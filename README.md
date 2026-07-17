@@ -15,10 +15,17 @@ PR diff ──► Engine.review(ctx) ──► Finding[] ──► threshold / d
 ```
 
 - **Engines** (`src/engines/`) implement one method: `review(ReviewContext) →
-  EngineResult`. The Claude engine shells out to `claude -p` and lets the
-  bugbot-codex-skills skill run its breadth→depth flow; tier models come from
-  config/env. The OpenAI stub documents exactly what to wire. The mock engine
-  exercises everything for free.
+  EngineResult`. The Claude engine shells out to `claude -p` and runs the
+  [invariant-first-pr-review](https://github.com/PeterGrayCreative/bugbot-codex-skills)
+  skill: session model = strong investigator tier, plus a `breadth-worker`
+  subagent pinned to the fast tier (the skill's docs are explicit that the
+  *orchestrator* owns model routing). With `--base`/`--head` the skill drives
+  git itself (merge-base review, manifest script, profile from the merge-base
+  `.peregrine/profile.md`); without git (fixture eval cases) the diff is
+  embedded and the skill's no-git fallback applies. Scratch output goes to a
+  temp dir outside the repo — the skill requires an untouched working tree.
+  The OpenAI stub documents exactly what to wire. The mock engine exercises
+  everything for free.
 - **Posting** (`src/github/`) filters by confidence, dedupes re-pushes via
   fingerprints embedded in comment markers, caps comments per PR, and posts a
   summary with cost. A finding must include its *failure path* — the input or

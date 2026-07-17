@@ -40,12 +40,21 @@ jobs:
           path: .peregrine-bot
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install review skill
+      # The skill discovers at .claude/skills/<skill-name>/SKILL.md, so copy
+      # the skill folder out of the skills repo (repo root is NOT the skill).
+      - name: Checkout review skills repo
         uses: actions/checkout@v4
         with:
           repository: PeterGrayCreative/bugbot-codex-skills
-          path: .claude/skills/bugbot-codex-skills
+          path: .peregrine-skills
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install review skill
+        run: |
+          mkdir -p .claude/skills
+          cp -R .peregrine-skills/skills/invariant-first-pr-review .claude/skills/
+          # ripgrep: required by the skill's review-manifest.sh
+          sudo apt-get update -q && sudo apt-get install -y -q ripgrep
 
       - uses: actions/setup-node@v4
         with:
@@ -57,10 +66,11 @@ jobs:
       - name: Install bot deps
         run: cd .peregrine-bot && npm ci
 
-      - name: Generate diff
+      # Diff goes to RUNNER_TEMP: the skill requires the working tree stay
+      # untouched, and .peregrine/ inside the repo is its profile namespace.
+      - name: Generate diff (size gate input)
         run: |
-          mkdir -p .peregrine
-          git diff origin/${{ github.event.pull_request.base.ref }}...HEAD > .peregrine/pr.diff
+          git diff "origin/${{ github.event.pull_request.base.ref }}...HEAD" > "$RUNNER_TEMP/pr.diff"
 
       - name: Run review
         env:
@@ -70,18 +80,22 @@ jobs:
           PR_REPO: ${{ github.event.repository.name }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           cd .peregrine-bot
           npx tsx src/index.ts review \
             --repo "$GITHUB_WORKSPACE" \
-            --diff "$GITHUB_WORKSPACE/.peregrine/pr.diff" \
+            --diff "$RUNNER_TEMP/pr.diff" \
+            --base "origin/${{ github.event.pull_request.base.ref }}" \
+            --head "${{ github.event.pull_request.head.sha }}" \
             --config peregrine.config.json \
             --post
 
       - name: Cost summary
         if: always()
         run: |
-          if [ -f .peregrine/result.json ]; then
+          if [ -f .peregrine-bot/.peregrine/result.json ]; then
             echo "### peregrine-bugbot run" >> "$GITHUB_STEP_SUMMARY"
-            node -e "const r=require('./.peregrine/result.json'); console.log(\`- findings: \${r.findings.length}\n- cost: \$\${r.usage.costUsd ?? '?'}\n- duration: \${Math.round(r.durationMs/1000)}s\n- config: \${r.modelConfig}\`)" >> "$GITHUB_STEP_SUMMARY"
+            node -e "const r=require('./.peregrine-bot/.peregrine/result.json'); console.log(\`- findings: \${r.findings.length}\n- cost: \$\${r.usage.costUsd ?? '?'}\n- duration: \${Math.round(r.durationMs/1000)}s\n- config: \${r.modelConfig}\`)" >> "$GITHUB_STEP_SUMMARY"
           fi

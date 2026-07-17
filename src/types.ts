@@ -49,8 +49,15 @@ export interface ReviewContext {
   repoPath: string;
   /** Absolute path to a unified diff file (base...head). */
   diffPath: string;
+  /**
+   * When base+head are set and repoPath has git objects, engines should let
+   * the skill drive git (merge-base review) instead of embedding the diff.
+   */
   baseRef?: string;
   headRef?: string;
+  /** PR metadata — feeds the skill's scope contract when available. */
+  prTitle?: string;
+  prBody?: string;
   /** When true, engines should use their larger "deep dive" budget. */
   deep?: boolean;
   config: PeregrineConfig;

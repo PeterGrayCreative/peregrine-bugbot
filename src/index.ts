@@ -9,7 +9,11 @@ import type { ReviewContext } from "./types.js";
 /**
  * peregrine-bugbot CLI
  *
- *   review  --repo <path> --diff <patch> [--engine claude] [--deep] [--post]
+ *   review  --repo <path> --diff <patch> [--base <ref> --head <ref>]
+ *           [--engine claude] [--deep] [--post]
+ *           With --base/--head the engine lets the skill drive git
+ *           (merge-base review); without them the diff file is embedded.
+ *           Optional env: PR_TITLE, PR_BODY (scope contract for the skill).
  *           Posting requires env: GITHUB_TOKEN, PR_OWNER, PR_REPO, PR_NUMBER, PR_HEAD_SHA
  *   matrix  [--config eval/matrix.config.json]      run the model-comparison matrix
  *   grade   [--runs eval/runs/<dir>]                grade runs against ground truth
@@ -37,7 +41,16 @@ async function cmdReview(): Promise<void> {
     return;
   }
 
-  const ctx: ReviewContext = { repoPath, diffPath, deep: has("--deep"), config };
+  const ctx: ReviewContext = {
+    repoPath,
+    diffPath,
+    baseRef: arg("--base"),
+    headRef: arg("--head"),
+    prTitle: process.env.PR_TITLE,
+    prBody: process.env.PR_BODY,
+    deep: has("--deep"),
+    config,
+  };
   const result = await getEngine(engineName).review(ctx);
 
   mkdirSync(".peregrine", { recursive: true });

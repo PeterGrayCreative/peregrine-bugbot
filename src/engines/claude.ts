@@ -1,55 +1,87 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 import type { ClaudeEngineConfig, EngineResult, Finding, ReviewContext } from "../types.js";
 import { exec, lastJsonBlock } from "../util/exec.js";
 import type { Engine } from "./engine.js";
 
 /**
- * Claude engine: shells out to the `claude` CLI in headless mode and lets the
- * bugbot-codex-skills skill drive the two-tier (breadth -> depth) review.
+ * Claude engine: runs the invariant-first-pr-review skill
+ * (github.com/PeterGrayCreative/bugbot-codex-skills) via `claude -p`.
  *
- * Contract with the skill (adjust after aligning with the skill repo):
- *  - The skill is installed in <repoPath>/.claude/skills/<skillName>/ (CI
- *    checks out the skills repo there).
- *  - Tier models are passed via env: PEREGRINE_TIER1_MODEL / PEREGRINE_TIER2_MODEL.
- *    The CLI session model (--model) is the tier-2 model; the skill invokes
- *    tier-1 breadth passes at the tier-1 model.
- *  - The skill writes findings to .peregrine/findings.json (FINDINGS_FILE env).
- *    If it doesn't, we fall back to parsing the last JSON block of the output.
- *
- * Cost comes straight from the CLI's JSON result (total_cost_usd), which is
- * what the eval harness uses for the value-per-dollar comparison.
+ * Alignment with the skill's contract (SKILL.md):
+ *  - The skill lives at <repoPath>/.claude/skills/<skillName>/ — CI copies
+ *    skills/invariant-first-pr-review out of the skills repo into that path.
+ *  - Two-tier routing is the ORCHESTRATOR's job ("skill metadata cannot
+ *    enforce model routing"): the session model (--model) is the strong
+ *    investigator tier; we define a `breadth-worker` subagent pinned to the
+ *    fast tier for the breadth sweep.
+ *  - When git objects exist (CI, historical eval cases) we pass base/head and
+ *    let the skill drive git + its review-manifest script. For plain fixture
+ *    dirs (seeded eval cases) we embed the diff — the skill's documented
+ *    no-git fallback.
+ *  - The skill requires the working tree stay untouched and treats
+ *    .peregrine/ as profile config, so all bot scratch output (findings file)
+ *    goes to a temp dir OUTSIDE the repo, permitted via --add-dir.
+ *  - Bash is allowlisted only for the manifest script and read-only git.
+ *    Deliberately NOT allowed: package scripts / running tests — in CI that
+ *    would execute attacker-controlled PR code next to secrets. The skill
+ *    downgrades to static proof ("state the static proof and reduce
+ *    confidence"), which is the trade we want.
  */
 
-const FINDINGS_FILE = ".peregrine/findings.json";
-
-function buildPrompt(ctx: ReviewContext, cfg: ClaudeEngineConfig): string {
-  const diff = readFileSync(ctx.diffPath, "utf8");
+function buildPrompt(ctx: ReviewContext, cfg: ClaudeEngineConfig, findingsFile: string): string {
   const limits = ctx.config.limits;
-  return [
-    `Use the "${cfg.skillName}" skill to review the following pull-request diff for bugs.`,
+  const gitMode = Boolean(ctx.baseRef && ctx.headRef);
+
+  const lines = [
+    `Use the "${cfg.skillName}" skill to review this change. Do not post comments,`,
+    `approve, request changes, or edit code — report only.`,
     ``,
-    `Process: breadth-first triage of the whole diff first, then deep investigation`,
-    `of at most ${limits.maxEscalations} of the most suspicious areas${ctx.deep ? " (deep-dive mode: you may double the usual investigation budget)" : ""}.`,
-    `Only report a finding if you can articulate the concrete failure path — the`,
-    `specific input or state that triggers the bug. If you cannot, drop it.`,
+    gitMode
+      ? `Review base: ${ctx.baseRef}  head: ${ctx.headRef} (use merge-base...head per the skill).`
+      : `This checkout has no usable git history. Use the skill's no-git fallback and review the diff below against the checked-out head state.`,
+    ctx.prTitle ? `PR title: ${ctx.prTitle}` : ``,
+    ctx.prBody ? `PR description (scope contract):\n${ctx.prBody}\n` : ``,
+    `Routing: delegate the breadth sweep to the "breadth-worker" subagent (fast`,
+    `tier: ${cfg.tier1Model}); investigate and adjudicate on the session model`,
+    `(${cfg.tier2Model}). Deep-investigate at most ${limits.maxEscalations * (ctx.deep ? 2 : 1)} candidate areas.`,
+    `Do not run package scripts or tests in this environment; use static proof`,
+    `and reduce confidence accordingly.`,
     ``,
-    `Write the final findings to ${FINDINGS_FILE} as JSON:`,
+    `In addition to the skill's final report, write machine-readable findings to`,
+    `${findingsFile} as JSON:`,
     `{"findings": [{"file", "startLine", "endLine", "severity": "high|medium|low",`,
     `"category", "title", "explanation", "failurePath", "confidence": 0..1}]}`,
-    `An empty findings array is a perfectly good answer for a clean diff.`,
-    ``,
-    `--- DIFF (base...head) ---`,
-    diff,
-  ].join("\n");
+    `Map confirmed blockers to high, confirmed discuss-level findings to medium,`,
+    `follow-up hardening to low. failurePath is the concrete counterexample.`,
+    `Rejected candidates must not appear. An empty findings array is a valid result.`,
+  ];
+
+  if (!gitMode) {
+    lines.push(``, `--- DIFF (base...head) ---`, readFileSync(ctx.diffPath, "utf8"));
+  }
+  return lines.filter((l) => l !== null).join("\n");
 }
 
-function parseFindings(repoPath: string, resultText: string): Finding[] {
-  const file = join(repoPath, FINDINGS_FILE);
+function breadthAgentJson(cfg: ClaudeEngineConfig): string {
+  return JSON.stringify({
+    "breadth-worker": {
+      description:
+        "Fast-tier breadth sweep worker for invariant-first PR review. Receives the compact breadth packet; nominates candidates and explicit no-risk conclusions only.",
+      prompt:
+        "You are the breadth-sweep worker. Follow the breadth worker packet you are given. Nominate candidates and explicit no-risk conclusions only; never assign final severity, close high-risk lanes, or draft comments.",
+      tools: ["Read", "Grep", "Glob"],
+      model: cfg.tier1Model,
+    },
+  });
+}
+
+function parseFindings(findingsFile: string, resultText: string): Finding[] {
   let parsed: unknown;
-  if (existsSync(file)) {
+  if (existsSync(findingsFile)) {
     try {
-      parsed = JSON.parse(readFileSync(file, "utf8"));
+      parsed = JSON.parse(readFileSync(findingsFile, "utf8"));
     } catch {
       /* fall through to text parsing */
     }
@@ -81,30 +113,58 @@ export const claudeEngine: Engine = {
     const cfg = ctx.config.engines.claude;
     const started = Date.now();
 
-    const args = [
+    const outDir = mkdtempSync(join(tmpdir(), "peregrine-out-"));
+    const findingsFile = join(outDir, "findings.json");
+
+    const manifestScript = `.claude/skills/${cfg.skillName}/scripts/review-manifest.sh`;
+    const allowedTools = [
+      "Task",
+      "Read",
+      "Grep",
+      "Glob",
+      "Write",
+      `Bash(bash ${manifestScript}:*)`,
+      "Bash(git show:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git status:*)",
+      "Bash(git merge-base:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git config --get:*)",
+      "Bash(rg:*)",
+    ].join(",");
+
+    const baseArgs = [
       "-p",
-      buildPrompt(ctx, cfg),
+      buildPrompt(ctx, cfg, findingsFile),
       "--output-format",
       "json",
       "--model",
       cfg.tier2Model,
       "--max-turns",
       String(ctx.deep ? cfg.maxTurns * 2 : cfg.maxTurns),
-      // Read-only investigation + writing the findings file. PR content is
-      // untrusted input — never let the review session run arbitrary commands.
       "--allowedTools",
-      "Read,Grep,Glob,Write",
+      allowedTools,
+      "--add-dir",
+      outDir,
     ];
 
-    const res = await exec("claude", args, {
+    const env = {
+      PEREGRINE_TIER1_MODEL: cfg.tier1Model,
+      PEREGRINE_TIER2_MODEL: cfg.tier2Model,
+    };
+
+    // Prefer defining the fast-tier subagent explicitly; if this CLI build
+    // doesn't support --agents, retry without it (the prompt still instructs
+    // fast-tier delegation, the skill's "routing unavailable" path applies).
+    let res = await exec("claude", [...baseArgs, "--agents", breadthAgentJson(cfg)], {
       cwd: ctx.repoPath,
       timeoutMs: cfg.timeoutMs,
-      env: {
-        PEREGRINE_TIER1_MODEL: cfg.tier1Model,
-        PEREGRINE_TIER2_MODEL: cfg.tier2Model,
-        FINDINGS_FILE,
-      },
+      env,
     });
+    if (res.code !== 0 && /unknown option|unrecognized|--agents/i.test(res.stderr)) {
+      res = await exec("claude", baseArgs, { cwd: ctx.repoPath, timeoutMs: cfg.timeoutMs, env });
+    }
 
     if (res.timedOut) {
       throw new Error(`claude engine timed out after ${cfg.timeoutMs}ms`);
@@ -131,7 +191,7 @@ export const claudeEngine: Engine = {
     return {
       engine: "claude",
       modelConfig: `${cfg.tier1Model}->${cfg.tier2Model}`,
-      findings: parseFindings(ctx.repoPath, resultText),
+      findings: parseFindings(findingsFile, resultText),
       usage,
       durationMs: Date.now() - started,
       raw,

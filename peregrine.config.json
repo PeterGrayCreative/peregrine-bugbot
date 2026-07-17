@@ -4,7 +4,7 @@
     "claude": {
       "tier1Model": "claude-haiku-4-5",
       "tier2Model": "claude-sonnet-5",
-      "skillName": "bugbot-codex-skills",
+      "skillName": "invariant-first-pr-review",
       "maxTurns": 40,
       "timeoutMs": 900000
     },
