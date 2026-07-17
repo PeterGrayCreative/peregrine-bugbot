@@ -1,0 +1,25 @@
+{
+  "name": "peregrine-bugbot",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Two-tier LLM code review bot: breadth-first triage with a cheap model, deep investigation with a strong one. Engine-agnostic (Claude today, OpenAI-ready).",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "review": "tsx src/index.ts review",
+    "eval:matrix": "tsx src/index.ts matrix",
+    "eval:grade": "tsx src/index.ts grade",
+    "eval:report": "tsx src/index.ts report"
+  },
+  "dependencies": {
+    "@octokit/rest": "^21.0.0",
+    "tsx": "^4.19.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}

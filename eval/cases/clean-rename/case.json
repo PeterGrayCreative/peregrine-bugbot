@@ -1,0 +1,7 @@
+{
+  "name": "clean-rename",
+  "kind": "clean",
+  "fixtureDir": "fixture",
+  "diffFile": "diff.patch",
+  "notes": "Clean case: a straightforward rename with no behavior change. Any finding here is a false positive."
+}

@@ -1,0 +1,10 @@
+--- a/src/totals.ts
++++ b/src/totals.ts
+@@ -3,6 +3,6 @@ export interface LineItem {
+   quantity: number;
+ }
+
+-export function calcTotal(items: LineItem[]): number {
++export function calculateOrderTotal(items: LineItem[]): number {
+   return items.reduce((total, item) => total + item.price * item.quantity, 0);
+ }

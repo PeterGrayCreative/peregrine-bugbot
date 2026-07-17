@@ -1,0 +1,36 @@
+{
+  "engine": "claude",
+  "engines": {
+    "claude": {
+      "tier1Model": "claude-haiku-4-5",
+      "tier2Model": "claude-sonnet-5",
+      "skillName": "bugbot-codex-skills",
+      "maxTurns": 40,
+      "timeoutMs": 900000
+    },
+    "openai": {
+      "tier1Model": "TODO",
+      "tier2Model": "TODO"
+    },
+    "mock": {}
+  },
+  "limits": {
+    "maxEscalations": 3,
+    "maxDiffLines": 1500,
+    "minConfidenceToPost": 0.7,
+    "maxCommentsPerPr": 5
+  },
+  "filters": {
+    "ignorePaths": [
+      "**/package-lock.json",
+      "**/pnpm-lock.yaml",
+      "**/yarn.lock",
+      "**/*.min.js",
+      "**/*.map",
+      "dist/**",
+      "build/**",
+      "vendor/**",
+      "**/__snapshots__/**"
+    ]
+  }
+}

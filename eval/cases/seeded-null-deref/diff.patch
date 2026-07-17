@@ -1,0 +1,12 @@
+--- a/src/user-service.ts
++++ b/src/user-service.ts
+@@ -10,7 +10,6 @@ export function getUser(id: string): User | undefined {
+ }
+
+ export function getUserLocale(id: string): string {
+-  const user = getUser(id);
+-  if (!user?.preferences) return "en-US";
+-  return user.preferences.locale;
++  const user = getUser(id); // BUG: no undefined check before property access
++  return user!.preferences!.locale;
+ }

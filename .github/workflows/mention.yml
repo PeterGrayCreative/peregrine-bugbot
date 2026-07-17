@@ -1,0 +1,82 @@
+# On-demand deep review: comment "@peregrine-bugbot" on a PR.
+# Gated to repo members so outsiders can't burn the API budget, and because
+# PR/comment content is untrusted input to the model.
+name: peregrine-mention
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  deep-review:
+    if: >
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@peregrine-bugbot') &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Get PR details
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          pr=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}")
+          echo "head_ref=$(echo "$pr" | jq -r .head.ref)" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$(echo "$pr" | jq -r .head.sha)" >> "$GITHUB_OUTPUT"
+          echo "base_ref=$(echo "$pr" | jq -r .base.ref)" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.pr.outputs.head_sha }}
+          fetch-depth: 0
+
+      - name: Checkout peregrine-bugbot
+        uses: actions/checkout@v4
+        with:
+          repository: PeterGrayCreative/peregrine-bugbot
+          path: .peregrine-bot
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install review skill
+        uses: actions/checkout@v4
+        with:
+          repository: PeterGrayCreative/bugbot-codex-skills
+          path: .claude/skills/bugbot-codex-skills
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .peregrine-bot/.nvmrc
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Install bot deps
+        run: cd .peregrine-bot && npm ci
+
+      - name: Generate diff
+        run: |
+          mkdir -p .peregrine
+          git diff origin/${{ steps.pr.outputs.base_ref }}...HEAD > .peregrine/pr.diff
+
+      - name: Run deep review
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_OWNER: ${{ github.repository_owner }}
+          PR_REPO: ${{ github.event.repository.name }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          PR_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
+        run: |
+          cd .peregrine-bot
+          npx tsx src/index.ts review \
+            --repo "$GITHUB_WORKSPACE" \
+            --diff "$GITHUB_WORKSPACE/.peregrine/pr.diff" \
+            --config peregrine.config.json \
+            --deep --post
