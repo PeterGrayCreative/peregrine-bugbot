@@ -70,7 +70,13 @@ async function cmdReview(): Promise<void> {
     if (!token || !target.owner || !target.repo || !target.prNumber || !target.headSha) {
       throw new Error("--post requires GITHUB_TOKEN, PR_OWNER, PR_REPO, PR_NUMBER, PR_HEAD_SHA");
     }
-    const { posted, skipped } = await postReview(result, target, config, token);
+    const { posted, skipped } = await postReview(
+      result,
+      target,
+      config,
+      token,
+      readFileSync(diffPath, "utf8"),
+    );
     console.log(`[peregrine] posted ${posted}, skipped ${skipped}`);
   } else {
     for (const f of result.findings) {

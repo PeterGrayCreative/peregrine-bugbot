@@ -1,0 +1,4 @@
+{
+  "repeats": 1,
+  "configs": [{ "name": "mock", "engine": "mock" }]
+}

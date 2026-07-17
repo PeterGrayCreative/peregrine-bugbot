@@ -1,0 +1,43 @@
+name: setup-peregrine
+description: >
+  Shared bootstrap for peregrine review jobs: installs the review skill,
+  ripgrep, Node (from the bot's .nvmrc), the Claude Code CLI, and bot deps.
+  Expects the bot repo to already be checked out at .peregrine-bot (this
+  action lives inside it).
+
+inputs:
+  checkout-token:
+    description: Token able to read PeterGrayCreative/bugbot-codex-skills
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # The skill discovers at .claude/skills/<skill-name>/SKILL.md, so copy
+    # the skill folder out of the skills repo (repo root is NOT the skill).
+    - name: Checkout review skills repo
+      uses: actions/checkout@v4
+      with:
+        repository: PeterGrayCreative/bugbot-codex-skills
+        path: .peregrine-skills
+        token: ${{ inputs.checkout-token }}
+
+    - name: Install review skill + ripgrep
+      shell: bash
+      run: |
+        mkdir -p .claude/skills
+        cp -R .peregrine-skills/skills/invariant-first-pr-review .claude/skills/
+        # ripgrep: required by the skill's review-manifest.sh
+        sudo apt-get update -q && sudo apt-get install -y -q ripgrep
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: .peregrine-bot/.nvmrc
+
+    - name: Install Claude Code CLI
+      shell: bash
+      run: npm install -g @anthropic-ai/claude-code
+
+    - name: Install bot deps
+      shell: bash
+      run: cd .peregrine-bot && npm ci

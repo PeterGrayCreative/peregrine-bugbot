@@ -15,6 +15,51 @@ const SEVERITY_EMOJI: Record<Finding["severity"], string> = {
   low: "🟡",
 };
 
+/**
+ * Lines that can carry an inline review comment: new-side lines that appear
+ * in a diff hunk (added or context). The invariant-first skill deliberately
+ * reports affected-surface findings in files/lines OUTSIDE the diff; GitHub
+ * 422s the entire review if any single inline comment targets such a line,
+ * so those findings must go in the review body instead.
+ */
+export function commentableLines(diffText: string): Map<string, Set<number>> {
+  const map = new Map<string, Set<number>>();
+  let current: Set<number> | undefined;
+  let newLine = 0;
+  // Strip only the final trailing newline: splitting it would yield a phantom
+  // "" context line and mark a nonexistent line commentable (=> 422 on post).
+  // Mid-hunk blank lines stay counted — git emits them space-prefixed, but
+  // hand-written patches may not, and both occupy a real line.
+  for (const line of diffText.replace(/\n$/, "").split("\n")) {
+    const fileMatch = line.match(/^\+\+\+ b\/(.+)$/);
+    if (fileMatch) {
+      current = map.get(fileMatch[1]!) ?? new Set();
+      map.set(fileMatch[1]!, current);
+      continue;
+    }
+    const hunkMatch = line.match(/^@@ -\d+(?:,\d+)? \+(\d+)/);
+    if (hunkMatch) {
+      newLine = Number(hunkMatch[1]);
+      continue;
+    }
+    if (!current) continue;
+    if (line.startsWith("+") && !line.startsWith("+++")) {
+      current.add(newLine);
+      newLine++;
+    } else if (!line.startsWith("-") && !line.startsWith("\\")) {
+      current.add(newLine);
+      newLine++;
+    }
+  }
+  return map;
+}
+
+function isInline(f: Finding, commentable: Map<string, Set<number>>): boolean {
+  const lines = commentable.get(f.file);
+  if (!lines) return false;
+  return lines.has(f.endLine) && (f.startLine === f.endLine || lines.has(f.startLine));
+}
+
 function renderComment(f: Finding, fp: string): string {
   return [
     `${SEVERITY_EMOJI[f.severity]} **${f.title}** (\`${f.category}\`, confidence ${(f.confidence * 100).toFixed(0)}%)`,
@@ -27,22 +72,35 @@ function renderComment(f: Finding, fp: string): string {
   ].join("\n");
 }
 
+function renderOutsideFinding(f: Finding, fp: string): string {
+  return [
+    `${SEVERITY_EMOJI[f.severity]} **${f.title}** — \`${f.file}:${f.startLine}\` (\`${f.category}\`, confidence ${(f.confidence * 100).toFixed(0)}%)`,
+    ``,
+    f.explanation,
+    ``,
+    `**How it fails:** ${f.failurePath}`,
+    ``,
+    marker(fp),
+  ].join("\n");
+}
+
 /**
- * Posts findings as a single PR review with inline comments.
- * Applies, in order: confidence threshold -> dedupe against already-posted
- * fingerprints -> per-PR comment cap. Also leaves a summary comment with
- * usage/cost so cost-per-PR is visible from day one.
+ * Posts findings as a single PR review. Pipeline: confidence threshold ->
+ * dedupe against fingerprints already on the PR (inline comments AND review
+ * bodies) -> per-PR cap -> partition into inline (on-diff) vs body
+ * (outside-diff, the skill's affected-surface findings).
  */
 export async function postReview(
   result: EngineResult,
   target: PostTarget,
   config: PeregrineConfig,
   token: string,
+  diffText: string,
 ): Promise<{ posted: number; skipped: number }> {
   const octokit = new Octokit({ auth: token });
   const { owner, repo, prNumber } = target;
 
-  // Collect fingerprints we've already posted on this PR.
+  // Fingerprints already posted on this PR — inline comments and review bodies.
   const existing = new Set<string>();
   const reviewComments = await octokit.paginate(octokit.pulls.listReviewComments, {
     owner,
@@ -53,6 +111,15 @@ export async function postReview(
   for (const c of reviewComments) {
     for (const fp of extractFingerprints(c.body ?? "")) existing.add(fp);
   }
+  const reviews = await octokit.paginate(octokit.pulls.listReviews, {
+    owner,
+    repo,
+    pull_number: prNumber,
+    per_page: 100,
+  });
+  for (const r of reviews) {
+    for (const fp of extractFingerprints(r.body ?? "")) existing.add(fp);
+  }
 
   const eligible = result.findings
     .filter((f) => f.confidence >= config.limits.minConfidenceToPost)
@@ -62,24 +129,37 @@ export async function postReview(
     .slice(0, config.limits.maxCommentsPerPr);
 
   const skipped = result.findings.length - eligible.length;
+  if (eligible.length === 0) return { posted: 0, skipped };
 
-  if (eligible.length > 0) {
-    await octokit.pulls.createReview({
-      owner,
-      repo,
-      pull_number: prNumber,
-      commit_id: target.headSha,
-      event: "COMMENT",
-      body: summaryBody(result, eligible.length, skipped),
-      comments: eligible.map(({ f, fp }) => ({
-        path: f.file,
-        line: f.endLine,
-        start_line: f.startLine < f.endLine ? f.startLine : undefined,
-        side: "RIGHT" as const,
-        body: renderComment(f, fp),
-      })),
-    });
+  const commentable = commentableLines(diffText);
+  const inline = eligible.filter(({ f }) => isInline(f, commentable));
+  const outside = eligible.filter(({ f }) => !isInline(f, commentable));
+
+  const bodyParts = [summaryBody(result, eligible.length, skipped)];
+  if (outside.length > 0) {
+    bodyParts.push(
+      ``,
+      `#### Findings outside this diff (affected surfaces)`,
+      ``,
+      ...outside.map(({ f, fp }) => renderOutsideFinding(f, fp) + "\n\n---"),
+    );
   }
+
+  await octokit.pulls.createReview({
+    owner,
+    repo,
+    pull_number: prNumber,
+    commit_id: target.headSha,
+    event: "COMMENT",
+    body: bodyParts.join("\n"),
+    comments: inline.map(({ f, fp }) => ({
+      path: f.file,
+      line: f.endLine,
+      start_line: f.startLine < f.endLine ? f.startLine : undefined,
+      side: "RIGHT" as const,
+      body: renderComment(f, fp),
+    })),
+  });
 
   return { posted: eligible.length, skipped };
 }

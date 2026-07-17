@@ -3,8 +3,8 @@
     {
       "id": "null-deref-1",
       "file": "src/user-service.ts",
-      "startLine": 13,
-      "endLine": 14,
+      "startLine": 14,
+      "endLine": 15,
       "description": "getUserLocale dereferences user and user.preferences with non-null assertions after the refactor removed the undefined guard; throws TypeError for unknown users or users without preferences (previously returned the 'en-US' fallback)."
     }
   ]

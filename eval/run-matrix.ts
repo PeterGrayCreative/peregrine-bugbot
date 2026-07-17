@@ -44,19 +44,27 @@ export async function runMatrix(configPath?: string): Promise<void> {
           `[${done}/${total}] ${modelConfig.name} × ${caseName} (run ${repeat}) ... `,
         );
 
-        // Model overrides flow through the same config object the real bot
-        // uses, so eval runs exercise the exact production path.
-        const config = structuredClone(baseConfig);
-        config.engine = modelConfig.engine;
-        Object.assign(config.engines[modelConfig.engine] as object, modelConfig.overrides ?? {});
-
-        const ctx: ReviewContext = {
-          repoPath,
-          diffPath: join(caseDir, spec.diffFile),
-          config,
-        };
-
         try {
+          // Model overrides flow through the same config object the real bot
+          // uses, so eval runs exercise the exact production path. Inside the
+          // try: a typo'd engine name should fail THIS run, not kill the
+          // remaining matrix.
+          const config = structuredClone(baseConfig);
+          config.engine = modelConfig.engine;
+          const engineCfg = config.engines[modelConfig.engine];
+          if (!engineCfg || typeof engineCfg !== "object") {
+            throw new Error(
+              `matrix config "${modelConfig.name}": unknown engine "${modelConfig.engine}"`,
+            );
+          }
+          Object.assign(engineCfg as object, modelConfig.overrides ?? {});
+
+          const ctx: ReviewContext = {
+            repoPath,
+            diffPath: join(caseDir, spec.diffFile),
+            config,
+          };
+
           const result = await getEngine(modelConfig.engine).review(ctx);
           const record: RunRecord = {
             caseName,

@@ -1,6 +1,11 @@
 # On-demand deep review: comment "@peregrine-bugbot" on a PR.
-# Gated to repo members so outsiders can't burn the API budget, and because
-# PR/comment content is untrusted input to the model.
+# Gated to repo members so outsiders can't burn the API budget. Note the gate
+# covers the COMMENTER; the PR author (and thus title/body/diff) can be anyone,
+# so all PR content stays treated as untrusted data:
+#  - title/body are read from the PR JSON inside the run step (env assignment,
+#    never GITHUB_OUTPUT heredocs — a body containing a delimiter line could
+#    otherwise inject output values)
+#  - the engine fences them as data in the prompt
 name: peregrine-mention
 
 on:
@@ -20,22 +25,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Get PR details
+      - name: Resolve PR refs
         id: pr
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pr=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}")
-          echo "head_sha=$(echo "$pr" | jq -r .head.sha)" >> "$GITHUB_OUTPUT"
-          echo "base_ref=$(echo "$pr" | jq -r .base.ref)" >> "$GITHUB_OUTPUT"
-          {
-            echo "title<<PEREGRINE_EOF"
-            echo "$pr" | jq -r .title
-            echo "PEREGRINE_EOF"
-            echo "body<<PEREGRINE_EOF"
-            echo "$pr" | jq -r '.body // ""'
-            echo "PEREGRINE_EOF"
-          } >> "$GITHUB_OUTPUT"
+          gh api "repos/${{ github.repository }}/pulls/${{ github.event.issue.number }}" > "$RUNNER_TEMP/pr.json"
+          # head SHA is hex and base ref is a git refname — neither can contain
+          # newlines, so single-line outputs are injection-safe.
+          echo "head_sha=$(jq -r .head.sha "$RUNNER_TEMP/pr.json")" >> "$GITHUB_OUTPUT"
+          echo "base_ref=$(jq -r .base.ref "$RUNNER_TEMP/pr.json")" >> "$GITHUB_OUTPUT"
 
       - name: Checkout PR head
         uses: actions/checkout@v4
@@ -48,33 +47,16 @@ jobs:
         with:
           repository: PeterGrayCreative/peregrine-bugbot
           path: .peregrine-bot
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PEREGRINE_CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
 
-      - name: Checkout review skills repo
-        uses: actions/checkout@v4
+      - name: Setup (skill, ripgrep, Node, CLI, deps)
+        uses: ./.peregrine-bot/.github/actions/setup-peregrine
         with:
-          repository: PeterGrayCreative/bugbot-codex-skills
-          path: .peregrine-skills
-          token: ${{ secrets.GITHUB_TOKEN }}
+          checkout-token: ${{ secrets.PEREGRINE_CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
 
-      - name: Install review skill
+      - name: Generate diff (size gate + inline-comment partition)
         run: |
-          mkdir -p .claude/skills
-          cp -R .peregrine-skills/skills/invariant-first-pr-review .claude/skills/
-          sudo apt-get update -q && sudo apt-get install -y -q ripgrep
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .peregrine-bot/.nvmrc
-
-      - name: Install Claude Code CLI
-        run: npm install -g @anthropic-ai/claude-code
-
-      - name: Install bot deps
-        run: cd .peregrine-bot && npm ci
-
-      - name: Generate diff (size gate input)
-        run: |
+          git fetch -q origin "${{ steps.pr.outputs.base_ref }}"
           git diff "origin/${{ steps.pr.outputs.base_ref }}...HEAD" > "$RUNNER_TEMP/pr.diff"
 
       - name: Run deep review
@@ -85,9 +67,10 @@ jobs:
           PR_REPO: ${{ github.event.repository.name }}
           PR_NUMBER: ${{ github.event.issue.number }}
           PR_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
-          PR_TITLE: ${{ steps.pr.outputs.title }}
-          PR_BODY: ${{ steps.pr.outputs.body }}
         run: |
+          PR_TITLE="$(jq -r '.title // ""' "$RUNNER_TEMP/pr.json")"
+          PR_BODY="$(jq -r '.body // ""' "$RUNNER_TEMP/pr.json")"
+          export PR_TITLE PR_BODY
           cd .peregrine-bot
           npx tsx src/index.ts review \
             --repo "$GITHUB_WORKSPACE" \

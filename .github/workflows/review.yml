@@ -1,6 +1,13 @@
 # Automatic review on ready-for-review PRs (and pushes to them).
 # Also callable from other repos as a reusable workflow — that's the org
 # rollout path: repos add a 5-line caller workflow, this stays the source of truth.
+#
+# Secrets:
+#   ANTHROPIC_API_KEY         required — use a dedicated workspace with a spend limit
+#   PEREGRINE_CHECKOUT_TOKEN  fine-grained PAT with contents:read on
+#                             peregrine-bugbot + bugbot-codex-skills. Falls back
+#                             to GITHUB_TOKEN, which only works if those repos
+#                             are public or are this repo.
 name: peregrine-review
 
 on:
@@ -10,6 +17,8 @@ on:
     secrets:
       ANTHROPIC_API_KEY:
         required: true
+      PEREGRINE_CHECKOUT_TOKEN:
+        required: false
 
 # Re-pushes cancel the superseded run — you pay for at most one review per
 # push burst, and only the latest code gets reviewed.
@@ -23,14 +32,21 @@ permissions:
 
 jobs:
   review:
-    # Drafts are skipped; the synchronize event still fires for them.
-    if: ${{ !github.event.pull_request.draft }}
+    # Drafts are skipped. Fork PRs are skipped explicitly: they don't get
+    # secrets, so the run could only fail — and PR content is untrusted input.
+    if: >
+      !github.event.pull_request.draft &&
+      github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
+      # Review the actual head, not the synthetic merge commit: comment
+      # anchors (head SHA) and the skill's merge-base...head contract must
+      # agree on what was reviewed.
       - name: Checkout PR head
         uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
 
       - name: Checkout peregrine-bugbot
@@ -38,38 +54,18 @@ jobs:
         with:
           repository: PeterGrayCreative/peregrine-bugbot
           path: .peregrine-bot
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PEREGRINE_CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
 
-      # The skill discovers at .claude/skills/<skill-name>/SKILL.md, so copy
-      # the skill folder out of the skills repo (repo root is NOT the skill).
-      - name: Checkout review skills repo
-        uses: actions/checkout@v4
+      - name: Setup (skill, ripgrep, Node, CLI, deps)
+        uses: ./.peregrine-bot/.github/actions/setup-peregrine
         with:
-          repository: PeterGrayCreative/bugbot-codex-skills
-          path: .peregrine-skills
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install review skill
-        run: |
-          mkdir -p .claude/skills
-          cp -R .peregrine-skills/skills/invariant-first-pr-review .claude/skills/
-          # ripgrep: required by the skill's review-manifest.sh
-          sudo apt-get update -q && sudo apt-get install -y -q ripgrep
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version-file: .peregrine-bot/.nvmrc
-
-      - name: Install Claude Code CLI
-        run: npm install -g @anthropic-ai/claude-code
-
-      - name: Install bot deps
-        run: cd .peregrine-bot && npm ci
+          checkout-token: ${{ secrets.PEREGRINE_CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
 
       # Diff goes to RUNNER_TEMP: the skill requires the working tree stay
       # untouched, and .peregrine/ inside the repo is its profile namespace.
-      - name: Generate diff (size gate input)
+      - name: Generate diff (size gate + inline-comment partition)
         run: |
+          git fetch -q origin "${{ github.event.pull_request.base.ref }}"
           git diff "origin/${{ github.event.pull_request.base.ref }}...HEAD" > "$RUNNER_TEMP/pr.diff"
 
       - name: Run review

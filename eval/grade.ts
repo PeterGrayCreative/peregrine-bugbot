@@ -88,13 +88,27 @@ async function llmMatch(f: Finding, bugDescription: string, bugFile: string): Pr
     ["-p", prompt, "--model", JUDGE_MODEL, "--output-format", "json", "--max-turns", "1"],
     { timeoutMs: 60_000 },
   );
+  // A broken judge must never masquerade as "not a match" — that silently
+  // zeroes recall and the benchmark reports garbage as data.
+  if (res.timedOut || res.code !== 0) {
+    throw new Error(
+      `LLM judge failed (${JUDGE_MODEL}): ${res.timedOut ? "timeout" : (res.stderr || res.stdout).slice(0, 300)}. ` +
+        `Use JUDGE=exact for keyless smoke runs.`,
+    );
+  }
+  let verdict: { same_root_cause?: boolean } | undefined;
   try {
     const parsed = JSON.parse(res.stdout) as { result?: string };
-    const verdict = lastJsonBlock(parsed.result ?? "") as { same_root_cause?: boolean } | undefined;
-    return verdict?.same_root_cause === true;
+    verdict = lastJsonBlock(parsed.result ?? "") as typeof verdict;
   } catch {
-    return false;
+    /* handled below */
   }
+  if (verdict?.same_root_cause === undefined) {
+    throw new Error(
+      `LLM judge returned an unparseable verdict: ${res.stdout.slice(0, 300)}`,
+    );
+  }
+  return verdict.same_root_cause === true;
 }
 
 function latestRunsDir(): string {

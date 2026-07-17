@@ -47,10 +47,17 @@ npm run review -- --repo /path/to/repo --diff /tmp/pr.diff        # dry run, pri
 1. Add `ANTHROPIC_API_KEY` to repo (later: org) secrets. Use a **dedicated
    Console workspace with a monthly spend limit** — that's the hard cost
    backstop.
-2. `.github/workflows/review.yml` reviews PRs when they leave draft;
-   re-pushes cancel superseded runs; oversized diffs are skipped.
-3. Comment `@peregrine-bugbot` on a PR for an on-demand deep review
+2. Add `PEREGRINE_CHECKOUT_TOKEN`: a fine-grained PAT with **contents:read**
+   on `peregrine-bugbot` and `bugbot-codex-skills`. The default
+   `GITHUB_TOKEN` is repo-scoped and cannot check out those private repos
+   from other repos' workflows.
+3. `.github/workflows/review.yml` reviews PRs when they leave draft;
+   re-pushes cancel superseded runs; oversized diffs and fork PRs are
+   skipped. Shared bootstrap lives in the `setup-peregrine` composite action.
+4. Comment `@peregrine-bugbot` on a PR for an on-demand deep review
    (members only — `mention.yml`).
+5. `ci.yml` keeps the bot honest: typecheck + the zero-cost mock pipeline
+   must pass on every PR to this repo.
 
 ## Org rollout (phase 2+)
 

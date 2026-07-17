@@ -1,6 +1,6 @@
 --- a/src/user-service.ts
 +++ b/src/user-service.ts
-@@ -10,7 +10,6 @@ export function getUser(id: string): User | undefined {
+@@ -11,7 +11,6 @@ export function getUser(id: string): User | undefined {
  }
 
  export function getUserLocale(id: string): string {

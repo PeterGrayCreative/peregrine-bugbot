@@ -22,6 +22,13 @@ export function exec(
     let stdout = "";
     let stderr = "";
     let timedOut = false;
+    let settled = false;
+    const settle = (result: ExecResult) => {
+      if (settled) return;
+      settled = true;
+      if (timer) clearTimeout(timer);
+      res(result);
+    };
     const timer = opts.timeoutMs
       ? setTimeout(() => {
           timedOut = true;
@@ -31,9 +38,14 @@ export function exec(
 
     child.stdout.on("data", (d) => (stdout += d));
     child.stderr.on("data", (d) => (stderr += d));
+    // Spawn failures (e.g. command not found) emit "error" and may never emit
+    // "close" — without this handler the promise would hang forever. code -1
+    // signals "process never ran"; callers treat any nonzero code as failure.
+    child.on("error", (err) => {
+      settle({ stdout, stderr: stderr || String(err), code: -1, timedOut });
+    });
     child.on("close", (code) => {
-      if (timer) clearTimeout(timer);
-      res({ stdout, stderr, code, timedOut });
+      settle({ stdout, stderr, code, timedOut });
     });
   });
 }
