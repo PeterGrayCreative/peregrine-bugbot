@@ -59,6 +59,19 @@ test("Claude runner loads the bundled plugin and validates structured output", a
   const schema = JSON.parse(receivedArgs[receivedArgs.indexOf("--json-schema") + 1]!) as Record<string, unknown>;
   assert.equal(schema.$schema, undefined);
   assert.ok(receivedArgs.includes("--agents"));
+  const agents = JSON.parse(receivedArgs[receivedArgs.indexOf("--agents") + 1]!) as {
+    "breadth-worker": { model: string; effort: string };
+  };
+  assert.deepEqual(
+    {
+      model: agents["breadth-worker"].model,
+      effort: agents["breadth-worker"].effort,
+    },
+    {
+      model: context().config.runners.claude.breadthModel,
+      effort: context().config.runners.claude.breadthEffort,
+    },
+  );
   assert.equal(receivedArgs.includes("--bare"), false);
   assert.equal(reviewed.engine, "claude");
   assert.equal(reviewed.findings.length, 1);

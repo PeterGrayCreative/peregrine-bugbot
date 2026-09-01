@@ -2,11 +2,37 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "peregrine",
   "displayName": "Peregrine Review",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Invariant-first pull-request review and repository review-profile generation.",
   "author": {
     "name": "Peter Gray"
   },
   "homepage": "https://github.com/PeterGrayCreative/peregrine-bugbot",
-  "repository": "https://github.com/PeterGrayCreative/peregrine-bugbot"
+  "repository": "https://github.com/PeterGrayCreative/peregrine-bugbot",
+  "userConfig": {
+    "claude_breadth_model": {
+      "type": "string",
+      "title": "Breadth model",
+      "description": "Claude model used for the provisional breadth sweep.",
+      "default": "claude-sonnet-5"
+    },
+    "claude_breadth_effort": {
+      "type": "string",
+      "title": "Breadth effort",
+      "description": "Reasoning effort used for the Claude breadth sweep.",
+      "default": "high"
+    },
+    "claude_investigation_model": {
+      "type": "string",
+      "title": "Investigation model",
+      "description": "Claude model used to verify and adjudicate findings.",
+      "default": "claude-opus-5"
+    },
+    "claude_investigation_effort": {
+      "type": "string",
+      "title": "Investigation effort",
+      "description": "Reasoning effort used for Claude investigation.",
+      "default": "high"
+    }
+  }
 }

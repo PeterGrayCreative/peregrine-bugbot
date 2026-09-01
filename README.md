@@ -76,6 +76,49 @@ development setup, and troubleshooting.
 If the repository is already cloned, `npm run plugin:install:codex` and
 `npm run plugin:install:claude` execute the same `main`-tracking installs.
 
+## Configure model routing
+
+Peregrine defaults to a high-effort breadth pass and a high-effort investigation
+pass:
+
+| Host | Breadth | Investigation |
+| --- | --- | --- |
+| Codex | `gpt-5.6-luna` / `high` | `gpt-5.6-sol` / `high` |
+| Claude | `claude-sonnet-5` / `high` | `claude-opus-5` / `high` |
+
+Override one interactive review by including a routing block with the plugin or
+skill call:
+
+```text
+@Peregrine Review review this pull request using:
+peregrineRouting:
+  breadthModel: gpt-5.6-luna
+  breadthEffort: high
+  investigationModel: gpt-5.6-sol
+  investigationEffort: high
+```
+
+Use the Claude model names instead when calling the plugin from Claude. Claude
+also supports persistent options during installation:
+
+```bash
+claude plugin install peregrine@peregrine --scope user \
+  --config claude_breadth_model=claude-sonnet-5 \
+  --config claude_breadth_effort=high \
+  --config claude_investigation_model=claude-opus-5 \
+  --config claude_investigation_effort=high
+```
+
+Codex does not currently expose persistent plugin `userConfig`, so use the
+per-review block there. Peregrine records requested and actual routing and
+reports a fallback when the host cannot select the requested model.
+
+For the automated Node runner and GitHub Actions, edit
+`peregrine.config.json` or use the provider-scoped environment variables.
+Operational settings such as `skillName`, `maxTurns`, `maxBudgetUsd`, and
+`timeoutMs` belong to that runner rather than an interactive plugin call. See
+the complete [configuration reference](docs/configuration.md).
+
 ## GitHub Actions
 
 The reusable workflow accepts `runner: claude|codex`. Supply only the matching secret. Pin consumers to a release tag or commit SHA after publishing a release:

@@ -2,12 +2,12 @@ import { type ExecResult, exec, lastJsonBlock } from "../util/exec.js";
 import { buildEngineResult, parseReviewPayload, reviewSchemaJson } from "../core/review-result.js";
 import { buildInvestigationPrompt } from "../core/prompt.js";
 import { bundledSkillDir, packageRoot } from "../core/paths.js";
-import type { EngineResult, ReviewContext } from "../types.js";
+import type { ClaudeEffort, EngineResult, ReviewContext } from "../types.js";
 import type { Engine } from "./engine.js";
 
 type ExecFunction = typeof exec;
 
-function breadthAgentJson(model: string): string {
+function breadthAgentJson(model: string, effort: ClaudeEffort): string {
   return JSON.stringify({
     "breadth-worker": {
       description:
@@ -16,6 +16,7 @@ function breadthAgentJson(model: string): string {
         "Follow the breadth worker packet. Do not assign final severity, close high-risk lanes, or draft comments.",
       tools: ["Read", "Grep", "Glob"],
       model,
+      effort,
     },
   });
 }
@@ -63,7 +64,7 @@ export function createClaudeEngine(run: ExecFunction = exec): Engine {
       const prompt = buildInvestigationPrompt(
         ctx,
         skillDir,
-        `Delegate the breadth sweep to the breadth-worker (${cfg.breadthModel}); investigate and adjudicate on ${cfg.investigationModel}.`,
+        `Delegate the breadth sweep to the breadth-worker (${cfg.breadthModel}/${cfg.breadthEffort}); investigate and adjudicate on ${cfg.investigationModel}/${cfg.investigationEffort}.`,
       );
       const allowedTools = [
         "Task",
@@ -106,14 +107,16 @@ export function createClaudeEngine(run: ExecFunction = exec): Engine {
           "--allowedTools",
           allowedTools,
           "--agents",
-          breadthAgentJson(cfg.breadthModel),
+          breadthAgentJson(cfg.breadthModel, cfg.breadthEffort),
         ],
         {
           cwd: ctx.repoPath,
           timeoutMs: cfg.timeoutMs,
           env: {
             PEREGRINE_CLAUDE_BREADTH_MODEL: cfg.breadthModel,
+            PEREGRINE_CLAUDE_BREADTH_EFFORT: cfg.breadthEffort,
             PEREGRINE_CLAUDE_INVESTIGATION_MODEL: cfg.investigationModel,
+            PEREGRINE_CLAUDE_INVESTIGATION_EFFORT: cfg.investigationEffort,
           },
         },
       );
@@ -128,7 +131,7 @@ export function createClaudeEngine(run: ExecFunction = exec): Engine {
       const parsed = parseClaudePayload(result);
       return buildEngineResult({
         engine: "claude",
-        modelConfig: `${cfg.breadthModel}->${cfg.investigationModel}/${cfg.investigationEffort}`,
+        modelConfig: `${cfg.breadthModel}/${cfg.breadthEffort}->${cfg.investigationModel}/${cfg.investigationEffort}`,
         ctx,
         payload: parsed.payload,
         usage: parsed.usage,

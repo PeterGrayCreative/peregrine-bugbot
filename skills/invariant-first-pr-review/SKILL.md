@@ -19,6 +19,8 @@ When delegating the breadth sweep, use the [breadth worker packet](references/br
 
 Before selecting models or workers, read [host routing](references/host-routing.md). When reviewing a merged or historical PR, also read [historical review](references/historical-review.md).
 
+Read [invocation routing](references/invocation-routing.md) before choosing the breadth and investigation route. Explicit `peregrineRouting` values in the current user request override installed defaults. For Claude plugin installs, the following are optional configured candidates: breadth model `${user_config.claude_breadth_model}`, breadth effort `${user_config.claude_breadth_effort}`, investigation model `${user_config.claude_investigation_model}`, and investigation effort `${user_config.claude_investigation_effort}`. Treat an empty value or an unresolved token beginning with `${user_config.` as absent. Codex does not currently substitute these Claude plugin tokens and must ignore them.
+
 Use [the review manifest script](scripts/review-manifest.sh) when local Git objects, Bash 3.2+, Git, and `rg` are available and script execution is allowed. Otherwise inventory the merge-base diff with the host's native repository tools, record that deterministic routing was unavailable, and select core lanes conservatively from the contract and change graph. In that fallback, do not activate profile regex extensions or custom lanes that could not be structurally validated; profile inventories and scenarios may inform investigation only when their trusted base/external provenance is independently established.
 
 ## Core rules

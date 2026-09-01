@@ -1,6 +1,6 @@
 {
   "name": "peregrine",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Invariant-first pull-request review and repository review-profile generation.",
   "author": {
     "name": "Peter Gray",
@@ -20,7 +20,8 @@
     "websiteURL": "https://github.com/PeterGrayCreative/peregrine-bugbot",
     "defaultPrompt": [
       "Review this pull request with Peregrine.",
-      "Build a review profile for this repository."
+      "Build a review profile for this repository.",
+      "Review with custom breadth and investigation routing."
     ]
   }
 }

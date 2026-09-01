@@ -74,6 +74,7 @@ export interface ReviewContext {
 
 export interface ClaudeRunnerConfig {
   breadthModel: string;
+  breadthEffort: ClaudeEffort;
   investigationModel: string;
   investigationEffort: ClaudeEffort;
   skillName: string;

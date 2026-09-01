@@ -21,6 +21,8 @@ flowchart LR
     C --> B
     C --> I
     C --> H
+    P[Interactive routing override] --> B
+    P --> I
 ```
 
 ## Boundaries
@@ -30,6 +32,7 @@ flowchart LR
 3. **Runners:** Claude defines one bounded breadth worker inside its investigation session. Codex launches separate ephemeral breadth and investigation processes. Both get read-only repository access and strict JSON schemas.
 4. **Artifact:** `review` writes a normalized result. `post` parses the artifact again and refuses invalid status/finding/usage shapes.
 5. **Posting:** GitHub posting refreshes the PR head, applies the confidence threshold and comment cap, deduplicates root-cause fingerprints, validates inline locations against the diff, and falls back once to a body-only review on an inline `422`.
+6. **Configuration:** `peregrine.config.json` and provider-scoped environment variables control the automated Node runner. Interactive plugin calls accept only model and effort routing; Claude can persist those four values through plugin `userConfig`, while Codex receives them in the current request. Parent-session turns, budget, and timeout remain host-owned and are never presented as enforceable interactive plugin options.
 
 ## Status semantics
 

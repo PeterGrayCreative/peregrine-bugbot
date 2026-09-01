@@ -20,9 +20,15 @@ export function loadConfig(path = "peregrine.config.json"): PeregrineConfig {
   }
 
   const cfg = parsed as PeregrineConfig;
+  normalizeConfig(cfg);
   applyEnvOverrides(cfg);
   validateConfig(cfg, path);
   return cfg;
+}
+
+function normalizeConfig(cfg: PeregrineConfig): void {
+  const claude = cfg?.runners?.claude as Partial<PeregrineConfig["runners"]["claude"]> | undefined;
+  if (claude && claude.breadthEffort === undefined) claude.breadthEffort = "high";
 }
 
 function applyEnvOverrides(cfg: PeregrineConfig): void {
@@ -31,6 +37,9 @@ function applyEnvOverrides(cfg: PeregrineConfig): void {
   const overrides: Array<[string | undefined, () => void]> = [
     [process.env.PEREGRINE_CLAUDE_BREADTH_MODEL, () => {
       cfg.runners.claude.breadthModel = process.env.PEREGRINE_CLAUDE_BREADTH_MODEL!;
+    }],
+    [process.env.PEREGRINE_CLAUDE_BREADTH_EFFORT, () => {
+      cfg.runners.claude.breadthEffort = process.env.PEREGRINE_CLAUDE_BREADTH_EFFORT as ClaudeEffort;
     }],
     [process.env.PEREGRINE_CLAUDE_INVESTIGATION_MODEL, () => {
       cfg.runners.claude.investigationModel = process.env.PEREGRINE_CLAUDE_INVESTIGATION_MODEL!;
@@ -49,6 +58,24 @@ function applyEnvOverrides(cfg: PeregrineConfig): void {
     }],
     [process.env.PEREGRINE_CODEX_INVESTIGATION_EFFORT, () => {
       cfg.runners.codex.investigationEffort = process.env.PEREGRINE_CODEX_INVESTIGATION_EFFORT as CodexEffort;
+    }],
+    [process.env.PEREGRINE_CLAUDE_SKILL_NAME, () => {
+      cfg.runners.claude.skillName = process.env.PEREGRINE_CLAUDE_SKILL_NAME!;
+    }],
+    [process.env.PEREGRINE_CLAUDE_MAX_TURNS, () => {
+      cfg.runners.claude.maxTurns = Number(process.env.PEREGRINE_CLAUDE_MAX_TURNS);
+    }],
+    [process.env.PEREGRINE_CLAUDE_MAX_BUDGET_USD, () => {
+      cfg.runners.claude.maxBudgetUsd = Number(process.env.PEREGRINE_CLAUDE_MAX_BUDGET_USD);
+    }],
+    [process.env.PEREGRINE_CLAUDE_TIMEOUT_MS, () => {
+      cfg.runners.claude.timeoutMs = Number(process.env.PEREGRINE_CLAUDE_TIMEOUT_MS);
+    }],
+    [process.env.PEREGRINE_CODEX_SKILL_NAME, () => {
+      cfg.runners.codex.skillName = process.env.PEREGRINE_CODEX_SKILL_NAME!;
+    }],
+    [process.env.PEREGRINE_CODEX_TIMEOUT_MS, () => {
+      cfg.runners.codex.timeoutMs = Number(process.env.PEREGRINE_CODEX_TIMEOUT_MS);
     }],
   ];
   for (const [value, apply] of overrides) if (value) apply();
@@ -85,8 +112,10 @@ export function validateConfig(cfg: PeregrineConfig, path = "config"): void {
   for (const key of ["breadthModel", "investigationModel", "skillName"] as const) {
     string(claude[key], `runners.claude.${key}`);
   }
-  if (!CLAUDE_EFFORTS.includes(claude.investigationEffort as ClaudeEffort)) {
-    fail(`"runners.claude.investigationEffort" must be one of: ${CLAUDE_EFFORTS.join(", ")}`);
+  for (const key of ["breadthEffort", "investigationEffort"] as const) {
+    if (!CLAUDE_EFFORTS.includes(claude[key] as ClaudeEffort)) {
+      fail(`"runners.claude.${key}" must be one of: ${CLAUDE_EFFORTS.join(", ")}`);
+    }
   }
   for (const key of ["maxTurns", "maxBudgetUsd", "timeoutMs"] as const) {
     positive(claude[key], `runners.claude.${key}`);

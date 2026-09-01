@@ -111,6 +111,20 @@ claude plugin install peregrine@peregrine --scope project
 Use `local` in both commands for a private, repository-specific installation.
 Use the same scope for later plugin update or uninstall commands.
 
+Claude prompts for Peregrine's persistent model-routing options when the plugin
+is enabled. They can also be supplied non-interactively during installation:
+
+```bash
+claude plugin install peregrine@peregrine --scope user \
+  --config claude_breadth_model=claude-sonnet-5 \
+  --config claude_breadth_effort=high \
+  --config claude_investigation_model=claude-opus-5 \
+  --config claude_investigation_effort=high
+```
+
+These are installed defaults. A `peregrineRouting` block in an individual
+request takes precedence. See [configuration](configuration.md#interactive-plugin-routing).
+
 ## Install in both hosts
 
 The Codex and Claude installations are independent. To use Peregrine in both,
