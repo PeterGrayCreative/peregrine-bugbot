@@ -6,4 +6,4 @@ Local authentication is handled by Claude Code. CI passes `ANTHROPIC_API_KEY` on
 
 Claude plugins use `.claude-plugin/plugin.json` at the plugin root and keep skills in the root `skills/` directory. Plugin-installed skills may appear under a plugin namespace; shared skill text therefore does not hard-code an invocation namespace. See the [Claude plugin reference](https://code.claude.com/docs/en/plugins-reference).
 
-The marketplace in `.claude-plugin/marketplace.json` distributes this repository root. `npm run plugin:update:claude` refreshes the GitHub marketplace and plugin cache from `main`; releases bump the plugin manifest version so Claude recognizes the new cached release.
+The marketplace in `.claude-plugin/marketplace.json` distributes this repository root. `npm run plugin:update:claude` refreshes the GitHub marketplace and plugin cache from `main`; releases bump the plugin manifest version so Claude recognizes the new cached release. See [installing from GitHub](../installing-from-github.md) for direct installation, migration, and update commands.

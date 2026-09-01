@@ -49,42 +49,32 @@ npm run review -- \
 
 Both runners use read-only model tooling. Local CLI authentication is inherited from the installed provider CLI; CI uses only the selected provider secret.
 
-## Install and update the canonical plugin
+## Install from GitHub
 
-Both hosts install from `PeterGrayCreative/peregrine-bugbot@main`. The marketplace snapshot and installed plugin are refreshed together, so loose copied skill directories are not part of the normal update path.
+The GitHub repository is the canonical distribution source. A normal plugin
+installation does not require cloning this repository or copying skill folders.
 
-Install once:
-
-```bash
-npm run plugin:install:codex
-npm run plugin:install:claude
-```
-
-After changes are merged to `main`, update the selected host and start a new thread:
+Codex:
 
 ```bash
-npm run plugin:update:codex
-npm run plugin:update:claude
+codex plugin marketplace add PeterGrayCreative/peregrine-bugbot --ref main
+codex plugin add peregrine@peregrine
 ```
 
-Codex uses the repository marketplace at `.agents/plugins/marketplace.json`; Claude uses `.claude-plugin/marketplace.json`. For repository development, Claude can still load the checkout directly with `claude --plugin-dir '/path/to/peregrine-bugbot'`.
-
-Confirm the installed source and detect conflicting loose copies with:
+Claude Code:
 
 ```bash
-codex plugin list
-claude plugin list
-npm run doctor
+claude plugin marketplace add PeterGrayCreative/peregrine-bugbot@main
+claude plugin install peregrine@peregrine --scope user
 ```
 
-The copy installer exists only for hosts that cannot consume a Git-backed plugin marketplace:
+Restart the selected host or start a new task/session after installation. See
+the [complete GitHub installation guide](docs/installing-from-github.md) for
+updates, verification, copied-skill migration, uninstalling,
+development setup, and troubleshooting.
 
-```bash
-npm run doctor
-bash 'scripts/install-local.sh' --client claude --scope personal
-```
-
-Do not combine the plugin with loose copies of the same skills. Codex does not merge duplicate skill definitions; `npm run doctor` reports duplicate local copies that should be migrated deliberately.
+If the repository is already cloned, `npm run plugin:install:codex` and
+`npm run plugin:install:claude` execute the same `main`-tracking installs.
 
 ## GitHub Actions
 
@@ -121,5 +111,5 @@ src/github/      deduplication and guarded posting
 schemas/         provider output contracts
 eval/            runner-neutral benchmarks
 .github/         CI, automatic review, and mention review
-docs/            architecture, configuration, providers, security, release notes
+docs/            installation, architecture, configuration, providers, security, release notes
 ```
