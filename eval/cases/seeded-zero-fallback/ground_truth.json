@@ -1,0 +1,11 @@
+{
+  "bugs": [
+    {
+      "id": "zero-fallback-1",
+      "file": "src/discount.ts",
+      "startLine": 2,
+      "endLine": 2,
+      "description": "Using logical OR replaces an explicitly configured zero discount with the default discount."
+    }
+  ]
+}

@@ -121,12 +121,12 @@ the complete [configuration reference](docs/configuration.md).
 
 ## GitHub Actions
 
-The reusable workflow accepts `runner: claude|codex`. Supply only the matching secret. Pin consumers to a release tag or commit SHA after publishing a release:
+The reusable workflow accepts `runner: claude|codex`. Supply only the matching secret. Track canonical development from `main` as shown below, or replace `main` with an immutable commit SHA for reproducible CI:
 
 ```yaml
 jobs:
   review:
-    uses: PeterGrayCreative/peregrine-bugbot/.github/workflows/review.yml@v0.3.0
+    uses: PeterGrayCreative/peregrine-bugbot/.github/workflows/review.yml@main
     with:
       runner: codex
     secrets:

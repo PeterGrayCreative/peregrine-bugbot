@@ -2,7 +2,9 @@
 
 Compares model configs (and engines) on bug-finding value: recall, false
 positives, and cost per case. The winner is the knee of the cost-vs-recall
-curve, not the top of the leaderboard.
+curve, not the top of the leaderboard. Claude and Codex runs also report
+separate breadth/investigation duration and input-token means; missing provider
+cost telemetry is shown as `n/a`, never as free.
 
 ## Case library
 
@@ -27,6 +29,12 @@ Build cases three ways:
    positive. Keep at least ~25% of cases clean or you won't measure noise.
 
 Keep a handful of cases as a holdout you never tune prompts against.
+
+The checked-in seed suite covers nullability, ordinary zero/fallback logic,
+swallowed errors, stale frontend closures, and pagination overlap, with clean
+rename, nullish-default, and error-propagation controls. This is a regression
+floor, not a statistically meaningful production benchmark. Add historical
+cases and grow beyond 20 cases before making cost/recall routing decisions.
 
 ## Running
 

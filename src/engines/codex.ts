@@ -2,11 +2,15 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { buildBreadthPrompt, buildInvestigationPrompt } from "../core/prompt.js";
+import { parseBreadthResult } from "../core/breadth-result.js";
+import { prepareReviewManifest } from "../core/manifest.js";
 import { bundledSkillDir, schemaPath } from "../core/paths.js";
 import { buildEngineResult, parseReviewPayload } from "../core/review-result.js";
 import type { CodexEffort, EngineResult, ReviewContext, Usage } from "../types.js";
 import { type ExecResult, exec } from "../util/exec.js";
 import type { Engine } from "./engine.js";
+import { assertNoSecrets, safeDiagnostic } from "../security/secrets.js";
+import { providerEnvironment } from "../security/provider-env.js";
 
 type ExecFunction = typeof exec;
 
@@ -52,12 +56,18 @@ async function runStage(args: {
       "never",
       "-",
     ],
-    { cwd: args.ctx.repoPath, timeoutMs: args.timeoutMs, stdin: args.prompt },
+    {
+      cwd: args.ctx.repoPath,
+      timeoutMs: args.timeoutMs,
+      stdin: args.prompt,
+      env: providerEnvironment("codex"),
+      inheritEnv: false,
+    },
   );
   if (result.timedOut) throw new Error(`codex ${args.model} stage timed out after ${args.timeoutMs}ms`);
   if (result.code !== 0) {
     throw new Error(
-      `codex ${args.model} stage exited with code ${result.code}: ${(result.stderr || result.stdout).slice(0, 500)}`,
+      `codex ${args.model} stage exited with code ${result.code}: ${safeDiagnostic(result.stderr || result.stdout, 500)}`,
     );
   }
 
@@ -116,6 +126,7 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
       const cfg = ctx.config.runners.codex;
       const started = Date.now();
       const skillDir = bundledSkillDir(cfg.skillName);
+      const manifest = await prepareReviewManifest(ctx, cfg.skillName);
       const outDir = mkdtempSync(join(tmpdir(), "peregrine-codex-"));
       try {
         const breadthOutput = join(outDir, "breadth.json");
@@ -127,14 +138,16 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
           effort: cfg.breadthEffort,
           schema: schemaPath("breadth-result"),
           output: breadthOutput,
-          prompt: buildBreadthPrompt(ctx, skillDir),
+          prompt: buildBreadthPrompt(ctx, skillDir, manifest),
           timeoutMs: breadthTimeout,
         });
+        let breadthPayload;
         try {
-          JSON.parse(breadth.output);
+          breadthPayload = parseBreadthResult(JSON.parse(breadth.output), "codex breadth output");
         } catch {
-          throw new Error(`codex breadth stage returned invalid JSON: ${breadth.output.slice(0, 300)}`);
+          throw new Error("codex breadth stage returned invalid structured JSON");
         }
+        assertNoSecrets(breadthPayload, "codex breadth output");
 
         const elapsed = Date.now() - started;
         const remaining = cfg.timeoutMs - elapsed;
@@ -151,7 +164,8 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
             ctx,
             skillDir,
             `A separate ${cfg.breadthModel}/${cfg.breadthEffort} breadth pass produced the ledger below. Investigate and adjudicate on ${cfg.investigationModel}/${cfg.investigationEffort}.`,
-            breadth.output,
+            JSON.stringify(breadthPayload),
+            manifest,
           ),
           timeoutMs: remaining,
         });
@@ -160,7 +174,7 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
         try {
           rawPayload = JSON.parse(investigation.output);
         } catch {
-          throw new Error(`codex investigation returned invalid JSON: ${investigation.output.slice(0, 300)}`);
+          throw new Error("codex investigation returned invalid structured JSON");
         }
         const payload = parseReviewPayload(rawPayload, "codex review output");
         return buildEngineResult({
@@ -171,8 +185,9 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
           usage: combineUsage(breadth.usage, investigation.usage),
           durationMs: Date.now() - started,
           raw: {
+            manifest: manifest.available ? "runner-generated" : manifest.reason,
             breadth: {
-              output: JSON.parse(breadth.output),
+              output: breadthPayload,
               usage: breadth.usage,
               durationMs: breadth.durationMs,
             },

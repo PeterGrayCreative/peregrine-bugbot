@@ -1,0 +1,11 @@
+--- a/src/load.ts
++++ b/src/load.ts
+@@ -1,3 +1,7 @@
+ export async function load(store: Store): Promise<Data> {
+-  return store.read();
++  try {
++    return await store.read();
++  } catch (error) {
++    throw new Error("Unable to load settings", { cause: error });
++  }
+ }

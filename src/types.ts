@@ -11,6 +11,9 @@ export const FINDING_CATEGORIES = [
   "concurrency",
   "test-quality",
   "logic",
+  "error-handling",
+  "frontend-state",
+  "boundaries",
   "other",
 ] as const;
 
@@ -28,11 +31,30 @@ export interface Finding {
   severity: Severity;
   disposition: FindingDisposition;
   category: FindingCategory;
+  invariant: string;
   title: string;
   explanation: string;
   failurePath: string;
   confidence: number;
   fingerprint?: string;
+}
+
+export interface BreadthCandidate {
+  id: string;
+  lane: string;
+  file: string;
+  line: number;
+  invariant: string;
+  counterexample: string;
+  evidenceNeeded: string;
+}
+
+export interface BreadthResult {
+  model: string;
+  candidates: BreadthCandidate[];
+  clear: Array<{ lane: string; file: string; reason: string }>;
+  escalations: Array<{ target: string; reason: string }>;
+  coverage: { coveredFiles: string[]; unavailable: string[] };
 }
 
 export interface ReviewPayload {
@@ -68,6 +90,7 @@ export interface ReviewContext {
   headRef?: string;
   prTitle?: string;
   prBody?: string;
+  profilePath?: string;
   deep?: boolean;
   config: PeregrineConfig;
 }

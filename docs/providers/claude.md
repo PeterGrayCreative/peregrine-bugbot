@@ -1,6 +1,6 @@
 # Claude provider
 
-The Claude runner loads this repository through `--plugin-dir`, supplies the canonical review skill, and defines a read-only breadth worker using the configured fast model. The investigation session runs on the configured strong model and must return the shared review schema.
+The Claude runner loads this repository through `--plugin-dir` and launches two isolated, read-only `claude -p` processes. Both are limited to `Read`, `Grep`, and `Glob`; repository command execution is not exposed. The configured breadth model receives the compact breadth packet and strict breadth schema; the configured investigation model receives the validated ledger, runner-generated manifest, embedded diff, canonical skill, and strict finding schema. Turns and budget are partitioned between the stages so cost and duration remain measurable per stage.
 
 Local authentication is handled by Claude Code. CI passes `ANTHROPIC_API_KEY` only to the Claude analysis step. The pinned workflow CLI version is recorded in `.github/actions/setup-peregrine/action.yml`.
 

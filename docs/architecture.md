@@ -29,10 +29,12 @@ flowchart LR
 
 1. **Skills:** `skills/` is the only editable source. `.claude-plugin/` and `.codex-plugin/` package the same directories; installed copies are release artifacts, not sources.
 2. **Core:** filtering, prompts, package paths, strict model-output parsing, and normalized `EngineResult` construction are provider-neutral.
-3. **Runners:** Claude defines one bounded breadth worker inside its investigation session. Codex launches separate ephemeral breadth and investigation processes. Both get read-only repository access and strict JSON schemas.
-4. **Artifact:** `review` writes a normalized result. `post` parses the artifact again and refuses invalid status/finding/usage shapes.
-5. **Posting:** GitHub posting refreshes the PR head, applies the confidence threshold and comment cap, deduplicates root-cause fingerprints, validates inline locations against the diff, and falls back once to a body-only review on an inline `422`.
-6. **Configuration:** `peregrine.config.json` and provider-scoped environment variables control the automated Node runner. Interactive plugin calls accept only model and effort routing; Claude can persist those four values through plugin `userConfig`, while Codex receives them in the current request. Parent-session turns, budget, and timeout remain host-owned and are never presented as enforceable interactive plugin options.
+3. **Deterministic routing:** the Node runner resolves the trusted profile, executes the bundled review-manifest code before inference, and embeds its output and the filtered diff in both stages. Profile order remains explicit path, merge-base-safe repository profile, then external per-repository profile. Manifest structure is trusted, while repository-derived paths and metadata remain untrusted data. Models do not spend turns rerunning the manifest or reconstructing the changed-file list.
+4. **Runners:** Claude and Codex each launch separate breadth and investigation processes with read-only repository access and strict JSON schemas. Per-stage usage and duration are retained as telemetry.
+5. **Outbound trust gate:** structured output is reparsed, bounded, checked for credential patterns, and only then persisted or passed to the separate posting process.
+6. **Artifact:** `review` writes a normalized result. `post` parses the artifact again and refuses invalid status/finding/usage shapes.
+7. **Posting:** GitHub posting refreshes the PR head, applies the confidence threshold and comment cap, deduplicates root-cause fingerprints, validates inline locations against the diff, and falls back once to a body-only review on an inline `422`.
+8. **Configuration:** `peregrine.config.json` and provider-scoped environment variables control the automated Node runner. Interactive plugin calls accept only model and effort routing; Claude can persist those four values through plugin `userConfig`, while Codex receives them in the current request. Parent-session turns, budget, and timeout remain host-owned and are never presented as enforceable interactive plugin options.
 
 ## Status semantics
 

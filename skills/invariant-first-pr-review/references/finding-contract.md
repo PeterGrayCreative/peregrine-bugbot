@@ -35,6 +35,8 @@ Do not publish low-confidence speculation as a finding. Put it under questions o
 For automated runners using the strict Peregrine JSON contract, map the prose
 contract without changing its meaning:
 
+- invariant: a stable lowercase hyphen-delimited root-cause slug, such as
+  `canonical-account-before-membership`; keep it stable across title rewrites;
 - severity: `high`, `medium`, or `low`;
 - disposition: `fix-in-pr` or `follow-up` (rejected candidates are not emitted);
 - confidence: Confirmed `0.95–1.0`, High `0.80–0.94`, Medium `0.60–0.79`.

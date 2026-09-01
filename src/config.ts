@@ -120,6 +120,7 @@ export function validateConfig(cfg: PeregrineConfig, path = "config"): void {
   for (const key of ["maxTurns", "maxBudgetUsd", "timeoutMs"] as const) {
     positive(claude[key], `runners.claude.${key}`);
   }
+  if (!Number.isInteger(claude.maxTurns)) fail(`"runners.claude.maxTurns" must be an integer`);
 
   const codex = object(cfg.runners.codex, "runners.codex");
   for (const key of ["breadthModel", "investigationModel", "skillName"] as const) {

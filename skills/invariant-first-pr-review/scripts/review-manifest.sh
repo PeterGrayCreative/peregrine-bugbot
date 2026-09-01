@@ -244,7 +244,7 @@ if [[ -n "$profile_abs" ]]; then
       profile_source="ignored; absent at merge base"
     fi
 
-    if ! git --literal-pathspecs diff --quiet "$merge_base" "$head_commit" -- "$profile_repo_rel" "$profile_lanes_rel"; then
+    if ! git --literal-pathspecs diff --no-ext-diff --quiet "$merge_base" "$head_commit" -- "$profile_repo_rel" "$profile_lanes_rel"; then
       profile_changed_at_head=1
     fi
   fi
@@ -397,7 +397,7 @@ fi
 changed_files=()
 while IFS= read -r -d '' changed_path; do
   changed_files[${#changed_files[@]}]="$changed_path"
-done < <(git diff --name-only -z "$merge_base" "$head_commit")
+done < <(git diff --no-ext-diff --name-only -z "$merge_base" "$head_commit")
 changed_count=${#changed_files[@]}
 
 echo "Invariant-first review manifest"
@@ -414,21 +414,21 @@ fi
 echo
 echo "Changed files"
 if [[ "$changed_count" -gt 0 ]]; then
-  git diff --name-status "$merge_base" "$head_commit"
+  git diff --no-ext-diff --name-status "$merge_base" "$head_commit"
 else
   echo "(none)"
 fi
 
 echo
 echo "Diff summary"
-git diff --stat "$merge_base" "$head_commit"
+git diff --no-ext-diff --stat "$merge_base" "$head_commit"
 
 diff_cache="${work_dir}/diffs"
 mkdir -p "$diff_cache"
 index=0
 while [[ "$index" -lt "$changed_count" ]]; do
   changed_path="${changed_files[$index]}"
-  git --literal-pathspecs diff --unified=0 "$merge_base" "$head_commit" -- "$changed_path" \
+  git --literal-pathspecs diff --no-ext-diff --unified=0 "$merge_base" "$head_commit" -- "$changed_path" \
     > "${diff_cache}/${index}.diff" 2>/dev/null || true
   index=$((index + 1))
 done

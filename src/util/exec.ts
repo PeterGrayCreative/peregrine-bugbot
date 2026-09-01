@@ -11,12 +11,18 @@ export interface ExecResult {
 export function exec(
   cmd: string,
   args: string[],
-  opts: { cwd?: string; env?: Record<string, string>; timeoutMs?: number; stdin?: string } = {},
+  opts: {
+    cwd?: string;
+    env?: Record<string, string>;
+    inheritEnv?: boolean;
+    timeoutMs?: number;
+    stdin?: string;
+  } = {},
 ): Promise<ExecResult> {
   return new Promise((res) => {
     const child = spawn(cmd, args, {
       cwd: opts.cwd,
-      env: { ...process.env, ...opts.env },
+      env: opts.inheritEnv === false ? opts.env : { ...process.env, ...opts.env },
       stdio: [opts.stdin === undefined ? "ignore" : "pipe", "pipe", "pipe"],
     });
     let stdout = "";

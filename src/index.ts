@@ -58,6 +58,7 @@ async function cmdReview(): Promise<void> {
       headRef: arg("--head"),
       prTitle: process.env.PR_TITLE,
       prBody: process.env.PR_BODY,
+      profilePath: arg("--profile"),
       deep: has("--deep"),
       config,
     };
@@ -74,16 +75,7 @@ async function cmdReview(): Promise<void> {
       console.log("[peregrine] skipped result was not posted");
       return;
     }
-    const token = process.env.GITHUB_TOKEN;
-    const target = {
-      owner: process.env.PR_OWNER ?? "",
-      repo: process.env.PR_REPO ?? "",
-      prNumber: Number(process.env.PR_NUMBER ?? 0),
-      headSha: process.env.PR_HEAD_SHA ?? "",
-    };
-    if (!token || !target.owner || !target.repo || !target.prNumber || !target.headSha) {
-      throw new Error("--post requires GITHUB_TOKEN, PR_OWNER, PR_REPO, PR_NUMBER, PR_HEAD_SHA");
-    }
+    const { token, target } = postTargetFromEnv("--post");
     const post = await postReview(result, target, config, token, filtered.text);
     console.log(
       post.superseded
@@ -106,16 +98,7 @@ async function cmdPost(): Promise<void> {
     console.log("[peregrine] skipped result was not posted");
     return;
   }
-  const token = process.env.GITHUB_TOKEN;
-  const target = {
-    owner: process.env.PR_OWNER ?? "",
-    repo: process.env.PR_REPO ?? "",
-    prNumber: Number(process.env.PR_NUMBER ?? 0),
-    headSha: process.env.PR_HEAD_SHA ?? "",
-  };
-  if (!token || !target.owner || !target.repo || !target.prNumber || !target.headSha) {
-    throw new Error("post requires GITHUB_TOKEN, PR_OWNER, PR_REPO, PR_NUMBER, PR_HEAD_SHA");
-  }
+  const { token, target } = postTargetFromEnv("post");
   const filtered = filterDiff(readFileSync(diffPath, "utf8"), config.filters.ignorePaths);
   const posted = await postReview(result, target, config, token, filtered.text);
   console.log(
@@ -123,6 +106,23 @@ async function cmdPost(): Promise<void> {
       ? "[peregrine] result superseded by a newer PR head; nothing posted"
       : `[peregrine] posted ${posted.posted}, skipped ${posted.skipped}${posted.bodyFallback ? " (body fallback)" : ""}`,
   );
+}
+
+function postTargetFromEnv(command: string): {
+  token: string;
+  target: { owner: string; repo: string; prNumber: number; headSha: string };
+} {
+  const token = process.env.GITHUB_TOKEN ?? "";
+  const target = {
+    owner: process.env.PR_OWNER ?? "",
+    repo: process.env.PR_REPO ?? "",
+    prNumber: Number(process.env.PR_NUMBER ?? 0),
+    headSha: process.env.PR_HEAD_SHA ?? "",
+  };
+  if (!token || !target.owner || !target.repo || !target.prNumber || !target.headSha) {
+    throw new Error(`${command} requires GITHUB_TOKEN, PR_OWNER, PR_REPO, PR_NUMBER, PR_HEAD_SHA`);
+  }
+  return { token, target };
 }
 
 function writeResult(path: string, result: EngineResult): void {

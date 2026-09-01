@@ -1,0 +1,12 @@
+--- a/src/save-settings.ts
++++ b/src/save-settings.ts
+@@ -4,5 +4,9 @@ export async function saveSettings(store: Store, settings: Settings): Promise<boolean> {
+-  await store.write(settings);
+-  return true;
++  try {
++    await store.write(settings);
++    return true;
++  } catch {
++    return true; // BUG: persistence failure becomes success
++  }
+ }

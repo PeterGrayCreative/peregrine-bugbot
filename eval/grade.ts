@@ -18,7 +18,8 @@ import type { Finding, GradedRun, GroundTruth, RunRecord } from "../src/types.js
  *    useful for CI smoke tests and the mock engine, but too brittle to
  *    compare real models with.
  *
- * Unmatched findings count as false positives (all findings do, on clean cases).
+ * Unmatched fix-in-pr findings count as false positives. Follow-up findings are
+ * retained for analysis but are not scored as incorrect PR demands.
  */
 type Judge = "exact" | "claude" | "codex";
 
@@ -64,8 +65,9 @@ export async function gradeRuns(runsDir?: string): Promise<void> {
       ...run,
       matches,
       falsePositiveIndexes: run.result.findings
-        .map((_, i) => i)
-        .filter((i) => !matchedFindingIdx.has(i)),
+        .map((finding, i) => ({ finding, i }))
+        .filter(({ finding, i }) => finding.disposition === "fix-in-pr" && !matchedFindingIdx.has(i))
+        .map(({ i }) => i),
     };
     writeFileSync(join(dir, file.replace(/\.json$/, ".graded.json")), JSON.stringify(graded, null, 2));
     const found = Object.values(matches).filter((m) => m !== null).length;

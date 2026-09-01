@@ -133,6 +133,10 @@ test("config validation rejects unknown runners, placeholders, and invalid effor
   const effort = config();
   effort.runners.claude.breadthEffort = "impossible" as never;
   assert.throws(() => validateConfig(effort), /breadthEffort.*low, medium, high/);
+
+  const turns = config();
+  turns.runners.claude.maxTurns = 2.5;
+  assert.throws(() => validateConfig(turns), /maxTurns.*integer/);
 });
 
 test("provider-scoped environment overrides cannot change the other provider", () => {

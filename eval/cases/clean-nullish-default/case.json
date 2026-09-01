@@ -1,0 +1,7 @@
+{
+  "name": "clean-nullish-default",
+  "kind": "clean",
+  "fixtureDir": "fixture",
+  "diffFile": "diff.patch",
+  "notes": "A correct change preserves zero while defaulting only absent values."
+}

@@ -1,0 +1,7 @@
+{
+  "name": "seeded-zero-fallback",
+  "kind": "seeded",
+  "fixtureDir": "fixture",
+  "diffFile": "diff.patch",
+  "notes": "An ordinary logic regression treats a valid zero value as absent."
+}

@@ -87,7 +87,7 @@ enforce those values from a skill prompt.
 
 ## Limits and filters
 
-- `maxEscalations`: maximum candidates the investigation prompt may promote.
+- `maxEscalations`: target number of candidates for full call-graph tracing. Explicit escalations and changed-file coverage are never silently discarded when this target is reached; `--deep` doubles the target.
 - `maxDiffLines`: filtered-diff gate; `--deep` deliberately bypasses it.
 - `minConfidenceToPost`: findings below this value remain in the artifact but are not posted.
 - `maxCommentsPerPr`: posting cap after confidence and dedupe filtering.
@@ -101,10 +101,14 @@ are eligible for GitHub comments.
 
 ```text
 npm run review -- --runner <claude|codex|mock> --repo <path> --diff <path>
-  [--base <ref>] [--head <ref>] [--deep] [--output <path>] [--post]
+  [--base <ref>] [--head <ref>] [--profile <path>] [--deep] [--output <path>] [--post]
 
 npm run post -- --result <path> --diff <path> [--config <path>]
 npm run doctor
 ```
 
 `--post` remains available for local compatibility. CI uses separate `review` and `post` processes so provider and GitHub write credentials do not share a process.
+
+Profile discovery follows the skill trust order: an explicit `--profile`, then
+the repository's merge-base-safe `.peregrine/profile.md`, then the external
+`${PEREGRINE_HOME:-$HOME/.peregrine}/profiles/<repository-key>/profile.md`.

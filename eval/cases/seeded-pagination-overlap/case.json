@@ -1,0 +1,7 @@
+{
+  "name": "seeded-pagination-overlap",
+  "kind": "seeded",
+  "fixtureDir": "fixture",
+  "diffFile": "diff.patch",
+  "notes": "An offset calculation overlaps consecutive pages."
+}

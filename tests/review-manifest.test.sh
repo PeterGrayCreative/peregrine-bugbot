@@ -59,6 +59,22 @@ runtime_section() {
   sed -n '/^Runtime configuration, containers, and harnesses/,/^Response, error, transport, and observability contracts/p'
 }
 
+logic_section() {
+  sed -n '/^Logic Correctness/,/^Error Handling and Recovery/p'
+}
+
+error_section() {
+  sed -n '/^Error Handling and Recovery/,/^Frontend State and Effects/p'
+}
+
+frontend_section() {
+  sed -n '/^Frontend State and Effects/,/^Boundaries, Pagination, and Ordering/p'
+}
+
+boundary_section() {
+  sed -n '/^Boundaries, Pagination, and Ordering/,/^Large changed files at head/p'
+}
+
 new_repo 'word-boundaries'
 git -C "$test_repo" switch -q -c feature
 mkdir -p "${test_repo}/src"
@@ -80,6 +96,50 @@ output="$(cd "$test_repo" && /bin/bash "$manifest" 'main' 'HEAD')"
 section="$(printf '%s\n' "$output" | runtime_section)"
 assert_contains "$section" 'src/export.ts' 'an exact PORT token activates the runtime lane'
 pass 'an exact PORT token activates the runtime lane'
+
+new_repo 'general-correctness-lanes'
+git -C "$test_repo" switch -q -c feature
+mkdir -p "${test_repo}/src"
+printf '%s\n' 'export const fallback = (value: number | undefined) => value || 10;' > "${test_repo}/src/math.ts"
+git -C "$test_repo" add 'src/math.ts'
+git -C "$test_repo" commit -q -m 'add ordinary logic change'
+output="$(cd "$test_repo" && /bin/bash "$manifest" 'main' 'HEAD')"
+section="$(printf '%s\n' "$output" | logic_section)"
+assert_contains "$section" 'src/math.ts' 'ordinary code activates the logic-correctness lane'
+section="$(printf '%s\n' "$output" | error_section)"
+assert_contains "$section" '(none detected)' 'ordinary code does not activate error handling by path alone'
+pass 'ordinary logic has a lane without overactivating error handling'
+
+printf '%s\n' \
+  'export async function load(read: () => Promise<string>): Promise<string> {' \
+  '  try { return await read(); } catch { return ""; }' \
+  '}' \
+  > "${test_repo}/src/load.ts"
+git -C "$test_repo" add 'src/load.ts'
+git -C "$test_repo" commit -q -m 'add swallowed error'
+output="$(cd "$test_repo" && /bin/bash "$manifest" 'main' 'HEAD')"
+section="$(printf '%s\n' "$output" | error_section)"
+assert_contains "$section" 'src/load.ts' 'catch changes activate the error-handling lane'
+pass 'error handling activates from changed content'
+
+printf '%s\n' \
+  'export function Profile() {' \
+  '  const [name] = useState("");' \
+  '  useEffect(() => save(name), []);' \
+  '}' \
+  > "${test_repo}/src/Profile.tsx"
+printf '%s\n' \
+  'export const page = <T>(items: T[], offset: number, limit: number) =>' \
+  '  items.slice(offset, offset + limit);' \
+  > "${test_repo}/src/pagination.ts"
+git -C "$test_repo" add 'src/Profile.tsx' 'src/pagination.ts'
+git -C "$test_repo" commit -q -m 'add frontend and pagination boundaries'
+output="$(cd "$test_repo" && /bin/bash "$manifest" 'main' 'HEAD')"
+section="$(printf '%s\n' "$output" | frontend_section)"
+assert_contains "$section" 'src/Profile.tsx' 'hook changes activate the frontend-state lane'
+section="$(printf '%s\n' "$output" | boundary_section)"
+assert_contains "$section" 'src/pagination.ts' 'pagination changes activate the boundaries lane'
+pass 'frontend and pagination changes activate their dedicated lanes'
 
 external_profile_dir="${sandbox}/external-profile"
 mkdir -p "${external_profile_dir}/lanes"

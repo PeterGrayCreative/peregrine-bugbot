@@ -1,6 +1,6 @@
 {
   "name": "peregrine",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Invariant-first pull-request review and repository review-profile generation.",
   "author": {
     "name": "Peter Gray",

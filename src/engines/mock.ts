@@ -36,6 +36,7 @@ export const mockEngine: Engine = {
             severity: "high",
             disposition: "fix-in-pr",
             category: "logic",
+            invariant: "seeded-mock-marker",
             title: `Suspicious change in ${currentFile}`,
             explanation: line.replace(/^\+\s*/, ""),
             failurePath: "Marker-based mock detection.",

@@ -26,8 +26,17 @@
               "concurrency",
               "test-quality",
               "logic",
+              "error-handling",
+              "frontend-state",
+              "boundaries",
               "other"
             ]
+          },
+          "invariant": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "minLength": 3,
+            "maxLength": 120
           },
           "title": { "type": "string", "minLength": 1, "maxLength": 300 },
           "explanation": { "type": "string", "minLength": 1, "maxLength": 8000 },
@@ -41,6 +50,7 @@
           "severity",
           "disposition",
           "category",
+          "invariant",
           "title",
           "explanation",
           "failurePath",

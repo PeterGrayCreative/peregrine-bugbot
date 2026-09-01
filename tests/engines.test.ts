@@ -6,6 +6,7 @@ import { createClaudeEngine } from "../src/engines/claude.js";
 import { createCodexEngine } from "../src/engines/codex.js";
 import type { PeregrineConfig, ReviewContext } from "../src/types.js";
 import type { exec } from "../src/util/exec.js";
+import { nonSensitiveEnvironment, providerEnvironment } from "../src/security/provider-env.js";
 
 function config(): PeregrineConfig {
   return JSON.parse(readFileSync(resolve("peregrine.config.json"), "utf8")) as PeregrineConfig;
@@ -14,7 +15,7 @@ function config(): PeregrineConfig {
 function context(): ReviewContext {
   return {
     repoPath: resolve("."),
-    diffPath: resolve("eval/cases/seeded-auth-bypass/pr.diff"),
+    diffPath: resolve("eval/cases/seeded-null-deref/diff.patch"),
     diffText: "diff --git a/src/app.ts b/src/app.ts\n+unsafe\n",
     baseRef: "base-sha",
     headRef: "head-sha",
@@ -29,21 +30,71 @@ const finding = {
   severity: "high",
   disposition: "fix-in-pr",
   category: "authorization",
+  invariant: "ownership-before-record-read",
   title: "Missing ownership check",
   explanation: "The changed lookup does not scope by owner.",
   failurePath: "Another user supplies the identifier and reads the record.",
   confidence: 0.95,
 };
 
-test("Claude runner loads the bundled plugin and validates structured output", async () => {
-  let command = "";
-  let receivedArgs: string[] = [];
+test("provider subprocess environments exclude unrelated credentials", () => {
+  const previousGitHub = process.env.GITHUB_TOKEN;
+  const previousAnthropic = process.env.ANTHROPIC_API_KEY;
+  const previousOpenAI = process.env.OPENAI_API_KEY;
+  process.env.GITHUB_TOKEN = "github-secret";
+  process.env.ANTHROPIC_API_KEY = "anthropic-secret";
+  process.env.OPENAI_API_KEY = "openai-secret";
+  try {
+    const claude = providerEnvironment("claude");
+    const codex = providerEnvironment("codex");
+    const helper = nonSensitiveEnvironment();
+    assert.equal(claude.GITHUB_TOKEN, undefined);
+    assert.equal(claude.OPENAI_API_KEY, undefined);
+    assert.equal(claude.ANTHROPIC_API_KEY, "anthropic-secret");
+    assert.equal(codex.GITHUB_TOKEN, undefined);
+    assert.equal(codex.ANTHROPIC_API_KEY, undefined);
+    assert.equal(codex.OPENAI_API_KEY, "openai-secret");
+    assert.equal(helper.GITHUB_TOKEN, undefined);
+    assert.equal(helper.ANTHROPIC_API_KEY, undefined);
+    assert.equal(helper.OPENAI_API_KEY, undefined);
+  } finally {
+    restoreEnv("GITHUB_TOKEN", previousGitHub);
+    restoreEnv("ANTHROPIC_API_KEY", previousAnthropic);
+    restoreEnv("OPENAI_API_KEY", previousOpenAI);
+  }
+});
+
+function restoreEnv(name: string, value: string | undefined): void {
+  if (value === undefined) delete process.env[name];
+  else process.env[name] = value;
+}
+
+const breadth = {
+  model: "breadth-model",
+  candidates: [
+    {
+      id: "auth-1",
+      file: "src/app.ts",
+      line: 1,
+      lane: "authorization",
+      invariant: "Records remain scoped to the verified owner.",
+      counterexample: "another owner",
+      evidenceNeeded: "lookup predicate",
+    },
+  ],
+  clear: [],
+  escalations: [{ target: "auth-1", reason: "authorization boundary" }],
+  coverage: { coveredFiles: ["src/app.ts"], unavailable: [] },
+};
+
+test("Claude runner performs isolated, measurable breadth and investigation stages", async () => {
+  const calls: Array<{ command: string; args: string[] }> = [];
   const fake: typeof exec = async (cmd, args) => {
-    command = cmd;
-    receivedArgs = args;
+    calls.push({ command: cmd, args });
+    const schema = JSON.parse(args[args.indexOf("--json-schema") + 1]!) as { title?: string };
     return {
       stdout: JSON.stringify({
-        structured_output: { findings: [finding] },
+        structured_output: schema.title === "Peregrine Breadth Sweep" ? breadth : { findings: [finding] },
         total_cost_usd: 0.01,
         usage: { input_tokens: 10, output_tokens: 20 },
       }),
@@ -53,29 +104,20 @@ test("Claude runner loads the bundled plugin and validates structured output", a
     };
   };
   const reviewed = await createClaudeEngine(fake).review(context());
-  assert.equal(command, "claude");
-  assert.ok(receivedArgs.includes("--plugin-dir"));
-  assert.ok(receivedArgs.includes("--json-schema"));
-  const schema = JSON.parse(receivedArgs[receivedArgs.indexOf("--json-schema") + 1]!) as Record<string, unknown>;
+  assert.equal(calls.length, 2);
+  assert.ok(calls.every((call) => call.command === "claude"));
+  assert.ok(calls.every((call) => call.args.includes("--plugin-dir")));
+  assert.ok(calls.every((call) => call.args.includes("--json-schema")));
+  assert.ok(calls.every((call) => !call.args.includes("--agents")));
+  assert.equal(calls[0]?.args[calls[0].args.indexOf("--model") + 1], context().config.runners.claude.breadthModel);
+  assert.equal(calls[1]?.args[calls[1].args.indexOf("--model") + 1], context().config.runners.claude.investigationModel);
+  const schema = JSON.parse(calls[0]!.args[calls[0]!.args.indexOf("--json-schema") + 1]!) as Record<string, unknown>;
   assert.equal(schema.$schema, undefined);
-  assert.ok(receivedArgs.includes("--agents"));
-  const agents = JSON.parse(receivedArgs[receivedArgs.indexOf("--agents") + 1]!) as {
-    "breadth-worker": { model: string; effort: string };
-  };
-  assert.deepEqual(
-    {
-      model: agents["breadth-worker"].model,
-      effort: agents["breadth-worker"].effort,
-    },
-    {
-      model: context().config.runners.claude.breadthModel,
-      effort: context().config.runners.claude.breadthEffort,
-    },
-  );
-  assert.equal(receivedArgs.includes("--bare"), false);
   assert.equal(reviewed.engine, "claude");
   assert.equal(reviewed.findings.length, 1);
   assert.equal(reviewed.reviewedHeadRef, "head-sha");
+  assert.equal(reviewed.usage.inputTokens, 20);
+  assert.equal(reviewed.usage.costUsd, 0.02);
 });
 
 test("Codex runner performs isolated breadth and investigation stages", async () => {
@@ -90,16 +132,8 @@ test("Codex runner performs isolated breadth and investigation stages", async ()
       output,
       schema.endsWith("breadth-result.schema.json")
         ? JSON.stringify({
-            candidates: [
-              {
-                file: "src/app.ts",
-                lane: "authorization",
-                risk: "ownership",
-                counterexample: "other owner",
-                evidenceNeeded: "lookup predicate",
-              },
-            ],
-            clearFiles: [],
+            ...breadth,
+            model: "gpt-5.6-luna",
           })
         : JSON.stringify({ findings: [finding] }),
     );
@@ -133,6 +167,25 @@ test("provider process failures are surfaced instead of becoming clean reviews",
   });
   await assert.rejects(() => createClaudeEngine(fake).review(context()), /authentication failed/);
   await assert.rejects(() => createCodexEngine(fake).review(context()), /authentication failed/);
+});
+
+test("provider failures never echo credential-like diagnostics", async () => {
+  const secret = "token=abc123456789SECRET";
+  const fake: typeof exec = async () => ({
+    stdout: "",
+    stderr: secret,
+    code: 1,
+    timedOut: false,
+  });
+  await assert.rejects(
+    () => createCodexEngine(fake).review(context()),
+    (error: unknown) => {
+      assert.ok(error instanceof Error);
+      assert.doesNotMatch(error.message, /abc123456789SECRET/);
+      assert.match(error.message, /diagnostic omitted/);
+      return true;
+    },
+  );
 });
 
 test("Claude provider JSON errors expose their actionable message", async () => {

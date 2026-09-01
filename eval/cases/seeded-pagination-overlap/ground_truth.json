@@ -1,0 +1,11 @@
+{
+  "bugs": [
+    {
+      "id": "pagination-overlap-1",
+      "file": "src/paginate.ts",
+      "startLine": 2,
+      "endLine": 3,
+      "description": "The offset uses pageSize - 1, so every page after the first repeats one item from the previous page."
+    }
+  ]
+}

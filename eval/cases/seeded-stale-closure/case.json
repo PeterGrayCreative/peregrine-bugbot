@@ -1,0 +1,7 @@
+{
+  "name": "seeded-stale-closure",
+  "kind": "seeded",
+  "fixtureDir": "fixture",
+  "diffFile": "diff.patch",
+  "notes": "A callback memoization change captures the initial account and saves to the wrong account after navigation."
+}

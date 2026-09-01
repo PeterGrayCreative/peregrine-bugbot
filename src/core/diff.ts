@@ -11,7 +11,9 @@ export function filterDiff(diff: string, ignorePatterns: string[]): FilteredDiff
 
   for (const part of parts) {
     if (!part) continue;
-    const file = part.match(/^diff --git a\/(.+) b\/(.+)$/m)?.[2] ?? part.match(/^\+\+\+ b\/(.+)$/m)?.[1];
+    const newPath = part.match(/^\+\+\+ b\/(.+)$/m)?.[1];
+    const oldPath = part.match(/^--- a\/(.+)$/m)?.[1];
+    const file = newPath ?? oldPath;
     if (file && ignorePatterns.some((pattern) => globMatches(pattern, file))) {
       ignoredFiles.push(file);
       continue;

@@ -8,6 +8,9 @@ import {
   type Usage,
 } from "../types.js";
 import { claudeSchemaJson } from "./paths.js";
+import { assertNoSecrets } from "../security/secrets.js";
+
+const MAX_RAW_SERIALIZED_CHARS = 200_000;
 
 const FINDING_KEYS = new Set([
   "file",
@@ -16,6 +19,7 @@ const FINDING_KEYS = new Set([
   "severity",
   "disposition",
   "category",
+  "invariant",
   "title",
   "explanation",
   "failurePath",
@@ -48,9 +52,11 @@ export function parseReviewPayload(value: unknown, source = "review output"): Re
   const root = plainObject(value, source);
   assertOnlyKeys(root, new Set(["findings"]), source);
   if (!Array.isArray(root.findings)) throw new Error(`${source}: "findings" must be an array`);
-  return {
+  const payload = {
     findings: root.findings.map((finding, index) => parseFinding(finding, `${source}.findings[${index}]`)),
   };
+  assertNoSecrets(payload, `${source}.findings`);
+  return payload;
 }
 
 /** Revalidate a serialized review artifact before it crosses into posting. */
@@ -65,6 +71,7 @@ export function parseEngineResult(value: unknown, source = "review result"): Eng
   }
   const modelConfig = requiredString(root.modelConfig, `${source}.modelConfig`, 1000);
   const payload = parseReviewPayload({ findings: root.findings }, source);
+  assertNoSecrets(payload, `${source}.findings`);
   if (root.status === "clean" && payload.findings.length !== 0) {
     throw new Error(`${source}: clean results cannot contain findings`);
   }
@@ -88,6 +95,14 @@ export function parseEngineResult(value: unknown, source = "review result"): Eng
   const reviewedBaseRef = optionalString(root.reviewedBaseRef, `${source}.reviewedBaseRef`, 1024);
   const reviewedHeadRef = optionalString(root.reviewedHeadRef, `${source}.reviewedHeadRef`, 1024);
 
+  if (root.raw !== undefined) {
+    const serializedRaw = JSON.stringify(root.raw);
+    if (serializedRaw.length > MAX_RAW_SERIALIZED_CHARS) {
+      throw new Error(`${source}.raw exceeds ${MAX_RAW_SERIALIZED_CHARS} serialized characters`);
+    }
+    assertNoSecrets(root.raw, `${source}.raw`);
+  }
+
   return {
     engine: root.engine as RunnerName,
     status: root.status,
@@ -110,6 +125,14 @@ export function buildEngineResult(args: {
   durationMs: number;
   raw?: unknown;
 }): EngineResult {
+  assertNoSecrets(args.payload, `${args.engine} review output`);
+  if (args.raw !== undefined) {
+    const serializedRaw = JSON.stringify(args.raw);
+    if (serializedRaw.length > MAX_RAW_SERIALIZED_CHARS) {
+      throw new Error(`${args.engine} raw telemetry exceeds ${MAX_RAW_SERIALIZED_CHARS} serialized characters`);
+    }
+    assertNoSecrets(args.raw, `${args.engine} raw telemetry`);
+  }
   return {
     engine: args.engine,
     status: args.payload.findings.length === 0 ? "clean" : "completed",
@@ -163,11 +186,20 @@ function parseFinding(value: unknown, source: string): Finding {
     severity: finding.severity as Finding["severity"],
     disposition: finding.disposition as Finding["disposition"],
     category: finding.category as Finding["category"],
+    invariant: invariantSlug(finding.invariant, `${source}.invariant`),
     title: requiredString(finding.title, `${source}.title`, 300),
     explanation: requiredString(finding.explanation, `${source}.explanation`, 8000),
     failurePath: requiredString(finding.failurePath, `${source}.failurePath`, 8000),
     confidence: finding.confidence,
   };
+}
+
+function invariantSlug(value: unknown, source: string): string {
+  const slug = requiredString(value, source, 120);
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+    throw new Error(`${source} must be a lowercase hyphen-delimited stable slug`);
+  }
+  return slug;
 }
 
 function plainObject(value: unknown, source: string): Record<string, unknown> {

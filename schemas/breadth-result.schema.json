@@ -4,25 +4,64 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "model": { "type": "string", "minLength": 1 },
     "candidates": {
       "type": "array",
       "items": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "id": { "type": "string", "minLength": 1, "maxLength": 120 },
           "file": { "type": "string", "minLength": 1 },
+          "line": { "type": "integer", "minimum": 1 },
           "lane": { "type": "string", "minLength": 1 },
-          "risk": { "type": "string", "minLength": 1 },
+          "invariant": { "type": "string", "minLength": 1 },
           "counterexample": { "type": "string", "minLength": 1 },
           "evidenceNeeded": { "type": "string", "minLength": 1 }
         },
-        "required": ["file", "lane", "risk", "counterexample", "evidenceNeeded"]
+        "required": ["id", "file", "line", "lane", "invariant", "counterexample", "evidenceNeeded"]
       }
     },
-    "clearFiles": {
+    "clear": {
       "type": "array",
-      "items": { "type": "string", "minLength": 1 }
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "lane": { "type": "string", "minLength": 1 },
+          "file": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 1 }
+        },
+        "required": ["lane", "file", "reason"]
+      }
+    },
+    "escalations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "target": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string", "minLength": 1 }
+        },
+        "required": ["target", "reason"]
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "coveredFiles": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "unavailable": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "required": ["coveredFiles", "unavailable"]
     }
   },
-  "required": ["candidates", "clearFiles"]
+  "required": ["model", "candidates", "clear", "escalations", "coverage"]
 }

@@ -122,6 +122,10 @@ Default priority (matching the lane file numbering):
 6. response, error, transport, and observability contracts;
 7. concurrency, performance, and resource use;
 8. test honesty, maintainability, and scope drift.
+9. ordinary control-flow, nullability, and transformation correctness;
+10. error propagation, recovery, retry, cleanup, and false-success behavior;
+11. frontend state, effects, closures, optimistic updates, and async ordering;
+12. collection boundaries, pagination, limits, and stable ordering.
 
 ### 5. Execute an affected-surface matrix
 

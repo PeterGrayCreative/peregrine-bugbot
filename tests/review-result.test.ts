@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { filterDiff, globMatches } from "../src/core/diff.js";
+import { parseBreadthResult } from "../src/core/breadth-result.js";
 import { parseEngineResult, parseReviewPayload } from "../src/core/review-result.js";
 
 function validFinding() {
@@ -11,12 +12,34 @@ function validFinding() {
     severity: "high",
     disposition: "fix-in-pr",
     category: "authorization",
+    invariant: "tenant-boundary-before-lookup",
     title: "Missing tenant boundary",
     explanation: "The query is not scoped to the current tenant.",
     failurePath: "A caller supplies another tenant's identifier and reads its record.",
     confidence: 0.95,
   };
 }
+
+test("breadth parsing preserves candidate identity, escalation, and coverage", () => {
+  const parsed = parseBreadthResult({
+    model: "fast-model",
+    candidates: [{
+      id: "logic-1",
+      lane: "logic-correctness",
+      file: "src/service.ts",
+      line: 12,
+      invariant: "The fallback preserves zero values.",
+      counterexample: "value is zero",
+      evidenceNeeded: "caller contract",
+    }],
+    clear: [{ lane: "contracts", file: "src/service.ts", reason: "shape is unchanged" }],
+    escalations: [{ target: "logic-1", reason: "published calculation contract" }],
+    coverage: { coveredFiles: ["src/service.ts"], unavailable: [] },
+  });
+  assert.equal(parsed.candidates[0]?.id, "logic-1");
+  assert.equal(parsed.escalations[0]?.target, "logic-1");
+  assert.deepEqual(parsed.coverage.coveredFiles, ["src/service.ts"]);
+});
 
 test("strict review parsing accepts the complete finding contract", () => {
   const parsed = parseReviewPayload({ findings: [validFinding()] });
@@ -48,6 +71,14 @@ test("strict review parsing rejects extra fields, unsafe paths, and invalid rang
   assert.throws(
     () => parseReviewPayload({ findings: [withoutDisposition] }),
     /disposition must be fix-in-pr or follow-up/,
+  );
+  assert.throws(
+    () => parseReviewPayload({ findings: [{ ...validFinding(), invariant: "Not a stable slug" }] }),
+    /stable slug/,
+  );
+  assert.throws(
+    () => parseReviewPayload({ findings: [{ ...validFinding(), explanation: "api_key=abc123456789SECRET" }] }),
+    /credential-like assignment/,
   );
 });
 
@@ -91,6 +122,20 @@ test("diff filtering removes complete ignored file blocks and reports them", () 
   assert.match(filtered.text, /src\/app\.ts/);
   assert.doesNotMatch(filtered.text, /pnpm-lock/);
   assert.deepEqual(filtered.ignoredFiles, ["pnpm-lock.yaml"]);
+});
+
+test("diff filtering handles paths containing the text b slash", () => {
+  const tricky = [
+    "diff --git a/src/a b/file.ts b/src/a b/file.ts",
+    "--- a/src/a b/file.ts",
+    "+++ b/src/a b/file.ts",
+    "@@ -1 +1 @@",
+    "-old",
+    "+new",
+  ].join("\n");
+  const filtered = filterDiff(tricky, ["src/a b/file.ts"]);
+  assert.equal(filtered.text, "");
+  assert.deepEqual(filtered.ignoredFiles, ["src/a b/file.ts"]);
 });
 
 test("portable glob matching handles recursive, single-component, and literal patterns", () => {

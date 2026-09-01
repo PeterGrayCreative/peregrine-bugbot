@@ -1,6 +1,7 @@
 import { Octokit } from "@octokit/rest";
 import type { EngineResult, Finding, PeregrineConfig } from "../types.js";
 import { extractFingerprints, fingerprint, marker } from "./fingerprint.js";
+import { assertNoSecrets } from "../security/secrets.js";
 
 export interface PostTarget {
   owner: string;
@@ -37,6 +38,11 @@ export function commentableLines(diffText: string): Map<string, Set<number>> {
   let current: Set<number> | undefined;
   let newLine = 0;
   for (const line of diffText.replace(/\n$/, "").split("\n")) {
+    if (line.startsWith("diff --git ")) {
+      current = undefined;
+      newLine = 0;
+      continue;
+    }
     const fileMatch = line.match(/^\+\+\+ b\/(.+)$/);
     if (fileMatch) {
       current = map.get(fileMatch[1]!) ?? new Set();
@@ -99,6 +105,7 @@ export async function postReview(
   diffText: string,
   suppliedClient?: GitHubReviewClient,
 ): Promise<PostResult> {
+  assertNoSecrets(result.findings, "outbound review findings");
   const client =
     suppliedClient ?? (new Octokit({ auth: token }) as unknown as GitHubReviewClient);
   const common = { owner: target.owner, repo: target.repo, pull_number: target.prNumber };
@@ -128,7 +135,10 @@ export async function postReview(
     )
     .map((finding) => ({ finding, fp: finding.fingerprint ?? fingerprint(finding) }))
     .filter(({ fp }) => !existing.has(fp))
-    .sort((left, right) => right.finding.confidence - left.finding.confidence)
+    .sort((left, right) => {
+      const severity = severityRank(right.finding.severity) - severityRank(left.finding.severity);
+      return severity || right.finding.confidence - left.finding.confidence;
+    })
     .slice(0, config.limits.maxCommentsPerPr);
   const skipped = result.findings.length - eligible.length;
   if (eligible.length === 0) {
@@ -172,6 +182,10 @@ export async function postReview(
     });
     return { posted: eligible.length, skipped, superseded: false, bodyFallback: true };
   }
+}
+
+function severityRank(severity: Finding["severity"]): number {
+  return severity === "high" ? 3 : severity === "medium" ? 2 : 1;
 }
 
 function buildBody(

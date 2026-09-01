@@ -1,0 +1,7 @@
+{
+  "name": "clean-error-propagation",
+  "kind": "clean",
+  "fixtureDir": "fixture",
+  "diffFile": "diff.patch",
+  "notes": "A catch adds context and preserves the original failure as its cause."
+}

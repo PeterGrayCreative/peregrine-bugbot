@@ -42,8 +42,7 @@ Allow read-only searches for immediate callers, sibling surfaces, and configurat
 
 ## Output schema
 
-Return compact lines only unless the host supplies a stricter machine-readable
-output schema. When it does, preserve these fields and semantics in that schema:
+Interactive hosts without a JSON schema may return compact lines:
 
 ```text
 MODEL | <actual model if exposed, otherwise unavailable>
@@ -52,5 +51,15 @@ CLEAR | <lane> | <file> | <specific reason>
 ESCALATE | <candidate id or boundary> | <why strong-model review is mandatory>
 COVERAGE | <files covered> | <files or context unavailable>
 ```
+
+Automated runners supply `breadth-result.schema.json`. Map the same contract exactly:
+
+- `model`: actual model, or `unavailable` when the host does not expose it;
+- `candidates[]`: `id`, `lane`, `file`, `line`, `invariant`, `counterexample`, and `evidenceNeeded`;
+- `clear[]`: `lane`, `file`, and a specific `reason`;
+- `escalations[]`: candidate ID or boundary in `target`, plus `reason`;
+- `coverage.coveredFiles[]` and `coverage.unavailable[]`.
+
+Candidate IDs must remain stable within the run so the investigator can cross-reference and consolidate them. Every changed file must appear in a candidate, a clear conclusion, or `coverage.unavailable`; never omit unread context silently.
 
 Do not include severity, disposition, prose summaries, fix plans, test commands, or GitHub-ready comments.

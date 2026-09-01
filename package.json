@@ -1,6 +1,6 @@
 {
   "name": "peregrine-bugbot",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "description": "Invariant-first pull-request review with two-tier Claude and Codex runners.",
   "type": "module",
@@ -9,7 +9,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/config.test.ts tests/review-result.test.ts tests/github.test.ts tests/engines.test.ts",
+    "test": "node --import tsx --test tests/config.test.ts tests/review-result.test.ts tests/github.test.ts tests/engines.test.ts tests/manifest.test.ts",
     "test:skills": "bash scripts/validate.sh",
     "validate": "npm run typecheck && npm test && npm run test:skills && npm run eval:smoke",
     "review": "node --import tsx src/index.ts review",
