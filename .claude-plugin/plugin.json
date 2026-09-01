@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "peregrine",
   "displayName": "Peregrine Review",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Invariant-first pull-request review and repository review-profile generation.",
   "author": {
     "name": "Peter Gray"

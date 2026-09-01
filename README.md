@@ -49,17 +49,42 @@ npm run review -- \
 
 Both runners use read-only model tooling. Local CLI authentication is inherited from the installed provider CLI; CI uses only the selected provider secret.
 
-## Skills and plugins
+## Install and update the canonical plugin
 
-For repository development, load this directory as a plugin. Claude supports `claude --plugin-dir '/path/to/peregrine-bugbot'`; Codex discovers the included plugin manifest and shared skills through its plugin workflow. The fallback installer remains for staged or hosted surfaces:
+Both hosts install from `PeterGrayCreative/peregrine-bugbot@main`. The marketplace snapshot and installed plugin are refreshed together, so loose copied skill directories are not part of the normal update path.
+
+Install once:
+
+```bash
+npm run plugin:install:codex
+npm run plugin:install:claude
+```
+
+After changes are merged to `main`, update the selected host and start a new thread:
+
+```bash
+npm run plugin:update:codex
+npm run plugin:update:claude
+```
+
+Codex uses the repository marketplace at `.agents/plugins/marketplace.json`; Claude uses `.claude-plugin/marketplace.json`. For repository development, Claude can still load the checkout directly with `claude --plugin-dir '/path/to/peregrine-bugbot'`.
+
+Confirm the installed source and detect conflicting loose copies with:
+
+```bash
+codex plugin list
+claude plugin list
+npm run doctor
+```
+
+The copy installer exists only for hosts that cannot consume a Git-backed plugin marketplace:
 
 ```bash
 npm run doctor
-bash 'scripts/install-local.sh' --client codex --scope project
 bash 'scripts/install-local.sh' --client claude --scope personal
 ```
 
-Do not install the same skill name into several discovery roots. Codex does not merge duplicate skill definitions; `npm run doctor` reports duplicate local copies.
+Do not combine the plugin with loose copies of the same skills. Codex does not merge duplicate skill definitions; `npm run doctor` reports duplicate local copies that should be migrated deliberately.
 
 ## GitHub Actions
 
@@ -68,7 +93,7 @@ The reusable workflow accepts `runner: claude|codex`. Supply only the matching s
 ```yaml
 jobs:
   review:
-    uses: PeterGrayCreative/peregrine-bugbot/.github/workflows/review.yml@v0.2.0
+    uses: PeterGrayCreative/peregrine-bugbot/.github/workflows/review.yml@v0.3.0
     with:
       runner: codex
     secrets:

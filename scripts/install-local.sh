@@ -3,7 +3,7 @@ set -euo pipefail
 
 usage() {
   cat <<'EOF'
-Install both Peregrine skills without overwriting an existing installation.
+Compatibility-copy both Peregrine skills without overwriting an installation.
 
 Usage:
   install-local.sh --client <claude|codex> [--scope <personal|project>]
@@ -15,8 +15,9 @@ Options:
   --dest-dir  Overrides the skills directory. Useful for testing or staging.
   -h, --help  Show this help.
 
-The installer preflights both skill destinations and aborts if either exists.
-It never recursively merges a new release into an installed release.
+Prefer scripts/manage-plugin.sh for a Git-backed installation that can update
+from the canonical repository. This fallback preflights both skill destinations
+and never recursively merges a new release into an installed release.
 EOF
 }
 

@@ -60,5 +60,6 @@ fi
 
 /bin/bash "${repo_root}/tests/review-manifest.test.sh"
 /bin/bash "${repo_root}/tests/package-and-install.test.sh"
+/bin/bash "${repo_root}/tests/manage-plugin.test.sh"
 
 echo 'Peregrine package validation passed.'

@@ -1,6 +1,6 @@
 {
   "name": "peregrine-bugbot",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Invariant-first pull-request review with two-tier Claude and Codex runners.",
   "type": "module",
@@ -18,7 +18,11 @@
     "eval:matrix": "node --import tsx src/index.ts matrix",
     "eval:grade": "node --import tsx src/index.ts grade",
     "eval:report": "node --import tsx src/index.ts report",
-    "eval:smoke": "node --import tsx eval/smoke.ts"
+    "eval:smoke": "node --import tsx eval/smoke.ts",
+    "plugin:install:claude": "bash scripts/manage-plugin.sh install --client claude",
+    "plugin:update:claude": "bash scripts/manage-plugin.sh update --client claude",
+    "plugin:install:codex": "bash scripts/manage-plugin.sh install --client codex",
+    "plugin:update:codex": "bash scripts/manage-plugin.sh update --client codex"
   },
   "dependencies": {
     "@octokit/rest": "^21.0.0",

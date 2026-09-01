@@ -1,6 +1,26 @@
 {
   "name": "peregrine",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Invariant-first pull-request review and repository review-profile generation.",
-  "skills": "./skills/"
+  "author": {
+    "name": "Peter Gray",
+    "url": "https://github.com/PeterGrayCreative"
+  },
+  "homepage": "https://github.com/PeterGrayCreative/peregrine-bugbot",
+  "repository": "https://github.com/PeterGrayCreative/peregrine-bugbot",
+  "keywords": ["code-review", "pull-requests", "skills"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Peregrine Review",
+    "shortDescription": "Invariant-first pull-request review",
+    "longDescription": "Review pull requests with a shared invariant-first method across Claude and Codex.",
+    "developerName": "Peter Gray",
+    "category": "Productivity",
+    "capabilities": ["Read"],
+    "websiteURL": "https://github.com/PeterGrayCreative/peregrine-bugbot",
+    "defaultPrompt": [
+      "Review this pull request with Peregrine.",
+      "Build a review profile for this repository."
+    ]
+  }
 }

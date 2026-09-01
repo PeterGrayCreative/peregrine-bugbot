@@ -2,6 +2,8 @@
 
 Peregrine has one canonical skill implementation and thin host adapters. Claude and Codex receive the same invariant method, finding contract, review lanes, and project-profile trust rules.
 
+The GitHub repository is also the distribution boundary. `.claude-plugin/marketplace.json` and `.agents/plugins/marketplace.json` expose the root plugin from `main`; native marketplace refresh plus plugin reinstall/update replaces disconnected copied-skill upgrade paths.
+
 ```mermaid
 flowchart LR
     U[Untrusted PR metadata and diff] --> F[Filter and size gate]

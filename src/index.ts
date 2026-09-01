@@ -135,8 +135,11 @@ async function cmdDoctor(): Promise<void> {
   const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as { version?: string };
   console.log(`Peregrine ${pkg.version ?? "unknown"}`);
   console.log(`Package root: ${root}`);
+  console.log("Canonical source: https://github.com/PeterGrayCreative/peregrine-bugbot@main");
   console.log(`Codex plugin: ${existsSync(join(root, ".codex-plugin", "plugin.json")) ? "present" : "MISSING"}`);
   console.log(`Claude plugin: ${existsSync(join(root, ".claude-plugin", "plugin.json")) ? "present" : "MISSING"}`);
+  console.log("Codex update: npm run plugin:update:codex");
+  console.log("Claude update: npm run plugin:update:claude");
 
   const discovered = new Map<string, string[]>();
   for (const skillsRoot of [

@@ -13,6 +13,15 @@ function config(): PeregrineConfig {
 test("the checked-in config and both plugin manifests are internally consistent", () => {
   const current = config();
   assert.doesNotThrow(() => validateConfig(current));
+  const packageVersion = (
+    JSON.parse(readFileSync(resolve("package.json"), "utf8")) as { version: string }
+  ).version;
+  const lock = JSON.parse(readFileSync(resolve("package-lock.json"), "utf8")) as {
+    version: string;
+    packages: { "": { version: string } };
+  };
+  assert.equal(lock.version, packageVersion);
+  assert.equal(lock.packages[""].version, packageVersion);
   for (const manifestPath of [".claude-plugin/plugin.json", ".codex-plugin/plugin.json"]) {
     const manifest = JSON.parse(readFileSync(resolve(manifestPath), "utf8")) as {
       name?: string;
@@ -20,9 +29,39 @@ test("the checked-in config and both plugin manifests are internally consistent"
       skills?: string;
     };
     assert.equal(manifest.name, "peregrine");
-    assert.equal(manifest.version, "0.2.0");
+    assert.equal(manifest.version, packageVersion);
     if (manifest.skills !== undefined) assert.equal(manifest.skills, "./skills/");
   }
+});
+
+test("Claude and Codex marketplaces resolve Peregrine from the canonical repository", () => {
+  const claude = JSON.parse(
+    readFileSync(resolve(".claude-plugin/marketplace.json"), "utf8"),
+  ) as {
+    name: string;
+    plugins: Array<{ name: string; source: string }>;
+  };
+  assert.equal(claude.name, "peregrine");
+  assert.equal(claude.plugins.length, 1);
+  assert.equal(claude.plugins[0]?.name, "peregrine");
+  assert.equal(claude.plugins[0]?.source, "./");
+
+  const codex = JSON.parse(
+    readFileSync(resolve(".agents/plugins/marketplace.json"), "utf8"),
+  ) as {
+    name: string;
+    plugins: Array<{
+      name: string;
+      source: { source: string; url: string; ref: string };
+    }>;
+  };
+  assert.equal(codex.name, "peregrine");
+  assert.equal(codex.plugins[0]?.name, "peregrine");
+  assert.deepEqual(codex.plugins[0]?.source, {
+    source: "url",
+    url: "https://github.com/PeterGrayCreative/peregrine-bugbot.git",
+    ref: "main",
+  });
 });
 
 test("config validation rejects unknown runners, placeholders, and invalid effort", () => {

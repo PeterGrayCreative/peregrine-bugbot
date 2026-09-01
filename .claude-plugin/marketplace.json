@@ -1,0 +1,17 @@
+{
+  "name": "peregrine",
+  "owner": {
+    "name": "Peter Gray"
+  },
+  "description": "Canonical Peregrine pull-request review skills for Claude and Codex.",
+  "plugins": [
+    {
+      "name": "peregrine",
+      "source": "./",
+      "description": "Invariant-first pull-request review and repository review-profile generation.",
+      "author": {
+        "name": "Peter Gray"
+      }
+    }
+  ]
+}
