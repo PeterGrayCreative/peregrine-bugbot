@@ -1,4 +1,4 @@
-# peregrine-bugbot 🦅
+# peregrine-bugbot
 
 Invariant-first pull-request review for Claude and Codex. Peregrine runs a bounded breadth pass, sends its candidate ledger to a stronger investigation pass, validates the result, then optionally posts deduplicated GitHub review comments.
 
