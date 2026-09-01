@@ -11,7 +11,7 @@ export const mockEngine: Engine = {
   name: "mock",
   async review(ctx: ReviewContext): Promise<EngineResult> {
     const started = Date.now();
-    const diff = readFileSync(ctx.diffPath, "utf8");
+    const diff = ctx.diffText ?? readFileSync(ctx.diffPath, "utf8");
     const findings: Finding[] = [];
 
     let currentFile = "";
@@ -34,7 +34,8 @@ export const mockEngine: Engine = {
             startLine: newLine,
             endLine: newLine,
             severity: "high",
-            category: "seeded",
+            disposition: "fix-in-pr",
+            category: "logic",
             title: `Suspicious change in ${currentFile}`,
             explanation: line.replace(/^\+\s*/, ""),
             failurePath: "Marker-based mock detection.",
@@ -49,7 +50,10 @@ export const mockEngine: Engine = {
 
     return {
       engine: "mock",
+      status: findings.length === 0 ? "clean" : "completed",
       modelConfig: "mock",
+      reviewedBaseRef: ctx.baseRef,
+      reviewedHeadRef: ctx.headRef,
       findings,
       usage: { costUsd: 0, inputTokens: 0, outputTokens: 0 },
       durationMs: Date.now() - started,

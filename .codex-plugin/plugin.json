@@ -1,0 +1,6 @@
+{
+  "name": "peregrine",
+  "version": "0.2.0",
+  "description": "Invariant-first pull-request review and repository review-profile generation.",
+  "skills": "./skills/"
+}

@@ -1,66 +1,126 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { PeregrineConfig } from "./types.js";
+import {
+  RUNNER_NAMES,
+  type ClaudeEffort,
+  type CodexEffort,
+  type PeregrineConfig,
+  type RunnerName,
+} from "./types.js";
 
-/**
- * Loads peregrine.config.json, applies env overrides, and validates the
- * boundary explicitly — a malformed config should fail here with a field
- * name, not as an undefined-property crash deep inside an engine.
- *
- * Env overrides (so CI and the eval matrix can vary models without edits):
- *   PEREGRINE_ENGINE, PEREGRINE_TIER1_MODEL, PEREGRINE_TIER2_MODEL
- */
+const CODEX_EFFORTS: CodexEffort[] = ["low", "medium", "high", "xhigh", "max", "ultra"];
+const CLAUDE_EFFORTS: ClaudeEffort[] = ["low", "medium", "high", "xhigh", "max"];
+
 export function loadConfig(path = "peregrine.config.json"): PeregrineConfig {
-  const cfg = JSON.parse(readFileSync(resolve(path), "utf8")) as PeregrineConfig;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(readFileSync(resolve(path), "utf8"));
+  } catch (error) {
+    throw new Error(`${path}: ${error instanceof Error ? error.message : String(error)}`);
+  }
 
-  if (process.env.PEREGRINE_ENGINE) cfg.engine = process.env.PEREGRINE_ENGINE;
-  if (process.env.PEREGRINE_TIER1_MODEL)
-    cfg.engines.claude.tier1Model = process.env.PEREGRINE_TIER1_MODEL;
-  if (process.env.PEREGRINE_TIER2_MODEL)
-    cfg.engines.claude.tier2Model = process.env.PEREGRINE_TIER2_MODEL;
-
-  validate(cfg, path);
+  const cfg = parsed as PeregrineConfig;
+  applyEnvOverrides(cfg);
+  validateConfig(cfg, path);
   return cfg;
 }
 
-function validate(cfg: PeregrineConfig, path: string): void {
-  const fail = (msg: string): never => {
-    throw new Error(`${path}: ${msg}`);
+function applyEnvOverrides(cfg: PeregrineConfig): void {
+  if (process.env.PEREGRINE_RUNNER) cfg.runner = process.env.PEREGRINE_RUNNER as RunnerName;
+
+  const overrides: Array<[string | undefined, () => void]> = [
+    [process.env.PEREGRINE_CLAUDE_BREADTH_MODEL, () => {
+      cfg.runners.claude.breadthModel = process.env.PEREGRINE_CLAUDE_BREADTH_MODEL!;
+    }],
+    [process.env.PEREGRINE_CLAUDE_INVESTIGATION_MODEL, () => {
+      cfg.runners.claude.investigationModel = process.env.PEREGRINE_CLAUDE_INVESTIGATION_MODEL!;
+    }],
+    [process.env.PEREGRINE_CLAUDE_INVESTIGATION_EFFORT, () => {
+      cfg.runners.claude.investigationEffort = process.env.PEREGRINE_CLAUDE_INVESTIGATION_EFFORT as ClaudeEffort;
+    }],
+    [process.env.PEREGRINE_CODEX_BREADTH_MODEL, () => {
+      cfg.runners.codex.breadthModel = process.env.PEREGRINE_CODEX_BREADTH_MODEL!;
+    }],
+    [process.env.PEREGRINE_CODEX_INVESTIGATION_MODEL, () => {
+      cfg.runners.codex.investigationModel = process.env.PEREGRINE_CODEX_INVESTIGATION_MODEL!;
+    }],
+    [process.env.PEREGRINE_CODEX_BREADTH_EFFORT, () => {
+      cfg.runners.codex.breadthEffort = process.env.PEREGRINE_CODEX_BREADTH_EFFORT as CodexEffort;
+    }],
+    [process.env.PEREGRINE_CODEX_INVESTIGATION_EFFORT, () => {
+      cfg.runners.codex.investigationEffort = process.env.PEREGRINE_CODEX_INVESTIGATION_EFFORT as CodexEffort;
+    }],
+  ];
+  for (const [value, apply] of overrides) if (value) apply();
+}
+
+export function validateConfig(cfg: PeregrineConfig, path = "config"): void {
+  const fail = (message: string): never => {
+    throw new Error(`${path}: ${message}`);
+  };
+  const object = (value: unknown, field: string): Record<string, unknown> => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+      fail(`"${field}" must be an object`);
+    }
+    return value as Record<string, unknown>;
+  };
+  const string = (value: unknown, field: string): void => {
+    if (typeof value !== "string" || value.trim().length === 0 || value === "TODO") {
+      fail(`"${field}" must be a non-empty configured string`);
+    }
+  };
+  const positive = (value: unknown, field: string): void => {
+    if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) {
+      fail(`"${field}" must be a positive number`);
+    }
   };
 
-  if (!cfg.engine || typeof cfg.engine !== "string") fail(`"engine" must be a string`);
-  if (!cfg.engines || typeof cfg.engines !== "object") fail(`"engines" must be an object`);
-  if (!(cfg.engine in cfg.engines))
-    fail(`engine "${cfg.engine}" has no block under "engines"`);
-
-  const c = cfg.engines.claude;
-  if (!c || typeof c !== "object") fail(`"engines.claude" must be an object`);
-  for (const key of ["tier1Model", "tier2Model", "skillName"] as const) {
-    if (typeof c[key] !== "string" || c[key].length === 0)
-      fail(`"engines.claude.${key}" must be a non-empty string`);
+  object(cfg, "root");
+  if (cfg.schemaVersion !== 1) fail(`"schemaVersion" must be 1`);
+  if (!RUNNER_NAMES.includes(cfg.runner)) {
+    fail(`"runner" must be one of: ${RUNNER_NAMES.join(", ")}`);
   }
-  for (const key of ["maxTurns", "timeoutMs"] as const) {
-    if (typeof c[key] !== "number" || !(c[key] > 0))
-      fail(`"engines.claude.${key}" must be a positive number`);
+  object(cfg.runners, "runners");
+  const claude = object(cfg.runners.claude, "runners.claude");
+  for (const key of ["breadthModel", "investigationModel", "skillName"] as const) {
+    string(claude[key], `runners.claude.${key}`);
+  }
+  if (!CLAUDE_EFFORTS.includes(claude.investigationEffort as ClaudeEffort)) {
+    fail(`"runners.claude.investigationEffort" must be one of: ${CLAUDE_EFFORTS.join(", ")}`);
+  }
+  for (const key of ["maxTurns", "maxBudgetUsd", "timeoutMs"] as const) {
+    positive(claude[key], `runners.claude.${key}`);
   }
 
-  const l = cfg.limits;
-  if (!l || typeof l !== "object") fail(`"limits" must be an object`);
+  const codex = object(cfg.runners.codex, "runners.codex");
+  for (const key of ["breadthModel", "investigationModel", "skillName"] as const) {
+    string(codex[key], `runners.codex.${key}`);
+  }
+  for (const key of ["breadthEffort", "investigationEffort"] as const) {
+    if (!CODEX_EFFORTS.includes(codex[key] as CodexEffort)) {
+      fail(`"runners.codex.${key}" must be one of: ${CODEX_EFFORTS.join(", ")}`);
+    }
+  }
+  positive(codex.timeoutMs, "runners.codex.timeoutMs");
+  object(cfg.runners.mock, "runners.mock");
+
+  const limits = object(cfg.limits, "limits");
   for (const key of ["maxEscalations", "maxDiffLines", "maxCommentsPerPr"] as const) {
-    if (typeof l[key] !== "number" || !(l[key] > 0))
-      fail(`"limits.${key}" must be a positive number`);
+    positive(limits[key], `limits.${key}`);
   }
   if (
-    typeof l.minConfidenceToPost !== "number" ||
-    l.minConfidenceToPost < 0 ||
-    l.minConfidenceToPost > 1
-  )
-    fail(`"limits.minConfidenceToPost" must be a number between 0 and 1`);
+    typeof limits.minConfidenceToPost !== "number" ||
+    limits.minConfidenceToPost < 0 ||
+    limits.minConfidenceToPost > 1
+  ) {
+    fail(`"limits.minConfidenceToPost" must be between 0 and 1`);
+  }
 
+  const filters = object(cfg.filters, "filters");
   if (
-    !cfg.filters ||
-    !Array.isArray(cfg.filters.ignorePaths) ||
-    cfg.filters.ignorePaths.some((p) => typeof p !== "string")
-  )
-    fail(`"filters.ignorePaths" must be an array of strings`);
+    !Array.isArray(filters.ignorePaths) ||
+    filters.ignorePaths.some((item) => typeof item !== "string" || item.length === 0)
+  ) {
+    fail(`"filters.ignorePaths" must be an array of non-empty strings`);
+  }
 }

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Peregrine Breadth Sweep",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "file": { "type": "string", "minLength": 1 },
+          "lane": { "type": "string", "minLength": 1 },
+          "risk": { "type": "string", "minLength": 1 },
+          "counterexample": { "type": "string", "minLength": 1 },
+          "evidenceNeeded": { "type": "string", "minLength": 1 }
+        },
+        "required": ["file", "lane", "risk", "counterexample", "evidenceNeeded"]
+      }
+    },
+    "clearFiles": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "required": ["candidates", "clearFiles"]
+}

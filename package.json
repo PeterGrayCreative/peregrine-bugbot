@@ -1,18 +1,24 @@
 {
   "name": "peregrine-bugbot",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
-  "description": "Two-tier LLM code review bot: breadth-first triage with a cheap model, deep investigation with a strong one. Engine-agnostic (Claude today, OpenAI-ready).",
+  "description": "Invariant-first pull-request review with two-tier Claude and Codex runners.",
   "type": "module",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "review": "tsx src/index.ts review",
-    "eval:matrix": "tsx src/index.ts matrix",
-    "eval:grade": "tsx src/index.ts grade",
-    "eval:report": "tsx src/index.ts report"
+    "test": "node --import tsx --test tests/config.test.ts tests/review-result.test.ts tests/github.test.ts tests/engines.test.ts",
+    "test:skills": "bash scripts/validate.sh",
+    "validate": "npm run typecheck && npm test && npm run test:skills && npm run eval:smoke",
+    "review": "node --import tsx src/index.ts review",
+    "post": "node --import tsx src/index.ts post",
+    "doctor": "node --import tsx src/index.ts doctor",
+    "eval:matrix": "node --import tsx src/index.ts matrix",
+    "eval:grade": "node --import tsx src/index.ts grade",
+    "eval:report": "node --import tsx src/index.ts report",
+    "eval:smoke": "node --import tsx eval/smoke.ts"
   },
   "dependencies": {
     "@octokit/rest": "^21.0.0",

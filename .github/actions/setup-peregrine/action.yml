@@ -1,43 +1,52 @@
 name: setup-peregrine
-description: >
-  Shared bootstrap for peregrine review jobs: installs the review skill,
-  ripgrep, Node (from the bot's .nvmrc), the Claude Code CLI, and bot deps.
-  Expects the bot repo to already be checked out at .peregrine-bot (this
-  action lives inside it).
+description: Install Peregrine dependencies and the selected pinned provider CLI.
 
 inputs:
-  checkout-token:
-    description: Token able to read PeterGrayCreative/bugbot-codex-skills
-    required: true
+  runner:
+    description: Review runner to prepare (claude or codex)
+    required: false
+    default: claude
+  install-runner:
+    description: Install ripgrep and the provider CLI; disable in the posting job
+    required: false
+    default: "true"
+  bot-path:
+    description: Path containing the checked-out Peregrine repository
+    required: false
+    default: peregrine
 
 runs:
   using: composite
   steps:
-    # The skill discovers at .claude/skills/<skill-name>/SKILL.md, so copy
-    # the skill folder out of the skills repo (repo root is NOT the skill).
-    - name: Checkout review skills repo
-      uses: actions/checkout@v4
-      with:
-        repository: PeterGrayCreative/bugbot-codex-skills
-        path: .peregrine-skills
-        token: ${{ inputs.checkout-token }}
-
-    - name: Install review skill + ripgrep
-      shell: bash
-      run: |
-        mkdir -p .claude/skills
-        cp -R .peregrine-skills/skills/invariant-first-pr-review .claude/skills/
-        # ripgrep: required by the skill's review-manifest.sh
-        sudo apt-get update -q && sudo apt-get install -y -q ripgrep
-
     - uses: actions/setup-node@v4
       with:
-        node-version-file: .peregrine-bot/.nvmrc
+        node-version-file: ${{ inputs.bot-path }}/.nvmrc
 
-    - name: Install Claude Code CLI
+    - name: Install bot dependencies
       shell: bash
-      run: npm install -g @anthropic-ai/claude-code
+      working-directory: ${{ inputs.bot-path }}
+      run: npm ci
 
-    - name: Install bot deps
+    - name: Install review prerequisites
+      if: inputs.install-runner == 'true'
       shell: bash
-      run: cd .peregrine-bot && npm ci
+      run: |
+        sudo apt-get update -q
+        sudo apt-get install -y -q ripgrep
+
+    - name: Install pinned Claude Code CLI
+      if: inputs.install-runner == 'true' && inputs.runner == 'claude'
+      shell: bash
+      run: npm install --global '@anthropic-ai/claude-code@2.1.252'
+
+    - name: Install pinned Codex CLI
+      if: inputs.install-runner == 'true' && inputs.runner == 'codex'
+      shell: bash
+      run: npm install --global '@openai/codex@0.152.0'
+
+    - name: Reject unsupported runner
+      if: inputs.install-runner == 'true' && inputs.runner != 'claude' && inputs.runner != 'codex'
+      shell: bash
+      run: |
+        echo "Unsupported Peregrine runner: ${{ inputs.runner }}" >&2
+        exit 1

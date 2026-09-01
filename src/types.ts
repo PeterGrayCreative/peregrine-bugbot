@@ -1,82 +1,103 @@
-/**
- * Core contracts. The whole point of this file is decoupling:
- * anything that can turn a ReviewContext into an EngineResult is a valid
- * engine — Claude via the bugbot-codex-skills skill today, OpenAI/codex or
- * anything else tomorrow. The orchestrator, GitHub layer, and eval harness
- * only ever speak these types.
- */
+export const RUNNER_NAMES = ["claude", "codex", "mock"] as const;
+export type RunnerName = (typeof RUNNER_NAMES)[number];
 
+export const FINDING_CATEGORIES = [
+  "authorization",
+  "identifiers",
+  "data-integrity",
+  "persistence",
+  "runtime-config",
+  "contracts",
+  "concurrency",
+  "test-quality",
+  "logic",
+  "other",
+] as const;
+
+export type FindingCategory = (typeof FINDING_CATEGORIES)[number];
 export type Severity = "high" | "medium" | "low";
+export type FindingDisposition = "fix-in-pr" | "follow-up";
+export type ReviewStatus = "completed" | "clean" | "skipped";
+export type CodexEffort = "low" | "medium" | "high" | "xhigh" | "max" | "ultra";
+export type ClaudeEffort = "low" | "medium" | "high" | "xhigh" | "max";
 
 export interface Finding {
   file: string;
   startLine: number;
   endLine: number;
   severity: Severity;
-  category: string;
+  disposition: FindingDisposition;
+  category: FindingCategory;
   title: string;
   explanation: string;
-  /**
-   * The concrete failure path: what input/state triggers the bug.
-   * Engines should drop findings they cannot articulate a failure path for —
-   * this single rule is the main false-positive filter.
-   */
   failurePath: string;
-  /** 0..1 — engine's own confidence. Posting threshold applied downstream. */
   confidence: number;
   fingerprint?: string;
 }
 
+export interface ReviewPayload {
+  findings: Finding[];
+}
+
 export interface Usage {
   inputTokens?: number;
+  cachedInputTokens?: number;
   outputTokens?: number;
+  reasoningOutputTokens?: number;
   costUsd?: number;
 }
 
 export interface EngineResult {
-  engine: string;
-  /** e.g. "haiku-4-5->sonnet-5" — whatever identifies the model config */
+  engine: RunnerName;
+  status: ReviewStatus;
   modelConfig: string;
+  reviewedBaseRef?: string;
+  reviewedHeadRef?: string;
   findings: Finding[];
   usage: Usage;
   durationMs: number;
-  /** Anything engine-specific worth keeping for debugging. */
   raw?: unknown;
 }
 
 export interface ReviewContext {
-  /** Absolute path to a checkout of the code under review (head state). */
   repoPath: string;
-  /** Absolute path to a unified diff file (base...head). */
   diffPath: string;
-  /**
-   * When base+head are set and repoPath has git objects, engines should let
-   * the skill drive git (merge-base review) instead of embedding the diff.
-   */
+  diffText?: string;
+  ignoredFiles?: string[];
   baseRef?: string;
   headRef?: string;
-  /** PR metadata — feeds the skill's scope contract when available. */
   prTitle?: string;
   prBody?: string;
-  /** When true, engines should use their larger "deep dive" budget. */
   deep?: boolean;
   config: PeregrineConfig;
 }
 
-export interface ClaudeEngineConfig {
-  tier1Model: string;
-  tier2Model: string;
-  /** Skill directory name as installed under .claude/skills/ in repoPath. */
+export interface ClaudeRunnerConfig {
+  breadthModel: string;
+  investigationModel: string;
+  investigationEffort: ClaudeEffort;
   skillName: string;
   maxTurns: number;
+  maxBudgetUsd: number;
+  timeoutMs: number;
+}
+
+export interface CodexRunnerConfig {
+  breadthModel: string;
+  investigationModel: string;
+  breadthEffort: CodexEffort;
+  investigationEffort: CodexEffort;
+  skillName: string;
   timeoutMs: number;
 }
 
 export interface PeregrineConfig {
-  engine: string;
-  engines: {
-    claude: ClaudeEngineConfig;
-    [name: string]: unknown;
+  schemaVersion: 1;
+  runner: RunnerName;
+  runners: {
+    claude: ClaudeRunnerConfig;
+    codex: CodexRunnerConfig;
+    mock: Record<string, never>;
   };
   limits: {
     maxEscalations: number;
@@ -100,28 +121,22 @@ export interface GroundTruthBug {
 }
 
 export interface GroundTruth {
-  /** Empty array for "clean" cases — any finding is a false positive. */
   bugs: GroundTruthBug[];
 }
 
 export interface CaseSpec {
   name: string;
-  /** "seeded" (injected bug), "historical" (real past bug), or "clean". */
   kind: "seeded" | "historical" | "clean";
-  /** Either a bundled fixture directory (relative to the case dir)... */
   fixtureDir?: string;
-  /** ...or a repo to clone at a specific commit. */
   repo?: string;
   commit?: string;
-  /** Diff file relative to the case dir. */
   diffFile: string;
   notes?: string;
 }
 
 export interface MatrixModelConfig {
   name: string;
-  engine: string;
-  /** Overrides merged into the engine's config (e.g. tier1Model/tier2Model). */
+  runner: RunnerName;
   overrides?: Record<string, unknown>;
 }
 
@@ -140,7 +155,6 @@ export interface RunRecord {
 }
 
 export interface GradedRun extends RunRecord {
-  /** ground-truth bug id -> index into findings, or null if missed */
   matches: Record<string, number | null>;
   falsePositiveIndexes: number[];
 }

@@ -15,7 +15,7 @@ import type { CaseSpec, MatrixConfig, ReviewContext, RunRecord } from "../src/ty
  * Runs are sequential on purpose: parallel agentic sessions chew through
  * rate limits and make cost attribution noisy.
  */
-export async function runMatrix(configPath?: string): Promise<void> {
+export async function runMatrix(configPath?: string, runsRoot?: string): Promise<string> {
   const matrix = JSON.parse(
     readFileSync(resolve(configPath ?? "eval/matrix.config.json"), "utf8"),
   ) as MatrixConfig;
@@ -26,7 +26,10 @@ export async function runMatrix(configPath?: string): Promise<void> {
     .filter((d) => d.isDirectory())
     .map((d) => d.name);
 
-  const outDir = resolve(`eval/runs/${new Date().toISOString().replace(/[:.]/g, "-")}`);
+  const outDir = resolve(
+    runsRoot ?? process.env.PEREGRINE_EVAL_RUNS_DIR ?? "eval/runs",
+    new Date().toISOString().replace(/[:.]/g, "-"),
+  );
   mkdirSync(outDir, { recursive: true });
 
   const total = matrix.configs.length * caseNames.length * matrix.repeats;
@@ -50,14 +53,14 @@ export async function runMatrix(configPath?: string): Promise<void> {
           // try: a typo'd engine name should fail THIS run, not kill the
           // remaining matrix.
           const config = structuredClone(baseConfig);
-          config.engine = modelConfig.engine;
-          const engineCfg = config.engines[modelConfig.engine];
-          if (!engineCfg || typeof engineCfg !== "object") {
+          config.runner = modelConfig.runner;
+          const runnerConfig = config.runners[modelConfig.runner];
+          if (!runnerConfig || typeof runnerConfig !== "object") {
             throw new Error(
-              `matrix config "${modelConfig.name}": unknown engine "${modelConfig.engine}"`,
+              `matrix config "${modelConfig.name}": unknown runner "${modelConfig.runner}"`,
             );
           }
-          Object.assign(engineCfg as object, modelConfig.overrides ?? {});
+          Object.assign(runnerConfig as object, modelConfig.overrides ?? {});
 
           const ctx: ReviewContext = {
             repoPath,
@@ -65,7 +68,7 @@ export async function runMatrix(configPath?: string): Promise<void> {
             config,
           };
 
-          const result = await getEngine(modelConfig.engine).review(ctx);
+          const result = await getEngine(modelConfig.runner).review(ctx);
           const record: RunRecord = {
             caseName,
             caseKind: spec.kind,
@@ -87,6 +90,7 @@ export async function runMatrix(configPath?: string): Promise<void> {
   }
   console.log(`\nRuns written to ${outDir}`);
   console.log(`Next: npm run eval:grade -- --runs ${outDir}`);
+  return outDir;
 }
 
 /** Copy a fixture (or clone repo@commit) into a temp dir for review. */

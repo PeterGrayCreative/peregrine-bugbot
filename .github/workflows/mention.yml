@@ -12,9 +12,8 @@ on:
   issue_comment:
     types: [created]
 
-permissions:
-  contents: read
-  pull-requests: write
+env:
+  PEREGRINE_RUNNER: ${{ vars.PEREGRINE_RUNNER || 'claude' }}
 
 jobs:
   deep-review:
@@ -22,8 +21,14 @@ jobs:
       github.event.issue.pull_request &&
       contains(github.event.comment.body, '@peregrine-bugbot') &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)
+    permissions:
+      contents: read
+      pull-requests: read
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      head_sha: ${{ steps.pr.outputs.head_sha }}
+      base_ref: ${{ steps.pr.outputs.base_ref }}
     steps:
       - name: Resolve PR refs
         id: pr
@@ -36,46 +41,108 @@ jobs:
           echo "head_sha=$(jq -r .head.sha "$RUNNER_TEMP/pr.json")" >> "$GITHUB_OUTPUT"
           echo "base_ref=$(jq -r .base.ref "$RUNNER_TEMP/pr.json")" >> "$GITHUB_OUTPUT"
 
-      - name: Checkout PR head
+      - name: Checkout the immutable PR head
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.pr.outputs.head_sha }}
           fetch-depth: 0
+          path: target
 
-      - name: Checkout peregrine-bugbot
+      - name: Checkout Peregrine
         uses: actions/checkout@v4
         with:
           repository: PeterGrayCreative/peregrine-bugbot
-          path: .peregrine-bot
+          path: peregrine
           token: ${{ secrets.PEREGRINE_CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
 
-      - name: Setup (skill, ripgrep, Node, CLI, deps)
-        uses: ./.peregrine-bot/.github/actions/setup-peregrine
+      - name: Setup selected runner
+        uses: ./peregrine/.github/actions/setup-peregrine
         with:
-          checkout-token: ${{ secrets.PEREGRINE_CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
+          runner: ${{ env.PEREGRINE_RUNNER }}
 
-      - name: Generate diff (size gate + inline-comment partition)
+      - name: Generate the review diff outside both checkouts
         run: |
-          git fetch -q origin "${{ steps.pr.outputs.base_ref }}"
-          git diff "origin/${{ steps.pr.outputs.base_ref }}...HEAD" > "$RUNNER_TEMP/pr.diff"
+          git -C target fetch -q origin '${{ steps.pr.outputs.base_ref }}'
+          git -C target diff 'origin/${{ steps.pr.outputs.base_ref }}...${{ steps.pr.outputs.head_sha }}' > "$RUNNER_TEMP/pr.diff"
 
-      - name: Run deep review
+      - name: Run Claude deep analysis
+        if: env.PEREGRINE_RUNNER == 'claude'
+        working-directory: peregrine
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_OWNER: ${{ github.repository_owner }}
-          PR_REPO: ${{ github.event.repository.name }}
-          PR_NUMBER: ${{ github.event.issue.number }}
-          PR_HEAD_SHA: ${{ steps.pr.outputs.head_sha }}
         run: |
           PR_TITLE="$(jq -r '.title // ""' "$RUNNER_TEMP/pr.json")"
           PR_BODY="$(jq -r '.body // ""' "$RUNNER_TEMP/pr.json")"
           export PR_TITLE PR_BODY
-          cd .peregrine-bot
-          npx tsx src/index.ts review \
-            --repo "$GITHUB_WORKSPACE" \
+          npm run review -- \
+            --runner claude \
+            --repo "$GITHUB_WORKSPACE/target" \
             --diff "$RUNNER_TEMP/pr.diff" \
-            --base "origin/${{ steps.pr.outputs.base_ref }}" \
-            --head "${{ steps.pr.outputs.head_sha }}" \
-            --config peregrine.config.json \
-            --deep --post
+            --base 'origin/${{ steps.pr.outputs.base_ref }}' \
+            --head '${{ steps.pr.outputs.head_sha }}' \
+            --output "$RUNNER_TEMP/result.json" \
+            --deep
+
+      - name: Run Codex deep analysis
+        if: env.PEREGRINE_RUNNER == 'codex'
+        working-directory: peregrine
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          PR_TITLE="$(jq -r '.title // ""' "$RUNNER_TEMP/pr.json")"
+          PR_BODY="$(jq -r '.body // ""' "$RUNNER_TEMP/pr.json")"
+          export PR_TITLE PR_BODY
+          npm run review -- \
+            --runner codex \
+            --repo "$GITHUB_WORKSPACE/target" \
+            --diff "$RUNNER_TEMP/pr.diff" \
+            --base 'origin/${{ steps.pr.outputs.base_ref }}' \
+            --head '${{ steps.pr.outputs.head_sha }}' \
+            --output "$RUNNER_TEMP/result.json" \
+            --deep
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: peregrine-deep-review-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/result.json
+            ${{ runner.temp }}/pr.diff
+          if-no-files-found: error
+          retention-days: 1
+
+  post:
+    needs: deep-review
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Peregrine
+        uses: actions/checkout@v4
+        with:
+          repository: PeterGrayCreative/peregrine-bugbot
+          path: peregrine
+          token: ${{ secrets.PEREGRINE_CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - uses: ./peregrine/.github/actions/setup-peregrine
+        with:
+          install-runner: "false"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: peregrine-deep-review-${{ github.run_id }}
+          path: artifact
+
+      - name: Revalidate and post against the current head
+        working-directory: peregrine
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_OWNER: ${{ github.repository_owner }}
+          PR_REPO: ${{ github.event.repository.name }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          PR_HEAD_SHA: ${{ needs.deep-review.outputs.head_sha }}
+        run: |
+          npm run post -- \
+            --result "$GITHUB_WORKSPACE/artifact/result.json" \
+            --diff "$GITHUB_WORKSPACE/artifact/pr.diff"

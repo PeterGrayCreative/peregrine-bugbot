@@ -9,27 +9,33 @@ export interface PostTarget {
   headSha: string;
 }
 
+export interface PostResult {
+  posted: number;
+  skipped: number;
+  superseded: boolean;
+  bodyFallback: boolean;
+}
+
+export interface GitHubReviewClient {
+  paginate(method: unknown, args: Record<string, unknown>): Promise<Array<{ body?: string | null }>>;
+  pulls: {
+    get(args: Record<string, unknown>): Promise<{ data: { head: { sha: string } } }>;
+    listReviewComments: unknown;
+    listReviews: unknown;
+    createReview(args: Record<string, unknown>): Promise<unknown>;
+  };
+}
+
 const SEVERITY_EMOJI: Record<Finding["severity"], string> = {
   high: "🔴",
   medium: "🟠",
   low: "🟡",
 };
 
-/**
- * Lines that can carry an inline review comment: new-side lines that appear
- * in a diff hunk (added or context). The invariant-first skill deliberately
- * reports affected-surface findings in files/lines OUTSIDE the diff; GitHub
- * 422s the entire review if any single inline comment targets such a line,
- * so those findings must go in the review body instead.
- */
 export function commentableLines(diffText: string): Map<string, Set<number>> {
   const map = new Map<string, Set<number>>();
   let current: Set<number> | undefined;
   let newLine = 0;
-  // Strip only the final trailing newline: splitting it would yield a phantom
-  // "" context line and mark a nonexistent line commentable (=> 422 on post).
-  // Mid-hunk blank lines stay counted — git emits them space-prefixed, but
-  // hand-written patches may not, and both occupy a real line.
   for (const line of diffText.replace(/\n$/, "").split("\n")) {
     const fileMatch = line.match(/^\+\+\+ b\/(.+)$/);
     if (fileMatch) {
@@ -44,133 +50,152 @@ export function commentableLines(diffText: string): Map<string, Set<number>> {
     }
     if (!current) continue;
     if (line.startsWith("+") && !line.startsWith("+++")) {
-      current.add(newLine);
-      newLine++;
+      current.add(newLine++);
     } else if (!line.startsWith("-") && !line.startsWith("\\")) {
-      current.add(newLine);
-      newLine++;
+      current.add(newLine++);
     }
   }
   return map;
 }
 
-function isInline(f: Finding, commentable: Map<string, Set<number>>): boolean {
-  const lines = commentable.get(f.file);
+function isInline(finding: Finding, commentable: Map<string, Set<number>>): boolean {
+  const lines = commentable.get(finding.file);
   if (!lines) return false;
-  return lines.has(f.endLine) && (f.startLine === f.endLine || lines.has(f.startLine));
+  return (
+    lines.has(finding.endLine) &&
+    (finding.startLine === finding.endLine || lines.has(finding.startLine))
+  );
 }
 
-function renderComment(f: Finding, fp: string): string {
+function renderInline(finding: Finding, fingerprintValue: string): string {
   return [
-    `${SEVERITY_EMOJI[f.severity]} **${f.title}** (\`${f.category}\`, confidence ${(f.confidence * 100).toFixed(0)}%)`,
-    ``,
-    f.explanation,
-    ``,
-    `**How it fails:** ${f.failurePath}`,
-    ``,
-    marker(fp),
+    `${SEVERITY_EMOJI[finding.severity]} **${finding.title}** (\`${finding.category}\`, confidence ${(finding.confidence * 100).toFixed(0)}%)`,
+    "",
+    finding.explanation,
+    "",
+    `**How it fails:** ${finding.failurePath}`,
+    "",
+    marker(fingerprintValue),
   ].join("\n");
 }
 
-function renderOutsideFinding(f: Finding, fp: string): string {
+function renderBodyFinding(finding: Finding, fingerprintValue: string): string {
   return [
-    `${SEVERITY_EMOJI[f.severity]} **${f.title}** — \`${f.file}:${f.startLine}\` (\`${f.category}\`, confidence ${(f.confidence * 100).toFixed(0)}%)`,
-    ``,
-    f.explanation,
-    ``,
-    `**How it fails:** ${f.failurePath}`,
-    ``,
-    marker(fp),
+    `${SEVERITY_EMOJI[finding.severity]} **${finding.title}** — \`${finding.file}:${finding.startLine}\` (\`${finding.category}\`, confidence ${(finding.confidence * 100).toFixed(0)}%)`,
+    "",
+    finding.explanation,
+    "",
+    `**How it fails:** ${finding.failurePath}`,
+    "",
+    marker(fingerprintValue),
   ].join("\n");
 }
 
-/**
- * Posts findings as a single PR review. Pipeline: confidence threshold ->
- * dedupe against fingerprints already on the PR (inline comments AND review
- * bodies) -> per-PR cap -> partition into inline (on-diff) vs body
- * (outside-diff, the skill's affected-surface findings).
- */
 export async function postReview(
   result: EngineResult,
   target: PostTarget,
   config: PeregrineConfig,
   token: string,
   diffText: string,
-): Promise<{ posted: number; skipped: number }> {
-  const octokit = new Octokit({ auth: token });
-  const { owner, repo, prNumber } = target;
-
-  // Fingerprints already posted on this PR — inline comments and review bodies.
-  const existing = new Set<string>();
-  const reviewComments = await octokit.paginate(octokit.pulls.listReviewComments, {
-    owner,
-    repo,
-    pull_number: prNumber,
-    per_page: 100,
-  });
-  for (const c of reviewComments) {
-    for (const fp of extractFingerprints(c.body ?? "")) existing.add(fp);
+  suppliedClient?: GitHubReviewClient,
+): Promise<PostResult> {
+  const client =
+    suppliedClient ?? (new Octokit({ auth: token }) as unknown as GitHubReviewClient);
+  const common = { owner: target.owner, repo: target.repo, pull_number: target.prNumber };
+  const current = await client.pulls.get(common);
+  const reviewedHead = result.reviewedHeadRef ?? target.headSha;
+  if (current.data.head.sha !== target.headSha || current.data.head.sha !== reviewedHead) {
+    return { posted: 0, skipped: result.findings.length, superseded: true, bodyFallback: false };
   }
-  const reviews = await octokit.paginate(octokit.pulls.listReviews, {
-    owner,
-    repo,
-    pull_number: prNumber,
+
+  const existing = new Set<string>();
+  const reviewComments = await client.paginate(client.pulls.listReviewComments, {
+    ...common,
     per_page: 100,
   });
-  for (const r of reviews) {
-    for (const fp of extractFingerprints(r.body ?? "")) existing.add(fp);
+  const reviews = await client.paginate(client.pulls.listReviews, { ...common, per_page: 100 });
+  for (const item of [...reviewComments, ...reviews]) {
+    for (const existingFingerprint of extractFingerprints(item.body ?? "")) {
+      existing.add(existingFingerprint);
+    }
   }
 
   const eligible = result.findings
-    .filter((f) => f.confidence >= config.limits.minConfidenceToPost)
-    .map((f) => ({ f, fp: f.fingerprint ?? fingerprint(f) }))
+    .filter(
+      (finding) =>
+        finding.disposition === "fix-in-pr" &&
+        finding.confidence >= config.limits.minConfidenceToPost,
+    )
+    .map((finding) => ({ finding, fp: finding.fingerprint ?? fingerprint(finding) }))
     .filter(({ fp }) => !existing.has(fp))
-    .sort((a, b) => b.f.confidence - a.f.confidence)
+    .sort((left, right) => right.finding.confidence - left.finding.confidence)
     .slice(0, config.limits.maxCommentsPerPr);
-
   const skipped = result.findings.length - eligible.length;
-  if (eligible.length === 0) return { posted: 0, skipped };
-
-  const commentable = commentableLines(diffText);
-  const inline = eligible.filter(({ f }) => isInline(f, commentable));
-  const outside = eligible.filter(({ f }) => !isInline(f, commentable));
-
-  const bodyParts = [summaryBody(result, eligible.length, skipped)];
-  if (outside.length > 0) {
-    bodyParts.push(
-      ``,
-      `#### Findings outside this diff (affected surfaces)`,
-      ``,
-      ...outside.map(({ f, fp }) => renderOutsideFinding(f, fp) + "\n\n---"),
-    );
+  if (eligible.length === 0) {
+    return { posted: 0, skipped, superseded: false, bodyFallback: false };
   }
 
-  await octokit.pulls.createReview({
-    owner,
-    repo,
-    pull_number: prNumber,
+  const commentable = commentableLines(diffText);
+  const inline = eligible.filter(({ finding }) => isInline(finding, commentable));
+  const outside = eligible.filter(({ finding }) => !isInline(finding, commentable));
+  const body = buildBody(result, outside, eligible.length, skipped, "Findings outside this diff");
+  const request = {
+    ...common,
     commit_id: target.headSha,
     event: "COMMENT",
-    body: bodyParts.join("\n"),
-    comments: inline.map(({ f, fp }) => ({
-      path: f.file,
-      line: f.endLine,
-      start_line: f.startLine < f.endLine ? f.startLine : undefined,
-      side: "RIGHT" as const,
-      body: renderComment(f, fp),
+    body,
+    comments: inline.map(({ finding, fp }) => ({
+      path: finding.file,
+      line: finding.endLine,
+      start_line: finding.startLine < finding.endLine ? finding.startLine : undefined,
+      start_side: finding.startLine < finding.endLine ? "RIGHT" : undefined,
+      side: "RIGHT",
+      body: renderInline(finding, fp),
     })),
-  });
+  };
 
-  return { posted: eligible.length, skipped };
+  try {
+    await client.pulls.createReview(request);
+    return { posted: eligible.length, skipped, superseded: false, bodyFallback: false };
+  } catch (error) {
+    const status =
+      error && typeof error === "object" && "status" in error
+        ? Number((error as { status?: unknown }).status)
+        : undefined;
+    if (status !== 422 || inline.length === 0) throw error;
+    await client.pulls.createReview({
+      ...common,
+      commit_id: target.headSha,
+      event: "COMMENT",
+      body: buildBody(result, eligible, eligible.length, skipped, "Findings"),
+      comments: [],
+    });
+    return { posted: eligible.length, skipped, superseded: false, bodyFallback: true };
+  }
 }
 
-function summaryBody(result: EngineResult, posted: number, skipped: number): string {
-  const cost = result.usage.costUsd !== undefined ? `$${result.usage.costUsd.toFixed(3)}` : "n/a";
-  return [
-    `### 🦅 peregrine-bugbot`,
-    ``,
+function buildBody(
+  result: EngineResult,
+  findings: Array<{ finding: Finding; fp: string }>,
+  posted: number,
+  skipped: number,
+  heading: string,
+): string {
+  const cost = result.usage.costUsd === undefined ? "n/a" : `$${result.usage.costUsd.toFixed(3)}`;
+  const sections = [
+    "### 🦅 peregrine-bugbot",
+    "",
     `${posted} finding(s) posted${skipped > 0 ? `, ${skipped} below threshold/duplicate` : ""}.`,
-    ``,
-    `<sub>engine: \`${result.engine}\` (${result.modelConfig}) · cost: ${cost} · ${(result.durationMs / 1000).toFixed(0)}s · mention \`@peregrine-bugbot\` for a deep re-review</sub>`,
-  ].join("\n");
+    "",
+    `<sub>runner: \`${result.engine}\` (${result.modelConfig}) · cost: ${cost} · ${(result.durationMs / 1000).toFixed(0)}s · reviewed: \`${result.reviewedHeadRef ?? "unknown"}\`</sub>`,
+  ];
+  if (findings.length > 0) {
+    sections.push(
+      "",
+      `#### ${heading}`,
+      "",
+      findings.map(({ finding, fp }) => renderBodyFinding(finding, fp)).join("\n\n---\n\n"),
+    );
+  }
+  return sections.join("\n");
 }

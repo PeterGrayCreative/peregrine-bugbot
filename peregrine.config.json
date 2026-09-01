@@ -1,16 +1,23 @@
 {
-  "engine": "claude",
-  "engines": {
+  "schemaVersion": 1,
+  "runner": "claude",
+  "runners": {
     "claude": {
-      "tier1Model": "claude-haiku-4-5",
-      "tier2Model": "claude-sonnet-5",
+      "breadthModel": "claude-haiku-4-5",
+      "investigationModel": "claude-sonnet-5",
+      "investigationEffort": "high",
       "skillName": "invariant-first-pr-review",
       "maxTurns": 40,
+      "maxBudgetUsd": 3,
       "timeoutMs": 900000
     },
-    "openai": {
-      "tier1Model": "TODO",
-      "tier2Model": "TODO"
+    "codex": {
+      "breadthModel": "gpt-5.6-luna",
+      "investigationModel": "gpt-5.6-sol",
+      "breadthEffort": "low",
+      "investigationEffort": "high",
+      "skillName": "invariant-first-pr-review",
+      "timeoutMs": 900000
     },
     "mock": {}
   },

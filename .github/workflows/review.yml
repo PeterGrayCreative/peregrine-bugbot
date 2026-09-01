@@ -1,97 +1,149 @@
-# Automatic review on ready-for-review PRs (and pushes to them).
-# Also callable from other repos as a reusable workflow — that's the org
-# rollout path: repos add a 5-line caller workflow, this stays the source of truth.
-#
-# Secrets:
-#   ANTHROPIC_API_KEY         required — use a dedicated workspace with a spend limit
-#   PEREGRINE_CHECKOUT_TOKEN  fine-grained PAT with contents:read on
-#                             peregrine-bugbot + bugbot-codex-skills. Falls back
-#                             to GITHUB_TOKEN, which only works if those repos
-#                             are public or are this repo.
 name: peregrine-review
 
 on:
   pull_request:
     types: [opened, ready_for_review, synchronize]
   workflow_call:
+    inputs:
+      runner:
+        description: Review runner (claude or codex)
+        required: false
+        type: string
+        default: claude
     secrets:
       ANTHROPIC_API_KEY:
-        required: true
+        required: false
+      OPENAI_API_KEY:
+        required: false
       PEREGRINE_CHECKOUT_TOKEN:
         required: false
 
-# Re-pushes cancel the superseded run — you pay for at most one review per
-# push burst, and only the latest code gets reviewed.
 concurrency:
   group: peregrine-${{ github.repository }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-  pull-requests: write
+env:
+  PEREGRINE_RUNNER: ${{ inputs.runner || vars.PEREGRINE_RUNNER || 'claude' }}
 
 jobs:
-  review:
-    # Drafts are skipped. Fork PRs are skipped explicitly: they don't get
-    # secrets, so the run could only fail — and PR content is untrusted input.
+  analyze:
     if: >
       !github.event.pull_request.draft &&
       github.event.pull_request.head.repo.fork == false
+    permissions:
+      contents: read
+      pull-requests: read
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
-      # Review the actual head, not the synthetic merge commit: comment
-      # anchors (head SHA) and the skill's merge-base...head contract must
-      # agree on what was reviewed.
-      - name: Checkout PR head
+      - name: Checkout the immutable PR head
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+          path: target
 
-      - name: Checkout peregrine-bugbot
+      - name: Checkout Peregrine
         uses: actions/checkout@v4
         with:
           repository: PeterGrayCreative/peregrine-bugbot
-          path: .peregrine-bot
+          path: peregrine
           token: ${{ secrets.PEREGRINE_CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
 
-      - name: Setup (skill, ripgrep, Node, CLI, deps)
-        uses: ./.peregrine-bot/.github/actions/setup-peregrine
+      - name: Setup selected runner
+        uses: ./peregrine/.github/actions/setup-peregrine
         with:
-          checkout-token: ${{ secrets.PEREGRINE_CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
+          runner: ${{ env.PEREGRINE_RUNNER }}
 
-      # Diff goes to RUNNER_TEMP: the skill requires the working tree stay
-      # untouched, and .peregrine/ inside the repo is its profile namespace.
-      - name: Generate diff (size gate + inline-comment partition)
+      - name: Generate the review diff outside both checkouts
         run: |
-          git fetch -q origin "${{ github.event.pull_request.base.ref }}"
-          git diff "origin/${{ github.event.pull_request.base.ref }}...HEAD" > "$RUNNER_TEMP/pr.diff"
+          git -C target fetch -q origin '${{ github.event.pull_request.base.ref }}'
+          git -C target diff 'origin/${{ github.event.pull_request.base.ref }}...${{ github.event.pull_request.head.sha }}' > "$RUNNER_TEMP/pr.diff"
 
-      - name: Run review
+      - name: Run Claude analysis
+        if: env.PEREGRINE_RUNNER == 'claude'
+        working-directory: peregrine
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          npm run review -- \
+            --runner claude \
+            --repo "$GITHUB_WORKSPACE/target" \
+            --diff "$RUNNER_TEMP/pr.diff" \
+            --base 'origin/${{ github.event.pull_request.base.ref }}' \
+            --head '${{ github.event.pull_request.head.sha }}' \
+            --output "$RUNNER_TEMP/result.json"
+
+      - name: Run Codex analysis
+        if: env.PEREGRINE_RUNNER == 'codex'
+        working-directory: peregrine
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          npm run review -- \
+            --runner codex \
+            --repo "$GITHUB_WORKSPACE/target" \
+            --diff "$RUNNER_TEMP/pr.diff" \
+            --base 'origin/${{ github.event.pull_request.base.ref }}' \
+            --head '${{ github.event.pull_request.head.sha }}' \
+            --output "$RUNNER_TEMP/result.json"
+
+      - name: Upload the validated review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: peregrine-review-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/result.json
+            ${{ runner.temp }}/pr.diff
+          if-no-files-found: error
+          retention-days: 1
+
+  post:
+    needs: analyze
+    permissions:
+      contents: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout Peregrine
+        uses: actions/checkout@v4
+        with:
+          repository: PeterGrayCreative/peregrine-bugbot
+          path: peregrine
+          token: ${{ secrets.PEREGRINE_CHECKOUT_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Setup posting process without a model runner
+        uses: ./peregrine/.github/actions/setup-peregrine
+        with:
+          install-runner: "false"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: peregrine-review-${{ github.run_id }}
+          path: artifact
+
+      - name: Revalidate and post against the current head
+        working-directory: peregrine
+        env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_OWNER: ${{ github.repository_owner }}
           PR_REPO: ${{ github.event.repository.name }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          PR_TITLE: ${{ github.event.pull_request.title }}
-          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          cd .peregrine-bot
-          npx tsx src/index.ts review \
-            --repo "$GITHUB_WORKSPACE" \
-            --diff "$RUNNER_TEMP/pr.diff" \
-            --base "origin/${{ github.event.pull_request.base.ref }}" \
-            --head "${{ github.event.pull_request.head.sha }}" \
-            --config peregrine.config.json \
-            --post
+          npm run post -- \
+            --result "$GITHUB_WORKSPACE/artifact/result.json" \
+            --diff "$GITHUB_WORKSPACE/artifact/pr.diff"
 
-      - name: Cost summary
+      - name: Job summary
         if: always()
         run: |
-          if [ -f .peregrine-bot/.peregrine/result.json ]; then
-            echo "### peregrine-bugbot run" >> "$GITHUB_STEP_SUMMARY"
-            node -e "const r=require('./.peregrine-bot/.peregrine/result.json'); console.log(\`- findings: \${r.findings.length}\n- cost: \$\${r.usage.costUsd ?? '?'}\n- duration: \${Math.round(r.durationMs/1000)}s\n- config: \${r.modelConfig}\`)" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f artifact/result.json ]; then
+            echo '### peregrine-bugbot run' >> "$GITHUB_STEP_SUMMARY"
+            jq -r '"- status: \(.status)\n- runner: \(.engine)\n- findings: \(.findings | length)\n- cost: $\(.usage.costUsd // "n/a")\n- duration: \((.durationMs / 1000) | floor)s\n- config: \(.modelConfig)"' artifact/result.json >> "$GITHUB_STEP_SUMMARY"
           fi

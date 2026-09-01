@@ -9,7 +9,7 @@ import type { GradedRun } from "../src/types.js";
  * a cost-vs-recall scatter: pick the knee of that curve, not the leaderboard
  * winner.
  */
-interface ConfigStats {
+export interface ConfigStats {
   config: string;
   runs: number;
   recallMean: number;
@@ -21,7 +21,7 @@ interface ConfigStats {
   validFindingsPerDollar: number | null;
 }
 
-export async function buildReport(runsDir?: string): Promise<void> {
+export async function buildReport(runsDir?: string): Promise<ConfigStats[]> {
   const dir = resolve(runsDir ?? latestRunsDir());
   const graded = readdirSync(dir)
     .filter((f) => f.endsWith(".graded.json"))
@@ -79,6 +79,7 @@ export async function buildReport(runsDir?: string): Promise<void> {
     );
   }
   console.log(`\nReport: ${join(dir, "benchmark.html")}`);
+  return stats;
 }
 
 const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);

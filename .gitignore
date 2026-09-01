@@ -4,3 +4,6 @@ eval/runs/
 .env
 *.log
 .peregrine/
+.DS_Store
+._*
+__MACOSX/

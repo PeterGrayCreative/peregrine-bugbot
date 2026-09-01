@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Review Profile"
+  short_description: "Teach invariant-first review your codebase"
+  default_prompt: "Use $build-review-profile to scan this repository and generate .peregrine/profile.md for invariant-first-pr-review."

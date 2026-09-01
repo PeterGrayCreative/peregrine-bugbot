@@ -38,20 +38,19 @@ npm run eval:report -- --runs eval/runs/<dir>   # benchmark.json + benchmark.htm
 
 - Repeats (default 3, `eval/matrix.config.json`) are not optional — runs are
   stochastic, and single-run model comparisons will mislead you.
-- Grading uses a blind LLM judge (`JUDGE=llm`, model via
-  `PEREGRINE_JUDGE_MODEL`); it never sees which config produced a finding.
-  `JUDGE=exact` is a free line-overlap fallback for smoke tests and CI.
+- `JUDGE=exact` is the default, free line-overlap judge for smoke tests and CI.
+  Use `JUDGE=claude` or `JUDGE=codex` for semantic root-cause grading; the
+  judge never sees which runner produced a finding. Override its model with
+  `PEREGRINE_JUDGE_MODEL` or the provider-specific
+  `PEREGRINE_CLAUDE_JUDGE_MODEL` / `PEREGRINE_CODEX_JUDGE_MODEL`.
 - Spot-check ~20% of judge decisions by hand early on to calibrate it.
 
 ## Zero-cost smoke test
 
 ```bash
 # mock engine "detects" lines marked `// BUG:` — verifies the whole pipeline
-JUDGE=exact npm run eval:matrix && JUDGE=exact npm run eval:grade && npm run eval:report
+npm run eval:smoke
 ```
-
-(Trim `matrix.config.json` to just the mock config first, or let the claude
-configs fail without an API key and grade what completed.)
 
 ## Comparing against commercial bots
 

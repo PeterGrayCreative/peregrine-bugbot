@@ -1,6 +1,6 @@
 import type { EngineResult, ReviewContext } from "../types.js";
 import { claudeEngine } from "./claude.js";
-import { openaiEngine } from "./openai.js";
+import { codexEngine } from "./codex.js";
 import { mockEngine } from "./mock.js";
 
 export interface Engine {
@@ -10,7 +10,7 @@ export interface Engine {
 
 const registry: Record<string, Engine> = {
   claude: claudeEngine,
-  openai: openaiEngine,
+  codex: codexEngine,
   mock: mockEngine,
 };
 

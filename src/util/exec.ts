@@ -11,13 +11,13 @@ export interface ExecResult {
 export function exec(
   cmd: string,
   args: string[],
-  opts: { cwd?: string; env?: Record<string, string>; timeoutMs?: number } = {},
+  opts: { cwd?: string; env?: Record<string, string>; timeoutMs?: number; stdin?: string } = {},
 ): Promise<ExecResult> {
   return new Promise((res) => {
     const child = spawn(cmd, args, {
       cwd: opts.cwd,
       env: { ...process.env, ...opts.env },
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: [opts.stdin === undefined ? "ignore" : "pipe", "pipe", "pipe"],
     });
     let stdout = "";
     let stderr = "";
@@ -36,8 +36,9 @@ export function exec(
         }, opts.timeoutMs)
       : undefined;
 
-    child.stdout.on("data", (d) => (stdout += d));
-    child.stderr.on("data", (d) => (stderr += d));
+    child.stdout?.on("data", (d) => (stdout += d));
+    child.stderr?.on("data", (d) => (stderr += d));
+    if (opts.stdin !== undefined) child.stdin?.end(opts.stdin);
     // Spawn failures (e.g. command not found) emit "error" and may never emit
     // "close" — without this handler the promise would hang forever. code -1
     // signals "process never ran"; callers treat any nonzero code as failure.

@@ -3,22 +3,22 @@
   "configs": [
     {
       "name": "mock",
-      "engine": "mock"
+      "runner": "mock"
     },
     {
       "name": "haiku45-to-sonnet5",
-      "engine": "claude",
-      "overrides": { "tier1Model": "claude-haiku-4-5", "tier2Model": "claude-sonnet-5" }
+      "runner": "claude",
+      "overrides": { "breadthModel": "claude-haiku-4-5", "investigationModel": "claude-sonnet-5" }
     },
     {
       "name": "haiku45-to-opus48",
-      "engine": "claude",
-      "overrides": { "tier1Model": "claude-haiku-4-5", "tier2Model": "claude-opus-4-8" }
+      "runner": "claude",
+      "overrides": { "breadthModel": "claude-haiku-4-5", "investigationModel": "claude-opus-4-8" }
     },
     {
-      "name": "haiku45-only",
-      "engine": "claude",
-      "overrides": { "tier1Model": "claude-haiku-4-5", "tier2Model": "claude-haiku-4-5" }
+      "name": "luna-to-sol",
+      "runner": "codex",
+      "overrides": { "breadthModel": "gpt-5.6-luna", "investigationModel": "gpt-5.6-sol" }
     }
   ]
 }

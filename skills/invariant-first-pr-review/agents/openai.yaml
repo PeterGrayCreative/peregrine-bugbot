@@ -1,0 +1,4 @@
+interface:
+  display_name: "Invariant-First PR Review"
+  short_description: "Route fast breadth, verify systemic PR defects"
+  default_prompt: "Use $invariant-first-pr-review with a fast breadth pass when available, then strong-model verification against the ticket."

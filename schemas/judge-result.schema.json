@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Peregrine Judge Output",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "same_root_cause": { "type": "boolean" }
+  },
+  "required": ["same_root_cause"]
+}
