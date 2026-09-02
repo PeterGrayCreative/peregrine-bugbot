@@ -111,6 +111,8 @@ test("Claude runner performs isolated, measurable breadth and investigation stag
   assert.ok(calls.every((call) => !call.args.includes("--agents")));
   assert.equal(calls[0]?.args[calls[0].args.indexOf("--model") + 1], context().config.runners.claude.breadthModel);
   assert.equal(calls[1]?.args[calls[1].args.indexOf("--model") + 1], context().config.runners.claude.investigationModel);
+  assert.match(calls[0]?.args[calls[0].args.indexOf("-p") + 1] ?? "", /^PEREGRINE_ROLE: breadth-worker/);
+  assert.match(calls[1]?.args[calls[1].args.indexOf("-p") + 1] ?? "", /^PEREGRINE_ROLE: investigation-worker/);
   const schema = JSON.parse(calls[0]!.args[calls[0]!.args.indexOf("--json-schema") + 1]!) as Record<string, unknown>;
   assert.equal(schema.$schema, undefined);
   assert.equal(reviewed.engine, "claude");
@@ -151,6 +153,8 @@ test("Codex runner performs isolated breadth and investigation stages", async ()
   assert.equal(calls.length, 2);
   assert.ok(calls.every((call) => call.args.includes("read-only")));
   assert.ok(calls.every((call) => call.args.includes("--ignore-user-config")));
+  assert.match(calls[0]?.stdin ?? "", /^PEREGRINE_ROLE: breadth-worker/);
+  assert.match(calls[1]?.stdin ?? "", /^PEREGRINE_ROLE: investigation-worker/);
   assert.match(calls[1]?.stdin ?? "", /breadth pass produced the ledger/);
   assert.equal(reviewed.engine, "codex");
   assert.equal(reviewed.findings.length, 1);

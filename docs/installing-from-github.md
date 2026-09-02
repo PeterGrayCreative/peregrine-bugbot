@@ -123,7 +123,9 @@ claude plugin install peregrine@peregrine --scope user \
 ```
 
 These are installed defaults. A `peregrineRouting` block in an individual
-request takes precedence. See [configuration](configuration.md#interactive-plugin-routing).
+request takes precedence. Both forms launch a breadth subagent and then a
+distinct investigation subagent; the calling agent remains coordinator-only.
+See [configuration](configuration.md#interactive-plugin-routing).
 
 ## Install in both hosts
 

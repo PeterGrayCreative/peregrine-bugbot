@@ -2,9 +2,13 @@
 
 Use this packet when delegating the comment-blind candidate sweep to a fast, low-cost model.
 
+The delegated prompt must begin with `PEREGRINE_ROLE: breadth-worker`. The
+worker must execute this packet directly and must not invoke Peregrine, spawn
+agents, or become the investigation worker.
+
 ## Model routing
 
-Choose the host's fastest low-cost model that can read code and use the required read-only tools. On Claude Code or Cowork, delegate to a subagent on the fast tier (e.g., Haiku or Sonnet). On Codex or another orchestrator, use the configured fast tier when model selection is exposed (for example, Terra or Luna where those aliases exist). Do not fail or invent a model identifier when none is available; fall back to the current model and preserve the two-pass workflow.
+Choose the configured breadth model and effort when the host exposes child routing. On Claude Code or Cowork, delegate to a subagent on that tier. On Codex or another orchestrator, use the configured worker route (for example, Luna where that alias exists). Do not invent a model identifier when none is available; launch a separate breadth worker on the closest available or current model and report the fallback.
 
 The worker discovers candidates only. The strong investigator owns verification, severity, disposition, consolidation, and review wording.
 

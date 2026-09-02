@@ -7,3 +7,8 @@ Local authentication is handled by Claude Code. CI passes `ANTHROPIC_API_KEY` on
 Claude plugins use `.claude-plugin/plugin.json` at the plugin root and keep skills in the root `skills/` directory. Plugin-installed skills may appear under a plugin namespace; shared skill text therefore does not hard-code an invocation namespace. See the [Claude plugin reference](https://code.claude.com/docs/en/plugins-reference).
 
 The marketplace in `.claude-plugin/marketplace.json` distributes this repository root. `npm run plugin:update:claude` refreshes the GitHub marketplace and plugin cache from `main`; releases bump the plugin manifest version so Claude recognizes the new cached release. Claude plugin `userConfig` stores persistent breadth and investigation model/effort preferences; an explicit `peregrineRouting` block in the current request takes precedence. See [configuration](../configuration.md) and [installing from GitHub](../installing-from-github.md).
+
+Interactive Claude calls use the same topology as the runner: the calling agent
+coordinates, one subagent performs breadth, and a second subagent performs
+investigation after receiving the frozen ledger. Missing routing overrides do
+not collapse investigation back into the calling agent.

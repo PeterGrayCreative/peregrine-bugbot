@@ -65,7 +65,20 @@ peregrineRouting:
 
 Explicit invocation values win over installed defaults. Peregrine records both
 the requested and actual route; if the host cannot select the requested model,
-it uses the current model for that stage and reports the fallback.
+it uses the closest available or current model for that worker and reports the
+fallback.
+
+The execution topology is not another YAML option. With custom YAML or defaults,
+the calling agent coordinates exactly two sequential workers:
+
+1. a breadth worker on the resolved breadth route;
+2. an investigation worker on the resolved investigation route, launched after
+   the breadth ledger is frozen.
+
+The parent agent does not count as either worker and must not silently take over
+investigation. If model override is unavailable, both workers still launch on
+available models. If worker creation itself is unavailable, the interactive
+review stops and directs the user to the automated runner.
 
 Claude also supports persistent plugin options. Configure them during install:
 

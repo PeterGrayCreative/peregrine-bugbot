@@ -89,6 +89,33 @@ test("the checked-in config and both plugin manifests are internally consistent"
   assert.match(invocationRouting, /gpt-5\.6-sol` \/ `high/);
   assert.match(invocationRouting, /claude-sonnet-5` \/ `high/);
   assert.match(invocationRouting, /claude-opus-5` \/ `high/);
+
+  const skill = readFileSync(
+    resolve("skills/invariant-first-pr-review/SKILL.md"),
+    "utf8",
+  );
+  const orchestration = readFileSync(
+    resolve("skills/invariant-first-pr-review/references/two-worker-orchestration.md"),
+    "utf8",
+  );
+  const breadthPacket = readFileSync(
+    resolve("skills/invariant-first-pr-review/references/breadth-worker-packet.md"),
+    "utf8",
+  );
+  const investigationPacket = readFileSync(
+    resolve("skills/invariant-first-pr-review/references/investigation-worker-packet.md"),
+    "utf8",
+  );
+  assert.match(skill, /calling agent coordinates and renders; it does not perform either review pass/);
+  assert.match(orchestration, /one breadth worker/);
+  assert.match(orchestration, /one new investigation worker/);
+  assert.match(orchestration, /Do not run them in parallel/);
+  assert.match(orchestration, /must not replace[\s\S]*investigation itself/);
+  assert.match(orchestration, /If the host cannot launch two separate workers at all, stop/);
+  assert.match(breadthPacket, /PEREGRINE_ROLE: breadth-worker/);
+  assert.match(investigationPacket, /PEREGRINE_ROLE: investigation-worker/);
+  assert.match(breadthPacket, /must not invoke Peregrine, spawn/);
+  assert.match(investigationPacket, /Do not invoke Peregrine,[\s\S]*spawn agents/);
 });
 
 test("Claude and Codex marketplaces resolve Peregrine from the canonical repository", () => {

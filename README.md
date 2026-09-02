@@ -86,6 +86,12 @@ pass:
 | Codex | `gpt-5.6-luna` / `high` | `gpt-5.6-sol` / `high` |
 | Claude | `claude-sonnet-5` / `high` | `claude-opus-5` / `high` |
 
+For interactive plugin calls, the calling agent is coordinator-only. It launches
+one breadth worker, waits for the frozen ledger, then launches a distinct
+investigation worker. This two-worker topology is the default whether or not a
+`peregrineRouting` block is supplied; the YAML changes the worker models and
+effort, not who performs the work.
+
 Override one interactive review by including a routing block with the plugin or
 skill call:
 
@@ -111,7 +117,9 @@ claude plugin install peregrine@peregrine --scope user \
 
 Codex does not currently expose persistent plugin `userConfig`, so use the
 per-review block there. Peregrine records requested and actual routing and
-reports a fallback when the host cannot select the requested model.
+reports a fallback when the host cannot select the requested model. A routing
+fallback still uses two separate workers. If the host cannot create two workers,
+Peregrine stops instead of silently investigating in the calling agent.
 
 For the automated Node runner and GitHub Actions, edit
 `peregrine.config.json` or use the provider-scoped environment variables.
