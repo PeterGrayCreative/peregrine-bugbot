@@ -6,6 +6,8 @@ Pull request: [#9](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/9)
 
 Validated head: `f58cd55bd298b51eef973179913299dfe99eabf2`
 
+Merged as: `cfe9282158c9663f7bd0f40bf85a92f83076af2a`
+
 Scope: Safety PR 2A.1 image bootstrap only, based on
 `8f667f4fa1c59e679efa08ce2776ab1908c3a4d2`. This slice does not execute a live
 provider, publish or pull an image, add a container runtime to the evaluator, or
@@ -71,3 +73,9 @@ which must be treated as rejected. A separate Safety PR
 2A.2 can then pin the released digest and implement runtime mounts, secret
 allowlisting, timeout cleanup, network-status accounting, and fake-provider
 execution. Until that follow-up passes, live evaluation stays disabled.
+
+## Remote proof
+
+PR #9 was ready and mergeable at head `2d8732099a5b9fa0bac1a6411576a751eb9cc152`. Repository `check` and the actual unprivileged `Build and smoke without credentials` job passed. The manual `Publish immutable candidate` job correctly skipped on the pull-request event. The optional Peregrine `analyze` job could not authenticate because `ANTHROPIC_API_KEY` was empty, and `post` skipped. The PR had no conversation comments, reviews, or review threads.
+
+The PR merged on 2026-09-03 as `cfe9282158c9663f7bd0f40bf85a92f83076af2a`. No image was published by the pull request.
