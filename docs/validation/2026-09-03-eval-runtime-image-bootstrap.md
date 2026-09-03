@@ -68,9 +68,15 @@ After this bootstrap merges, an authorized maintainer must manually dispatch the
 publication job from `main`, independently verify the resulting GHCR attestation
 and amd64/arm64 digest, and explicitly approve that digest. Publication precedes
 the two platform probes so that they exercise the actual registry artifact; a
-probe failure may leave a commit-tagged but deliberately unattested candidate,
-which must be treated as rejected. A separate Safety PR
-2A.2 can then pin the released digest and implement runtime mounts, secret
+probe failure may leave a commit-tagged but deliberately unattested candidate
+that must be treated as rejected. Each probe removes its exact-digest platform
+pull after the container exits
+so Docker's classic image store cannot collide when the next architecture pulls
+the same multi-platform index digest. The subsequent probe still uses
+`--pull always`, so cleanup cannot substitute cached content for registry proof.
+Cleanup is fail-closed: Docker launch and exit status are checked, then an exact
+digest inspection must report that the image is absent before the probe passes.
+A separate Safety PR 2A.2 can then pin the released digest and implement runtime mounts, secret
 allowlisting, timeout cleanup, network-status accounting, and fake-provider
 execution. Until that follow-up passes, live evaluation stays disabled.
 

@@ -206,6 +206,7 @@ export interface RunFailureTelemetry {
   usage: Usage;
   durationMs: number;
   stages: StageTelemetry[];
+  containmentCleanupFailed?: true;
 }
 
 export type FailureTelemetryUnavailableReason = "not-observed" | "secret-redacted";
@@ -229,6 +230,12 @@ export interface ReviewContext {
 export interface EvaluationIsolation {
   providerHome: string;
   providerAssetsRoot: string;
+  /** Attempt-owned host directory exposed to the provider only as /output. */
+  providerOutputRoot?: string;
+  /** Outer containment boundary for provider CLI execution. */
+  runProvider?: ProviderExec;
+  /** Race-resistant reader for hostile files created by a contained provider. */
+  readProviderOutput?: (path: string) => string;
   validatePrompt(input: {
     prompt: string;
     stage: "breadth" | "investigation";
@@ -236,6 +243,24 @@ export interface EvaluationIsolation {
     untrustedModelText?: string;
   }): void;
 }
+
+export type ProviderExec = (
+  cmd: string,
+  args: string[],
+  opts?: {
+    cwd?: string;
+    env?: Record<string, string>;
+    inheritEnv?: boolean;
+    timeoutMs?: number;
+    stdin?: string;
+  },
+) => Promise<{
+  stdout: string;
+  stderr: string;
+  code: number | null;
+  timedOut: boolean;
+  cleanupErrors?: readonly string[];
+}>;
 
 export interface ClaudeRunnerConfig {
   breadthModel: string;
@@ -385,10 +410,14 @@ export interface RunAttempt {
 }
 
 export interface MatrixRunManifest {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   createdAt: string;
   expectedAttempts: RunAttempt[];
   providerNetworkIsolation: Partial<Record<RunnerName, NetworkIsolationCapability>>;
+  /** Present only in schema 2 containment-aware manifests. */
+  providerFilesystemIsolation?: Partial<Record<RunnerName, NetworkIsolationCapability>>;
+  /** Immutable runtime identity; null only when every attempt uses the mock runner. */
+  runtimeImage?: { reference: string; pullPolicy: "never" } | null;
 }
 
 export interface NetworkIsolationCapability {

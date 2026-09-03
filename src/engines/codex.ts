@@ -58,10 +58,10 @@ async function runStage(args: {
         "--ignore-rules",
         "--config", "project_doc_max_bytes=0",
         "--config", "project_doc_fallback_filenames=[]",
-        "--config", `projects.${JSON.stringify(args.ctx.repoPath)}.trust_level="untrusted"`,
+        "--config", `projects.${JSON.stringify(args.ctx.evaluationIsolation.runProvider ? "/workspace" : args.ctx.repoPath)}.trust_level="untrusted"`,
       ]
     : [];
-  const result = await args.run(
+  const result = await (args.ctx.evaluationIsolation?.runProvider ?? args.run)(
     "codex",
     [
       "exec",
@@ -113,19 +113,43 @@ async function runStage(args: {
     completed: false,
   });
   if (result.timedOut) {
-    throw codexStageFailure("timeout", `codex ${args.model} stage timed out after ${args.timeoutMs}ms`, stageTelemetry());
+    throw codexStageFailure("timeout", withCleanupDetail(
+      `codex ${args.model} stage timed out after ${args.timeoutMs}ms`, result,
+    ), stageTelemetry());
   }
   if (result.code !== 0) {
     throw codexStageFailure(
       "provider",
-      `codex ${args.model} stage exited with code ${result.code}: ${safeDiagnostic(result.stderr || result.stdout, 500)}`,
+      withCleanupDetail(
+        `codex ${args.model} stage exited with code ${result.code}: ${safeDiagnostic(result.stderr || result.stdout, 500)}`,
+        result,
+      ),
       stageTelemetry(),
+    );
+  }
+
+  // Containment cleanup is part of the security boundary. Check it before
+  // touching the provider-owned output path so a missing, malformed, or
+  // racing output cannot mask a surviving container. Usage derived from the
+  // already-captured stdout event stream remains safe to retain.
+  if (result.cleanupErrors?.length) {
+    throw new RunFailureError(
+      "configuration",
+      `codex ${args.model} stage completed but containment cleanup failed: ${result.cleanupErrors.join("; ")}`,
+      {
+        telemetry: {
+          ...singleCodexStageFailure(args.model, stageTelemetry()),
+          containmentCleanupFailed: true,
+        },
+      },
     );
   }
 
   let output: string;
   try {
-    output = readFileSync(args.output, "utf8");
+    output = args.ctx.evaluationIsolation?.readProviderOutput
+      ? args.ctx.evaluationIsolation.readProviderOutput(args.output)
+      : readFileSync(args.output, "utf8");
   } catch {
     throw new RunFailureError(
       "parse",
@@ -142,6 +166,12 @@ async function runStage(args: {
     model: args.model,
     promptSha256: sha256(args.prompt),
   };
+}
+
+function withCleanupDetail(message: string, result: ExecResult): string {
+  return result.cleanupErrors?.length
+    ? `${message}; containment cleanup failed: ${result.cleanupErrors.join("; ")}`
+    : message;
 }
 
 function parseCodexEvents(stdout: string): { events: unknown[]; malformedEventLines: number } {
@@ -170,7 +200,8 @@ function codexStage(stage: StageTelemetry["stage"], result: CodexStageResult, co
 }
 
 function wrapCodexFailure(error: unknown, modelConfig: string, started: number, completed: StageTelemetry[]): RunFailureError {
-  const partial = runFailureTelemetry(error)?.stages ?? [];
+  const failureTelemetry = runFailureTelemetry(error);
+  const partial = failureTelemetry?.stages ?? [];
   const stages = [...completed, ...partial];
   const telemetry = stages.length === 0
     ? undefined
@@ -182,6 +213,9 @@ function wrapCodexFailure(error: unknown, modelConfig: string, started: number, 
           : combineUsage(...stages.map((stage) => stage.usage)),
         durationMs: Date.now() - started,
         stages,
+        ...(failureTelemetry?.containmentCleanupFailed
+          ? { containmentCleanupFailed: true as const }
+          : {}),
       };
   return new RunFailureError(runFailureKind(error), error instanceof Error ? error.message : "codex review failed", {
     cause: error,
@@ -199,11 +233,14 @@ export function createCodexEngine(
       const cfg = ctx.config.runners.codex;
       const started = Date.now();
       const skillDir = ctx.evaluationIsolation
-        ? join(ctx.evaluationIsolation.providerAssetsRoot, "skills", cfg.skillName)
+        ? join(ctx.evaluationIsolation.runProvider ? "/opt/peregrine" : ctx.evaluationIsolation.providerAssetsRoot, "skills", cfg.skillName)
         : bundledSkillDir(cfg.skillName);
       const manifest = await prepareReviewManifest(ctx, cfg.skillName);
       const modelConfig = `${cfg.breadthModel}/${cfg.breadthEffort}->${cfg.investigationModel}/${cfg.investigationEffort}`;
-      const outDir = mkdtempSync(join(tmpdir(), "peregrine-codex-"));
+      const outDir = mkdtempSync(join(
+        ctx.evaluationIsolation?.providerOutputRoot ?? tmpdir(),
+        "peregrine-codex-",
+      ));
       let outcome: EngineResult | undefined;
       let failure: unknown;
       let observedStages: StageTelemetry[] = [];
