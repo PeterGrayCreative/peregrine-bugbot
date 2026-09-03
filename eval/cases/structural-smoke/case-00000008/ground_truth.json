@@ -2,10 +2,16 @@
   "bugs": [
     {
       "id": "zero-fallback-1",
+      "lane": "logic-correctness",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "medium",
       "file": "src/discount.ts",
       "startLine": 2,
       "endLine": 2,
-      "description": "Using logical OR replaces an explicitly configured zero discount with the default discount."
+      "description": "Using logical OR replaces an explicitly configured zero discount with the default discount.",
+      "reachablePreconditions": "The configured discount is exactly zero.",
+      "observableImpact": "The default discount is applied instead of the explicit zero value.",
+      "provenance": "Curated structural-smoke fixture."
     }
   ]
 }

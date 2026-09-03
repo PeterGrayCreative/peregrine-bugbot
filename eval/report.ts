@@ -12,6 +12,7 @@ import type {
 } from "../src/types.js";
 import type { RunFailureKind } from "../src/core/run-failure.js";
 import { readCaseGroundTruth } from "./case-truth.js";
+import { assertGradingEvidenceConsistent, assertMatchReuseMatchesRootCause } from "./grading-contract.js";
 import { formatUsd } from "../src/core/telemetry.js";
 import {
   assertGradedMatchesRun,
@@ -48,6 +49,8 @@ type CompatibilityGradedRun = Omit<GradedRun, "attemptDurationMs"> & { attemptDu
 type ReportCostSource = "provider" | "estimated" | "mixed" | "mock" | "unknown" | null;
 type ScoredRun = Pick<GradedRun, "outcome" | "matches" | "falsePositiveIndexes"> & {
   attemptDurationMs?: number;
+  caseName?: string;
+  grading?: GradedRun["grading"];
 };
 type FailedRun = {
   outcome: Extract<RunRecord["outcome"], { status: "failed" }>;
@@ -70,6 +73,15 @@ export interface ConfigStats {
   failureRatesByKind: Partial<Record<RunFailureKind, number>>;
   recallMean: number | null;
   recallStd: number | null;
+  rootCauseRecallMean: number | null;
+  adjudicatedPrecision: number | null;
+  falseDiscoveryRate: number | null;
+  confirmedNewFindings: number | null;
+  unsupportedFindings: number | null;
+  unresolvedFindings: number | null;
+  blockingFalsePositivesOnCleanCases: number | null;
+  missesByStage: Record<string, number>;
+  costPerReliablyFoundRootCause: number | null;
   failureInclusiveRecallMean: number | null;
   fpPerCaseMean: number | null;
   costPerCaseMean: number | null;
@@ -168,8 +180,21 @@ function buildReportLocked(dir: string, casesDir: string): ConfigStats[] {
       }
     }
     if (currentManifest) {
-      if (hasExperimentMetadata) requireValidExperimentGradingSeal(dir, currentManifest);
-      stats = trackedStats(dir, casesDir, currentManifest);
+      const gradingEvidence = hasExperimentMetadata
+        ? requireValidExperimentGradingSeal(dir, currentManifest).evidence
+        : undefined;
+      let expectedJudge: NonNullable<GradedRun["grading"]>["judge"] | undefined;
+      if (gradingEvidence) {
+        const declaredJudge = gradingEvidence.experiment.protocol.judge;
+        expectedJudge = declaredJudge.kind === "exact"
+          ? { kind: "exact", version: "exact-v1" }
+          : {
+              kind: declaredJudge.kind,
+              version: "semantic-v1",
+              configSha256: gradingEvidence.experiment.hashes.judgeSha256,
+            };
+      }
+      stats = trackedStats(dir, casesDir, currentManifest, expectedJudge);
     }
   } else {
     if (hasExperimentMetadata) {
@@ -248,6 +273,14 @@ function preTelemetryStats(
         groundTruthIds.some((id) => !Object.prototype.hasOwnProperty.call(graded.matches, id))) {
         throw new Error(`${gradedPath}.matches does not match ground truth bug IDs`);
       }
+      assertMatchReuseMatchesRootCause(readCaseGroundTruth(casesDir, attempt.caseName), graded.matches, gradedPath);
+      if (graded.grading) assertGradingEvidenceConsistent(
+        readCaseGroundTruth(casesDir, attempt.caseName),
+        graded.outcome.result.findings,
+        graded.matches,
+        graded.grading,
+        gradedPath,
+      );
       completed.push(graded);
     }
     return calculateStats({
@@ -266,7 +299,12 @@ function preTelemetryStats(
   });
 }
 
-function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest): ConfigStats[] {
+function trackedStats(
+  dir: string,
+  casesDir: string,
+  manifest: MatrixRunManifest,
+  expectedJudge?: NonNullable<GradedRun["grading"]>["judge"],
+): ConfigStats[] {
   preflightTrackedRunSet(dir, casesDir, manifest);
   const byConfig = groupBy(manifest.expectedAttempts, (attempt) =>
     `${attempt.configName}\0${attempt.corpus}\0${attempt.runner}`);
@@ -317,6 +355,15 @@ function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest
         groundTruthIds.some((id) => !Object.prototype.hasOwnProperty.call(graded.matches, id))) {
         throw new Error(`${gradedPath}.matches does not match ground truth bug IDs`);
       }
+      assertMatchReuseMatchesRootCause(readCaseGroundTruth(casesDir, attempt.caseName), graded.matches, gradedPath);
+      if (graded.grading) assertGradingEvidenceConsistent(
+        readCaseGroundTruth(casesDir, attempt.caseName),
+        graded.outcome.result.findings,
+        graded.matches,
+        graded.grading,
+        gradedPath,
+        expectedJudge,
+      );
       completed.push(graded);
       const recall = runRecall(graded);
       if (recall !== null) failureInclusiveRecalls.push(recall);
@@ -643,6 +690,27 @@ export function calculateStats(args: {
   const behavioral = args.benchmarkKind === "behavioral";
   const recalls = args.completed.map(runRecall).filter((value): value is number => value !== null);
   const fps = args.completed.map((run) => run.falsePositiveIndexes.length);
+  const rootCauseRecalls = args.completed.flatMap((run) => {
+    const groups = run.grading ? Object.values(run.grading.rootCauseMatches) : [];
+    return groups.length === 0 ? [] : [groups.filter(Boolean).length / groups.length];
+  });
+  const unmatched = args.completed.flatMap((run) => run.grading?.unmatchedFindings ?? []);
+  const confirmedNewFindings = unmatched.filter((item) => item.classification === "confirmed-new").length;
+  const unsupportedFindings = unmatched.filter((item) => item.classification === "unsupported").length;
+  const unresolvedFindings = unmatched.filter((item) => item.classification === "unresolved").length;
+  const blockingFalsePositivesOnCleanCases = args.completed.reduce((sum, run) =>
+    Object.keys(run.matches).length === 0
+      ? sum + (run.grading?.unmatchedFindings.filter((item) => item.classification === "unsupported").length ?? 0)
+      : sum,
+  0);
+  const matchedFindings = args.completed.reduce((sum, run) => sum + new Set(
+    Object.values(run.matches).filter((value): value is number => value !== null),
+  ).size, 0);
+  const precisionDenominator = matchedFindings + confirmedNewFindings + unsupportedFindings;
+  const missesByStage = countBy(
+    args.completed.flatMap((run) => run.grading ? Object.values(run.grading.missStages).filter((stage) => stage !== "none") : []),
+    (stage) => stage,
+  );
   const costs = args.completed
     .map((run) => run.outcome.result.usage.costUsd)
     .filter((cost): cost is number => typeof cost === "number" && Number.isFinite(cost) && cost >= 0);
@@ -717,6 +785,7 @@ export function calculateStats(args: {
   const estimatedPricing = args.completed.map((run) => run.outcome.result.usage.pricing);
   const hasComparableCost = hasCompleteCost && totalCost !== null && costSource !== "mixed" && costSource !== "unknown" &&
     (costSource !== "estimated" || comparableEstimatedPricing(estimatedPricing));
+  const reliableRootCauses = reliablyFoundRootCauses(args.completed);
   const incurred = incurredCosts(args.completed, args.failed);
 
   const failuresByKind = countBy(args.failed, (failure) => failure.outcome.failureKind);
@@ -742,6 +811,22 @@ export function calculateStats(args: {
     failureRatesByKind,
     recallMean: behavioral && recalls.length > 0 ? mean(recalls) : null,
     recallStd: behavioral && recalls.length > 0 ? std(recalls) : null,
+    rootCauseRecallMean: behavioral && rootCauseRecalls.length === args.completed.length && rootCauseRecalls.length > 0 ? mean(rootCauseRecalls) : null,
+    adjudicatedPrecision: behavioral && isTrackedComplete && unresolvedFindings === 0 && precisionDenominator > 0
+      ? (matchedFindings + confirmedNewFindings) / precisionDenominator
+      : null,
+    falseDiscoveryRate: behavioral && isTrackedComplete && unresolvedFindings === 0 && precisionDenominator > 0
+      ? unsupportedFindings / precisionDenominator
+      : null,
+    confirmedNewFindings: behavioral ? confirmedNewFindings : null,
+    unsupportedFindings: behavioral ? unsupportedFindings : null,
+    unresolvedFindings: behavioral ? unresolvedFindings : null,
+    blockingFalsePositivesOnCleanCases: behavioral ? blockingFalsePositivesOnCleanCases : null,
+    missesByStage: behavioral ? missesByStage : {},
+    costPerReliablyFoundRootCause: behavioral && hasComparableCost && totalCost !== null &&
+      reliableRootCauses !== null && reliableRootCauses > 0
+      ? totalCost / reliableRootCauses
+      : null,
     failureInclusiveRecallMean:
       !behavioral || args.failureInclusiveRecalls === null || args.failureInclusiveRecalls.length === 0
         ? null
@@ -872,14 +957,16 @@ export function renderBenchmarkHtml(stats: ConfigStats[]): string {
     .join("\n");
   const rows = stats.map((item) => `<tr><td>${item.config}</td><td>${item.benchmarkKind}${item.corpus ? ` (${item.corpus})` : ""}</td><td>${formatCompletion(item)}</td>
 <td>${formatPercent(item.recallMean)} ± ${formatPercent(item.recallStd)}</td><td>${formatPercent(item.failureInclusiveRecallMean)}</td>
+<td>${formatPercent(item.rootCauseRecallMean)}</td><td>${formatPercent(item.adjudicatedPrecision)}</td><td>${formatPercent(item.falseDiscoveryRate)}</td><td>${formatAdjudication(item)}</td><td>${item.blockingFalsePositivesOnCleanCases ?? "n/a"}</td><td>${formatMisses(item)}</td>
 <td>${formatNumber(item.fpPerCaseMean, 1)}</td><td>${formatCost(item.costPerCaseMean, item.costPerCaseStd, item.costSource)}</td>
+<td>${item.costPerReliablyFoundRootCause === null ? "n/a" : formatUsd(item.costPerReliablyFoundRootCause)}</td>
 <td>${formatDuration(item)}</td><td>${formatUsage(item)}</td><td>${formatAvailability(item)}</td><td>${formatIncurredCost(item)}</td><td>${formatStructural(item)}</td><td>${formatStages(item)}</td></tr>`).join("\n");
 
   return `<!doctype html><html><head><meta charset="utf-8"><title>peregrine-bugbot benchmark</title>
 <style>body{font-family:system-ui;margin:2rem;max-width:1050px}table{border-collapse:collapse;width:100%}
 td,th{border:1px solid #ddd;padding:6px 10px;text-align:left;font-size:14px}th{background:#f5f5f5}</style></head>
 <body><h1>peregrine-bugbot · evaluation report</h1>
-<table><tr><th>config</th><th>class</th><th>completion</th><th>conditional recall</th><th>failure-inclusive recall</th><th>FP/case</th><th>cost/case</th><th>time mean / median / p95</th><th>usage / work</th><th>telemetry observed</th><th>incurred cost lower bound</th><th>structural markers</th><th>breadth / investigation</th></tr>
+<table><tr><th>config</th><th>class</th><th>completion</th><th>bug-instance recall</th><th>failure-inclusive recall</th><th>root-cause recall</th><th>precision</th><th>FDR</th><th>adjudication</th><th>blocking clean FP</th><th>miss stages</th><th>FP/case</th><th>cost/case</th><th>cost/reliably found root cause</th><th>time mean / median / p95</th><th>usage / work</th><th>telemetry observed</th><th>incurred cost lower bound</th><th>structural markers</th><th>breadth / investigation</th></tr>
 ${rows}</table>
 <h2>Behavioral cost vs recall — pick the knee</h2>
 <svg viewBox="0 0 600 360" width="600" style="border:1px solid #eee">
@@ -912,6 +999,32 @@ function formatPercent(value: number | null): string {
 
 function formatNumber(value: number | null, digits: number): string {
   return value === null ? "n/a" : value.toFixed(digits);
+}
+
+function formatAdjudication(stats: ConfigStats): string {
+  if (stats.confirmedNewFindings === null) return "n/a";
+  return `${stats.confirmedNewFindings} confirmed new; ${stats.unsupportedFindings} unsupported; ${stats.unresolvedFindings} unresolved`;
+}
+
+function formatMisses(stats: ConfigStats): string {
+  const entries = Object.entries(stats.missesByStage);
+  return entries.length === 0 ? "none" : entries.map(([stage, count]) => `${stage}: ${count}`).join("; ");
+}
+
+function reliablyFoundRootCauses(runs: readonly ScoredRun[]): number | null {
+  if (runs.length === 0 || runs.some((run) => !run.caseName || !run.grading)) return null;
+  const groups = new Map<string, boolean[]>();
+  for (const run of runs) {
+    for (const [group, found] of Object.entries(run.grading!.rootCauseMatches)) {
+      const key = `${run.caseName}\u0000${group}`;
+      groups.set(key, [...(groups.get(key) ?? []), found]);
+    }
+  }
+  const observations = [...groups.values()];
+  // "Reliably found" is a preregistered 2-of-3 measure, not a generic
+  // majority label. With any other repeat shape the denominator is unknown.
+  if (observations.some((items) => items.length !== 3)) return null;
+  return observations.filter((items) => items.filter(Boolean).length >= 2).length;
 }
 
 function formatCost(

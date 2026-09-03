@@ -2,10 +2,16 @@
   "bugs": [
     {
       "id": "stale-closure-1",
+      "lane": "frontend-state",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
       "file": "src/Profile.tsx",
       "startLine": 6,
       "endLine": 8,
-      "description": "The empty useCallback dependency list captures the initial accountId, so saving after switching accounts writes the profile to the previous account."
+      "description": "The empty useCallback dependency list captures the initial accountId, so saving after switching accounts writes the profile to the previous account.",
+      "reachablePreconditions": "The active account changes after the callback is created.",
+      "observableImpact": "A profile save writes to the previously active account.",
+      "provenance": "Curated structural-smoke fixture."
     }
   ]
 }

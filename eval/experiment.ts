@@ -427,7 +427,7 @@ function parseExperimentProtocolValue(
   }
   if (providerCalls === "allow" && !allowProviderCallsForCeilingEvaluation) {
     throw new Error(
-      `${source}: providerCalls=allow is deferred until PR 4 provides an immutable, contained, and budgeted semantic-judge ledger`,
+      `${source}: providerCalls=allow remains disabled until contained review and judge execution with separate budgets are integrated`,
     );
   }
 

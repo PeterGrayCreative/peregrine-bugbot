@@ -32,3 +32,7 @@ export const CORE_LANE_CATEGORY: Readonly<Record<CoreLaneId, FindingCategory>> =
   "frontend-state": "frontend-state",
   "boundaries-pagination": "boundaries",
 };
+
+export function isCoreLaneId(value: unknown): value is CoreLaneId {
+  return typeof value === "string" && (CORE_LANE_IDS as readonly string[]).includes(value);
+}

@@ -351,7 +351,7 @@ test("provider-enabled protocols fail before creating a run directory", async ()
   try {
     await assert.rejects(
       () => runMatrix(matrixPath, runsRoot, { casesDir, runtimeMetadataFor }),
-      /providerCalls=allow is deferred until PR 4/,
+      /providerCalls=allow remains disabled until contained review and judge execution/,
     );
     assert.equal(existsSync(runsRoot), false);
   } finally {
@@ -714,7 +714,7 @@ test("a denied experiment cannot invoke its semantic judge", async () => {
     });
     await assert.rejects(
       () => gradeRuns(runsDir, casesDir),
-      /semantic grading is deferred until PR 4/,
+      /semantic grading remains disabled until contained judge execution/,
     );
   } finally {
     rmSync(root, { recursive: true, force: true });

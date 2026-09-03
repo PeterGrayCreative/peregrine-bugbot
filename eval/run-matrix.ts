@@ -862,7 +862,9 @@ async function prepareExperimentManifest(
     await effectiveProfileSnapshotSha256(input.cases);
   const judgeSha256 = canonicalJsonSha256({
     implementation: hashPathTree(join(root, "eval", "grade.ts")),
-    schema: hashPathTree(join(root, "schemas", "judge-result.schema.json")),
+    gradingContract: hashPathTree(join(root, "eval", "grading-contract.ts")),
+    resultSchema: hashPathTree(join(root, "schemas", "judge-result.schema.json")),
+    evidenceSchema: hashPathTree(join(root, "schemas", "grading-evidence.schema.json")),
     judge: input.protocol.judge,
   });
   const configurationSha256 = canonicalJsonSha256({

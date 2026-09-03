@@ -1,4 +1,5 @@
 import type { RunFailureKind } from "./core/run-failure.js";
+import type { CoreLaneId } from "./core/lanes.js";
 
 export const RUNNER_NAMES = ["claude", "codex", "mock"] as const;
 export type RunnerName = (typeof RUNNER_NAMES)[number];
@@ -306,10 +307,17 @@ export interface PeregrineConfig {
 
 export interface GroundTruthBug {
   id: string;
+  rootCauseGroup?: string;
+  lane: CoreLaneId;
+  expectedDisposition: FindingDisposition;
+  expectedSeverity: Severity;
   file: string;
   startLine: number;
   endLine: number;
   description: string;
+  reachablePreconditions: string;
+  observableImpact: string;
+  provenance: string;
 }
 
 export interface GroundTruth {
@@ -518,4 +526,36 @@ export interface GradedRun extends Omit<RunRecord, "outcome"> {
   outcome: Extract<RunOutcome, { status: "completed" }>;
   matches: Record<string, number | null>;
   falsePositiveIndexes: number[];
+  grading?: GradingEvidence;
+}
+
+export type MissStage = "none" | "routing" | "breadth" | "investigation" | "budget" | "presentation" | "infrastructure";
+export type UnmatchedFindingClassification = "confirmed-new" | "unsupported" | "unresolved";
+
+export interface SemanticJudgeDecision {
+  decisionId: string;
+  judgeVersion: "semantic-v1";
+  /** Immutable fingerprint of the complete judge implementation/config snapshot. */
+  judgeConfigSha256: string;
+  bugId: string;
+  /** Stable occurrence in the ordered review result, even for byte-identical findings. */
+  findingIndex: number;
+  findingEvidenceSha256: string;
+  verdict: "same-root-cause" | "different-root-cause" | "failed";
+  failureKind?: "timeout" | "provider" | "parse" | "configuration" | "unknown";
+}
+
+export interface UnmatchedFindingAdjudication {
+  findingIndex: number;
+  findingEvidenceSha256: string;
+  classification: UnmatchedFindingClassification;
+}
+
+export interface GradingEvidence {
+  version: "root-cause-v1";
+  judge: { kind: ExperimentJudge; version: string; configSha256?: string };
+  decisions: SemanticJudgeDecision[];
+  rootCauseMatches: Record<string, boolean>;
+  missStages: Record<string, MissStage>;
+  unmatchedFindings: UnmatchedFindingAdjudication[];
 }

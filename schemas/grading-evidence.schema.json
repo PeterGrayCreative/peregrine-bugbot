@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Peregrine Root Cause Grading Evidence",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": { "const": "root-cause-v1" },
+    "judge": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["exact", "claude", "codex"] },
+        "version": { "type": "string", "minLength": 1 },
+        "configSha256": { "$ref": "#/$defs/sha256" }
+      },
+      "required": ["kind", "version"],
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "exact" } }, "required": ["kind"] },
+          "then": {
+            "properties": { "version": { "const": "exact-v1" } },
+            "not": { "required": ["configSha256"] }
+          },
+          "else": {
+            "properties": { "version": { "const": "semantic-v1" } },
+            "required": ["configSha256"]
+          }
+        }
+      ]
+    },
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "decisionId": { "$ref": "#/$defs/sha256" },
+          "judgeVersion": { "const": "semantic-v1" },
+          "judgeConfigSha256": { "$ref": "#/$defs/sha256" },
+          "bugId": { "type": "string", "minLength": 1 },
+          "findingIndex": { "type": "integer", "minimum": 0 },
+          "findingEvidenceSha256": { "$ref": "#/$defs/sha256" },
+          "verdict": { "enum": ["same-root-cause", "different-root-cause", "failed"] },
+          "failureKind": { "enum": ["timeout", "provider", "parse", "configuration", "unknown"] }
+        },
+        "required": ["decisionId", "judgeVersion", "judgeConfigSha256", "bugId", "findingIndex", "findingEvidenceSha256", "verdict"]
+      }
+    },
+    "rootCauseMatches": { "type": "object", "additionalProperties": { "type": "boolean" } },
+    "missStages": { "type": "object", "additionalProperties": { "enum": ["none", "routing", "breadth", "investigation", "budget", "presentation", "infrastructure"] } },
+    "unmatchedFindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "findingIndex": { "type": "integer", "minimum": 0 },
+          "findingEvidenceSha256": { "$ref": "#/$defs/sha256" },
+          "classification": { "enum": ["confirmed-new", "unsupported", "unresolved"] }
+        },
+        "required": ["findingIndex", "findingEvidenceSha256", "classification"]
+      }
+    }
+  },
+  "required": ["version", "judge", "decisions", "rootCauseMatches", "missStages", "unmatchedFindings"],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}
