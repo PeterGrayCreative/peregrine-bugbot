@@ -89,15 +89,17 @@ checkout, sanitized assets, required output, and provider endpoint.
 Admin-managed provider policy may still apply and is not claimed as disabled;
 the host sandbox must prevent it from reaching curator-only material.
 
-Live provider processes also receive an attempt-specific `HOME`, XDG paths,
-temporary directory, and disabled global/system Git configuration. Ambient
-SSH agents, Git credential helpers, CLI home directories, proxy URLs, and
-unrelated credentials are not forwarded. Consequently, file-backed user-login
-sessions are not a supported eval authentication path: provide the selected
-provider's explicit environment credential (`ANTHROPIC_API_KEY` or
-`OPENAI_API_KEY`). Claude's eval-only `--bare` mode intentionally disables
-OAuth and keychain authentication. A missing credential is a
-recorded provider failure, never a reason to fall back to the user's home.
+Once an external containment backend permits provider launch, the live process
+receives an attempt-specific `HOME`, XDG paths, temporary directory, and
+disabled global/system Git configuration. Ambient SSH agents, Git credential
+helpers, CLI home directories, proxy URLs, and unrelated credentials are not
+forwarded. File-backed user-login sessions are therefore not a supported eval
+authentication path: provide the selected provider's explicit environment
+credential (`ANTHROPIC_API_KEY` or `OPENAI_API_KEY`). Claude's eval-only
+`--bare` mode intentionally disables OAuth and keychain authentication. At
+that point, a missing credential is recorded as a provider failure; without
+external containment, the earlier isolation check remains a configuration
+failure and no provider process starts.
 
 The isolation slice constructs the minimum fresh two-commit fixture needed by
 the existing review flow. Plan PR 3 remains responsible for exact textual diff
