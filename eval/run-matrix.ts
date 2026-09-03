@@ -165,6 +165,7 @@ export async function runMatrix(
   const protocol = matrix.experiment === undefined
     ? undefined
     : parseExperimentProtocol(matrix.experiment, `${resolvedConfigPath}.experiment`);
+  validateMatrixCaseIdsForMode(matrix, protocol?.mode);
   if (!protocol && !options.allowLegacyTestConfig) {
     throw new Error("matrix config requires an experiment protocol");
   }
@@ -175,7 +176,8 @@ export async function runMatrix(
 
   const casesDir = resolve(options.casesDir ?? "eval/cases");
   const requireBehavioralAdmission = protocol?.mode === "screening" || protocol?.mode === "checkpoint";
-  const cases = discoverCases(casesDir, matrix.corpora, requireBehavioralAdmission);
+  const discoveredCases = discoverCases(casesDir);
+  let cases = selectMatrixCases(discoveredCases, matrix.corpora, matrix.caseIds);
   const behavioralCases = cases.filter((item) => item.corpus !== "structural-smoke");
   if (protocol?.mode === "screening" && behavioralCases.length === 0) {
     throw new Error("screening requires at least one selected behavioral case");
@@ -192,6 +194,10 @@ export async function runMatrix(
       behavioralCases.map((item) => item.caseDir),
       casesDir,
     );
+    cases = cases.map((item) => item.corpus === "structural-smoke" ? item : ({
+      ...item,
+      expectedBugCount: readBehavioralCaseAdmission(item.caseDir, loadCaseSpec(item.caseDir)).truth.bugs.length,
+    }));
   }
   if (protocol?.mode === "checkpoint") {
     const readiness = await (await import("./validate-corpus.js")).validateBehavioralCorpus(casesDir);
@@ -1383,8 +1389,6 @@ export function loadCaseSpec(caseDir: string): CaseSpec {
 
 function discoverCases(
   casesDir: string,
-  corpora?: CaseCorpus[],
-  requireBehavioralAdmission = false,
 ): DiscoveredCase[] {
   const discovered: DiscoveredCase[] = [];
   const allCaseIds = new Set<string>();
@@ -1424,23 +1428,42 @@ function discoverCases(
           `case directory ${relative(casesDir, path)} is missing case.json; refusing to construct a partial manifest`,
         );
       }
-      if (!corpora || corpora.includes(corpus)) {
-        let expectedBugCount = readExpectedBugCount(path);
-        if (requireBehavioralAdmission && corpus !== "structural-smoke") {
-          const spec = loadCaseSpec(path);
-          expectedBugCount = readBehavioralCaseAdmission(path, spec).truth.bugs.length;
-        }
-        discovered.push({
-          caseName: relative(casesDir, path),
-          caseDir: path,
-          corpus,
-          expectedBugCount,
-        });
-      }
+      discovered.push({
+        caseName: relative(casesDir, path),
+        caseDir: path,
+        corpus,
+        expectedBugCount: readExpectedBugCount(path),
+      });
     }
   }
   discovered.sort((left, right) => left.caseName.localeCompare(right.caseName));
   return discovered;
+}
+
+function selectMatrixCases(
+  discovered: readonly DiscoveredCase[],
+  corpora?: readonly CaseCorpus[],
+  caseIds?: readonly string[],
+): DiscoveredCase[] {
+  const selectedCorpora = corpora === undefined ? undefined : new Set(corpora);
+  const corpusCases = selectedCorpora === undefined
+    ? [...discovered]
+    : discovered.filter((item) => selectedCorpora.has(item.corpus as CaseCorpus));
+  if (caseIds === undefined) return corpusCases;
+
+  const byId = new Map(discovered.map((item) => [caseIdFromDirectory(item.caseDir), item]));
+  for (const caseId of caseIds) {
+    const item = byId.get(caseId);
+    if (!item) throw new Error(`screening caseIds references unknown case ${caseId}`);
+    if (selectedCorpora !== undefined && !selectedCorpora.has(item.corpus as CaseCorpus)) {
+      throw new Error(`screening case ${caseId} is not in the selected corpora`);
+    }
+    if (item.corpus !== "development") {
+      throw new Error(`screening caseIds may select only development cases; ${caseId} is in ${item.corpus}`);
+    }
+  }
+  const selectedIds = new Set(caseIds);
+  return corpusCases.filter((item) => selectedIds.has(caseIdFromDirectory(item.caseDir)));
 }
 
 function readExpectedBugCount(caseDir: string): number | null {
@@ -1462,7 +1485,7 @@ function validateMatrixCaseSelection(matrix: MatrixConfig): void {
   if (!Array.isArray(matrix.configs)) throw new Error("matrix configs must be an array");
   if (matrix.experiment !== undefined) {
     const unexpected = Object.keys(matrix).filter(
-      (key) => !["repeats", "configs", "corpora", "experiment"].includes(key),
+      (key) => !["repeats", "configs", "corpora", "caseIds", "experiment"].includes(key),
     );
     if (unexpected.length > 0) {
       throw new Error(`matrix config contains unsupported field ${unexpected[0]}`);
@@ -1487,16 +1510,38 @@ function validateMatrixCaseSelection(matrix: MatrixConfig): void {
   if (new Set(configNames).size !== configNames.length) {
     throw new Error("matrix config names must not contain duplicates");
   }
-  if (matrix.corpora === undefined) return;
-  if (
-    !Array.isArray(matrix.corpora) ||
-    matrix.corpora.length === 0 ||
-    matrix.corpora.some((corpus) => !CASE_CORPORA.includes(corpus))
-  ) {
-    throw new Error(`matrix corpora must be a non-empty subset of: ${CASE_CORPORA.join(", ")}`);
+  if (matrix.corpora !== undefined) {
+    if (
+      !Array.isArray(matrix.corpora) ||
+      matrix.corpora.length === 0 ||
+      matrix.corpora.some((corpus) => !CASE_CORPORA.includes(corpus))
+    ) {
+      throw new Error(`matrix corpora must be a non-empty subset of: ${CASE_CORPORA.join(", ")}`);
+    }
+    if (new Set(matrix.corpora).size !== matrix.corpora.length) {
+      throw new Error("matrix corpora must not contain duplicates");
+    }
   }
-  if (new Set(matrix.corpora).size !== matrix.corpora.length) {
-    throw new Error("matrix corpora must not contain duplicates");
+  if (matrix.caseIds !== undefined) {
+    if (!Array.isArray(matrix.caseIds) || matrix.caseIds.length === 0) {
+      throw new Error("matrix caseIds must be a non-empty array");
+    }
+    for (const [index, caseId] of matrix.caseIds.entries()) {
+      if (typeof caseId !== "string") throw new Error(`matrix caseIds[${index}] must be an opaque case id`);
+      assertOpaqueCaseId(caseId, `matrix caseIds[${index}]`);
+    }
+    if (new Set(matrix.caseIds).size !== matrix.caseIds.length) {
+      throw new Error("matrix caseIds must not contain duplicates");
+    }
+  }
+}
+
+function validateMatrixCaseIdsForMode(
+  matrix: MatrixConfig,
+  mode: MatrixConfig["experiment"]["mode"] | undefined,
+): void {
+  if (matrix.caseIds !== undefined && mode !== "screening") {
+    throw new Error("matrix caseIds are supported only for screening experiments");
   }
 }
 
