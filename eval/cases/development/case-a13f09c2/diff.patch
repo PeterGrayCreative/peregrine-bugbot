@@ -1,0 +1,12 @@
+diff --git a/src/load-account.ts b/src/load-account.ts
+index 87165a1b2a6746c9e3e7fa8b71a758af3a42137c..f901c97c4f52600c5e24df35bee30874069e7d7f 100644
+--- a/src/load-account.ts
++++ b/src/load-account.ts
+@@ -13,6 +13,6 @@ export async function loadAccount(client: AccountClient, logger: Logger, id: str
+     return await client.get(id);
+   } catch (error) {
+     logger.warn("account lookup failed", { accountId: id, error });
+-    throw error;
++    return { id, status: "closed" };
+   }
+ }

@@ -1,0 +1,18 @@
+diff --git a/src/read-settings.ts b/src/read-settings.ts
+index 34e1d2c80d347db97046ee6f48bf06e793bdeb43..55b64982c5101a369a556ba1e240541280425172 100644
+--- a/src/read-settings.ts
++++ b/src/read-settings.ts
+@@ -1,6 +1,11 @@
+ export interface SettingsClient { read(): Promise<{ theme: string }> }
+ export interface Logger { warn(message: string, error: unknown): void }
+ 
+-export function readSettings(client: SettingsClient, _logger: Logger): Promise<{ theme: string }> {
+-  return client.read();
++export async function readSettings(client: SettingsClient, logger: Logger): Promise<{ theme: string }> {
++  try {
++    return await client.read();
++  } catch (error) {
++    logger.warn("settings read failed", error);
++    throw error;
++  }
+ }

@@ -1,0 +1,13 @@
+diff --git a/src/preferences-state.ts b/src/preferences-state.ts
+index 91300432917722cc599c197e135b845690f1ccf8..da2dce935c7e94341fc5954e2cd25c631e16be5f 100644
+--- a/src/preferences-state.ts
++++ b/src/preferences-state.ts
+@@ -10,7 +10,6 @@ export function applySuccess(state: PreferenceState, mutationId: number): Prefer
+   return { ...state, confirmedValue: state.value, saving: false };
+ }
+ 
+-export function applyFailure(state: PreferenceState, mutationId: number): PreferenceState {
+-  if (mutationId !== state.mutationId) return state;
++export function applyFailure(state: PreferenceState, _mutationId: number): PreferenceState {
+   return { ...state, value: state.previousValue, saving: false };
+ }

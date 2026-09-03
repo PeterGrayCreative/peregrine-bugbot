@@ -1,0 +1,11 @@
+diff --git a/src/search-state.ts b/src/search-state.ts
+index 149cad95c613ed121c8bdb123355ace305f479fe..5531139b14440fe7a9b349f27267a5d9c15dcd49 100644
+--- a/src/search-state.ts
++++ b/src/search-state.ts
+@@ -8,6 +8,5 @@ export function beginSearch(state: SearchState, requestId: number): SearchState
+ }
+ 
+ export function acceptSearchResponse(state: SearchState, response: SearchResponse): SearchState {
+-  if (response.requestId !== state.latestRequestId) return state;
+   return { ...state, items: response.items, loading: false };
+ }

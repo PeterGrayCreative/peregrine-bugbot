@@ -1,0 +1,10 @@
+diff --git a/src/display-name.ts b/src/display-name.ts
+index 67a84c3454118ec30aa85466391baa4e063529f6..8c1c26fbe29d018960e13244c3c023b0c59d6d52 100644
+--- a/src/display-name.ts
++++ b/src/display-name.ts
+@@ -1,4 +1,3 @@
+ export function displayNameForInput(value: string | null, cachedValue: string): string {
+-  if (value === null) return cachedValue;
+-  return value;
++  return value ?? cachedValue;
+ }

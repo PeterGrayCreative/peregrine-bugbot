@@ -1,0 +1,12 @@
+diff --git a/src/list-orders.ts b/src/list-orders.ts
+index fbcd0dde9e92098f679ceb974493e2fc677708e7..068b533cd9cca08dbe966ea11c02ddbf3e2dbe71 100644
+--- a/src/list-orders.ts
++++ b/src/list-orders.ts
+@@ -3,6 +3,6 @@ export interface OrderStore { list(input: { limit: number; offset: number }): Pr
+ 
+ export async function listOrders(store: OrderStore, page: number, limit: number): Promise<Order[]> {
+   if (!Number.isInteger(page) || page < 1) throw new RangeError("page must be positive");
+-  const offset = (page - 1) * limit;
++  const offset = page * limit;
+   return store.list({ limit, offset });
+ }
