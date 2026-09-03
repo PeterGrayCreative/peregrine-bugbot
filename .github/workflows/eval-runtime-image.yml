@@ -1,0 +1,137 @@
+name: eval-runtime-image
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/eval-runtime-image.yml
+      - container/eval-runtime/**
+      - eval/README.md
+      - tests/eval-runtime-image.test.ts
+      - package.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_NAME: ghcr.io/petergraycreative/peregrine-eval-runtime
+
+jobs:
+  verify:
+    name: Build and smoke without credentials
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build the local-only test image
+        run: |
+          docker build \
+            --build-arg "SOURCE_REVISION=${GITHUB_SHA}" \
+            --file container/eval-runtime/Dockerfile \
+            --tag peregrine-eval-runtime:pr \
+            container/eval-runtime
+
+      - name: Exercise the zero-credential containment probe
+        shell: bash
+        run: |
+          set -euo pipefail
+          smoke_root="$(mktemp -d)"
+          container_name="peregrine-image-smoke-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-1}"
+          cleanup() {
+            docker rm --force "$container_name" >/dev/null 2>&1 || true
+            rm -rf "$smoke_root"
+          }
+          trap cleanup EXIT
+
+          checkout_dir="${smoke_root}/checkout"
+          assets_dir="${smoke_root}/assets"
+          output_dir="${smoke_root}/output"
+          host_sentinel="${smoke_root}/host-only.txt"
+          mkdir -p "$checkout_dir" "$assets_dir" "$output_dir"
+          printf '%s\n' checkout > "${checkout_dir}/.peregrine-containment-marker"
+          printf '%s\n' assets > "${assets_dir}/.peregrine-containment-marker"
+          printf '%s\n' 'must remain on the host' > "$host_sentinel"
+          chmod 0555 "$checkout_dir" "$assets_dir"
+          chmod 0777 "$output_dir"
+
+          docker run --rm \
+            --name "$container_name" \
+            --network none \
+            --read-only \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --pids-limit 256 \
+            --user 1000:1000 \
+            --env "PEREGRINE_PROBE_HOST_SENTINEL=${host_sentinel}" \
+            --mount "type=bind,source=${checkout_dir},target=/workspace,readonly" \
+            --mount "type=bind,source=${assets_dir},target=/opt/peregrine,readonly" \
+            --mount "type=bind,source=${output_dir},target=/output" \
+            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m,uid=1000,gid=1000 \
+            --tmpfs /home/peregrine:rw,noexec,nosuid,nodev,size=64m,uid=1000,gid=1000 \
+            peregrine-eval-runtime:pr
+
+          test -f "${output_dir}/containment-probe.json"
+          grep --fixed-strings '"status": "passed"' "${output_dir}/containment-probe.json"
+
+  publish:
+    name: Publish immutable candidate
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install pinned emulation support
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+        with:
+          image: docker.io/tonistiigi/binfmt@sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0
+          platforms: arm64
+
+      - name: Create the pinned Buildx builder
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        with:
+          version: v0.37.0
+          driver-opts: image=docker.io/moby/buildkit@sha256:28a898719c18a33f4e8000685287fa36fd0dd9560c6440227d3a732d79bb41d8
+
+      - name: Sign in to GHCR for this manual job only
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and publish the commit-addressed candidate
+        id: publish-image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: container/eval-runtime
+          file: container/eval-runtime/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          build-args: SOURCE_REVISION=${{ github.sha }}
+          provenance: false
+
+      - name: Attest the published digest
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-name: ${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.publish-image.outputs.digest }}
+          push-to-registry: true
+
+      - name: Record the immutable candidate reference
+        run: |
+          echo "Published candidate: ${IMAGE_NAME}@${{ steps.publish-image.outputs.digest }}" >> "$GITHUB_STEP_SUMMARY"

@@ -132,6 +132,35 @@ not alter prompts, grading, routing, budgets, posting, or model choice. These
 history and manifest checks are evaluation-integrity evidence, not model-quality
 evidence.
 
+## Runtime image bootstrap
+
+`container/eval-runtime/` defines the repo-owned Linux image intended for the
+external containment backend. Its Node base is pinned by immutable multi-platform
+digest, and its lockfile carries the same exact Claude Code and Codex CLI versions
+as the production setup action. The build context contains only that definition,
+the lockfile, and a zero-credential containment probe; it never contains the
+Peregrine source tree, case corpus, or provider credentials.
+
+Pull requests that touch the image build it without registry credentials, then
+run the probe with no network, a read-only root filesystem, read-only checkout and
+asset fixtures, one read-write output directory, and tmpfs-backed home and scratch
+directories. The probe verifies those mounts, denies a host-only sentinel and the
+Docker socket, confirms no common credentials were inherited, and checks both CLI
+versions without making a provider request.
+
+The same workflow has a separate manual, `main`-only publication job for
+`ghcr.io/petergraycreative/peregrine-eval-runtime`. Only that job receives
+`packages: write` and `GITHUB_TOKEN`; it publishes an amd64/arm64 candidate tagged
+with the source commit and records its immutable digest with a GitHub provenance
+attestation. It never publishes `latest`.
+
+This bootstrap does **not** enable live evaluation. The existing pre-provider
+gate remains closed, no runtime invokes Docker, and no released digest is accepted
+by the evaluator yet. A follow-up safety slice must publish and independently
+verify a candidate, pin its final GHCR digest, implement the runtime mount/secret/
+cleanup contract, and repeat the fake-provider containment tests before changing
+that gate.
+
 ## Running
 
 ```bash

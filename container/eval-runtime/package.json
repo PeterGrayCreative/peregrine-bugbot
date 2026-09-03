@@ -1,0 +1,14 @@
+{
+  "name": "peregrine-eval-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pinned provider CLI dependencies for the Peregrine evaluation runtime image.",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@anthropic-ai/claude-code": "2.1.252",
+    "@openai/codex": "0.152.0"
+  },
+  "engines": {
+    "node": "22.22.1"
+  }
+}
