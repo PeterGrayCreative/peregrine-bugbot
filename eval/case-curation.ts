@@ -134,9 +134,9 @@ export function readBehavioralCaseAdmission(
     throw new Error(`${spec.id} source change identity does not match the checked-in diff`);
   }
   if (spec.kind !== "historical") {
-    const fixtureIdentity = fixtureFamilyIdentitySha256(caseRoot, spec.fixtureDir);
+    const fixtureIdentity = fixtureSourceIdentitySha256(caseRoot, spec.fixtureDir);
     if (curation.source.repositoryIdentitySha256 !== fixtureIdentity) {
-      throw new Error(`${spec.id} fixture family identity does not match its authenticated fixture tree`);
+      throw new Error(`${spec.id} fixture source identity does not match its authenticated fixture tree`);
     }
   }
   const text = diff.toString("utf8");
@@ -340,9 +340,9 @@ export function parseCuratorPolicy(value: unknown, label = "curator policy"): Cu
   };
 }
 
-export function fixtureFamilyIdentitySha256(caseDir: string, fixtureDir: string): string {
+export function fixtureSourceIdentitySha256(caseDir: string, fixtureDir: string): string {
   return createHash("sha256").update(JSON.stringify({
-    version: "fixture-family-v1",
+    version: "fixture-source-v1",
     fixtureTreeSha256: fixtureTreeSha256(realpathSync(resolve(caseDir)), fixtureDir),
   })).digest("hex");
 }

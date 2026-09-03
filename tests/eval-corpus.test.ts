@@ -8,7 +8,7 @@ import {
   parseCaseCuration,
   caseBundleSha256,
   diffSizeStratum,
-  fixtureFamilyIdentitySha256,
+  fixtureSourceIdentitySha256,
   parseHoldoutCommitment,
   requiredConfirmationChecks,
   readBehavioralCaseAdmission,
@@ -219,7 +219,7 @@ test("zero-provider validator authenticates a draft case and reports readiness s
     const value = curation(caseSpec, "draft");
     const diff = readFileSync(join(target, "diff.patch"));
     const source = value.source as Record<string, unknown>;
-    source.repositoryIdentitySha256 = fixtureFamilyIdentitySha256(target, caseSpec.fixtureDir);
+    source.repositoryIdentitySha256 = fixtureSourceIdentitySha256(target, caseSpec.fixtureDir);
     source.changeIdentitySha256 = createHash("sha256").update(diff).digest("hex");
     const proofRecord = value.proof as Record<string, unknown>;
     proofRecord.sha256 = sha(proof);
@@ -286,7 +286,7 @@ test("case bundles authenticate every fixture file and reject unreviewed context
     assert.notEqual(after, before);
     assert.throws(
       () => readBehavioralCaseAdmission(caseDir, spec),
-      /fixture family identity does not match its authenticated fixture tree/,
+      /fixture source identity does not match its authenticated fixture tree/,
     );
   } finally {
     rmSync(outer, { recursive: true, force: true });
@@ -658,7 +658,7 @@ function createCleanBehavioralCase(
   writeFileSync(join(target, "proof.md"), proof);
   const value = curation(spec, status);
   writeCuratorPolicyForCasesRoot(casesRoot);
-  (value.source as Record<string, unknown>).repositoryIdentitySha256 = fixtureFamilyIdentitySha256(target, spec.fixtureDir);
+  (value.source as Record<string, unknown>).repositoryIdentitySha256 = fixtureSourceIdentitySha256(target, spec.fixtureDir);
   (value.source as Record<string, unknown>).changeIdentitySha256 = sha(readFileSync(join(target, "diff.patch"), "utf8"));
   (value.proof as Record<string, unknown>).sha256 = sha(proof);
   if (status === "admitted") {

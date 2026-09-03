@@ -26,7 +26,7 @@ import { buildReport } from "../eval/report.js";
 import { runMatrix } from "../eval/run-matrix.js";
 import {
   caseBundleSha256,
-  fixtureFamilyIdentitySha256,
+  fixtureSourceIdentitySha256,
   parseCaseCuration,
   requiredConfirmationChecks,
 } from "../eval/case-curation.js";
@@ -810,7 +810,7 @@ function createFixtureCase(casesDir: string, id: string, corpus: CaseCorpus): st
       source: {
         kind: "clean",
         repositoryAlias: "experiment-fixture",
-        repositoryIdentitySha256: fixtureFamilyIdentitySha256(caseDir, "fixture"),
+        repositoryIdentitySha256: fixtureSourceIdentitySha256(caseDir, "fixture"),
         changeIdentitySha256: createHash("sha256").update(PATCH).digest("hex"),
         access: "public",
       },
