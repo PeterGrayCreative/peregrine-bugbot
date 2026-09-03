@@ -206,7 +206,11 @@ async function verifySafeMaterialization(
 ): Promise<void> {
   const policy = leakagePolicyForCase(caseDir, spec);
   readSanitizedMetadata(caseDir, spec, policy);
-  const materialized = await materializeCase(caseDir, spec, policy, { prepareProviderAssets: false });
+  // Admission must exercise every model-visible input assembled by the live
+  // runtime. Preparing the trusted package assets starts no provider process,
+  // but it prevents an admitted case-specific term from colliding with those
+  // assets only after an experiment has already been scheduled.
+  const materialized = await materializeCase(caseDir, spec, policy);
   try {
     for (const bug of truth.bugs) verifyBugLineRange(materialized.repoPath, bug, spec.id);
     if (spec.kind === "historical") {
