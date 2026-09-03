@@ -1,0 +1,19 @@
+diff --git a/src/member-service.ts b/src/member-service.ts
+index 2556e0242d7c8118e36ecaf5c10ad1aa80f16e46..4dfdfff8d3a6957aaf0f1892bca23ed1a6fa8993 100644
+--- a/src/member-service.ts
++++ b/src/member-service.ts
+@@ -1,9 +1,11 @@
+-export function parseMemberId(value: string): string {
++export type MemberId = string & { readonly memberId: unique symbol };
++
++export function parseMemberId(value: string): MemberId {
+   const normalized = value.trim().toUpperCase();
+   if (!/^MEM-[0-9]{6}$/.test(normalized)) throw new Error("invalid member id");
+-  return normalized;
++  return normalized as MemberId;
+ }
+ 
+-export function memberCacheKey(tenantId: string, memberId: string): string {
++export function memberCacheKey(tenantId: string, memberId: MemberId): string {
+   return `${tenantId.length}:${tenantId}${memberId.length}:${memberId}`;
+ }

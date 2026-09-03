@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "caseId": "case-8b6d9e04",
+  "status": "draft",
+  "curatorPolicyId": "protected-git-review-v1",
+  "source": {
+    "kind": "seeded",
+    "repositoryAlias": "access-service",
+    "repositoryIdentitySha256": "1ea9307dd16144c561b4ee2b9356749a9765400210e4fcd8bd0d409044878124",
+    "changeIdentitySha256": "afe319b04e875a0943b5934c1a3bb398ef6a1bb307cbdb05acf46d28e242d04d",
+    "access": "sanitized-private"
+  },
+  "strata": {
+    "languageFamily": "typescript",
+    "architectureFamily": "backend-service",
+    "size": "small",
+    "changeShapes": ["seam", "multi-observation"],
+    "surfaceLanes": ["authorization"]
+  },
+  "proof": {
+    "kind": "regression-test",
+    "artifact": "proof.mjs",
+    "sha256": "4a5f04cddc47499e3655ca68b4c8a4d607acb7a662362c867b2388bbf1e895f4"
+  },
+  "confirmations": []
+}

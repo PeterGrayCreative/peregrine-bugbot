@@ -1,0 +1,13 @@
+diff --git a/src/quota-service.ts b/src/quota-service.ts
+index fb39c4a8345b84b3a26f13e8128dbcb55019e65b..3b6cb49e1f391e9e06c426e211a380c1a65a477f 100644
+--- a/src/quota-service.ts
++++ b/src/quota-service.ts
+@@ -4,7 +4,7 @@ export interface QuotaChange {
+ }
+ 
+ export function applyQuotaChanges(current: Map<string, number>, changes: QuotaChange[]): Map<string, number> {
+-  const next = new Map([...current.entries()]);
++  const next = new Map(current);
+   for (const change of changes) {
+     if (!Number.isSafeInteger(change.delta)) throw new Error("invalid delta");
+     const value = (next.get(change.workspaceId) ?? 0) + change.delta;

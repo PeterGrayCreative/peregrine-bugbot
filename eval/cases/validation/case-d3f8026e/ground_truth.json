@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-c2e85b19",
+      "lane": "data-integrity",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
+      "file": "src/inventory-service.ts",
+      "startLine": 12,
+      "endLine": 17,
+      "description": "Reservation now validates and decrements each stock line in one loop, so a later invalid line throws after earlier inventory has already been consumed.",
+      "reachablePreconditions": "A multi-line reservation has an earlier satisfiable line followed by an unknown or insufficient-stock line.",
+      "observableImpact": "The reservation fails but earlier stock remains decremented, creating an unowned inventory hold.",
+      "provenance": "Seeded from a base implementation that validated every line before a second mutation pass. Confirmed by curator-only executable proof."
+    }
+  ]
+}

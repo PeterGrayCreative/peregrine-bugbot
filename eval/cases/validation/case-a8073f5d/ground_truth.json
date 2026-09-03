@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-b247d9c1",
+      "lane": "identifiers",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "medium",
+      "file": "src/shipment-service.ts",
+      "startLine": 8,
+      "endLine": 10,
+      "description": "Splitting the shipment key without limiting from the right truncates account identifiers that contain hyphens and misassigns the sequence component.",
+      "reachablePreconditions": "A valid shipment key contains a hyphenated account component, such as us-acme-retail-0042.",
+      "observableImpact": "The shipment is routed under account acme with sequence retail instead of account acme-retail with sequence 0042.",
+      "provenance": "Seeded from a base parser that took the first segment as region, the final segment as sequence, and joined the intervening segments as account. Confirmed by curator-only executable proof."
+    }
+  ]
+}

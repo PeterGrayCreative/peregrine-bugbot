@@ -1,0 +1,13 @@
+diff --git a/src/customer-service.ts b/src/customer-service.ts
+index 89cff53aa2cb36d64ae1484dcf53bb9e540882d9..99bd97a80ec11395e7faa762d9ef30ce3f2155dd 100644
+--- a/src/customer-service.ts
++++ b/src/customer-service.ts
+@@ -6,7 +6,7 @@ export interface CustomerRecord {
+ export function normalizeExternalId(input: string): string {
+   const trimmed = input.trim();
+   if (!/^\d{1,12}$/.test(trimmed)) throw new Error("invalid external id");
+-  return trimmed;
++  return String(Number(trimmed));
+ }
+ 
+ export function indexCustomers(records: CustomerRecord[]): Map<string, CustomerRecord> {
