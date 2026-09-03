@@ -28,7 +28,7 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | P1 / Plan PR 1 | Persist and report every matrix attempt | - | Merged | [#2](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/2) |
 | Plan PR 2 | Blind and isolate case materialization | PR 1 | Merged | [#5](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/5) |
 | Safety PR 2A | OCI filesystem containment for live evaluation | PR 2 | Not started | - |
-| Plan PR 3 | Reproduce base/head history and production manifest path | PR 2 | In review | [#7](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/7) |
+| Plan PR 3 | Reproduce base/head history and production manifest path | PR 2 | Merged | [#7](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/7) |
 | Plan PR 4 | Root-cause grading, adjudication, and miss stages | PRs 3, 6 | Not started | - |
 | Plan PR 5 | Provider-correct usage, cost, work, and experiment metadata | PR 1 | Not started | - |
 | Plan PR 6 | Typed manifest shadow/parity mode | PR 3 | Not started | - |
@@ -133,9 +133,9 @@ Decision gate: choose and own the provider-enabled OCI image source and immutabl
 - [x] Add tests proving no future fixing commit or remote remains accessible.
 - [x] Run `npm run validate` and the structural screening corpus.
 - [x] Open and independently review [PR #7](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/7).
-- [ ] Merge PR #7 before Plan PR 6. Plan PR 4 follows Plan PR 6 so routing-versus-breadth misses use typed manifest evidence.
+- [x] Merge PR #7 as `8edcc9f573e4e8186d1ec504329e58a4818aeba9` before Plan PR 6. Plan PR 4 follows Plan PR 6 so routing-versus-breadth misses use typed manifest evidence.
 
-Evidence: [Plan PR 3 validation record](../validation/2026-09-02-eval-reproducible-history.md) and [PR #7](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/7). Two independent exact-head reviews found no remaining blocker before publication.
+Evidence: [Plan PR 3 validation record](../validation/2026-09-02-eval-reproducible-history.md) and [PR #7](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/7). Two independent exact-head reviews found no remaining blocker before publication. On the final ready head, `check`, `analyze`, and `post` passed; earlier draft-triggered review jobs were skipped.
 
 Must stay untouched: grading policy, prompts, budgets, and routing.
 
