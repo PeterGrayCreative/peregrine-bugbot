@@ -217,9 +217,9 @@ test("adjudication records are strict and reject duplicate evidence", () => {
 
 test("semantic judge packet is blind to runner, route, config, and treatment", () => {
   const prompt = buildSemanticJudgePrompt(reviewFinding(), truth.bugs[0]!);
-  assert.doesNotMatch(prompt, /(?:runner|route|config|control|treatment|variant|codex|claude)/i);
-  assert.match(prompt, /Reachable preconditions/);
-  assert.match(prompt, /Observable impact/);
+  assert.doesNotMatch(prompt, /\b(?:runner|route|config|control|treatment|variant|codex|claude)\b/i);
+  assert.match(prompt, /reachablePreconditions/);
+  assert.match(prompt, /observableImpact/);
 });
 
 test("semantic disagreements and judge failures remain explicit fail-closed evidence", async () => {
@@ -324,6 +324,11 @@ test("behavioral reporting separates root-cause cost and blocking clean-control 
   assert.equal(stats.costPerReliablyFoundRootCause, null);
   assert.equal(stats.blockingFalsePositivesOnCleanCases, 0);
   assert.match(renderBenchmarkHtml([stats]), /cost\/reliably found root cause/);
+  assert.match(renderBenchmarkHtml([stats], {
+    providerAttempts: 2, failures: 0, durationMs: 1000, providerCostUsd: 0,
+    costUnavailableAttempts: 2, inputTokens: 20, cachedInputTokens: 4,
+    outputTokens: 2, reasoningTokens: 1, turns: 2, toolCalls: 0,
+  }), /Semantic judge accounting[\s\S]*20 \/ 4 \/ 2 \/ 1/);
 });
 
 test("reliable root-cause cost uses a strict majority including two of three repeats", () => {

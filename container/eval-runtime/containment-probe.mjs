@@ -8,12 +8,20 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
+import { networkInterfaces } from "node:os";
+import { fileURLToPath } from "node:url";
 
 const CONTRACT = Object.freeze({
   schemaVersion: 1,
   user: { uid: 1000, gid: 1000 },
   rootFilesystem: "read-only",
-  network: { interfaces: ["lo"], defaultRoutes: false },
+  network: {
+    requiredInterface: "lo",
+    permittedInertTunnelInterfaces: ["erspan0", "gre0", "gretap0", "ip6gre0", "ip6tnl0", "ip6_vti0", "ip_vti0", "sit0", "tunl0"],
+    nonLoopbackAddresses: false,
+    nonLoopbackRoutes: false,
+    defaultRoutes: false,
+  },
   mounts: {
     checkout: { path: "/workspace", access: "read-only", marker: "checkout" },
     assets: { path: "/opt/peregrine", access: "read-only", marker: "assets" },
@@ -27,13 +35,24 @@ const CONTRACT = Object.freeze({
   },
 });
 
-const mode = process.argv[2] ?? "--check";
-if (mode === "--describe") {
-  process.stdout.write(`${JSON.stringify(CONTRACT)}\n`);
-} else if (mode === "--check") {
-  runChecks();
-} else {
-  fail(`unsupported argument: ${mode}`);
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  const mode = process.argv[2] ?? "--check";
+  if (mode === "--describe") {
+    process.stdout.write(`${JSON.stringify(CONTRACT)}\n`);
+  } else if (mode === "--assess-network-fixture") {
+    process.stdout.write(`${JSON.stringify(assessNetworkNamespace(JSON.parse(readFileSync(0, "utf8"))))}\n`);
+  } else if (mode === "--filter-network-entry-fixture") {
+    const entries = JSON.parse(readFileSync(0, "utf8"));
+    process.stdout.write(`${JSON.stringify(networkInterfaceNames(entries.map(({ name, kind }) => ({
+      name,
+      isDirectory: () => kind === "directory",
+      isSymbolicLink: () => kind === "symlink",
+    }))))}\n`);
+  } else if (mode === "--check") {
+    runChecks();
+  } else {
+    fail(`unsupported argument: ${mode}`);
+  }
 }
 
 function runChecks() {
@@ -94,9 +113,7 @@ function runChecks() {
 }
 
 function assertNetworkNamespace(checks) {
-  const interfaces = readdirSync("/sys/class/net").sort();
-  check(interfaces.length === 1 && interfaces[0] === "lo", "network namespace exposes loopback only", checks);
-
+  const interfaces = networkInterfaceNames(readdirSync("/sys/class/net", { withFileTypes: true }));
   const ipv4Routes = readFileSync("/proc/net/route", "utf8")
     .trim()
     .split("\n")
@@ -111,8 +128,41 @@ function assertNetworkNamespace(checks) {
     .split("\n")
     .filter(Boolean)
     .map((line) => line.trim().split(/\s+/));
-  check(ipv6Routes.every((route) => route.at(-1) === "lo"), "IPv6 routes are loopback-only", checks);
-  check(ipv6Routes.every((route) => !isUsableIpv6DefaultRoute(route)), "no usable default IPv6 route exists", checks);
+  const counters = Object.fromEntries(interfaces.filter((name) => name !== "lo").map((name) => [name, {
+    rx: Number(readFileSync(`/sys/class/net/${name}/statistics/rx_bytes`, "utf8").trim()),
+    tx: Number(readFileSync(`/sys/class/net/${name}/statistics/tx_bytes`, "utf8").trim()),
+  }]));
+  const errors = assessNetworkNamespace({ interfaces, addresses: networkInterfaces(), ipv4Routes, ipv6Routes, counters });
+  for (const error of errors) fail(error);
+  checks.push("network namespace has no assigned non-loopback addresses");
+  checks.push("network namespace has no non-loopback or default routes");
+  checks.push("only the explicit inert tunnel-device set may accompany loopback");
+}
+
+function networkInterfaceNames(entries) {
+  return entries
+    .filter((entry) => entry.isDirectory() || entry.isSymbolicLink())
+    .map((entry) => entry.name)
+    .sort();
+}
+
+export function assessNetworkNamespace({ interfaces, addresses, ipv4Routes, ipv6Routes, counters }) {
+  const errors = [];
+  const allowed = new Set([CONTRACT.network.requiredInterface, ...CONTRACT.network.permittedInertTunnelInterfaces]);
+  if (!interfaces.includes("lo")) errors.push("network namespace is missing loopback");
+  if (interfaces.some((name) => !allowed.has(name))) errors.push("network namespace exposes an unexpected interface");
+  for (const [name, entries] of Object.entries(addresses)) {
+    if (name !== "lo" && (entries?.length ?? 0) > 0) errors.push("network namespace exposes a non-loopback address");
+  }
+  for (const name of interfaces.filter((item) => item !== "lo")) {
+    const counter = counters[name];
+    if (!counter || counter.rx !== 0 || counter.tx !== 0) errors.push("permitted tunnel interface is not inert");
+  }
+  if (ipv4Routes.some((route) => route[0] !== "lo")) errors.push("IPv4 route escapes loopback");
+  if (ipv4Routes.some((route) => route[1] === "00000000")) errors.push("default IPv4 route exists");
+  if (ipv6Routes.some((route) => route.at(-1) !== "lo")) errors.push("IPv6 route escapes loopback");
+  if (ipv6Routes.some((route) => isUsableIpv6DefaultRoute(route))) errors.push("usable default IPv6 route exists");
+  return errors;
 }
 
 function isUsableIpv6DefaultRoute(route) {

@@ -1,6 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Peregrine Benchmark Ground Truth",
+  "title": "Peregrine Behavioral Benchmark Ground Truth",
+  "$comment": "Development and validation corpus contract. Structural-smoke compatibility truth is parsed separately and is not behavioral benchmark evidence.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
@@ -12,18 +13,18 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "id": { "type": "string", "minLength": 1 },
-        "rootCauseGroup": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "pattern": "^bug-[a-f0-9]{8,32}$" },
+        "rootCauseGroup": { "type": "string", "pattern": "^root-[a-f0-9]{8,32}$" },
         "lane": { "enum": ["authorization", "identifiers", "data-integrity", "persistence", "runtime-config", "contracts", "concurrency", "test-quality", "logic-correctness", "error-handling", "frontend-state", "boundaries-pagination"] },
         "expectedDisposition": { "enum": ["fix-in-pr", "follow-up"] },
         "expectedSeverity": { "enum": ["high", "medium", "low"] },
-        "file": { "type": "string", "minLength": 1 },
+        "file": { "type": "string", "minLength": 1, "maxLength": 512, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*\\\\).+$" },
         "startLine": { "type": "integer", "minimum": 1 },
         "endLine": { "type": "integer", "minimum": 1 },
-        "description": { "type": "string", "minLength": 1 },
-        "reachablePreconditions": { "type": "string", "minLength": 1 },
-        "observableImpact": { "type": "string", "minLength": 1 },
-        "provenance": { "type": "string", "minLength": 1 }
+        "description": { "type": "string", "pattern": "\\S" },
+        "reachablePreconditions": { "type": "string", "pattern": "\\S" },
+        "observableImpact": { "type": "string", "pattern": "\\S" },
+        "provenance": { "type": "string", "pattern": "\\S" }
       },
       "required": ["id", "lane", "expectedDisposition", "expectedSeverity", "file", "startLine", "endLine", "description", "reachablePreconditions", "observableImpact", "provenance"]
     }

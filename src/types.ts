@@ -390,7 +390,10 @@ export interface ExperimentProtocol {
     kind: ExperimentJudge;
     /** Required for provider-backed semantic judges; absent for exact grading. */
     model?: string;
+    effort?: string;
     version: string;
+    /** Independently enforced; review attempts never consume this budget. */
+    limits?: ExperimentLimits;
   };
   /** Required together for screening and checkpoint comparisons. */
   control?: string;
@@ -449,6 +452,7 @@ export interface EvaluationHistoryProvenance {
   checkedOutTreeMatchesHead: true;
   treeReproductionVerified: true;
   historicalSource?: {
+    /** git-root-family-v1: object format plus sorted complete roots reachable from sourceHeadRef. */
     sourceIdentitySha256: string;
     sourceBaseRef: string;
     sourceHeadRef: string;

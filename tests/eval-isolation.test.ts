@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
+  cpSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -189,6 +190,36 @@ test("historical attempts export only sanitized base and head trees", async () =
         .every((oid) => allowedReflogOids.has(oid)),
     );
     assert.equal(existsSync(join(dirname(materialized.repoPath), "curator-source")), false);
+
+    const relocatedSource = join(root, "relocated-source-copy");
+    cpSync(source, relocatedSource, { recursive: true });
+    git(relocatedSource, "remote", "set-url", "origin", "git@example.invalid:alias/answer-source.git");
+    const relocatedCase = join(root, "cases", "validation", "case-cafebabf");
+    cpSync(caseDir, relocatedCase, { recursive: true });
+    writeFileSync(join(relocatedCase, "case.json"), JSON.stringify({
+      id: "case-cafebabf",
+      corpus: "validation",
+      kind: "historical",
+      repoSource: relocatedSource,
+      baseCommit: base,
+      headCommit: head,
+      diffFile: "diff.patch",
+    }));
+    const relocatedSpec = loadCaseSpec(relocatedCase);
+    const relocated = await materializeCase(
+      relocatedCase,
+      relocatedSpec,
+      leakagePolicyForCase(relocatedCase, relocatedSpec),
+    );
+    try {
+      assert.equal(
+        relocated.historyProvenance.historicalSource?.sourceIdentitySha256,
+        materialized.historyProvenance.historicalSource?.sourceIdentitySha256,
+        "relocation and remote URL spelling cannot create a new historical repository family",
+      );
+    } finally {
+      relocated.cleanup();
+    }
   } finally {
     materialized.cleanup();
     rmSync(root, { recursive: true, force: true });

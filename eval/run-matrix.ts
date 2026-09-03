@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, join, relative, resolve } from "node:path";
+import { join, relative, resolve } from "node:path";
 import { loadConfig } from "../src/config.js";
 import { validateConfig } from "../src/config.js";
 import { RunFailureError, runFailureKind, runFailureTelemetry } from "../src/core/run-failure.js";
@@ -32,6 +32,7 @@ import {
   readSanitizedMetadata,
 } from "./case-isolation.js";
 import { prepareEvaluationManifest } from "./case-manifest.js";
+import { semanticJudgeImplementationSha256 } from "./judge-runtime.js";
 import type { EvaluationManifestPreparer } from "./case-manifest.js";
 import { CASE_CORPORA } from "../src/types.js";
 import type {
@@ -96,6 +97,7 @@ import {
   observeContainedCliVersion,
   probeContainedRuntime,
 } from "./runtime-containment.js";
+import { readBehavioralCaseAdmission } from "./case-curation.js";
 
 interface RunMatrixOptions {
   casesDir?: string;
@@ -172,7 +174,31 @@ export async function runMatrix(
   const baseConfig = loadConfig();
 
   const casesDir = resolve(options.casesDir ?? "eval/cases");
-  const cases = discoverCases(casesDir, matrix.corpora);
+  const requireBehavioralAdmission = protocol?.mode === "screening" || protocol?.mode === "checkpoint";
+  const cases = discoverCases(casesDir, matrix.corpora, requireBehavioralAdmission);
+  const behavioralCases = cases.filter((item) => item.corpus !== "structural-smoke");
+  if (protocol?.mode === "screening" && behavioralCases.length === 0) {
+    throw new Error("screening requires at least one selected behavioral case");
+  }
+  if (protocol?.mode === "checkpoint") {
+    const selectedCorpora = new Set(cases.map((item) => item.corpus));
+    if (selectedCorpora.has("structural-smoke") ||
+      !selectedCorpora.has("development") || !selectedCorpora.has("validation")) {
+      throw new Error("checkpoint schedule must contain development and validation cases and no structural-smoke cases");
+    }
+  }
+  if (requireBehavioralAdmission) {
+    await (await import("./validate-corpus.js")).validateSelectedBehavioralCases(
+      behavioralCases.map((item) => item.caseDir),
+      casesDir,
+    );
+  }
+  if (protocol?.mode === "checkpoint") {
+    const readiness = await (await import("./validate-corpus.js")).validateBehavioralCorpus(casesDir);
+    if (!readiness.goldSetReady) {
+      throw new Error(`checkpoint requires a ready historical gold set: ${readiness.goldSetRequirements.join("; ")}`);
+    }
+  }
   const effective = protocol ? effectiveMatrixConfigs(matrix, baseConfig) : new Map<string, EffectiveMatrixConfig>();
   const now = options.now ?? Date.now;
   const runsBase = resolve(runsRoot ?? process.env.PEREGRINE_EVAL_RUNS_DIR ?? "eval/runs");
@@ -860,13 +886,7 @@ async function prepareExperimentManifest(
   const schemaSha256 = hashPathTree(join(root, "schemas"));
   const profileSha256 = input.reuseProfileSha256 ??
     await effectiveProfileSnapshotSha256(input.cases);
-  const judgeSha256 = canonicalJsonSha256({
-    implementation: hashPathTree(join(root, "eval", "grade.ts")),
-    gradingContract: hashPathTree(join(root, "eval", "grading-contract.ts")),
-    resultSchema: hashPathTree(join(root, "schemas", "judge-result.schema.json")),
-    evidenceSchema: hashPathTree(join(root, "schemas", "grading-evidence.schema.json")),
-    judge: input.protocol.judge,
-  });
+  const judgeSha256 = semanticJudgeImplementationSha256(input.protocol.judge);
   const configurationSha256 = canonicalJsonSha256({
     matrixManifestSha256,
     matrixConfigSha256,
@@ -1364,8 +1384,10 @@ export function loadCaseSpec(caseDir: string): CaseSpec {
 function discoverCases(
   casesDir: string,
   corpora?: CaseCorpus[],
+  requireBehavioralAdmission = false,
 ): DiscoveredCase[] {
   const discovered: DiscoveredCase[] = [];
+  const allCaseIds = new Set<string>();
   for (const corpusEntry of readdirSync(casesDir, { withFileTypes: true })) {
     if (!corpusEntry.isDirectory()) {
       if (corpusEntry.name === "README.md" || corpusEntry.name === "case-aliases.json") continue;
@@ -1392,6 +1414,8 @@ function discoverCases(
           `${error instanceof Error ? error.message : String(error)}; expected <cases-root>/<corpus>/<opaque-id>`,
         );
       }
+      if (allCaseIds.has(entry.name)) throw new Error(`duplicate opaque case id ${entry.name}`);
+      allCaseIds.add(entry.name);
       const path = join(corpusDir, entry.name);
       const hasCaseSpec = readdirSync(path, { withFileTypes: true })
         .some((candidate) => candidate.isFile() && candidate.name === "case.json");
@@ -1401,22 +1425,21 @@ function discoverCases(
         );
       }
       if (!corpora || corpora.includes(corpus)) {
+        let expectedBugCount = readExpectedBugCount(path);
+        if (requireBehavioralAdmission && corpus !== "structural-smoke") {
+          const spec = loadCaseSpec(path);
+          expectedBugCount = readBehavioralCaseAdmission(path, spec).truth.bugs.length;
+        }
         discovered.push({
           caseName: relative(casesDir, path),
           caseDir: path,
           corpus,
-          expectedBugCount: readExpectedBugCount(path),
+          expectedBugCount,
         });
       }
     }
   }
   discovered.sort((left, right) => left.caseName.localeCompare(right.caseName));
-  const ids = new Set<string>();
-  for (const item of discovered) {
-    const id = basename(item.caseDir);
-    if (ids.has(id)) throw new Error(`duplicate opaque case id ${id}`);
-    ids.add(id);
-  }
   return discovered;
 }
 
