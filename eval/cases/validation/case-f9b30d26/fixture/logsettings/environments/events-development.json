@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "profile": "events-development",
+  "service": "events",
+  "deployment": {
+    "environment": "development",
+    "region": "us-east",
+    "ownerGroup": "platform-observability",
+    "tier": "standard"
+  },
+  "environment": {
+    "LOG_LEVEL": "info",
+    "LOG_FORMAT": "plain",
+    "LOG_PROPAGATE": "true",
+    "LOG_HANDLERS": "console"
+  },
+  "retention": {
+    "days": 7,
+    "maxFiles": 5,
+    "compress": false,
+    "legalHold": false
+  },
+  "sampling": {
+    "requestRate": 0.50,
+    "errorRate": 1.00,
+    "healthRate": 0.10,
+    "metricsRate": 0.10
+  },
+  "redaction": {
+    "fields": [
+      "authorization",
+      "cookie",
+      "email",
+      "session_id",
+      "user_token"
+    ],
+    "replacement": "[redacted]"
+  },
+  "routing": {
+    "primary": "central-us-east",
+    "secondary": "archive-us-east",
+    "deadLetter": "logging-failures-us-east"
+  },
+  "labels": {
+    "team": "events",
+    "costCenter": "cc-4120",
+    "dataClass": "internal"
+  }
+}

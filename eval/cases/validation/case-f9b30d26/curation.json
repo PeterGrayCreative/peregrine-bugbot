@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "caseId": "case-f9b30d26",
+  "status": "draft",
+  "curatorPolicyId": "protected-git-review-v1",
+  "source": {
+    "kind": "clean",
+    "repositoryAlias": "service-launcher",
+    "repositoryIdentitySha256": "2dae0321da30f3fd2ee9272582442df469b290fcd7c045285319bf6ed2b94bdb",
+    "changeIdentitySha256": "a0f33b75111692940bf78f14ba4590bea6dee6f79cac8d51db8e16ec2088ee05",
+    "access": "curator-local-private"
+  },
+  "strata": {
+    "languageFamily": "python",
+    "architectureFamily": "infrastructure",
+    "size": "large",
+    "changeShapes": ["large-diff", "seam"],
+    "surfaceLanes": ["runtime-config"]
+  },
+  "proof": {
+    "kind": "clean-control-review",
+    "artifact": "proof.json",
+    "sha256": "746ef477d1104a861e0181e7009df6144cd2ca709a3162298e9fbc9a5b420f62"
+  },
+  "confirmations": [
+    {
+      "curatorIdentitySha256": "617ac849db736678cc50ccdba46a2eab92738cafb44bda4ccd1eee1c585a4bc1",
+      "confirmedAt": "2026-09-03T16:00:00Z",
+      "caseBundleSha256": "cc93f140ee07a036e16d7212c583492647fc4e71ed4fc9a96550f91a12cd1e63",
+      "checks": ["classification", "clean-control", "line-range", "provenance", "source-authenticity", "truth-completeness"]
+    }
+  ]
+}

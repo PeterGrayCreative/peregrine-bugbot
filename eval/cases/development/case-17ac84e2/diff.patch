@@ -1,0 +1,11 @@
+diff --git a/page_response.py b/page_response.py
+index 9117acbfd63df8094176202e6d02b9918c5563a6..3f782ba7802c20db7d08cecd7de18d7842ddf48d 100644
+--- a/page_response.py
++++ b/page_response.py
+@@ -10,5 +10,5 @@ class Page:
+ def serialize_page(page: Page) -> dict[str, object]:
+     return {
+         "items": page.items,
+-        "next_cursor": page.next_cursor,
++        "cursor": page.next_cursor,
+     }

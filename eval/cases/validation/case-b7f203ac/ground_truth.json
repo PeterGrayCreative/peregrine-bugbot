@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-b63f19a2",
+      "lane": "persistence",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
+      "file": "checkpoint.py",
+      "startLine": 15,
+      "endLine": 16,
+      "description": "save_checkpoint writes directly to the durable checkpoint path instead of replacing it only after a complete temporary write.",
+      "reachablePreconditions": "The writer raises after emitting only part of the new checkpoint, such as when storage fills.",
+      "observableImpact": "The last valid checkpoint is truncated and cannot be decoded during recovery.",
+      "provenance": "Seeded mutation replacing a same-directory temporary file and os.replace with a direct write. The interruption is deterministic in test_checkpoint.py."
+    }
+  ]
+}
