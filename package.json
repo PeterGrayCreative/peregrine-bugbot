@@ -20,6 +20,7 @@
     "eval:report": "node --import tsx src/index.ts report",
     "eval:validate-corpus": "node --import tsx eval/validate-corpus.ts",
     "eval:admit-corpus": "node --import tsx eval/validate-corpus.ts --require-ready",
+    "eval:admit-gold-corpus": "node --import tsx eval/validate-corpus.ts --require-gold",
     "eval:smoke": "node --import tsx eval/smoke.ts",
     "plugin:install:claude": "bash scripts/manage-plugin.sh install --client claude",
     "plugin:update:claude": "bash scripts/manage-plugin.sh update --client claude",

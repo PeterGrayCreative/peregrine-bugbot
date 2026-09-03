@@ -4,7 +4,8 @@ Corpus admission and result adjudication are separate trust decisions.
 
 `npm run eval:validate-corpus` authenticates curator inputs without a provider:
 strict truth, curation metadata, independent confirmations, proof and diff
-digests, source uniqueness, leakage, reproducible history, line ranges, strata,
+digests, confirmation-bound case bundles, source uniqueness, leakage,
+reproducible history, line ranges, strata,
 visible-corpus quotas, and the external holdout commitment. It does not decide
 whether a model finding matches a root cause and does not execute curator proof
 or repository code.

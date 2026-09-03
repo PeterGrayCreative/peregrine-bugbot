@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
@@ -23,6 +24,7 @@ import {
 import { gradeRuns } from "../eval/grade.js";
 import { buildReport } from "../eval/report.js";
 import { runMatrix } from "../eval/run-matrix.js";
+import { caseBundleSha256, parseCaseCuration, requiredConfirmationChecks } from "../eval/case-curation.js";
 import {
   EXPERIMENT_GRADING_SEAL_FILENAME,
   EXPERIMENT_TERMINAL_SEAL_FILENAME,
@@ -773,14 +775,53 @@ function createFixtureCase(casesDir: string, id: string, corpus: CaseCorpus): st
   mkdirSync(join(caseDir, "fixture", "src"), { recursive: true });
   writeFileSync(join(caseDir, "fixture", "src", "value.ts"), HEAD);
   writeFileSync(join(caseDir, "diff.patch"), PATCH);
-  writeFileSync(join(caseDir, "ground_truth.json"), JSON.stringify({ bugs: [] }));
-  writeFileSync(join(caseDir, "case.json"), JSON.stringify({
+  const truth = { bugs: [] };
+  writeFileSync(join(caseDir, "ground_truth.json"), JSON.stringify(truth));
+  const spec = {
     id,
     corpus,
-    kind: "clean",
+    kind: "clean" as const,
     fixtureDir: "fixture",
     diffFile: "diff.patch",
-  }));
+  };
+  writeFileSync(join(caseDir, "case.json"), JSON.stringify(spec));
+  if (corpus !== "structural-smoke") {
+    const proof = "Independent clean-control test fixture proof.\n";
+    writeFileSync(join(caseDir, "proof.md"), proof);
+    const checks = requiredConfirmationChecks("clean");
+    const curation = {
+      schemaVersion: 1,
+      caseId: id,
+      status: "admitted",
+      source: {
+        kind: "clean",
+        repositoryAlias: "experiment-fixture",
+        repositoryIdentitySha256: createHash("sha256").update("experiment-fixture").digest("hex"),
+        changeIdentitySha256: createHash("sha256").update(PATCH).digest("hex"),
+        access: "public",
+      },
+      strata: {
+        languageFamily: "typescript",
+        architectureFamily: "library",
+        size: "small",
+        changeShapes: ["direct"],
+        surfaceLanes: ["logic-correctness"],
+      },
+      proof: {
+        kind: "clean-control-review",
+        artifact: "proof.md",
+        sha256: createHash("sha256").update(proof).digest("hex"),
+      },
+      confirmations: [
+        { curatorIdentitySha256: "1".repeat(64), confirmedAt: "2026-09-03T10:00:00Z", caseBundleSha256: "0".repeat(64), checks },
+        { curatorIdentitySha256: "2".repeat(64), confirmedAt: "2026-09-03T11:00:00Z", caseBundleSha256: "0".repeat(64), checks },
+      ],
+    };
+    const parsed = parseCaseCuration(curation, spec, truth);
+    const bundle = caseBundleSha256(caseDir, spec, parsed);
+    for (const confirmation of curation.confirmations) confirmation.caseBundleSha256 = bundle;
+    writeFileSync(join(caseDir, "curation.json"), JSON.stringify(curation));
+  }
   return caseDir;
 }
 

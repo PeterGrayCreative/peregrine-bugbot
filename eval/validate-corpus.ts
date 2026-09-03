@@ -1,9 +1,12 @@
 import { existsSync, lstatSync, readFileSync, readdirSync, realpathSync } from "node:fs";
-import { dirname, join, resolve, sep } from "node:path";
+import { dirname, extname, join, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import { CORE_LANE_IDS, type CoreLaneId } from "../src/core/lanes.js";
+import { nonSensitiveEnvironment } from "../src/security/provider-env.js";
+import { exec } from "../src/util/exec.js";
 import type { CaseCorpus, CaseSpec, GroundTruth } from "../src/types.js";
 import {
+  assertOpaqueCaseId,
   leakagePolicyForCase,
   materializeCase,
   readSanitizedMetadata,
@@ -21,7 +24,8 @@ type BehavioralCorpus = (typeof BEHAVIORAL_CORPORA)[number];
 
 export interface CorpusValidationReport {
   schemaVersion: 1;
-  visibleBaselineReady: boolean;
+  visibleSeededBenchmarkReady: boolean;
+  goldSetReady: boolean;
   finalHoldoutReady: boolean;
   totalCases: number;
   admittedCases: number;
@@ -31,7 +35,8 @@ export interface CorpusValidationReport {
   cleanFraction: number | null;
   multiObservationCases: number;
   largeDiffCases: number;
-  repositories: number;
+  provenHistoricalRepositories: number;
+  fixtureFamilies: number;
   languageFamilies: number;
   architectureFamilies: number;
   corpora: Record<BehavioralCorpus, { total: number; bug: number; clean: number }>;
@@ -39,7 +44,8 @@ export interface CorpusValidationReport {
   comparableCleanLaneCoverage: CoreLaneId[];
   changeShapeCoverage: ChangeShape[];
   holdoutCommitted: boolean;
-  unmetRequirements: string[];
+  seededBenchmarkRequirements: string[];
+  goldSetRequirements: string[];
   holdoutRequirements: string[];
 }
 
@@ -54,8 +60,10 @@ export async function validateBehavioralCorpus(casesDir = "eval/cases"): Promise
   const root = realpathSync(resolve(casesDir));
   const cases: ValidatedBehavioralCase[] = [];
   const changeIdentities = new Set<string>();
+  const caseIds = new Set<string>();
   const aliasesByRepository = new Map<string, string>();
   const repositoriesByAlias = new Map<string, string>();
+  const architecturesByFamily = new Map<string, string>();
 
   for (const corpus of BEHAVIORAL_CORPORA) {
     const corpusDir = join(root, corpus);
@@ -65,6 +73,9 @@ export async function validateBehavioralCorpus(casesDir = "eval/cases"): Promise
     for (const entry of readdirSync(corpusDir, { withFileTypes: true })) {
       if (entry.name === "README.md" && entry.isFile()) continue;
       if (!entry.isDirectory()) throw new Error(`${corpus}/${entry.name} is not a case directory`);
+      assertOpaqueCaseId(entry.name, `${corpus} case directory id`);
+      if (caseIds.has(entry.name)) throw new Error(`duplicate opaque case id ${entry.name}`);
+      caseIds.add(entry.name);
       const caseDir = join(corpusDir, entry.name);
       const spec = loadCaseSpec(caseDir);
       if (spec.corpus !== corpus) throw new Error(`${corpus}/${entry.name} declares the wrong corpus`);
@@ -83,7 +94,13 @@ export async function validateBehavioralCorpus(casesDir = "eval/cases"): Promise
       }
       aliasesByRepository.set(curation.source.repositoryIdentitySha256, curation.source.repositoryAlias);
       repositoriesByAlias.set(curation.source.repositoryAlias, curation.source.repositoryIdentitySha256);
-      await verifySafeMaterialization(caseDir, spec, truth);
+      const familyKey = `${spec.kind === "historical" ? "historical" : "fixture"}:${curation.source.repositoryIdentitySha256}`;
+      const priorArchitecture = architecturesByFamily.get(familyKey);
+      if (priorArchitecture !== undefined && priorArchitecture !== curation.strata.architectureFamily) {
+        throw new Error(`${corpus}/${entry.name} changes architecture within one source or fixture family`);
+      }
+      architecturesByFamily.set(familyKey, curation.strata.architectureFamily);
+      await verifySafeMaterialization(caseDir, spec, truth, curation);
       cases.push({ corpus, spec, truth, curation });
     }
   }
@@ -91,20 +108,123 @@ export async function validateBehavioralCorpus(casesDir = "eval/cases"): Promise
   const holdoutPath = join(dirname(root), "holdout-commitment.json");
   const holdoutCommitted = existsSync(holdoutPath);
   if (holdoutCommitted) {
-    parseHoldoutCommitment(JSON.parse(readFileSync(holdoutPath, "utf8")) as unknown);
+    const evalRoot = realpathSync(dirname(root));
+    const stat = lstatSync(holdoutPath);
+    const resolved = realpathSync(holdoutPath);
+    if (!stat.isFile() || stat.isSymbolicLink() || resolved !== holdoutPath ||
+      !resolved.startsWith(`${evalRoot}${sep}`)) {
+      throw new Error("holdout commitment must be a direct regular non-symlink file in eval/");
+    }
+    parseHoldoutCommitment(JSON.parse(readFileSync(resolved, "utf8")) as unknown);
   }
   return buildCorpusValidationReport(cases, holdoutCommitted);
 }
 
-async function verifySafeMaterialization(caseDir: string, spec: CaseSpec, truth: GroundTruth): Promise<void> {
+export async function validateSelectedBehavioralCases(caseDirs: readonly string[]): Promise<void> {
+  const ids = new Set<string>();
+  const changes = new Set<string>();
+  const aliasesByIdentity = new Map<string, string>();
+  const identitiesByAlias = new Map<string, string>();
+  const architecturesByFamily = new Map<string, string>();
+  for (const caseDir of caseDirs) {
+    const spec = loadCaseSpec(caseDir);
+    if (spec.corpus === "structural-smoke") continue;
+    if (ids.has(spec.id)) throw new Error(`duplicate opaque case id ${spec.id}`);
+    ids.add(spec.id);
+    const { truth, curation } = readBehavioralCaseAdmission(caseDir, spec);
+    if (changes.has(curation.source.changeIdentitySha256)) throw new Error(`${spec.id} reuses another selected source change`);
+    changes.add(curation.source.changeIdentitySha256);
+    const identity = curation.source.repositoryIdentitySha256;
+    const alias = curation.source.repositoryAlias;
+    if ((aliasesByIdentity.get(identity) ?? alias) !== alias || (identitiesByAlias.get(alias) ?? identity) !== identity) {
+      throw new Error(`${spec.id} has an inconsistent source or fixture family identity`);
+    }
+    aliasesByIdentity.set(identity, alias);
+    identitiesByAlias.set(alias, identity);
+    const familyKey = `${spec.kind === "historical" ? "historical" : "fixture"}:${identity}`;
+    const architecture = curation.strata.architectureFamily;
+    if ((architecturesByFamily.get(familyKey) ?? architecture) !== architecture) {
+      throw new Error(`${spec.id} changes architecture within one source or fixture family`);
+    }
+    architecturesByFamily.set(familyKey, architecture);
+    await verifySafeMaterialization(caseDir, spec, truth, curation);
+  }
+}
+
+async function verifySafeMaterialization(
+  caseDir: string,
+  spec: CaseSpec,
+  truth: GroundTruth,
+  curation: CaseCuration,
+): Promise<void> {
   const policy = leakagePolicyForCase(caseDir, spec);
   readSanitizedMetadata(caseDir, spec, policy);
   const materialized = await materializeCase(caseDir, spec, policy, { prepareProviderAssets: false });
   try {
     for (const bug of truth.bugs) verifyBugLineRange(materialized.repoPath, bug, spec.id);
+    if (spec.kind === "historical") {
+      assertHistoricalRepositoryIdentity(
+        spec.id,
+        curation.source.repositoryIdentitySha256,
+        materialized.historyProvenance.historicalSource?.sourceIdentitySha256,
+      );
+    }
+    const language = await deriveLanguageFamily(materialized.repoPath, materialized.baseRef, materialized.headRef);
+    if (language !== curation.strata.languageFamily) {
+      throw new Error(`${spec.id} language family ${curation.strata.languageFamily} does not match derived ${language}`);
+    }
   } finally {
     materialized.cleanup();
   }
+}
+
+export function assertHistoricalRepositoryIdentity(
+  caseId: string,
+  curatedIdentitySha256: string,
+  provenIdentitySha256: string | undefined,
+): void {
+  if (!provenIdentitySha256 || curatedIdentitySha256 !== provenIdentitySha256) {
+    throw new Error(`${caseId} historical repository identity does not match materialized source provenance`);
+  }
+}
+
+async function deriveLanguageFamily(repoPath: string, baseRef: string, headRef: string): Promise<string> {
+  let paths = await gitPaths(repoPath, ["diff", "--name-only", "-z", baseRef, headRef]);
+  let families = languageFamiliesForPaths(paths);
+  if (families.size === 0) {
+    paths = await gitPaths(repoPath, ["ls-tree", "-r", "--name-only", "-z", headRef]);
+    families = languageFamiliesForPaths(paths);
+  }
+  if (families.size !== 1) {
+    throw new Error(`behavioral case must derive exactly one language family; found ${[...families].sort().join(", ") || "none"}`);
+  }
+  return [...families][0]!;
+}
+
+async function gitPaths(repoPath: string, args: string[]): Promise<string[]> {
+  const result = await exec("git", args, {
+    cwd: repoPath,
+    timeoutMs: 10_000,
+    env: nonSensitiveEnvironment(),
+    inheritEnv: false,
+  });
+  if (result.code !== 0 || result.timedOut) throw new Error("could not derive case language family from Git history");
+  return result.stdout.split("\0").filter(Boolean);
+}
+
+function languageFamiliesForPaths(paths: readonly string[]): Set<string> {
+  const families = new Set<string>();
+  for (const path of paths) {
+    const family = ({
+      ".c": "c", ".cc": "cpp", ".cpp": "cpp", ".cs": "csharp", ".go": "go",
+      ".java": "java", ".js": "javascript", ".jsx": "javascript", ".kt": "kotlin",
+      ".kts": "kotlin", ".mjs": "javascript", ".cjs": "javascript", ".php": "php",
+      ".py": "python", ".rb": "ruby", ".rs": "rust", ".swift": "swift",
+      ".ts": "typescript", ".tsx": "typescript",
+    } as Record<string, string>)[extname(path).toLowerCase()];
+    if (family) families.add(family);
+  }
+  return families;
 }
 
 function verifyBugLineRange(
@@ -159,43 +279,52 @@ export function buildCorpusValidationReport(
   const cleanCases = admitted.length - bugCases;
   const multiObservationCases = admitted.filter((item) =>
     item.curation.strata.changeShapes.includes("multi-observation")).length;
-  const unmetRequirements: string[] = [];
-  if (cases.some((item) => item.curation.status !== "admitted")) unmetRequirements.push("every visible behavioral case is admitted");
-  if (admitted.length < 36) unmetRequirements.push("at least 36 admitted visible cases");
+  const coreRequirements: string[] = [];
+  if (cases.some((item) => item.curation.status !== "admitted")) coreRequirements.push("every visible behavioral case is admitted");
+  if (admitted.length < 36) coreRequirements.push("at least 36 admitted visible cases");
   if (byCorpus.development.bug < 12 || byCorpus.development.clean < 8) {
-    unmetRequirements.push("development contains at least 12 bug cases and 8 clean controls");
+    coreRequirements.push("development contains at least 12 bug cases and 8 clean controls");
   }
   if (byCorpus.validation.bug < 12 || byCorpus.validation.clean < 4) {
-    unmetRequirements.push("validation contains at least 12 bug cases and 4 clean controls");
+    coreRequirements.push("validation contains at least 12 bug cases and 4 clean controls");
   }
-  if (admitted.length === 0 || cleanCases / admitted.length < 0.25) unmetRequirements.push("clean controls are at least 25% of visible cases");
+  if (admitted.length === 0 || cleanCases / admitted.length < 0.25) coreRequirements.push("clean controls are at least 25% of visible cases");
   for (const corpus of BEHAVIORAL_CORPORA) {
     const missing = CORE_LANE_IDS.filter((lane) => !defectLaneCoverage[corpus].includes(lane));
-    if (missing.length > 0) unmetRequirements.push(`${corpus} has a defect case for every core lane`);
+    if (missing.length > 0) coreRequirements.push(`${corpus} has a defect case for every core lane`);
   }
   if (comparableCleanLaneCoverage.length !== CORE_LANE_IDS.length) {
-    unmetRequirements.push("clean controls cover surfaces comparable to every core lane");
+    coreRequirements.push("clean controls cover surfaces comparable to every core lane");
   }
-  if (multiObservationCases < 3) unmetRequirements.push("at least three multi-observation cases");
+  if (multiObservationCases < 3) coreRequirements.push("at least three multi-observation cases");
   const largeDiffCases = admitted.filter((item) => item.curation.strata.changeShapes.includes("large-diff")).length;
-  if (largeDiffCases < 3) unmetRequirements.push("at least three realistic large-diff cases");
+  if (largeDiffCases < 3) coreRequirements.push("at least three realistic large-diff cases");
   if (!(["direct", "large-diff", "multi-observation", "seam"] as const).every((shape) => shapeCoverage.includes(shape))) {
-    unmetRequirements.push("direct, seam, multi-observation, and large-diff shapes are represented");
+    coreRequirements.push("direct, seam, multi-observation, and large-diff shapes are represented");
   }
-  const repositories = new Set(admitted.map((item) => item.curation.source.repositoryIdentitySha256)).size;
+  const provenHistoricalRepositories = new Set(admitted
+    .filter((item) => item.spec.kind === "historical")
+    .map((item) => item.curation.source.repositoryIdentitySha256)).size;
+  const fixtureFamilies = new Set(admitted
+    .filter((item) => item.spec.kind !== "historical")
+    .map((item) => item.curation.source.repositoryIdentitySha256)).size;
   const languageFamilies = new Set(admitted.map((item) => item.curation.strata.languageFamily)).size;
   const architectureFamilies = new Set(admitted.map((item) => item.curation.strata.architectureFamily)).size;
-  if (repositories < 3) unmetRequirements.push("at least three independent source repositories");
-  if (languageFamilies < 2) unmetRequirements.push("at least two language families");
-  if (architectureFamilies < 2) unmetRequirements.push("at least two architecture families");
+  if (languageFamilies < 2) coreRequirements.push("at least two derived language families");
+  if (architectureFamilies < 2) coreRequirements.push("at least two architecture families");
+  const seededBenchmarkRequirements = [...coreRequirements];
+  if (fixtureFamilies < 3) seededBenchmarkRequirements.push("at least three bound fixture families");
+  const goldSetRequirements = [...coreRequirements];
+  if (provenHistoricalRepositories < 3) goldSetRequirements.push("at least three proven historical source repositories");
   const holdoutRequirements = holdoutCommitted
     ? []
     : ["external sealed holdout commitment metadata exists"];
 
   return {
     schemaVersion: 1,
-    visibleBaselineReady: unmetRequirements.length === 0,
-    finalHoldoutReady: unmetRequirements.length === 0 && holdoutRequirements.length === 0,
+    visibleSeededBenchmarkReady: seededBenchmarkRequirements.length === 0,
+    goldSetReady: goldSetRequirements.length === 0,
+    finalHoldoutReady: goldSetRequirements.length === 0 && holdoutRequirements.length === 0,
     totalCases: cases.length,
     admittedCases: admitted.length,
     draftCases: cases.length - admitted.length,
@@ -204,7 +333,8 @@ export function buildCorpusValidationReport(
     cleanFraction: admitted.length === 0 ? null : cleanCases / admitted.length,
     multiObservationCases,
     largeDiffCases,
-    repositories,
+    provenHistoricalRepositories,
+    fixtureFamilies,
     languageFamilies,
     architectureFamilies,
     corpora: byCorpus,
@@ -212,19 +342,21 @@ export function buildCorpusValidationReport(
     comparableCleanLaneCoverage,
     changeShapeCoverage: shapeCoverage,
     holdoutCommitted,
-    unmetRequirements,
+    seededBenchmarkRequirements,
+    goldSetRequirements,
     holdoutRequirements,
   };
 }
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
-  const unexpected = args.filter((arg) => arg !== "--require-ready" && !arg.startsWith("--cases-dir="));
+  const unexpected = args.filter((arg) => arg !== "--require-ready" && arg !== "--require-gold" && !arg.startsWith("--cases-dir="));
   if (unexpected.length > 0) throw new Error(`unsupported argument ${unexpected[0]}`);
   const casesArg = args.find((arg) => arg.startsWith("--cases-dir="));
   const report = await validateBehavioralCorpus(casesArg?.slice("--cases-dir=".length) || "eval/cases");
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
-  if (args.includes("--require-ready") && !report.visibleBaselineReady) process.exitCode = 1;
+  if (args.includes("--require-ready") && !report.visibleSeededBenchmarkReady) process.exitCode = 1;
+  if (args.includes("--require-gold") && !report.goldSetReady) process.exitCode = 1;
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

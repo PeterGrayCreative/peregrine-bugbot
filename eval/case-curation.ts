@@ -12,6 +12,15 @@ const CHANGE_SHAPES = ["direct", "large-diff", "multi-observation", "seam"] as c
 const PROOF_KINDS = ["clean-control-review", "reasoned-analysis", "regression-test", "reproduction"] as const;
 const SOURCE_ACCESS = ["curator-local-private", "public", "sanitized-private"] as const;
 const SIZE_STRATA = ["large", "medium", "small"] as const;
+const ARCHITECTURE_FAMILIES = [
+  "backend-service",
+  "cli-tool",
+  "data-pipeline",
+  "frontend-application",
+  "infrastructure",
+  "library",
+  "worker-service",
+] as const;
 export const SMALL_DIFF_MAX_LINES = 250;
 export const LARGE_DIFF_MIN_LINES = 1_501;
 const BUG_CONFIRMATION_CHECKS = [
@@ -37,6 +46,7 @@ const CLEAN_CONFIRMATION_CHECKS = [
 
 export type ChangeShape = (typeof CHANGE_SHAPES)[number];
 export type ConfirmationCheck = (typeof BUG_CONFIRMATION_CHECKS)[number] | (typeof CLEAN_CONFIRMATION_CHECKS)[number];
+export type ArchitectureFamily = (typeof ARCHITECTURE_FAMILIES)[number];
 
 export interface CaseCuration {
   schemaVersion: 1;
@@ -51,7 +61,7 @@ export interface CaseCuration {
   };
   strata: {
     languageFamily: string;
-    architectureFamily: string;
+    architectureFamily: ArchitectureFamily;
     size: (typeof SIZE_STRATA)[number];
     changeShapes: ChangeShape[];
     surfaceLanes: CoreLaneId[];
@@ -64,6 +74,7 @@ export interface CaseCuration {
   confirmations: Array<{
     curatorIdentitySha256: string;
     confirmedAt: string;
+    caseBundleSha256: string;
     checks: ConfirmationCheck[];
   }>;
 }
@@ -91,12 +102,13 @@ export function readBehavioralCaseAdmission(
   options: { requireAdmitted?: boolean } = {},
 ): BehavioralCaseAdmission {
   if (spec.corpus === "structural-smoke") throw new Error(`${spec.id} is not a behavioral case`);
+  const caseRoot = realpathSync(resolve(caseDir));
   const truth = parseBehavioralGroundTruth(
-    readJson(resolve(caseDir, "ground_truth.json"), `${spec.id} ground_truth.json`),
+    readJson(directFile(caseRoot, "ground_truth.json", `${spec.id} ground_truth.json`), `${spec.id} ground_truth.json`),
     `${spec.id} ground truth`,
   );
   const curation = parseCaseCuration(
-    readJson(resolve(caseDir, "curation.json"), `${spec.id} curation.json`),
+    readJson(directFile(caseRoot, "curation.json", `${spec.id} curation.json`), `${spec.id} curation.json`),
     spec,
     truth,
     `${spec.id} curation`,
@@ -106,19 +118,14 @@ export function readBehavioralCaseAdmission(
   }
   verifyCurationProof(caseDir, curation);
 
-  const caseRoot = realpathSync(resolve(caseDir));
-  const diffPath = resolve(caseRoot, spec.diffFile);
-  const resolvedDiff = realpathSync(diffPath);
-  if (!resolvedDiff.startsWith(`${caseRoot}${sep}`) || resolvedDiff !== diffPath || !lstatSync(resolvedDiff).isFile()) {
-    throw new Error(`${spec.id} diff must be a direct regular file inside its case directory`);
-  }
+  const resolvedDiff = directFile(caseRoot, spec.diffFile, `${spec.id} diff`);
   const diff = readFileSync(resolvedDiff);
   const actual = createHash("sha256").update(diff).digest("hex");
   if (actual !== curation.source.changeIdentitySha256) {
     throw new Error(`${spec.id} source change identity does not match the checked-in diff`);
   }
   const text = diff.toString("utf8");
-  const diffLines = text.length === 0 ? 0 : text.split("\n").length;
+  const diffLines = text.length === 0 ? 0 : text.split("\n").length - (text.endsWith("\n") ? 1 : 0);
   const expectedSize = diffSizeStratum(diffLines);
   if (curation.strata.size !== expectedSize) {
     throw new Error(`${spec.id} size stratum does not match its ${diffLines}-line diff`);
@@ -127,7 +134,34 @@ export function readBehavioralCaseAdmission(
   if (declaresLarge !== (diffLines >= LARGE_DIFF_MIN_LINES)) {
     throw new Error(`${spec.id} large-diff shape does not match its ${diffLines}-line diff`);
   }
+  const bundleSha256 = caseBundleSha256(caseRoot, spec, curation);
+  for (const [index, confirmation] of curation.confirmations.entries()) {
+    if (confirmation.caseBundleSha256 !== bundleSha256) {
+      throw new Error(`${spec.id} confirmation ${index} does not authenticate the current case bundle`);
+    }
+  }
   return { truth, curation, diffLines };
+}
+
+export function caseBundleSha256(caseDir: string, spec: CaseSpec, curation: CaseCuration): string {
+  const caseRoot = realpathSync(resolve(caseDir));
+  const proofPath = directFile(caseRoot, curation.proof.artifact, `${spec.id} curation proof`);
+  const artifacts = {
+    caseJsonSha256: fileSha256(directFile(caseRoot, "case.json", `${spec.id} case.json`)),
+    groundTruthSha256: fileSha256(directFile(caseRoot, "ground_truth.json", `${spec.id} ground_truth.json`)),
+    diffSha256: fileSha256(directFile(caseRoot, spec.diffFile, `${spec.id} diff`)),
+    proofSha256: fileSha256(proofPath),
+  };
+  return createHash("sha256").update(JSON.stringify({
+    version: "case-bundle-v1",
+    caseId: spec.id,
+    artifacts,
+    curation: {
+      source: curation.source,
+      strata: curation.strata,
+      proof: curation.proof,
+    },
+  })).digest("hex");
 }
 
 export function diffSizeStratum(diffLines: number): CaseCuration["strata"]["size"] {
@@ -161,10 +195,17 @@ export function parseCaseCuration(
     "languageFamily", "architectureFamily", "size", "changeShapes", "surfaceLanes",
   ]);
   const languageFamily = slug(strata.languageFamily, `${label}.strata.languageFamily`);
-  const architectureFamily = slug(strata.architectureFamily, `${label}.strata.architectureFamily`);
+  if (!ARCHITECTURE_FAMILIES.includes(strata.architectureFamily as never)) {
+    throw new Error(`${label}.strata.architectureFamily is invalid`);
+  }
+  const architectureFamily = strata.architectureFamily as ArchitectureFamily;
   if (!SIZE_STRATA.includes(strata.size as never)) throw new Error(`${label}.strata.size is invalid`);
-  const changeShapes = enumArray(strata.changeShapes, CHANGE_SHAPES, `${label}.strata.changeShapes`);
+  const declaredShapes = enumArray(strata.changeShapes, CHANGE_SHAPES, `${label}.strata.changeShapes`);
+  const changeShapes = CHANGE_SHAPES.filter((shape) => declaredShapes.includes(shape));
   const surfaceLanes = coreLaneArray(strata.surfaceLanes, `${label}.strata.surfaceLanes`);
+  if (changeShapes.includes("direct") === changeShapes.includes("seam")) {
+    throw new Error(`${label}.strata.changeShapes must contain exactly one of direct or seam`);
+  }
 
   const proof = strictObject(root.proof, `${label}.proof`, ["kind", "artifact", "sha256"]);
   if (!PROOF_KINDS.includes(proof.kind as never)) throw new Error(`${label}.proof.kind is invalid`);
@@ -186,7 +227,7 @@ export function parseCaseCuration(
   const curators = new Set<string>();
   const confirmations = root.confirmations.map((raw, index) => {
     const confirmation = strictObject(raw, `${label}.confirmations[${index}]`, [
-      "curatorIdentitySha256", "confirmedAt", "checks",
+      "curatorIdentitySha256", "confirmedAt", "caseBundleSha256", "checks",
     ]);
     const curatorIdentitySha256 = sha256(
       confirmation.curatorIdentitySha256,
@@ -195,12 +236,16 @@ export function parseCaseCuration(
     if (curators.has(curatorIdentitySha256)) throw new Error(`${label}.confirmations has a duplicate curator`);
     curators.add(curatorIdentitySha256);
     const confirmedAt = timestamp(confirmation.confirmedAt, `${label}.confirmations[${index}].confirmedAt`);
+    const caseBundleSha256 = sha256(
+      confirmation.caseBundleSha256,
+      `${label}.confirmations[${index}].caseBundleSha256`,
+    );
     if (!Array.isArray(confirmation.checks) ||
       confirmation.checks.length !== expectedChecks.length ||
       confirmation.checks.some((check, checkIndex) => check !== expectedChecks[checkIndex])) {
       throw new Error(`${label}.confirmations[${index}].checks must equal the required ordered checklist`);
     }
-    return { curatorIdentitySha256, confirmedAt, checks: [...expectedChecks] };
+    return { curatorIdentitySha256, confirmedAt, caseBundleSha256, checks: [...expectedChecks] };
   });
   if (root.status === "admitted" && confirmations.length < 2) {
     throw new Error(`${label} admitted cases need two independent curator confirmations`);
@@ -210,6 +255,9 @@ export function parseCaseCuration(
   if (spec.kind !== "clean" && truth.bugs.length === 0) throw new Error(`${label} bug cases need non-empty ground truth`);
   if (spec.kind === "clean" && proof.kind !== "clean-control-review") {
     throw new Error(`${label} clean cases require a clean-control-review proof`);
+  }
+  if (spec.kind === "clean" && surfaceLanes.length !== 1) {
+    throw new Error(`${label} clean controls must declare exactly one comparable surface lane`);
   }
   if (spec.kind !== "clean" && proof.kind === "clean-control-review") {
     throw new Error(`${label} bug cases cannot use a clean-control-review proof`);
@@ -246,13 +294,7 @@ export function parseCaseCuration(
 
 export function verifyCurationProof(caseDir: string, curation: CaseCuration): void {
   const root = realpathSync(resolve(caseDir));
-  const path = resolve(root, curation.proof.artifact);
-  if (!path.startsWith(`${root}${sep}`)) throw new Error("curation proof path escapes its case directory");
-  const resolved = realpathSync(path);
-  if (!resolved.startsWith(`${root}${sep}`) || resolved !== path) {
-    throw new Error("curation proof must be a direct non-symlink file inside its case directory");
-  }
-  if (!lstatSync(resolved).isFile()) throw new Error("curation proof must be a regular file");
+  const resolved = directFile(root, curation.proof.artifact, "curation proof");
   const actual = createHash("sha256").update(readFileSync(resolved)).digest("hex");
   if (actual !== curation.proof.sha256) throw new Error("curation proof digest does not match its artifact");
 }
@@ -292,7 +334,7 @@ function assertRootCauseObservations(truth: GroundTruth, shapes: readonly Change
   for (const bug of truth.bugs) {
     if (!bug.rootCauseGroup) continue;
     const observations = groups.get(bug.rootCauseGroup) ?? new Set<string>();
-    const key = JSON.stringify([bug.file, bug.startLine, bug.endLine, bug.observableImpact]);
+    const key = JSON.stringify([bug.file, bug.startLine, bug.endLine]);
     if (observations.has(key)) throw new Error(`${label} repeats a root-cause observation`);
     observations.add(key);
     groups.set(bug.rootCauseGroup, observations);
@@ -370,4 +412,25 @@ function readJson(path: string, label: string): unknown {
   } catch (error) {
     throw new Error(`${label} is invalid: ${error instanceof Error ? error.message : String(error)}`);
   }
+}
+
+function directFile(root: string, name: string, label: string): string {
+  const path = resolve(root, name);
+  if (!path.startsWith(`${root}${sep}`)) throw new Error(`${label} path escapes its case directory`);
+  let stat;
+  try {
+    stat = lstatSync(path);
+  } catch (error) {
+    throw new Error(`${label} is unavailable: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  if (!stat.isFile() || stat.isSymbolicLink()) throw new Error(`${label} must be a direct regular non-symlink file`);
+  const resolved = realpathSync(path);
+  if (resolved !== path || !resolved.startsWith(`${root}${sep}`)) {
+    throw new Error(`${label} must be confined directly inside its case directory`);
+  }
+  return resolved;
+}
+
+function fileSha256(path: string): string {
+  return createHash("sha256").update(readFileSync(path)).digest("hex");
 }

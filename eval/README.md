@@ -223,9 +223,12 @@ and curator proof, runs the existing leakage and two-commit materialization
 checks, verifies every truth line against the reviewed head, and reports whether
 the corpus meets the preregistered readiness quotas. It never executes proof
 artifacts or repository code and never starts a model. Run
-`npm run eval:admit-corpus` when visible-baseline readiness must be an exit-code
-gate. Holdout readiness is reported separately and does not block development
-or validation baseline runs.
+`npm run eval:admit-corpus` when seeded visible-benchmark readiness must be an
+exit-code gate. It permits the current development/validation checkpoint over
+admitted seeded and clean fixtures once at least three fixture families and all
+other visible quotas are proven. `npm run eval:admit-gold-corpus` is the later
+historical gold-set gate. Holdout readiness is reported separately and does not
+block seeded development/validation runs.
 
 Behavioral truth has no compatibility defaults. Every bug field must be
 explicit, bug and root-cause IDs must be opaque, and unknown fields fail closed.
@@ -240,17 +243,26 @@ SHA-256 of the checked-in diff and must be unique across the visible corpus.
 The proof artifact is curator-only, case-relative, a direct regular file, and
 authenticated by its exact SHA-256. The validator does not execute it. An
 `admitted` case requires two distinct curator identity hashes, and each curator
-must affirm the complete ordered checklist for a bug or clean case. Use `draft`
-until independent confirmation is complete.
+must affirm the complete ordered checklist for a bug or clean case. Each
+confirmation also binds `caseBundleSha256`, which authenticates exact case JSON,
+truth, diff, and proof bytes plus normalized source, strata, and proof metadata.
+Changing any of those inputs invalidates both confirmations. Use `draft` until
+independent confirmation is complete.
 
 Readiness requires 36 admitted visible cases: development has at least 12 bug
 cases and 8 clean controls; validation has at least 12 bug cases and 4 clean
 controls. Each core lane has an independent defect case in each corpus and a
 comparable clean surface. Clean controls remain at least 25% of the corpus.
 At least three cases are multi-observation; direct, seam, multi-observation,
-and large-diff shapes are represented; at least three admitted cases are
-realistic large diffs; and the corpus spans at least three
-source repositories, two language families, and two architecture families.
+and large-diff shapes are represented; and at least three admitted cases are
+realistic large diffs. Seeded readiness requires at least three bound fixture
+families. Gold-set readiness separately requires at least three historical
+repository identities authenticated against their materialized local sources;
+seeded and clean fixture families never count as historical repositories. Both
+gates require at least two derived language families and two architecture
+families. Language is derived from the changed/head file extensions, while
+architecture uses a closed schema enum and must remain consistent within each
+source or fixture family.
 Size strata are deterministic from the identity-normalized checked-in diff:
 small is at most 250 lines, medium is 251 through 1,500, and large is at least
 1,501. The `large-diff` shape and `large` size must agree exactly. This matches
@@ -426,15 +438,18 @@ protocol can enforce and attest cold or warm conditions.
 
 Screening and checkpoint use the same config shape. Set `experiment.mode` to
 `screening` for a curated development subset or `checkpoint` for the planned
-development/validation gate, and name exactly one `control` and one `treatment`
-from `configs`. There is no checked-in provider-enabled screening config while
-the containment gate is closed.
+historical gold development/validation gate, and name exactly one `control` and
+one `treatment` from `configs`. Before creating a run directory or starting a
+provider, screening fully validates every selected behavioral case. Checkpoint
+also requires the complete visible corpus to satisfy `goldSetReady`. There is
+no checked-in provider-enabled screening config while the containment gate is
+closed.
 
-Until genuine sanitized development and validation cases are admitted,
-`npm run eval:matrix` writes an empty manifest, prints that no provider process
-was started, and exits successfully. It never substitutes structural fixtures
-or presents synthetic results as model evidence. Reports group development and
-validation attempts separately.
+Until genuine sanitized development and validation cases are admitted, a
+screening or checkpoint matrix fails before creating run artifacts or starting
+a provider. It never substitutes structural fixtures or presents synthetic
+results as model evidence. Reports group development and validation attempts
+separately.
 
 - Repeats (default 3, `eval/matrix.config.json`) are not optional — runs are
   stochastic, and single-run model comparisons will mislead you.

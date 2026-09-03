@@ -26,7 +26,7 @@
       "required": ["languageFamily", "architectureFamily", "size", "changeShapes", "surfaceLanes"],
       "properties": {
         "languageFamily": { "$ref": "#/$defs/slug" },
-        "architectureFamily": { "$ref": "#/$defs/slug" },
+        "architectureFamily": { "enum": ["backend-service", "cli-tool", "data-pipeline", "frontend-application", "infrastructure", "library", "worker-service"] },
         "size": { "enum": ["small", "medium", "large"] },
         "changeShapes": {
           "type": "array",
@@ -57,10 +57,11 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["curatorIdentitySha256", "confirmedAt", "checks"],
+        "required": ["curatorIdentitySha256", "confirmedAt", "caseBundleSha256", "checks"],
         "properties": {
           "curatorIdentitySha256": { "$ref": "#/$defs/sha256" },
           "confirmedAt": { "type": "string", "format": "date-time" },
+          "caseBundleSha256": { "$ref": "#/$defs/sha256" },
           "checks": {
             "type": "array",
             "uniqueItems": true,
