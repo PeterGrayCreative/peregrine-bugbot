@@ -398,6 +398,49 @@ test("malformed Codex JSONL never becomes trusted provider usage", async () => {
   assert.ok(reviewed.usage.promptBytes);
 });
 
+test("Codex artifact construction failures retain both completed stages", async () => {
+  const maxFindings = Array.from({ length: 20 }, (_, index) => ({
+    ...finding,
+    startLine: index + 1,
+    endLine: index + 1,
+    explanation: "e".repeat(8000),
+    failurePath: "f".repeat(8000),
+  }));
+  let calls = 0;
+  const fake: typeof exec = async (_cmd, args) => {
+    calls++;
+    const output = args[args.indexOf("--output-last-message") + 1]!;
+    const schema = args[args.indexOf("--output-schema") + 1]!;
+    writeFileSync(output, schema.endsWith("breadth-result.schema.json")
+      ? JSON.stringify({ ...breadth, model: "gpt-5.6-luna" })
+      : JSON.stringify({ findings: maxFindings }));
+    return {
+      stdout: `${JSON.stringify({
+        type: "turn.completed",
+        usage: { input_tokens: 11, cached_input_tokens: 2, output_tokens: 3 },
+      })}\n`,
+      stderr: "",
+      code: 0,
+      timedOut: false,
+    };
+  };
+
+  await assert.rejects(
+    () => createCodexEngine(fake).review(context()),
+    (error: unknown) => {
+      assert.ok(error instanceof RunFailureError);
+      assert.equal(error.kind, "parse");
+      assert.match(error.message, /raw telemetry exceeds/);
+      assert.equal(error.telemetry?.stages.length, 2);
+      assert.ok(error.telemetry?.stages.every((stage) => stage.completed));
+      assert.equal(error.telemetry?.usage.inputTokens, 22);
+      assert.equal(error.telemetry?.usage.outputTokens, 6);
+      return true;
+    },
+  );
+  assert.equal(calls, 2);
+});
+
 test("provider failures never echo credential-like diagnostics", async () => {
   const secret = "token=abc123456789SECRET";
   const fake: typeof exec = async () => ({

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import {
   USAGE_METRICS,
   type CostSource,
+  type MalformedUsageField,
   type PricingReference,
   type Usage,
   type UsageMetric,
@@ -16,6 +17,7 @@ const USAGE_KEYS = new Set([
   "costSource",
   "pricing",
   "unavailable",
+  "malformed",
 ]);
 const USAGE_AGGREGATIONS = ["single-envelope", "single-snapshot", "ambiguous", "stage-sum"] as const;
 const WORK_ITEM_TYPES = new Set([
@@ -53,8 +55,15 @@ export function claudeUsageFromEnvelope(
   );
   const totalInput = sumIfComplete(base, cacheWrite, cacheRead);
   const cachedInput = sumIfComplete(cacheWrite, cacheRead);
-  const providerCost = finiteNonNegativeFrom(envelope, "total_cost_usd");
-  const serviceTier = firstString(raw.service_tier, envelope.service_tier);
+  const providerCostValue = envelope.total_cost_usd;
+  const providerCost = providerCostValue === undefined
+    ? undefined
+    : finiteNonNegativeFrom(envelope, "total_cost_usd");
+  const serviceTierValue = raw.service_tier === undefined ? envelope.service_tier : raw.service_tier;
+  const serviceTier = firstString(serviceTierValue);
+  const malformed: MalformedUsageField[] = [];
+  if (providerCostValue !== undefined && providerCost === undefined) malformed.push("costUsd");
+  if (serviceTierValue !== undefined && serviceTier === undefined) malformed.push("serviceTier");
 
   const usage: Usage = {
     provider: "anthropic",
@@ -75,6 +84,7 @@ export function claudeUsageFromEnvelope(
     promptBytes: promptBytes(prompt),
     costUsd: providerCost,
     costSource: providerCost === undefined ? undefined : "provider",
+    malformed: malformed.length > 0 ? malformed : undefined,
   };
   return withUnavailable(usage);
 }
@@ -96,13 +106,16 @@ export function codexUsageFromEvents(
       promptBytes: promptBytes(prompt),
     });
   }
+  if (events.length === 0 || events.some((event) => !isEventObject(event))) {
+    return withUnavailable({ provider: "openai", aggregation: "ambiguous", promptBytes: promptBytes(prompt) });
+  }
   const completed = events
     .map((event) => record(event))
     .filter((event) => event.type === "turn.completed");
   const usageSnapshots = completed
     .map((event) => record(event.usage))
     .filter((usage) => Object.keys(usage).length > 0);
-  if (completed.length === 0 || usageSnapshots.length === 0) {
+  if (completed.length !== 1 || usageSnapshots.length !== 1) {
     return withUnavailable({
       provider: "openai",
       aggregation: "ambiguous",
@@ -117,7 +130,16 @@ export function codexUsageFromEvents(
     : undefined;
   const output = numberFrom(raw, "output_tokens");
   const reasoning = numberFrom(raw, "reasoning_output_tokens");
+  const lastEvent = record(events[events.length - 1]);
+  if (lastEvent.type !== "turn.completed" || input === undefined || cacheRead === undefined ||
+    output === undefined || cacheRead > input ||
+    (raw.reasoning_output_tokens !== undefined && reasoning === undefined)) {
+    return withUnavailable({ provider: "openai", aggregation: "ambiguous", promptBytes: promptBytes(prompt) });
+  }
   const serviceTier = firstString(raw.service_tier);
+  const malformed: MalformedUsageField[] = raw.service_tier !== undefined && serviceTier === undefined
+    ? ["serviceTier"]
+    : [];
   const work = observedWork(events, true);
 
   return withUnavailable({
@@ -135,6 +157,7 @@ export function codexUsageFromEvents(
     toolCallsByType: work.toolCallsByType,
     toolOutputBytes: work.toolOutputBytes,
     promptBytes: promptBytes(prompt),
+    malformed: malformed.length > 0 ? malformed : undefined,
   });
 }
 
@@ -169,6 +192,8 @@ export function combineUsage(...stages: Usage[]): Usage {
     serviceTier: same(stages.map((stage) => stage.serviceTier)),
     aggregation: "stage-sum",
   };
+  const malformed = [...new Set(stages.flatMap((stage) => stage.malformed ?? []))];
+  if (malformed.length > 0) result.malformed = malformed;
   for (const metric of USAGE_METRICS) {
     if (metric === "toolCallsByType") continue;
     const values = stages.map((stage) => stage[metric]).filter(isNumber);
@@ -265,6 +290,17 @@ export function parseUsage(value: unknown, source: string): Usage {
     parsed.costSource = raw.costSource as CostSource;
   }
   if (raw.pricing !== undefined) parsed.pricing = parsePricingReference(raw.pricing, `${source}.pricing`);
+  if (raw.malformed !== undefined) {
+    if (!Array.isArray(raw.malformed)) throw new Error(`${source}.malformed must be an array`);
+    const malformed = raw.malformed.map((field, index) => {
+      if (!(field === "serviceTier" || field === "costUsd")) {
+        throw new Error(`${source}.malformed[${index}] is invalid`);
+      }
+      return field as MalformedUsageField;
+    });
+    if (new Set(malformed).size !== malformed.length) throw new Error(`${source}.malformed must not contain duplicates`);
+    parsed.malformed = malformed;
+  }
   if (raw.unavailable !== undefined) {
     if (!Array.isArray(raw.unavailable)) throw new Error(`${source}.unavailable must be an array`);
     const unavailable = raw.unavailable.map((metric, index) => {
@@ -290,6 +326,26 @@ export function parseUsage(value: unknown, source: string): Usage {
   }
   if (parsed.pricing !== undefined && parsed.costSource !== "estimated") {
     throw new Error(`${source}.pricing requires costSource estimated`);
+  }
+  if (parsed.costSource === "estimated" &&
+    (parsed.pricing === undefined || parsed.provider === undefined || parsed.provider === "mock")) {
+    throw new Error(`${source}.costSource estimated requires provider and pricing provenance`);
+  }
+  if (parsed.costSource === "provider" && parsed.provider === undefined) {
+    throw new Error(`${source}.costSource provider requires provider provenance`);
+  }
+  if (parsed.costSource === "mixed" && parsed.aggregation !== "stage-sum") {
+    throw new Error(`${source}.costSource mixed requires stage-sum aggregation`);
+  }
+  if (parsed.malformed?.includes("costUsd") && parsed.costUsd !== undefined) {
+    throw new Error(`${source}.costUsd cannot be both malformed and observed`);
+  }
+  if (parsed.malformed?.includes("serviceTier") && parsed.serviceTier !== undefined) {
+    throw new Error(`${source}.serviceTier cannot be both malformed and observed`);
+  }
+  if (parsed.serviceTier !== undefined && parsed.pricing?.serviceTier !== undefined &&
+    parsed.serviceTier !== parsed.pricing.serviceTier) {
+    throw new Error(`${source}.serviceTier does not match pricing provenance`);
   }
   return parsed;
 }
@@ -442,6 +498,12 @@ function record(value: unknown): Record<string, unknown> {
     : {};
 }
 
+function isEventObject(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const type = (value as Record<string, unknown>).type;
+  return typeof type === "string" && type.length > 0 && type === type.trim() && type.length <= 100;
+}
+
 function requiredRecord(value: unknown, source: string): Record<string, unknown> {
   const parsed = record(value);
   if (Object.keys(parsed).length === 0 && !(value && typeof value === "object" && !Array.isArray(value))) {
@@ -496,7 +558,11 @@ export function formatUsageCost(usage: Usage): string {
         : usage.costSource === "mixed"
           ? "mixed-source"
           : "unattributed";
-  return `${label} $${usage.costUsd.toFixed(3)}`;
+  return `${label} ${formatUsd(usage.costUsd)}`;
+}
+
+export function formatUsd(costUsd: number): string {
+  return costUsd > 0 && costUsd < 0.001 ? `$${costUsd.toPrecision(3)}` : `$${costUsd.toFixed(3)}`;
 }
 
 function isPricingReference(value: PricingReference | undefined): value is PricingReference {

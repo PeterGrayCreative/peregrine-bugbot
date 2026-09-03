@@ -6,18 +6,29 @@ import type {
   GradedRun,
   MatrixRunManifest,
   RunRecord,
+  RunnerName,
 } from "../src/types.js";
 import type { RunFailureKind } from "../src/core/run-failure.js";
 import { readCaseGroundTruth } from "./case-truth.js";
+import { formatUsd } from "../src/core/telemetry.js";
+import {
+  assertGradedMatchesRun,
+  parseGradedRun,
+  parseLegacyCompletedRun,
+  parseMatrixRunManifest,
+  parseRunRecord,
+} from "./artifacts.js";
 
-type LegacyGradedRun = Omit<GradedRun, "schemaVersion" | "attemptId" | "finishedAt" | "outcome"> & {
+type LegacyGradedRun = Omit<GradedRun, "schemaVersion" | "attemptId" | "finishedAt" | "outcome" | "caseCorpus" | "runner"> & {
   result: EngineResult;
 };
 type ReportCostSource = "provider" | "estimated" | "mixed" | "mock" | "unknown" | null;
 
 export interface ConfigStats {
   config: string;
-  corpus: CaseCorpus | "unknown";
+  runner: RunnerName | null;
+  corpus: CaseCorpus | "unknown" | null;
+  benchmarkKind: "behavioral" | "structural-only" | "legacy-unknown";
   completeness: "tracked" | "legacy-incomplete";
   expectedRuns: number | null;
   runs: number;
@@ -58,6 +69,9 @@ export interface ConfigStats {
   incurredCostObservedAttempts: number;
   incurredCostSource: ReportCostSource;
   validFindingsPerDollar: number | null;
+  structuralExpectedMarkers: number | null;
+  structuralMatchedMarkers: number | null;
+  structuralUnexpectedFindings: number | null;
 }
 
 export async function buildReport(
@@ -68,7 +82,11 @@ export async function buildReport(
   const casesDir = resolve(options.casesDir ?? "eval/cases");
   const manifestPath = join(dir, "matrix-manifest.json");
   const stats = existsSync(manifestPath)
-    ? trackedStats(dir, casesDir, JSON.parse(readFileSync(manifestPath, "utf8")) as MatrixRunManifest)
+    ? trackedStats(
+        dir,
+        casesDir,
+        parseMatrixRunManifest(JSON.parse(readFileSync(manifestPath, "utf8")), manifestPath),
+      )
     : legacyStats(dir);
 
   if (stats.length === 0) {
@@ -83,10 +101,18 @@ export async function buildReport(
 }
 
 function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest): ConfigStats[] {
-  const byConfig = groupBy(
-    manifest.expectedAttempts,
-    (attempt) => `${attempt.configName}\0${attempt.corpus ?? "unknown"}`,
-  );
+  const declaredFiles = new Set(manifest.expectedAttempts.flatMap((attempt) => [
+    attempt.file,
+    attempt.file.replace(/\.json$/, ".graded.json"),
+  ]));
+  const undeclared = readdirSync(dir).filter((file) =>
+    file.endsWith(".json") && file !== "matrix-manifest.json" && file !== "benchmark.json" &&
+    !declaredFiles.has(file));
+  if (undeclared.length > 0) {
+    throw new Error(`run artifacts not declared by matrix manifest: ${undeclared.join(", ")}`);
+  }
+  const byConfig = groupBy(manifest.expectedAttempts, (attempt) =>
+    `${attempt.configName}\0${attempt.corpus}\0${attempt.runner}`);
   const countBugs = (attempt: MatrixRunManifest["expectedAttempts"][number]): number | null => {
     const snapshot = (attempt as { expectedBugCount?: number | null }).expectedBugCount;
     if (snapshot !== undefined) return snapshot;
@@ -99,7 +125,8 @@ function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest
 
   return [...byConfig.values()].map((attempts) => {
     const config = attempts[0]!.configName;
-    const corpus = attempts[0]!.corpus ?? "unknown";
+    const corpus = attempts[0]!.corpus;
+    const runner = attempts[0]!.runner;
     const completed: GradedRun[] = [];
     const failed: Array<Extract<RunRecord["outcome"], { status: "failed" }>> = [];
     let missing = 0;
@@ -115,7 +142,7 @@ function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest
         if ((bugCount ?? 0) > 0) failureInclusiveRecalls.push(0);
         continue;
       }
-      const raw = JSON.parse(readFileSync(rawPath, "utf8")) as RunRecord;
+      const raw = parseRunRecord(JSON.parse(readFileSync(rawPath, "utf8")), rawPath, attempt);
       if (raw.outcome.status === "failed") {
         failed.push(raw.outcome);
         if ((bugCount ?? 0) > 0) failureInclusiveRecalls.push(0);
@@ -125,7 +152,14 @@ function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest
       if (!existsSync(gradedPath)) {
         throw new Error(`${attempt.file} completed but has no graded artifact — run eval:grade first.`);
       }
-      const graded = JSON.parse(readFileSync(gradedPath, "utf8")) as GradedRun;
+      const graded = parseGradedRun(JSON.parse(readFileSync(gradedPath, "utf8")), gradedPath, attempt);
+      assertGradedMatchesRun(graded, raw, gradedPath);
+      const groundTruthIds = loadGroundTruthIds(casesDir, attempt.caseName);
+      const gradedIds = Object.keys(graded.matches);
+      if (groundTruthIds.length !== gradedIds.length ||
+        groundTruthIds.some((id) => !Object.prototype.hasOwnProperty.call(graded.matches, id))) {
+        throw new Error(`${gradedPath}.matches does not match ground truth bug IDs`);
+      }
       completed.push(graded);
       const recall = runRecall(graded);
       if (recall !== null) failureInclusiveRecalls.push(recall);
@@ -133,7 +167,9 @@ function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest
 
     return calculateStats({
       config,
+      runner,
       corpus,
+      benchmarkKind: corpus === "structural-smoke" || runner === "mock" ? "structural-only" : "behavioral",
       completeness: "tracked",
       expectedRuns: attempts.length,
       completed,
@@ -144,10 +180,23 @@ function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest
   });
 }
 
+function loadGroundTruthIds(casesDir: string, caseName: string): string[] {
+  return readCaseGroundTruth(casesDir, caseName).bugs.map((bug) => bug.id);
+}
+
 function legacyStats(dir: string): ConfigStats[] {
   const graded = readdirSync(dir)
     .filter((file) => file.endsWith(".graded.json"))
-    .map((file) => JSON.parse(readFileSync(join(dir, file), "utf8")) as LegacyGradedRun | GradedRun);
+    .map((file): LegacyGradedRun | GradedRun => {
+      const path = join(dir, file);
+      const raw: unknown = JSON.parse(readFileSync(path, "utf8"));
+      if (raw && typeof raw === "object" && !Array.isArray(raw) && "outcome" in raw) {
+        return parseGradedRun(raw, path);
+      }
+      const parsed = parseLegacyCompletedRun(raw, path);
+      if (!parsed.matches || !parsed.falsePositiveIndexes) throw new Error(`${path}: expected a graded legacy artifact`);
+      return { ...parsed, matches: parsed.matches, falsePositiveIndexes: parsed.falsePositiveIndexes };
+    });
   const byConfig = groupBy(graded, (run) => run.configName);
   return [...byConfig.entries()].map(([config, legacyRuns]) => {
     const completed = legacyRuns.map((run): GradedRun =>
@@ -157,13 +206,22 @@ function legacyStats(dir: string): ConfigStats[] {
             ...run,
             schemaVersion: 1 as const,
             attemptId: `${run.configName}--${run.caseName}--${run.repeat}`,
+            caseCorpus: "unknown" as const,
+            runner: run.result.engine,
             finishedAt: run.startedAt,
             outcome: { status: "completed", result: run.result },
           },
     );
     return calculateStats({
       config,
-      corpus: "unknown",
+      runner: completed.length > 0 && completed.every((run) =>
+        run.outcome.result.engine === completed[0]!.outcome.result.engine)
+        ? completed[0]!.outcome.result.engine
+        : null,
+      corpus: null,
+      benchmarkKind: completed.every((run) => run.outcome.result.engine === "mock")
+        ? "structural-only"
+        : "legacy-unknown",
       completeness: "legacy-incomplete",
       expectedRuns: null,
       completed,
@@ -176,7 +234,9 @@ function legacyStats(dir: string): ConfigStats[] {
 
 function calculateStats(args: {
   config: string;
+  runner: RunnerName | null;
   corpus: ConfigStats["corpus"];
+  benchmarkKind: ConfigStats["benchmarkKind"];
   completeness: ConfigStats["completeness"];
   expectedRuns: number | null;
   completed: GradedRun[];
@@ -184,6 +244,7 @@ function calculateStats(args: {
   missing: number | null;
   failureInclusiveRecalls: number[] | null;
 }): ConfigStats {
+  const behavioral = args.benchmarkKind === "behavioral";
   const recalls = args.completed.map(runRecall).filter((value): value is number => value !== null);
   const fps = args.completed.map((run) => run.falsePositiveIndexes.length);
   const costs = args.completed
@@ -252,7 +313,9 @@ function calculateStats(args: {
 
   return {
     config: args.config,
+    runner: args.runner,
     corpus: args.corpus,
+    benchmarkKind: args.benchmarkKind,
     completeness: args.completeness,
     expectedRuns: args.expectedRuns,
     runs: args.completed.length,
@@ -262,16 +325,16 @@ function calculateStats(args: {
     completionRate: args.expectedRuns === null ? null : args.completed.length / args.expectedRuns,
     failuresByKind,
     failureRatesByKind,
-    recallMean: recalls.length > 0 ? mean(recalls) : null,
-    recallStd: recalls.length > 0 ? std(recalls) : null,
+    recallMean: behavioral && recalls.length > 0 ? mean(recalls) : null,
+    recallStd: behavioral && recalls.length > 0 ? std(recalls) : null,
     failureInclusiveRecallMean:
-      args.failureInclusiveRecalls === null || args.failureInclusiveRecalls.length === 0
+      !behavioral || args.failureInclusiveRecalls === null || args.failureInclusiveRecalls.length === 0
         ? null
         : mean(args.failureInclusiveRecalls),
-    fpPerCaseMean: fps.length > 0 ? mean(fps) : null,
-    costPerCaseMean: hasComparableCost ? mean(costs) : null,
-    costPerCaseStd: hasComparableCost ? std(costs) : null,
-    costSource,
+    fpPerCaseMean: behavioral && fps.length > 0 ? mean(fps) : null,
+    costPerCaseMean: behavioral && hasComparableCost ? mean(costs) : null,
+    costPerCaseStd: behavioral && hasComparableCost ? std(costs) : null,
+    costSource: behavioral ? costSource : null,
     durationSecMean: completeMean(durations, hasCompleteDuration ? args.expectedRuns! : 0),
     durationSecMedian: hasCompleteDuration ? median(durations) : null,
     durationSecP95: hasCompleteDuration ? durationP95(durations) : null,
@@ -304,12 +367,19 @@ function calculateStats(args: {
         values.length + observedFailureUsage(key as keyof EngineResult["usage"]),
       ])),
     },
-    incurredCostUsdTotal: args.completeness === "tracked" ? finiteSum(incurred.costs) : null,
-    incurredCostObservedAttempts: args.completeness === "tracked" ? incurred.observedAttempts : 0,
-    incurredCostSource: args.completeness === "tracked" && incurred.costs.length > 0
+    incurredCostUsdTotal: behavioral && args.completeness === "tracked" ? finiteSum(incurred.costs) : null,
+    incurredCostObservedAttempts: behavioral && args.completeness === "tracked" ? incurred.observedAttempts : 0,
+    incurredCostSource: behavioral && args.completeness === "tracked" && incurred.costs.length > 0
       ? summarizeCostSource(incurred.sources)
       : null,
-    validFindingsPerDollar: hasComparableCost && totalCost !== null && totalCost > 0 ? totalValid / totalCost : null,
+    validFindingsPerDollar: behavioral && hasComparableCost && totalCost !== null && totalCost > 0 ? totalValid / totalCost : null,
+    structuralExpectedMarkers: args.benchmarkKind === "structural-only"
+      ? args.completed.reduce((sum, run) => sum + Object.keys(run.matches).length, 0)
+      : null,
+    structuralMatchedMarkers: args.benchmarkKind === "structural-only" ? totalValid : null,
+    structuralUnexpectedFindings: args.benchmarkKind === "structural-only"
+      ? args.completed.reduce((sum, run) => sum + run.falsePositiveIndexes.length, 0)
+      : null,
   };
 }
 
@@ -355,32 +425,32 @@ function renderHtml(stats: ConfigStats[]): string {
 <text x="${x + 10}" y="${y + 4}" font-size="11">${item.config} · ${item.corpus}</text>`;
     })
     .join("\n");
-  const rows = stats.map((item) => `<tr><td>${item.config}</td><td>${item.corpus}</td><td>${formatCompletion(item)}</td>
+  const rows = stats.map((item) => `<tr><td>${item.config}</td><td>${item.benchmarkKind}${item.corpus ? ` (${item.corpus})` : ""}</td><td>${formatCompletion(item)}</td>
 <td>${formatPercent(item.recallMean)} ± ${formatPercent(item.recallStd)}</td><td>${formatPercent(item.failureInclusiveRecallMean)}</td>
 <td>${formatNumber(item.fpPerCaseMean, 1)}</td><td>${formatCost(item.costPerCaseMean, item.costPerCaseStd, item.costSource)}</td>
-<td>${formatDuration(item)}</td><td>${formatUsage(item)}</td><td>${formatAvailability(item)}</td><td>${formatIncurredCost(item)}</td><td>${formatStages(item)}</td><td>${item.validFindingsPerDollar?.toFixed(1) ?? "—"}</td></tr>`).join("\n");
+<td>${formatDuration(item)}</td><td>${formatUsage(item)}</td><td>${formatAvailability(item)}</td><td>${formatIncurredCost(item)}</td><td>${formatStructural(item)}</td><td>${formatStages(item)}</td><td>${item.validFindingsPerDollar?.toFixed(1) ?? "—"}</td></tr>`).join("\n");
 
   return `<!doctype html><html><head><meta charset="utf-8"><title>peregrine-bugbot benchmark</title>
 <style>body{font-family:system-ui;margin:2rem;max-width:1050px}table{border-collapse:collapse;width:100%}
 td,th{border:1px solid #ddd;padding:6px 10px;text-align:left;font-size:14px}th{background:#f5f5f5}</style></head>
-<body><h1>peregrine-bugbot · model benchmark</h1>
-<table><tr><th>config</th><th>corpus</th><th>completion</th><th>conditional recall</th><th>failure-inclusive recall</th><th>FP/case</th><th>cost/case</th><th>time mean / median / p95</th><th>usage / work</th><th>telemetry observed</th><th>incurred cost lower bound</th><th>breadth / investigation</th><th>valid findings / $</th></tr>
+<body><h1>peregrine-bugbot · evaluation report</h1>
+<table><tr><th>config</th><th>class</th><th>completion</th><th>conditional recall</th><th>failure-inclusive recall</th><th>FP/case</th><th>cost/case</th><th>time mean / median / p95</th><th>usage / work</th><th>telemetry observed</th><th>incurred cost lower bound</th><th>structural markers</th><th>breadth / investigation</th><th>valid findings / $</th></tr>
 ${rows}</table>
-<h2>Cost vs recall — pick the knee</h2>
+<h2>Behavioral cost vs recall — pick the knee</h2>
 <svg viewBox="0 0 600 360" width="600" style="border:1px solid #eee">
 <line x1="60" y1="320" x2="560" y2="320" stroke="#999"/><line x1="60" y1="320" x2="60" y2="20" stroke="#999"/>
 <text x="300" y="350" font-size="12" text-anchor="middle">cost per case ($, max $${maxCost.toFixed(2)})</text>
 <text x="20" y="170" font-size="12" transform="rotate(-90 20 170)">conditional recall</text>
 ${points}</svg>
-<p style="color:#666;font-size:13px">Conditional recall includes completed bug-bearing attempts. Failure-inclusive recall counts failed or missing bug-bearing attempts as misses. Comparison time and usage are n/a unless every expected attempt has the required telemetry; wall time includes failed attempts. P95 requires at least 20 attempts. Incurred cost is a lower bound that retains known spend from failed attempts. Legacy folders are explicitly incomplete.</p>
+<p style="color:#666;font-size:13px">Behavioral conditional recall includes completed bug-bearing attempts. Failure-inclusive recall counts failed or missing bug-bearing attempts as misses. Structural mock rows validate transport, accounting, and expected markers only; they are excluded from recall, cost, efficiency, and this plot. Comparison time and usage are n/a unless every expected attempt has the required telemetry; wall time includes failed attempts. P95 requires at least 20 attempts. Incurred cost is a lower bound that retains known spend from failed attempts. Legacy folders are explicitly incomplete.</p>
 </body></html>`;
 }
 
 function printStats(stats: ConfigStats[], dir: string): void {
-  console.log(`\n${"config".padEnd(24)} ${"corpus".padEnd(18)} ${"completion".padEnd(35)} conditional  incl. failures  FP/case  $/case`);
+  console.log(`\n${"config".padEnd(28)} ${"class".padEnd(18)} ${"completion".padEnd(35)} conditional  incl. failures  FP/case  $/case`);
   for (const item of stats) {
     console.log(
-      `${item.config.padEnd(24)} ${item.corpus.padEnd(18)} ${formatCompletion(item).padEnd(35)} ${formatPercent(item.recallMean).padEnd(12)} ${formatPercent(item.failureInclusiveRecallMean).padEnd(14)} ${formatNumber(item.fpPerCaseMean, 1).padEnd(8)} ${formatCost(item.costPerCaseMean, item.costPerCaseStd, item.costSource)}`,
+      `${item.config.padEnd(28)} ${item.benchmarkKind.padEnd(18)} ${formatCompletion(item).padEnd(35)} ${formatPercent(item.recallMean).padEnd(12)} ${formatPercent(item.failureInclusiveRecallMean).padEnd(14)} ${formatNumber(item.fpPerCaseMean, 1).padEnd(8)} ${formatCost(item.costPerCaseMean, item.costPerCaseStd, item.costSource)}${item.benchmarkKind === "structural-only" ? ` · ${formatStructural(item)}` : ""}`,
     );
   }
   console.log(`\nReport: ${join(dir, "benchmark.html")}`);
@@ -406,7 +476,7 @@ function formatCost(
 ): string {
   return meanCost === null || stdCost === null
     ? "n/a"
-    : `$${meanCost.toFixed(3)}±${stdCost.toFixed(3)} (${costSourceLabel(source)})`;
+    : `${formatUsd(meanCost)}±${formatUsd(stdCost)} (${costSourceLabel(source)})`;
 }
 
 function completeMean(values: number[], expected: number): number | null {
@@ -457,7 +527,13 @@ function formatDuration(stats: ConfigStats): string {
 
 function formatIncurredCost(stats: ConfigStats): string {
   if (stats.incurredCostUsdTotal === null) return "n/a";
-  return `$${stats.incurredCostUsdTotal.toFixed(3)} (${costSourceLabel(stats.incurredCostSource)}; ${stats.incurredCostObservedAttempts} attempt(s))`;
+  return `${formatUsd(stats.incurredCostUsdTotal)} (${costSourceLabel(stats.incurredCostSource)}; ${stats.incurredCostObservedAttempts} attempt(s))`;
+}
+
+function formatStructural(stats: ConfigStats): string {
+  if (stats.structuralExpectedMarkers === null || stats.structuralMatchedMarkers === null ||
+    stats.structuralUnexpectedFindings === null) return "n/a";
+  return `${stats.structuralMatchedMarkers}/${stats.structuralExpectedMarkers} expected markers; ${stats.structuralUnexpectedFindings} unexpected`;
 }
 
 function costSourceLabel(source: ConfigStats["costSource"]): string {

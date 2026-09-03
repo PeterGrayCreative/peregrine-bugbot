@@ -91,6 +91,7 @@ export async function runMatrix(
           configName: modelConfig.name,
           repeat,
           file: `${id}.json`,
+          runner: modelConfig.runner,
         };
       }),
     ),
@@ -243,6 +244,7 @@ export async function runMatrix(
             caseKind: spec.kind,
             configName: modelConfig.name,
             repeat,
+            runner: attempt.runner,
             startedAt,
             finishedAt: new Date().toISOString(),
             evaluationProvenance,
@@ -270,6 +272,7 @@ export async function runMatrix(
             caseKind: spec?.kind ?? "unknown",
             configName: modelConfig.name,
             repeat,
+            runner: attempt.runner,
             startedAt,
             finishedAt: new Date().toISOString(),
             ...(evaluationProvenance ? { evaluationProvenance } : {}),

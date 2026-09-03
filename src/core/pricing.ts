@@ -22,6 +22,7 @@ export function applyUsageCost(
   catalog: PricingCatalog | undefined,
   serviceTier?: string,
 ): Usage {
+  if (usage.malformed?.length) return withUnavailable(usage);
   if (usage.costUsd !== undefined) {
     return withUnavailable({
       ...usage,
@@ -34,11 +35,17 @@ export function applyUsageCost(
   if (usage.aggregation === "stage-sum" || usage.aggregation === "ambiguous") {
     return withUnavailable(usage);
   }
-  const effectiveServiceTier = serviceTier ?? usage.serviceTier;
+  if (serviceTier !== undefined && usage.serviceTier !== undefined && serviceTier !== usage.serviceTier) {
+    return withUnavailable(usage);
+  }
+  const effectiveServiceTier = usage.serviceTier ?? serviceTier;
   const candidates = catalog.contracts.filter((candidate) =>
     candidate.provider === usage.provider && candidate.model === model);
   const contract = candidates.find((candidate) => candidate.serviceTier === effectiveServiceTier);
   if (!contract) return withUnavailable(usage);
+  if (contract.tiers.length > 1 && usage.turns !== undefined && usage.turns > 1) {
+    return withUnavailable(usage);
+  }
   const tier = selectTier(contract, usage.inputTokens);
   if (!tier) return withUnavailable(usage);
   const costUsd = estimateCost(usage, contract, tier);
@@ -136,10 +143,13 @@ function validateTiers(contract: ProviderPriceContract, source: string): void {
     throw new Error(`${source}.tiers must contain at least one tier`);
   }
   let previous = 0;
+  const tierIds = new Set<string>();
   contract.tiers.forEach((tier, index) => {
     const at = `${source}.tiers[${index}]`;
     onlyKeys(requiredObject(tier, at), TIER_KEYS, at);
     strictString(tier.id, `${at}.id`, 200);
+    if (tierIds.has(tier.id)) throw new Error(`${source} contains duplicate tier id ${tier.id}`);
+    tierIds.add(tier.id);
     if (tier.upToInputTokens !== undefined) {
       if (!Number.isSafeInteger(tier.upToInputTokens) || tier.upToInputTokens <= previous) {
         throw new Error(`${at}.upToInputTokens must be a strictly increasing positive safe integer`);
@@ -155,7 +165,30 @@ function validateTiers(contract: ProviderPriceContract, source: string): void {
         throw new Error(`${at}.${name} must be a non-negative number`);
       }
     }
+    validateProviderRates(contract, tier, at);
   });
+}
+
+function validateProviderRates(contract: ProviderPriceContract, tier: PricingTier, source: string): void {
+  const required = contract.provider === "anthropic"
+    ? ["baseInputPerMillionUsd", "cacheWriteInputPerMillionUsd", "cacheReadInputPerMillionUsd", "outputPerMillionUsd"] as const
+    : ["uncachedInputPerMillionUsd", "cacheReadInputPerMillionUsd", "outputPerMillionUsd"] as const;
+  const forbidden = contract.provider === "anthropic"
+    ? ["uncachedInputPerMillionUsd"] as const
+    : ["baseInputPerMillionUsd", "cacheWriteInputPerMillionUsd"] as const;
+  for (const field of required) {
+    if (tier[field] === undefined) throw new Error(`${source}.${field} is required for ${contract.provider}`);
+  }
+  for (const field of forbidden) {
+    if (tier[field] !== undefined) throw new Error(`${source}.${field} is not valid for ${contract.provider}`);
+  }
+  if (contract.reasoningOutputBilling === "separate") {
+    if (tier.reasoningOutputPerMillionUsd === undefined) {
+      throw new Error(`${source}.reasoningOutputPerMillionUsd is required for separate reasoning billing`);
+    }
+  } else if (tier.reasoningOutputPerMillionUsd !== undefined) {
+    throw new Error(`${source}.reasoningOutputPerMillionUsd would be inert when reasoning is included in output`);
+  }
 }
 
 function requiredObject(value: unknown, source: string): Record<string, unknown> {

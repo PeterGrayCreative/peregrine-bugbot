@@ -71,8 +71,8 @@ export function parseEngineResult(value: unknown, source = "review result"): Eng
   if (root.status === "completed" && payload.findings.length === 0) {
     throw new Error(`${source}: completed results must contain findings`);
   }
-  if (typeof root.durationMs !== "number" || !Number.isFinite(root.durationMs) || root.durationMs < 0) {
-    throw new Error(`${source}.durationMs must be a non-negative number`);
+  if (!Number.isSafeInteger(root.durationMs) || Number(root.durationMs) < 0) {
+    throw new Error(`${source}.durationMs must be a non-negative safe integer`);
   }
   const usage = parseUsage(root.usage, `${source}.usage`);
   assertNoSecrets(usage, `${source}.usage`);
@@ -95,7 +95,7 @@ export function parseEngineResult(value: unknown, source = "review result"): Eng
     reviewedHeadRef,
     findings: payload.findings,
     usage,
-    durationMs: root.durationMs,
+    durationMs: Number(root.durationMs),
     raw: root.raw,
   };
 }
@@ -160,8 +160,9 @@ function parseFinding(value: unknown, source: string): Finding {
   if (!FINDING_CATEGORIES.includes(finding.category as Finding["category"])) {
     throw new Error(`${source}.category is not a supported finding category`);
   }
-  if (typeof finding.confidence !== "number" || finding.confidence < 0 || finding.confidence > 1) {
-    throw new Error(`${source}.confidence must be a number between 0 and 1`);
+  if (typeof finding.confidence !== "number" || !Number.isFinite(finding.confidence) ||
+    finding.confidence < 0 || finding.confidence > 1) {
+    throw new Error(`${source}.confidence must be a finite number between 0 and 1`);
   }
 
   return {
@@ -200,8 +201,8 @@ function assertOnlyKeys(value: Record<string, unknown>, allowed: Set<string>, so
 }
 
 function requiredString(value: unknown, source: string, maxLength: number): string {
-  if (typeof value !== "string" || value.trim().length === 0) {
-    throw new Error(`${source} must be a non-empty string`);
+  if (typeof value !== "string" || value.length === 0 || value !== value.trim()) {
+    throw new Error(`${source} must be a trimmed non-empty string`);
   }
   if (value.length > maxLength) throw new Error(`${source} exceeds ${maxLength} characters`);
   return value;
@@ -213,8 +214,8 @@ function optionalString(value: unknown, source: string, maxLength: number): stri
 }
 
 function positiveInteger(value: unknown, source: string): number {
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 1) {
-    throw new Error(`${source} must be a positive integer`);
+  if (!Number.isSafeInteger(value) || Number(value) < 1) {
+    throw new Error(`${source} must be a positive safe integer`);
   }
-  return value;
+  return Number(value);
 }

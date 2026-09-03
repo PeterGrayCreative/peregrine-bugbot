@@ -11,9 +11,10 @@ providers into one lossy cached-token field. Claude records base input, cache
 creation, cache reads, output, and reasoning output separately. Codex records
 the reported input total, safely derived uncached input, cache reads, output,
 and reasoning output. A normalized total is present only when every contributing
-component is known. Each stage also records UTF-8 prompt bytes, duration, model
-ID, a prompt hash, and turns/tool work when the provider exposes a complete event
-stream.
+component is known. Each stage also records UTF-8 prompt bytes, duration, the
+configured/requested model name, a prompt hash, and turns/tool work when the
+provider exposes a complete event stream. Provider-resolved model identity stays
+unavailable unless the provider reports it explicitly.
 Raw provider envelopes and tool output are not persisted. If a later stage
 fails, its attempt artifact retains sanitized stage telemetry and already
 incurred spend from earlier stages.
@@ -40,6 +41,11 @@ older versions that have no attempt manifest are labeled `legacy/incomplete`;
 their completion and failure-inclusive metrics are intentionally unavailable.
 Their telemetry denominator and all comparison telemetry means are also
 reported as `n/a` because the expected attempt count cannot be reconstructed.
+
+Runs using the deterministic mock are labeled `structural-only`. They verify
+fixture transport, accounting, and expected marker detection; their marker
+counts are never presented as model recall, provider cost, or findings-per-dollar
+and are excluded from the behavioral cost-versus-recall plot.
 
 ## Case library
 

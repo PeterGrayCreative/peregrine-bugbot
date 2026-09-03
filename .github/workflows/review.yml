@@ -145,5 +145,18 @@ jobs:
         run: |
           if [ -f artifact/result.json ]; then
             echo '### peregrine-bugbot run' >> "$GITHUB_STEP_SUMMARY"
-            jq -r '"- status: \(.status)\n- runner: \(.engine)\n- findings: \(.findings | length)\n- cost: $\(.usage.costUsd // "n/a")\n- duration: \((.durationMs / 1000) | floor)s\n- config: \(.modelConfig)"' artifact/result.json >> "$GITHUB_STEP_SUMMARY"
+            jq -r '
+              def cost_source:
+                if .engine == "mock" then "mock"
+                elif .usage.costSource == "provider" then "provider-reported"
+                elif .usage.costSource == "estimated" then "estimated"
+                elif .usage.costSource == "mixed" then "mixed-source"
+                else "unattributed"
+                end;
+              def cost:
+                if .usage.costUsd == null then "n/a"
+                else "\(cost_source) $\(.usage.costUsd)"
+                end;
+              "- status: \(.status)\n- runner: \(.engine)\n- findings: \(.findings | length)\n- cost: \(cost)\n- duration: \((.durationMs / 1000) | floor)s\n- config: \(.modelConfig)"
+            ' artifact/result.json >> "$GITHUB_STEP_SUMMARY"
           fi

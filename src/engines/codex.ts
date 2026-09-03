@@ -293,33 +293,46 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
             [codexStage("breadth", breadth, true), codexStage("investigation", investigation, false)],
           );
         }
-        return buildEngineResult({
-          engine: "codex",
-          modelConfig,
-          ctx,
-          payload,
-          usage: combineUsage(breadth.usage, investigation.usage),
-          durationMs: Date.now() - started,
-          raw: {
-            manifest: manifest.available ? "runner-generated" : manifest.reason,
-            breadth: {
-              output: breadthPayload,
-              model: breadth.model,
-              promptSha256: breadth.promptSha256,
-              usage: breadth.usage,
-              durationMs: breadth.durationMs,
-              malformedEventLines: breadth.malformedEventLines,
+        try {
+          return buildEngineResult({
+            engine: "codex",
+            modelConfig,
+            ctx,
+            payload,
+            usage: combineUsage(breadth.usage, investigation.usage),
+            durationMs: Date.now() - started,
+            raw: {
+              manifest: manifest.available ? "runner-generated" : manifest.reason,
+              breadth: {
+                output: breadthPayload,
+                model: breadth.model,
+                promptSha256: breadth.promptSha256,
+                usage: breadth.usage,
+                durationMs: breadth.durationMs,
+                malformedEventLines: breadth.malformedEventLines,
+              },
+              investigation: {
+                output: rawPayload,
+                model: investigation.model,
+                promptSha256: investigation.promptSha256,
+                usage: investigation.usage,
+                durationMs: investigation.durationMs,
+                malformedEventLines: investigation.malformedEventLines,
+              },
             },
-            investigation: {
-              output: rawPayload,
-              model: investigation.model,
-              promptSha256: investigation.promptSha256,
-              usage: investigation.usage,
-              durationMs: investigation.durationMs,
-              malformedEventLines: investigation.malformedEventLines,
-            },
-          },
-        });
+          });
+        } catch (error) {
+          throw wrapCodexFailure(
+            new RunFailureError(
+              "parse",
+              error instanceof Error ? error.message : "codex could not construct the review artifact",
+              { cause: error },
+            ),
+            modelConfig,
+            started,
+            [codexStage("breadth", breadth, true), codexStage("investigation", investigation, true)],
+          );
+        }
       } finally {
         rmSync(outDir, { recursive: true, force: true });
       }

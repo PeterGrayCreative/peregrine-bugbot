@@ -243,3 +243,11 @@ test("pricing catalogs require dated, provider-specific contracts", () => {
   priced.pricing.pricingAsOf = "today";
   assert.throws(() => validateConfig(priced), /pricingAsOf/);
 });
+
+test("the review workflow labels every cost provenance state", () => {
+  const workflow = readFileSync(resolve(".github/workflows/review.yml"), "utf8");
+  for (const label of ["provider-reported", "estimated", "mixed-source", "unattributed", "mock"]) {
+    assert.match(workflow, new RegExp(`"${label}"`));
+  }
+  assert.ok(!workflow.includes('- cost: $\\(.usage.costUsd // "n/a")'));
+});

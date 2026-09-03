@@ -14,9 +14,143 @@ import { gradeRuns } from "../eval/grade.js";
 import { buildReport } from "../eval/report.js";
 import { runMatrix } from "../eval/run-matrix.js";
 import { readCaseGroundTruth } from "../eval/case-truth.js";
+import {
+  assertGradedMatchesRun,
+  parseGradedRun,
+  parseMatrixRunManifest,
+  parseRunRecord,
+} from "../eval/artifacts.js";
 import { RunFailureError } from "../src/core/run-failure.js";
 import type { Engine } from "../src/engines/engine.js";
-import type { MatrixModelConfig, MatrixRunManifest, RunRecord } from "../src/types.js";
+import type { GradedRun, MatrixModelConfig, MatrixRunManifest, RunAttempt, RunRecord } from "../src/types.js";
+
+function validAttempt(): RunAttempt {
+  return {
+    id: "attempt-000001",
+    caseName: "case",
+    configName: "route",
+    repeat: 1,
+    file: "attempt-000001.json",
+    corpus: "development",
+    expectedBugCount: 1,
+    runner: "claude",
+  };
+}
+
+function validRecord(): RunRecord {
+  return {
+    schemaVersion: 1,
+    attemptId: "attempt-000001",
+    caseName: "case",
+    caseKind: "seeded",
+    configName: "route",
+    repeat: 1,
+    caseCorpus: "development",
+    runner: "claude",
+    startedAt: "2026-09-02T00:00:00.000Z",
+    finishedAt: "2026-09-02T00:00:01.000Z",
+    outcome: {
+      status: "completed",
+      result: {
+        engine: "claude",
+        status: "completed",
+        modelConfig: "fast->strong",
+        findings: [{
+          file: "src/value.ts",
+          startLine: 1,
+          endLine: 1,
+          severity: "high",
+          disposition: "fix-in-pr",
+          category: "logic",
+          invariant: "value-remains-valid",
+          title: "Invalid value",
+          explanation: "The changed value violates the invariant.",
+          failurePath: "A caller observes the invalid value.",
+          confidence: 0.99,
+        }],
+        usage: { provider: "anthropic", inputTokens: 10, unavailable: [] },
+        durationMs: 1000,
+      },
+    },
+  };
+}
+
+test("evaluation artifact parsers reject schema, identity, enum, and numeric tampering", () => {
+  const attempt = validAttempt();
+  const manifest = {
+    schemaVersion: 1,
+    createdAt: "2026-09-02T00:00:00.000Z",
+    expectedAttempts: [attempt],
+    providerNetworkIsolation: {
+      claude: { status: "limited", mechanism: "provider-specific sandbox" },
+    },
+  };
+  assert.doesNotThrow(() => parseMatrixRunManifest(manifest));
+  assert.doesNotThrow(() => parseRunRecord(validRecord(), "record", attempt));
+
+  for (const [field, value] of [
+    ["attemptId", "attempt-999999"],
+    ["caseName", "other"],
+    ["configName", "other"],
+    ["repeat", 2],
+    ["caseCorpus", "validation"],
+    ["runner", "codex"],
+  ] as const) {
+    const tampered = structuredClone(validRecord()) as unknown as Record<string, unknown>;
+    tampered[field] = value;
+    assert.throws(() => parseRunRecord(tampered, "record", attempt), /does not match matrix manifest|does not match runner/);
+  }
+
+  const fractionalUsage = structuredClone(validRecord());
+  if (fractionalUsage.outcome.status !== "completed") throw new Error("expected completed fixture");
+  fractionalUsage.outcome.result.usage.inputTokens = 1.5;
+  assert.throws(() => parseRunRecord(fractionalUsage, "record", attempt), /safe integer/);
+
+  const wrongProvider = structuredClone(validRecord());
+  if (wrongProvider.outcome.status !== "completed") throw new Error("expected completed fixture");
+  wrongProvider.outcome.result.usage.provider = "openai";
+  assert.throws(() => parseRunRecord(wrongProvider, "record", attempt), /does not match claude runner/);
+
+  const unsafeDuration = structuredClone(validRecord());
+  if (unsafeDuration.outcome.status !== "completed") throw new Error("expected completed fixture");
+  unsafeDuration.outcome.result.durationMs = Number.MAX_SAFE_INTEGER + 1;
+  assert.throws(() => parseRunRecord(unsafeDuration, "record", attempt), /safe integer/);
+
+  const nonfiniteConfidence = structuredClone(validRecord());
+  if (nonfiniteConfidence.outcome.status !== "completed") throw new Error("expected completed fixture");
+  nonfiniteConfidence.outcome.result.findings[0]!.confidence = Number.NaN;
+  assert.throws(() => parseRunRecord(nonfiniteConfidence, "record", attempt), /finite number/);
+
+  const badFailure = { ...structuredClone(validRecord()), outcome: {
+    status: "failed", failureKind: "cancelled", message: "stopped", durationMs: 1,
+  } };
+  assert.throws(() => parseRunRecord(badFailure, "record", attempt), /failureKind is invalid/);
+
+  const badTimestamp = { ...structuredClone(validRecord()), startedAt: "2026-09-02" };
+  assert.throws(() => parseRunRecord(badTimestamp, "record", attempt), /canonical ISO/);
+  const badOrder = { ...structuredClone(validRecord()), finishedAt: "2026-09-01T23:59:59.000Z" };
+  assert.throws(() => parseRunRecord(badOrder, "record", attempt), /must not precede/);
+  const badSchema = { ...structuredClone(validRecord()), schemaVersion: 2 };
+  assert.throws(() => parseRunRecord(badSchema, "record", attempt), /schemaVersion must be 1/);
+  assert.throws(() => parseMatrixRunManifest({ ...manifest, surprise: true }), /unexpected field/);
+
+  const graded = {
+    ...validRecord(),
+    matches: { bug: 0 },
+    falsePositiveIndexes: [],
+  } as GradedRun;
+  assert.doesNotThrow(() => parseGradedRun(graded, "graded", attempt));
+  const fractionalMatch = { ...structuredClone(graded), matches: { bug: 0.5 } };
+  assert.throws(() => parseGradedRun(fractionalMatch, "graded", attempt), /safe integer/);
+  const tamperedGraded = structuredClone(graded);
+  if (tamperedGraded.outcome.status !== "completed") throw new Error("expected completed fixture");
+  tamperedGraded.outcome.result.usage.inputTokens = 11;
+  assert.throws(() => assertGradedMatchesRun(tamperedGraded, validRecord(), "graded"), /does not match the run artifact/);
+  assert.throws(
+    () => assertGradedMatchesRun({ ...graded, falsePositiveIndexes: [0] }, validRecord(), "graded"),
+    /does not match the graded findings/,
+  );
+});
 
 const CANONICAL_VALUE_PATCH = [
   "diff --git a/src/value.ts b/src/value.ts",
@@ -51,30 +185,30 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
   );
 
   const configs: MatrixModelConfig[] = ["completed", "mixed", "timeout", "provider", "parse", "unknown", "missing"].map(
-    (name) => ({ name, runner: "mock", overrides: { scenario: name } }),
+    (name) => ({ name, runner: "claude", overrides: { scenario: name } }),
   );
-  configs.push({ name: "completed", runner: "mock", overrides: { scenario: "completed" } });
+  configs.push({ name: "completed", runner: "claude", overrides: { scenario: "completed" } });
   configs.push({ name: "configuration", runner: "codex", overrides: { timeoutMs: 0 } });
   const matrixPath = join(root, "matrix.json");
   writeFileSync(matrixPath, JSON.stringify({ repeats: 2, configs }));
 
   let mixedCalls = 0;
   const engine: Engine = {
-    name: "mock",
+    name: "claude",
     async review(ctx) {
-      const scenario = (ctx.config.runners.mock as Record<string, unknown>).scenario;
+      const scenario = (ctx.config.runners.claude as unknown as Record<string, unknown>).scenario;
       if (scenario === "mixed" && ++mixedCalls === 2) {
         throw new RunFailureError("timeout", "timed out", {
           telemetry: {
-            engine: "mock",
-            modelConfig: "mock",
-            usage: { provider: "mock", costUsd: 0.01, costSource: "provider" },
+            engine: "claude",
+            modelConfig: "claude-test",
+            usage: { provider: "anthropic", costUsd: 0.01, costSource: "provider" },
             durationMs: 20,
             stages: [{
               stage: "breadth",
-              model: "mock",
+              model: "claude-test",
               promptSha256: "a".repeat(64),
-              usage: { provider: "mock", costUsd: 0.01, costSource: "provider" },
+              usage: { provider: "anthropic", costUsd: 0.01, costSource: "provider" },
               durationMs: 20,
               completed: true,
             }],
@@ -86,9 +220,9 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
       if (scenario === "parse") throw new RunFailureError("parse", "invalid output");
       if (scenario === "unknown") throw new Error("token=abc123456789SECRET");
       return {
-        engine: "mock",
+        engine: "claude",
         status: "completed",
-        modelConfig: "mock",
+        modelConfig: "claude-test",
         findings: [{
           file: "src/value.ts",
           startLine: 1,
@@ -188,7 +322,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     const graded = JSON.parse(readFileSync(join(runsDir, gradedFile), "utf8")) as Record<string, unknown>;
     writeFileSync(join(legacyDir, "new-shape.graded.json"), JSON.stringify(graded));
     const outcome = graded.outcome as { result: unknown };
-    const { schemaVersion: _schema, attemptId: _attempt, finishedAt: _finished, outcome: _outcome, ...legacy } = graded;
+    const { schemaVersion: _schema, attemptId: _attempt, finishedAt: _finished, outcome: _outcome, caseCorpus: _corpus, runner: _runner, ...legacy } = graded;
     writeFileSync(join(legacyDir, "legacy.graded.json"), JSON.stringify({ ...legacy, result: outcome.result }));
     const legacyStats = await buildReport(legacyDir, { casesDir });
     assert.equal(legacyStats[0]?.completeness, "legacy-incomplete");
@@ -201,21 +335,30 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     assert.equal(legacyStats[0]?.telemetryExpectedRuns, null);
     assert.equal(legacyStats[0]?.completedRuns, 2);
 
-    const cleanCaseDir = join(casesDir, "clean-case");
+    const cleanCaseName = "structural-smoke/clean-case";
+    const cleanCaseDir = join(casesDir, cleanCaseName);
     mkdirSync(cleanCaseDir);
     writeFileSync(join(cleanCaseDir, "ground_truth.json"), JSON.stringify({ bugs: [] }));
     const cleanRunsDir = join(root, "clean-runs");
     mkdirSync(cleanRunsDir);
     const cleanAttempt = {
       id: "attempt-000001",
-      caseName: "clean-case",
+      caseName: cleanCaseName,
       configName: "clean-only",
       repeat: 1,
       file: "attempt-000001.json",
+      corpus: "structural-smoke" as const,
+      expectedBugCount: 0,
+      runner: "mock" as const,
     };
     writeFileSync(
       join(cleanRunsDir, "matrix-manifest.json"),
-      JSON.stringify({ schemaVersion: 1, createdAt: new Date().toISOString(), expectedAttempts: [cleanAttempt] }),
+      JSON.stringify({
+        schemaVersion: 1,
+        createdAt: new Date().toISOString(),
+        expectedAttempts: [cleanAttempt],
+        providerNetworkIsolation: { mock: { status: "not-applicable", mechanism: "no provider process" } },
+      }),
     );
     const completedRun = records.find((record) => record.outcome.status === "completed");
     assert.ok(completedRun && completedRun.outcome.status === "completed");
@@ -224,7 +367,18 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
       attemptId: cleanAttempt.id,
       caseName: cleanAttempt.caseName,
       configName: cleanAttempt.configName,
-      outcome: { ...completedRun.outcome, result: { ...completedRun.outcome.result, findings: [] } },
+      caseCorpus: cleanAttempt.corpus,
+      runner: cleanAttempt.runner,
+      outcome: {
+        ...completedRun.outcome,
+        result: {
+          ...completedRun.outcome.result,
+          engine: cleanAttempt.runner,
+          status: "clean",
+          findings: [],
+          usage: { provider: "mock" },
+        },
+      },
     };
     writeFileSync(join(cleanRunsDir, cleanAttempt.file), JSON.stringify(cleanRun));
     writeFileSync(
@@ -296,10 +450,16 @@ test("tracked reports keep development and validation rows separate", async () =
     configName: "same-config",
     repeat: 1,
     file: `attempt-00000${index + 1}.json`,
+    runner: "mock" as const,
   }));
   writeFileSync(
     join(runsDir, "matrix-manifest.json"),
-    JSON.stringify({ schemaVersion: 1, createdAt: new Date().toISOString(), expectedAttempts }),
+    JSON.stringify({
+      schemaVersion: 1,
+      createdAt: new Date().toISOString(),
+      expectedAttempts,
+      providerNetworkIsolation: { mock: { status: "not-applicable", mechanism: "no provider process" } },
+    }),
   );
   for (const attempt of expectedAttempts) {
     const record: RunRecord = {
@@ -310,6 +470,7 @@ test("tracked reports keep development and validation rows separate", async () =
       caseKind: "clean",
       configName: attempt.configName,
       repeat: 1,
+      runner: attempt.runner,
       startedAt: new Date().toISOString(),
       finishedAt: new Date().toISOString(),
       outcome: { status: "failed", failureKind: "configuration", message: "fixture unavailable", durationMs: 1 },

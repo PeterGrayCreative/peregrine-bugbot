@@ -116,8 +116,27 @@ test("ambiguous multiple Codex usage snapshots remain unavailable", () => {
   assert.equal(usage.inputTokens, undefined);
   assert.equal(usage.aggregation, "ambiguous");
   assert.equal(usage.outputTokens, undefined);
-  assert.equal(usage.turns, 2);
+  assert.equal(usage.turns, undefined);
   assert.ok(usage.unavailable?.includes("inputTokens"));
+});
+
+test("Codex rejects malformed, non-object, and non-terminal usage streams", () => {
+  const valid = { type: "turn.completed", usage: { input_tokens: 10, cached_input_tokens: 2, output_tokens: 1 } };
+  const malformedStreams: unknown[][] = [
+    [null, valid],
+    ["event", valid],
+    [[valid], valid],
+    [{ type: "turn.completed", usage: { input_tokens: 1 } }, valid],
+    [valid, { type: "item.completed", item: { id: "later", type: "command_execution" } }],
+  ];
+  for (const events of malformedStreams) {
+    const usage = codexUsageFromEvents(events, "prompt");
+    assert.equal(usage.aggregation, "ambiguous");
+    assert.equal(usage.inputTokens, undefined);
+    assert.equal(usage.outputTokens, undefined);
+    assert.equal(usage.turns, undefined);
+    assert.equal(usage.costUsd, undefined);
+  }
 });
 
 test("Codex streams without a completed usage event remain entirely unavailable", () => {
@@ -172,6 +191,8 @@ test("aggregation retains mixed cost provenance and refuses unsafe sums", () => 
   assert.equal(aggregate.inputTokens, undefined);
   assert.equal(formatUsageCost(aggregate), "mixed-source $3.000");
   assert.equal(formatUsageCost({ provider: "openai", costUsd: 1, costSource: "provider" }), "provider-reported $1.000");
+  assert.equal(formatUsageCost({ provider: "openai", costUsd: 0.0004, costSource: "provider" }), "provider-reported $0.000400");
+  assert.equal(formatUsageCost({ provider: "openai", costUsd: 1e-9, costSource: "provider" }), "provider-reported $1.00e-9");
   assert.equal(formatUsageCost({ provider: "mock", costUsd: 0, costSource: "provider" }), "mock $0.000");
   assert.equal(combineUsage({ costUsd: Number.MAX_VALUE }, { costUsd: Number.MAX_VALUE }).costUsd, undefined);
 });
@@ -256,6 +277,77 @@ test("pricing requires exact service tiers and prices each request context indep
   };
   assert.equal(applyUsageCost(genericUsage, "claude-test", pricing).costUsd, undefined);
   assert.equal(applyUsageCost({ ...genericUsage, serviceTier: undefined, aggregation: "stage-sum" }, "claude-test", pricing).costUsd, undefined);
+  assert.notEqual(applyUsageCost({
+    ...genericUsage,
+    serviceTier: undefined,
+    aggregation: "single-envelope",
+    turns: 1,
+  }, "claude-test", pricing).costUsd, undefined);
+  assert.equal(applyUsageCost({
+    ...genericUsage,
+    serviceTier: undefined,
+    aggregation: "single-envelope",
+    turns: 2,
+  }, "claude-test", pricing).costUsd, undefined);
+  const codexPriorityUsage = {
+    provider: "openai" as const,
+    serviceTier: "priority",
+    inputTokens: 10,
+    uncachedInputTokens: 10,
+    cacheReadInputTokens: 0,
+    outputTokens: 1,
+  };
+  assert.notEqual(applyUsageCost(codexPriorityUsage, "codex-test", pricing, "priority").costUsd, undefined);
+  assert.equal(applyUsageCost(codexPriorityUsage, "codex-test", pricing, "batch").costUsd, undefined);
+
+  const providerReported = applyUsageCost({
+    ...genericUsage,
+    turns: 2,
+    costUsd: 0.004,
+    costSource: "provider",
+  }, "claude-test", pricing);
+  assert.equal(providerReported.costUsd, 0.004);
+  assert.equal(providerReported.costSource, "provider");
+});
+
+test("malformed provider cost and service tier fields block estimated fallback", () => {
+  for (const totalCost of ["not-a-number", -1, Number.NaN, Number.POSITIVE_INFINITY]) {
+    const invalidClaudeCost = claudeUsageFromEnvelope({
+      total_cost_usd: totalCost,
+      usage: {
+        input_tokens: 10,
+        cache_creation_input_tokens: 0,
+        cache_read_input_tokens: 0,
+        output_tokens: 1,
+      },
+    }, "prompt");
+    assert.deepEqual(invalidClaudeCost.malformed, ["costUsd"]);
+    assert.equal(applyUsageCost(invalidClaudeCost, "claude-test", pricing).costUsd, undefined);
+  }
+
+  const invalidClaudeTier = claudeUsageFromEnvelope({
+    service_tier: " priority ",
+    usage: {
+      input_tokens: 10,
+      cache_creation_input_tokens: 0,
+      cache_read_input_tokens: 0,
+      output_tokens: 1,
+    },
+  }, "prompt");
+  assert.deepEqual(invalidClaudeTier.malformed, ["serviceTier"]);
+  assert.equal(applyUsageCost(invalidClaudeTier, "claude-test", pricing).costUsd, undefined);
+
+  const invalidCodexTier = codexUsageFromEvents([{
+    type: "turn.completed",
+    usage: {
+      input_tokens: 10,
+      cached_input_tokens: 0,
+      output_tokens: 1,
+      service_tier: -1,
+    },
+  }], "prompt");
+  assert.deepEqual(invalidCodexTier.malformed, ["serviceTier"]);
+  assert.equal(applyUsageCost(invalidCodexTier, "codex-test", pricing, "priority").costUsd, undefined);
 });
 
 test("reasoning tokens are billed once according to the provider contract", () => {
@@ -309,8 +401,14 @@ test("usage validation distinguishes unavailable fields from observed zero", () 
   assert.equal(parsed.inputTokens, 0);
   assert.deepEqual(parsed.unavailable, ["baseInputTokens"]);
   assert.equal(parseUsage({ costUsd: 0 }, "usage").costSource, undefined);
-  assert.equal(parseUsage({ costUsd: 1, costSource: "mixed" }, "usage").costSource, "mixed");
+  assert.equal(parseUsage({ costUsd: 1, costSource: "mixed", aggregation: "stage-sum" }, "usage").costSource, "mixed");
   assert.throws(() => parseUsage({ costSource: "provider" }, "usage"), /requires costUsd/);
+  assert.throws(() => parseUsage({ costUsd: 1, costSource: "provider" }, "usage"), /provider provenance/);
+  assert.throws(() => parseUsage({ provider: "openai", costUsd: 1, costSource: "estimated" }, "usage"), /pricing provenance/);
+  assert.throws(() => parseUsage({ provider: "openai", costUsd: 1, costSource: "mixed", aggregation: "single-snapshot" }, "usage"), /stage-sum/);
+  assert.throws(() => parseUsage({ provider: "openai", costUsd: 1, costSource: "mixed", aggregation: "stage-sum", pricing: {
+    catalogVersion: "v1", pricingAsOf: "2026-09-02", contractModel: "model", tier: "default", assumptions: [],
+  } }, "usage"), /pricing requires costSource estimated/);
   assert.throws(() => parseUsage({ inputTokens: null }, "usage"), /non-negative number/);
   assert.throws(() => parseUsage({ inputTokens: 1.5 }, "usage"), /safe integer/);
   assert.throws(() => parseUsage({ inputTokens: Number.MAX_SAFE_INTEGER + 1 }, "usage"), /safe integer/);
@@ -339,6 +437,21 @@ test("pricing validation rejects ambiguous or overlapping contracts", () => {
   const blankModel = structuredClone(pricing);
   blankModel.contracts[0]!.model = "   ";
   assert.throws(() => validatePricingCatalog(blankModel), /non-empty string/);
+  const duplicateTier = structuredClone(pricing);
+  duplicateTier.contracts[0]!.tiers[1]!.id = duplicateTier.contracts[0]!.tiers[0]!.id;
+  assert.throws(() => validatePricingCatalog(duplicateTier), /duplicate tier id/);
+  const missingProviderRate = structuredClone(pricing);
+  delete missingProviderRate.contracts[0]!.tiers[0]!.baseInputPerMillionUsd;
+  assert.throws(() => validatePricingCatalog(missingProviderRate), /baseInputPerMillionUsd is required/);
+  const forbiddenProviderRate = structuredClone(pricing);
+  forbiddenProviderRate.contracts[1]!.tiers[0]!.baseInputPerMillionUsd = 1;
+  assert.throws(() => validatePricingCatalog(forbiddenProviderRate), /not valid for openai/);
+  const inertReasoning = structuredClone(pricing);
+  inertReasoning.contracts[1]!.tiers[0]!.reasoningOutputPerMillionUsd = 1;
+  assert.throws(() => validatePricingCatalog(inertReasoning), /would be inert/);
+  const missingSeparateReasoning = structuredClone(pricing);
+  missingSeparateReasoning.contracts[1]!.reasoningOutputBilling = "separate";
+  assert.throws(() => validatePricingCatalog(missingSeparateReasoning), /required for separate/);
   const overflowing = structuredClone(pricing);
   overflowing.contracts[0]!.tiers[1]!.baseInputPerMillionUsd = Number.MAX_VALUE;
   assert.equal(applyUsageCost({
@@ -364,13 +477,25 @@ test("reports aggregate provider cost, token classes, work, and stage duration",
   mkdirSync(join(casesDir, "case"), { recursive: true });
   mkdirSync(runsDir);
   writeFileSync(join(casesDir, "case", "ground_truth.json"), JSON.stringify({ bugs: [{ id: "bug" }] }));
-  const attempt = { id: "attempt-000001", caseName: "case", configName: "route", repeat: 1, file: "attempt-000001.json" };
+  const attempt = { id: "attempt-000001", caseName: "case", configName: "route", repeat: 1, file: "attempt-000001.json", corpus: "development", runner: "claude" };
   writeFileSync(join(runsDir, "matrix-manifest.json"), JSON.stringify({ schemaVersion: 1, createdAt: "2026-09-02T00:00:00.000Z", expectedAttempts: [attempt] }));
   const result = {
     engine: "claude",
     status: "completed",
     modelConfig: "fast->strong",
-    findings: [{}],
+    findings: [{
+      file: "src/value.ts",
+      startLine: 1,
+      endLine: 1,
+      severity: "high",
+      disposition: "fix-in-pr",
+      category: "logic",
+      invariant: "value-remains-valid",
+      title: "Invalid value",
+      explanation: "The changed value violates the invariant.",
+      failurePath: "A caller observes the invalid value.",
+      confidence: 0.99,
+    }],
     usage: {
       provider: "anthropic",
       inputTokens: 175,
@@ -386,14 +511,24 @@ test("reports aggregate provider cost, token classes, work, and stage duration",
       toolCallsByType: { tool_use: 1 },
       toolOutputBytes: 6,
       promptBytes: 1000,
-      costUsd: 0.0123,
+      costUsd: 0.0004,
       costSource: "provider",
       unavailable: [],
     },
     durationMs: 4000,
     raw: {
-      breadth: { durationMs: 1000, usage: { inputTokens: 75 } },
-      investigation: { durationMs: 3000, usage: { inputTokens: 100 } },
+      breadth: {
+        model: "fast",
+        promptSha256: "a".repeat(64),
+        durationMs: 1000,
+        usage: { inputTokens: 75 },
+      },
+      investigation: {
+        model: "strong",
+        promptSha256: "b".repeat(64),
+        durationMs: 3000,
+        usage: { inputTokens: 100 },
+      },
     },
   };
   const record = {
@@ -403,6 +538,8 @@ test("reports aggregate provider cost, token classes, work, and stage duration",
     caseKind: "seeded",
     configName: "route",
     repeat: 1,
+    corpus: "development",
+    runner: "claude",
     startedAt: "2026-09-02T00:00:00.000Z",
     finishedAt: "2026-09-02T00:00:04.000Z",
     outcome: { status: "completed", result },
@@ -416,7 +553,7 @@ test("reports aggregate provider cost, token classes, work, and stage duration",
   try {
     const [stats] = await buildReport(runsDir, { casesDir });
     assert.equal(stats?.costSource, "provider");
-    assert.equal(stats?.costPerCaseMean, 0.0123);
+    assert.equal(stats?.costPerCaseMean, 0.0004);
     assert.equal(stats?.durationSecMedian, 4);
     assert.equal(stats?.durationSecP95, null);
     assert.equal(stats?.uncachedInputTokensMean, 100);
@@ -429,7 +566,8 @@ test("reports aggregate provider cost, token classes, work, and stage duration",
     assert.equal(stats?.telemetryExpectedRuns, 1);
     assert.equal(stats?.telemetryObserved.costUsd, 1);
     assert.equal(stats?.telemetryObserved.cacheWriteInputTokens, 1);
-    assert.equal(stats?.incurredCostUsdTotal, 0.0123);
+    assert.equal(stats?.incurredCostUsdTotal, 0.0004);
+    assert.match(readFileSync(join(runsDir, "benchmark.html"), "utf8"), /\$0\.000400/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

@@ -84,6 +84,7 @@ export type UsageMetric = (typeof USAGE_METRICS)[number];
 export type UsageProvider = "anthropic" | "openai" | "mock";
 export type CostSource = "provider" | "estimated" | "mixed";
 export type UsageAggregation = "single-envelope" | "single-snapshot" | "ambiguous" | "stage-sum";
+export type MalformedUsageField = "serviceTier" | "costUsd";
 
 export interface PricingReference {
   catalogVersion: string;
@@ -118,6 +119,8 @@ export interface Usage {
   costUsd?: number;
   costSource?: CostSource;
   pricing?: PricingReference;
+  /** Provider fields that were present but invalid; never eligible for estimation fallback. */
+  malformed?: MalformedUsageField[];
   /** Metrics the provider did not expose or whose semantics were ambiguous. */
   unavailable?: UsageMetric[];
 }
@@ -313,6 +316,7 @@ export interface RunAttempt {
   configName: string;
   repeat: number;
   file: string;
+  runner: RunnerName;
 }
 
 export interface MatrixRunManifest {
@@ -397,6 +401,7 @@ export interface RunRecord {
   caseKind: CaseSpec["kind"] | "unknown";
   configName: string;
   repeat: number;
+  runner: RunnerName;
   startedAt: string;
   finishedAt: string;
   /** Present after history materialization; manifest is added only after its preflight passes. */
