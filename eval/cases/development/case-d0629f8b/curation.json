@@ -2,16 +2,17 @@
   "schemaVersion": 1,
   "caseId": "case-d0629f8b",
   "status": "draft",
+  "curatorPolicyId": "protected-git-review-v1",
   "source": {
     "kind": "seeded",
     "repositoryAlias": "service-launcher",
-    "repositoryIdentitySha256": "52a96508df3f14aafe14d829948bf337ba4ac257eac1046ce74a9cbe319a94b4",
+    "repositoryIdentitySha256": "00284b10588d579ad619ec5010cc79f5d48a07076ad1e7693ebbb25e44cba212",
     "changeIdentitySha256": "7f48dac2c142c1ec7ad180d441ddaf1433a702968b6f98801dc4b63c00ce94c7",
     "access": "curator-local-private"
   },
   "strata": {
     "languageFamily": "python",
-    "architectureFamily": "service-config",
+    "architectureFamily": "infrastructure",
     "size": "small",
     "changeShapes": ["direct"],
     "surfaceLanes": ["runtime-config"]
@@ -25,6 +26,7 @@
     {
       "curatorIdentitySha256": "617ac849db736678cc50ccdba46a2eab92738cafb44bda4ccd1eee1c585a4bc1",
       "confirmedAt": "2026-09-03T16:00:00Z",
+      "caseBundleSha256": "224ae902cb78906b19883392ec0e1304a4364c450b8f6e3a7ae5b20856ef9374",
       "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
     }
   ]

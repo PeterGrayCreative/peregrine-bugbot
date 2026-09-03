@@ -2,16 +2,17 @@
   "schemaVersion": 1,
   "caseId": "case-c85d174e",
   "status": "admitted",
+  "curatorPolicyId": "protected-git-review-v1",
   "source": {
     "kind": "clean",
     "repositoryAlias": "ledger-service",
-    "repositoryIdentitySha256": "0d0ea8006c64f2f35023186e3099ba20efa057368fbb6703be381e752fed30f3",
+    "repositoryIdentitySha256": "b3e61748667a77303d563d47d55c68a1aa260640c5916bdcd89efb915f580df7",
     "changeIdentitySha256": "557a6195ce2056f3a7588ef4e3d7c1484ba35d63f5d63f4742a1fde009bf08c4",
     "access": "curator-local-private"
   },
   "strata": {
     "languageFamily": "python",
-    "architectureFamily": "transactional-service",
+    "architectureFamily": "backend-service",
     "size": "small",
     "changeShapes": ["direct"],
     "surfaceLanes": ["persistence"]
@@ -25,11 +26,13 @@
     {
       "curatorIdentitySha256": "617ac849db736678cc50ccdba46a2eab92738cafb44bda4ccd1eee1c585a4bc1",
       "confirmedAt": "2026-09-03T16:00:00Z",
+      "caseBundleSha256": "bc04273e4d402516d562a65458999a4967a4b909a99ccd4ac952b49bea2643ad",
       "checks": ["classification", "clean-control", "line-range", "provenance", "source-authenticity", "truth-completeness"]
     },
     {
       "curatorIdentitySha256": "99f87bbb05ab81b66dac4ea9c949e2823ed3f07886fe47b410bf4c0c8b4351e1",
       "confirmedAt": "2026-09-03T17:08:04Z",
+      "caseBundleSha256": "bc04273e4d402516d562a65458999a4967a4b909a99ccd4ac952b49bea2643ad",
       "checks": ["classification", "clean-control", "line-range", "provenance", "source-authenticity", "truth-completeness"]
     }
   ]
