@@ -144,15 +144,24 @@ Peregrine source tree, case corpus, or provider credentials.
 Pull requests that touch the image build it without registry credentials, then
 run the probe with no network, a read-only root filesystem, read-only checkout and
 asset fixtures, one read-write output directory, and tmpfs-backed home and scratch
-directories. The probe verifies those mounts, denies a host-only sentinel and the
-Docker socket, confirms no common credentials were inherited, and checks both CLI
-versions without making a provider request.
+directories. The workflow invokes the repo-owned
+`scripts/run-eval-runtime-probe.ts` launcher rather than carrying a second inline
+copy of the Docker arguments. Its strict argument parser rejects missing or extra
+mounts and weakened network, root, capability, user, or tmpfs controls. Inside the
+container, the probe dynamically confirms that `/` and the two input mounts are
+read-only, the only network interface is loopback, no default IPv4 or usable IPv6
+route exists, and the writable mounts have the expected types. It also denies a
+host-only sentinel and the Docker socket, confirms no common credentials were
+inherited, and checks both CLI versions without making a provider request.
 
 The same workflow has a separate manual, `main`-only publication job for
 `ghcr.io/petergraycreative/peregrine-eval-runtime`. Only that job receives
 `packages: write` and `GITHUB_TOKEN`; it publishes an amd64/arm64 candidate tagged
-with the source commit and records its immutable digest with a GitHub provenance
-attestation. It never publishes `latest`.
+with the source commit. The job then pulls that exact multi-platform digest, runs
+the same zero-credential probe for both `linux/amd64` and `linux/arm64`, and creates
+the GitHub provenance attestation only after both pass. A failed post-publish probe
+can therefore leave a commit-tagged candidate in GHCR, but that candidate remains
+unattested and must not be approved. The workflow never publishes `latest`.
 
 This bootstrap does **not** enable live evaluation. The existing pre-provider
 gate remains closed, no runtime invokes Docker, and no released digest is accepted

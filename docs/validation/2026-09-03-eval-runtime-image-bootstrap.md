@@ -28,9 +28,9 @@ Buildx release were resolved from their upstream Git refs.
 All Node commands ran after `nvm use 22`, which selected Node `22.22.1` and npm
 `10.9.4`.
 
-- `node --import tsx --test tests/eval-runtime-image.test.ts` — passed 6/6.
+- `node --import tsx --test tests/eval-runtime-image.test.ts` — passed 7/7.
 - `npm run typecheck` — passed.
-- `npm run validate` — passed: 56/56 Node tests, all skill/packaging/install
+- `npm run validate` — passed: 57/57 Node tests, all skill/packaging/install
   checks, and the 8/8 zero-cost structural smoke suite with five expected markers
   found and zero findings on three clean controls.
 - `git diff --check` — passed.
@@ -42,6 +42,14 @@ therefore have pulled image layers, which this task explicitly prohibited. The
 zero-credential container build/smoke remains to be exercised by the unprivileged
 pull-request job; it is not claimed as locally passed.
 
+The workflow's executable probe launcher owns the complete ordered `docker run`
+argument vector. Pure tests parse its valid local and digest-addressed forms and
+reject mutations that restore default networking, remove the read-only root, make
+an input mount writable, add a host-root mount, or replace the published digest
+with a mutable tag. The in-image probe now independently checks the root mount's
+`ro` flag, loopback-only interfaces, and absence of default IPv4 or usable IPv6
+routes.
+
 No provider process, registry login, image publication, or image-layer pull was
 performed. `eval/case-isolation.ts` remained byte-for-byte unchanged from the base
 commit, so Claude and Codex live matrix attempts still stop before provider
@@ -51,7 +59,10 @@ execution.
 
 After this bootstrap merges, an authorized maintainer must manually dispatch the
 publication job from `main`, independently verify the resulting GHCR attestation
-and amd64/arm64 digest, and explicitly approve that digest. A separate Safety PR
+and amd64/arm64 digest, and explicitly approve that digest. Publication precedes
+the two platform probes so that they exercise the actual registry artifact; a
+probe failure may leave a commit-tagged but deliberately unattested candidate,
+which must be treated as rejected. A separate Safety PR
 2A.2 can then pin the released digest and implement runtime mounts, secret
 allowlisting, timeout cleanup, network-status accounting, and fake-provider
 execution. Until that follow-up passes, live evaluation stays disabled.

@@ -6,6 +6,7 @@ on:
       - .github/workflows/eval-runtime-image.yml
       - container/eval-runtime/**
       - eval/README.md
+      - scripts/run-eval-runtime-probe.ts
       - tests/eval-runtime-image.test.ts
       - package.json
   workflow_dispatch:
@@ -28,6 +29,13 @@ jobs:
         with:
           persist-credentials: false
 
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install probe dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
       - name: Build the local-only test image
         run: |
           docker build \
@@ -37,53 +45,14 @@ jobs:
             container/eval-runtime
 
       - name: Exercise the zero-credential containment probe
-        shell: bash
-        run: |
-          set -euo pipefail
-          smoke_root="$(mktemp -d)"
-          container_name="peregrine-image-smoke-${GITHUB_RUN_ID:-local}-${GITHUB_RUN_ATTEMPT:-1}"
-          cleanup() {
-            docker rm --force "$container_name" >/dev/null 2>&1 || true
-            rm -rf "$smoke_root"
-          }
-          trap cleanup EXIT
-
-          checkout_dir="${smoke_root}/checkout"
-          assets_dir="${smoke_root}/assets"
-          output_dir="${smoke_root}/output"
-          host_sentinel="${smoke_root}/host-only.txt"
-          mkdir -p "$checkout_dir" "$assets_dir" "$output_dir"
-          printf '%s\n' checkout > "${checkout_dir}/.peregrine-containment-marker"
-          printf '%s\n' assets > "${assets_dir}/.peregrine-containment-marker"
-          printf '%s\n' 'must remain on the host' > "$host_sentinel"
-          chmod 0555 "$checkout_dir" "$assets_dir"
-          chmod 0777 "$output_dir"
-
-          docker run --rm \
-            --name "$container_name" \
-            --network none \
-            --read-only \
-            --cap-drop ALL \
-            --security-opt no-new-privileges \
-            --pids-limit 256 \
-            --user 1000:1000 \
-            --env "PEREGRINE_PROBE_HOST_SENTINEL=${host_sentinel}" \
-            --mount "type=bind,source=${checkout_dir},target=/workspace,readonly" \
-            --mount "type=bind,source=${assets_dir},target=/opt/peregrine,readonly" \
-            --mount "type=bind,source=${output_dir},target=/output" \
-            --tmpfs /tmp:rw,noexec,nosuid,nodev,size=64m,uid=1000,gid=1000 \
-            --tmpfs /home/peregrine:rw,noexec,nosuid,nodev,size=64m,uid=1000,gid=1000 \
-            peregrine-eval-runtime:pr
-
-          test -f "${output_dir}/containment-probe.json"
-          grep --fixed-strings '"status": "passed"' "${output_dir}/containment-probe.json"
+        run: node --import tsx scripts/run-eval-runtime-probe.ts --image peregrine-eval-runtime:pr
 
   publish:
     name: Publish immutable candidate
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     needs: verify
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     permissions:
       attestations: write
       contents: read
@@ -93,6 +62,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install probe dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Install pinned emulation support
         uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
@@ -124,6 +100,21 @@ jobs:
           tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
           build-args: SOURCE_REVISION=${{ github.sha }}
           provenance: false
+
+      - name: Probe both platforms from the exact published digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          digest="${{ steps.publish-image.outputs.digest }}"
+          if [[ ! "$digest" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "Published image did not return an immutable sha256 digest" >&2
+            exit 1
+          fi
+          for platform in linux/amd64 linux/arm64; do
+            node --import tsx scripts/run-eval-runtime-probe.ts \
+              --image "${IMAGE_NAME}@${digest}" \
+              --platform "$platform"
+          done
 
       - name: Attest the published digest
         uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3

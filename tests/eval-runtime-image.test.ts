@@ -3,6 +3,11 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
+import {
+  buildProbeDockerArgs,
+  parseProbeDockerArgs,
+  type ProbeLaunchOptions,
+} from "../scripts/run-eval-runtime-probe.js";
 
 const imageRoot = resolve("container/eval-runtime");
 const dockerfile = readFileSync(resolve(imageRoot, "Dockerfile"), "utf8");
@@ -59,13 +64,11 @@ test("the image workflow keeps pull requests unprivileged and publication manual
   assert.doesNotMatch(verify, /docker\/login-action/);
   assert.doesNotMatch(verify, /push:\s*true/);
   assert.match(verify, /persist-credentials: false/);
-  assert.match(verify, /--network none/);
-  assert.match(verify, /--read-only/);
-  assert.match(verify, /--cap-drop ALL/);
-  assert.match(verify, /--security-opt no-new-privileges/);
-  assert.match(verify, /target=\/workspace,readonly/);
-  assert.match(verify, /target=\/opt\/peregrine,readonly/);
-  assert.match(verify, /target=\/output/);
+  assert.match(
+    verify,
+    /^\s+run: node --import tsx scripts\/run-eval-runtime-probe\.ts --image peregrine-eval-runtime:pr$/m,
+  );
+  assert.doesNotMatch(workflow, /docker run/);
 
   assert.match(publish, /github\.event_name == 'workflow_dispatch'/);
   assert.match(publish, /github\.ref == 'refs\/heads\/main'/);
@@ -73,6 +76,51 @@ test("the image workflow keeps pull requests unprivileged and publication manual
   assert.match(workflow, /IMAGE_NAME: ghcr\.io\/petergraycreative\/peregrine-eval-runtime/);
   assert.match(publish, /tags: \$\{\{ env\.IMAGE_NAME \}\}:\$\{\{ github\.sha \}\}/);
   assert.doesNotMatch(publish, /:latest/);
+  assert.match(publish, /for platform in linux\/amd64 linux\/arm64/);
+  assert.match(publish, /--image "\$\{IMAGE_NAME\}@\$\{digest\}"/);
+  assert.match(publish, /--platform "\$platform"/);
+  const probeStep = publish.indexOf("Probe both platforms");
+  const attestStep = publish.indexOf("Attest the published digest");
+  assert.ok(probeStep >= 0 && attestStep > probeStep);
+});
+
+test("the executable probe builder rejects containment-weakening argv mutations", () => {
+  const options: ProbeLaunchOptions = {
+    image: "peregrine-eval-runtime:pr",
+    containerName: "peregrine-image-smoke-deadbeef",
+    checkoutDir: "/tmp/probe/checkout",
+    assetsDir: "/tmp/probe/assets",
+    outputDir: "/tmp/probe/output",
+    hostSentinel: "/tmp/probe/host-only.txt",
+  };
+  const args = buildProbeDockerArgs(options);
+  assert.deepEqual(parseProbeDockerArgs(args), { ...options, pull: false });
+
+  assertMutationRejected(args, (mutated) => {
+    mutated[mutated.indexOf("none")] = "bridge";
+  });
+  assertMutationRejected(args, (mutated) => {
+    mutated.splice(mutated.indexOf("--read-only"), 1);
+  });
+  assertMutationRejected(args, (mutated) => {
+    const index = mutated.findIndex((value) => value.includes("target=/workspace"));
+    mutated[index] = mutated[index]?.replace(",readonly", "") ?? "";
+  });
+  assertMutationRejected(args, (mutated) => {
+    mutated.splice(mutated.length - 1, 0, "--volume", "/:/host");
+  });
+
+  const digest = `ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:${"a".repeat(64)}`;
+  const published = buildProbeDockerArgs({ ...options, image: digest, platform: "linux/arm64" });
+  assert.deepEqual(parseProbeDockerArgs(published), {
+    ...options,
+    image: digest,
+    platform: "linux/arm64",
+    pull: true,
+  });
+  assertMutationRejected(published, (mutated) => {
+    mutated[mutated.length - 1] = "ghcr.io/petergraycreative/peregrine-eval-runtime:mutable";
+  });
 });
 
 test("every workflow action and helper image is immutable", () => {
@@ -101,6 +149,8 @@ test("the zero-credential probe exposes a stable mount contract", () => {
   assert.deepEqual(JSON.parse(result.stdout), {
     schemaVersion: 1,
     user: { uid: 1000, gid: 1000 },
+    rootFilesystem: "read-only",
+    network: { interfaces: ["lo"], defaultRoutes: false },
     mounts: {
       checkout: { path: "/workspace", access: "read-only", marker: "checkout" },
       assets: { path: "/opt/peregrine", access: "read-only", marker: "assets" },
@@ -111,6 +161,12 @@ test("the zero-credential probe exposes a stable mount contract", () => {
     providerVersions: { claude: "2.1.252", codex: "0.152.0" },
   });
 });
+
+function assertMutationRejected(args: readonly string[], mutate: (copy: string[]) => void): void {
+  const copy = [...args];
+  mutate(copy);
+  assert.throws(() => parseProbeDockerArgs(copy));
+}
 
 test("the merged live-provider gate remains closed", () => {
   const isolation = readFileSync(resolve("eval/case-isolation.ts"), "utf8");

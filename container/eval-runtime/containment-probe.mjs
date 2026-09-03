@@ -3,6 +3,7 @@
 import { spawnSync } from "node:child_process";
 import {
   readFileSync,
+  readdirSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -11,6 +12,8 @@ import { join } from "node:path";
 const CONTRACT = Object.freeze({
   schemaVersion: 1,
   user: { uid: 1000, gid: 1000 },
+  rootFilesystem: "read-only",
+  network: { interfaces: ["lo"], defaultRoutes: false },
   mounts: {
     checkout: { path: "/workspace", access: "read-only", marker: "checkout" },
     assets: { path: "/opt/peregrine", access: "read-only", marker: "assets" },
@@ -40,6 +43,7 @@ function runChecks() {
   check(process.getgid?.() === CONTRACT.user.gid, "runtime GID is the non-root image GID", checks);
 
   const mounts = readMounts();
+  assertMount(mounts, "/", "ro", undefined, checks);
   assertMount(mounts, CONTRACT.mounts.checkout.path, "ro", undefined, checks);
   assertMount(mounts, CONTRACT.mounts.assets.path, "ro", undefined, checks);
   assertMount(mounts, CONTRACT.mounts.output.path, "rw", undefined, checks);
@@ -52,6 +56,7 @@ function runChecks() {
   assertWritable(CONTRACT.mounts.home.path, checks);
   assertWritable(CONTRACT.mounts.scratch.path, checks);
   assertDeniedWrite(`/peregrine-root-write-${process.pid}`, checks);
+  assertNetworkNamespace(checks);
 
   const hostSentinel = process.env.PEREGRINE_PROBE_HOST_SENTINEL;
   check(typeof hostSentinel === "string" && hostSentinel.startsWith("/"), "host sentinel path is declared", checks);
@@ -83,9 +88,38 @@ function runChecks() {
   };
   writeFileSync(join(CONTRACT.mounts.output.path, "containment-probe.json"), `${JSON.stringify(report, null, 2)}\n`, {
     encoding: "utf8",
-    mode: 0o600,
+    mode: 0o644,
   });
   process.stdout.write(`${JSON.stringify(report)}\n`);
+}
+
+function assertNetworkNamespace(checks) {
+  const interfaces = readdirSync("/sys/class/net").sort();
+  check(interfaces.length === 1 && interfaces[0] === "lo", "network namespace exposes loopback only", checks);
+
+  const ipv4Routes = readFileSync("/proc/net/route", "utf8")
+    .trim()
+    .split("\n")
+    .slice(1)
+    .filter(Boolean)
+    .map((line) => line.trim().split(/\s+/));
+  check(ipv4Routes.every((route) => route[0] === "lo"), "IPv4 routes are loopback-only", checks);
+  check(ipv4Routes.every((route) => route[1] !== "00000000"), "no default IPv4 route exists", checks);
+
+  const ipv6Routes = readFileSync("/proc/net/ipv6_route", "utf8")
+    .trim()
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => line.trim().split(/\s+/));
+  check(ipv6Routes.every((route) => route.at(-1) === "lo"), "IPv6 routes are loopback-only", checks);
+  check(ipv6Routes.every((route) => !isUsableIpv6DefaultRoute(route)), "no usable default IPv6 route exists", checks);
+}
+
+function isUsableIpv6DefaultRoute(route) {
+  if (route[0] !== "00000000000000000000000000000000" || route[1] !== "00") return false;
+  const flags = Number.parseInt(route[8] ?? "", 16);
+  const rejectRoute = Number.isFinite(flags) && (flags & 0x0200) !== 0;
+  return route.at(-1) !== "lo" || !rejectRoute;
 }
 
 function readMounts() {
