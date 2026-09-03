@@ -6,7 +6,15 @@ import { claudeSchemaJson, packageRoot, schemaPath } from "../src/core/paths.js"
 import { exec, lastJsonBlock } from "../src/util/exec.js";
 import type { EngineResult, Finding, GradedRun, GroundTruth, RunRecord } from "../src/types.js";
 import { readCaseGroundTruth } from "./case-truth.js";
-import { parseLegacyCompletedRun, parseMatrixRunManifest, parseRunRecord } from "./artifacts.js";
+import {
+  isLegacyMatrixRunManifest,
+  parseLegacyCompletedRun,
+  parseLegacyMatrixRunManifest,
+  parseLegacySchemaV1RunRecord,
+  parseMatrixRunManifest,
+  parseRunRecord,
+  type LegacySchemaV1RunRecord,
+} from "./artifacts.js";
 
 type LegacyRunRecord = Omit<RunRecord, "schemaVersion" | "attemptId" | "finishedAt" | "outcome" | "caseCorpus" | "runner"> & {
   result: EngineResult;
@@ -39,10 +47,22 @@ export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Prom
       ? process.env.PEREGRINE_CODEX_JUDGE_MODEL ?? config.runners.codex.investigationModel
       : process.env.PEREGRINE_CLAUDE_JUDGE_MODEL ?? config.runners.claude.investigationModel);
   const manifestPath = join(dir, "matrix-manifest.json");
-  const manifest = existsSync(manifestPath)
-    ? parseMatrixRunManifest(JSON.parse(readFileSync(manifestPath, "utf8")), manifestPath)
+  const manifestValue: unknown = existsSync(manifestPath)
+    ? JSON.parse(readFileSync(manifestPath, "utf8"))
     : undefined;
-  const expectedByFile = new Map(manifest?.expectedAttempts.map((attempt) => [attempt.file, attempt]));
+  let manifest: ReturnType<typeof parseMatrixRunManifest> | undefined;
+  let legacyManifest: ReturnType<typeof parseLegacyMatrixRunManifest> | undefined;
+  if (manifestValue !== undefined) {
+    try {
+      manifest = parseMatrixRunManifest(manifestValue, manifestPath);
+    } catch (error) {
+      if (!isLegacyMatrixRunManifest(manifestValue)) throw error;
+      legacyManifest = parseLegacyMatrixRunManifest(manifestValue, manifestPath);
+    }
+  }
+  const expectedByFile = new Map(
+    (manifest?.expectedAttempts ?? legacyManifest?.expectedAttempts ?? []).map((attempt) => [attempt.file, attempt]),
+  );
   const files = readdirSync(dir).filter(
     (f) => f.endsWith(".json") && !f.endsWith(".graded.json") && f !== "matrix-manifest.json" && f !== "benchmark.json",
   );
@@ -51,10 +71,14 @@ export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Prom
     const path = join(dir, file);
     const raw: unknown = JSON.parse(readFileSync(path, "utf8"));
     const expected = expectedByFile.get(file);
-    if (manifest && !expected) throw new Error(`${file}: run artifact is not declared by matrix manifest`);
-    const run: RunRecord | LegacyRunRecord = manifest
-      ? parseRunRecord(raw, path, expected)
-      : parseLegacyRun(raw, path);
+    if ((manifest || legacyManifest) && !expected) {
+      throw new Error(`${file}: run artifact is not declared by matrix manifest`);
+    }
+    const run: RunRecord | LegacySchemaV1RunRecord | LegacyRunRecord = manifest
+      ? parseRunRecord(raw, path, expected as (typeof manifest.expectedAttempts)[number])
+      : legacyManifest
+        ? parseLegacySchemaV1RunRecord(raw, path, expected as (typeof legacyManifest.expectedAttempts)[number])
+        : parseLegacyRun(raw, path);
     let result: EngineResult;
     if ("outcome" in run) {
       if (run.outcome.status === "failed") {
@@ -89,7 +113,13 @@ export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Prom
     }
 
     const normalizedRun = "outcome" in run
-      ? run
+      ? isCurrentRunRecord(run)
+        ? run
+        : {
+            ...run,
+            caseCorpus: "unknown" as const,
+            runner: result.engine,
+          }
       : {
           ...run,
           schemaVersion: 1 as const,
@@ -115,6 +145,12 @@ export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Prom
     );
   }
   console.log(`\nNext: npm run eval:report -- --runs ${dir}`);
+}
+
+function isCurrentRunRecord(
+  run: RunRecord | LegacySchemaV1RunRecord,
+): run is RunRecord {
+  return "caseCorpus" in run && "runner" in run;
 }
 
 function parseLegacyRun(value: unknown, source: string): LegacyRunRecord {

@@ -13,8 +13,11 @@ import { readCaseGroundTruth } from "./case-truth.js";
 import { formatUsd } from "../src/core/telemetry.js";
 import {
   assertGradedMatchesRun,
+  isLegacyMatrixRunManifest,
   parseGradedRun,
   parseLegacyCompletedRun,
+  parseLegacyMatrixRunManifest,
+  parseLegacySchemaV1GradedRun,
   parseMatrixRunManifest,
   parseRunRecord,
 } from "./artifacts.js";
@@ -81,13 +84,19 @@ export async function buildReport(
   const dir = resolve(runsDir ?? latestRunsDir());
   const casesDir = resolve(options.casesDir ?? "eval/cases");
   const manifestPath = join(dir, "matrix-manifest.json");
-  const stats = existsSync(manifestPath)
-    ? trackedStats(
-        dir,
-        casesDir,
-        parseMatrixRunManifest(JSON.parse(readFileSync(manifestPath, "utf8")), manifestPath),
-      )
-    : legacyStats(dir);
+  let stats: ConfigStats[];
+  if (existsSync(manifestPath)) {
+    const manifestValue: unknown = JSON.parse(readFileSync(manifestPath, "utf8"));
+    try {
+      stats = trackedStats(dir, casesDir, parseMatrixRunManifest(manifestValue, manifestPath));
+    } catch (error) {
+      if (!isLegacyMatrixRunManifest(manifestValue)) throw error;
+      parseLegacyMatrixRunManifest(manifestValue, manifestPath);
+      stats = legacyStats(dir);
+    }
+  } else {
+    stats = legacyStats(dir);
+  }
 
   if (stats.length === 0) {
     throw new Error(`No benchmark run artifacts in ${dir} — run eval:grade first.`);
@@ -191,6 +200,14 @@ function legacyStats(dir: string): ConfigStats[] {
       const path = join(dir, file);
       const raw: unknown = JSON.parse(readFileSync(path, "utf8"));
       if (raw && typeof raw === "object" && !Array.isArray(raw) && "outcome" in raw) {
+        if (!("caseCorpus" in raw) && !("runner" in raw)) {
+          const parsed = parseLegacySchemaV1GradedRun(raw, path);
+          return {
+            ...parsed,
+            caseCorpus: "unknown",
+            runner: parsed.outcome.result.engine,
+          };
+        }
         return parseGradedRun(raw, path);
       }
       const parsed = parseLegacyCompletedRun(raw, path);

@@ -37,8 +37,10 @@ finished attempt then records either a completed result or a sanitized failure
 with a stable kind. Reports show completion and failure rates by kind,
 conditional recall, and recall with
 failed or interrupted bug-bearing attempts counted as misses. Directories from
-older versions that have no attempt manifest are labeled `legacy/incomplete`;
-their completion and failure-inclusive metrics are intentionally unavailable.
+older versions that have no attempt manifest, and P1 schema-v1 artifacts from
+before manifest attempts recorded corpus and runner identity, are labeled
+`legacy/incomplete`; their completion and failure-inclusive metrics are
+intentionally unavailable.
 Their telemetry denominator and all comparison telemetry means are also
 reported as `n/a` because the expected attempt count cannot be reconstructed.
 

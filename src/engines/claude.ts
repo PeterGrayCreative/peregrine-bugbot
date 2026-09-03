@@ -14,6 +14,7 @@ import { type ExecResult, exec, lastJsonBlock } from "../util/exec.js";
 import type { Engine } from "./engine.js";
 
 type ExecFunction = typeof exec;
+type BuildEngineResult = typeof buildEngineResult;
 
 interface ClaudeStageResult<T> {
   output: T;
@@ -199,7 +200,10 @@ function wrapClaudeFailure(error: unknown, modelConfig: string, started: number,
   );
 }
 
-export function createClaudeEngine(run: ExecFunction = exec): Engine {
+export function createClaudeEngine(
+  run: ExecFunction = exec,
+  buildResult: BuildEngineResult = buildEngineResult,
+): Engine {
   return {
     name: "claude",
     async review(ctx: ReviewContext): Promise<EngineResult> {
@@ -273,30 +277,43 @@ export function createClaudeEngine(run: ExecFunction = exec): Engine {
         throw wrapClaudeFailure(error, modelConfig, started, [completedStage("breadth", breadth)]);
       }
 
-      return buildEngineResult({
-        engine: "claude",
-        modelConfig,
-        ctx,
-        payload: investigation.output,
-        usage: combineUsage(breadth.usage, investigation.usage),
-        durationMs: Date.now() - started,
-        raw: {
-          manifest: manifest.available ? "runner-generated" : manifest.reason,
-          breadth: {
-            output: breadth.output,
-            model: breadth.model,
-            promptSha256: breadth.promptSha256,
-            usage: breadth.usage,
-            durationMs: breadth.durationMs,
+      try {
+        return buildResult({
+          engine: "claude",
+          modelConfig,
+          ctx,
+          payload: investigation.output,
+          usage: combineUsage(breadth.usage, investigation.usage),
+          durationMs: Date.now() - started,
+          raw: {
+            manifest: manifest.available ? "runner-generated" : manifest.reason,
+            breadth: {
+              output: breadth.output,
+              model: breadth.model,
+              promptSha256: breadth.promptSha256,
+              usage: breadth.usage,
+              durationMs: breadth.durationMs,
+            },
+            investigation: {
+              model: investigation.model,
+              promptSha256: investigation.promptSha256,
+              usage: investigation.usage,
+              durationMs: investigation.durationMs,
+            },
           },
-          investigation: {
-            model: investigation.model,
-            promptSha256: investigation.promptSha256,
-            usage: investigation.usage,
-            durationMs: investigation.durationMs,
-          },
-        },
-      });
+        });
+      } catch (error) {
+        throw wrapClaudeFailure(
+          new RunFailureError(
+            "parse",
+            error instanceof Error ? error.message : "could not construct Claude review artifact",
+            { cause: error },
+          ),
+          modelConfig,
+          started,
+          [completedStage("breadth", breadth), completedStage("investigation", investigation)],
+        );
+      }
     },
   };
 }

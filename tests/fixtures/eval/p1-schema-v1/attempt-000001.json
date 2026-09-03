@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "attemptId": "attempt-000001",
+  "caseName": "legacy-p1-case",
+  "caseKind": "seeded",
+  "configName": "claude-p1-route",
+  "repeat": 1,
+  "startedAt": "2026-09-02T00:00:00.000Z",
+  "finishedAt": "2026-09-02T00:00:01.000Z",
+  "outcome": {
+    "status": "completed",
+    "result": {
+      "engine": "claude",
+      "status": "completed",
+      "modelConfig": "claude-haiku->claude-sonnet",
+      "findings": [
+        {
+          "file": "src/value.ts",
+          "startLine": 1,
+          "endLine": 1,
+          "severity": "high",
+          "disposition": "fix-in-pr",
+          "category": "logic",
+          "invariant": "value-remains-valid",
+          "title": "Invalid value",
+          "explanation": "The changed value violates the invariant.",
+          "failurePath": "A caller observes the invalid value.",
+          "confidence": 0.99
+        }
+      ],
+      "usage": {
+        "provider": "anthropic",
+        "aggregation": "stage-sum",
+        "inputTokens": 10,
+        "outputTokens": 2,
+        "costUsd": 0.01,
+        "costSource": "provider",
+        "unavailable": [
+          "baseInputTokens",
+          "uncachedInputTokens",
+          "cachedInputTokens",
+          "cacheWriteInputTokens",
+          "cacheReadInputTokens",
+          "reasoningOutputTokens",
+          "turns",
+          "toolCalls",
+          "toolCallsByType",
+          "toolOutputBytes",
+          "promptBytes"
+        ]
+      },
+      "durationMs": 1000
+    }
+  }
+}

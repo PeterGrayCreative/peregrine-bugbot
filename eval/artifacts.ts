@@ -1,7 +1,7 @@
 import { isDeepStrictEqual } from "node:util";
 import { parseEngineResult } from "../src/core/review-result.js";
 import { RUN_FAILURE_KINDS } from "../src/core/run-failure.js";
-import { parseUsage } from "../src/core/telemetry.js";
+import { combineUsage, parseUsage } from "../src/core/telemetry.js";
 import {
   CASE_CORPORA,
   type CaseCorpus,
@@ -20,6 +20,17 @@ const RECORD_KEYS = new Set([
   "runner",
 ]);
 const GRADED_KEYS = new Set([...RECORD_KEYS, "matches", "falsePositiveIndexes"]);
+const LEGACY_SCHEMA_V1_RECORD_KEYS = new Set([...RECORD_KEYS].filter((key) => key !== "caseCorpus" && key !== "runner"));
+const LEGACY_SCHEMA_V1_GRADED_KEYS = new Set([...LEGACY_SCHEMA_V1_RECORD_KEYS, "matches", "falsePositiveIndexes"]);
+
+export type LegacyRunAttempt = Omit<RunAttempt, "corpus" | "expectedBugCount" | "runner">;
+export interface LegacyMatrixRunManifest {
+  schemaVersion: 1;
+  createdAt: string;
+  expectedAttempts: LegacyRunAttempt[];
+}
+export type LegacySchemaV1RunRecord = Omit<RunRecord, "caseCorpus" | "runner">;
+export type LegacySchemaV1GradedRun = Omit<GradedRun, "caseCorpus" | "runner">;
 
 export function parseMatrixRunManifest(value: unknown, source = "matrix manifest"): MatrixRunManifest {
   const root = object(value, source);
@@ -29,19 +40,40 @@ export function parseMatrixRunManifest(value: unknown, source = "matrix manifest
   if (!Array.isArray(root.expectedAttempts)) throw new Error(`${source}.expectedAttempts must be an array`);
   const expectedAttempts = root.expectedAttempts.map((attempt, index) =>
     parseAttempt(attempt, `${source}.expectedAttempts[${index}]`));
-  const ids = new Set<string>();
-  const files = new Set<string>();
-  for (const attempt of expectedAttempts) {
-    if (ids.has(attempt.id)) throw new Error(`${source}: duplicate attempt id ${attempt.id}`);
-    if (files.has(attempt.file)) throw new Error(`${source}: duplicate attempt file ${attempt.file}`);
-    ids.add(attempt.id);
-    files.add(attempt.file);
-  }
+  assertUniqueAttempts(expectedAttempts, source);
   const providerNetworkIsolation = parseNetworkIsolation(
     root.providerNetworkIsolation,
     `${source}.providerNetworkIsolation`,
   );
   return { schemaVersion: 1, createdAt, expectedAttempts, providerNetworkIsolation };
+}
+
+/**
+ * P1 emitted schema-v1 manifests before corpus and runner were added. The
+ * version could not distinguish those artifacts, so recognize only the exact
+ * old attempt shape and keep its reports explicitly legacy/incomplete.
+ */
+export function isLegacyMatrixRunManifest(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const attempts = (value as Record<string, unknown>).expectedAttempts;
+  return Array.isArray(attempts) && attempts.every((attempt) =>
+    !!attempt && typeof attempt === "object" && !Array.isArray(attempt) &&
+    !("corpus" in attempt) && !("runner" in attempt));
+}
+
+export function parseLegacyMatrixRunManifest(
+  value: unknown,
+  source = "legacy matrix manifest",
+): LegacyMatrixRunManifest {
+  const root = object(value, source);
+  onlyKeys(root, new Set(["schemaVersion", "createdAt", "expectedAttempts"]), source);
+  if (root.schemaVersion !== 1) throw new Error(`${source}.schemaVersion must be 1`);
+  const createdAt = isoDate(root.createdAt, `${source}.createdAt`);
+  if (!Array.isArray(root.expectedAttempts)) throw new Error(`${source}.expectedAttempts must be an array`);
+  const expectedAttempts = root.expectedAttempts.map((attempt, index) =>
+    parseLegacyAttempt(attempt, `${source}.expectedAttempts[${index}]`));
+  assertUniqueAttempts(expectedAttempts, source);
+  return { schemaVersion: 1, createdAt, expectedAttempts };
 }
 
 export function parseRunRecord(value: unknown, source: string, expected?: RunAttempt): RunRecord {
@@ -59,30 +91,37 @@ export function parseGradedRun(value: unknown, source: string, expected?: RunAtt
   if (record.outcome.status !== "completed") throw new Error(`${source}.outcome must be completed`);
   const completed = record.outcome;
   if (expected) assertAttemptIdentity(record, expected, source);
-  const matchesRaw = object(root.matches, `${source}.matches`);
-  const matches: Record<string, number | null> = {};
-  for (const [bugId, findingIndex] of Object.entries(matchesRaw)) {
-    strictString(bugId, `${source}.matches key`, 500);
-    if (findingIndex !== null && !safeInteger(findingIndex, 0)) {
-      throw new Error(`${source}.matches.${bugId} must be null or a non-negative safe integer`);
-    }
-    if (typeof findingIndex === "number" && findingIndex >= completed.result.findings.length) {
-      throw new Error(`${source}.matches.${bugId} references a missing finding`);
-    }
-    matches[bugId] = findingIndex as number | null;
-  }
-  if (!Array.isArray(root.falsePositiveIndexes)) {
-    throw new Error(`${source}.falsePositiveIndexes must be an array`);
-  }
-  const falsePositiveIndexes = root.falsePositiveIndexes.map((index, position) => {
-    if (!safeInteger(index, 0) || index >= completed.result.findings.length) {
-      throw new Error(`${source}.falsePositiveIndexes[${position}] must reference an existing finding`);
-    }
-    return index;
-  });
-  if (new Set(falsePositiveIndexes).size !== falsePositiveIndexes.length) {
-    throw new Error(`${source}.falsePositiveIndexes must not contain duplicates`);
-  }
+  const { matches, falsePositiveIndexes } = parseGradeFields(root, completed.result.findings.length, source);
+  return { ...record, outcome: record.outcome, matches, falsePositiveIndexes };
+}
+
+export function parseLegacySchemaV1RunRecord(
+  value: unknown,
+  source: string,
+  expected?: LegacyRunAttempt,
+): LegacySchemaV1RunRecord {
+  const root = object(value, source);
+  onlyKeys(root, LEGACY_SCHEMA_V1_RECORD_KEYS, source);
+  const record = parseLegacySchemaV1RecordFields(root, source);
+  if (expected) assertLegacyAttemptIdentity(record, expected, source);
+  return record;
+}
+
+export function parseLegacySchemaV1GradedRun(
+  value: unknown,
+  source: string,
+  expected?: LegacyRunAttempt,
+): LegacySchemaV1GradedRun {
+  const root = object(value, source);
+  onlyKeys(root, LEGACY_SCHEMA_V1_GRADED_KEYS, source);
+  const record = parseLegacySchemaV1RecordFields(root, source);
+  if (record.outcome.status !== "completed") throw new Error(`${source}.outcome must be completed`);
+  if (expected) assertLegacyAttemptIdentity(record, expected, source);
+  const { matches, falsePositiveIndexes } = parseGradeFields(
+    root,
+    record.outcome.result.findings.length,
+    source,
+  );
   return { ...record, outcome: record.outcome, matches, falsePositiveIndexes };
 }
 
@@ -176,12 +215,49 @@ function parseAttempt(value: unknown, source: string): RunAttempt {
   };
 }
 
+function parseLegacyAttempt(value: unknown, source: string): LegacyRunAttempt {
+  const root = object(value, source);
+  onlyKeys(root, new Set(["id", "caseName", "configName", "repeat", "file"]), source);
+  const id = strictString(root.id, `${source}.id`, 200);
+  if (!/^attempt-[a-z0-9-]+$/i.test(id)) throw new Error(`${source}.id is not a safe attempt id`);
+  const file = strictString(root.file, `${source}.file`, 240);
+  if (file !== `${id}.json`) throw new Error(`${source}.file must equal ${id}.json`);
+  return {
+    id,
+    caseName: strictString(root.caseName, `${source}.caseName`, 500),
+    configName: strictString(root.configName, `${source}.configName`, 500),
+    repeat: positiveSafeInteger(root.repeat, `${source}.repeat`),
+    file,
+  };
+}
+
+function assertUniqueAttempts(attempts: Array<Pick<RunAttempt, "id" | "file">>, source: string): void {
+  const ids = new Set<string>();
+  const files = new Set<string>();
+  for (const attempt of attempts) {
+    if (ids.has(attempt.id)) throw new Error(`${source}: duplicate attempt id ${attempt.id}`);
+    if (files.has(attempt.file)) throw new Error(`${source}: duplicate attempt file ${attempt.file}`);
+    ids.add(attempt.id);
+    files.add(attempt.file);
+  }
+}
+
 function parseRecordFields(root: Record<string, unknown>, source: string): RunRecord {
   if (root.schemaVersion !== 1) throw new Error(`${source}.schemaVersion must be 1`);
   const outcome = parseOutcome(root.outcome, `${source}.outcome`);
   if (outcome.status === "completed") {
     validateUsageProvider(outcome.result.engine, outcome.result.usage, `${source}.outcome.result.usage`);
-    validateEngineStageTelemetry(outcome.result.raw, `${source}.outcome.result.raw`, outcome.result.engine);
+    const stageUsage = validateEngineStageTelemetry(
+      outcome.result.raw,
+      `${source}.outcome.result.raw`,
+      outcome.result.engine,
+    );
+    if (stageUsage && !isDeepStrictEqual(
+      withoutUndefined(combineUsage(...stageUsage)),
+      withoutUndefined(outcome.result.usage),
+    )) {
+      throw new Error(`${source}.outcome.result.usage does not match aggregate stage telemetry`);
+    }
   }
   const parsedRunner = runner(root.runner, `${source}.runner`);
   if (outcome.status === "completed" && outcome.result.engine !== parsedRunner) {
@@ -210,9 +286,41 @@ function parseRecordFields(root: Record<string, unknown>, source: string): RunRe
   };
 }
 
-function validateEngineStageTelemetry(value: unknown, source: string, engine: RunRecord["runner"]): void {
-  if (value === undefined) return;
+function parseLegacySchemaV1RecordFields(
+  root: Record<string, unknown>,
+  source: string,
+): LegacySchemaV1RunRecord {
+  if (root.schemaVersion !== 1) throw new Error(`${source}.schemaVersion must be 1`);
+  const outcome = parseOutcome(root.outcome, `${source}.outcome`);
+  if (outcome.status === "completed") {
+    validateUsageProvider(outcome.result.engine, outcome.result.usage, `${source}.outcome.result.usage`);
+  }
+  const startedAt = isoDate(root.startedAt, `${source}.startedAt`);
+  const finishedAt = isoDate(root.finishedAt, `${source}.finishedAt`);
+  if (Date.parse(finishedAt) < Date.parse(startedAt)) {
+    throw new Error(`${source}.finishedAt must not precede startedAt`);
+  }
+  return {
+    schemaVersion: 1,
+    attemptId: strictString(root.attemptId, `${source}.attemptId`, 200),
+    caseName: strictString(root.caseName, `${source}.caseName`, 500),
+    caseKind: caseKind(root.caseKind, `${source}.caseKind`),
+    configName: strictString(root.configName, `${source}.configName`, 500),
+    repeat: positiveSafeInteger(root.repeat, `${source}.repeat`),
+    startedAt,
+    finishedAt,
+    outcome,
+  };
+}
+
+function validateEngineStageTelemetry(
+  value: unknown,
+  source: string,
+  engine: RunRecord["runner"],
+): ReturnType<typeof parseUsage>[] | undefined {
+  if (value === undefined) return undefined;
   const raw = object(value, source);
+  const usages: Partial<Record<"breadth" | "investigation", ReturnType<typeof parseUsage>>> = {};
   for (const stageName of ["breadth", "investigation"] as const) {
     if (raw[stageName] === undefined) continue;
     const stage = object(raw[stageName], `${source}.${stageName}`);
@@ -223,12 +331,55 @@ function validateEngineStageTelemetry(value: unknown, source: string, engine: Ru
     nonNegativeSafeInteger(stage.durationMs, `${source}.${stageName}.durationMs`);
     const usage = parseUsage(stage.usage, `${source}.${stageName}.usage`);
     validateUsageProvider(engine, usage, `${source}.${stageName}.usage`);
+    usages[stageName] = usage;
     strictString(stage.model, `${source}.${stageName}.model`, 500);
     const promptSha256 = strictString(stage.promptSha256, `${source}.${stageName}.promptSha256`, 64);
     if (!/^[a-f0-9]{64}$/.test(promptSha256)) {
       throw new Error(`${source}.${stageName}.promptSha256 must be lowercase SHA-256 hex`);
     }
   }
+  if (usages.breadth === undefined && usages.investigation === undefined) return undefined;
+  if (usages.breadth === undefined || usages.investigation === undefined) {
+    throw new Error(`${source} must include both breadth and investigation stage telemetry`);
+  }
+  return [usages.breadth, usages.investigation];
+}
+
+function parseGradeFields(
+  root: Record<string, unknown>,
+  findingCount: number,
+  source: string,
+): Pick<GradedRun, "matches" | "falsePositiveIndexes"> {
+  const matchesRaw = object(root.matches, `${source}.matches`);
+  const matches: Record<string, number | null> = {};
+  const matchedIndexes = new Set<number>();
+  for (const [bugId, findingIndex] of Object.entries(matchesRaw)) {
+    strictString(bugId, `${source}.matches key`, 500);
+    if (findingIndex !== null && !safeInteger(findingIndex, 0)) {
+      throw new Error(`${source}.matches.${bugId} must be null or a non-negative safe integer`);
+    }
+    if (typeof findingIndex === "number" && findingIndex >= findingCount) {
+      throw new Error(`${source}.matches.${bugId} references a missing finding`);
+    }
+    if (typeof findingIndex === "number" && matchedIndexes.has(findingIndex)) {
+      throw new Error(`${source}.matches must not reuse a finding index across bug IDs`);
+    }
+    if (typeof findingIndex === "number") matchedIndexes.add(findingIndex);
+    matches[bugId] = findingIndex as number | null;
+  }
+  if (!Array.isArray(root.falsePositiveIndexes)) {
+    throw new Error(`${source}.falsePositiveIndexes must be an array`);
+  }
+  const falsePositiveIndexes = root.falsePositiveIndexes.map((index, position) => {
+    if (!safeInteger(index, 0) || index >= findingCount) {
+      throw new Error(`${source}.falsePositiveIndexes[${position}] must reference an existing finding`);
+    }
+    return index;
+  });
+  if (new Set(falsePositiveIndexes).size !== falsePositiveIndexes.length) {
+    throw new Error(`${source}.falsePositiveIndexes must not contain duplicates`);
+  }
+  return { matches, falsePositiveIndexes };
 }
 
 function parseOutcome(value: unknown, source: string): RunRecord["outcome"] {
@@ -321,6 +472,21 @@ function assertAttemptIdentity(record: RunRecord, expected: RunAttempt, source: 
   }
 }
 
+function assertLegacyAttemptIdentity(
+  record: LegacySchemaV1RunRecord,
+  expected: LegacyRunAttempt,
+  source: string,
+): void {
+  for (const [field, actual, wanted] of [
+    ["attemptId", record.attemptId, expected.id],
+    ["caseName", record.caseName, expected.caseName],
+    ["configName", record.configName, expected.configName],
+    ["repeat", record.repeat, expected.repeat],
+  ] as const) {
+    if (actual !== wanted) throw new Error(`${source}.${field} does not match legacy matrix manifest`);
+  }
+}
+
 function runner(value: unknown, source: string): RunRecord["runner"] {
   if (!(value === "claude" || value === "codex" || value === "mock")) throw new Error(`${source} is invalid`);
   return value;
@@ -329,6 +495,16 @@ function runner(value: unknown, source: string): RunRecord["runner"] {
 function object(value: unknown, source: string): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${source} must be an object`);
   return value as Record<string, unknown>;
+}
+
+function withoutUndefined(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(withoutUndefined);
+  if (!value || typeof value !== "object") return value;
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .filter(([, child]) => child !== undefined)
+      .map(([key, child]) => [key, withoutUndefined(child)]),
+  );
 }
 
 function onlyKeys(value: Record<string, unknown>, allowed: Set<string>, source: string): void {

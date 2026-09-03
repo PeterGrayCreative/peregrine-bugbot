@@ -8,7 +8,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { basename, join, resolve } from "node:path";
 import test from "node:test";
 import { gradeRuns } from "../eval/grade.js";
 import { buildReport } from "../eval/report.js";
@@ -17,10 +17,12 @@ import { readCaseGroundTruth } from "../eval/case-truth.js";
 import {
   assertGradedMatchesRun,
   parseGradedRun,
+  parseLegacySchemaV1GradedRun,
   parseMatrixRunManifest,
   parseRunRecord,
 } from "../eval/artifacts.js";
 import { RunFailureError } from "../src/core/run-failure.js";
+import { combineUsage, withUnavailable } from "../src/core/telemetry.js";
 import type { Engine } from "../src/engines/engine.js";
 import type { GradedRun, MatrixModelConfig, MatrixRunManifest, RunAttempt, RunRecord } from "../src/types.js";
 
@@ -142,6 +144,8 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
   assert.doesNotThrow(() => parseGradedRun(graded, "graded", attempt));
   const fractionalMatch = { ...structuredClone(graded), matches: { bug: 0.5 } };
   assert.throws(() => parseGradedRun(fractionalMatch, "graded", attempt), /safe integer/);
+  const reusedFinding = { ...structuredClone(graded), matches: { bug: 0, "bug-2": 0 } };
+  assert.throws(() => parseGradedRun(reusedFinding, "graded", attempt), /must not reuse a finding index/);
   const tamperedGraded = structuredClone(graded);
   if (tamperedGraded.outcome.status !== "completed") throw new Error("expected completed fixture");
   tamperedGraded.outcome.result.usage.inputTokens = 11;
@@ -162,6 +166,74 @@ const CANONICAL_VALUE_PATCH = [
   "+export const value = false;",
   "",
 ].join("\n");
+
+test("strict ingestion rejects aggregate usage forged below its two stages", () => {
+  const stageUsage = withUnavailable({
+    provider: "anthropic",
+    aggregation: "single-envelope",
+    costUsd: 1,
+    costSource: "provider",
+  });
+  const forged = structuredClone(validRecord());
+  if (forged.outcome.status !== "completed") throw new Error("expected completed fixture");
+  forged.outcome.result.usage = { ...combineUsage(stageUsage, stageUsage), costUsd: 0.01 };
+  forged.outcome.result.raw = {
+    breadth: {
+      model: "fast",
+      promptSha256: "a".repeat(64),
+      durationMs: 10,
+      usage: stageUsage,
+    },
+    investigation: {
+      model: "strong",
+      promptSha256: "b".repeat(64),
+      durationMs: 20,
+      usage: stageUsage,
+    },
+  };
+  assert.throws(
+    () => parseRunRecord(forged, "forged", validAttempt()),
+    /does not match aggregate stage telemetry/,
+  );
+
+  forged.outcome.result.usage = combineUsage(stageUsage, stageUsage);
+  assert.doesNotThrow(() => parseRunRecord(forged, "reconciled", validAttempt()));
+});
+
+test("pre-corpus P1 schema-v1 artifacts remain readable only as legacy incomplete", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-p1-artifact-test-"));
+  const runsDir = join(root, "runs");
+  const casesDir = join(root, "cases");
+  const fixtureDir = resolve("tests/fixtures/eval/p1-schema-v1");
+  mkdirSync(runsDir);
+  mkdirSync(join(casesDir, "legacy-p1-case"), { recursive: true });
+  for (const file of ["matrix-manifest.json", "attempt-000001.json", "attempt-000001.graded.json"]) {
+    writeFileSync(join(runsDir, file), readFileSync(join(fixtureDir, file)));
+  }
+  writeFileSync(
+    join(casesDir, "legacy-p1-case", "ground_truth.json"),
+    JSON.stringify({ bugs: [{ id: "bug-1", file: "src/value.ts", startLine: 1, endLine: 1, description: "invalid value" }] }),
+  );
+
+  try {
+    const fixtureGraded: unknown = JSON.parse(
+      readFileSync(join(fixtureDir, "attempt-000001.graded.json"), "utf8"),
+    );
+    assert.doesNotThrow(() => parseLegacySchemaV1GradedRun(fixtureGraded, "P1 fixture"));
+    rmSync(join(runsDir, "attempt-000001.graded.json"));
+    await gradeRuns(runsDir, casesDir);
+    const [stats] = await buildReport(runsDir, { casesDir });
+    assert.equal(stats?.config, "claude-p1-route");
+    assert.equal(stats?.completeness, "legacy-incomplete");
+    assert.equal(stats?.benchmarkKind, "legacy-unknown");
+    assert.equal(stats?.expectedRuns, null);
+    assert.equal(stats?.completionRate, null);
+    assert.equal(stats?.telemetryExpectedRuns, null);
+    assert.equal(stats?.costPerCaseMean, null);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test("matrix accounting preserves failures, missing attempts, recall, and unknown cost", async () => {
   const root = mkdtempSync(join(tmpdir(), "peregrine-accounting-test-"));
