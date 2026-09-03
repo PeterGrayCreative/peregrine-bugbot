@@ -253,6 +253,111 @@ test("strict ingestion reconciles failure usage and cost with all observed stage
   assert.doesNotThrow(() => parseRunRecord(failed, "reconciled failure", validAttempt()));
 });
 
+test("behavioral reports count failed and missing attempts and retain incurred failure cost", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-behavioral-accounting-"));
+  const runsDir = join(root, "runs");
+  const casesDir = join(root, "cases");
+  const caseName = "development/case-b00c0001";
+  mkdirSync(runsDir, { recursive: true });
+  mkdirSync(join(casesDir, caseName), { recursive: true });
+  writeFileSync(join(casesDir, caseName, "ground_truth.json"), JSON.stringify({
+    bugs: [{
+      id: "bug-1",
+      file: "src/value.ts",
+      startLine: 1,
+      endLine: 1,
+      description: "invalid value",
+    }],
+  }));
+  const attempts: RunAttempt[] = [1, 2, 3].map((repeat) => ({
+    id: `attempt-00000${repeat}`,
+    caseName,
+    corpus: "development",
+    expectedBugCount: 1,
+    configName: "route",
+    repeat,
+    file: `attempt-00000${repeat}.json`,
+    runner: "claude",
+  }));
+  writeFileSync(join(runsDir, "matrix-manifest.json"), JSON.stringify({
+    schemaVersion: 1,
+    createdAt: "2026-09-02T00:00:00.000Z",
+    expectedAttempts: attempts,
+    providerNetworkIsolation: {
+      claude: { status: "unavailable", mechanism: "artifact-only test" },
+    },
+  }));
+  const completed = structuredClone(validRecord());
+  completed.attemptId = attempts[0]!.id;
+  completed.caseName = caseName;
+  if (completed.outcome.status !== "completed") throw new Error("expected completed fixture");
+  completed.outcome.result.usage = {
+    provider: "anthropic",
+    costUsd: 0.01,
+    costSource: "provider",
+  };
+  writeFileSync(join(runsDir, attempts[0]!.file), JSON.stringify(completed));
+  writeFileSync(join(runsDir, attempts[0]!.file.replace(/\.json$/, ".graded.json")), JSON.stringify({
+    ...completed,
+    matches: { "bug-1": 0 },
+    falsePositiveIndexes: [],
+  }));
+  const stageUsage = withUnavailable({
+    provider: "anthropic" as const,
+    aggregation: "single-envelope" as const,
+    costUsd: 0.02,
+    costSource: "provider" as const,
+  });
+  const failed: RunRecord = {
+    schemaVersion: 1,
+    attemptId: attempts[1]!.id,
+    caseName,
+    caseCorpus: "development",
+    caseKind: "seeded",
+    configName: "route",
+    repeat: 2,
+    runner: "claude",
+    startedAt: "2026-09-02T00:00:00.000Z",
+    finishedAt: "2026-09-02T00:00:02.000Z",
+    outcome: {
+      status: "failed",
+      failureKind: "timeout",
+      message: "timed out",
+      durationMs: 2000,
+      telemetry: {
+        engine: "claude",
+        modelConfig: "fast->strong",
+        usage: stageUsage,
+        durationMs: 2000,
+        stages: [{
+          stage: "breadth",
+          model: "fast",
+          promptSha256: "a".repeat(64),
+          usage: stageUsage,
+          durationMs: 2000,
+          completed: true,
+        }],
+      },
+    },
+  };
+  writeFileSync(join(runsDir, attempts[1]!.file), JSON.stringify(failed));
+
+  try {
+    const [stats] = await buildReport(runsDir, { casesDir });
+    assert.equal(stats?.benchmarkKind, "behavioral");
+    assert.equal(stats?.completionRate, 1 / 3);
+    assert.equal(stats?.failureInclusiveRecallMean, 1 / 3);
+    assert.equal(stats?.failedRuns, 1);
+    assert.equal(stats?.missingRuns, 1);
+    assert.equal(stats?.durationSecMean, null);
+    assert.equal(stats?.incurredCostUsdTotal, 0.03);
+    assert.equal(stats?.incurredCostObservedAttempts, 2);
+    assert.equal(stats?.incurredCostSource, "provider");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("pre-corpus P1 schema-v1 artifacts remain readable only as legacy incomplete", async () => {
   const root = mkdtempSync(join(tmpdir(), "peregrine-p1-artifact-test-"));
   const runsDir = join(root, "runs");
@@ -339,30 +444,30 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
   );
 
   const configs: MatrixModelConfig[] = ["completed", "mixed", "timeout", "provider", "parse", "unknown", "missing"].map(
-    (name) => ({ name, runner: "claude", overrides: { scenario: name } }),
+    (name) => ({ name, runner: "mock", overrides: { scenario: name } }),
   );
-  configs.push({ name: "completed", runner: "claude", overrides: { scenario: "completed" } });
+  configs.push({ name: "completed", runner: "mock", overrides: { scenario: "completed" } });
   configs.push({ name: "configuration", runner: "codex", overrides: { timeoutMs: 0 } });
   const matrixPath = join(root, "matrix.json");
   writeFileSync(matrixPath, JSON.stringify({ repeats: 2, configs }));
 
   let mixedCalls = 0;
   const engine: Engine = {
-    name: "claude",
+    name: "mock",
     async review(ctx) {
-      const scenario = (ctx.config.runners.claude as unknown as Record<string, unknown>).scenario;
+      const scenario = (ctx.config.runners.mock as Record<string, unknown>).scenario;
       if (scenario === "mixed" && ++mixedCalls === 2) {
         throw new RunFailureError("timeout", "timed out", {
           telemetry: {
-            engine: "claude",
-            modelConfig: "claude-test",
-            usage: { provider: "anthropic", costUsd: 0.01, costSource: "provider" },
+            engine: "mock",
+            modelConfig: "mock-test",
+            usage: { provider: "mock" },
             durationMs: 20,
             stages: [{
               stage: "breadth",
-              model: "claude-test",
+              model: "mock-test",
               promptSha256: "a".repeat(64),
-              usage: { provider: "anthropic", costUsd: 0.01, costSource: "provider" },
+              usage: { provider: "mock" },
               durationMs: 20,
               completed: true,
             }],
@@ -374,9 +479,9 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
       if (scenario === "parse") throw new RunFailureError("parse", "invalid output");
       if (scenario === "unknown") throw new Error("token=abc123456789SECRET");
       return {
-        engine: "claude",
+        engine: "mock",
         status: "completed",
-        modelConfig: "claude-test",
+        modelConfig: "mock-test",
         findings: [{
           file: "src/value.ts",
           startLine: 1,
@@ -408,6 +513,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     assert.equal(new Set(manifest.expectedAttempts.map((attempt) => attempt.id)).size, 18);
     assert.equal(new Set(manifest.expectedAttempts.map((attempt) => attempt.file)).size, 18);
     assert.equal(manifest.providerNetworkIsolation.mock?.status, "not-applicable");
+    assert.equal(manifest.providerNetworkIsolation.codex?.status, "unavailable");
     assert.ok(manifest.expectedAttempts.every((attempt) => attempt.corpus === "development"));
     assert.ok(manifest.expectedAttempts.every((attempt) => attempt.expectedBugCount === 1));
 
@@ -440,25 +546,26 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     assert.equal(completed?.corpus, "development");
     assert.equal(completed?.expectedRuns, 4);
     assert.equal(completed?.completedRuns, 4);
-    assert.equal(completed?.recallMean, 1);
-    assert.equal(completed?.failureInclusiveRecallMean, 1);
+    assert.equal(completed?.benchmarkKind, "structural-only");
+    assert.equal(completed?.recallMean, null);
+    assert.equal(completed?.failureInclusiveRecallMean, null);
     assert.equal(completed?.costPerCaseMean, null);
     const mixed = stats.find((item) => item.config === "mixed");
     assert.equal(mixed?.expectedRuns, 2);
     assert.equal(mixed?.completedRuns, 1);
     assert.equal(mixed?.failedRuns, 1);
     assert.equal(mixed?.completionRate, 0.5);
-    assert.equal(mixed?.recallMean, 1);
-    assert.equal(mixed?.failureInclusiveRecallMean, 0.5);
+    assert.equal(mixed?.recallMean, null);
+    assert.equal(mixed?.failureInclusiveRecallMean, null);
     assert.notEqual(mixed?.durationSecMean, null);
     assert.equal(mixed?.inputTokensMean, null);
-    assert.equal(mixed?.incurredCostUsdTotal, 0.01);
-    assert.equal(mixed?.incurredCostObservedAttempts, 1);
-    assert.equal(mixed?.telemetryObserved.costUsd, 1);
+    assert.equal(mixed?.incurredCostUsdTotal, null);
+    assert.equal(mixed?.incurredCostObservedAttempts, 0);
+    assert.equal(mixed?.telemetryObserved.costUsd, 0);
     const timeout = stats.find((item) => item.config === "timeout");
     assert.equal(timeout?.completionRate, 0);
     assert.equal(timeout?.recallMean, null);
-    assert.equal(timeout?.failureInclusiveRecallMean, 0);
+    assert.equal(timeout?.failureInclusiveRecallMean, null);
     assert.notEqual(timeout?.durationSecMean, null);
     const missing = stats.find((item) => item.config === "missing");
     assert.equal(missing?.missingRuns, 1);
@@ -491,7 +598,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
 
     const cleanCaseName = "structural-smoke/clean-case";
     const cleanCaseDir = join(casesDir, cleanCaseName);
-    mkdirSync(cleanCaseDir);
+    mkdirSync(cleanCaseDir, { recursive: true });
     writeFileSync(join(cleanCaseDir, "ground_truth.json"), JSON.stringify({ bugs: [] }));
     const cleanRunsDir = join(root, "clean-runs");
     mkdirSync(cleanRunsDir);
@@ -673,7 +780,7 @@ test("legacy descriptive case names remain reportable through the explicit curat
   try {
     const stats = await buildReport(root, { casesDir: resolve("eval/cases") });
     assert.equal(stats[0]?.corpus, "unknown");
-    assert.equal(stats[0]?.failureInclusiveRecallMean, 0);
+    assert.equal(stats[0]?.failureInclusiveRecallMean, null);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

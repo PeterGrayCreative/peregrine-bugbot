@@ -257,7 +257,7 @@ function legacyStats(dir: string, manifest?: LegacyMatrixRunManifest): ConfigSta
         run.outcome.result.engine === completed[0]!.outcome.result.engine)
         ? completed[0]!.outcome.result.engine
         : null,
-      corpus: null,
+      corpus: "unknown",
       benchmarkKind: completed.length > 0 && completed.every((run) => run.outcome.result.engine === "mock")
         ? "structural-only"
         : "legacy-unknown",

@@ -498,9 +498,27 @@ test("reports aggregate provider cost, token classes, work, and stage duration",
   const runsDir = join(root, "runs");
   mkdirSync(join(casesDir, "case"), { recursive: true });
   mkdirSync(runsDir);
-  writeFileSync(join(casesDir, "case", "ground_truth.json"), JSON.stringify({ bugs: [{ id: "bug" }] }));
-  const attempt = { id: "attempt-000001", caseName: "case", configName: "route", repeat: 1, file: "attempt-000001.json", corpus: "development", runner: "claude" };
-  writeFileSync(join(runsDir, "matrix-manifest.json"), JSON.stringify({ schemaVersion: 1, createdAt: "2026-09-02T00:00:00.000Z", expectedAttempts: [attempt] }));
+  writeFileSync(join(casesDir, "case", "ground_truth.json"), JSON.stringify({
+    bugs: [{ id: "bug", file: "src/value.ts", startLine: 1, endLine: 1, description: "invalid value" }],
+  }));
+  const attempt = {
+    id: "attempt-000001",
+    caseName: "case",
+    configName: "route",
+    repeat: 1,
+    file: "attempt-000001.json",
+    corpus: "development",
+    expectedBugCount: 1,
+    runner: "claude",
+  };
+  writeFileSync(join(runsDir, "matrix-manifest.json"), JSON.stringify({
+    schemaVersion: 1,
+    createdAt: "2026-09-02T00:00:00.000Z",
+    expectedAttempts: [attempt],
+    providerNetworkIsolation: {
+      claude: { status: "unavailable", mechanism: "test fixture" },
+    },
+  }));
   const result = {
     engine: "claude",
     status: "completed",
@@ -599,7 +617,7 @@ test("reports aggregate provider cost, token classes, work, and stage duration",
     caseKind: "seeded",
     configName: "route",
     repeat: 1,
-    corpus: "development",
+    caseCorpus: "development",
     runner: "claude",
     startedAt: "2026-09-02T00:00:00.000Z",
     finishedAt: "2026-09-02T00:00:04.000Z",
