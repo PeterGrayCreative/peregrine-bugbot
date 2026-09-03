@@ -485,6 +485,7 @@ test("leakage validation rejects descriptive IDs, paths, prompts, metadata, and 
   try {
     const spec = loadCaseSpec(caseDir);
     const casePolicy = leakagePolicyForCase(caseDir, spec);
+    assert.equal(casePolicy.forbiddenTerms.includes("high"), false);
     assert.throws(() => readSanitizedMetadata(caseDir, spec, casePolicy), /model-visible metadata/);
     assert.throws(
       () => createPromptValidator(casePolicy)({
@@ -823,7 +824,7 @@ function createFixtureCase(
         endLine: 1,
         description: "A hidden truth description with enough detail.",
         lane: "authorization",
-        severity: "high",
+        expectedSeverity: "high",
         expectedDisposition: "fix-in-pr",
       }],
     }),

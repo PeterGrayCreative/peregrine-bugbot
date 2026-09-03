@@ -319,6 +319,30 @@ test("admission trusts only identities registered by the bound protected-review 
   }
 });
 
+test("admission scans trusted provider assets with the case leakage policy", async () => {
+  const outer = mkdtempSync(join(tmpdir(), "peregrine-corpus-provider-assets-"));
+  const casesRoot = join(outer, "cases");
+  const caseDir = join(casesRoot, "development", "case-6c19f4ab");
+  try {
+    mkdirSync(join(casesRoot, "development"), { recursive: true });
+    cpSync(join(process.cwd(), "eval/cases/development/case-6c19f4ab"), caseDir, { recursive: true });
+    cpSync(join(process.cwd(), "eval/curator-policy.json"), join(outer, "curator-policy.json"));
+    const truthPath = join(caseDir, "ground_truth.json");
+    const truth = JSON.parse(readFileSync(truthPath, "utf8"));
+    truth.bugs[0].description =
+      "Review the source branch against its merge base and ticket contract, then consolidate every candidate by root invariant before drafting comments.";
+    writeFileSync(truthPath, JSON.stringify(truth));
+    rewriteAndSignCuration(caseDir, () => {});
+
+    await assert.rejects(
+      () => validateSelectedBehavioralCases([caseDir], casesRoot),
+      /repository file contains forbidden answer-bearing term/,
+    );
+  } finally {
+    rmSync(outer, { recursive: true, force: true });
+  }
+});
+
 test("curator policy rejects symlink substitution", async () => {
   const outer = mkdtempSync(join(tmpdir(), "peregrine-corpus-policy-symlink-"));
   const casesRoot = join(outer, "cases");
