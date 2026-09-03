@@ -95,6 +95,8 @@ Rollback boundary: revert PR #2; model prompts, routing, topology, posting behav
 
 Must stay untouched: production prompts, routing, posting, and model selection.
 
+Integration note: this slice establishes isolation, opaque identities, containment, cleanup, and leakage gates. Deterministic ancestry, exact `merge-base...head` equivalence, and production-manifest parity close in Plan PR 3.
+
 ## Plan PR 3 - Reproducible base/head history and production manifest path
 
 - [ ] Materialize deterministic base and head commits with preserved ancestry.
@@ -144,6 +146,8 @@ Must stay untouched: provider prompts and production posting thresholds.
 - [ ] Open, review, and merge the PR.
 
 Must stay untouched: model behavior and routing.
+
+Integration note: this slice must preserve the telemetry needed for cost per reliably found root cause. The derived metric is added after Plan PR 4 supplies root-cause-aware grading rather than using a temporary proxy.
 
 ## Plan PR 6 - Typed manifest shadow/parity mode
 
