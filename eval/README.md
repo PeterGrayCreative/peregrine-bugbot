@@ -6,6 +6,15 @@ curve, not the top of the leaderboard. Claude and Codex runs also report
 separate breadth/investigation duration and input-token means; missing provider
 cost telemetry is shown as `n/a`, never as free.
 
+Each new matrix directory starts with `matrix-manifest.json`, which inventories
+every expected configuration/case/repeat before provider work begins. Every
+finished attempt then records either a completed result or a sanitized failure
+with a stable kind. Reports show completion and failure rates by kind,
+conditional recall, and recall with
+failed or interrupted bug-bearing attempts counted as misses. Directories from
+older versions that have no attempt manifest are labeled `legacy/incomplete`;
+their completion and failure-inclusive metrics are intentionally unavailable.
+
 ## Case library
 
 Each directory under `eval/cases/` is one case:

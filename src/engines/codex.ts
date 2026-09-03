@@ -6,6 +6,7 @@ import { parseBreadthResult } from "../core/breadth-result.js";
 import { prepareReviewManifest } from "../core/manifest.js";
 import { bundledSkillDir, schemaPath } from "../core/paths.js";
 import { buildEngineResult, parseReviewPayload } from "../core/review-result.js";
+import { RunFailureError } from "../core/run-failure.js";
 import type { CodexEffort, EngineResult, ReviewContext, Usage } from "../types.js";
 import { type ExecResult, exec } from "../util/exec.js";
 import type { Engine } from "./engine.js";
@@ -64,9 +65,12 @@ async function runStage(args: {
       inheritEnv: false,
     },
   );
-  if (result.timedOut) throw new Error(`codex ${args.model} stage timed out after ${args.timeoutMs}ms`);
+  if (result.timedOut) {
+    throw new RunFailureError("timeout", `codex ${args.model} stage timed out after ${args.timeoutMs}ms`);
+  }
   if (result.code !== 0) {
-    throw new Error(
+    throw new RunFailureError(
+      "provider",
       `codex ${args.model} stage exited with code ${result.code}: ${safeDiagnostic(result.stderr || result.stdout, 500)}`,
     );
   }
@@ -75,7 +79,7 @@ async function runStage(args: {
   try {
     output = readFileSync(args.output, "utf8");
   } catch {
-    throw new Error(`codex ${args.model} stage did not write its structured output file`);
+    throw new RunFailureError("parse", `codex ${args.model} stage did not write its structured output file`);
   }
   const events = result.stdout
     .split("\n")
@@ -145,13 +149,15 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
         try {
           breadthPayload = parseBreadthResult(JSON.parse(breadth.output), "codex breadth output");
         } catch {
-          throw new Error("codex breadth stage returned invalid structured JSON");
+          throw new RunFailureError("parse", "codex breadth stage returned invalid structured JSON");
         }
         assertNoSecrets(breadthPayload, "codex breadth output");
 
         const elapsed = Date.now() - started;
         const remaining = cfg.timeoutMs - elapsed;
-        if (remaining <= 0) throw new Error(`codex review exhausted its ${cfg.timeoutMs}ms timeout`);
+        if (remaining <= 0) {
+          throw new RunFailureError("timeout", `codex review exhausted its ${cfg.timeoutMs}ms timeout`);
+        }
         const reviewOutput = join(outDir, "review.json");
         const investigation = await runStage({
           run,
@@ -174,9 +180,18 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
         try {
           rawPayload = JSON.parse(investigation.output);
         } catch {
-          throw new Error("codex investigation returned invalid structured JSON");
+          throw new RunFailureError("parse", "codex investigation returned invalid structured JSON");
         }
-        const payload = parseReviewPayload(rawPayload, "codex review output");
+        let payload;
+        try {
+          payload = parseReviewPayload(rawPayload, "codex review output");
+        } catch (error) {
+          throw new RunFailureError(
+            "parse",
+            error instanceof Error ? error.message : "codex investigation returned invalid structured output",
+            { cause: error },
+          );
+        }
         return buildEngineResult({
           engine: "codex",
           modelConfig: `${cfg.breadthModel}/${cfg.breadthEffort}->${cfg.investigationModel}/${cfg.investigationEffort}`,

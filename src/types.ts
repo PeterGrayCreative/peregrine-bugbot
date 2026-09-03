@@ -1,3 +1,5 @@
+import type { RunFailureKind } from "./core/run-failure.js";
+
 export const RUNNER_NAMES = ["claude", "codex", "mock"] as const;
 export type RunnerName = (typeof RUNNER_NAMES)[number];
 
@@ -169,16 +171,43 @@ export interface MatrixConfig {
   configs: MatrixModelConfig[];
 }
 
-export interface RunRecord {
+export interface RunAttempt {
+  id: string;
   caseName: string;
-  caseKind: CaseSpec["kind"];
   configName: string;
   repeat: number;
-  result: EngineResult;
-  startedAt: string;
+  file: string;
 }
 
-export interface GradedRun extends RunRecord {
+export interface MatrixRunManifest {
+  schemaVersion: 1;
+  createdAt: string;
+  expectedAttempts: RunAttempt[];
+}
+
+export type RunOutcome =
+  | { status: "completed"; result: EngineResult }
+  | {
+      status: "failed";
+      failureKind: RunFailureKind;
+      message: string;
+      durationMs: number;
+    };
+
+export interface RunRecord {
+  schemaVersion: 1;
+  attemptId: string;
+  caseName: string;
+  caseKind: CaseSpec["kind"] | "unknown";
+  configName: string;
+  repeat: number;
+  startedAt: string;
+  finishedAt: string;
+  outcome: RunOutcome;
+}
+
+export interface GradedRun extends Omit<RunRecord, "outcome"> {
+  outcome: Extract<RunOutcome, { status: "completed" }>;
   matches: Record<string, number | null>;
   falsePositiveIndexes: number[];
 }

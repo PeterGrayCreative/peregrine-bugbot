@@ -4,7 +4,11 @@ import { join, resolve } from "node:path";
 import { loadConfig } from "../src/config.js";
 import { claudeSchemaJson, packageRoot, schemaPath } from "../src/core/paths.js";
 import { exec, lastJsonBlock } from "../src/util/exec.js";
-import type { Finding, GradedRun, GroundTruth, RunRecord } from "../src/types.js";
+import type { EngineResult, Finding, GradedRun, GroundTruth, RunRecord } from "../src/types.js";
+
+type LegacyRunRecord = Omit<RunRecord, "schemaVersion" | "attemptId" | "finishedAt" | "outcome"> & {
+  result: EngineResult;
+};
 
 /**
  * Grades each run against its case's ground_truth.json.
@@ -23,7 +27,7 @@ import type { Finding, GradedRun, GroundTruth, RunRecord } from "../src/types.js
  */
 type Judge = "exact" | "claude" | "codex";
 
-export async function gradeRuns(runsDir?: string): Promise<void> {
+export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Promise<void> {
   const dir = resolve(runsDir ?? latestRunsDir());
   const judge = parseJudge(process.env.JUDGE ?? "exact");
   const config = loadConfig();
@@ -32,12 +36,24 @@ export async function gradeRuns(runsDir?: string): Promise<void> {
     (judge === "codex"
       ? process.env.PEREGRINE_CODEX_JUDGE_MODEL ?? config.runners.codex.investigationModel
       : process.env.PEREGRINE_CLAUDE_JUDGE_MODEL ?? config.runners.claude.investigationModel);
-  const files = readdirSync(dir).filter((f) => f.endsWith(".json") && !f.endsWith(".graded.json"));
+  const files = readdirSync(dir).filter(
+    (f) => f.endsWith(".json") && !f.endsWith(".graded.json") && f !== "matrix-manifest.json" && f !== "benchmark.json",
+  );
 
   for (const file of files) {
-    const run = JSON.parse(readFileSync(join(dir, file), "utf8")) as RunRecord;
+    const run = JSON.parse(readFileSync(join(dir, file), "utf8")) as RunRecord | LegacyRunRecord;
+    let result: EngineResult;
+    if ("outcome" in run) {
+      if (run.outcome.status === "failed") {
+        console.log(`${file}: not graded (${run.outcome.failureKind} failure)`);
+        continue;
+      }
+      result = run.outcome.result;
+    } else {
+      result = run.result;
+    }
     const gt = JSON.parse(
-      readFileSync(resolve("eval/cases", run.caseName, "ground_truth.json"), "utf8"),
+      readFileSync(resolve(casesDir, run.caseName, "ground_truth.json"), "utf8"),
     ) as GroundTruth;
 
     const matches: Record<string, number | null> = {};
@@ -45,9 +61,9 @@ export async function gradeRuns(runsDir?: string): Promise<void> {
 
     for (const bug of gt.bugs) {
       let matched: number | null = null;
-      for (let i = 0; i < run.result.findings.length; i++) {
+      for (let i = 0; i < result.findings.length; i++) {
         if (matchedFindingIdx.has(i)) continue;
-        const f = run.result.findings[i]!;
+        const f = result.findings[i]!;
         const isMatch =
           judge === "exact"
             ? exactMatch(f, bug)
@@ -61,10 +77,20 @@ export async function gradeRuns(runsDir?: string): Promise<void> {
       matches[bug.id] = matched;
     }
 
+    const normalizedRun = "outcome" in run
+      ? run
+      : {
+          ...run,
+          schemaVersion: 1 as const,
+          attemptId: `${run.configName}--${run.caseName}--${run.repeat}`,
+          finishedAt: run.startedAt,
+          outcome: { status: "completed" as const, result },
+        };
     const graded: GradedRun = {
-      ...run,
+      ...normalizedRun,
+      outcome: { status: "completed", result },
       matches,
-      falsePositiveIndexes: run.result.findings
+      falsePositiveIndexes: result.findings
         .map((finding, i) => ({ finding, i }))
         .filter(({ finding, i }) => finding.disposition === "fix-in-pr" && !matchedFindingIdx.has(i))
         .map(({ i }) => i),

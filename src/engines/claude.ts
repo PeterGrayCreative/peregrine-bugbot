@@ -3,6 +3,7 @@ import { prepareReviewManifest } from "../core/manifest.js";
 import { buildBreadthPrompt, buildInvestigationPrompt } from "../core/prompt.js";
 import { bundledSkillDir, packageRoot } from "../core/paths.js";
 import { buildEngineResult, parseReviewPayload, reviewSchemaJson } from "../core/review-result.js";
+import { RunFailureError } from "../core/run-failure.js";
 import { assertNoSecrets, safeDiagnostic } from "../security/secrets.js";
 import { providerEnvironment } from "../security/provider-env.js";
 import type { ClaudeEffort, EngineResult, ReviewContext, Usage } from "../types.js";
@@ -53,12 +54,27 @@ async function runStage<T>(args: {
       inheritEnv: false,
     },
   );
-  if (result.timedOut) throw new Error(`claude ${args.model} stage timed out after ${args.timeoutMs}ms`);
-  if (result.code !== 0) {
-    throw new Error(`claude ${args.model} stage exited with code ${result.code}: ${claudeFailureDetail(result)}`);
+  if (result.timedOut) {
+    throw new RunFailureError("timeout", `claude ${args.model} stage timed out after ${args.timeoutMs}ms`);
   }
-  const parsed = parseClaudeEnvelope(result);
-  const output = args.parse(parsed.structured);
+  if (result.code !== 0) {
+    throw new RunFailureError(
+      "provider",
+      `claude ${args.model} stage exited with code ${result.code}: ${claudeFailureDetail(result)}`,
+    );
+  }
+  let parsed: ReturnType<typeof parseClaudeEnvelope>;
+  let output: T;
+  try {
+    parsed = parseClaudeEnvelope(result);
+    output = args.parse(parsed.structured);
+  } catch (error) {
+    throw new RunFailureError(
+      "parse",
+      error instanceof Error ? error.message : "claude returned invalid structured output",
+      { cause: error },
+    );
+  }
   assertNoSecrets(output, `claude ${args.model} stage output`);
   return { output, usage: parsed.usage, durationMs: Date.now() - started };
 }
@@ -127,7 +143,9 @@ export function createClaudeEngine(run: ExecFunction = exec): Engine {
 
       const elapsed = Date.now() - started;
       const remaining = cfg.timeoutMs - elapsed;
-      if (remaining <= 0) throw new Error(`claude review exhausted its ${cfg.timeoutMs}ms timeout`);
+      if (remaining <= 0) {
+        throw new RunFailureError("timeout", `claude review exhausted its ${cfg.timeoutMs}ms timeout`);
+      }
       const investigation = await runStage({
         run,
         ctx,
