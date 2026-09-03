@@ -25,11 +25,14 @@ import type {
   CaseCorpus,
   CaseSpec,
   EvaluationAttemptProvenance,
+  EngineResult,
   MatrixConfig,
   MatrixRunManifest,
   ReviewContext,
+  RunFailureTelemetry,
   RunRecord,
   RunnerName,
+  StageTelemetry,
 } from "../src/types.js";
 import type { Engine } from "../src/engines/engine.js";
 import { parseGroundTruth } from "./case-truth.js";
@@ -39,6 +42,8 @@ interface RunMatrixOptions {
   engineFor?: (runner: RunnerName) => Engine;
   /** Test seam; production and normal eval calls use prepareReviewManifest. */
   manifestPreparer?: EvaluationManifestPreparer;
+  /** Test seam for verifying that attempt cleanup cannot erase incurred work. */
+  materializeCaseFor?: typeof materializeCase;
 }
 
 interface DiscoveredCase {
@@ -157,7 +162,7 @@ export async function runMatrix(
           }
           try {
             assertRunnerMayUseCorpus(spec.corpus, modelConfig.runner);
-            materialized = await materializeCase(caseDir, spec, policy, {
+            materialized = await (options.materializeCaseFor ?? materializeCase)(caseDir, spec, policy, {
               prepareProviderAssets: modelConfig.runner !== "mock",
             });
             evaluationProvenance = { history: materialized.historyProvenance };
@@ -308,6 +313,9 @@ export async function runMatrix(
                     : "configuration",
                   message,
                   durationMs: Date.now() - started,
+                  telemetry: prior.outcome.status === "failed"
+                    ? prior.outcome.telemetry
+                    : completedResultFailureTelemetry(prior.outcome.result),
                 },
               };
               writeFileSync(file, JSON.stringify(replacement, null, 2));
@@ -332,6 +340,56 @@ function productionManifestSkillName(config: ReviewContext["config"], runner: Ru
     );
   }
   return config.runners.claude.skillName;
+}
+
+/**
+ * Cleanup is part of attempt validity, but it happens after provider work has
+ * already been incurred. Convert the completed result to failure telemetry so
+ * accounting retains known spend without persisting model output.
+ */
+function completedResultFailureTelemetry(result: EngineResult): RunFailureTelemetry {
+  return {
+    engine: result.engine,
+    modelConfig: result.modelConfig,
+    usage: result.usage,
+    durationMs: result.durationMs,
+    stages: completedStages(result.raw),
+  };
+}
+
+function completedStages(raw: unknown): StageTelemetry[] {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
+  const record = raw as Record<string, unknown>;
+  const breadth = completedStage("breadth", record.breadth);
+  const investigation = completedStage("investigation", record.investigation);
+  // Partial raw stage metadata cannot be reconciled with aggregate usage. Keep
+  // the aggregate, but report stage detail as unavailable rather than forging it.
+  return breadth && investigation ? [breadth, investigation] : [];
+}
+
+function completedStage(
+  stage: StageTelemetry["stage"],
+  value: unknown,
+): StageTelemetry | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.model !== "string" ||
+    typeof record.promptSha256 !== "string" ||
+    !/^[a-f0-9]{64}$/.test(record.promptSha256) ||
+    !record.usage || typeof record.usage !== "object" || Array.isArray(record.usage) ||
+    !Number.isSafeInteger(record.durationMs) || Number(record.durationMs) < 0
+  ) {
+    return undefined;
+  }
+  return {
+    stage,
+    model: record.model,
+    promptSha256: record.promptSha256,
+    usage: record.usage as StageTelemetry["usage"],
+    durationMs: Number(record.durationMs),
+    completed: true,
+  };
 }
 
 export function loadCaseSpec(caseDir: string): CaseSpec {

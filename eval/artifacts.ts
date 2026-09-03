@@ -408,8 +408,8 @@ function parseFailureTelemetry(value: unknown, source: string): RunFailureTeleme
   if (!(root.engine === "claude" || root.engine === "codex" || root.engine === "mock")) {
     throw new Error(`${source}.engine is invalid`);
   }
-  if (!Array.isArray(root.stages) || root.stages.length === 0 || root.stages.length > 2) {
-    throw new Error(`${source}.stages must contain one or two stages`);
+  if (!Array.isArray(root.stages) || root.stages.length > 2) {
+    throw new Error(`${source}.stages must contain zero, one, or two stages`);
   }
   const stages = root.stages.map((stage, index) => parseStage(stage, `${source}.stages[${index}]`));
   if (new Set(stages.map((stage) => stage.stage)).size !== stages.length) {
@@ -421,11 +421,13 @@ function parseFailureTelemetry(value: unknown, source: string): RunFailureTeleme
   for (const [index, stage] of stages.entries()) {
     validateUsageProvider(engine, stage.usage, `${source}.stages[${index}].usage`);
   }
-  const expectedUsage = stages.length === 1
-    ? stages[0]!.usage
-    : combineUsage(...stages.map((stage) => stage.usage));
-  if (!isDeepStrictEqual(withoutUndefined(expectedUsage), withoutUndefined(usage))) {
-    throw new Error(`${source}.usage does not match aggregate stage telemetry`);
+  if (stages.length > 0) {
+    const expectedUsage = stages.length === 1
+      ? stages[0]!.usage
+      : combineUsage(...stages.map((stage) => stage.usage));
+    if (!isDeepStrictEqual(withoutUndefined(expectedUsage), withoutUndefined(usage))) {
+      throw new Error(`${source}.usage does not match aggregate stage telemetry`);
+    }
   }
   return {
     engine,

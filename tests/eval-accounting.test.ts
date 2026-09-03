@@ -13,6 +13,7 @@ import test from "node:test";
 import { gradeRuns } from "../eval/grade.js";
 import { buildReport } from "../eval/report.js";
 import { runMatrix } from "../eval/run-matrix.js";
+import { materializeCase } from "../eval/case-isolation.js";
 import { readCaseGroundTruth } from "../eval/case-truth.js";
 import {
   assertGradedMatchesRun,
@@ -694,6 +695,139 @@ test("malformed or missing truth remains failed and makes mixed denominators una
     assert.equal(stats[0]?.completedRuns, 1);
     assert.equal(stats[0]?.failedRuns, 2);
     assert.equal(stats[0]?.failureInclusiveRecallMean, null);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("cleanup failures preserve partial and completed provider telemetry", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-cleanup-accounting-"));
+  const casesDir = join(root, "cases");
+  const caseName = "case-c1ea0001";
+  const caseDir = join(casesDir, "development", caseName);
+  mkdirSync(join(caseDir, "fixture", "src"), { recursive: true });
+  writeFileSync(join(caseDir, "fixture", "src", "value.ts"), "export const value = false;\n");
+  writeFileSync(
+    join(caseDir, "diff.patch"),
+    "diff --git a/src/value.ts b/src/value.ts\n--- a/src/value.ts\n+++ b/src/value.ts\n@@ -1 +1 @@\n-export const value = true;\n+export const value = false;\n",
+  );
+  writeFileSync(
+    join(caseDir, "case.json"),
+    JSON.stringify({ id: caseName, corpus: "development", kind: "seeded", fixtureDir: "fixture", diffFile: "diff.patch" }),
+  );
+  writeFileSync(join(caseDir, "ground_truth.json"), JSON.stringify({ bugs: [] }));
+  const matrixPath = join(root, "matrix.json");
+  writeFileSync(matrixPath, JSON.stringify({
+    repeats: 1,
+    configs: [
+      { name: "partial", runner: "mock", overrides: { scenario: "partial" } },
+      { name: "completed", runner: "mock", overrides: { scenario: "completed" } },
+    ],
+  }));
+
+  const partialUsage = withUnavailable({
+    provider: "mock" as const,
+    aggregation: "single-envelope" as const,
+    costUsd: 0.75,
+    costSource: "provider" as const,
+  });
+  const breadthUsage = withUnavailable({
+    provider: "mock" as const,
+    aggregation: "single-envelope" as const,
+    costUsd: 1,
+    costSource: "provider" as const,
+  });
+  const investigationUsage = withUnavailable({
+    provider: "mock" as const,
+    aggregation: "single-envelope" as const,
+    costUsd: 2,
+    costSource: "provider" as const,
+  });
+  const engine: Engine = {
+    name: "mock",
+    async review(ctx) {
+      const scenario = (ctx.config.runners.mock as Record<string, unknown>).scenario;
+      if (scenario === "partial") {
+        throw new RunFailureError("timeout", "investigation timed out", {
+          telemetry: {
+            engine: "mock",
+            modelConfig: "mock-partial",
+            usage: partialUsage,
+            durationMs: 12,
+            stages: [{
+              stage: "breadth",
+              model: "mock-breadth",
+              promptSha256: "a".repeat(64),
+              usage: partialUsage,
+              durationMs: 12,
+              completed: true,
+            }],
+          },
+        });
+      }
+      return {
+        ...completedClean(),
+        modelConfig: "mock-completed",
+        usage: combineUsage(breadthUsage, investigationUsage),
+        durationMs: 30,
+        raw: {
+          breadth: {
+            model: "mock-breadth",
+            promptSha256: "b".repeat(64),
+            usage: breadthUsage,
+            durationMs: 10,
+          },
+          investigation: {
+            model: "mock-investigation",
+            promptSha256: "c".repeat(64),
+            usage: investigationUsage,
+            durationMs: 20,
+          },
+        },
+      };
+    },
+  };
+
+  try {
+    const runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+      casesDir,
+      engineFor: () => engine,
+      materializeCaseFor: async (...args) => {
+        const materialized = await materializeCase(...args);
+        return {
+          ...materialized,
+          cleanup() {
+            materialized.cleanup();
+            throw new Error("forced cleanup failure");
+          },
+        };
+      },
+    });
+    const manifest = parseMatrixRunManifest(
+      JSON.parse(readFileSync(join(runsDir, "matrix-manifest.json"), "utf8")),
+    );
+    const records = manifest.expectedAttempts.map((attempt) => parseRunRecord(
+      JSON.parse(readFileSync(join(runsDir, attempt.file), "utf8")),
+      attempt.file,
+      attempt,
+    ));
+    const partial = records.find((record) => record.configName === "partial");
+    assert.ok(partial && partial.outcome.status === "failed");
+    assert.equal(partial.outcome.failureKind, "timeout");
+    assert.match(partial.outcome.message, /cleanup also failed/);
+    assert.equal(partial.outcome.telemetry?.usage.costUsd, 0.75);
+    assert.equal(partial.outcome.telemetry?.stages.length, 1);
+
+    const completed = records.find((record) => record.configName === "completed");
+    assert.ok(completed && completed.outcome.status === "failed");
+    assert.equal(completed.outcome.failureKind, "configuration");
+    assert.match(completed.outcome.message, /cleanup failed after provider completion/);
+    assert.equal(completed.outcome.telemetry?.usage.costUsd, 3);
+    assert.equal(completed.outcome.telemetry?.stages.length, 2);
+    assert.deepEqual(
+      completed.outcome.telemetry?.stages.map((stage) => stage.stage),
+      ["breadth", "investigation"],
+    );
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
