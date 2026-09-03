@@ -175,12 +175,10 @@ export function assertGradingEvidenceConsistent(
     decisions.add(decision.decisionId);
   }
   if (evidence.judge.kind !== "exact") {
-    // Reconstruct the deterministic bug-major traversal used by gradeResult.
-    // Every attempted pair is evidence: failures and negative decisions may
-    // not be dropped, and a positive already claimed by another root group is
-    // retained before traversal continues to the next occurrence.
+    // Reconstruct the deterministic, verdict-independent Cartesian schedule.
+    // Every pair is evidence: failures, negative decisions, and decisions after
+    // an earlier positive may not be omitted.
     let cursor = 0;
-    const claimedFindingGroups = new Map<number, string>();
     for (const bug of truth.bugs) {
       for (let findingIndex = 0; findingIndex < findings.length; findingIndex++) {
         const decision = evidence.decisions[cursor];
@@ -188,13 +186,9 @@ export function assertGradingEvidenceConsistent(
           throw new Error(`${source}.grading semantic decision coverage/order is incomplete`);
         }
         cursor += 1;
-        if (decision.verdict !== "same-root-cause") continue;
-        const group = rootCauseKey(bug);
-        const claimed = claimedFindingGroups.get(findingIndex);
-        if (claimed !== undefined && claimed !== group) continue;
-        claimedFindingGroups.set(findingIndex, group);
-        candidates.push({ bugId: bug.id, findingIndex, sameRootCause: true, decisionId: decision.decisionId });
-        break;
+        if (decision.verdict === "same-root-cause") {
+          candidates.push({ bugId: bug.id, findingIndex, sameRootCause: true, decisionId: decision.decisionId });
+        }
       }
     }
     if (cursor !== evidence.decisions.length) {

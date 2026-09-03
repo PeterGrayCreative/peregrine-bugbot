@@ -25,6 +25,7 @@ const imageLock = JSON.parse(readFileSync(resolve(imageRoot, "package-lock.json"
 };
 const workflow = readFileSync(resolve(".github/workflows/eval-runtime-image.yml"), "utf8");
 const setupAction = readFileSync(resolve(".github/actions/setup-peregrine/action.yml"), "utf8");
+const evalReadme = readFileSync(resolve("eval/README.md"), "utf8");
 
 test("the runtime image pins its base and provider toolchain", () => {
   assert.match(
@@ -80,6 +81,8 @@ test("the image workflow keeps pull requests unprivileged and publication manual
   assert.match(workflow, /IMAGE_NAME: ghcr\.io\/petergraycreative\/peregrine-eval-runtime/);
   assert.match(publish, /tags: \$\{\{ env\.IMAGE_NAME \}\}:\$\{\{ github\.sha \}\}/);
   assert.doesNotMatch(publish, /:latest/);
+  assert.match(evalReadme, /private[\s\S]*read-only package access/);
+  assert.match(evalReadme, /Docker configuration and registry\s+credentials are never mounted/);
   assert.match(publish, /for platform in linux\/amd64 linux\/arm64/);
   assert.match(publish, /--image "\$\{IMAGE_NAME\}@\$\{digest\}"/);
   assert.match(publish, /--platform "\$platform"/);
@@ -217,7 +220,13 @@ test("the zero-credential probe exposes a stable mount contract", () => {
     schemaVersion: 1,
     user: { uid: 1000, gid: 1000 },
     rootFilesystem: "read-only",
-    network: { interfaces: ["lo"], defaultRoutes: false },
+    network: {
+      requiredInterface: "lo",
+      permittedInertTunnelInterfaces: ["erspan0", "gre0", "gretap0", "ip6gre0", "ip6tnl0", "ip6_vti0", "ip_vti0", "sit0", "tunl0"],
+      nonLoopbackAddresses: false,
+      nonLoopbackRoutes: false,
+      defaultRoutes: false,
+    },
     mounts: {
       checkout: { path: "/workspace", access: "read-only", marker: "checkout" },
       assets: { path: "/opt/peregrine", access: "read-only", marker: "assets" },
@@ -228,6 +237,43 @@ test("the zero-credential probe exposes a stable mount contract", () => {
     providerVersions: { claude: "2.1.252", codex: "0.152.0" },
   });
 });
+
+test("network probe allows only addressless, routeless, inert Docker tunnel devices", () => {
+  const base = {
+    interfaces: ["lo", "tunl0", "gre0"],
+    addresses: { lo: [{ address: "127.0.0.1", internal: true }] },
+    ipv4Routes: [],
+    ipv6Routes: [],
+    counters: { tunl0: { rx: 0, tx: 0 }, gre0: { rx: 0, tx: 0 } },
+  };
+  assert.deepEqual(assessNetworkFixture(base), []);
+  assert.match(assessNetworkFixture({ ...base, interfaces: [...base.interfaces, "eth0"], counters: { ...base.counters, eth0: { rx: 0, tx: 0 } } }).join(" "), /unexpected interface/);
+  assert.match(assessNetworkFixture({ ...base, addresses: { ...base.addresses, tunl0: [{ address: "10.0.0.2", internal: false }] } }).join(" "), /non-loopback address/);
+  assert.match(assessNetworkFixture({ ...base, ipv4Routes: [["tunl0", "00000000"]] }).join(" "), /route|default/);
+  assert.match(assessNetworkFixture({ ...base, counters: { ...base.counters, tunl0: { rx: 1, tx: 0 } } }).join(" "), /not inert/);
+});
+
+test("network probe ignores non-interface sysfs control files", () => {
+  const result = spawnSync(process.execPath, [resolve(imageRoot, "containment-probe.mjs"), "--filter-network-entry-fixture"], {
+    encoding: "utf8",
+    input: JSON.stringify([
+      { name: "bonding_masters", kind: "file" },
+      { name: "lo", kind: "symlink" },
+      { name: "tunl0", kind: "directory" },
+    ]),
+    env: { PATH: process.env.PATH ?? "" },
+  });
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(JSON.parse(result.stdout), ["lo", "tunl0"]);
+});
+
+function assessNetworkFixture(value: unknown): string[] {
+  const result = spawnSync(process.execPath, [resolve(imageRoot, "containment-probe.mjs"), "--assess-network-fixture"], {
+    encoding: "utf8", input: JSON.stringify(value), env: { PATH: process.env.PATH ?? "" },
+  });
+  assert.equal(result.status, 0, result.stderr);
+  return JSON.parse(result.stdout) as string[];
+}
 
 function assertMutationRejected(args: readonly string[], mutate: (copy: string[]) => void): void {
   const copy = [...args];
