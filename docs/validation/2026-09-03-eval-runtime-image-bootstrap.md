@@ -3,7 +3,7 @@
 Date: 2026-09-03
 
 Scope: Safety PR 2A.1 image bootstrap only, based on
-`2e4ae2ad5deb34aba8b91cde78d8e4662dcf109d`. This slice does not execute a live
+`8f667f4fa1c59e679efa08ce2776ab1908c3a4d2`. This slice does not execute a live
 provider, publish or pull an image, add a container runtime to the evaluator, or
 open the merged fail-closed live gate.
 
@@ -30,7 +30,7 @@ All Node commands ran after `nvm use 22`, which selected Node `22.22.1` and npm
 
 - `node --import tsx --test tests/eval-runtime-image.test.ts` — passed 7/7.
 - `npm run typecheck` — passed.
-- `npm run validate` — passed: 57/57 Node tests, all skill/packaging/install
+- `npm run validate` — passed: 71/71 Node tests, all skill/packaging/install
   checks, and the 8/8 zero-cost structural smoke suite with five expected markers
   found and zero findings on three clean controls.
 - `git diff --check` — passed.
