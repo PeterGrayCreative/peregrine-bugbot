@@ -1,23 +1,36 @@
-import { readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import type { GradedRun } from "../src/types.js";
+import type {
+  EngineResult,
+  GradedRun,
+  GroundTruth,
+  MatrixRunManifest,
+  RunRecord,
+} from "../src/types.js";
+import type { RunFailureKind } from "../src/core/run-failure.js";
 
-/**
- * Aggregates graded runs into benchmark.json + benchmark.html.
- * Per model config: recall (on cases with bugs), false positives per case,
- * cost per case, duration — mean ± stddev across repeats. The HTML includes
- * a cost-vs-recall scatter: pick the knee of that curve, not the leaderboard
- * winner.
- */
+type LegacyGradedRun = Omit<GradedRun, "schemaVersion" | "attemptId" | "finishedAt" | "outcome"> & {
+  result: EngineResult;
+};
+
 export interface ConfigStats {
   config: string;
+  completeness: "tracked" | "legacy-incomplete";
+  expectedRuns: number | null;
   runs: number;
-  recallMean: number;
-  recallStd: number;
-  fpPerCaseMean: number;
+  completedRuns: number;
+  failedRuns: number | null;
+  missingRuns: number | null;
+  completionRate: number | null;
+  failuresByKind: Partial<Record<RunFailureKind, number>>;
+  failureRatesByKind: Partial<Record<RunFailureKind, number>>;
+  recallMean: number | null;
+  recallStd: number | null;
+  failureInclusiveRecallMean: number | null;
+  fpPerCaseMean: number | null;
   costPerCaseMean: number | null;
   costPerCaseStd: number | null;
-  durationSecMean: number;
+  durationSecMean: number | null;
   breadthDurationSecMean: number | null;
   investigationDurationSecMean: number | null;
   breadthInputTokensMean: number | null;
@@ -25,118 +38,246 @@ export interface ConfigStats {
   validFindingsPerDollar: number | null;
 }
 
-export async function buildReport(runsDir?: string): Promise<ConfigStats[]> {
+export async function buildReport(
+  runsDir?: string,
+  options: { casesDir?: string } = {},
+): Promise<ConfigStats[]> {
   const dir = resolve(runsDir ?? latestRunsDir());
-  const graded = readdirSync(dir)
-    .filter((f) => f.endsWith(".graded.json"))
-    .map((f) => JSON.parse(readFileSync(join(dir, f), "utf8")) as GradedRun);
+  const casesDir = resolve(options.casesDir ?? "eval/cases");
+  const manifestPath = join(dir, "matrix-manifest.json");
+  const stats = existsSync(manifestPath)
+    ? trackedStats(dir, casesDir, JSON.parse(readFileSync(manifestPath, "utf8")) as MatrixRunManifest)
+    : legacyStats(dir);
 
-  if (graded.length === 0) {
-    throw new Error(`No .graded.json files in ${dir} — run eval:grade first.`);
+  if (stats.length === 0) {
+    throw new Error(`No benchmark run artifacts in ${dir} — run eval:grade first.`);
   }
 
-  const byConfig = new Map<string, GradedRun[]>();
-  for (const run of graded) {
-    byConfig.set(run.configName, [...(byConfig.get(run.configName) ?? []), run]);
-  }
-
-  const stats: ConfigStats[] = [...byConfig.entries()].map(([config, runs]) => {
-    const recalls = runs
-      .filter((r) => Object.keys(r.matches).length > 0)
-      .map((r) => {
-        const total = Object.keys(r.matches).length;
-        const found = Object.values(r.matches).filter((m) => m !== null).length;
-        return found / total;
-      });
-    const fps = runs.map((r) => r.falsePositiveIndexes.length);
-    const costs = runs
-      .map((r) => r.result.usage.costUsd)
-      .filter((c): c is number => typeof c === "number");
-    const durations = runs.map((r) => r.result.durationMs / 1000);
-    const breadthDurations = stageNumbers(runs, "breadth", "durationMs").map((value) => value / 1000);
-    const investigationDurations = stageNumbers(runs, "investigation", "durationMs").map((value) => value / 1000);
-    const breadthInputs = stageUsageNumbers(runs, "breadth", "inputTokens");
-    const investigationInputs = stageUsageNumbers(runs, "investigation", "inputTokens");
-    const totalValid = runs.reduce(
-      (sum, r) => sum + Object.values(r.matches).filter((m) => m !== null).length,
-      0,
-    );
-    const totalCost = costs.reduce((a, b) => a + b, 0);
-
-    return {
-      config,
-      runs: runs.length,
-      recallMean: mean(recalls),
-      recallStd: std(recalls),
-      fpPerCaseMean: mean(fps),
-      costPerCaseMean: costs.length === runs.length ? mean(costs) : null,
-      costPerCaseStd: costs.length === runs.length ? std(costs) : null,
-      durationSecMean: mean(durations),
-      breadthDurationSecMean: completeMean(breadthDurations, runs.length),
-      investigationDurationSecMean: completeMean(investigationDurations, runs.length),
-      breadthInputTokensMean: completeMean(breadthInputs, runs.length),
-      investigationInputTokensMean: completeMean(investigationInputs, runs.length),
-      validFindingsPerDollar: costs.length === runs.length && totalCost > 0 ? totalValid / totalCost : null,
-    };
-  });
-
-  stats.sort((a, b) => b.recallMean - a.recallMean);
-
+  stats.sort((a, b) => (b.recallMean ?? -1) - (a.recallMean ?? -1));
   writeFileSync(join(dir, "benchmark.json"), JSON.stringify(stats, null, 2));
   writeFileSync(join(dir, "benchmark.html"), renderHtml(stats));
-  console.log(`\n${"config".padEnd(28)} recall        FP/case  $/case         valid/$`);
-  for (const s of stats) {
-    console.log(
-      `${s.config.padEnd(28)} ${pct(s.recallMean)}±${pct(s.recallStd)}  ${s.fpPerCaseMean.toFixed(1).padEnd(7)}  ${formatCost(s.costPerCaseMean, s.costPerCaseStd).padEnd(14)}  ${s.validFindingsPerDollar?.toFixed(1) ?? "n/a"}`,
-    );
-  }
-  console.log(`\nReport: ${join(dir, "benchmark.html")}`);
+  printStats(stats, dir);
   return stats;
 }
 
-const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
-const std = (xs: number[]) => {
-  if (xs.length < 2) return 0;
-  const m = mean(xs);
-  return Math.sqrt(xs.reduce((a, x) => a + (x - m) ** 2, 0) / (xs.length - 1));
+function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest): ConfigStats[] {
+  const byConfig = groupBy(manifest.expectedAttempts, (attempt) => attempt.configName);
+  const bugCounts = new Map<string, number>();
+  const countBugs = (caseName: string): number => {
+    const cached = bugCounts.get(caseName);
+    if (cached !== undefined) return cached;
+    const truth = JSON.parse(
+      readFileSync(join(casesDir, caseName, "ground_truth.json"), "utf8"),
+    ) as GroundTruth;
+    bugCounts.set(caseName, truth.bugs.length);
+    return truth.bugs.length;
+  };
+
+  return [...byConfig.entries()].map(([config, attempts]) => {
+    const completed: GradedRun[] = [];
+    const failed: Array<Extract<RunRecord["outcome"], { status: "failed" }>> = [];
+    let missing = 0;
+    const failureInclusiveRecalls: number[] = [];
+
+    for (const attempt of attempts) {
+      const rawPath = join(dir, attempt.file);
+      if (!existsSync(rawPath)) {
+        missing++;
+        if (countBugs(attempt.caseName) > 0) failureInclusiveRecalls.push(0);
+        continue;
+      }
+      const raw = JSON.parse(readFileSync(rawPath, "utf8")) as RunRecord;
+      if (raw.outcome.status === "failed") {
+        failed.push(raw.outcome);
+        if (countBugs(attempt.caseName) > 0) failureInclusiveRecalls.push(0);
+        continue;
+      }
+      const gradedPath = rawPath.replace(/\.json$/, ".graded.json");
+      if (!existsSync(gradedPath)) {
+        throw new Error(`${attempt.file} completed but has no graded artifact — run eval:grade first.`);
+      }
+      const graded = JSON.parse(readFileSync(gradedPath, "utf8")) as GradedRun;
+      completed.push(graded);
+      const recall = runRecall(graded);
+      if (recall !== null) failureInclusiveRecalls.push(recall);
+    }
+
+    return calculateStats({
+      config,
+      completeness: "tracked",
+      expectedRuns: attempts.length,
+      completed,
+      failed,
+      missing,
+      failureInclusiveRecalls,
+    });
+  });
+}
+
+function legacyStats(dir: string): ConfigStats[] {
+  const graded = readdirSync(dir)
+    .filter((file) => file.endsWith(".graded.json"))
+    .map((file) => JSON.parse(readFileSync(join(dir, file), "utf8")) as LegacyGradedRun | GradedRun);
+  const byConfig = groupBy(graded, (run) => run.configName);
+  return [...byConfig.entries()].map(([config, legacyRuns]) => {
+    const completed = legacyRuns.map((run): GradedRun =>
+      "outcome" in run
+        ? run
+        : {
+            ...run,
+            schemaVersion: 1 as const,
+            attemptId: `${run.configName}--${run.caseName}--${run.repeat}`,
+            finishedAt: run.startedAt,
+            outcome: { status: "completed", result: run.result },
+          },
+    );
+    return calculateStats({
+      config,
+      completeness: "legacy-incomplete",
+      expectedRuns: null,
+      completed,
+      failed: [],
+      missing: null,
+      failureInclusiveRecalls: null,
+    });
+  });
+}
+
+function calculateStats(args: {
+  config: string;
+  completeness: ConfigStats["completeness"];
+  expectedRuns: number | null;
+  completed: GradedRun[];
+  failed: Array<Extract<RunRecord["outcome"], { status: "failed" }>>;
+  missing: number | null;
+  failureInclusiveRecalls: number[] | null;
+}): ConfigStats {
+  const recalls = args.completed.map(runRecall).filter((value): value is number => value !== null);
+  const fps = args.completed.map((run) => run.falsePositiveIndexes.length);
+  const costs = args.completed
+    .map((run) => run.outcome.result.usage.costUsd)
+    .filter((cost): cost is number => typeof cost === "number");
+  const durations = args.completed.map((run) => run.outcome.result.durationMs / 1000);
+  const breadthDurations = stageNumbers(args.completed, "breadth", "durationMs").map((value) => value / 1000);
+  const investigationDurations = stageNumbers(args.completed, "investigation", "durationMs").map((value) => value / 1000);
+  const breadthInputs = stageUsageNumbers(args.completed, "breadth", "inputTokens");
+  const investigationInputs = stageUsageNumbers(args.completed, "investigation", "inputTokens");
+  const totalValid = args.completed.reduce(
+    (sum, run) => sum + Object.values(run.matches).filter((match) => match !== null).length,
+    0,
+  );
+  const totalCost = costs.reduce((sum, cost) => sum + cost, 0);
+  const hasCompleteCost =
+    args.completeness === "tracked" &&
+    args.expectedRuns === args.completed.length &&
+    costs.length === args.completed.length;
+
+  const failuresByKind = countBy(args.failed, (failure) => failure.failureKind);
+  const failureRatesByKind = Object.fromEntries(
+    Object.entries(failuresByKind).map(([kind, count]) => [
+      kind,
+      args.expectedRuns === null ? 0 : count / args.expectedRuns,
+    ]),
+  );
+
+  return {
+    config: args.config,
+    completeness: args.completeness,
+    expectedRuns: args.expectedRuns,
+    runs: args.completed.length,
+    completedRuns: args.completed.length,
+    failedRuns: args.completeness === "tracked" ? args.failed.length : null,
+    missingRuns: args.missing,
+    completionRate: args.expectedRuns === null ? null : args.completed.length / args.expectedRuns,
+    failuresByKind,
+    failureRatesByKind,
+    recallMean: recalls.length > 0 ? mean(recalls) : null,
+    recallStd: recalls.length > 0 ? std(recalls) : null,
+    failureInclusiveRecallMean:
+      args.failureInclusiveRecalls === null ? null : mean(args.failureInclusiveRecalls),
+    fpPerCaseMean: fps.length > 0 ? mean(fps) : null,
+    costPerCaseMean: hasCompleteCost ? mean(costs) : null,
+    costPerCaseStd: hasCompleteCost ? std(costs) : null,
+    durationSecMean: durations.length > 0 ? mean(durations) : null,
+    breadthDurationSecMean: completeMean(breadthDurations, args.completed.length),
+    investigationDurationSecMean: completeMean(investigationDurations, args.completed.length),
+    breadthInputTokensMean: completeMean(breadthInputs, args.completed.length),
+    investigationInputTokensMean: completeMean(investigationInputs, args.completed.length),
+    validFindingsPerDollar: hasCompleteCost && totalCost > 0 ? totalValid / totalCost : null,
+  };
+}
+
+function runRecall(run: GradedRun): number | null {
+  const total = Object.keys(run.matches).length;
+  if (total === 0) return null;
+  return Object.values(run.matches).filter((match) => match !== null).length / total;
+}
+
+const mean = (values: number[]) =>
+  values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+const std = (values: number[]) => {
+  if (values.length < 2) return 0;
+  const average = mean(values);
+  return Math.sqrt(
+    values.reduce((sum, value) => sum + (value - average) ** 2, 0) / (values.length - 1),
+  );
 };
-const pct = (x: number) => `${(x * 100).toFixed(0)}%`;
+const pct = (value: number) => `${(value * 100).toFixed(0)}%`;
 
 function renderHtml(stats: ConfigStats[]): string {
-  const knownCosts = stats.map((s) => s.costPerCaseMean).filter((cost): cost is number => cost !== null);
+  const knownCosts = stats.map((item) => item.costPerCaseMean).filter((cost): cost is number => cost !== null);
   const maxCost = Math.max(...knownCosts, 0.01);
   const points = stats
-    .filter((s) => s.costPerCaseMean !== null)
-    .map((s, i) => {
-      const x = 60 + (s.costPerCaseMean! / maxCost) * 480;
-      const y = 320 - s.recallMean * 280;
-      return `<circle cx="${x}" cy="${y}" r="6" fill="hsl(${(i * 67) % 360},70%,45%)"><title>${s.config}</title></circle>
-<text x="${x + 10}" y="${y + 4}" font-size="11">${s.config}</text>`;
+    .filter((item) => item.costPerCaseMean !== null && item.recallMean !== null)
+    .map((item, index) => {
+      const x = 60 + (item.costPerCaseMean! / maxCost) * 480;
+      const y = 320 - item.recallMean! * 280;
+      return `<circle cx="${x}" cy="${y}" r="6" fill="hsl(${(index * 67) % 360},70%,45%)"><title>${item.config}</title></circle>
+<text x="${x + 10}" y="${y + 4}" font-size="11">${item.config}</text>`;
     })
     .join("\n");
-
-  const rows = stats
-    .map(
-      (s) => `<tr><td>${s.config}</td><td>${s.runs}</td><td>${pct(s.recallMean)} ± ${pct(s.recallStd)}</td>
-<td>${s.fpPerCaseMean.toFixed(1)}</td><td>${formatCost(s.costPerCaseMean, s.costPerCaseStd)}</td>
-<td>${s.durationSecMean.toFixed(0)}s</td><td>${formatStages(s)}</td><td>${s.validFindingsPerDollar?.toFixed(1) ?? "—"}</td></tr>`,
-    )
-    .join("\n");
+  const rows = stats.map((item) => `<tr><td>${item.config}</td><td>${formatCompletion(item)}</td>
+<td>${formatPercent(item.recallMean)} ± ${formatPercent(item.recallStd)}</td><td>${formatPercent(item.failureInclusiveRecallMean)}</td>
+<td>${formatNumber(item.fpPerCaseMean, 1)}</td><td>${formatCost(item.costPerCaseMean, item.costPerCaseStd)}</td>
+<td>${item.durationSecMean === null ? "n/a" : `${item.durationSecMean.toFixed(0)}s`}</td><td>${formatStages(item)}</td><td>${item.validFindingsPerDollar?.toFixed(1) ?? "—"}</td></tr>`).join("\n");
 
   return `<!doctype html><html><head><meta charset="utf-8"><title>peregrine-bugbot benchmark</title>
-<style>body{font-family:system-ui;margin:2rem;max-width:900px}table{border-collapse:collapse;width:100%}
+<style>body{font-family:system-ui;margin:2rem;max-width:1050px}table{border-collapse:collapse;width:100%}
 td,th{border:1px solid #ddd;padding:6px 10px;text-align:left;font-size:14px}th{background:#f5f5f5}</style></head>
 <body><h1>peregrine-bugbot · model benchmark</h1>
-<table><tr><th>config</th><th>runs</th><th>recall</th><th>FP/case</th><th>cost/case</th><th>time</th><th>breadth / investigation</th><th>valid findings / $</th></tr>
+<table><tr><th>config</th><th>completion</th><th>conditional recall</th><th>failure-inclusive recall</th><th>FP/case</th><th>cost/case</th><th>time</th><th>breadth / investigation</th><th>valid findings / $</th></tr>
 ${rows}</table>
 <h2>Cost vs recall — pick the knee</h2>
 <svg viewBox="0 0 600 360" width="600" style="border:1px solid #eee">
 <line x1="60" y1="320" x2="560" y2="320" stroke="#999"/><line x1="60" y1="320" x2="60" y2="20" stroke="#999"/>
 <text x="300" y="350" font-size="12" text-anchor="middle">cost per case ($, max $${maxCost.toFixed(2)})</text>
-<text x="20" y="170" font-size="12" transform="rotate(-90 20 170)">recall</text>
+<text x="20" y="170" font-size="12" transform="rotate(-90 20 170)">conditional recall</text>
 ${points}</svg>
-<p style="color:#666;font-size:13px">Recall over seeded+historical cases; FP counts unmatched fix-in-pr findings only. Configurations without provider cost telemetry show n/a and are omitted from the cost chart. Mean ± stddev across repeats.</p>
+<p style="color:#666;font-size:13px">Conditional recall includes completed bug-bearing attempts. Failure-inclusive recall counts failed or missing bug-bearing attempts as misses. Legacy folders are explicitly incomplete. Cost is n/a unless every expected attempt completed with cost telemetry.</p>
 </body></html>`;
+}
+
+function printStats(stats: ConfigStats[], dir: string): void {
+  console.log(`\n${"config".padEnd(28)} ${"completion".padEnd(35)} conditional  incl. failures  FP/case  $/case`);
+  for (const item of stats) {
+    console.log(
+      `${item.config.padEnd(28)} ${formatCompletion(item).padEnd(35)} ${formatPercent(item.recallMean).padEnd(12)} ${formatPercent(item.failureInclusiveRecallMean).padEnd(14)} ${formatNumber(item.fpPerCaseMean, 1).padEnd(8)} ${formatCost(item.costPerCaseMean, item.costPerCaseStd)}`,
+    );
+  }
+  console.log(`\nReport: ${join(dir, "benchmark.html")}`);
+}
+
+function formatCompletion(stats: ConfigStats): string {
+  if (stats.completeness === "legacy-incomplete") return "legacy/incomplete";
+  return `${stats.completedRuns}/${stats.expectedRuns} (${pct(stats.completionRate ?? 0)}); ${stats.failedRuns} failed; ${stats.missingRuns} missing`;
+}
+
+function formatPercent(value: number | null): string {
+  return value === null ? "n/a" : pct(value);
+}
+
+function formatNumber(value: number | null, digits: number): string {
+  return value === null ? "n/a" : value.toFixed(digits);
 }
 
 function formatCost(meanCost: number | null, stdCost: number | null): string {
@@ -144,11 +285,11 @@ function formatCost(meanCost: number | null, stdCost: number | null): string {
 }
 
 function completeMean(values: number[], expected: number): number | null {
-  return values.length === expected ? mean(values) : null;
+  return expected > 0 && values.length === expected ? mean(values) : null;
 }
 
 function rawStage(run: GradedRun, stage: "breadth" | "investigation"): Record<string, unknown> | undefined {
-  const raw = run.result.raw;
+  const raw = run.outcome.result.raw;
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
   const value = (raw as Record<string, unknown>)[stage];
   return value && typeof value === "object" && !Array.isArray(value)
@@ -156,21 +297,13 @@ function rawStage(run: GradedRun, stage: "breadth" | "investigation"): Record<st
     : undefined;
 }
 
-function stageNumbers(
-  runs: GradedRun[],
-  stage: "breadth" | "investigation",
-  field: string,
-): number[] {
+function stageNumbers(runs: GradedRun[], stage: "breadth" | "investigation", field: string): number[] {
   return runs
     .map((run) => rawStage(run, stage)?.[field])
     .filter((value): value is number => typeof value === "number");
 }
 
-function stageUsageNumbers(
-  runs: GradedRun[],
-  stage: "breadth" | "investigation",
-  field: string,
-): number[] {
+function stageUsageNumbers(runs: GradedRun[], stage: "breadth" | "investigation", field: string): number[] {
   return runs
     .map((run) => {
       const usage = rawStage(run, stage)?.usage;
@@ -187,6 +320,24 @@ function formatStages(stats: ConfigStats): string {
     ? ""
     : ` · ${stats.breadthInputTokensMean.toFixed(0)} / ${stats.investigationInputTokensMean.toFixed(0)} input tokens`;
   return `${stats.breadthDurationSecMean.toFixed(0)}s / ${stats.investigationDurationSecMean.toFixed(0)}s${tokens}`;
+}
+
+function groupBy<T>(values: T[], key: (value: T) => string): Map<string, T[]> {
+  const grouped = new Map<string, T[]>();
+  for (const value of values) {
+    const group = key(value);
+    grouped.set(group, [...(grouped.get(group) ?? []), value]);
+  }
+  return grouped;
+}
+
+function countBy<T>(values: T[], key: (value: T) => string): Record<string, number> {
+  const counts: Record<string, number> = {};
+  for (const value of values) {
+    const group = key(value);
+    counts[group] = (counts[group] ?? 0) + 1;
+  }
+  return counts;
 }
 
 function latestRunsDir(): string {

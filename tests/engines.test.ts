@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 import test from "node:test";
 import { createClaudeEngine } from "../src/engines/claude.js";
 import { createCodexEngine } from "../src/engines/codex.js";
+import { RunFailureError } from "../src/core/run-failure.js";
 import type { PeregrineConfig, ReviewContext } from "../src/types.js";
 import type { exec } from "../src/util/exec.js";
 import { nonSensitiveEnvironment, providerEnvironment } from "../src/security/provider-env.js";
@@ -169,8 +170,45 @@ test("provider process failures are surfaced instead of becoming clean reviews",
     code: 1,
     timedOut: false,
   });
-  await assert.rejects(() => createClaudeEngine(fake).review(context()), /authentication failed/);
-  await assert.rejects(() => createCodexEngine(fake).review(context()), /authentication failed/);
+  for (const engine of [createClaudeEngine(fake), createCodexEngine(fake)]) {
+    await assert.rejects(
+      () => engine.review(context()),
+      (error: unknown) =>
+        error instanceof RunFailureError &&
+        error.kind === "provider" &&
+        /authentication failed/.test(error.message),
+    );
+  }
+});
+
+test("provider adapters expose stable timeout failure codes", async () => {
+  const fake: typeof exec = async () => ({
+    stdout: "",
+    stderr: "",
+    code: null,
+    timedOut: true,
+  });
+  for (const engine of [createClaudeEngine(fake), createCodexEngine(fake)]) {
+    await assert.rejects(
+      () => engine.review(context()),
+      (error: unknown) => error instanceof RunFailureError && error.kind === "timeout",
+    );
+  }
+});
+
+test("provider adapters expose stable parse failure codes", async () => {
+  const fake: typeof exec = async () => ({
+    stdout: "not-json",
+    stderr: "",
+    code: 0,
+    timedOut: false,
+  });
+  for (const engine of [createClaudeEngine(fake), createCodexEngine(fake)]) {
+    await assert.rejects(
+      () => engine.review(context()),
+      (error: unknown) => error instanceof RunFailureError && error.kind === "parse",
+    );
+  }
 });
 
 test("provider failures never echo credential-like diagnostics", async () => {
