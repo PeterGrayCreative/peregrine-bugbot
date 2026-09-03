@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "policyId": "protected-git-review-v1",
+  "trustRoot": "protected-git-review",
+  "minimumIndependentConfirmations": 2,
+  "curatorIdentitySha256s": []
+}

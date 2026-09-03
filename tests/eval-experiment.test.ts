@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
@@ -27,6 +28,12 @@ import { runSemanticJudge } from "../eval/run-semantic-judge.js";
 import { unavailableJudgeUsage } from "../eval/judge-runtime.js";
 import { materializeCase } from "../eval/case-isolation.js";
 import {
+  caseBundleSha256,
+  fixtureSourceIdentitySha256,
+  parseCaseCuration,
+  requiredConfirmationChecks,
+} from "../eval/case-curation.js";
+import {
   EXPERIMENT_GRADING_SEAL_FILENAME,
   EXPERIMENT_TERMINAL_SEAL_FILENAME,
   parseExperimentTerminalSeal,
@@ -36,6 +43,7 @@ import type {
   CaseCorpus,
   EngineResult,
   ExperimentProtocol,
+  GroundTruth,
   ReviewContext,
   RunRecord,
   RunnerName,
@@ -414,14 +422,13 @@ test("fake contained semantic judge completes grading seals and report accountin
   const materializationRoot = join(root, "materialized");
   mkdirSync(materializationRoot);
   const casesDir = join(root, "cases");
-  const caseDir = createFixtureCase(casesDir, "case-67676767", "development");
-  writeFileSync(join(caseDir, "ground_truth.json"), JSON.stringify({ bugs: [{
-    id: "p1", rootCauseGroup: "r1", lane: "logic-correctness",
+  const caseDir = createFixtureCase(casesDir, "case-67676767", "development", { bugs: [{
+    id: "bug-67676767", lane: "logic-correctness",
     expectedDisposition: "fix-in-pr", expectedSeverity: "high", file: "src/value.ts",
     startLine: 1, endLine: 1, description: "Polarity reversed.",
     reachablePreconditions: "Export is consumed.", observableImpact: "Feature stays off.",
     provenance: "fixture",
-  }] }));
+  }] });
   const matrixPath = join(root, "matrix.json");
   writeFileSync(matrixPath, JSON.stringify({
     repeats: 1,
@@ -930,19 +937,71 @@ test("best-effort CLI-session accounting tolerates unknown dollars but enforces 
   assert.equal(decision.observed.providerAttempts, 1);
 });
 
-function createFixtureCase(casesDir: string, id: string, corpus: CaseCorpus): string {
+function createFixtureCase(
+  casesDir: string,
+  id: string,
+  corpus: CaseCorpus,
+  truth: GroundTruth = { bugs: [] },
+): string {
   const caseDir = join(casesDir, corpus, id);
   mkdirSync(join(caseDir, "fixture", "src"), { recursive: true });
   writeFileSync(join(caseDir, "fixture", "src", "value.ts"), HEAD);
   writeFileSync(join(caseDir, "diff.patch"), PATCH);
-  writeFileSync(join(caseDir, "ground_truth.json"), JSON.stringify({ bugs: [] }));
-  writeFileSync(join(caseDir, "case.json"), JSON.stringify({
+  writeFileSync(join(caseDir, "ground_truth.json"), JSON.stringify(truth));
+  const spec = {
     id,
     corpus,
-    kind: "clean",
+    kind: (truth.bugs.length === 0 ? "clean" : "seeded") as "clean" | "seeded",
     fixtureDir: "fixture",
     diffFile: "diff.patch",
-  }));
+  };
+  writeFileSync(join(caseDir, "case.json"), JSON.stringify(spec));
+  if (corpus !== "structural-smoke") {
+    const proof = "Independent clean-control test fixture proof.\n";
+    writeFileSync(join(caseDir, "proof.md"), proof);
+    const policy = `${JSON.stringify({
+      schemaVersion: 1,
+      policyId: "protected-git-review-v1",
+      trustRoot: "protected-git-review",
+      minimumIndependentConfirmations: 2,
+      curatorIdentitySha256s: ["1".repeat(64), "2".repeat(64)],
+    }, null, 2)}\n`;
+    writeFileSync(join(casesDir, "..", "curator-policy.json"), policy);
+    const checks = requiredConfirmationChecks(spec.kind);
+    const curation = {
+      schemaVersion: 1,
+      caseId: id,
+      status: "admitted",
+      curatorPolicyId: "protected-git-review-v1",
+      source: {
+        kind: spec.kind,
+        repositoryAlias: "experiment-fixture",
+        repositoryIdentitySha256: fixtureSourceIdentitySha256(caseDir, "fixture"),
+        changeIdentitySha256: createHash("sha256").update(PATCH).digest("hex"),
+        access: "public",
+      },
+      strata: {
+        languageFamily: "typescript",
+        architectureFamily: "library",
+        size: "small",
+        changeShapes: ["direct"],
+        surfaceLanes: ["logic-correctness"],
+      },
+      proof: {
+        kind: spec.kind === "clean" ? "clean-control-review" : "regression-test",
+        artifact: "proof.md",
+        sha256: createHash("sha256").update(proof).digest("hex"),
+      },
+      confirmations: [
+        { curatorIdentitySha256: "1".repeat(64), confirmedAt: "2026-09-03T10:00:00Z", caseBundleSha256: "0".repeat(64), checks },
+        { curatorIdentitySha256: "2".repeat(64), confirmedAt: "2026-09-03T11:00:00Z", caseBundleSha256: "0".repeat(64), checks },
+      ],
+    };
+    const parsed = parseCaseCuration(curation, spec, truth);
+    const bundle = caseBundleSha256(caseDir, spec, parsed);
+    for (const confirmation of curation.confirmations) confirmation.caseBundleSha256 = bundle;
+    writeFileSync(join(caseDir, "curation.json"), JSON.stringify(curation));
+  }
   return caseDir;
 }
 

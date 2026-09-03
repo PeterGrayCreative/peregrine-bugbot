@@ -179,6 +179,8 @@ eval/cases/
 ├── case.json          # discriminated fixture or historical source contract
 ├── diff.patch         # runner-owned input, never copied into the checkout
 ├── ground_truth.json  # grader-owned input, never copied into the checkout
+├── curation.json      # curator-only admission, strata, proof, and confirmations
+├── proof.md           # example content-addressed curator proof; name is configurable
 ├── metadata.json      # optional sanitized title/body only
 ├── leakage_exceptions.json # optional content hashes + curator reasons
 └── fixture/           # complete head-state tree for seeded/clean cases
@@ -209,6 +211,86 @@ Build cases three ways:
    positive. Keep at least ~25% of cases clean or you won't measure noise.
 
 Keep a handful of cases as a holdout you never tune prompts against.
+
+### Behavioral corpus admission
+
+Development and validation cases use a stricter contract than structural
+smoke fixtures. Run `npm run eval:validate-corpus` for a zero-provider integrity
+check. It strictly parses truth and curation, authenticates the checked-in diff
+and curator proof, runs the existing leakage and two-commit materialization
+checks, verifies every truth line against the reviewed head, and reports whether
+the corpus meets the preregistered readiness quotas. It never executes proof
+artifacts or repository code and never starts a model. Run
+`npm run eval:admit-corpus` when seeded visible-benchmark readiness must be an
+exit-code gate. It permits the current seeded benchmark over admitted seeded
+and clean fixtures once at least three distinct authenticated fixture source
+trees and all other visible quotas are proven. `npm run eval:admit-gold-corpus` is the later
+historical gold-set gate. Holdout readiness is reported separately and does not
+block seeded development/validation runs.
+
+Behavioral truth has no compatibility defaults. Every bug field must be
+explicit, bug and root-cause IDs must be opaque, and unknown fields fail closed.
+A `rootCauseGroup` is valid only when it connects at least two distinct observed
+symptoms in the same case. Such a case must declare the `multi-observation`
+change shape. Clean cases have empty truth; other case kinds have non-empty
+truth.
+
+Each behavioral case has `curation.json` matching
+`schemas/benchmark-curation.schema.json`. Its source-change digest is the exact
+SHA-256 of the checked-in diff and must be unique across the visible corpus.
+The proof artifact is curator-only, case-relative, a direct regular file, and
+authenticated by its exact SHA-256. The validator does not execute it. The
+complete no-symlink fixture file tree, including file paths, content hashes, and
+executable bits, is authenticated as well. An `admitted` case requires two
+distinct identities registered in the direct-file `eval/curator-policy.json`,
+and each registered curator must affirm the complete ordered checklist for a
+bug or clean case. The stable policy ID and trust semantics are bundle-bound;
+ordinary registry additions or revocations do not invalidate unrelated bundle
+digests, but a revoked identity makes its cases inadmissible at the next run.
+The trust root is protected Git review of the registry and case changes. These
+checks enforce distinct registered identities; they are not cryptographic proof
+that two different humans performed the reviews. Each
+confirmation also binds `caseBundleSha256`, which authenticates exact case JSON,
+truth, diff, proof, fixture-tree bytes, stable curator policy ID, and normalized
+source, strata, and proof metadata.
+Changing any of those inputs invalidates both confirmations. Use `draft` until
+independent confirmation is complete.
+
+Readiness requires 36 admitted visible cases: development has at least 12 bug
+cases and 8 clean controls; validation has at least 12 bug cases and 4 clean
+controls. Each core lane has an independent defect case in each corpus and a
+comparable clean surface. Clean controls remain at least 25% of the corpus.
+At least three cases are multi-observation; direct, seam, multi-observation,
+and large-diff shapes are represented; and at least three admitted cases are
+realistic large diffs. Seeded readiness requires at least three distinct
+authenticated fixture source trees; this is fixture diversity, not evidence of
+three independent repositories. Gold-set readiness separately requires at least three historical
+repository identities authenticated against their materialized local sources;
+seeded and clean fixtures never count as historical repositories. Historical
+identity is location-independent: SHA-256 over a versioned canonical record of
+the Git object format and the sorted complete root commit OIDs reachable from
+the selected immutable head in a non-shallow, non-rewritten clone. Copies, path
+aliases, relocation, and remote URL spelling therefore do
+not inflate repository diversity. Forks with common complete roots are
+conservatively treated as one family; unrelated histories merged later may
+change this identity and require curator review. Both
+gates require at least two derived language families and two architecture
+families. Language is derived from the changed/head file extensions, while
+architecture uses a closed schema enum and must remain consistent within each
+historical repository family. Fixture aliases are curator labels only: multiple
+distinct authenticated fixture trees may share an alias, and aliases do not
+contribute to either fixture-source or historical-repository diversity counts.
+Size strata are deterministic from the identity-normalized checked-in diff:
+small is at most 250 lines, medium is 251 through 1,500, and large is at least
+1,501. The `large-diff` shape and `large` size must agree exactly. This matches
+the production 1,500-line limit frozen when corpus schema version 1 was defined.
+
+The sealed holdout is never stored under `eval/cases`. Once a steward and
+external access-controlled corpus exist, only `eval/holdout-commitment.json`
+matching `schemas/holdout-commitment.schema.json` is checked in. It contains a
+steward identity hash, corpus commitment hash, case count, and unopened status;
+case IDs, sources, and truth are forbidden. Do not create this file until those
+facts are real.
 
 The checked-in marker-driven suite covers nullability, ordinary zero/fallback
 logic, swallowed errors, stale frontend closures, and pagination overlap,
@@ -376,16 +458,20 @@ protocol can enforce and attest cold or warm conditions.
 
 Screening and checkpoint use the same config shape. Set `experiment.mode` to
 `screening` for a curated development subset or `checkpoint` for the planned
-development/validation gate, and name exactly one `control` and one `treatment`
-from `configs`. There is no checked-in provider-enabled screening config;
-enabling one is an explicit operator decision backed by the private-image and
-credential setup.
+historical gold development/validation gate, and name exactly one `control` and
+one `treatment` from `configs`. Before creating a run directory or starting a
+provider, screening requires a non-empty selection and fully validates every
+selected behavioral case. Checkpoint schedules must contain both development
+and validation cases, contain no structural-smoke cases, and require the
+complete visible corpus to satisfy `goldSetReady`. There is no checked-in
+provider-enabled screening config; enabling one is an explicit operator
+decision backed by the private-image and credential setup.
 
-Until genuine sanitized development and validation cases are admitted,
-`npm run eval:matrix` writes an empty manifest, prints that no provider process
-was started, and exits successfully. It never substitutes structural fixtures
-or presents synthetic results as model evidence. Reports group development and
-validation attempts separately.
+Until genuine sanitized development and validation cases are admitted, a
+screening or checkpoint matrix fails before creating run artifacts or starting
+a provider. It never substitutes structural fixtures or presents synthetic
+results as model evidence. Reports group development and validation attempts
+separately.
 
 - Repeats (default 3, `eval/matrix.config.json`) are not optional — runs are
   stochastic, and single-run model comparisons will mislead you.
