@@ -2,7 +2,6 @@
   "bugs": [
     {
       "id": "bug-d381be42",
-      "rootCauseGroup": "root-dd10e679",
       "lane": "runtime-config",
       "expectedDisposition": "fix-in-pr",
       "expectedSeverity": "medium",

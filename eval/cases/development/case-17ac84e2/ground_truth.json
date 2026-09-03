@@ -2,7 +2,6 @@
   "bugs": [
     {
       "id": "bug-19c805bf",
-      "rootCauseGroup": "root-1d9f2a70",
       "lane": "contracts",
       "expectedDisposition": "fix-in-pr",
       "expectedSeverity": "high",

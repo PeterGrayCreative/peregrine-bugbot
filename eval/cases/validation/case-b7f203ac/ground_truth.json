@@ -2,7 +2,6 @@
   "bugs": [
     {
       "id": "bug-b63f19a2",
-      "rootCauseGroup": "root-b8452d13",
       "lane": "persistence",
       "expectedDisposition": "fix-in-pr",
       "expectedSeverity": "high",

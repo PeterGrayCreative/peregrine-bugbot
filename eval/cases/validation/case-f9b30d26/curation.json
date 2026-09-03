@@ -6,7 +6,7 @@
     "kind": "clean",
     "repositoryAlias": "service-launcher",
     "repositoryIdentitySha256": "52a96508df3f14aafe14d829948bf337ba4ac257eac1046ce74a9cbe319a94b4",
-    "changeIdentitySha256": "c54b72b037ac9be038e21f76b0b6308147028d8f989541ed8d298c5bfcd40a5e",
+    "changeIdentitySha256": "a0f33b75111692940bf78f14ba4590bea6dee6f79cac8d51db8e16ec2088ee05",
     "access": "curator-local-private"
   },
   "strata": {
