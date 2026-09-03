@@ -151,58 +151,105 @@ test("historical attempts export only sanitized base and head trees", async () =
   }
 });
 
-test("reachable deleted binary blobs are scanned before provider invocation", async () => {
+test("reachable deleted UTF-16 binary blobs are scanned before provider invocation", async () => {
   const root = mkdtempSync(join(tmpdir(), "peregrine-deleted-blob-test-"));
-  const source = join(root, "source");
-  const caseDir = join(root, "cases", "development", "case-b16b00b5");
   const hiddenDescription = "Deleted binary contains the unreleased answer sentinel.";
-  mkdirSync(join(source, "assets"), { recursive: true });
-  git(source, "init", "-q", "-b", "main");
-  git(source, "config", "user.name", "Curator");
-  git(source, "config", "user.email", "curator@example.invalid");
-  writeFileSync(
-    join(source, "assets", "deleted.bin"),
-    Buffer.concat([Buffer.from([0, 1, 2]), Buffer.from(`${hiddenDescription}\0// BUG: hidden answer`)]),
-  );
-  git(source, "add", ".");
-  git(source, "commit", "-q", "-m", "source base");
-  const base = git(source, "rev-parse", "HEAD");
-  rmSync(join(source, "assets", "deleted.bin"));
-  git(source, "add", "--all");
-  git(source, "commit", "-q", "-m", "source head");
-  const head = git(source, "rev-parse", "HEAD");
-  const diff = git(source, "diff", "--binary", `${base}...${head}`) + "\n";
-
-  mkdirSync(caseDir, { recursive: true });
-  writeFileSync(join(caseDir, "diff.patch"), diff);
-  writeFileSync(
-    join(caseDir, "ground_truth.json"),
-    JSON.stringify({ bugs: [{
-      id: "binary-deletion-answer",
-      file: "assets/deleted.bin",
-      startLine: 1,
-      endLine: 1,
-      description: hiddenDescription,
-    }] }),
-  );
-  writeFileSync(
-    join(caseDir, "case.json"),
-    JSON.stringify({
-      id: "case-b16b00b5",
-      corpus: "development",
-      kind: "historical",
-      repoSource: source,
-      baseCommit: base,
-      headCommit: head,
-      diffFile: "diff.patch",
-    }),
-  );
-
   try {
-    const spec = loadCaseSpec(caseDir);
+    const encoded = Buffer.from(`${hiddenDescription}\n// BUG: hidden answer`, "utf16le");
+    for (const [id, bytes, expected] of [
+      ["case-b16b00b5", encoded, /reachable Git blob .*forbidden answer-bearing term/],
+      [
+        "case-b16b00b6",
+        Buffer.concat([Buffer.from([0xfe, 0xff]), encodeUtf16Be(encoded)]),
+        /reachable Git blob .*forbidden answer-bearing term/,
+      ],
+      [
+        "case-b16b00b7",
+        encodeUtf16Be(Buffer.from("# FIXME: hidden encoded marker", "utf16le")),
+        /reachable Git blob .*undocumented answer-bearing marker/,
+      ],
+    ] as const) {
+      const source = join(root, `source-${id}`);
+      const caseDir = join(root, "cases", "development", id);
+      mkdirSync(join(source, "assets"), { recursive: true });
+      git(source, "init", "-q", "-b", "main");
+      git(source, "config", "user.name", "Curator");
+      git(source, "config", "user.email", "curator@example.invalid");
+      writeFileSync(join(source, "assets", "deleted.bin"), bytes);
+      git(source, "add", ".");
+      git(source, "commit", "-q", "-m", "source base");
+      const base = git(source, "rev-parse", "HEAD");
+      rmSync(join(source, "assets", "deleted.bin"));
+      git(source, "add", "--all");
+      git(source, "commit", "-q", "-m", "source head");
+      const head = git(source, "rev-parse", "HEAD");
+
+      mkdirSync(caseDir, { recursive: true });
+      writeFileSync(join(caseDir, "diff.patch"), `${git(source, "diff", "--binary", `${base}...${head}`)}\n`);
+      writeFileSync(
+        join(caseDir, "ground_truth.json"),
+        JSON.stringify({ bugs: [{
+          id: "binary-deletion-answer",
+          file: "assets/deleted.bin",
+          startLine: 1,
+          endLine: 1,
+          description: hiddenDescription,
+        }] }),
+      );
+      writeFileSync(
+        join(caseDir, "case.json"),
+        JSON.stringify({
+          id,
+          corpus: "development",
+          kind: "historical",
+          repoSource: source,
+          baseCommit: base,
+          headCommit: head,
+          diffFile: "diff.patch",
+        }),
+      );
+
+      const spec = loadCaseSpec(caseDir);
+      await assert.rejects(
+        () => materializeCase(caseDir, spec, leakagePolicyForCase(caseDir, spec)),
+        expected,
+      );
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("reachable base-only paths reject symlink modes and answer artifacts", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-base-only-paths-"));
+  const casesDir = join(root, "cases");
+  try {
+    const symlinkCase = createBaseOnlyDeletionCase(
+      root,
+      casesDir,
+      "case-120000aa",
+      "src/legacy-link",
+      "keep.ts",
+      true,
+    );
+    let spec = loadCaseSpec(symlinkCase);
     await assert.rejects(
-      () => materializeCase(caseDir, spec, leakagePolicyForCase(caseDir, spec)),
-      /reachable Git blob .*forbidden answer-bearing term/,
+      () => materializeCase(symlinkCase, spec, leakagePolicyForCase(symlinkCase, spec)),
+      /reachable Git history contains a forbidden symlink/,
+    );
+
+    const artifactCase = createBaseOnlyDeletionCase(
+      root,
+      casesDir,
+      "case-a22fac7a",
+      "review-comments.txt",
+      "ordinary historical review text\n",
+      false,
+    );
+    spec = loadCaseSpec(artifactCase);
+    await assert.rejects(
+      () => materializeCase(artifactCase, spec, leakagePolicyForCase(artifactCase, spec)),
+      /reachable Git history contains a forbidden answer artifact/,
     );
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -276,28 +323,27 @@ test("attempt cleanup is installed before asset setup and retries after removal 
       (error: unknown) =>
         error instanceof AggregateError &&
         error.message.includes("case materialization failed and cleanup also failed") &&
-        error.message.includes("forced setup cleanup failure"),
+        error.message.includes("cleanup failed after two attempts"),
     );
     const leakedAttempt = readdirSync(attempts);
     assert.equal(leakedAttempt.length, 1, "a failed removal remains visible for external cleanup");
     rmSync(join(attempts, leakedAttempt[0]!), { recursive: true, force: true });
 
-    let failRemoval = true;
+    let removalCalls = 0;
     const materialized = await materializeCase(caseDir, spec, policy, {
       tempRoot: attempts,
       prepareProviderAssets: false,
       removeAttempt(path) {
-        if (failRemoval) {
-          failRemoval = false;
+        removalCalls++;
+        if (removalCalls === 1) {
           throw new Error("forced removal failure");
         }
         rmSync(path, { recursive: true, force: true });
       },
     });
     const attemptRoot = dirname(materialized.repoPath);
-    assert.throws(() => materialized.cleanup(), /isolated attempt cleanup failed.*forced removal failure/);
-    assert.equal(existsSync(attemptRoot), true);
     materialized.cleanup();
+    assert.equal(removalCalls, 2);
     assert.equal(existsSync(attemptRoot), false);
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -394,28 +440,28 @@ test("case materialization rejects traversal, symlinks, nested Git data, answer 
       mutate(caseDir) {
         symlinkSync("/tmp", join(caseDir, "fixture", "escape"));
       },
-      expected: /contains symlink/,
+      expected: /forbidden symlink/,
     },
     {
       name: "nested-git",
       mutate(caseDir) {
         mkdirSync(join(caseDir, "fixture", "nested", ".git"), { recursive: true });
       },
-      expected: /forbidden \.git/,
+      expected: /forbidden nested Git metadata/,
     },
     {
       name: "gitmodules",
       mutate(caseDir) {
         writeFileSync(join(caseDir, "fixture", ".gitmodules"), "[submodule]\n");
       },
-      expected: /forbidden \.gitmodules/,
+      expected: /forbidden nested Git metadata/,
     },
     {
       name: "special-file",
       mutate(caseDir) {
         execFileSync("mkfifo", [join(caseDir, "fixture", "named-pipe")]);
       },
-      expected: /contains special file/,
+      expected: /forbidden special file/,
     },
     {
       name: "answer-artifact",
@@ -596,6 +642,46 @@ test("leaking cases, structural smoke, and uncontained live runs never invoke an
   }
 });
 
+test("leakage failures do not echo answer IDs or paths into records or stdout", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-redacted-leak-"));
+  const casesDir = join(root, "cases");
+  const caseDir = createFixtureCase(casesDir, "case-acde9876", "development");
+  writeFileSync(join(caseDir, "fixture", "src", "truth-needle.ts"), "export {};\n");
+  const matrixPath = join(root, "matrix.json");
+  writeFileSync(
+    matrixPath,
+    JSON.stringify({ repeats: 1, configs: [{ name: "mock", runner: "mock" }] }),
+  );
+  let calls = 0;
+  let captured = "";
+  let runsDir = "";
+  const originalWrite = process.stdout.write;
+  const originalLog = console.log;
+  process.stdout.write = ((chunk: string | Uint8Array) => {
+    captured += chunk.toString();
+    return true;
+  }) as typeof process.stdout.write;
+  console.log = (...values: unknown[]) => { captured += `${values.map(String).join(" ")}\n`; };
+  try {
+    runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+      casesDir,
+      engineFor: () => ({ name: "mock", async review() { calls++; return completed(); } }),
+    });
+  } finally {
+    process.stdout.write = originalWrite;
+    console.log = originalLog;
+  }
+  try {
+    const record = readFileSync(join(runsDir, "attempt-000001.json"), "utf8");
+    assert.equal(calls, 0);
+    assert.doesNotMatch(record, /truth-needle/);
+    assert.doesNotMatch(captured, /truth-needle/);
+    assert.match(record, /forbidden answer-bearing term/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("isolated provider environments omit ambient Git, SSH, CLI homes, and unrelated credentials", () => {
   const previous = { ...process.env };
   process.env.ANTHROPIC_API_KEY = "allowed-provider-key";
@@ -679,6 +765,68 @@ function completed(engine: "mock" | "claude" = "mock"): EngineResult {
     usage: {},
     durationMs: 1,
   };
+}
+
+function createBaseOnlyDeletionCase(
+  root: string,
+  casesDir: string,
+  id: string,
+  deletedPath: string,
+  deletedContent: string,
+  symlink: boolean,
+): string {
+  const source = join(root, `source-${id}`);
+  mkdirSync(join(source, "src"), { recursive: true });
+  git(source, "init", "-q", "-b", "main");
+  git(source, "config", "user.name", "Curator");
+  git(source, "config", "user.email", "curator@example.invalid");
+  writeFileSync(join(source, "src", "keep.ts"), "export const keep = true;\n");
+  const deleted = join(source, deletedPath);
+  mkdirSync(dirname(deleted), { recursive: true });
+  if (symlink) symlinkSync(deletedContent, deleted);
+  else writeFileSync(deleted, deletedContent);
+  git(source, "add", "--all");
+  git(source, "commit", "-q", "-m", "base");
+  const base = git(source, "rev-parse", "HEAD");
+  rmSync(deleted, { recursive: true, force: true });
+  git(source, "add", "--all");
+  git(source, "commit", "-q", "-m", "head");
+  const head = git(source, "rev-parse", "HEAD");
+
+  const caseDir = join(casesDir, "development", id);
+  mkdirSync(join(caseDir, "fixture", "src"), { recursive: true });
+  writeFileSync(join(caseDir, "fixture", "src", "keep.ts"), "export const keep = true;\n");
+  writeFileSync(join(caseDir, "diff.patch"), `${git(source, "diff", "--binary", `${base}...${head}`)}\n`);
+  writeFileSync(
+    join(caseDir, "ground_truth.json"),
+    JSON.stringify({ bugs: [{
+      id: `hidden-${id}`,
+      file: "src/keep.ts",
+      startLine: 1,
+      endLine: 1,
+      description: "The deleted base-only object is curator-controlled answer material.",
+    }] }),
+  );
+  writeFileSync(
+    join(caseDir, "case.json"),
+    JSON.stringify({
+      id,
+      corpus: "development",
+      kind: "seeded",
+      fixtureDir: "fixture",
+      diffFile: "diff.patch",
+    }),
+  );
+  return caseDir;
+}
+
+function encodeUtf16Be(utf16Le: Buffer): Buffer {
+  const output = Buffer.allocUnsafe(utf16Le.length);
+  for (let index = 0; index < utf16Le.length; index += 2) {
+    output[index] = utf16Le[index + 1]!;
+    output[index + 1] = utf16Le[index]!;
+  }
+  return output;
 }
 
 function git(repo: string, ...args: string[]): string {

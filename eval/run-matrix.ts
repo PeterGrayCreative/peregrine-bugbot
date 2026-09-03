@@ -358,12 +358,12 @@ function discoverCases(
     if (!corpusEntry.isDirectory()) {
       if (corpusEntry.name === "README.md" || corpusEntry.name === "case-aliases.json") continue;
       throw new Error(
-        `unexpected case-root entry ${corpusEntry.name}; expected only corpus directories and curator metadata`,
+        "unexpected case-root entry; expected only corpus directories and curator metadata",
       );
     }
     if (!CASE_CORPORA.includes(corpusEntry.name as CaseCorpus)) {
       throw new Error(
-        `unexpected case directory ${corpusEntry.name}; expected <cases-root>/<corpus>/<opaque-id>`,
+        "unexpected case directory; expected <cases-root>/<corpus>/<opaque-id>",
       );
     }
     const corpus = corpusEntry.name as CaseCorpus;
@@ -371,10 +371,10 @@ function discoverCases(
     for (const entry of readdirSync(corpusDir, { withFileTypes: true })) {
       if (!entry.isDirectory()) {
         if (entry.name === "README.md") continue;
-        throw new Error(`unexpected ${corpus} corpus entry ${entry.name}; expected an opaque case directory`);
+        throw new Error(`unexpected ${corpus} corpus entry; expected an opaque case directory`);
       }
       try {
-        assertOpaqueCaseId(entry.name, `case directory ${corpus}/${entry.name}`);
+        assertOpaqueCaseId(entry.name, "case directory id");
       } catch (error) {
         throw new Error(
           `${error instanceof Error ? error.message : String(error)}; expected <cases-root>/<corpus>/<opaque-id>`,
@@ -440,7 +440,7 @@ function rejectUnexpectedKeys(
   if (unexpected.length > 0) {
     throw new RunFailureError(
       "configuration",
-      `case ${caseId}: unsupported fields ${unexpected.join(", ")}; answer-bearing notes belong outside model inputs`,
+      `case ${caseId}: contains unsupported fields; answer-bearing notes belong outside model inputs`,
     );
   }
 }

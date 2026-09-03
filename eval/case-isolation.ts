@@ -43,6 +43,19 @@ const NON_ANSWER_GROUND_TRUTH_KEYS = new Set([
 ]);
 const ANSWER_GROUND_TRUTH_KEY =
   /(?:^id$|bugid|rootcause|description|precondition|impact|explanation|canary|expected|answer|needle|reason)/;
+const SAFE_LEAKAGE_LABELS = [
+  "review diff",
+  "model-visible metadata",
+  "model-visible checkout path",
+  "breadth model output",
+  "final breadth provider prompt",
+  "final investigation provider prompt",
+  "reachable Git commit",
+  "reachable Git path",
+  "reachable Git blob",
+  "repository path",
+  "repository file",
+] as const;
 
 export interface LeakagePolicy {
   caseId: string;
@@ -106,7 +119,7 @@ export function readSanitizedMetadata(
   }
   const metadata = value as Record<string, unknown>;
   const unexpected = Object.keys(metadata).filter((key) => key !== "title" && key !== "body");
-  if (unexpected.length > 0) throw new Error(`metadataFile contains unsupported fields: ${unexpected.join(", ")}`);
+  if (unexpected.length > 0) throw new Error("metadataFile contains unsupported fields");
   for (const key of ["title", "body"] as const) {
     if (metadata[key] !== undefined && typeof metadata[key] !== "string") {
       throw new Error(`metadataFile ${key} must be a string`);
@@ -167,19 +180,21 @@ export function assertLeakageFreeText(
   options: { allowDocumentedMarkers?: boolean } = {},
 ): void {
   const raw = typeof value === "string" ? Buffer.from(value) : value;
-  const normalized = normalizeLeakageText(raw.toString("utf8"));
+  const views = leakageTextViews(raw);
+  const normalizedViews = views.map(normalizeLeakageText);
+  const safeLabel = safeLeakageLabel(label);
   for (const term of policy.forbiddenTerms) {
-    if (term && normalized.includes(term)) {
+    if (term && normalizedViews.some((view) => view.includes(term))) {
       // Never echo the curator-only answer term into run artifacts or logs.
-      throw new Error(`${label} contains forbidden answer-bearing term`);
+      throw new Error(`${safeLabel} contains forbidden answer-bearing term`);
     }
   }
   if (policy.corpus !== "structural-smoke") {
     for (const marker of ANSWER_MARKERS) {
-      if (marker.test(raw.toString("utf8"))) {
+      if (views.some((view) => marker.test(view))) {
         const hash = createHash("sha256").update(raw).digest("hex");
         if (options.allowDocumentedMarkers && policy.documentedMarkerHashes.has(hash)) continue;
-        throw new Error(`${label} contains undocumented answer-bearing marker ${marker.source}`);
+        throw new Error(`${safeLabel} contains undocumented answer-bearing marker`);
       }
     }
   }
@@ -236,16 +251,21 @@ export async function materializeCase(
   let cleaned = false;
   const cleanup = (): void => {
     if (cleaned) return;
-    try {
-      (options.removeAttempt ?? ((path) => rmSync(path, { recursive: true, force: true })))(attemptRoot);
-    } catch (error) {
-      throw new Error(
-        `isolated attempt cleanup failed: ${error instanceof Error ? error.message : String(error)}`,
-        { cause: error },
-      );
+    const remove = options.removeAttempt ?? ((path) => rmSync(path, { recursive: true, force: true }));
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        remove(attemptRoot);
+        if (!existsSync(attemptRoot)) {
+          cleaned = true;
+          return;
+        }
+        lastError = new Error("attempt root still exists after removal");
+      } catch (error) {
+        lastError = error;
+      }
     }
-    if (existsSync(attemptRoot)) throw new Error("isolated attempt cleanup did not remove its root");
-    cleaned = true;
+    throw new Error("isolated attempt cleanup failed after two attempts", { cause: lastError });
   };
 
   const repoPath = join(attemptRoot, "checkout");
@@ -422,6 +442,73 @@ function normalizeLeakageText(value: string): string {
   return value.normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+function safeLeakageLabel(label: string): string {
+  return SAFE_LEAKAGE_LABELS.find((candidate) => label.startsWith(candidate)) ?? "model-visible input";
+}
+
+function leakageTextViews(raw: Buffer): string[] {
+  const views = new Set<string>([raw.toString("utf8")]);
+  if (raw.includes(0)) {
+    // ASCII embedded in UTF-16/32 is still visible when alternating NUL bytes
+    // are removed. This also catches encoded markers inside otherwise-binary
+    // blobs without assuming the whole blob is valid text.
+    views.add(raw.toString("latin1").replaceAll("\0", ""));
+  }
+  if (hasBom(raw, [0xff, 0xfe]) || looksLikeUtf16(raw, "le")) {
+    views.add(raw.subarray(hasBom(raw, [0xff, 0xfe]) ? 2 : 0).toString("utf16le"));
+  }
+  if (hasBom(raw, [0xfe, 0xff]) || looksLikeUtf16(raw, "be")) {
+    const offset = hasBom(raw, [0xfe, 0xff]) ? 2 : 0;
+    views.add(decodeUtf16Be(raw.subarray(offset)));
+  }
+  if (hasBom(raw, [0xff, 0xfe, 0x00, 0x00])) {
+    views.add(decodeUtf32(raw.subarray(4), "le"));
+  }
+  if (hasBom(raw, [0x00, 0x00, 0xfe, 0xff])) {
+    views.add(decodeUtf32(raw.subarray(4), "be"));
+  }
+  return [...views];
+}
+
+function hasBom(raw: Buffer, bytes: number[]): boolean {
+  return bytes.every((byte, index) => raw[index] === byte);
+}
+
+function looksLikeUtf16(raw: Buffer, endian: "le" | "be"): boolean {
+  let likelyPairs = 0;
+  let pairs = 0;
+  for (let index = 0; index + 1 < raw.length; index += 2) {
+    const nul = endian === "le" ? raw[index + 1] : raw[index];
+    const value = endian === "le" ? raw[index] : raw[index + 1];
+    if (nul === 0 && value !== 0) likelyPairs++;
+    pairs++;
+  }
+  return likelyPairs >= 4 && likelyPairs / pairs >= 0.3;
+}
+
+function decodeUtf16Be(raw: Buffer): string {
+  const evenLength = raw.length - (raw.length % 2);
+  const swapped = Buffer.allocUnsafe(evenLength);
+  for (let index = 0; index < evenLength; index += 2) {
+    swapped[index] = raw[index + 1]!;
+    swapped[index + 1] = raw[index]!;
+  }
+  return swapped.toString("utf16le");
+}
+
+function decodeUtf32(raw: Buffer, endian: "le" | "be"): string {
+  const codePoints: number[] = [];
+  for (let index = 0; index + 3 < raw.length; index += 4) {
+    const value = endian === "le" ? raw.readUInt32LE(index) : raw.readUInt32BE(index);
+    codePoints.push(value <= 0x10ffff && !(value >= 0xd800 && value <= 0xdfff) ? value : 0xfffd);
+  }
+  let decoded = "";
+  for (let index = 0; index < codePoints.length; index += 4096) {
+    decoded += String.fromCodePoint(...codePoints.slice(index, index + 4096));
+  }
+  return decoded;
+}
+
 async function materializeFixture(
   caseRoot: string,
   fixtureDir: string,
@@ -543,7 +630,7 @@ async function assertReachableHistorySafe(
   const seenBlobs = new Set<string>();
   for (const commit of commits) {
     const commitObject = gitBuffer(repoPath, ["cat-file", "commit", commit], providerHome);
-    assertLeakageFreeText(`reachable commit ${commit}`, commitObject, policy);
+    assertLeakageFreeText("reachable Git commit", commitObject, policy);
     const entries = gitBuffer(
       repoPath,
       ["ls-tree", "-r", "-z", "--full-tree", commit],
@@ -553,17 +640,44 @@ async function assertReachableHistorySafe(
       const separator = entry.indexOf("\t");
       if (separator === -1) throw new Error("reachable Git tree contains an unparseable entry");
       const header = entry.slice(0, separator).split(" ");
+      if (header.length !== 3) throw new Error("reachable Git tree contains an unparseable entry");
+      const mode = header[0];
       const objectType = header[1];
       const oid = header[2];
       const path = entry.slice(separator + 1);
-      assertLeakageFreeText(`reachable Git path ${path}`, path, policy);
-      if (objectType !== "blob" || !oid || seenBlobs.has(oid)) continue;
+      assertHistoricalPathSafe(path);
+      assertLeakageFreeText("reachable Git path", path, policy);
+      if (mode === "120000") throw new Error("reachable Git history contains a forbidden symlink");
+      if (mode === "160000" || objectType === "commit") {
+        throw new Error("reachable Git history contains a forbidden gitlink");
+      }
+      if ((mode !== "100644" && mode !== "100755") || objectType !== "blob" || !oid) {
+        throw new Error("reachable Git history contains an unsupported tree entry");
+      }
+      if (seenBlobs.has(oid)) continue;
       seenBlobs.add(oid);
       const blob = gitBuffer(repoPath, ["cat-file", "blob", oid], providerHome);
-      assertLeakageFreeText(`reachable Git blob ${path}`, blob, policy, {
+      assertLeakageFreeText("reachable Git blob", blob, policy, {
         allowDocumentedMarkers: true,
       });
     }
+  }
+}
+
+function assertHistoricalPathSafe(path: string): void {
+  const components = path.split(/[\\/]/);
+  if (
+    !path ||
+    path.startsWith("/") ||
+    components.some((component) => component === "" || component === "." || component === "..")
+  ) {
+    throw new Error("reachable Git history contains an unsafe path");
+  }
+  if (components.some((component) => [".git", ".gitmodules"].includes(component.toLowerCase()))) {
+    throw new Error("reachable Git history contains forbidden nested Git metadata");
+  }
+  if (components.some((component) => ANSWER_ARTIFACT.test(component))) {
+    throw new Error("reachable Git history contains a forbidden answer artifact");
   }
 }
 
@@ -590,26 +704,26 @@ function assertTreeSafe(
   const visit = (directory: string, atRoot: boolean): void => {
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
       if (atRoot && options.allowRootGit && entry.name === ".git") continue;
-      if (entry.name === ".git" || entry.name === ".gitmodules") {
-        throw new Error(`model-visible repository contains forbidden ${entry.name}`);
+      if ([".git", ".gitmodules"].includes(entry.name.toLowerCase())) {
+        throw new Error("model-visible repository contains forbidden nested Git metadata");
       }
       if (ANSWER_ARTIFACT.test(entry.name)) {
-        throw new Error(`model-visible repository contains answer artifact ${entry.name}`);
+        throw new Error("model-visible repository contains a forbidden answer artifact");
       }
       const full = join(directory, entry.name);
       const visiblePath = relative(rootReal, full);
-      if (policy) assertLeakageFreeText(`repository path ${visiblePath}`, visiblePath, policy);
+      if (policy) assertLeakageFreeText("repository path", visiblePath, policy);
       const stat = lstatSync(full);
-      if (stat.isSymbolicLink()) throw new Error(`model-visible repository contains symlink ${visiblePath}`);
+      if (stat.isSymbolicLink()) throw new Error("model-visible repository contains a forbidden symlink");
       if (stat.isDirectory()) {
         visit(full, false);
         continue;
       }
-      if (!stat.isFile()) throw new Error(`model-visible repository contains special file ${visiblePath}`);
+      if (!stat.isFile()) throw new Error("model-visible repository contains a forbidden special file");
       const resolved = realpathSync(full);
-      if (!isWithin(rootReal, resolved)) throw new Error(`model-visible file escapes repository: ${visiblePath}`);
+      if (!isWithin(rootReal, resolved)) throw new Error("model-visible file escapes repository");
       if (policy) {
-        assertLeakageFreeText(`repository file ${visiblePath}`, readFileSync(full), policy, {
+        assertLeakageFreeText("repository file", readFileSync(full), policy, {
           allowDocumentedMarkers: true,
         });
       }
@@ -649,7 +763,7 @@ function assertSafeDiffPaths(diff: string): void {
     if (!match || match[1] === "/dev/null") continue;
     const path = match[1]!;
     if (isAbsolute(path) || path.split(/[\\/]/).includes("..")) {
-      throw new Error(`diff contains unsafe path ${JSON.stringify(path)}`);
+      throw new Error("diff contains an unsafe path");
     }
   }
 }
