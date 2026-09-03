@@ -1,0 +1,1722 @@
+diff --git a/src/allocation-plan.ts b/src/allocation-plan.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..78f0b8f69d7dfd4786204e66348d6ebb8a622af9
+--- /dev/null
++++ b/src/allocation-plan.ts
+@@ -0,0 +1,43 @@
++import type { ReservationRequest, ReservedLine, StockSnapshot } from "./inventory-types.ts";
++
++export interface AllocationPlan {
++  requestId: string;
++  lines: ReservedLine[];
++  totalUnits: number;
++}
++
++export function buildAllocationPlan(
++  request: ReservationRequest,
++  snapshots: ReadonlyMap<string, StockSnapshot>,
++): AllocationPlan {
++  const lines = request.lines.map((line) => {
++    const snapshot = snapshots.get(line.sku);
++    if (!snapshot) throw new Error(`missing stock: ${line.sku}`);
++    if (snapshot.available < line.quantity) throw new Error(`insufficient stock: ${line.sku}`);
++    return {
++      sku: line.sku,
++      quantity: line.quantity,
++      remainingAvailable: snapshot.available - line.quantity,
++    };
++  });
++  return {
++    requestId: request.requestId,
++    lines,
++    totalUnits: lines.reduce((sum, line) => sum + line.quantity, 0),
++  };
++}
++
++export function mergeAllocationPlans(plans: AllocationPlan[]): Map<string, number> {
++  const allocated = new Map<string, number>();
++  for (const plan of plans) {
++    for (const line of plan.lines) {
++      allocated.set(line.sku, (allocated.get(line.sku) ?? 0) + line.quantity);
++    }
++  }
++  return allocated;
++}
++
++export function describeAllocation(plan: AllocationPlan): string {
++  const lineSummary = plan.lines.map((line) => `${line.sku}:${line.quantity}`).join(",");
++  return `${plan.requestId}[${lineSummary}]=${plan.totalUnits}`;
++}
+diff --git a/src/availability-query.ts b/src/availability-query.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..334a8d550ce8b87b3b3e5a7bf9e8b48f8ea02887
+--- /dev/null
++++ b/src/availability-query.ts
+@@ -0,0 +1,50 @@
++export interface AvailabilityRow {
++  sku: string;
++  warehouseId: string;
++  available: number;
++  expectedReceipts: Array<{ quantity: number; arrivesAt: string }>;
++}
++
++export interface AvailabilityAnswer {
++  sku: string;
++  immediatelyAvailable: number;
++  availableByPromiseDate: number;
++  contributingWarehouses: string[];
++}
++
++export function queryAvailability(
++  rows: AvailabilityRow[],
++  sku: string,
++  promiseDate: string,
++): AvailabilityAnswer {
++  const promiseMs = Date.parse(promiseDate);
++  if (!Number.isFinite(promiseMs)) throw new Error("invalid promise date");
++  const matching = rows.filter((row) => row.sku === sku);
++  let immediatelyAvailable = 0;
++  let availableByPromiseDate = 0;
++  const contributingWarehouses: string[] = [];
++  for (const row of matching) {
++    if (!Number.isSafeInteger(row.available) || row.available < 0) throw new Error("invalid available quantity");
++    immediatelyAvailable += row.available;
++    const inbound = row.expectedReceipts
++      .filter((receipt) => Date.parse(receipt.arrivesAt) <= promiseMs)
++      .reduce((sum, receipt) => sum + receipt.quantity, 0);
++    availableByPromiseDate += row.available + inbound;
++    if (row.available > 0 || inbound > 0) contributingWarehouses.push(row.warehouseId);
++  }
++  return {
++    sku,
++    immediatelyAvailable,
++    availableByPromiseDate,
++    contributingWarehouses: [...new Set(contributingWarehouses)].sort(),
++  };
++}
++
++export function canPromise(answer: AvailabilityAnswer, quantity: number): boolean {
++  return Number.isSafeInteger(quantity) && quantity > 0 && answer.availableByPromiseDate >= quantity;
++}
++
++export function availabilityRatio(answer: AvailabilityAnswer, quantity: number): number {
++  if (!Number.isFinite(quantity) || quantity <= 0) throw new Error("invalid requested quantity");
++  return Math.min(1, answer.availableByPromiseDate / quantity);
++}
+diff --git a/src/catalog-service.ts b/src/catalog-service.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..1f1dc5b676d6877730f2a693490e8408bcf95b24
+--- /dev/null
++++ b/src/catalog-service.ts
+@@ -0,0 +1,40 @@
++export interface CatalogItem {
++  sku: string;
++  title: string;
++  active: boolean;
++  unitOfMeasure: "each" | "case" | "kilogram";
++  caseSize: number | null;
++  tags: string[];
++}
++
++export function validateCatalogItem(item: CatalogItem): void {
++  if (!/^[A-Z0-9][A-Z0-9_-]{2,31}$/.test(item.sku)) throw new Error("invalid catalog sku");
++  if (!item.title.trim()) throw new Error("catalog title is required");
++  if (item.unitOfMeasure === "case") {
++    if (!Number.isSafeInteger(item.caseSize) || (item.caseSize ?? 0) <= 1) throw new Error("case item needs a case size");
++  } else if (item.caseSize !== null) throw new Error("case size is only valid for case units");
++  if (new Set(item.tags).size !== item.tags.length) throw new Error("catalog tags must be unique");
++}
++
++export function indexCatalog(items: CatalogItem[]): Map<string, CatalogItem> {
++  const indexed = new Map<string, CatalogItem>();
++  for (const item of items) {
++    validateCatalogItem(item);
++    if (indexed.has(item.sku)) throw new Error(`duplicate catalog sku: ${item.sku}`);
++    indexed.set(item.sku, structuredClone(item));
++  }
++  return indexed;
++}
++
++export function activeCatalogItems(items: CatalogItem[]): CatalogItem[] {
++  return items.filter((item) => item.active).map((item) => structuredClone(item)).sort((left, right) => left.sku.localeCompare(right.sku));
++}
++
++export function itemsWithTag(items: CatalogItem[], tag: string): CatalogItem[] {
++  return activeCatalogItems(items).filter((item) => item.tags.includes(tag));
++}
++
++export function unitsPerPackage(item: CatalogItem): number {
++  validateCatalogItem(item);
++  return item.unitOfMeasure === "case" ? item.caseSize! : 1;
++}
+diff --git a/src/cycle-count.ts b/src/cycle-count.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..2b6c2aa9945930d0201cf30af14020f887f14375
+--- /dev/null
++++ b/src/cycle-count.ts
+@@ -0,0 +1,49 @@
++export interface CountTask {
++  taskId: string;
++  warehouseId: string;
++  sku: string;
++  priority: number;
++  dueAt: string;
++  assignedTo: string | null;
++  status: "pending" | "assigned" | "completed";
++}
++
++export function scheduleCountTasks(
++  warehouseId: string,
++  skus: string[],
++  dueAt: string,
++  priorityFor: (sku: string) => number,
++): CountTask[] {
++  if (!Number.isFinite(Date.parse(dueAt))) throw new Error("invalid count due date");
++  const unique = [...new Set(skus)];
++  return unique.map((sku, index) => ({
++    taskId: `${warehouseId}-${index + 1}`,
++    warehouseId,
++    sku,
++    priority: priorityFor(sku),
++    dueAt,
++    assignedTo: null,
++    status: "pending" as const,
++  })).sort((left, right) => right.priority - left.priority || left.sku.localeCompare(right.sku));
++}
++
++export function assignCountTask(task: CountTask, assignee: string): CountTask {
++  if (task.status !== "pending") throw new Error("only pending tasks can be assigned");
++  if (!assignee.trim()) throw new Error("assignee is required");
++  return { ...task, assignedTo: assignee, status: "assigned" };
++}
++
++export function completeCountTask(task: CountTask): CountTask {
++  if (task.status !== "assigned" || task.assignedTo === null) throw new Error("task must be assigned");
++  return { ...task, status: "completed" };
++}
++
++export function overdueCountTasks(tasks: CountTask[], nowMs: number): CountTask[] {
++  return tasks
++    .filter((task) => task.status !== "completed" && Date.parse(task.dueAt) < nowMs)
++    .sort((left, right) => left.dueAt.localeCompare(right.dueAt));
++}
++
++export function countTaskProgress(tasks: CountTask[]): { completed: number; total: number } {
++  return { completed: tasks.filter((task) => task.status === "completed").length, total: tasks.length };
++}
+diff --git a/src/fulfillment-window.ts b/src/fulfillment-window.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..0c47d52c726177d27234d926c4acde2fc8f64c1c
+--- /dev/null
++++ b/src/fulfillment-window.ts
+@@ -0,0 +1,32 @@
++export interface FulfillmentWindow {
++  opensAt: string;
++  closesAt: string;
++  timezone: string;
++}
++
++export function validateFulfillmentWindow(window: FulfillmentWindow): void {
++  const opensAt = Date.parse(window.opensAt);
++  const closesAt = Date.parse(window.closesAt);
++  if (!Number.isFinite(opensAt) || !Number.isFinite(closesAt)) throw new Error("invalid fulfillment window");
++  if (closesAt <= opensAt) throw new Error("fulfillment window must close after opening");
++  if (!/^[A-Za-z_]+\/[A-Za-z_]+$/.test(window.timezone)) throw new Error("invalid timezone");
++}
++
++export function containsInstant(window: FulfillmentWindow, instant: string): boolean {
++  validateFulfillmentWindow(window);
++  const value = Date.parse(instant);
++  return Number.isFinite(value) && value >= Date.parse(window.opensAt) && value < Date.parse(window.closesAt);
++}
++
++export function intersectWindows(left: FulfillmentWindow, right: FulfillmentWindow): FulfillmentWindow | null {
++  validateFulfillmentWindow(left);
++  validateFulfillmentWindow(right);
++  const opensAt = Math.max(Date.parse(left.opensAt), Date.parse(right.opensAt));
++  const closesAt = Math.min(Date.parse(left.closesAt), Date.parse(right.closesAt));
++  if (closesAt <= opensAt) return null;
++  return {
++    opensAt: new Date(opensAt).toISOString(),
++    closesAt: new Date(closesAt).toISOString(),
++    timezone: left.timezone,
++  };
++}
+diff --git a/src/idempotency.ts b/src/idempotency.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..decab761ec94385cc8b0d2a18cc5cd90b0149160
+--- /dev/null
++++ b/src/idempotency.ts
+@@ -0,0 +1,50 @@
++export interface IdempotencyRecord<T> {
++  key: string;
++  requestSha256: string;
++  response: T;
++  createdAt: string;
++  expiresAt: string;
++}
++
++export class IdempotencyRegistry<T> {
++  readonly #records = new Map<string, IdempotencyRecord<T>>();
++
++  lookup(key: string, requestSha256: string, nowMs: number): T | null {
++    const record = this.#records.get(key);
++    if (!record) return null;
++    if (Date.parse(record.expiresAt) <= nowMs) {
++      this.#records.delete(key);
++      return null;
++    }
++    if (record.requestSha256 !== requestSha256) throw new Error("idempotency key reused with different request");
++    return structuredClone(record.response);
++  }
++
++  remember(record: IdempotencyRecord<T>, nowMs: number): void {
++    if (!record.key.trim()) throw new Error("idempotency key is required");
++    if (!/^[a-f0-9]{64}$/.test(record.requestSha256)) throw new Error("invalid request digest");
++    if (Date.parse(record.expiresAt) <= nowMs) throw new Error("idempotency record is already expired");
++    const existing = this.#records.get(record.key);
++    if (existing && Date.parse(existing.expiresAt) > nowMs) {
++      if (existing.requestSha256 !== record.requestSha256) throw new Error("idempotency key conflict");
++      return;
++    }
++    this.#records.set(record.key, structuredClone(record));
++  }
++
++  prune(nowMs: number): number {
++    let removed = 0;
++    for (const [key, record] of this.#records) {
++      if (Date.parse(record.expiresAt) <= nowMs) {
++        this.#records.delete(key);
++        removed += 1;
++      }
++    }
++    return removed;
++  }
++
++  activeKeys(nowMs: number): string[] {
++    this.prune(nowMs);
++    return [...this.#records.keys()].sort();
++  }
++}
+diff --git a/src/inventory-api.ts b/src/inventory-api.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..72ddf519763f5385b4d92ce5db9ce36053e2d4fd
+--- /dev/null
++++ b/src/inventory-api.ts
+@@ -0,0 +1,39 @@
++import { buildAllocationPlan } from "./allocation-plan.ts";
++import type { ReservationReceipt, ReservationRequest, StockSnapshot } from "./inventory-types.ts";
++import { isFulfillable, validateReservationRequest } from "./reservation-policy.ts";
++
++export interface ReservationResponse {
++  status: 201 | 409 | 422;
++  body: { receipt?: ReservationReceipt; error?: string };
++}
++
++export function previewReservation(
++  request: ReservationRequest,
++  snapshots: ReadonlyMap<string, StockSnapshot>,
++  nowMs: number,
++): ReservationResponse {
++  try {
++    validateReservationRequest(request, snapshots, nowMs);
++    if (!isFulfillable(request, snapshots)) {
++      return { status: 409, body: { error: "insufficient stock" } };
++    }
++    const plan = buildAllocationPlan(request, snapshots);
++    return {
++      status: 201,
++      body: {
++        receipt: {
++          requestId: plan.requestId,
++          warehouseId: request.warehouseId,
++          lines: plan.lines,
++          reservedAt: new Date(nowMs).toISOString(),
++        },
++      },
++    };
++  } catch (error) {
++    return { status: 422, body: { error: error instanceof Error ? error.message : "invalid reservation" } };
++  }
++}
++
++export function reservationLocation(receipt: ReservationReceipt): string {
++  return `/warehouses/${encodeURIComponent(receipt.warehouseId)}/reservations/${encodeURIComponent(receipt.requestId)}`;
++}
+diff --git a/src/inventory-audit.ts b/src/inventory-audit.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..5898919d373b2bf703be8112da42122782f90d39
+--- /dev/null
++++ b/src/inventory-audit.ts
+@@ -0,0 +1,46 @@
++export interface AuditActor {
++  actorId: string;
++  actorType: "user" | "service" | "system";
++}
++
++export interface InventoryAuditEntry {
++  eventId: string;
++  occurredAt: string;
++  actor: AuditActor;
++  action: string;
++  warehouseId: string;
++  sku: string | null;
++  attributes: Record<string, string | number | boolean | null>;
++}
++
++export function createAuditEntry(entry: InventoryAuditEntry): InventoryAuditEntry {
++  if (!entry.eventId.trim() || !entry.actor.actorId.trim() || !entry.action.trim()) throw new Error("audit identity is incomplete");
++  if (!Number.isFinite(Date.parse(entry.occurredAt))) throw new Error("invalid audit timestamp");
++  if (!entry.warehouseId.trim()) throw new Error("warehouse is required");
++  return structuredClone(entry);
++}
++
++export function auditEntriesForSku(entries: InventoryAuditEntry[], sku: string): InventoryAuditEntry[] {
++  return entries
++    .filter((entry) => entry.sku === sku)
++    .map(createAuditEntry)
++    .sort((left, right) => left.occurredAt.localeCompare(right.occurredAt) || left.eventId.localeCompare(right.eventId));
++}
++
++export function summarizeAuditActions(entries: InventoryAuditEntry[]): Map<string, number> {
++  const summary = new Map<string, number>();
++  for (const entry of entries) summary.set(entry.action, (summary.get(entry.action) ?? 0) + 1);
++  return summary;
++}
++
++export function serializeAuditEntry(entry: InventoryAuditEntry): string {
++  const safe = createAuditEntry(entry);
++  return JSON.stringify({
++    ...safe,
++    attributes: Object.fromEntries(Object.entries(safe.attributes).sort(([left], [right]) => left.localeCompare(right))),
++  });
++}
++
++export function latestAuditEntry(entries: InventoryAuditEntry[]): InventoryAuditEntry | null {
++  return [...entries].sort((left, right) => right.occurredAt.localeCompare(left.occurredAt))[0] ?? null;
++}
+diff --git a/src/inventory-events.ts b/src/inventory-events.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..635e9bdf72c0b9457c3edfb25635c1f3564d50c7
+--- /dev/null
++++ b/src/inventory-events.ts
+@@ -0,0 +1,38 @@
++import type { ReservationReceipt, ReservedLine, WarehouseId } from "./inventory-types.ts";
++
++export interface InventoryReservedEvent {
++  type: "inventory.reserved";
++  version: 1;
++  occurredAt: string;
++  payload: {
++    requestId: string;
++    warehouseId: WarehouseId;
++    lines: Array<Pick<ReservedLine, "sku" | "quantity">>;
++  };
++}
++
++export function reservationEvent(receipt: ReservationReceipt): InventoryReservedEvent {
++  return {
++    type: "inventory.reserved",
++    version: 1,
++    occurredAt: receipt.reservedAt,
++    payload: {
++      requestId: receipt.requestId,
++      warehouseId: receipt.warehouseId,
++      lines: receipt.lines.map(({ sku, quantity }) => ({ sku, quantity })),
++    },
++  };
++}
++
++export function eventPartitionKey(event: InventoryReservedEvent): string {
++  return `${event.payload.warehouseId}:${event.payload.requestId}`;
++}
++
++export function serializeInventoryEvent(event: InventoryReservedEvent): string {
++  if (event.payload.lines.length === 0) throw new Error("reservation event needs lines");
++  return JSON.stringify(event);
++}
++
++export function totalReservedUnits(event: InventoryReservedEvent): number {
++  return event.payload.lines.reduce((sum, line) => sum + line.quantity, 0);
++}
+diff --git a/src/inventory-locks.ts b/src/inventory-locks.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..b036eeb9ad3796fd718243a4460d3167a1d92b10
+--- /dev/null
++++ b/src/inventory-locks.ts
+@@ -0,0 +1,48 @@
++export interface InventoryLock {
++  lockId: string;
++  resourceKey: string;
++  ownerId: string;
++  acquiredAt: string;
++  expiresAt: string;
++}
++
++export function acquireInventoryLock(
++  active: InventoryLock[],
++  candidate: InventoryLock,
++  nowMs: number,
++): InventoryLock[] {
++  if (!candidate.lockId.trim() || !candidate.resourceKey.trim() || !candidate.ownerId.trim()) {
++    throw new Error("inventory lock identity is incomplete");
++  }
++  const acquiredAt = Date.parse(candidate.acquiredAt);
++  const expiresAt = Date.parse(candidate.expiresAt);
++  if (!Number.isFinite(acquiredAt) || !Number.isFinite(expiresAt) || expiresAt <= acquiredAt) {
++    throw new Error("invalid inventory lock window");
++  }
++  if (expiresAt <= nowMs) throw new Error("inventory lock is already expired");
++  const retained = active.filter((lock) => Date.parse(lock.expiresAt) > nowMs);
++  if (retained.some((lock) => lock.lockId === candidate.lockId)) throw new Error("inventory lock id already exists");
++  if (retained.some((lock) => lock.resourceKey === candidate.resourceKey && lock.ownerId !== candidate.ownerId)) {
++    throw new Error("inventory resource is locked");
++  }
++  return [...retained, { ...candidate }];
++}
++
++export function releaseInventoryLock(active: InventoryLock[], lockId: string, ownerId: string): InventoryLock[] {
++  const lock = active.find((candidate) => candidate.lockId === lockId);
++  if (!lock) return active.map((candidate) => ({ ...candidate }));
++  if (lock.ownerId !== ownerId) throw new Error("only the lock owner can release it");
++  return active.filter((candidate) => candidate.lockId !== lockId).map((candidate) => ({ ...candidate }));
++}
++
++export function locksForOwner(active: InventoryLock[], ownerId: string, nowMs: number): InventoryLock[] {
++  return active
++    .filter((lock) => lock.ownerId === ownerId && Date.parse(lock.expiresAt) > nowMs)
++    .map((lock) => ({ ...lock }))
++    .sort((left, right) => left.resourceKey.localeCompare(right.resourceKey));
++}
++
++export function lockResourceKey(warehouseId: string, sku: string): string {
++  if (!warehouseId.trim() || !sku.trim()) throw new Error("lock resource components are required");
++  return `${warehouseId.length}:${warehouseId}${sku.length}:${sku}`;
++}
+diff --git a/src/inventory-metrics.ts b/src/inventory-metrics.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..f7817052c1c2399029b1965cd64e927e06ea5f3c
+--- /dev/null
++++ b/src/inventory-metrics.ts
+@@ -0,0 +1,46 @@
++export interface InventoryMetricInput {
++  sku: string;
++  onHand: number;
++  reserved: number;
++  shippedLast30Days: number;
++  stockoutHoursLast30Days: number;
++}
++
++export interface InventoryMetrics {
++  sku: string;
++  available: number;
++  reservationRate: number;
++  daysOfSupply: number | null;
++  stockoutRate: number;
++}
++
++export function calculateInventoryMetrics(input: InventoryMetricInput): InventoryMetrics {
++  for (const value of [input.onHand, input.reserved, input.shippedLast30Days, input.stockoutHoursLast30Days]) {
++    if (!Number.isFinite(value) || value < 0) throw new Error("invalid metric input");
++  }
++  if (input.reserved > input.onHand) throw new Error("reserved stock exceeds on-hand stock");
++  if (input.stockoutHoursLast30Days > 30 * 24) throw new Error("stockout duration exceeds metric window");
++  const available = input.onHand - input.reserved;
++  const averageDailyDemand = input.shippedLast30Days / 30;
++  return {
++    sku: input.sku,
++    available,
++    reservationRate: input.onHand === 0 ? 0 : input.reserved / input.onHand,
++    daysOfSupply: averageDailyDemand === 0 ? null : available / averageDailyDemand,
++    stockoutRate: input.stockoutHoursLast30Days / (30 * 24),
++  };
++}
++
++export function averageDaysOfSupply(metrics: InventoryMetrics[]): number | null {
++  const measured = metrics.flatMap((metric) => metric.daysOfSupply === null ? [] : [metric.daysOfSupply]);
++  return measured.length === 0 ? null : measured.reduce((sum, value) => sum + value, 0) / measured.length;
++}
++
++export function stockoutSkus(metrics: InventoryMetrics[], threshold: number): string[] {
++  if (threshold < 0 || threshold > 1) throw new Error("invalid stockout threshold");
++  return metrics.filter((metric) => metric.stockoutRate >= threshold).map((metric) => metric.sku).sort();
++}
++
++export function metricKey(warehouseId: string, metric: InventoryMetrics): string {
++  return `${warehouseId}:${metric.sku}`;
++}
+diff --git a/src/inventory-promise.ts b/src/inventory-promise.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..ef7c434180458eb4c1b910e1ecd6f395fa1e1b02
+--- /dev/null
++++ b/src/inventory-promise.ts
+@@ -0,0 +1,43 @@
++export interface PromiseInput {
++  sku: string;
++  requested: number;
++  available: number;
++  inbound: Array<{ quantity: number; arrivesAt: string }>;
++  cutoffAt: string;
++}
++
++export interface InventoryPromise {
++  sku: string;
++  promised: number;
++  backordered: number;
++  source: "available" | "inbound" | "mixed" | "none";
++}
++
++export function makeInventoryPromise(input: PromiseInput): InventoryPromise {
++  if (!Number.isSafeInteger(input.requested) || input.requested <= 0) throw new Error("invalid requested units");
++  if (!Number.isSafeInteger(input.available) || input.available < 0) throw new Error("invalid available units");
++  const cutoff = Date.parse(input.cutoffAt);
++  if (!Number.isFinite(cutoff)) throw new Error("invalid promise cutoff");
++  const inbound = input.inbound
++    .filter((receipt) => Date.parse(receipt.arrivesAt) <= cutoff)
++    .reduce((sum, receipt) => {
++      if (!Number.isSafeInteger(receipt.quantity) || receipt.quantity < 0) throw new Error("invalid inbound units");
++      return sum + receipt.quantity;
++    }, 0);
++  const promised = Math.min(input.requested, input.available + inbound);
++  const backordered = input.requested - promised;
++  let source: InventoryPromise["source"] = "none";
++  if (promised > 0 && promised <= input.available) source = "available";
++  else if (input.available === 0 && promised > 0) source = "inbound";
++  else if (promised > 0) source = "mixed";
++  return { sku: input.sku, promised, backordered, source };
++}
++
++export function promiseFillRate(promises: InventoryPromise[]): number {
++  const requested = promises.reduce((sum, item) => sum + item.promised + item.backordered, 0);
++  return requested === 0 ? 1 : promises.reduce((sum, item) => sum + item.promised, 0) / requested;
++}
++
++export function unfulfilledSkus(promises: InventoryPromise[]): string[] {
++  return promises.filter((item) => item.backordered > 0).map((item) => item.sku).sort();
++}
+diff --git a/src/inventory-service.ts b/src/inventory-service.ts
+index 11a07f69cdfb831cd83ff6b079cd89371aa593a1..3e6b516fafacbd796dd7ee049f39faabede89e5f 100644
+--- a/src/inventory-service.ts
++++ b/src/inventory-service.ts
+@@ -13,8 +13,6 @@ export function reserve(stock: Map<string, StockLine>, lines: ReservationLine[])
+     const item = stock.get(line.sku);
+     if (!item) throw new Error(`unknown sku: ${line.sku}`);
+     if (line.quantity <= 0 || item.available < line.quantity) throw new Error(`cannot reserve: ${line.sku}`);
+-  }
+-  for (const line of lines) {
+-    stock.get(line.sku)!.available -= line.quantity;
++    item.available -= line.quantity;
+   }
+ }
+diff --git a/src/inventory-types.ts b/src/inventory-types.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..d460909636adff4b413f3519fc3c8debd44fd314
+--- /dev/null
++++ b/src/inventory-types.ts
+@@ -0,0 +1,41 @@
++export type WarehouseId = string & { readonly warehouseId: unique symbol };
++export type Sku = string & { readonly sku: unique symbol };
++
++export interface StockSnapshot {
++  warehouseId: WarehouseId;
++  sku: Sku;
++  available: number;
++  reserved: number;
++  observedAt: string;
++}
++
++export interface ReservationRequest {
++  requestId: string;
++  customerId: string;
++  warehouseId: WarehouseId;
++  lines: Array<{ sku: Sku; quantity: number }>;
++  requestedAt: string;
++}
++
++export interface ReservedLine {
++  sku: Sku;
++  quantity: number;
++  remainingAvailable: number;
++}
++
++export interface ReservationReceipt {
++  requestId: string;
++  warehouseId: WarehouseId;
++  lines: ReservedLine[];
++  reservedAt: string;
++}
++
++export function warehouseId(value: string): WarehouseId {
++  if (!/^wh_[a-z0-9]{4,24}$/.test(value)) throw new Error("invalid warehouse id");
++  return value as WarehouseId;
++}
++
++export function sku(value: string): Sku {
++  if (!/^[A-Z0-9][A-Z0-9_-]{2,31}$/.test(value)) throw new Error("invalid sku");
++  return value as Sku;
++}
+diff --git a/src/lot-selection.ts b/src/lot-selection.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..fd2ca6bcfb38591f8dc2275f22198d937f7087ed
+--- /dev/null
++++ b/src/lot-selection.ts
+@@ -0,0 +1,45 @@
++export interface InventoryLot {
++  lotId: string;
++  sku: string;
++  available: number;
++  receivedAt: string;
++  expiresAt: string | null;
++  quarantined: boolean;
++}
++
++export interface LotAllocation {
++  lotId: string;
++  quantity: number;
++}
++
++function lotOrder(left: InventoryLot, right: InventoryLot): number {
++  const leftExpiry = left.expiresAt ? Date.parse(left.expiresAt) : Number.MAX_SAFE_INTEGER;
++  const rightExpiry = right.expiresAt ? Date.parse(right.expiresAt) : Number.MAX_SAFE_INTEGER;
++  return leftExpiry - rightExpiry || left.receivedAt.localeCompare(right.receivedAt) || left.lotId.localeCompare(right.lotId);
++}
++
++export function selectLots(lots: InventoryLot[], sku: string, quantity: number, nowMs: number): LotAllocation[] {
++  if (!Number.isSafeInteger(quantity) || quantity <= 0) throw new Error("invalid allocation quantity");
++  let remaining = quantity;
++  const allocations: LotAllocation[] = [];
++  const eligible = lots
++    .filter((lot) => lot.sku === sku && !lot.quarantined && lot.available > 0)
++    .filter((lot) => lot.expiresAt === null || Date.parse(lot.expiresAt) > nowMs)
++    .sort(lotOrder);
++  for (const lot of eligible) {
++    const allocated = Math.min(lot.available, remaining);
++    allocations.push({ lotId: lot.lotId, quantity: allocated });
++    remaining -= allocated;
++    if (remaining === 0) break;
++  }
++  if (remaining > 0) throw new Error(`insufficient eligible stock: ${sku}`);
++  return allocations;
++}
++
++export function allocatedQuantity(allocations: LotAllocation[]): number {
++  return allocations.reduce((sum, allocation) => sum + allocation.quantity, 0);
++}
++
++export function allocationByLot(allocations: LotAllocation[]): Map<string, number> {
++  return new Map(allocations.map((allocation) => [allocation.lotId, allocation.quantity]));
++}
+diff --git a/src/packing-plan.ts b/src/packing-plan.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..e3542bd20e8be6c091304de852d6f2344bafa58b
+--- /dev/null
++++ b/src/packing-plan.ts
+@@ -0,0 +1,46 @@
++export interface PackableLine {
++  sku: string;
++  quantity: number;
++  unitWeightGrams: number;
++  fragile: boolean;
++}
++
++export interface CartonType {
++  cartonId: string;
++  maximumWeightGrams: number;
++  supportsFragile: boolean;
++}
++
++export interface PackingPlan {
++  cartonId: string;
++  lines: PackableLine[];
++  totalWeightGrams: number;
++}
++
++export function selectCarton(lines: PackableLine[], cartons: CartonType[]): CartonType {
++  const totalWeight = lines.reduce((sum, line) => {
++    if (!Number.isSafeInteger(line.quantity) || line.quantity <= 0) throw new Error("invalid pack quantity");
++    if (!Number.isFinite(line.unitWeightGrams) || line.unitWeightGrams <= 0) throw new Error("invalid unit weight");
++    return sum + line.quantity * line.unitWeightGrams;
++  }, 0);
++  const requiresFragile = lines.some((line) => line.fragile);
++  const selected = [...cartons]
++    .filter((carton) => carton.maximumWeightGrams >= totalWeight)
++    .filter((carton) => !requiresFragile || carton.supportsFragile)
++    .sort((left, right) => left.maximumWeightGrams - right.maximumWeightGrams || left.cartonId.localeCompare(right.cartonId))[0];
++  if (!selected) throw new Error("no suitable carton");
++  return selected;
++}
++
++export function buildPackingPlan(lines: PackableLine[], cartons: CartonType[]): PackingPlan {
++  const carton = selectCarton(lines, cartons);
++  return {
++    cartonId: carton.cartonId,
++    lines: lines.map((line) => ({ ...line })),
++    totalWeightGrams: lines.reduce((sum, line) => sum + line.quantity * line.unitWeightGrams, 0),
++  };
++}
++
++export function packingSlip(plan: PackingPlan): string[] {
++  return plan.lines.map((line) => `${line.sku} x ${line.quantity}`);
++}
+diff --git a/src/pick-list.ts b/src/pick-list.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..f39b2849e6e4f809d92176a6de4bc97f1fb597a7
+--- /dev/null
++++ b/src/pick-list.ts
+@@ -0,0 +1,56 @@
++export interface PickInstruction {
++  reservationId: string;
++  sku: string;
++  quantity: number;
++  zone: string;
++  aisle: string;
++  bin: string;
++}
++
++export interface PickWave {
++  waveId: string;
++  instructions: PickInstruction[];
++  totalUnits: number;
++  zones: string[];
++}
++
++export function buildPickWave(waveId: string, instructions: PickInstruction[]): PickWave {
++  if (!waveId.trim()) throw new Error("wave id is required");
++  const normalized = instructions.map((instruction) => {
++    if (!Number.isSafeInteger(instruction.quantity) || instruction.quantity <= 0) throw new Error("invalid pick quantity");
++    if (![instruction.zone, instruction.aisle, instruction.bin].every((value) => value.trim())) {
++      throw new Error("pick location is incomplete");
++    }
++    return { ...instruction };
++  });
++  normalized.sort((left, right) =>
++    left.zone.localeCompare(right.zone) ||
++    left.aisle.localeCompare(right.aisle) ||
++    left.bin.localeCompare(right.bin) ||
++    left.sku.localeCompare(right.sku));
++  return {
++    waveId,
++    instructions: normalized,
++    totalUnits: normalized.reduce((sum, instruction) => sum + instruction.quantity, 0),
++    zones: [...new Set(normalized.map((instruction) => instruction.zone))],
++  };
++}
++
++export function splitPickWave(wave: PickWave, maximumUnits: number): PickWave[] {
++  if (!Number.isSafeInteger(maximumUnits) || maximumUnits <= 0) throw new Error("invalid wave capacity");
++  const waves: PickWave[] = [];
++  let pending: PickInstruction[] = [];
++  let units = 0;
++  for (const instruction of wave.instructions) {
++    if (instruction.quantity > maximumUnits) throw new Error("one pick exceeds wave capacity");
++    if (units + instruction.quantity > maximumUnits) {
++      waves.push(buildPickWave(`${wave.waveId}-${waves.length + 1}`, pending));
++      pending = [];
++      units = 0;
++    }
++    pending.push(instruction);
++    units += instruction.quantity;
++  }
++  if (pending.length > 0) waves.push(buildPickWave(`${wave.waveId}-${waves.length + 1}`, pending));
++  return waves;
++}
+diff --git a/src/quarantine-service.ts b/src/quarantine-service.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..abbb33d78fb3e73e0c73d74a2c18330b12a1f1a1
+--- /dev/null
++++ b/src/quarantine-service.ts
+@@ -0,0 +1,40 @@
++export interface QuarantineHold {
++  holdId: string;
++  sku: string;
++  lotId: string | null;
++  quantity: number;
++  reason: string;
++  createdAt: string;
++  releasedAt: string | null;
++}
++
++export function createQuarantineHold(input: Omit<QuarantineHold, "releasedAt">): QuarantineHold {
++  if (!input.holdId.trim() || !input.sku.trim() || !input.reason.trim()) throw new Error("quarantine hold is incomplete");
++  if (!Number.isSafeInteger(input.quantity) || input.quantity <= 0) throw new Error("invalid quarantine quantity");
++  if (!Number.isFinite(Date.parse(input.createdAt))) throw new Error("invalid quarantine timestamp");
++  return { ...input, releasedAt: null };
++}
++
++export function releaseQuarantineHold(hold: QuarantineHold, releasedAt: string): QuarantineHold {
++  if (hold.releasedAt !== null) throw new Error("quarantine hold is already released");
++  if (!Number.isFinite(Date.parse(releasedAt))) throw new Error("invalid release timestamp");
++  if (Date.parse(releasedAt) < Date.parse(hold.createdAt)) throw new Error("release precedes hold");
++  return { ...hold, releasedAt };
++}
++
++export function activeQuarantineQuantity(holds: QuarantineHold[], sku: string): number {
++  return holds
++    .filter((hold) => hold.sku === sku && hold.releasedAt === null)
++    .reduce((sum, hold) => sum + hold.quantity, 0);
++}
++
++export function activeHoldsForLot(holds: QuarantineHold[], lotId: string): QuarantineHold[] {
++  return holds
++    .filter((hold) => hold.lotId === lotId && hold.releasedAt === null)
++    .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
++}
++
++export function holdDurationMs(hold: QuarantineHold, nowMs: number): number {
++  const end = hold.releasedAt ? Date.parse(hold.releasedAt) : nowMs;
++  return Math.max(0, end - Date.parse(hold.createdAt));
++}
+diff --git a/src/receiving-service.ts b/src/receiving-service.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..544ade7def5ab06cd5f50eb6413dcdad6aec6bd2
+--- /dev/null
++++ b/src/receiving-service.ts
+@@ -0,0 +1,53 @@
++export interface PurchaseOrderLine {
++  sku: string;
++  ordered: number;
++  previouslyReceived: number;
++}
++
++export interface ReceiptLine {
++  sku: string;
++  received: number;
++  damaged: number;
++}
++
++export interface AppliedReceipt {
++  sku: string;
++  accepted: number;
++  quarantined: number;
++  cumulativeReceived: number;
++}
++
++export function applyReceipt(order: PurchaseOrderLine[], receipt: ReceiptLine[]): AppliedReceipt[] {
++  const bySku = new Map(order.map((line) => [line.sku, line]));
++  const seen = new Set<string>();
++  return receipt.map((line) => {
++    if (seen.has(line.sku)) throw new Error(`duplicate receipt line: ${line.sku}`);
++    seen.add(line.sku);
++    const ordered = bySku.get(line.sku);
++    if (!ordered) throw new Error(`sku is not on purchase order: ${line.sku}`);
++    if (![line.received, line.damaged].every((value) => Number.isSafeInteger(value) && value >= 0)) {
++      throw new Error("invalid receipt quantity");
++    }
++    if (line.damaged > line.received) throw new Error("damaged quantity exceeds received quantity");
++    if (ordered.previouslyReceived + line.received > ordered.ordered) throw new Error("receipt exceeds order quantity");
++    return {
++      sku: line.sku,
++      accepted: line.received - line.damaged,
++      quarantined: line.damaged,
++      cumulativeReceived: ordered.previouslyReceived + line.received,
++    };
++  });
++}
++
++export function receiptAcceptedUnits(lines: AppliedReceipt[]): number {
++  return lines.reduce((sum, line) => sum + line.accepted, 0);
++}
++
++export function receiptComplete(order: PurchaseOrderLine[], applied: AppliedReceipt[]): boolean {
++  const received = new Map(applied.map((line) => [line.sku, line.cumulativeReceived]));
++  return order.every((line) => (received.get(line.sku) ?? line.previouslyReceived) === line.ordered);
++}
++
++export function outstandingUnits(order: PurchaseOrderLine): number {
++  return Math.max(0, order.ordered - order.previouslyReceived);
++}
+diff --git a/src/replenishment-policy.ts b/src/replenishment-policy.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..d565a8a5792bb121f972735e476619af0f5d75b8
+--- /dev/null
++++ b/src/replenishment-policy.ts
+@@ -0,0 +1,48 @@
++export interface StockPosition {
++  sku: string;
++  available: number;
++  inbound: number;
++  averageDailyDemand: number;
++}
++
++export interface ReplenishmentRule {
++  sku: string;
++  leadTimeDays: number;
++  reviewPeriodDays: number;
++  safetyStockDays: number;
++  minimumOrderQuantity: number;
++  orderMultiple: number;
++}
++
++export interface ReplenishmentRecommendation {
++  sku: string;
++  reorderPoint: number;
++  targetStock: number;
++  recommendedQuantity: number;
++}
++
++export function recommendReplenishment(
++  position: StockPosition,
++  rule: ReplenishmentRule,
++): ReplenishmentRecommendation | null {
++  for (const value of [position.available, position.inbound, position.averageDailyDemand]) {
++    if (!Number.isFinite(value) || value < 0) throw new Error("invalid stock position");
++  }
++  for (const value of [rule.leadTimeDays, rule.reviewPeriodDays, rule.safetyStockDays]) {
++    if (!Number.isFinite(value) || value < 0) throw new Error("invalid replenishment duration");
++  }
++  if (!Number.isSafeInteger(rule.minimumOrderQuantity) || rule.minimumOrderQuantity <= 0) throw new Error("invalid minimum order");
++  if (!Number.isSafeInteger(rule.orderMultiple) || rule.orderMultiple <= 0) throw new Error("invalid order multiple");
++  const reorderPoint = Math.ceil(position.averageDailyDemand * (rule.leadTimeDays + rule.safetyStockDays));
++  const effectiveStock = position.available + position.inbound;
++  if (effectiveStock > reorderPoint) return null;
++  const targetStock = Math.ceil(position.averageDailyDemand * (rule.leadTimeDays + rule.reviewPeriodDays + rule.safetyStockDays));
++  const shortfall = Math.max(rule.minimumOrderQuantity, targetStock - effectiveStock);
++  const recommendedQuantity = Math.ceil(shortfall / rule.orderMultiple) * rule.orderMultiple;
++  return { sku: position.sku, reorderPoint, targetStock, recommendedQuantity };
++}
++
++export function prioritizeReplenishment(items: ReplenishmentRecommendation[]): ReplenishmentRecommendation[] {
++  return [...items].sort((left, right) =>
++    (right.targetStock - right.reorderPoint) - (left.targetStock - left.reorderPoint) || left.sku.localeCompare(right.sku));
++}
+diff --git a/src/reservation-expiry.ts b/src/reservation-expiry.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..ec5b630af07968d51e2e09b21b73032f098f9e5d
+--- /dev/null
++++ b/src/reservation-expiry.ts
+@@ -0,0 +1,46 @@
++export interface ExpirableReservation {
++  reservationId: string;
++  status: "active" | "released" | "fulfilled" | "expired";
++  expiresAt: string;
++  lines: Array<{ sku: string; quantity: number }>;
++}
++
++export interface ExpiryRelease {
++  reservationId: string;
++  released: Array<{ sku: string; quantity: number }>;
++  expiredAt: string;
++}
++
++export function isExpired(reservation: ExpirableReservation, nowMs: number): boolean {
++  const expiresAt = Date.parse(reservation.expiresAt);
++  if (!Number.isFinite(expiresAt)) throw new Error("invalid reservation expiry");
++  return reservation.status === "active" && expiresAt <= nowMs;
++}
++
++export function releaseExpired(reservation: ExpirableReservation, nowMs: number): ExpiryRelease | null {
++  if (!isExpired(reservation, nowMs)) return null;
++  return {
++    reservationId: reservation.reservationId,
++    released: reservation.lines.map((line) => ({ ...line })),
++    expiredAt: new Date(nowMs).toISOString(),
++  };
++}
++
++export function dueForExpiry(reservations: ExpirableReservation[], nowMs: number, limit: number): ExpirableReservation[] {
++  if (!Number.isSafeInteger(limit) || limit <= 0) throw new Error("invalid expiry batch limit");
++  return reservations
++    .filter((reservation) => isExpired(reservation, nowMs))
++    .sort((left, right) => left.expiresAt.localeCompare(right.expiresAt) || left.reservationId.localeCompare(right.reservationId))
++    .slice(0, limit);
++}
++
++export function releasedUnitCount(releases: ExpiryRelease[]): number {
++  return releases.reduce(
++    (total, release) => total + release.released.reduce((subtotal, line) => subtotal + line.quantity, 0),
++    0,
++  );
++}
++
++export function expiryPartition(reservation: ExpirableReservation): string {
++  return reservation.expiresAt.slice(0, 10);
++}
+diff --git a/src/reservation-policy.ts b/src/reservation-policy.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..e24d3a5be9ddc2481c2aa61d9ac08ad58b7ced01
+--- /dev/null
++++ b/src/reservation-policy.ts
+@@ -0,0 +1,44 @@
++import type { ReservationRequest, StockSnapshot } from "./inventory-types.ts";
++
++export interface ReservationPolicy {
++  maximumLines: number;
++  maximumUnitsPerLine: number;
++  maximumUnitsPerRequest: number;
++  staleAfterMs: number;
++}
++
++export const DEFAULT_RESERVATION_POLICY: ReservationPolicy = {
++  maximumLines: 50,
++  maximumUnitsPerLine: 100,
++  maximumUnitsPerRequest: 500,
++  staleAfterMs: 60_000,
++};
++
++export function validateReservationRequest(
++  request: ReservationRequest,
++  snapshots: ReadonlyMap<string, StockSnapshot>,
++  nowMs: number,
++  policy = DEFAULT_RESERVATION_POLICY,
++): void {
++  if (request.lines.length === 0 || request.lines.length > policy.maximumLines) {
++    throw new Error("invalid reservation line count");
++  }
++  let units = 0;
++  const seen = new Set<string>();
++  for (const line of request.lines) {
++    if (!Number.isSafeInteger(line.quantity) || line.quantity <= 0 || line.quantity > policy.maximumUnitsPerLine) {
++      throw new Error(`invalid quantity: ${line.sku}`);
++    }
++    if (seen.has(line.sku)) throw new Error(`duplicate sku: ${line.sku}`);
++    seen.add(line.sku);
++    units += line.quantity;
++    const snapshot = snapshots.get(line.sku);
++    if (!snapshot || snapshot.warehouseId !== request.warehouseId) throw new Error(`stock unavailable: ${line.sku}`);
++    if (nowMs - Date.parse(snapshot.observedAt) > policy.staleAfterMs) throw new Error(`stale stock: ${line.sku}`);
++  }
++  if (units > policy.maximumUnitsPerRequest) throw new Error("reservation is too large");
++}
++
++export function isFulfillable(request: ReservationRequest, snapshots: ReadonlyMap<string, StockSnapshot>): boolean {
++  return request.lines.every((line) => (snapshots.get(line.sku)?.available ?? 0) >= line.quantity);
++}
+diff --git a/src/reservation-store.ts b/src/reservation-store.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..c1062e5427803b37cd501c89d5ab1d2521c16a4f
+--- /dev/null
++++ b/src/reservation-store.ts
+@@ -0,0 +1,56 @@
++export interface StoredReservation {
++  reservationId: string;
++  requestId: string;
++  warehouseId: string;
++  status: "active" | "released" | "fulfilled" | "expired";
++  createdAt: string;
++  updatedAt: string;
++}
++
++export class ReservationStore {
++  readonly #byId = new Map<string, StoredReservation>();
++  readonly #byRequest = new Map<string, string>();
++
++  create(reservation: StoredReservation): void {
++    if (this.#byId.has(reservation.reservationId)) throw new Error("reservation already exists");
++    if (this.#byRequest.has(reservation.requestId)) throw new Error("request already reserved");
++    if (reservation.status !== "active") throw new Error("new reservation must be active");
++    this.#byId.set(reservation.reservationId, structuredClone(reservation));
++    this.#byRequest.set(reservation.requestId, reservation.reservationId);
++  }
++
++  get(reservationId: string): StoredReservation | null {
++    const value = this.#byId.get(reservationId);
++    return value ? structuredClone(value) : null;
++  }
++
++  findByRequest(requestId: string): StoredReservation | null {
++    const reservationId = this.#byRequest.get(requestId);
++    return reservationId ? this.get(reservationId) : null;
++  }
++
++  transition(
++    reservationId: string,
++    status: Exclude<StoredReservation["status"], "active">,
++    updatedAt: string,
++  ): StoredReservation {
++    const existing = this.#byId.get(reservationId);
++    if (!existing) throw new Error("reservation not found");
++    if (existing.status !== "active") throw new Error("reservation is already terminal");
++    if (Date.parse(updatedAt) < Date.parse(existing.updatedAt)) throw new Error("reservation timestamp moved backward");
++    const updated = { ...existing, status, updatedAt };
++    this.#byId.set(reservationId, updated);
++    return structuredClone(updated);
++  }
++
++  activeForWarehouse(warehouseId: string): StoredReservation[] {
++    return [...this.#byId.values()]
++      .filter((reservation) => reservation.warehouseId === warehouseId && reservation.status === "active")
++      .map((reservation) => structuredClone(reservation))
++      .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
++  }
++
++  size(): number {
++    return this.#byId.size;
++  }
++}
+diff --git a/src/reservation-summary.ts b/src/reservation-summary.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..7bed5082083c89e45235a599e287f9395bd964c5
+--- /dev/null
++++ b/src/reservation-summary.ts
+@@ -0,0 +1,37 @@
++import type { ReservationReceipt } from "./inventory-types.ts";
++
++export interface ReservationSummary {
++  requestId: string;
++  lineCount: number;
++  totalUnits: number;
++  lowestRemainingStock: number;
++}
++
++export function summarizeReservation(receipt: ReservationReceipt): ReservationSummary {
++  if (receipt.lines.length === 0) throw new Error("reservation receipt has no lines");
++  return {
++    requestId: receipt.requestId,
++    lineCount: receipt.lines.length,
++    totalUnits: receipt.lines.reduce((sum, line) => sum + line.quantity, 0),
++    lowestRemainingStock: Math.min(...receipt.lines.map((line) => line.remainingAvailable)),
++  };
++}
++
++export function formatReservationSummary(summary: ReservationSummary): string {
++  return [
++    `request=${summary.requestId}`,
++    `lines=${summary.lineCount}`,
++    `units=${summary.totalUnits}`,
++    `lowestRemaining=${summary.lowestRemainingStock}`,
++  ].join(" ");
++}
++
++export function combineSummaries(summaries: ReservationSummary[]): ReservationSummary {
++  if (summaries.length === 0) throw new Error("at least one summary is required");
++  return {
++    requestId: summaries.map((summary) => summary.requestId).join("+"),
++    lineCount: summaries.reduce((sum, summary) => sum + summary.lineCount, 0),
++    totalUnits: summaries.reduce((sum, summary) => sum + summary.totalUnits, 0),
++    lowestRemainingStock: Math.min(...summaries.map((summary) => summary.lowestRemainingStock)),
++  };
++}
+diff --git a/src/returns-service.ts b/src/returns-service.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..7c0be2e8976e40c2944cc72325710daf336b4004
+--- /dev/null
++++ b/src/returns-service.ts
+@@ -0,0 +1,47 @@
++export interface ReturnLine {
++  sku: string;
++  quantity: number;
++  condition: "sealed" | "opened" | "damaged";
++  reason: string;
++}
++
++export interface ReturnDisposition {
++  sku: string;
++  restock: number;
++  inspect: number;
++  discard: number;
++}
++
++export function classifyReturn(line: ReturnLine): ReturnDisposition {
++  if (!Number.isSafeInteger(line.quantity) || line.quantity <= 0) throw new Error("invalid return quantity");
++  if (!line.reason.trim()) throw new Error("return reason is required");
++  if (line.condition === "sealed") return { sku: line.sku, restock: line.quantity, inspect: 0, discard: 0 };
++  if (line.condition === "opened") return { sku: line.sku, restock: 0, inspect: line.quantity, discard: 0 };
++  return { sku: line.sku, restock: 0, inspect: 0, discard: line.quantity };
++}
++
++export function classifyReturns(lines: ReturnLine[]): ReturnDisposition[] {
++  return lines.map(classifyReturn);
++}
++
++export function combineReturnDispositions(lines: ReturnDisposition[]): Map<string, ReturnDisposition> {
++  const combined = new Map<string, ReturnDisposition>();
++  for (const line of lines) {
++    const current = combined.get(line.sku) ?? { sku: line.sku, restock: 0, inspect: 0, discard: 0 };
++    combined.set(line.sku, {
++      sku: line.sku,
++      restock: current.restock + line.restock,
++      inspect: current.inspect + line.inspect,
++      discard: current.discard + line.discard,
++    });
++  }
++  return combined;
++}
++
++export function returnedUnits(disposition: ReturnDisposition): number {
++  return disposition.restock + disposition.inspect + disposition.discard;
++}
++
++export function dispositionRequiresReview(disposition: ReturnDisposition): boolean {
++  return disposition.inspect > 0 || disposition.discard > 0;
++}
+diff --git a/src/serial-registry.ts b/src/serial-registry.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..83284e13b298101dde7f95bcfd02c0ad4c736246
+--- /dev/null
++++ b/src/serial-registry.ts
+@@ -0,0 +1,48 @@
++export interface SerializedUnit {
++  serial: string;
++  sku: string;
++  warehouseId: string;
++  status: "available" | "reserved" | "shipped" | "retired";
++  reservationId: string | null;
++}
++
++export function normalizeSerial(value: string): string {
++  const normalized = value.trim().toUpperCase();
++  if (!/^[A-Z0-9][A-Z0-9-]{5,39}$/.test(normalized)) throw new Error("invalid serial");
++  return normalized;
++}
++
++export function registerUnits(existing: Map<string, SerializedUnit>, additions: SerializedUnit[]): Map<string, SerializedUnit> {
++  const next = new Map(existing);
++  for (const unit of additions) {
++    const serial = normalizeSerial(unit.serial);
++    if (next.has(serial)) throw new Error(`duplicate serial: ${serial}`);
++    if (unit.status !== "available" || unit.reservationId !== null) throw new Error("new unit must be available");
++    next.set(serial, { ...unit, serial });
++  }
++  return next;
++}
++
++export function reserveSerials(
++  existing: Map<string, SerializedUnit>,
++  serials: string[],
++  reservationId: string,
++): Map<string, SerializedUnit> {
++  const normalized = serials.map(normalizeSerial);
++  if (new Set(normalized).size !== normalized.length) throw new Error("duplicate requested serial");
++  for (const serial of normalized) {
++    if (existing.get(serial)?.status !== "available") throw new Error(`serial unavailable: ${serial}`);
++  }
++  const next = new Map(existing);
++  for (const serial of normalized) {
++    next.set(serial, { ...next.get(serial)!, status: "reserved", reservationId });
++  }
++  return next;
++}
++
++export function serialsForReservation(existing: Map<string, SerializedUnit>, reservationId: string): string[] {
++  return [...existing.values()]
++    .filter((unit) => unit.reservationId === reservationId)
++    .map((unit) => unit.serial)
++    .sort();
++}
+diff --git a/src/shipment-plan.ts b/src/shipment-plan.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..107304718bc98f965eb226203bd74527aac63c22
+--- /dev/null
++++ b/src/shipment-plan.ts
+@@ -0,0 +1,47 @@
++export interface ShipmentPackage {
++  cartonId: string;
++  weightGrams: number;
++  declaredValueCents: number;
++}
++
++export interface CarrierRate {
++  carrier: string;
++  service: string;
++  maximumWeightGrams: number;
++  priceCents: number;
++  estimatedDays: number;
++}
++
++export interface ShipmentPlan {
++  carrier: string;
++  service: string;
++  packageCount: number;
++  totalPriceCents: number;
++  estimatedDays: number;
++}
++
++export function planShipment(packages: ShipmentPackage[], rates: CarrierRate[], maximumDays: number): ShipmentPlan {
++  if (packages.length === 0) throw new Error("shipment needs a package");
++  if (!Number.isSafeInteger(maximumDays) || maximumDays <= 0) throw new Error("invalid delivery target");
++  const heaviest = Math.max(...packages.map((item) => item.weightGrams));
++  const eligible = rates
++    .filter((rate) => rate.maximumWeightGrams >= heaviest && rate.estimatedDays <= maximumDays)
++    .sort((left, right) => left.priceCents - right.priceCents || left.estimatedDays - right.estimatedDays);
++  const selected = eligible[0];
++  if (!selected) throw new Error("no carrier rate meets shipment requirements");
++  return {
++    carrier: selected.carrier,
++    service: selected.service,
++    packageCount: packages.length,
++    totalPriceCents: selected.priceCents * packages.length,
++    estimatedDays: selected.estimatedDays,
++  };
++}
++
++export function declaredShipmentValue(packages: ShipmentPackage[]): number {
++  return packages.reduce((sum, item) => sum + item.declaredValueCents, 0);
++}
++
++export function shipmentServiceKey(plan: ShipmentPlan): string {
++  return `${plan.carrier}:${plan.service}`;
++}
+diff --git a/src/stock-projection.ts b/src/stock-projection.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..fcddcc15612f48dbe3dd6a3ed7fe8598495b35b1
+--- /dev/null
++++ b/src/stock-projection.ts
+@@ -0,0 +1,52 @@
++export interface StockMovement {
++  sku: string;
++  warehouseId: string;
++  quantity: number;
++  kind: "receipt" | "reservation" | "release" | "shipment" | "adjustment";
++  occurredAt: string;
++}
++
++export interface ProjectedStock {
++  sku: string;
++  warehouseId: string;
++  onHand: number;
++  reserved: number;
++  available: number;
++  lastMovementAt: string | null;
++}
++
++export function projectStock(sku: string, warehouseId: string, movements: StockMovement[]): ProjectedStock {
++  let onHand = 0;
++  let reserved = 0;
++  let lastMovementAt: string | null = null;
++  const ordered = movements
++    .filter((movement) => movement.sku === sku && movement.warehouseId === warehouseId)
++    .sort((left, right) => left.occurredAt.localeCompare(right.occurredAt));
++  for (const movement of ordered) {
++    if (!Number.isSafeInteger(movement.quantity) || movement.quantity <= 0) throw new Error("invalid movement quantity");
++    if (movement.kind === "receipt") onHand += movement.quantity;
++    else if (movement.kind === "reservation") reserved += movement.quantity;
++    else if (movement.kind === "release") reserved -= movement.quantity;
++    else if (movement.kind === "shipment") {
++      reserved -= movement.quantity;
++      onHand -= movement.quantity;
++    } else onHand += movement.quantity;
++    if (onHand < 0 || reserved < 0 || reserved > onHand) throw new Error("invalid stock projection");
++    lastMovementAt = movement.occurredAt;
++  }
++  return { sku, warehouseId, onHand, reserved, available: onHand - reserved, lastMovementAt };
++}
++
++export function projectCatalog(movements: StockMovement[]): Map<string, ProjectedStock> {
++  const keys = new Set(movements.map((movement) => `${movement.warehouseId}\0${movement.sku}`));
++  const catalog = new Map<string, ProjectedStock>();
++  for (const key of keys) {
++    const [warehouseId, sku] = key.split("\0");
++    catalog.set(key, projectStock(sku!, warehouseId!, movements));
++  }
++  return catalog;
++}
++
++export function stockProjectionKey(stock: Pick<ProjectedStock, "warehouseId" | "sku">): string {
++  return `${stock.warehouseId}\0${stock.sku}`;
++}
+diff --git a/src/stock-reconciliation.ts b/src/stock-reconciliation.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..60c3f4489585aba3360bfc141624c5d0b613f71a
+--- /dev/null
++++ b/src/stock-reconciliation.ts
+@@ -0,0 +1,51 @@
++export interface CountedStock {
++  sku: string;
++  warehouseId: string;
++  systemQuantity: number;
++  countedQuantity: number;
++  countedAt: string;
++}
++
++export interface ReconciliationAdjustment {
++  sku: string;
++  warehouseId: string;
++  delta: number;
++  reason: "count-surplus" | "count-shortage";
++  countedAt: string;
++}
++
++export function reconcileCount(count: CountedStock): ReconciliationAdjustment | null {
++  if (!Number.isSafeInteger(count.systemQuantity) || count.systemQuantity < 0) throw new Error("invalid system quantity");
++  if (!Number.isSafeInteger(count.countedQuantity) || count.countedQuantity < 0) throw new Error("invalid counted quantity");
++  if (!Number.isFinite(Date.parse(count.countedAt))) throw new Error("invalid count timestamp");
++  const delta = count.countedQuantity - count.systemQuantity;
++  if (delta === 0) return null;
++  return {
++    sku: count.sku,
++    warehouseId: count.warehouseId,
++    delta,
++    reason: delta > 0 ? "count-surplus" : "count-shortage",
++    countedAt: count.countedAt,
++  };
++}
++
++export function reconcileBatch(counts: CountedStock[]): ReconciliationAdjustment[] {
++  const seen = new Set<string>();
++  const adjustments: ReconciliationAdjustment[] = [];
++  for (const count of counts) {
++    const key = `${count.warehouseId}\0${count.sku}`;
++    if (seen.has(key)) throw new Error(`duplicate count: ${count.sku}`);
++    seen.add(key);
++    const adjustment = reconcileCount(count);
++    if (adjustment) adjustments.push(adjustment);
++  }
++  return adjustments;
++}
++
++export function netAdjustment(adjustments: ReconciliationAdjustment[]): number {
++  return adjustments.reduce((total, adjustment) => total + adjustment.delta, 0);
++}
++
++export function reconciliationKey(adjustment: ReconciliationAdjustment): string {
++  return `${adjustment.warehouseId}:${adjustment.sku}:${adjustment.countedAt}`;
++}
+diff --git a/src/stock-transfer.ts b/src/stock-transfer.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..b6f5980332ba67b686f5819768eebc558e56855f
+--- /dev/null
++++ b/src/stock-transfer.ts
+@@ -0,0 +1,45 @@
++export interface WarehouseStock {
++  warehouseId: string;
++  sku: string;
++  onHand: number;
++  reserved: number;
++}
++
++export interface StockTransfer {
++  transferId: string;
++  sku: string;
++  quantity: number;
++  fromWarehouseId: string;
++  toWarehouseId: string;
++}
++
++export function validateTransfer(transfer: StockTransfer, source: WarehouseStock, target: WarehouseStock): void {
++  if (transfer.fromWarehouseId === transfer.toWarehouseId) throw new Error("transfer endpoints must differ");
++  if (source.warehouseId !== transfer.fromWarehouseId || target.warehouseId !== transfer.toWarehouseId) {
++    throw new Error("transfer stock endpoint mismatch");
++  }
++  if (source.sku !== transfer.sku || target.sku !== transfer.sku) throw new Error("transfer sku mismatch");
++  if (!Number.isSafeInteger(transfer.quantity) || transfer.quantity <= 0) throw new Error("invalid transfer quantity");
++  if (source.onHand - source.reserved < transfer.quantity) throw new Error("insufficient transferable stock");
++}
++
++export function applyTransfer(
++  transfer: StockTransfer,
++  source: WarehouseStock,
++  target: WarehouseStock,
++): { source: WarehouseStock; target: WarehouseStock } {
++  validateTransfer(transfer, source, target);
++  return {
++    source: { ...source, onHand: source.onHand - transfer.quantity },
++    target: { ...target, onHand: target.onHand + transfer.quantity },
++  };
++}
++
++export function transferConservesStock(before: WarehouseStock[], after: WarehouseStock[], sku: string): boolean {
++  const total = (items: WarehouseStock[]) => items.filter((item) => item.sku === sku).reduce((sum, item) => sum + item.onHand, 0);
++  return total(before) === total(after);
++}
++
++export function transferKey(transfer: StockTransfer): string {
++  return `${transfer.fromWarehouseId}>${transfer.toWarehouseId}:${transfer.transferId}`;
++}
+diff --git a/src/supplier-order.ts b/src/supplier-order.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..3d1d4cbde023ccf4d4005ab1fb080089335ac09e
+--- /dev/null
++++ b/src/supplier-order.ts
+@@ -0,0 +1,49 @@
++export interface SupplierOffer {
++  supplierId: string;
++  sku: string;
++  unitPriceCents: number;
++  minimumQuantity: number;
++  orderMultiple: number;
++  leadTimeDays: number;
++}
++
++export interface SupplierOrderLine {
++  supplierId: string;
++  sku: string;
++  quantity: number;
++  unitPriceCents: number;
++  totalPriceCents: number;
++}
++
++export function chooseSupplierOffer(offers: SupplierOffer[], sku: string, desiredQuantity: number): SupplierOrderLine {
++  if (!Number.isSafeInteger(desiredQuantity) || desiredQuantity <= 0) throw new Error("invalid desired quantity");
++  const candidates = offers.filter((offer) => offer.sku === sku).map((offer) => {
++    if (!Number.isSafeInteger(offer.unitPriceCents) || offer.unitPriceCents <= 0) throw new Error("invalid supplier price");
++    if (!Number.isSafeInteger(offer.orderMultiple) || offer.orderMultiple <= 0) throw new Error("invalid order multiple");
++    const minimum = Math.max(desiredQuantity, offer.minimumQuantity);
++    const quantity = Math.ceil(minimum / offer.orderMultiple) * offer.orderMultiple;
++    return {
++      supplierId: offer.supplierId,
++      sku,
++      quantity,
++      unitPriceCents: offer.unitPriceCents,
++      totalPriceCents: quantity * offer.unitPriceCents,
++      leadTimeDays: offer.leadTimeDays,
++    };
++  });
++  const selected = candidates.sort((left, right) =>
++    left.totalPriceCents - right.totalPriceCents || left.leadTimeDays - right.leadTimeDays || left.supplierId.localeCompare(right.supplierId))[0];
++  if (!selected) throw new Error(`no supplier offer: ${sku}`);
++  const { leadTimeDays: _, ...line } = selected;
++  return line;
++}
++
++export function supplierOrderTotal(lines: SupplierOrderLine[]): number {
++  return lines.reduce((sum, line) => sum + line.totalPriceCents, 0);
++}
++
++export function groupOrdersBySupplier(lines: SupplierOrderLine[]): Map<string, SupplierOrderLine[]> {
++  const grouped = new Map<string, SupplierOrderLine[]>();
++  for (const line of lines) grouped.set(line.supplierId, [...(grouped.get(line.supplierId) ?? []), line]);
++  return grouped;
++}
+diff --git a/src/warehouse-capacity.ts b/src/warehouse-capacity.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..4643e5149105ef04b7af458f11966ccd62f4cd6b
+--- /dev/null
++++ b/src/warehouse-capacity.ts
+@@ -0,0 +1,43 @@
++export interface CapacityBand {
++  warehouseId: string;
++  maximumUnits: number;
++  usedUnits: number;
++  inboundUnits: number;
++}
++
++export interface CapacityDecision {
++  warehouseId: string;
++  acceptedUnits: number;
++  rejectedUnits: number;
++  utilizationAfter: number;
++}
++
++export function remainingCapacity(band: CapacityBand): number {
++  for (const value of [band.maximumUnits, band.usedUnits, band.inboundUnits]) {
++    if (!Number.isSafeInteger(value) || value < 0) throw new Error("invalid warehouse capacity");
++  }
++  if (band.usedUnits + band.inboundUnits > band.maximumUnits) throw new Error("warehouse exceeds capacity");
++  return band.maximumUnits - band.usedUnits - band.inboundUnits;
++}
++
++export function allocateInboundCapacity(band: CapacityBand, requestedUnits: number): CapacityDecision {
++  if (!Number.isSafeInteger(requestedUnits) || requestedUnits <= 0) throw new Error("invalid inbound units");
++  const available = remainingCapacity(band);
++  const acceptedUnits = Math.min(available, requestedUnits);
++  const rejectedUnits = requestedUnits - acceptedUnits;
++  const utilizationAfter = band.maximumUnits === 0
++    ? 1
++    : (band.usedUnits + band.inboundUnits + acceptedUnits) / band.maximumUnits;
++  return { warehouseId: band.warehouseId, acceptedUnits, rejectedUnits, utilizationAfter };
++}
++
++export function rankCapacity(bands: CapacityBand[]): CapacityBand[] {
++  return [...bands].sort((left, right) => remainingCapacity(right) - remainingCapacity(left) || left.warehouseId.localeCompare(right.warehouseId));
++}
++
++export function networkCapacity(bands: CapacityBand[]): { maximum: number; committed: number; remaining: number } {
++  const maximum = bands.reduce((sum, band) => sum + band.maximumUnits, 0);
++  const committed = bands.reduce((sum, band) => sum + band.usedUnits + band.inboundUnits, 0);
++  for (const band of bands) remainingCapacity(band);
++  return { maximum, committed, remaining: maximum - committed };
++}
+diff --git a/src/warehouse-routing.ts b/src/warehouse-routing.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..9e992395643174a63cbe89082c9f6755489aa37e
+--- /dev/null
++++ b/src/warehouse-routing.ts
+@@ -0,0 +1,40 @@
++import type { ReservationRequest, WarehouseId } from "./inventory-types.ts";
++
++export interface WarehouseRoute {
++  warehouseId: WarehouseId;
++  region: string;
++  priority: number;
++  supportedPrefixes: string[];
++}
++
++export function selectWarehouse(
++  request: Pick<ReservationRequest, "lines">,
++  routes: WarehouseRoute[],
++  region: string,
++): WarehouseId {
++  const requiredPrefixes = new Set(request.lines.map((line) => line.sku.split("_")[0]));
++  const candidates = routes
++    .filter((route) => route.region === region)
++    .filter((route) => [...requiredPrefixes].every((prefix) => route.supportedPrefixes.includes(prefix)))
++    .sort((left, right) => left.priority - right.priority || left.warehouseId.localeCompare(right.warehouseId));
++  const selected = candidates[0];
++  if (!selected) throw new Error("no warehouse can fulfill the requested product families");
++  return selected.warehouseId;
++}
++
++export function groupRoutesByRegion(routes: WarehouseRoute[]): Map<string, WarehouseRoute[]> {
++  const grouped = new Map<string, WarehouseRoute[]>();
++  for (const route of routes) {
++    const existing = grouped.get(route.region) ?? [];
++    existing.push(route);
++    grouped.set(route.region, existing);
++  }
++  for (const group of grouped.values()) {
++    group.sort((left, right) => left.priority - right.priority);
++  }
++  return grouped;
++}
++
++export function routeSupports(route: WarehouseRoute, sku: string): boolean {
++  return route.supportedPrefixes.includes(sku.split("_")[0] ?? "");
++}
+diff --git a/src/warehouse-zone.ts b/src/warehouse-zone.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..09ba1b522f3a6ed3dc6a8fbfe15f1e4947a8e47f
+--- /dev/null
++++ b/src/warehouse-zone.ts
+@@ -0,0 +1,52 @@
++export interface StorageZone {
++  zoneId: string;
++  warehouseId: string;
++  temperature: "ambient" | "chilled" | "frozen";
++  maximumUnits: number;
++  occupiedUnits: number;
++  hazardousAllowed: boolean;
++}
++
++export interface StorageRequirement {
++  sku: string;
++  units: number;
++  temperature: StorageZone["temperature"];
++  hazardous: boolean;
++}
++
++export function zoneRemainingUnits(zone: StorageZone): number {
++  if (!Number.isSafeInteger(zone.maximumUnits) || zone.maximumUnits < 0) throw new Error("invalid zone capacity");
++  if (!Number.isSafeInteger(zone.occupiedUnits) || zone.occupiedUnits < 0) throw new Error("invalid zone occupancy");
++  if (zone.occupiedUnits > zone.maximumUnits) throw new Error("zone is over capacity");
++  return zone.maximumUnits - zone.occupiedUnits;
++}
++
++export function selectStorageZone(zones: StorageZone[], requirement: StorageRequirement): StorageZone {
++  if (!Number.isSafeInteger(requirement.units) || requirement.units <= 0) throw new Error("invalid storage units");
++  const selected = zones
++    .filter((zone) => zone.temperature === requirement.temperature)
++    .filter((zone) => !requirement.hazardous || zone.hazardousAllowed)
++    .filter((zone) => zoneRemainingUnits(zone) >= requirement.units)
++    .sort((left, right) => zoneRemainingUnits(left) - zoneRemainingUnits(right) || left.zoneId.localeCompare(right.zoneId))[0];
++  if (!selected) throw new Error(`no storage zone available: ${requirement.sku}`);
++  return { ...selected };
++}
++
++export function occupyStorageZone(zone: StorageZone, units: number): StorageZone {
++  if (!Number.isSafeInteger(units) || units <= 0) throw new Error("invalid occupancy units");
++  if (zoneRemainingUnits(zone) < units) throw new Error("zone capacity exceeded");
++  return { ...zone, occupiedUnits: zone.occupiedUnits + units };
++}
++
++export function releaseStorageZone(zone: StorageZone, units: number): StorageZone {
++  if (!Number.isSafeInteger(units) || units <= 0) throw new Error("invalid release units");
++  if (zone.occupiedUnits < units) throw new Error("release exceeds zone occupancy");
++  return { ...zone, occupiedUnits: zone.occupiedUnits - units };
++}
++
++export function warehouseZoneUtilization(zones: StorageZone[], warehouseId: string): number {
++  const matching = zones.filter((zone) => zone.warehouseId === warehouseId);
++  const capacity = matching.reduce((sum, zone) => sum + zone.maximumUnits, 0);
++  const occupied = matching.reduce((sum, zone) => sum + zone.occupiedUnits, 0);
++  return capacity === 0 ? 0 : occupied / capacity;
++}

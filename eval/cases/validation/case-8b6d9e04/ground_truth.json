@@ -1,0 +1,32 @@
+{
+  "bugs": [
+    {
+      "id": "bug-a2e91d40",
+      "rootCauseGroup": "root-a24c890e",
+      "lane": "authorization",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
+      "file": "src/workspace-service.ts",
+      "startLine": 13,
+      "endLine": 14,
+      "description": "The shared management predicate dropped the tenant comparison, allowing a manager from another tenant to read workspace secrets.",
+      "reachablePreconditions": "An actor with workspace:manage permission supplies a workspace belonging to a different tenant.",
+      "observableImpact": "The actor receives another tenant's workspace secret.",
+      "provenance": "Seeded from a base shared predicate that required both matching tenantId and workspace:manage permission. Confirmed by curator-only executable proof."
+    },
+    {
+      "id": "bug-a37fb812",
+      "rootCauseGroup": "root-a24c890e",
+      "lane": "authorization",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
+      "file": "src/workspace-service.ts",
+      "startLine": 13,
+      "endLine": 14,
+      "description": "The same weakened shared predicate allows a manager from another tenant to modify workspace settings.",
+      "reachablePreconditions": "An actor with workspace:manage permission supplies a workspace belonging to a different tenant and calls updateSetting.",
+      "observableImpact": "A cross-tenant workspace setting is modified.",
+      "provenance": "Second independently executable symptom of the same seeded shared-predicate root cause."
+    }
+  ]
+}

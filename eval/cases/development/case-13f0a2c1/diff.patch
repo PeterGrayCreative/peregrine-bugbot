@@ -1,0 +1,13 @@
+diff --git a/src/invoice-service.ts b/src/invoice-service.ts
+index ffd6b44c57987a047bda745a1171541212a728d7..7a5fd68b135fc5ce584de7d40498297f2b5488df 100644
+--- a/src/invoice-service.ts
++++ b/src/invoice-service.ts
+@@ -11,7 +11,7 @@ export interface Invoice {
+ }
+ 
+ export function canApproveInvoice(session: Session, invoice: Invoice): boolean {
+-  return session.tenantId === invoice.tenantId && session.roles.includes("billing-approver");
++  return session.roles.includes("billing-approver");
+ }
+ 
+ export function approveInvoice(session: Session, invoice: Invoice): string {

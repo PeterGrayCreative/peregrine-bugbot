@@ -1,0 +1,25 @@
+diff --git a/src/workspace-service.ts b/src/workspace-service.ts
+index a874c9a32d266fcc53e7693435175c1a78ba107b..b2c8a866656a0359c845abd6de4462b70cae5728 100644
+--- a/src/workspace-service.ts
++++ b/src/workspace-service.ts
+@@ -10,16 +10,16 @@ export interface Workspace {
+   setting: string;
+ }
+ 
+-function canManage(actor: Actor, workspace: Workspace): boolean {
+-  return actor.tenantId === workspace.tenantId && actor.permissions.includes("workspace:manage");
++function canManage(actor: Actor): boolean {
++  return actor.permissions.includes("workspace:manage");
+ }
+ 
+ export function readSecret(actor: Actor, workspace: Workspace): string {
+-  if (!canManage(actor, workspace)) throw new Error("not authorized");
++  if (!canManage(actor)) throw new Error("not authorized");
+   return workspace.secret;
+ }
+ 
+ export function updateSetting(actor: Actor, workspace: Workspace, value: string): Workspace {
+-  if (!canManage(actor, workspace)) throw new Error("not authorized");
++  if (!canManage(actor)) throw new Error("not authorized");
+   return { ...workspace, setting: value };
+ }

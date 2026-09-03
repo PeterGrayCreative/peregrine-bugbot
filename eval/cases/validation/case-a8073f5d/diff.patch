@@ -1,0 +1,16 @@
+diff --git a/src/shipment-service.ts b/src/shipment-service.ts
+index e17dbc9051035e5ac4735f5df7b091367fa59510..82ffa35be564294abf30a3cc026765131eab2a07 100644
+--- a/src/shipment-service.ts
++++ b/src/shipment-service.ts
+@@ -5,10 +5,7 @@ export interface ShipmentReference {
+ }
+ 
+ export function parseShipmentKey(value: string): ShipmentReference {
+-  const parts = value.split("-");
+-  const region = parts.shift();
+-  const sequence = parts.pop();
+-  const account = parts.join("-");
++  const [region, account, sequence] = value.split("-");
+   if (!region || !account || !sequence) throw new Error("invalid shipment key");
+   return { region, account, sequence };
+ }

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "caseId": "case-13f0a2c1",
+  "status": "draft",
+  "source": {
+    "kind": "seeded",
+    "repositoryAlias": "access-service",
+    "repositoryIdentitySha256": "1ba9af77ebacaaf76e1d352720d0b3dacb200e3f41afbb4bef3018b387837cc6",
+    "changeIdentitySha256": "d320390d062e862068b7df7f72647ece8802fd2a214967926c9e5b4b86a49078",
+    "access": "sanitized-private"
+  },
+  "strata": {
+    "languageFamily": "typescript",
+    "architectureFamily": "service-module",
+    "size": "small",
+    "changeShapes": ["direct"],
+    "surfaceLanes": ["authorization"]
+  },
+  "proof": {
+    "kind": "regression-test",
+    "artifact": "proof.mjs",
+    "sha256": "e55cc0ca4374e142af5923969d1197ad86d672059c12a093f751bfc90c760326"
+  },
+  "confirmations": [
+    {
+      "curatorIdentitySha256": "16cc773f8b36edb7951cbe25b689a81696e187d68bb78bac500be431b9b9274f",
+      "confirmedAt": "2026-09-03T16:48:21Z",
+      "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
+    }
+  ]
+}

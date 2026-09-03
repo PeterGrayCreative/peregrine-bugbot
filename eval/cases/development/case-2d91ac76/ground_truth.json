@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-b19e3a52",
+      "lane": "identifiers",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
+      "file": "src/customer-service.ts",
+      "startLine": 9,
+      "endLine": 9,
+      "description": "Converting the validated external identifier to a number strips leading zeros, so distinct identifiers such as 00123 and 123 collapse to the same map key.",
+      "reachablePreconditions": "The upstream identifier namespace treats fixed-width digit strings with different leading zeros as distinct customer identifiers.",
+      "observableImpact": "Indexing overwrites one customer record with another, and subsequent lookups can return the wrong customer.",
+      "provenance": "Seeded from a base implementation that validated and returned the trimmed string unchanged. Confirmed by curator-only executable proof."
+    }
+  ]
+}
