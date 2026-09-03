@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Peregrine Sealed Holdout Commitment",
+  "$comment": "This file commits to an externally access-controlled holdout without exposing case identities, source metadata, or ground truth.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "kind", "status", "stewardIdentitySha256", "storageBoundary", "corpusCommitmentSha256", "caseCount", "committedAt"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "kind": { "const": "sealed-holdout-commitment" },
+    "status": { "const": "unopened" },
+    "stewardIdentitySha256": { "$ref": "#/$defs/sha256" },
+    "storageBoundary": { "const": "external-access-controlled" },
+    "corpusCommitmentSha256": { "$ref": "#/$defs/sha256" },
+    "caseCount": { "type": "integer", "minimum": 1 },
+    "committedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

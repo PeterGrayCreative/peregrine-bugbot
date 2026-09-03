@@ -181,6 +181,8 @@ eval/cases/
 ├── case.json          # discriminated fixture or historical source contract
 ├── diff.patch         # runner-owned input, never copied into the checkout
 ├── ground_truth.json  # grader-owned input, never copied into the checkout
+├── curation.json      # curator-only admission, strata, proof, and confirmations
+├── proof.md           # example content-addressed curator proof; name is configurable
 ├── metadata.json      # optional sanitized title/body only
 ├── leakage_exceptions.json # optional content hashes + curator reasons
 └── fixture/           # complete head-state tree for seeded/clean cases
@@ -211,6 +213,55 @@ Build cases three ways:
    positive. Keep at least ~25% of cases clean or you won't measure noise.
 
 Keep a handful of cases as a holdout you never tune prompts against.
+
+### Behavioral corpus admission
+
+Development and validation cases use a stricter contract than structural
+smoke fixtures. Run `npm run eval:validate-corpus` for a zero-provider integrity
+check. It strictly parses truth and curation, authenticates the checked-in diff
+and curator proof, runs the existing leakage and two-commit materialization
+checks, verifies every truth line against the reviewed head, and reports whether
+the corpus meets the preregistered readiness quotas. It never executes proof
+artifacts or repository code and never starts a model. Run
+`npm run eval:admit-corpus` when visible-baseline readiness must be an exit-code
+gate. Holdout readiness is reported separately and does not block development
+or validation baseline runs.
+
+Behavioral truth has no compatibility defaults. Every bug field must be
+explicit, bug and root-cause IDs must be opaque, and unknown fields fail closed.
+A `rootCauseGroup` is valid only when it connects at least two distinct observed
+symptoms in the same case. Such a case must declare the `multi-observation`
+change shape. Clean cases have empty truth; other case kinds have non-empty
+truth.
+
+Each behavioral case has `curation.json` matching
+`schemas/benchmark-curation.schema.json`. Its source-change digest is the exact
+SHA-256 of the checked-in diff and must be unique across the visible corpus.
+The proof artifact is curator-only, case-relative, a direct regular file, and
+authenticated by its exact SHA-256. The validator does not execute it. An
+`admitted` case requires two distinct curator identity hashes, and each curator
+must affirm the complete ordered checklist for a bug or clean case. Use `draft`
+until independent confirmation is complete.
+
+Readiness requires 36 admitted visible cases: development has at least 12 bug
+cases and 8 clean controls; validation has at least 12 bug cases and 4 clean
+controls. Each core lane has an independent defect case in each corpus and a
+comparable clean surface. Clean controls remain at least 25% of the corpus.
+At least three cases are multi-observation; direct, seam, multi-observation,
+and large-diff shapes are represented; at least three admitted cases are
+realistic large diffs; and the corpus spans at least three
+source repositories, two language families, and two architecture families.
+Size strata are deterministic from the identity-normalized checked-in diff:
+small is at most 250 lines, medium is 251 through 1,500, and large is at least
+1,501. The `large-diff` shape and `large` size must agree exactly. This matches
+the production 1,500-line limit frozen when corpus schema version 1 was defined.
+
+The sealed holdout is never stored under `eval/cases`. Once a steward and
+external access-controlled corpus exist, only `eval/holdout-commitment.json`
+matching `schemas/holdout-commitment.schema.json` is checked in. It contains a
+steward identity hash, corpus commitment hash, case count, and unopened status;
+case IDs, sources, and truth are forbidden. Do not create this file until those
+facts are real.
 
 The checked-in marker-driven suite covers nullability, ordinary zero/fallback
 logic, swallowed errors, stale frontend closures, and pagination overlap,
