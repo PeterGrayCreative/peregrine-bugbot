@@ -16,6 +16,7 @@ import {
   parsePreTelemetryMatrixRunManifest,
   parsePreTelemetryRunRecord,
   parseRunRecord,
+  type LegacySchemaV1GradedRun,
   type PreTelemetryGradedRun,
   type PreTelemetryRunRecord,
   type LegacySchemaV1RunRecord,
@@ -131,15 +132,7 @@ export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Prom
     }
 
     const normalizedRun = "outcome" in run
-      ? isCurrentRunRecord(run)
-        ? run
-        : isPreTelemetryRunRecord(run)
-          ? run
-          : {
-              ...run,
-              caseCorpus: "unknown" as const,
-              runner: result.engine,
-            }
+      ? run
       : {
           ...run,
           schemaVersion: 1 as const,
@@ -149,7 +142,7 @@ export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Prom
           finishedAt: run.startedAt,
           outcome: { status: "completed" as const, result },
         };
-    const graded: GradedRun | PreTelemetryGradedRun = {
+    const graded: GradedRun | PreTelemetryGradedRun | LegacySchemaV1GradedRun = {
       ...normalizedRun,
       outcome: { status: "completed", result },
       matches,
@@ -165,18 +158,6 @@ export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Prom
     );
   }
   console.log(`\nNext: npm run eval:report -- --runs ${dir}`);
-}
-
-function isCurrentRunRecord(
-  run: RunRecord | PreTelemetryRunRecord | LegacySchemaV1RunRecord,
-): run is RunRecord {
-  return "caseCorpus" in run && "runner" in run;
-}
-
-function isPreTelemetryRunRecord(
-  run: RunRecord | PreTelemetryRunRecord | LegacySchemaV1RunRecord,
-): run is PreTelemetryRunRecord {
-  return "caseCorpus" in run && !("runner" in run);
 }
 
 function parseLegacyRun(value: unknown, source: string): LegacyRunRecord {

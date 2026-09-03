@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-09-02T00:00:00.000Z",
+  "expectedAttempts": [
+    {
+      "id": "attempt-000001",
+      "caseName": "legacy-pr3-mock-case",
+      "corpus": "structural-smoke",
+      "expectedBugCount": 1,
+      "configName": "mock-pr3-route",
+      "repeat": 1,
+      "file": "attempt-000001.json"
+    }
+  ],
+  "providerNetworkIsolation": {
+    "mock": {
+      "status": "not-applicable",
+      "mechanism": "mock runner starts no provider process"
+    }
+  }
+}

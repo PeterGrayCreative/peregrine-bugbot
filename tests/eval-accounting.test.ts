@@ -45,6 +45,17 @@ function validAttempt(): RunAttempt {
 }
 
 function validRecord(): RunRecord {
+  const provenance = validEvaluationProvenance();
+  const breadthUsage = withUnavailable({
+    provider: "anthropic",
+    aggregation: "single-envelope",
+    inputTokens: 4,
+  });
+  const investigationUsage = withUnavailable({
+    provider: "anthropic",
+    aggregation: "single-envelope",
+    inputTokens: 6,
+  });
   return {
     schemaVersion: 1,
     attemptId: "attempt-000001",
@@ -56,12 +67,15 @@ function validRecord(): RunRecord {
     runner: "claude",
     startedAt: "2026-09-02T00:00:00.000Z",
     finishedAt: "2026-09-02T00:00:01.000Z",
+    evaluationProvenance: provenance,
     outcome: {
       status: "completed",
       result: {
         engine: "claude",
         status: "completed",
         modelConfig: "fast->strong",
+        reviewedBaseRef: provenance.history.baseRef,
+        reviewedHeadRef: provenance.history.headRef,
         findings: [{
           file: "src/value.ts",
           startLine: 1,
@@ -75,8 +89,22 @@ function validRecord(): RunRecord {
           failurePath: "A caller observes the invalid value.",
           confidence: 0.99,
         }],
-        usage: { provider: "anthropic", inputTokens: 10, unavailable: [] },
+        usage: combineUsage(breadthUsage, investigationUsage),
         durationMs: 1000,
+        raw: {
+          breadth: {
+            model: "fast",
+            promptSha256: "a".repeat(64),
+            usage: breadthUsage,
+            durationMs: 400,
+          },
+          investigation: {
+            model: "strong",
+            promptSha256: "b".repeat(64),
+            usage: investigationUsage,
+            durationMs: 600,
+          },
+        },
       },
     },
   };
@@ -125,12 +153,7 @@ function validEvaluationProvenance(): EvaluationAttemptProvenance {
 }
 
 function validProvenanceRecord(): RunRecord {
-  const record = validRecord();
-  record.evaluationProvenance = validEvaluationProvenance();
-  if (record.outcome.status !== "completed") throw new Error("expected completed fixture");
-  record.outcome.result.reviewedBaseRef = record.evaluationProvenance.history.baseRef;
-  record.outcome.result.reviewedHeadRef = record.evaluationProvenance.history.headRef;
-  return record;
+  return validRecord();
 }
 
 test("evaluation artifact parsers reject schema, identity, enum, and numeric tampering", () => {
@@ -145,6 +168,26 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
   };
   assert.doesNotThrow(() => parseMatrixRunManifest(manifest));
   assert.doesNotThrow(() => parseRunRecord(validRecord(), "record", attempt));
+  const currentWithoutProvenance = structuredClone(validRecord());
+  delete currentWithoutProvenance.evaluationProvenance;
+  assert.throws(
+    () => parseRunRecord(currentWithoutProvenance, "completed without provenance", attempt),
+    /evaluationProvenance is required for a completed attempt/,
+  );
+  currentWithoutProvenance.outcome = {
+    status: "failed",
+    failureKind: "configuration",
+    message: "case materialization failed",
+    durationMs: 1,
+  };
+  assert.doesNotThrow(
+    () => parseRunRecord(currentWithoutProvenance, "pre-materialization failure", attempt),
+  );
+  currentWithoutProvenance.outcome.failureKind = "provider";
+  assert.throws(
+    () => parseRunRecord(currentWithoutProvenance, "provider failure without provenance", attempt),
+    /evaluationProvenance is required for a post-materialization failure/,
+  );
 
   for (const [field, value] of [
     ["attemptId", "attempt-999999"],
@@ -213,6 +256,16 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
     () => parseRunRecord(mismatchedManifest, "mismatched manifest", attempt),
     /output base provenance does not match history/,
   );
+  const conflictingManifest = structuredClone(provenanceRecord);
+  conflictingManifest.evaluationProvenance!.manifest!.output +=
+    `base: ${"0".repeat(40)} (argument)\n`;
+  conflictingManifest.evaluationProvenance!.manifest!.outputSha256 = sha256(
+    conflictingManifest.evaluationProvenance!.manifest!.output,
+  );
+  assert.throws(
+    () => parseRunRecord(conflictingManifest, "conflicting manifest", attempt),
+    /output base provenance does not match history/,
+  );
   const missingReviewedRef = structuredClone(provenanceRecord);
   if (missingReviewedRef.outcome.status !== "completed") throw new Error("expected completed fixture");
   delete missingReviewedRef.outcome.result.reviewedBaseRef;
@@ -248,6 +301,67 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
   failedWithoutManifest.outcome.failureKind = "configuration";
   assert.doesNotThrow(
     () => parseRunRecord(failedWithoutManifest, "preflight configuration failure", attempt),
+  );
+
+  const mismatchedCaseKind = structuredClone(provenanceRecord);
+  mismatchedCaseKind.caseKind = "historical";
+  assert.throws(
+    () => parseRunRecord(mismatchedCaseKind, "mismatched case kind", attempt),
+    /caseKind does not match history materialization/,
+  );
+  const historicalRecord = structuredClone(provenanceRecord);
+  historicalRecord.caseKind = "historical";
+  const historicalRecordHistory = historicalRecord.evaluationProvenance!.history;
+  historicalRecordHistory.materialization = "historical-sanitized-export";
+  historicalRecordHistory.historicalSource = {
+    sourceIdentitySha256: "6".repeat(64),
+    sourceBaseRef: historicalRecordHistory.baseRef,
+    sourceHeadRef: historicalRecordHistory.headRef,
+    sourceMergeBase: historicalRecordHistory.baseRef,
+    sourceBaseTree: historicalRecordHistory.baseTree,
+    sourceHeadTree: historicalRecordHistory.headTree,
+    baseCommitIsMergeBase: true,
+    baseTreeMatches: true,
+    headTreeMatches: true,
+  };
+  assert.doesNotThrow(() => parseRunRecord(historicalRecord, "historical record", attempt));
+  const collapsedHistoricalSource = structuredClone(historicalRecord);
+  const historicalSource = collapsedHistoricalSource.evaluationProvenance!.history.historicalSource!;
+  historicalSource.sourceHeadRef = historicalSource.sourceBaseRef;
+  assert.throws(
+    () => parseRunRecord(collapsedHistoricalSource, "collapsed historical source", attempt),
+    /sourceBaseRef and sourceHeadRef must be distinct commits/,
+  );
+  historicalRecord.caseKind = "clean";
+  assert.throws(
+    () => parseRunRecord(historicalRecord, "historical history with fixture kind", attempt),
+    /caseKind does not match history materialization/,
+  );
+
+  const collapsedCommits = structuredClone(provenanceRecord);
+  const collapsedBase = collapsedCommits.evaluationProvenance!.history.baseRef;
+  collapsedCommits.evaluationProvenance!.history.headRef = collapsedBase;
+  collapsedCommits.evaluationProvenance!.manifest!.headRef = collapsedBase;
+  collapsedCommits.evaluationProvenance!.manifest!.output =
+    collapsedCommits.evaluationProvenance!.manifest!.output.replace(
+      `head: ${"2".repeat(40)}`,
+      `head: ${collapsedBase}`,
+    );
+  collapsedCommits.evaluationProvenance!.manifest!.outputSha256 = sha256(
+    collapsedCommits.evaluationProvenance!.manifest!.output,
+  );
+  if (collapsedCommits.outcome.status !== "completed") throw new Error("expected completed fixture");
+  collapsedCommits.outcome.result.reviewedHeadRef = collapsedBase;
+  assert.throws(
+    () => parseRunRecord(collapsedCommits, "collapsed commits", attempt),
+    /baseRef and headRef must be distinct commits/,
+  );
+  const collapsedTrees = structuredClone(provenanceRecord);
+  collapsedTrees.evaluationProvenance!.history.headTree =
+    collapsedTrees.evaluationProvenance!.history.baseTree;
+  assert.throws(
+    () => parseRunRecord(collapsedTrees, "collapsed trees", attempt),
+    /baseTree and headTree must be distinct trees/,
   );
 
   const historicalMismatch = structuredClone(provenanceRecord);
@@ -298,9 +412,11 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
     () => assertGradedMatchesRun({ ...graded, falsePositiveIndexes: [0] }, validRecord(), "graded"),
     /does not match the graded findings/,
   );
+  const mismatchedGradedProvenance = validEvaluationProvenance();
+  mismatchedGradedProvenance.history.diffSha256 = "6".repeat(64);
   assert.throws(
     () => assertGradedMatchesRun(
-      { ...graded, evaluationProvenance: validEvaluationProvenance() },
+      { ...graded, evaluationProvenance: mismatchedGradedProvenance },
       validRecord(),
       "graded",
     ),
@@ -449,10 +565,32 @@ test("behavioral reports count failed and missing attempts and retain incurred f
   completed.attemptId = attempts[0]!.id;
   completed.caseName = caseName;
   if (completed.outcome.status !== "completed") throw new Error("expected completed fixture");
-  completed.outcome.result.usage = {
+  const completedBreadthUsage = withUnavailable({
     provider: "anthropic",
-    costUsd: 0.01,
+    aggregation: "single-envelope",
+    costUsd: 0.004,
     costSource: "provider",
+  });
+  const completedInvestigationUsage = withUnavailable({
+    provider: "anthropic",
+    aggregation: "single-envelope",
+    costUsd: 0.006,
+    costSource: "provider",
+  });
+  completed.outcome.result.usage = combineUsage(completedBreadthUsage, completedInvestigationUsage);
+  completed.outcome.result.raw = {
+    breadth: {
+      model: "fast",
+      promptSha256: "a".repeat(64),
+      durationMs: 400,
+      usage: completedBreadthUsage,
+    },
+    investigation: {
+      model: "strong",
+      promptSha256: "b".repeat(64),
+      durationMs: 600,
+      usage: completedInvestigationUsage,
+    },
   };
   writeFileSync(join(runsDir, attempts[0]!.file), JSON.stringify(completed));
   writeFileSync(join(runsDir, attempts[0]!.file.replace(/\.json$/, ".graded.json")), JSON.stringify({
@@ -477,6 +615,7 @@ test("behavioral reports count failed and missing attempts and retain incurred f
     runner: "claude",
     startedAt: "2026-09-02T00:00:00.000Z",
     finishedAt: "2026-09-02T00:00:02.000Z",
+    evaluationProvenance: validEvaluationProvenance(),
     outcome: {
       status: "failed",
       failureKind: "timeout",
@@ -593,9 +732,73 @@ test("PR3 pre-telemetry schema-v1 artifacts grade and report only as legacy inco
       "PR3 record fixture",
       manifest.expectedAttempts[0],
     ));
+    const recordWithoutProvenance = structuredClone(recordValue) as Record<string, unknown>;
+    delete recordWithoutProvenance.evaluationProvenance;
+    assert.throws(
+      () => parsePreTelemetryRunRecord(recordWithoutProvenance, "PR3 completed without provenance"),
+      /evaluationProvenance is required for a completed attempt/,
+    );
+    const preMaterializationFailure = structuredClone(recordWithoutProvenance) as Record<string, unknown>;
+    preMaterializationFailure.outcome = {
+      status: "failed",
+      failureKind: "configuration",
+      message: "case materialization failed",
+      durationMs: 1,
+    };
+    assert.doesNotThrow(() => parsePreTelemetryRunRecord(
+      preMaterializationFailure,
+      "PR3 pre-materialization failure",
+      manifest.expectedAttempts[0],
+    ));
+    const manifestPreflightFailure = structuredClone(recordValue) as {
+      evaluationProvenance: EvaluationAttemptProvenance;
+      outcome: unknown;
+    };
+    delete manifestPreflightFailure.evaluationProvenance.manifest;
+    manifestPreflightFailure.outcome = {
+      status: "failed",
+      failureKind: "configuration",
+      message: "manifest preflight failed",
+      durationMs: 1,
+    };
+    assert.doesNotThrow(() => parsePreTelemetryRunRecord(
+      manifestPreflightFailure,
+      "PR3 manifest-preflight failure",
+      manifest.expectedAttempts[0],
+    ));
+    manifestPreflightFailure.outcome = {
+      status: "failed",
+      failureKind: "timeout",
+      message: "provider timed out",
+      durationMs: 1,
+    };
+    assert.throws(
+      () => parsePreTelemetryRunRecord(manifestPreflightFailure, "PR3 post-preflight failure"),
+      /manifest is required for a post-preflight failure/,
+    );
     assert.throws(
       () => parseRunRecord(recordValue, "strict telemetry record"),
       /must include model, promptSha256, durationMs, and usage/,
+    );
+    const currentWithoutRaw = structuredClone(recordValue) as {
+      runner?: "claude";
+      outcome: { result: { usage: ReturnType<typeof withUnavailable>; raw?: unknown } };
+    };
+    currentWithoutRaw.runner = "claude";
+    currentWithoutRaw.outcome.result.usage = withUnavailable({
+      provider: "anthropic",
+      aggregation: "stage-sum",
+      inputTokens: 30,
+      outputTokens: 7,
+    });
+    delete currentWithoutRaw.outcome.result.raw;
+    assert.throws(
+      () => parseRunRecord(
+        currentWithoutRaw,
+        "current provider record without stages",
+        { ...manifest.expectedAttempts[0]!, runner: "claude" },
+      ),
+      /raw must include both provider stage records/,
     );
     const telemetryEraStage = structuredClone(recordValue) as {
       outcome: { result: { raw: { breadth: Record<string, unknown> } } };
@@ -630,6 +833,85 @@ test("PR3 pre-telemetry schema-v1 artifacts grade and report only as legacy inco
     assert.equal(stats?.incurredCostUsdTotal, null);
     assert.equal(stats?.durationSecMean, null);
     assert.equal(stats?.telemetryExpectedRuns, null);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("PR3 pre-telemetry mock artifacts retain their exact raw-less writer shape", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-pr3-mock-artifact-test-"));
+  const runsDir = join(root, "runs");
+  const casesDir = join(root, "cases");
+  const fixtureDir = resolve("tests/fixtures/eval/pr3-pre-telemetry-mock");
+  mkdirSync(runsDir);
+  mkdirSync(join(casesDir, "legacy-pr3-mock-case"), { recursive: true });
+  for (const file of ["matrix-manifest.json", "attempt-000001.json"]) {
+    writeFileSync(join(runsDir, file), readFileSync(join(fixtureDir, file)));
+  }
+  writeFileSync(
+    join(casesDir, "legacy-pr3-mock-case", "ground_truth.json"),
+    JSON.stringify({
+      bugs: [{
+        id: "bug-1",
+        file: "src/value.ts",
+        startLine: 1,
+        endLine: 1,
+        description: "deterministic marker",
+      }],
+    }),
+  );
+
+  try {
+    const manifest = parsePreTelemetryMatrixRunManifest(
+      JSON.parse(readFileSync(join(fixtureDir, "matrix-manifest.json"), "utf8")),
+      "PR3 mock manifest fixture",
+    );
+    const recordValue = JSON.parse(
+      readFileSync(join(fixtureDir, "attempt-000001.json"), "utf8"),
+    ) as Record<string, unknown>;
+    assert.doesNotThrow(() => parsePreTelemetryRunRecord(
+      recordValue,
+      "PR3 mock record fixture",
+      manifest.expectedAttempts[0],
+    ));
+    const mockWithRaw = structuredClone(recordValue) as {
+      outcome: { result: { raw?: unknown } };
+    };
+    mockWithRaw.outcome.result.raw = {};
+    assert.throws(
+      () => parsePreTelemetryRunRecord(mockWithRaw, "PR3 mock with raw telemetry"),
+      /raw must be absent for a pre-telemetry mock result/,
+    );
+    const mockWithExtraUsage = structuredClone(recordValue) as {
+      outcome: { result: { usage: Record<string, unknown> } };
+    };
+    mockWithExtraUsage.outcome.result.usage.cachedInputTokens = 0;
+    assert.throws(
+      () => parsePreTelemetryRunRecord(mockWithExtraUsage, "PR3 mock with invented usage"),
+      /usage does not match the pre-telemetry mock writer/,
+    );
+
+    await gradeRuns(runsDir, casesDir);
+    const gradedValue = JSON.parse(
+      readFileSync(join(runsDir, "attempt-000001.graded.json"), "utf8"),
+    ) as Record<string, unknown>;
+    assert.equal("runner" in gradedValue, false);
+    const gradedResult = (gradedValue.outcome as { result: Record<string, unknown> }).result;
+    assert.equal("raw" in gradedResult, false);
+    assert.doesNotThrow(() => parsePreTelemetryGradedRun(
+      gradedValue,
+      "PR3 mock graded fixture",
+      manifest.expectedAttempts[0],
+    ));
+
+    const [stats] = await buildReport(runsDir, { casesDir });
+    assert.equal(stats?.config, "mock-pr3-route");
+    assert.equal(stats?.runner, null);
+    assert.equal(stats?.completeness, "legacy-incomplete");
+    assert.equal(stats?.benchmarkKind, "legacy-unknown");
+    assert.equal(stats?.recallMean, null);
+    assert.equal(stats?.costPerCaseMean, null);
+    assert.equal(stats?.structuralMatchedMarkers, null);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

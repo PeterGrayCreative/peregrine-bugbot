@@ -46,6 +46,9 @@ provenance but predate manifest runner identity and provider-correct stage
 telemetry are recognized only by their exact writer-era shape. They are also
 `legacy/incomplete`: grading remains available, but their old aggregate usage,
 cost, duration, and recall are excluded from behavioral comparisons.
+The corresponding PR3 mock shape remains raw-less and is accepted only with
+its exact zero-valued legacy usage fields; it is not promoted to a behavioral
+or telemetry benchmark.
 Their telemetry denominator and all comparison telemetry means are also
 reported as `n/a` because these formats do not establish a comparison-safe
 attempt and telemetry identity.

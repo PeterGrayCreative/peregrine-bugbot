@@ -277,22 +277,7 @@ export function parseLegacyCompletedRun(value: unknown, source: string): {
   if (root.matches === undefined || root.falsePositiveIndexes === undefined) {
     throw new Error(`${source}: legacy graded fields must appear together`);
   }
-  const synthetic = {
-    schemaVersion: 1,
-    attemptId: `legacy--${base.configName}--${base.caseName}--${base.repeat}`,
-    caseName: base.caseName,
-    caseKind: base.caseKind,
-    configName: base.configName,
-    repeat: base.repeat,
-    caseCorpus: "unknown" as const,
-    runner: result.engine,
-    startedAt: base.startedAt,
-    finishedAt: base.startedAt,
-    outcome: { status: "completed" as const, result },
-    matches: root.matches,
-    falsePositiveIndexes: root.falsePositiveIndexes,
-  };
-  const parsed = parseGradedRun(synthetic, source);
+  const parsed = parseGradeFields(root, result.findings.length, source);
   return { ...base, matches: parsed.matches, falsePositiveIndexes: parsed.falsePositiveIndexes };
 }
 
@@ -378,6 +363,9 @@ function parseRecordFields(root: Record<string, unknown>, source: string): RunRe
       `${source}.outcome.result.raw`,
       outcome.result.engine,
     );
+    if (outcome.result.engine !== "mock" && !stageUsage) {
+      throw new Error(`${source}.outcome.result.raw must include both provider stage records`);
+    }
     if (stageUsage && !isDeepStrictEqual(
       withoutUndefined(combineUsage(...stageUsage)),
       withoutUndefined(outcome.result.usage),
@@ -400,12 +388,13 @@ function parseRecordFields(root: Record<string, unknown>, source: string): RunRe
   const evaluationProvenance = root.evaluationProvenance === undefined
     ? undefined
     : parseEvaluationProvenance(root.evaluationProvenance, `${source}.evaluationProvenance`);
-  validateOutcomeProvenance(outcome, evaluationProvenance, source);
+  const parsedCaseKind = caseKind(root.caseKind, `${source}.caseKind`);
+  validateOutcomeProvenance(outcome, evaluationProvenance, parsedCaseKind, source, true);
   return {
     schemaVersion: 1,
     attemptId: strictString(root.attemptId, `${source}.attemptId`, 200),
     caseName: strictString(root.caseName, `${source}.caseName`, 500),
-    caseKind: caseKind(root.caseKind, `${source}.caseKind`),
+    caseKind: parsedCaseKind,
     configName: strictString(root.configName, `${source}.configName`, 500),
     repeat: positiveSafeInteger(root.repeat, `${source}.repeat`),
     caseCorpus: corpus(root.caseCorpus, `${source}.caseCorpus`),
@@ -434,12 +423,13 @@ function parseLegacySchemaV1RecordFields(
   const evaluationProvenance = root.evaluationProvenance === undefined
     ? undefined
     : parseEvaluationProvenance(root.evaluationProvenance, `${source}.evaluationProvenance`);
-  validateOutcomeProvenance(outcome, evaluationProvenance, source);
+  const parsedCaseKind = caseKind(root.caseKind, `${source}.caseKind`);
+  validateOutcomeProvenance(outcome, evaluationProvenance, parsedCaseKind, source, false);
   return {
     schemaVersion: 1,
     attemptId: strictString(root.attemptId, `${source}.attemptId`, 200),
     caseName: strictString(root.caseName, `${source}.caseName`, 500),
-    caseKind: caseKind(root.caseKind, `${source}.caseKind`),
+    caseKind: parsedCaseKind,
     configName: strictString(root.configName, `${source}.configName`, 500),
     repeat: positiveSafeInteger(root.repeat, `${source}.repeat`),
     startedAt,
@@ -463,12 +453,13 @@ function parsePreTelemetryRecordFields(
   const evaluationProvenance = root.evaluationProvenance === undefined
     ? undefined
     : parseEvaluationProvenance(root.evaluationProvenance, `${source}.evaluationProvenance`);
-  validateOutcomeProvenance(outcome, evaluationProvenance, source);
+  const parsedCaseKind = caseKind(root.caseKind, `${source}.caseKind`);
+  validateOutcomeProvenance(outcome, evaluationProvenance, parsedCaseKind, source, true);
   return {
     schemaVersion: 1,
     attemptId: strictString(root.attemptId, `${source}.attemptId`, 200),
     caseName: strictString(root.caseName, `${source}.caseName`, 500),
-    caseKind: caseKind(root.caseKind, `${source}.caseKind`),
+    caseKind: parsedCaseKind,
     configName: strictString(root.configName, `${source}.configName`, 500),
     repeat: positiveSafeInteger(root.repeat, `${source}.repeat`),
     caseCorpus: corpus(root.caseCorpus, `${source}.caseCorpus`),
@@ -506,7 +497,21 @@ function validatePreTelemetryEngineResult(
   source: string,
 ): void {
   const root = object(value, source);
-  parsePreTelemetryUsage(root.usage, `${source}.usage`);
+  const usageRoot = object(root.usage, `${source}.usage`);
+  const usage = parsePreTelemetryUsage(usageRoot, `${source}.usage`);
+  if (result.engine === "mock") {
+    if (!sameKeys(usageRoot, new Set(["inputTokens", "outputTokens", "costUsd"])) ||
+      usage.inputTokens !== 0 || usage.outputTokens !== 0 || usage.costUsd !== 0) {
+      throw new Error(`${source}.usage does not match the pre-telemetry mock writer`);
+    }
+    if (result.modelConfig !== "mock") {
+      throw new Error(`${source}.modelConfig does not match the pre-telemetry mock writer`);
+    }
+    if (root.raw !== undefined) {
+      throw new Error(`${source}.raw must be absent for a pre-telemetry mock result`);
+    }
+    return;
+  }
   const raw = object(root.raw, `${source}.raw`);
   onlyKeys(raw, new Set(["manifest", "breadth", "investigation"]), `${source}.raw`);
   boundedText(raw.manifest, `${source}.raw.manifest`, MAX_MANIFEST_CHARS);
@@ -562,9 +567,27 @@ function combinePreTelemetryUsage(
 function validateOutcomeProvenance(
   outcome: RunRecord["outcome"],
   provenance: EvaluationAttemptProvenance | undefined,
+  parsedCaseKind: RunRecord["caseKind"],
   source: string,
+  requireCompletedProvenance: boolean,
 ): void {
-  if (!provenance) return;
+  if (!provenance) {
+    if (outcome.status === "completed" && requireCompletedProvenance) {
+      throw new Error(`${source}.evaluationProvenance is required for a completed attempt`);
+    }
+    if (outcome.status === "failed" && outcome.failureKind !== "configuration" && requireCompletedProvenance) {
+      throw new Error(`${source}.evaluationProvenance is required for a post-materialization failure`);
+    }
+    return;
+  }
+  const expectedMaterialization = parsedCaseKind === "historical"
+    ? "historical-sanitized-export"
+    : parsedCaseKind === "seeded" || parsedCaseKind === "clean"
+      ? "fixture-patch"
+      : undefined;
+  if (!expectedMaterialization || provenance.history.materialization !== expectedMaterialization) {
+    throw new Error(`${source}.caseKind does not match history materialization`);
+  }
   if (outcome.status === "completed") {
     if (!provenance.manifest) {
       throw new Error(`${source}.evaluationProvenance.manifest is required for a completed attempt`);
@@ -611,6 +634,8 @@ function parseHistoryProvenance(value: unknown, source: string): EvaluationHisto
   const mergeBase = gitObjectId(root.mergeBase, objectFormat, `${source}.mergeBase`);
   const baseTree = gitObjectId(root.baseTree, objectFormat, `${source}.baseTree`);
   const headTree = gitObjectId(root.headTree, objectFormat, `${source}.headTree`);
+  if (baseRef === headRef) throw new Error(`${source}.baseRef and headRef must be distinct commits`);
+  if (baseTree === headTree) throw new Error(`${source}.baseTree and headTree must be distinct trees`);
   if (mergeBase !== baseRef) throw new Error(`${source}.mergeBase must equal baseRef`);
   if (root.commitCount !== 2) throw new Error(`${source}.commitCount must be 2`);
   requireTrue(root.baseIsMergeBase, `${source}.baseIsMergeBase`);
@@ -661,7 +686,11 @@ function parseHistoricalSource(
     "headTreeMatches",
   ]), source);
   const sourceBaseRef = gitObjectId(root.sourceBaseRef, objectFormat, `${source}.sourceBaseRef`);
+  const sourceHeadRef = gitObjectId(root.sourceHeadRef, objectFormat, `${source}.sourceHeadRef`);
   const sourceMergeBase = gitObjectId(root.sourceMergeBase, objectFormat, `${source}.sourceMergeBase`);
+  if (sourceBaseRef === sourceHeadRef) {
+    throw new Error(`${source}.sourceBaseRef and sourceHeadRef must be distinct commits`);
+  }
   if (sourceMergeBase !== sourceBaseRef) {
     throw new Error(`${source}.sourceMergeBase must equal sourceBaseRef`);
   }
@@ -671,7 +700,7 @@ function parseHistoricalSource(
   return {
     sourceIdentitySha256: sha256Hex(root.sourceIdentitySha256, `${source}.sourceIdentitySha256`),
     sourceBaseRef,
-    sourceHeadRef: gitObjectId(root.sourceHeadRef, objectFormat, `${source}.sourceHeadRef`),
+    sourceHeadRef,
     sourceMergeBase,
     sourceBaseTree: gitObjectId(root.sourceBaseTree, objectFormat, `${source}.sourceBaseTree`),
     sourceHeadTree: gitObjectId(root.sourceHeadTree, objectFormat, `${source}.sourceHeadTree`),
@@ -751,7 +780,8 @@ function validateManifestOutputProvenance(
     ["head", `head: ${history.headRef}`],
     ["merge-base", `merge-base: ${history.mergeBase}`],
   ] as const) {
-    if (lines.filter((line) => line === expected).length !== 1) {
+    const provenanceLines = lines.filter((line) => line.startsWith(`${label}:`));
+    if (provenanceLines.length !== 1 || provenanceLines[0] !== expected) {
       throw new Error(`${source}.output ${label} provenance does not match history`);
     }
   }
