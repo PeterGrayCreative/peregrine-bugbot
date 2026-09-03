@@ -1,0 +1,15 @@
+diff --git a/registry/registry.go b/registry/registry.go
+index b622b2da4fdfa3df748ee944679f4d97a2d6e20e..edd9471baa98bdacf5660cb25ce5f44fae8df0c7 100644
+--- a/registry/registry.go
++++ b/registry/registry.go
+@@ -18,8 +18,8 @@ func (r *Registry) Put(key, value string) {
+ }
+ 
+ func (r *Registry) Snapshot() map[string]string {
+-	r.mu.Lock()
+-	defer r.mu.Unlock()
++	r.mu.RLock()
++	defer r.mu.RUnlock()
+ 	copy := make(map[string]string, len(r.values))
+ 	for key, value := range r.values {
+ 		copy[key] = value

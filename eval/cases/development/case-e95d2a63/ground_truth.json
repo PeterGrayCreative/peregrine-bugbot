@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-4f2a9c70",
+      "lane": "logic-correctness",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
+      "file": "checkout/total.go",
+      "startLine": 4,
+      "endLine": 4,
+      "description": "The new grouping subtracts shipping from the order instead of adding it after the discount.",
+      "reachablePreconditions": "Any checkout has a positive shipping charge.",
+      "observableImpact": "Every shipped order is undercharged by twice the shipping amount, directly reducing collected revenue.",
+      "provenance": "Seeded arithmetic-precedence regression with an unchanged exact-value unit test that passes at base and fails at head."
+    }
+  ]
+}

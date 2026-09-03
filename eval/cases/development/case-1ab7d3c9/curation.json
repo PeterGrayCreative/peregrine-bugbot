@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "caseId": "case-1ab7d3c9",
+  "status": "draft",
+  "source": {
+    "kind": "clean",
+    "repositoryAlias": "repo-01",
+    "repositoryIdentitySha256": "47201a36af2ef1fcd7ac68d051070da860b999c18fd5b0529484cdb304e6d7b3",
+    "changeIdentitySha256": "3835438024508a543eb1fb0816bba8c2f33ac1aabb9fdb28eeebd73e53776ba2",
+    "access": "curator-local-private"
+  },
+  "strata": {
+    "languageFamily": "go",
+    "architectureFamily": "worker-service",
+    "size": "small",
+    "changeShapes": ["direct"],
+    "surfaceLanes": ["concurrency"]
+  },
+  "proof": {
+    "kind": "clean-control-review",
+    "artifact": "proof.md",
+    "sha256": "a6fdbb3882ee5fcd329e70ab1eb57f11bf421da52cb5885fa73bf6d87c1ea53d"
+  },
+  "confirmations": [
+    {
+      "curatorIdentitySha256": "47ecc656c1d06b3646efa3642f75cd99656909eefc8aeb3de662d309c300ca8a",
+      "confirmedAt": "2026-09-03T12:00:00Z",
+      "checks": ["classification", "clean-control", "line-range", "provenance", "source-authenticity", "truth-completeness"]
+    }
+  ]
+}

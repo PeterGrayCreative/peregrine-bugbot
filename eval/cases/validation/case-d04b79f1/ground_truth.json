@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-e7052d9a",
+      "lane": "test-quality",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "medium",
+      "file": "backoff/delay_test.go",
+      "startLine": 9,
+      "endLine": 14,
+      "description": "The table no longer includes the zero-attempt boundary, which is the only branch that must return immediately.",
+      "reachablePreconditions": "A retry begins at attempt zero and a later implementation changes or removes the special-case branch.",
+      "observableImpact": "The suite can pass while first-attempt operations are unnecessarily delayed, increasing latency for every retried operation.",
+      "provenance": "Seeded table-case deletion; the base and head subtest inventories provide deterministic evidence that the boundary scenario disappeared."
+    }
+  ]
+}

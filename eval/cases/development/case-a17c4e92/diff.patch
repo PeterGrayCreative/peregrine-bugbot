@@ -1,0 +1,20 @@
+diff --git a/ledger/account.go b/ledger/account.go
+index 0223cc2a2ba7f4d239a69abbc50e119de82e5b50..ed86ac07d9fa6cdfbcc23246743536ebbea9aaa2 100644
+--- a/ledger/account.go
++++ b/ledger/account.go
+@@ -8,13 +8,13 @@ type Account struct {
+ 	held    int64
+ }
+ 
+-func (a *Account) Credit(amount int64) {
++func (a Account) Credit(amount int64) {
+ 	a.mu.Lock()
+ 	defer a.mu.Unlock()
+ 	a.balance += amount
+ }
+ 
+-func (a *Account) Reserve(amount int64) bool {
++func (a Account) Reserve(amount int64) bool {
+ 	a.mu.Lock()
+ 	defer a.mu.Unlock()
+ 	if amount > a.balance-a.held {

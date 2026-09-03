@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-0d9c6a41",
+      "lane": "concurrency",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
+      "file": "batch/batch.go",
+      "startLine": 9,
+      "endLine": 9,
+      "description": "The result channel can hold only one value even though Run waits for every sender before it starts receiving.",
+      "reachablePreconditions": "Run receives at least two jobs, so a worker blocks after the single buffer slot is occupied.",
+      "observableImpact": "workers.Wait never completes and the entire batch hangs instead of returning results.",
+      "provenance": "Seeded channel-capacity regression with an unchanged timeout-based test that passes on the base revision and deterministically fails at head."
+    }
+  ]
+}

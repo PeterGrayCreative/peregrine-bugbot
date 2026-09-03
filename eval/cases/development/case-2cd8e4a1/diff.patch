@@ -1,0 +1,15 @@
+diff --git a/quota/quota.go b/quota/quota.go
+index d9155e1909df557f6d5a006d2b05e08da213b79b..0225826df65455560579ce4cffb2c76b7625f7eb 100644
+--- a/quota/quota.go
++++ b/quota/quota.go
+@@ -1,9 +1,5 @@
+ package quota
+ 
+ func Billable(used, included int64) int64 {
+-	billable := used - included
+-	if billable < 0 {
+-		return 0
+-	}
+-	return billable
++	return max(used-included, 0)
+ }

@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "caseId": "case-e95d2a63",
+  "status": "draft",
+  "source": {
+    "kind": "seeded",
+    "repositoryAlias": "repo-03",
+    "repositoryIdentitySha256": "b16cfb9ec0192119b65a42872ecb3569017b800659bb057c8edab2c781f9ef86",
+    "changeIdentitySha256": "c1912c6093e0a7156eacdf9f123ad3ba7d53cdbeeb48432e252ab0fb9f55601d",
+    "access": "curator-local-private"
+  },
+  "strata": {
+    "languageFamily": "go",
+    "architectureFamily": "domain-service",
+    "size": "small",
+    "changeShapes": ["direct"],
+    "surfaceLanes": ["logic-correctness"]
+  },
+  "proof": {
+    "kind": "regression-test",
+    "artifact": "proof.md",
+    "sha256": "8352b7e2fcdc6137e4c802feb2f2223eaa6e9abb10578f692275125545b18567"
+  },
+  "confirmations": [
+    {
+      "curatorIdentitySha256": "47ecc656c1d06b3646efa3642f75cd99656909eefc8aeb3de662d309c300ca8a",
+      "confirmedAt": "2026-09-03T12:00:00Z",
+      "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
+    }
+  ]
+}
