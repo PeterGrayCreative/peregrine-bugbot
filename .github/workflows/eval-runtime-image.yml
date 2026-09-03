@@ -1,0 +1,128 @@
+name: eval-runtime-image
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/eval-runtime-image.yml
+      - container/eval-runtime/**
+      - eval/README.md
+      - scripts/run-eval-runtime-probe.ts
+      - tests/eval-runtime-image.test.ts
+      - package.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  IMAGE_NAME: ghcr.io/petergraycreative/peregrine-eval-runtime
+
+jobs:
+  verify:
+    name: Build and smoke without credentials
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install probe dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Build the local-only test image
+        run: |
+          docker build \
+            --build-arg "SOURCE_REVISION=${GITHUB_SHA}" \
+            --file container/eval-runtime/Dockerfile \
+            --tag peregrine-eval-runtime:pr \
+            container/eval-runtime
+
+      - name: Exercise the zero-credential containment probe
+        run: node --import tsx scripts/run-eval-runtime-probe.ts --image peregrine-eval-runtime:pr
+
+  publish:
+    name: Publish immutable candidate
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    needs: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      attestations: write
+      contents: read
+      id-token: write
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Install probe dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Install pinned emulation support
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
+        with:
+          image: docker.io/tonistiigi/binfmt@sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0
+          platforms: arm64
+
+      - name: Create the pinned Buildx builder
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+        with:
+          version: v0.37.0
+          driver-opts: image=docker.io/moby/buildkit@sha256:28a898719c18a33f4e8000685287fa36fd0dd9560c6440227d3a732d79bb41d8
+
+      - name: Sign in to GHCR for this manual job only
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and publish the commit-addressed candidate
+        id: publish-image
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: container/eval-runtime
+          file: container/eval-runtime/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          build-args: SOURCE_REVISION=${{ github.sha }}
+          provenance: false
+
+      - name: Probe both platforms from the exact published digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          digest="${{ steps.publish-image.outputs.digest }}"
+          if [[ ! "$digest" =~ ^sha256:[a-f0-9]{64}$ ]]; then
+            echo "Published image did not return an immutable sha256 digest" >&2
+            exit 1
+          fi
+          for platform in linux/amd64 linux/arm64; do
+            node --import tsx scripts/run-eval-runtime-probe.ts \
+              --image "${IMAGE_NAME}@${digest}" \
+              --platform "$platform"
+          done
+
+      - name: Attest the published digest
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-name: ${{ env.IMAGE_NAME }}
+          subject-digest: ${{ steps.publish-image.outputs.digest }}
+          push-to-registry: true
+
+      - name: Record the immutable candidate reference
+        run: |
+          echo "Published candidate: ${IMAGE_NAME}@${{ steps.publish-image.outputs.digest }}" >> "$GITHUB_STEP_SUMMARY"

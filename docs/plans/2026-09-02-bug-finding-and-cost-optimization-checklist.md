@@ -27,7 +27,8 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | P0 follow-up | Add this implementation checklist | P0 | Merged | [#3](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/3) |
 | P1 / Plan PR 1 | Persist and report every matrix attempt | - | Merged | [#2](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/2) |
 | Plan PR 2 | Blind and isolate case materialization | PR 1 | Merged | [#5](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/5) |
-| Safety PR 2A | OCI filesystem containment for live evaluation | PR 2 | Not started | - |
+| Safety PR 2A.1 | Bootstrap and attest the provider runtime image | PR 2 | In review | [#9](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/9) |
+| Safety PR 2A.2 | Pin the accepted digest and enforce live filesystem containment | PR 2A.1 | Not started | - |
 | Plan PR 3 | Reproduce base/head history and production manifest path | PR 2 | Merged | [#7](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/7) |
 | Plan PR 4 | Root-cause grading, adjudication, and miss stages | PRs 3, 6 | Not started | - |
 | Plan PR 5 | Provider-correct usage, cost, work, and experiment metadata | PR 1 | Not started | - |
@@ -104,6 +105,23 @@ Integration note: this slice establishes isolation, opaque identities, containme
 
 Plan PR 2 proves that isolated homes, opaque paths, CLI flags, and read-only tool modes do not create a host-filesystem confidentiality boundary. Until this prerequisite lands, Claude and Codex live matrix attempts fail as configuration outcomes before either provider process starts.
 
+### Safety PR 2A.1 - Image bootstrap
+
+- [x] Pin the Node base image, Claude CLI, Codex CLI, package lock, workflow actions, and build helpers.
+- [x] Restrict the build context and run the image as a non-root user.
+- [x] Add one executable, strictly parsed Docker probe contract with negative mutation tests.
+- [x] Dynamically probe read-only root and input mounts, writable output, tmpfs state, loopback-only networking, provider versions, and absence of credentials.
+- [x] Keep pull-request verification read-only and credential-free.
+- [x] Restrict GHCR publication to manual dispatch from `main` with job-scoped permissions.
+- [x] Probe the exact pushed digest on both amd64 and arm64 before attesting that digest.
+- [x] Run `npm run validate`, independent security/supply-chain reviews, and open [PR #9](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/9).
+- [ ] Require the pull-request image build and zero-credential container smoke to pass before merge.
+- [ ] After merge, manually publish and verify an attested candidate before accepting its digest for Safety PR 2A.2.
+
+Evidence: [Safety PR 2A.1 validation record](../validation/2026-09-03-eval-runtime-image-bootstrap.md) and [PR #9](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/9). This bootstrap creates a quarantined candidate only; it does not open live evaluation.
+
+### Safety PR 2A.2 - Runtime containment
+
 - [ ] Require a Linux OCI image pinned by immutable digest; never auto-pull during an experiment.
 - [ ] Mount only the sanitized checkout read-only, sanitized Peregrine assets read-only, and one attempt-owned output directory read-write.
 - [ ] Use container-only tmpfs mounts for provider state and scratch data.
@@ -114,12 +132,12 @@ Plan PR 2 proves that isolated homes, opaque paths, CLI flags, and read-only too
 - [ ] Fail closed on unsupported platforms, missing or inaccessible runtimes, mutable image tags, digest mismatch, failed probes, or unknown provider flags.
 - [ ] Force-remove timed-out containers by opaque name and prove no process or container survives.
 - [ ] Record filesystem containment separately from network isolation; outbound provider access remains `limited` unless an egress allowlist is independently attested.
-- [ ] Add pure argv tests and a fake-provider containment smoke test that incurs no model cost.
+- [ ] Reuse the pure argv contract and add a fake-provider containment smoke test that incurs no model cost.
 - [ ] Run `npm run validate`, open, review, and merge the PR before any live-model benchmark or Plan PR 7 baseline.
 
 Must stay untouched: model prompts, model selection, routing, grading policy, and production review execution.
 
-Decision gate: choose and own the provider-enabled OCI image source and immutable digest before implementation can be accepted. Do not substitute deprecated macOS `sandbox-exec` or an inner CLI read-only mode for the outer mount boundary.
+Decision gate: accept the attested `ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:<digest>` candidate before Safety PR 2A.2 can be accepted. Do not substitute deprecated macOS `sandbox-exec` or an inner CLI read-only mode for the outer mount boundary.
 
 ## Plan PR 3 - Reproducible base/head history and production manifest path
 
