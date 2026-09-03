@@ -730,7 +730,20 @@ function behavioralMatrix(
       costAccounting: "best-effort",
       control: "control",
       treatment: "treatment",
-      judge: { kind: "codex", model: "gpt-5.6-luna", version: "semantic-v1" },
+      judge: {
+        kind: "codex",
+        model: "gpt-5.6-luna",
+        effort: "medium",
+        version: "semantic-v1",
+        limits: {
+          maxProviderCostUsd: null,
+          maxProviderAttempts: 500,
+          maxWallTimeMs: 3_600_000,
+          maxFailureRate: 0.25,
+          minAttemptsForFailureRate: 8,
+          maxConsecutiveFailures: 3,
+        },
+      },
       limits: {
         maxProviderCostUsd: null,
         maxProviderAttempts: 0,
