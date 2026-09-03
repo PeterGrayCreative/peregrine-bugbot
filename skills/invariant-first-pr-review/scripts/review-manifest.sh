@@ -2,7 +2,7 @@
 # Inventory changed surfaces and map them to invariant review lanes.
 #
 # Usage:
-#   review-manifest.sh [--trust-working-tree-profile] [<base-ref>|-] [<head-ref>] [<profile.md>]
+#   review-manifest.sh [--trust-working-tree-profile] [--json-output <path>] [<base-ref>|-] [<head-ref>] [<profile.md>]
 #
 # A repository-local profile is read from the merge base by default. The
 # explicit trust flag is reserved for validating an intentional profile edit.
@@ -13,11 +13,20 @@ usage() {
 }
 
 trust_working_tree_profile=0
+json_output=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --trust-working-tree-profile)
       trust_working_tree_profile=1
       shift
+      ;;
+    --json-output)
+      if [[ $# -lt 2 || -z "$2" ]]; then
+        echo "error: --json-output requires a path" >&2
+        exit 2
+      fi
+      json_output="$2"
+      shift 2
       ;;
     -h|--help)
       usage
@@ -47,7 +56,7 @@ if [[ $# -gt 3 ]]; then
   exit 2
 fi
 
-for command_name in git rg grep sed mktemp tr; do
+for command_name in cat git node rg grep sed mktemp tr; do
   if ! command -v "$command_name" >/dev/null 2>&1; then
     echo "error: required command not found: ${command_name}" >&2
     exit 1
@@ -447,10 +456,26 @@ if [[ -n "$effective_profile" ]]; then
   validate_profile_configuration "$effective_profile"
 fi
 
+status_records="${work_dir}/name-status.z"
+numstat_records="${work_dir}/numstat.z"
+status_text="${work_dir}/name-status.txt"
+stat_text="${work_dir}/stat.txt"
+git diff --no-ext-diff --name-status -z "$merge_base" "$head_commit" > "$status_records"
+git diff --no-ext-diff --numstat -z "$merge_base" "$head_commit" > "$numstat_records"
+git diff --no-ext-diff --name-status "$merge_base" "$head_commit" > "$status_text"
+git diff --no-ext-diff --stat "$merge_base" "$head_commit" > "$stat_text"
+
 changed_files=()
-while IFS= read -r -d '' changed_path; do
+changed_old_files=()
+while IFS= read -r -d '' changed_status; do
+  changed_old_path=""
+  if [[ "$changed_status" == R* || "$changed_status" == C* ]]; then
+    IFS= read -r -d '' changed_old_path
+  fi
+  IFS= read -r -d '' changed_path
   changed_files[${#changed_files[@]}]="$changed_path"
-done < <(git diff --no-ext-diff --name-only -z "$merge_base" "$head_commit")
+  changed_old_files[${#changed_old_files[@]}]="$changed_old_path"
+done < "$status_records"
 changed_count=${#changed_files[@]}
 
 echo "Invariant-first review manifest"
@@ -467,17 +492,25 @@ fi
 echo
 echo "Changed files"
 if [[ "$changed_count" -gt 0 ]]; then
-  git diff --no-ext-diff --name-status "$merge_base" "$head_commit"
+  cat "$status_text"
 else
   echo "(none)"
 fi
 
 echo
 echo "Diff summary"
-git diff --no-ext-diff --stat "$merge_base" "$head_commit"
+cat "$stat_text"
 
 diff_cache="${work_dir}/diffs"
 mkdir -p "$diff_cache"
+activation_records="${work_dir}/activations.tsv"
+: > "$activation_records"
+lane_text_records="${work_dir}/lane-text.z"
+: > "$lane_text_records"
+custom_lane_records="${work_dir}/custom-lanes.tsv"
+: > "$custom_lane_records"
+core_lane_records="${work_dir}/core-lanes.z"
+: > "$core_lane_records"
 index=0
 while [[ "$index" -lt "$changed_count" ]]; do
   changed_path="${changed_files[$index]}"
@@ -532,7 +565,8 @@ validate_regex() {
 
 emit_lane() {
   local lane_file="$1"
-  local fname id label path_pattern content_pattern extra found path_matches content_matches
+  local fname id label path_pattern content_pattern base_path_pattern base_content_pattern extra_path extra_content found path_matches content_matches
+  local base_path_matches base_content_matches extension_path_matches extension_content_matches
   local path_declarations content_declarations
 
   fname="${lane_file##*/}"
@@ -561,15 +595,19 @@ emit_lane() {
 
   path_pattern="$(extract_pattern "$lane_file" 'path')"
   content_pattern="$(extract_pattern "$lane_file" 'content')"
+  base_path_pattern="$path_pattern"
+  base_content_pattern="$content_pattern"
+  extra_path=""
+  extra_content=""
 
   if [[ -n "$effective_profile" ]]; then
-    extra="$(extract_extend "$effective_profile" "$id" 'path')"
-    if [[ -n "$extra" ]]; then
-      path_pattern="${path_pattern:+${path_pattern}|}${extra}"
+    extra_path="$(extract_extend "$effective_profile" "$id" 'path')"
+    if [[ -n "$extra_path" ]]; then
+      path_pattern="${path_pattern:+${path_pattern}|}${extra_path}"
     fi
-    extra="$(extract_extend "$effective_profile" "$id" 'content')"
-    if [[ -n "$extra" ]]; then
-      content_pattern="${content_pattern:+${content_pattern}|}${extra}"
+    extra_content="$(extract_extend "$effective_profile" "$id" 'content')"
+    if [[ -n "$extra_content" ]]; then
+      content_pattern="${content_pattern:+${content_pattern}|}${extra_content}"
     fi
   fi
 
@@ -592,6 +630,10 @@ emit_lane() {
     changed_path="${changed_files[$index]}"
     path_matches=0
     content_matches=0
+    base_path_matches=0
+    base_content_matches=0
+    extension_path_matches=0
+    extension_content_matches=0
     if [[ -n "$path_pattern" ]] && printf '%s\n' "$changed_path" | rg -q -e "$path_pattern" --; then
       path_matches=1
     fi
@@ -601,6 +643,27 @@ emit_lane() {
     fi
     if [[ "$path_matches" -eq 1 || "$content_matches" -eq 1 ]]; then
       printf -- '- %q\n' "$changed_path"
+      printf -v quoted_path '%q' "$changed_path"
+      printf '%s\0%s\0%s\0' "$id" "$changed_path" "$quoted_path" >> "$lane_text_records"
+      if [[ -n "$base_path_pattern" ]] && printf '%s\n' "$changed_path" | rg -q -e "$base_path_pattern" --; then
+        base_path_matches=1
+        printf '%s\0%s\0path\0' "$changed_path" "$id" >> "$activation_records"
+      fi
+      if [[ -n "$base_content_pattern" && -s "${diff_cache}/${index}.diff" ]] && \
+         rg -q -e "$base_content_pattern" -- "${diff_cache}/${index}.diff"; then
+        base_content_matches=1
+        printf '%s\0%s\0content\0' "$changed_path" "$id" >> "$activation_records"
+      fi
+      if [[ -n "$extra_path" ]] && printf '%s\n' "$changed_path" | rg -q -e "$extra_path" --; then
+        extension_path_matches=1
+      fi
+      if [[ -n "$extra_content" && -s "${diff_cache}/${index}.diff" ]] && \
+         rg -q -e "$extra_content" -- "${diff_cache}/${index}.diff"; then
+        extension_content_matches=1
+      fi
+      if [[ "$extension_path_matches" -eq 1 || "$extension_content_matches" -eq 1 ]]; then
+        printf '%s\0%s\0profile-extension\0' "$changed_path" "$id" >> "$activation_records"
+      fi
       found=1
     fi
     index=$((index + 1))
@@ -614,6 +677,10 @@ emit_lane() {
 lane_source_hint=""
 for lane_file in "$lanes_dir"/[0-9]*.md; do
   if [[ -e "$lane_file" ]]; then
+    core_lane_name="${lane_file##*/}"
+    core_lane_id="${core_lane_name%.md}"
+    core_lane_id="${core_lane_id#[0-9][0-9]-}"
+    printf '%s\0' "$core_lane_id" >> "$core_lane_records"
     emit_lane "$lane_file"
   fi
 done
@@ -631,6 +698,10 @@ if [[ -n "$profile_lanes_dir" && -d "$profile_lanes_dir" ]]; then
       else
         lane_source_hint="$lane_file"
       fi
+      custom_lane_id="${lane_name%.md}"
+      custom_lane_id="${custom_lane_id#[0-9][0-9]-}"
+      printf -v quoted_source '%q' "$lane_source_hint"
+      printf '%s\0%s\0%s\0' "$custom_lane_id" "$lane_source_hint" "$quoted_source" >> "$custom_lane_records"
       emit_lane "$lane_file"
     fi
   done
@@ -640,9 +711,12 @@ lane_source_hint=""
 echo
 echo "Large changed files at head"
 large_found=0
+large_file_records="${work_dir}/large-files.z"
+: > "$large_file_records"
 index=0
 while [[ "$index" -lt "$changed_count" ]]; do
   changed_path="${changed_files[$index]}"
+  changed_old_path="${changed_old_files[$index]}"
   index=$((index + 1))
 
   if ! git cat-file -e "${head_commit}:${changed_path}" 2>/dev/null; then
@@ -654,10 +728,13 @@ while [[ "$index" -lt "$changed_count" ]]; do
       head_lines="$(git show "${head_commit}:${changed_path}" | wc -l | tr -d ' ')"
       if [[ "$head_lines" -ge 400 ]]; then
         base_lines=0
-        if git cat-file -e "${merge_base}:${changed_path}" 2>/dev/null; then
-          base_lines="$(git show "${merge_base}:${changed_path}" | wc -l | tr -d ' ')"
+        base_path="${changed_old_path:-$changed_path}"
+        if git cat-file -e "${merge_base}:${base_path}" 2>/dev/null; then
+          base_lines="$(git show "${merge_base}:${base_path}" | wc -l | tr -d ' ')"
         fi
         printf -- '- %q: %s -> %s lines\n' "$changed_path" "$base_lines" "$head_lines"
+        printf -v quoted_path '%q' "$changed_path"
+        printf '%s\0%s\0%s\0%s\0' "$changed_path" "$quoted_path" "$base_lines" "$head_lines" >> "$large_file_records"
         large_found=1
       fi
       ;;
@@ -671,3 +748,29 @@ fi
 echo
 echo "Next step"
 echo "Use this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it."
+
+if [[ -n "$json_output" ]]; then
+  node "${script_dir}/review-manifest-json.mjs" \
+    --output "$json_output" \
+    --repo "$repo_root" \
+    --base-ref "$base_ref" \
+    --base-source "$base_source" \
+    --base-commit "$base_commit" \
+    --head-ref "$head_ref" \
+    --head-commit "$head_commit" \
+    --merge-base "$merge_base" \
+    --profile-requested "$requested_profile" \
+    --profile-source "$profile_source" \
+    --profile-changed-at-head "$profile_changed_at_head" \
+    --profile-lanes-rel "$profile_lanes_rel" \
+    --activations "$activation_records" \
+    --core-lanes "$core_lane_records" \
+    --custom-lanes "$custom_lane_records" \
+    --status-records "$status_records" \
+    --status-text "$status_text" \
+    --stat-text "$stat_text" \
+    --numstat-records "$numstat_records" \
+    --lane-text "$lane_text_records" \
+    --large-files "$large_file_records" \
+    --parity-output "${json_output}.parity"
+fi
