@@ -227,6 +227,29 @@ assert_contains "$output" 'trusted lane source:' 'ordinary review reports a retr
 assert_contains "$output" '.peregrine/lanes/09-project-policy.md' 'ordinary review reports the merge-base custom-lane object path'
 pass 'ordinary review uses custom lanes from the merge base'
 
+new_repo 'symlinked-profile-path'
+git -C "$test_repo" switch -q -c feature
+symlink_profile_dir="${sandbox}/symlinked-profile-content"
+mkdir -p "$symlink_profile_dir" "${test_repo}/src"
+printf '%s\n' \
+  '<!-- peregrine-profile-version: 1 -->' \
+  '# Review profile: untrusted symlink target' \
+  '<!-- review-base: main -->' \
+  '<!-- manifest-extend runtime-config content-pattern: HEAD_ONLY_PROFILE_TOKEN -->' \
+  > "${symlink_profile_dir}/profile.md"
+ln -s "$symlink_profile_dir" "${test_repo}/.peregrine"
+printf '%s\n' 'export const policy = "HEAD_ONLY_PROFILE_TOKEN";' > "${test_repo}/src/policy.ts"
+git -C "$test_repo" add '.peregrine' 'src/policy.ts'
+git -C "$test_repo" commit -q -m 'add untrusted symlinked profile'
+repo_alias="${sandbox}/symlinked-profile-repo-alias"
+ln -s "$test_repo" "$repo_alias"
+output="$(cd "$repo_alias" && /bin/bash "$manifest" 'main' 'HEAD' "${repo_alias}/.peregrine/profile.md")"
+assert_contains "$output" 'profile: ' 'symlinked repository profiles retain repository-local identity'
+assert_contains "$output" '(ignored; absent at merge base)' 'symlinked repository profiles retain repository-local identity'
+section="$(printf '%s\n' "$output" | runtime_section)"
+assert_contains "$section" '(none detected)' 'symlinked repository profiles cannot activate head-authored policy'
+pass 'symlinked repository profiles cannot become trusted external policy'
+
 new_repo 'self-blinding-profile'
 main_head="$(git -C "$test_repo" rev-parse main)"
 git -C "$test_repo" update-ref 'refs/remotes/origin/main' "$main_head"

@@ -1,6 +1,11 @@
+diff --git a/src/save-settings.ts b/src/save-settings.ts
+index 4b1fd29e874efdde4a547ab182fb740cca2bef77..306ecd70e2f76d30df14197ead4c17452ee071da 100644
 --- a/src/save-settings.ts
 +++ b/src/save-settings.ts
-@@ -5,3 +5,7 @@ export async function saveSettings(store: Store, settings: Settings): Promise<boolean> {
+@@ -2,6 +2,10 @@ export interface Settings { theme: string }
+ export interface Store { write(settings: Settings): Promise<void> }
+ 
+ export async function saveSettings(store: Store, settings: Settings): Promise<boolean> {
 -  await store.write(settings);
 -  return true;
 +  try {

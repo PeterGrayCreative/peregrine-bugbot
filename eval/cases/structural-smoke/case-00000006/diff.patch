@@ -1,6 +1,10 @@
+diff --git a/src/Profile.tsx b/src/Profile.tsx
+index ee9059f59feafc9336fb2f698925c315f40f2181..7de50ef99c3f1f97b66b27f300d52906f6a39df8 100644
 --- a/src/Profile.tsx
 +++ b/src/Profile.tsx
-@@ -6,4 +6,4 @@ export function Profile({ accountId }: Props) {
+@@ -4,6 +4,6 @@ interface Props { accountId: string }
+ 
+ export function Profile({ accountId }: Props) {
    const [name, setName] = useState("");
 -  const save = () => api.save(accountId, name);
 +  const save = useCallback(() => api.save(accountId, name), []); // BUG: captures initial account and name

@@ -1,3 +1,5 @@
+diff --git a/src/paginate.ts b/src/paginate.ts
+index 733f3e27c8d95af2014a3c5cf7314b88e48f6833..01d5233f37bf23c6d7efe3ec936b1b994a0d7212 100644
 --- a/src/paginate.ts
 +++ b/src/paginate.ts
 @@ -1,4 +1,4 @@

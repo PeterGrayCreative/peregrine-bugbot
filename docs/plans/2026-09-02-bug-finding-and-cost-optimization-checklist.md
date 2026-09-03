@@ -28,8 +28,8 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | P1 / Plan PR 1 | Persist and report every matrix attempt | - | Merged | [#2](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/2) |
 | Plan PR 2 | Blind and isolate case materialization | PR 1 | Merged | [#5](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/5) |
 | Safety PR 2A | OCI filesystem containment for live evaluation | PR 2 | Not started | - |
-| Plan PR 3 | Reproduce base/head history and production manifest path | PR 2 | Not started | - |
-| Plan PR 4 | Root-cause grading, adjudication, and miss stages | PR 3 | Not started | - |
+| Plan PR 3 | Reproduce base/head history and production manifest path | PR 2 | In review | [#7](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/7) |
+| Plan PR 4 | Root-cause grading, adjudication, and miss stages | PRs 3, 6 | Not started | - |
 | Plan PR 5 | Provider-correct usage, cost, work, and experiment metadata | PR 1 | Not started | - |
 | Plan PR 6 | Typed manifest shadow/parity mode | PR 3 | Not started | - |
 | Plan PR 7 | Curated gold set v1 and unmodified baseline | PRs 4-6 | Not started | - |
@@ -123,16 +123,19 @@ Decision gate: choose and own the provider-enabled OCI image source and immutabl
 
 ## Plan PR 3 - Reproducible base/head history and production manifest path
 
-- [ ] Materialize deterministic base and head commits with preserved ancestry.
-- [ ] Ensure the reviewed working tree matches the head commit.
-- [ ] Verify the checked-in diff equals the materialized `merge-base...head` diff after documented normalization only.
-- [ ] Exercise the same manifest entry point used by production reviews.
-- [ ] Cover additions, deletions, renames, binaries, and profile changes.
-- [ ] Record base, head, merge base, and provenance in run artifacts.
-- [ ] Fail closed when history, diff, or manifest provenance cannot be reproduced.
-- [ ] Add tests proving no future fixing commit or remote remains accessible.
-- [ ] Run `npm run validate` and the structural screening corpus.
-- [ ] Open, review, and merge the PR before starting PR 4 or PR 6.
+- [x] Materialize deterministic base and head commits with preserved ancestry.
+- [x] Ensure the reviewed working tree matches the head commit.
+- [x] Verify the checked-in diff equals the materialized `merge-base...head` diff after documented normalization only.
+- [x] Exercise the same manifest entry point used by production reviews.
+- [x] Cover additions, deletions, renames, binaries, and profile changes.
+- [x] Record base, head, merge base, and provenance in run artifacts.
+- [x] Fail closed when history, diff, or manifest provenance cannot be reproduced.
+- [x] Add tests proving no future fixing commit or remote remains accessible.
+- [x] Run `npm run validate` and the structural screening corpus.
+- [x] Open and independently review [PR #7](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/7).
+- [ ] Merge PR #7 before Plan PR 6. Plan PR 4 follows Plan PR 6 so routing-versus-breadth misses use typed manifest evidence.
+
+Evidence: [Plan PR 3 validation record](../validation/2026-09-02-eval-reproducible-history.md) and [PR #7](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/7). Two independent exact-head reviews found no remaining blocker before publication.
 
 Must stay untouched: grading policy, prompts, budgets, and routing.
 

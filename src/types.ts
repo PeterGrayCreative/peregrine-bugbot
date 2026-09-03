@@ -226,6 +226,58 @@ export interface NetworkIsolationCapability {
   mechanism: string;
 }
 
+export type EvaluationDiffNormalization = "identity-v1";
+
+export interface EvaluationHistoryProvenance {
+  schemaVersion: 1;
+  materialization: "fixture-patch" | "historical-sanitized-export";
+  objectFormat: "sha1" | "sha256";
+  baseRef: string;
+  headRef: string;
+  mergeBase: string;
+  baseTree: string;
+  headTree: string;
+  commitCount: 2;
+  baseIsMergeBase: true;
+  checkedOutTreeMatchesHead: true;
+  treeReproductionVerified: true;
+  historicalSource?: {
+    sourceIdentitySha256: string;
+    sourceBaseRef: string;
+    sourceHeadRef: string;
+    sourceMergeBase: string;
+    sourceBaseTree: string;
+    sourceHeadTree: string;
+    baseCommitIsMergeBase: true;
+    baseTreeMatches: true;
+    headTreeMatches: true;
+  };
+  diffNormalization: EvaluationDiffNormalization;
+  diffSha256: string;
+}
+
+export interface EvaluationManifestProvenance {
+  entryPoint: "prepareReviewManifest";
+  skillName: string;
+  baseRef: string;
+  headRef: string;
+  mergeBase: string;
+  outputSha256: string;
+  /** Exact bounded text returned by the production manifest entry point. */
+  output: string;
+  profileSource:
+    | "none"
+    | "merge-base snapshot"
+    | "ignored; absent at merge base";
+  headProfileChanged: boolean;
+}
+
+export interface EvaluationAttemptProvenance {
+  history: EvaluationHistoryProvenance;
+  /** Absent only when production-manifest preflight failed closed. */
+  manifest?: EvaluationManifestProvenance;
+}
+
 export type RunOutcome =
   | { status: "completed"; result: EngineResult }
   | {
@@ -245,6 +297,8 @@ export interface RunRecord {
   repeat: number;
   startedAt: string;
   finishedAt: string;
+  /** Present after history materialization; manifest is added only after its preflight passes. */
+  evaluationProvenance?: EvaluationAttemptProvenance;
   outcome: RunOutcome;
 }
 

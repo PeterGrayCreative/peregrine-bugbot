@@ -1,9 +1,11 @@
+diff --git a/src/totals.ts b/src/totals.ts
+index feca7ee24565ee286d935cf03a2a58c65ce81418..55e4ad5530d772925e1a43697fc727d6ae762f46 100644
 --- a/src/totals.ts
 +++ b/src/totals.ts
 @@ -3,6 +3,6 @@ export interface LineItem {
    quantity: number;
  }
-
+ 
 -export function calcTotal(items: LineItem[]): number {
 +export function calculateOrderTotal(items: LineItem[]): number {
    return items.reduce((total, item) => total + item.price * item.quantity, 0);
