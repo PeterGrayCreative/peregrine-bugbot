@@ -8,6 +8,7 @@ import { RunFailureError } from "../src/core/run-failure.js";
 import type { PeregrineConfig, ReviewContext } from "../src/types.js";
 import type { exec } from "../src/util/exec.js";
 import { nonSensitiveEnvironment, providerEnvironment } from "../src/security/provider-env.js";
+import { sha256 } from "../src/core/telemetry.js";
 
 function config(): PeregrineConfig {
   return JSON.parse(readFileSync(resolve("peregrine.config.json"), "utf8")) as PeregrineConfig;
@@ -98,7 +99,12 @@ test("Claude runner performs isolated, measurable breadth and investigation stag
       stdout: JSON.stringify({
         structured_output: schema.title === "Peregrine Breadth Sweep" ? breadth : { findings: [finding] },
         total_cost_usd: 0.01,
-        usage: { input_tokens: 10, output_tokens: 20 },
+        usage: {
+          input_tokens: 10,
+          cache_creation_input_tokens: 0,
+          cache_read_input_tokens: 0,
+          output_tokens: 20,
+        },
       }),
       stderr: "",
       code: 0,
@@ -132,7 +138,15 @@ test("Claude runner performs isolated, measurable breadth and investigation stag
   assert.equal(reviewed.findings.length, 1);
   assert.equal(reviewed.reviewedHeadRef, "head-sha");
   assert.equal(reviewed.usage.inputTokens, 20);
+  assert.equal(reviewed.usage.baseInputTokens, 20);
+  assert.equal(reviewed.usage.cacheWriteInputTokens, 0);
+  assert.equal(reviewed.usage.cacheReadInputTokens, 0);
   assert.equal(reviewed.usage.costUsd, 0.02);
+  assert.equal(reviewed.usage.costSource, "provider");
+  const raw = reviewed.raw as { breadth: { model: string; promptSha256: string } };
+  const breadthPrompt = calls[0]?.args[calls[0].args.indexOf("-p") + 1] ?? "";
+  assert.equal(raw.breadth.model, context().config.runners.claude.breadthModel);
+  assert.equal(raw.breadth.promptSha256, sha256(breadthPrompt));
   assert.deepEqual(validatedStages, ["breadth", "investigation"]);
 });
 
@@ -185,6 +199,12 @@ test("Codex runner performs isolated breadth and investigation stages", async ()
   assert.equal(reviewed.findings.length, 1);
   assert.equal(reviewed.usage.inputTokens, 22);
   assert.equal(reviewed.usage.cachedInputTokens, 4);
+  assert.equal(reviewed.usage.uncachedInputTokens, 18);
+  assert.equal(reviewed.usage.cacheReadInputTokens, 4);
+  assert.equal(reviewed.usage.costUsd, undefined);
+  const raw = reviewed.raw as { breadth: { model: string; promptSha256: string } };
+  assert.equal(raw.breadth.model, context().config.runners.codex.breadthModel);
+  assert.equal(raw.breadth.promptSha256, sha256(calls[0]?.stdin ?? ""));
   assert.deepEqual(validatedStages, ["breadth", "investigation"]);
 });
 

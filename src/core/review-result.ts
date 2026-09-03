@@ -9,6 +9,7 @@ import {
 } from "../types.js";
 import { claudeSchemaJson } from "./paths.js";
 import { assertNoSecrets } from "../security/secrets.js";
+import { parseUsage } from "./telemetry.js";
 
 const MAX_RAW_SERIALIZED_CHARS = 200_000;
 
@@ -36,14 +37,6 @@ const RESULT_KEYS = new Set([
   "durationMs",
   "raw",
 ]);
-const USAGE_KEYS = new Set([
-  "inputTokens",
-  "cachedInputTokens",
-  "outputTokens",
-  "reasoningOutputTokens",
-  "costUsd",
-]);
-
 export function reviewSchemaJson(): string {
   return claudeSchemaJson("review-result");
 }
@@ -81,17 +74,8 @@ export function parseEngineResult(value: unknown, source = "review result"): Eng
   if (typeof root.durationMs !== "number" || !Number.isFinite(root.durationMs) || root.durationMs < 0) {
     throw new Error(`${source}.durationMs must be a non-negative number`);
   }
-  const usageObject = plainObject(root.usage, `${source}.usage`);
-  assertOnlyKeys(usageObject, USAGE_KEYS, `${source}.usage`);
-  const usage: Usage = {};
-  for (const key of USAGE_KEYS) {
-    const usageValue = usageObject[key];
-    if (usageValue === undefined) continue;
-    if (typeof usageValue !== "number" || !Number.isFinite(usageValue) || usageValue < 0) {
-      throw new Error(`${source}.usage.${key} must be a non-negative number`);
-    }
-    usage[key as keyof Usage] = usageValue;
-  }
+  const usage = parseUsage(root.usage, `${source}.usage`);
+  assertNoSecrets(usage, `${source}.usage`);
   const reviewedBaseRef = optionalString(root.reviewedBaseRef, `${source}.reviewedBaseRef`, 1024);
   const reviewedHeadRef = optionalString(root.reviewedHeadRef, `${source}.reviewedHeadRef`, 1024);
 
@@ -126,6 +110,7 @@ export function buildEngineResult(args: {
   raw?: unknown;
 }): EngineResult {
   assertNoSecrets(args.payload, `${args.engine} review output`);
+  assertNoSecrets(args.usage, `${args.engine} usage telemetry`);
   if (args.raw !== undefined) {
     const serializedRaw = JSON.stringify(args.raw);
     if (serializedRaw.length > MAX_RAW_SERIALIZED_CHARS) {

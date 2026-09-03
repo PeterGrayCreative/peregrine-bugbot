@@ -6,7 +6,9 @@ import { parseBreadthResult } from "../core/breadth-result.js";
 import { prepareReviewManifest } from "../core/manifest.js";
 import { bundledSkillDir, schemaPath } from "../core/paths.js";
 import { buildEngineResult, parseReviewPayload } from "../core/review-result.js";
+import { applyUsageCost } from "../core/pricing.js";
 import { RunFailureError } from "../core/run-failure.js";
+import { codexUsageFromEvents, combineUsage, sha256 } from "../core/telemetry.js";
 import type { CodexEffort, EngineResult, ReviewContext, Usage } from "../types.js";
 import { type ExecResult, exec } from "../util/exec.js";
 import type { Engine } from "./engine.js";
@@ -20,6 +22,9 @@ interface CodexStageResult {
   usage: Usage;
   durationMs: number;
   events: unknown[];
+  malformedEventLines: number;
+  model: string;
+  promptSha256: string;
 }
 
 async function runStage(args: {
@@ -107,46 +112,31 @@ async function runStage(args: {
   } catch {
     throw new RunFailureError("parse", `codex ${args.model} stage did not write its structured output file`);
   }
+  let malformedEventLines = 0;
   const events = result.stdout
     .split("\n")
-    .filter(Boolean)
-    .map((line) => {
+    .filter((line) => line.trim().length > 0)
+    .flatMap((line) => {
       try {
-        return JSON.parse(line) as unknown;
+        return [JSON.parse(line) as unknown];
       } catch {
-        return undefined;
+        malformedEventLines++;
+        return [];
       }
-    })
-    .filter((event): event is unknown => event !== undefined);
-  return { output, usage: usageFromEvents(events), durationMs: Date.now() - started, events };
-}
-
-function usageFromEvents(events: unknown[]): Usage {
-  const totals: Usage = {};
-  for (const event of events) {
-    if (!event || typeof event !== "object") continue;
-    const value = event as Record<string, unknown>;
-    if (value.type !== "turn.completed" || !value.usage || typeof value.usage !== "object") continue;
-    const usage = value.usage as Record<string, unknown>;
-    addUsage(totals, "inputTokens", usage.input_tokens);
-    addUsage(totals, "cachedInputTokens", usage.cached_input_tokens);
-    addUsage(totals, "outputTokens", usage.output_tokens);
-    addUsage(totals, "reasoningOutputTokens", usage.reasoning_output_tokens);
-  }
-  return totals;
-}
-
-function addUsage(target: Usage, key: keyof Usage, value: unknown): void {
-  if (typeof value === "number") target[key] = (target[key] ?? 0) + value;
-}
-
-function combineUsage(left: Usage, right: Usage): Usage {
-  const combined: Usage = {};
-  for (const key of ["inputTokens", "cachedInputTokens", "outputTokens", "reasoningOutputTokens"] as const) {
-    const value = (left[key] ?? 0) + (right[key] ?? 0);
-    if (value > 0) combined[key] = value;
-  }
-  return combined;
+    });
+  return {
+    output,
+    usage: applyUsageCost(
+      codexUsageFromEvents(events, args.prompt, { completeEventStream: malformedEventLines === 0 }),
+      args.model,
+      args.ctx.config.pricing,
+    ),
+    durationMs: Date.now() - started,
+    events,
+    malformedEventLines,
+    model: args.model,
+    promptSha256: sha256(args.prompt),
+  };
 }
 
 export function createCodexEngine(run: ExecFunction = exec): Engine {
@@ -239,13 +229,19 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
             manifest: manifest.available ? "runner-generated" : manifest.reason,
             breadth: {
               output: breadthPayload,
+              model: breadth.model,
+              promptSha256: breadth.promptSha256,
               usage: breadth.usage,
               durationMs: breadth.durationMs,
+              malformedEventLines: breadth.malformedEventLines,
             },
             investigation: {
               output: rawPayload,
+              model: investigation.model,
+              promptSha256: investigation.promptSha256,
               usage: investigation.usage,
               durationMs: investigation.durationMs,
+              malformedEventLines: investigation.malformedEventLines,
             },
           },
         });

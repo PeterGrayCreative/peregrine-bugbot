@@ -7,6 +7,7 @@ import {
   type PeregrineConfig,
   type RunnerName,
 } from "./types.js";
+import { validatePricingCatalog } from "./core/pricing.js";
 
 const CODEX_EFFORTS: CodexEffort[] = ["low", "medium", "high", "xhigh", "max", "ultra"];
 const CLAUDE_EFFORTS: ClaudeEffort[] = ["low", "medium", "high", "xhigh", "max"];
@@ -153,4 +154,5 @@ export function validateConfig(cfg: PeregrineConfig, path = "config"): void {
   ) {
     fail(`"filters.ignorePaths" must be an array of non-empty strings`);
   }
+  if (cfg.pricing !== undefined) validatePricingCatalog(cfg.pricing, `${path}.pricing`);
 }

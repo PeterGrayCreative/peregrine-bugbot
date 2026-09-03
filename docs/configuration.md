@@ -39,6 +39,25 @@ Provider-scoped overrides:
 
 An override for one provider never mutates the other provider's block. Unknown runners, placeholder model names, invalid effort, non-positive limits, and invalid confidence thresholds fail before a model starts.
 
+## Pricing contracts
+
+`pricing` is optional. Peregrine never assumes that a missing or unknown price
+means free. When the provider reports a charge, that value wins and is labeled
+`costSource: "provider"`. Otherwise an estimate is produced only when a dated
+contract exactly matches the provider, model, and optional service tier.
+
+Each contract declares `pricingAsOf`, a catalog version, assumptions, whether
+reasoning tokens are already included in output pricing, and one or more
+context tiers. Anthropic contracts price base input, cache writes, cache reads,
+and output independently. OpenAI contracts price uncached input, cache reads,
+and output independently. The final tier omits `upToInputTokens`; earlier tiers
+use increasing inclusive thresholds.
+
+The checked-in configuration intentionally contains no price values for the
+configured future-facing model aliases. Operators must add verified rates and
+a date before estimates can appear. Unknown models, missing token components,
+ambiguous cache semantics, and unmatched service tiers remain `n/a`.
+
 ## Interactive plugin routing
 
 An interactive plugin or skill call can override the four routing fields in the

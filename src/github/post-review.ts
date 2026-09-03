@@ -195,7 +195,9 @@ function buildBody(
   skipped: number,
   heading: string,
 ): string {
-  const cost = result.usage.costUsd === undefined ? "n/a" : `$${result.usage.costUsd.toFixed(3)}`;
+  const cost = result.usage.costUsd === undefined
+    ? "n/a"
+    : `${result.usage.costSource ?? "unattributed"} $${result.usage.costUsd.toFixed(3)}`;
   const sections = [
     "### 🦅 peregrine-bugbot",
     "",

@@ -67,7 +67,7 @@ async function cmdReview(): Promise<void> {
 
   writeResult(outputPath, result);
   console.log(
-    `[peregrine] ${result.status} · ${result.findings.length} finding(s) · cost $${result.usage.costUsd?.toFixed(3) ?? "?"} · ${(result.durationMs / 1000).toFixed(0)}s`,
+    `[peregrine] ${result.status} · ${result.findings.length} finding(s) · cost ${result.usage.costUsd === undefined ? "n/a" : `${result.usage.costSource ?? "unattributed"} $${result.usage.costUsd.toFixed(3)}`} · ${(result.durationMs / 1000).toFixed(0)}s`,
   );
 
   if (has("--post")) {

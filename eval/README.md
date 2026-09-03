@@ -6,6 +6,22 @@ curve, not the top of the leaderboard. Claude and Codex runs also report
 separate breadth/investigation duration and input-token means; missing provider
 cost telemetry is shown as `n/a`, never as free.
 
+Review artifacts preserve provider token semantics instead of forcing both
+providers into one lossy cached-token field. Claude records base input, cache
+creation, cache reads, output, and reasoning output separately. Codex records
+the reported input total, safely derived uncached input, cache reads, output,
+and reasoning output. A normalized total is present only when every contributing
+component is known. Each stage also records UTF-8 prompt bytes, duration, model
+ID, a prompt hash, and turns/tool work when the provider exposes a complete event
+stream.
+Raw provider envelopes and tool output are not persisted.
+
+Reports label cost as provider-reported, estimated, mixed, or unattributed.
+An estimate requires an exact dated pricing contract; unknown models and
+partial usage stay `n/a`. Aggregate token, work, and cost values are emitted
+only when every contributing stage or expected completed attempt supplied the
+field, so a missing value cannot silently become zero.
+
 Each new matrix directory starts with `matrix-manifest.json`, which inventories
 every expected configuration/case/repeat before provider work begins. Every
 finished attempt then records either a completed result or a sanitized failure

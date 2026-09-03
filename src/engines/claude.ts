@@ -4,7 +4,9 @@ import { buildBreadthPrompt, buildInvestigationPrompt } from "../core/prompt.js"
 import { bundledSkillDir, packageRoot } from "../core/paths.js";
 import { join } from "node:path";
 import { buildEngineResult, parseReviewPayload, reviewSchemaJson } from "../core/review-result.js";
+import { applyUsageCost } from "../core/pricing.js";
 import { RunFailureError } from "../core/run-failure.js";
+import { claudeUsageFromEnvelope, combineUsage, sha256 } from "../core/telemetry.js";
 import { assertNoSecrets, safeDiagnostic } from "../security/secrets.js";
 import { isolatedProviderEnvironment, providerEnvironment } from "../security/provider-env.js";
 import type { ClaudeEffort, EngineResult, ReviewContext, Usage } from "../types.js";
@@ -17,6 +19,8 @@ interface ClaudeStageResult<T> {
   output: T;
   usage: Usage;
   durationMs: number;
+  model: string;
+  promptSha256: string;
 }
 
 async function runStage<T>(args: {
@@ -94,7 +98,7 @@ async function runStage<T>(args: {
   let parsed: ReturnType<typeof parseClaudeEnvelope>;
   let output: T;
   try {
-    parsed = parseClaudeEnvelope(result);
+    parsed = parseClaudeEnvelope(result, args.prompt);
     output = args.parse(parsed.structured);
   } catch (error) {
     throw new RunFailureError(
@@ -104,10 +108,19 @@ async function runStage<T>(args: {
     );
   }
   assertNoSecrets(output, `claude ${args.model} stage output`);
-  return { output, usage: parsed.usage, durationMs: Date.now() - started };
+  return {
+    output,
+    usage: applyUsageCost(parsed.usage, args.model, args.ctx.config.pricing),
+    durationMs: Date.now() - started,
+    model: args.model,
+    promptSha256: sha256(args.prompt),
+  };
 }
 
-function parseClaudeEnvelope(result: ExecResult): { structured: unknown; usage: Usage } {
+function parseClaudeEnvelope(
+  result: ExecResult,
+  prompt: string,
+): { structured: unknown; usage: Usage } {
   let outer: Record<string, unknown>;
   try {
     outer = JSON.parse(result.stdout) as Record<string, unknown>;
@@ -121,24 +134,10 @@ function parseClaudeEnvelope(result: ExecResult): { structured: unknown; usage: 
   if (structured === undefined) {
     throw new Error("claude returned no structured output");
   }
-  const usage = outer.usage as Record<string, unknown> | undefined;
   return {
     structured,
-    usage: {
-      costUsd: typeof outer.total_cost_usd === "number" ? outer.total_cost_usd : undefined,
-      inputTokens: typeof usage?.input_tokens === "number" ? usage.input_tokens : undefined,
-      outputTokens: typeof usage?.output_tokens === "number" ? usage.output_tokens : undefined,
-    },
+    usage: claudeUsageFromEnvelope(outer, prompt),
   };
-}
-
-function combineUsage(left: Usage, right: Usage): Usage {
-  const combined: Usage = {};
-  for (const key of ["inputTokens", "cachedInputTokens", "outputTokens", "reasoningOutputTokens", "costUsd"] as const) {
-    const values = [left[key], right[key]].filter((value): value is number => typeof value === "number");
-    if (values.length > 0) combined[key] = values.reduce((sum, value) => sum + value, 0);
-  }
-  return combined;
 }
 
 export function createClaudeEngine(run: ExecFunction = exec): Engine {
@@ -209,8 +208,19 @@ export function createClaudeEngine(run: ExecFunction = exec): Engine {
         durationMs: Date.now() - started,
         raw: {
           manifest: manifest.available ? "runner-generated" : manifest.reason,
-          breadth: { output: breadth.output, usage: breadth.usage, durationMs: breadth.durationMs },
-          investigation: { usage: investigation.usage, durationMs: investigation.durationMs },
+          breadth: {
+            output: breadth.output,
+            model: breadth.model,
+            promptSha256: breadth.promptSha256,
+            usage: breadth.usage,
+            durationMs: breadth.durationMs,
+          },
+          investigation: {
+            model: investigation.model,
+            promptSha256: investigation.promptSha256,
+            usage: investigation.usage,
+            durationMs: investigation.durationMs,
+          },
         },
       });
     },

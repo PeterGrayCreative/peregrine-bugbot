@@ -32,11 +32,25 @@ export interface ConfigStats {
   fpPerCaseMean: number | null;
   costPerCaseMean: number | null;
   costPerCaseStd: number | null;
+  costSource: "provider" | "estimated" | "mixed" | "unknown" | null;
   durationSecMean: number | null;
+  durationSecMedian: number | null;
   breadthDurationSecMean: number | null;
   investigationDurationSecMean: number | null;
   breadthInputTokensMean: number | null;
   investigationInputTokensMean: number | null;
+  inputTokensMean: number | null;
+  uncachedInputTokensMean: number | null;
+  cacheWriteInputTokensMean: number | null;
+  cacheReadInputTokensMean: number | null;
+  outputTokensMean: number | null;
+  reasoningOutputTokensMean: number | null;
+  turnsMean: number | null;
+  toolCallsMean: number | null;
+  toolOutputBytesMean: number | null;
+  promptBytesMean: number | null;
+  telemetryExpectedRuns: number;
+  telemetryObserved: Record<string, number>;
   validFindingsPerDollar: number | null;
 }
 
@@ -170,10 +184,25 @@ function calculateStats(args: {
     .map((run) => run.outcome.result.usage.costUsd)
     .filter((cost): cost is number => typeof cost === "number");
   const durations = args.completed.map((run) => run.outcome.result.durationMs / 1000);
+  const usage = (field: keyof EngineResult["usage"]): number[] => args.completed
+    .map((run) => run.outcome.result.usage[field])
+    .filter((value): value is number => typeof value === "number");
   const breadthDurations = stageNumbers(args.completed, "breadth", "durationMs").map((value) => value / 1000);
   const investigationDurations = stageNumbers(args.completed, "investigation", "durationMs").map((value) => value / 1000);
   const breadthInputs = stageUsageNumbers(args.completed, "breadth", "inputTokens");
   const investigationInputs = stageUsageNumbers(args.completed, "investigation", "inputTokens");
+  const usageValues = {
+    inputTokens: usage("inputTokens"),
+    uncachedInputTokens: usage("uncachedInputTokens"),
+    cacheWriteInputTokens: usage("cacheWriteInputTokens"),
+    cacheReadInputTokens: usage("cacheReadInputTokens"),
+    outputTokens: usage("outputTokens"),
+    reasoningOutputTokens: usage("reasoningOutputTokens"),
+    turns: usage("turns"),
+    toolCalls: usage("toolCalls"),
+    toolOutputBytes: usage("toolOutputBytes"),
+    promptBytes: usage("promptBytes"),
+  };
   const totalValid = args.completed.reduce(
     (sum, run) => sum + Object.values(run.matches).filter((match) => match !== null).length,
     0,
@@ -183,6 +212,11 @@ function calculateStats(args: {
     args.completeness === "tracked" &&
     args.expectedRuns === args.completed.length &&
     costs.length === args.completed.length;
+  const costSources = args.completed.map((run) => run.outcome.result.usage.costSource);
+  const costSource = hasCompleteCost ? summarizeCostSource(costSources) : null;
+  const estimatedPricing = args.completed.map((run) => run.outcome.result.usage.pricing);
+  const hasComparableCost = hasCompleteCost && costSource !== "mixed" && costSource !== "unknown" &&
+    (costSource !== "estimated" || comparableEstimatedPricing(estimatedPricing));
 
   const failuresByKind = countBy(args.failed, (failure) => failure.failureKind);
   const failureRatesByKind = Object.fromEntries(
@@ -211,14 +245,36 @@ function calculateStats(args: {
         ? null
         : mean(args.failureInclusiveRecalls),
     fpPerCaseMean: fps.length > 0 ? mean(fps) : null,
-    costPerCaseMean: hasCompleteCost ? mean(costs) : null,
-    costPerCaseStd: hasCompleteCost ? std(costs) : null,
+    costPerCaseMean: hasComparableCost ? mean(costs) : null,
+    costPerCaseStd: hasComparableCost ? std(costs) : null,
+    costSource,
     durationSecMean: durations.length > 0 ? mean(durations) : null,
+    durationSecMedian: durations.length > 0 ? median(durations) : null,
     breadthDurationSecMean: completeMean(breadthDurations, args.completed.length),
     investigationDurationSecMean: completeMean(investigationDurations, args.completed.length),
     breadthInputTokensMean: completeMean(breadthInputs, args.completed.length),
     investigationInputTokensMean: completeMean(investigationInputs, args.completed.length),
-    validFindingsPerDollar: hasCompleteCost && totalCost > 0 ? totalValid / totalCost : null,
+    inputTokensMean: completeMean(usageValues.inputTokens, args.completed.length),
+    uncachedInputTokensMean: completeMean(usageValues.uncachedInputTokens, args.completed.length),
+    cacheWriteInputTokensMean: completeMean(usageValues.cacheWriteInputTokens, args.completed.length),
+    cacheReadInputTokensMean: completeMean(usageValues.cacheReadInputTokens, args.completed.length),
+    outputTokensMean: completeMean(usageValues.outputTokens, args.completed.length),
+    reasoningOutputTokensMean: completeMean(usageValues.reasoningOutputTokens, args.completed.length),
+    turnsMean: completeMean(usageValues.turns, args.completed.length),
+    toolCallsMean: completeMean(usageValues.toolCalls, args.completed.length),
+    toolOutputBytesMean: completeMean(usageValues.toolOutputBytes, args.completed.length),
+    promptBytesMean: completeMean(usageValues.promptBytes, args.completed.length),
+    telemetryExpectedRuns: args.expectedRuns ?? args.completed.length,
+    telemetryObserved: {
+      costUsd: costs.length,
+      durationMs: durations.length,
+      breadthDurationMs: breadthDurations.length,
+      investigationDurationMs: investigationDurations.length,
+      breadthInputTokens: breadthInputs.length,
+      investigationInputTokens: investigationInputs.length,
+      ...Object.fromEntries(Object.entries(usageValues).map(([key, values]) => [key, values.length])),
+    },
+    validFindingsPerDollar: hasComparableCost && totalCost > 0 ? totalValid / totalCost : null,
   };
 }
 
@@ -230,6 +286,13 @@ function runRecall(run: GradedRun): number | null {
 
 const mean = (values: number[]) =>
   values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
+const median = (values: number[]) => {
+  const ordered = [...values].sort((left, right) => left - right);
+  const middle = Math.floor(ordered.length / 2);
+  return ordered.length % 2 === 0
+    ? (ordered[middle - 1]! + ordered[middle]!) / 2
+    : ordered[middle]!;
+};
 const std = (values: number[]) => {
   if (values.length < 2) return 0;
   const average = mean(values);
@@ -253,14 +316,14 @@ function renderHtml(stats: ConfigStats[]): string {
     .join("\n");
   const rows = stats.map((item) => `<tr><td>${item.config}</td><td>${item.corpus}</td><td>${formatCompletion(item)}</td>
 <td>${formatPercent(item.recallMean)} ± ${formatPercent(item.recallStd)}</td><td>${formatPercent(item.failureInclusiveRecallMean)}</td>
-<td>${formatNumber(item.fpPerCaseMean, 1)}</td><td>${formatCost(item.costPerCaseMean, item.costPerCaseStd)}</td>
-<td>${item.durationSecMean === null ? "n/a" : `${item.durationSecMean.toFixed(0)}s`}</td><td>${formatStages(item)}</td><td>${item.validFindingsPerDollar?.toFixed(1) ?? "—"}</td></tr>`).join("\n");
+<td>${formatNumber(item.fpPerCaseMean, 1)}</td><td>${formatCost(item.costPerCaseMean, item.costPerCaseStd, item.costSource)}</td>
+<td>${formatDuration(item)}</td><td>${formatUsage(item)}</td><td>${formatAvailability(item)}</td><td>${formatStages(item)}</td><td>${item.validFindingsPerDollar?.toFixed(1) ?? "—"}</td></tr>`).join("\n");
 
   return `<!doctype html><html><head><meta charset="utf-8"><title>peregrine-bugbot benchmark</title>
 <style>body{font-family:system-ui;margin:2rem;max-width:1050px}table{border-collapse:collapse;width:100%}
 td,th{border:1px solid #ddd;padding:6px 10px;text-align:left;font-size:14px}th{background:#f5f5f5}</style></head>
 <body><h1>peregrine-bugbot · model benchmark</h1>
-<table><tr><th>config</th><th>corpus</th><th>completion</th><th>conditional recall</th><th>failure-inclusive recall</th><th>FP/case</th><th>cost/case</th><th>time</th><th>breadth / investigation</th><th>valid findings / $</th></tr>
+<table><tr><th>config</th><th>corpus</th><th>completion</th><th>conditional recall</th><th>failure-inclusive recall</th><th>FP/case</th><th>cost/case</th><th>time mean / median</th><th>usage / work</th><th>telemetry observed</th><th>breadth / investigation</th><th>valid findings / $</th></tr>
 ${rows}</table>
 <h2>Cost vs recall — pick the knee</h2>
 <svg viewBox="0 0 600 360" width="600" style="border:1px solid #eee">
@@ -268,7 +331,7 @@ ${rows}</table>
 <text x="300" y="350" font-size="12" text-anchor="middle">cost per case ($, max $${maxCost.toFixed(2)})</text>
 <text x="20" y="170" font-size="12" transform="rotate(-90 20 170)">conditional recall</text>
 ${points}</svg>
-<p style="color:#666;font-size:13px">Conditional recall includes completed bug-bearing attempts. Failure-inclusive recall counts failed or missing bug-bearing attempts as misses. Legacy folders are explicitly incomplete. Cost is n/a unless every expected attempt completed with cost telemetry.</p>
+<p style="color:#666;font-size:13px">Conditional recall includes completed bug-bearing attempts. Failure-inclusive recall counts failed or missing bug-bearing attempts as misses. Legacy folders are explicitly incomplete. Cost is n/a unless every expected attempt completed with cost telemetry; provider and estimated costs are labeled.</p>
 </body></html>`;
 }
 
@@ -276,7 +339,7 @@ function printStats(stats: ConfigStats[], dir: string): void {
   console.log(`\n${"config".padEnd(24)} ${"corpus".padEnd(18)} ${"completion".padEnd(35)} conditional  incl. failures  FP/case  $/case`);
   for (const item of stats) {
     console.log(
-      `${item.config.padEnd(24)} ${item.corpus.padEnd(18)} ${formatCompletion(item).padEnd(35)} ${formatPercent(item.recallMean).padEnd(12)} ${formatPercent(item.failureInclusiveRecallMean).padEnd(14)} ${formatNumber(item.fpPerCaseMean, 1).padEnd(8)} ${formatCost(item.costPerCaseMean, item.costPerCaseStd)}`,
+      `${item.config.padEnd(24)} ${item.corpus.padEnd(18)} ${formatCompletion(item).padEnd(35)} ${formatPercent(item.recallMean).padEnd(12)} ${formatPercent(item.failureInclusiveRecallMean).padEnd(14)} ${formatNumber(item.fpPerCaseMean, 1).padEnd(8)} ${formatCost(item.costPerCaseMean, item.costPerCaseStd, item.costSource)}`,
     );
   }
   console.log(`\nReport: ${join(dir, "benchmark.html")}`);
@@ -295,8 +358,14 @@ function formatNumber(value: number | null, digits: number): string {
   return value === null ? "n/a" : value.toFixed(digits);
 }
 
-function formatCost(meanCost: number | null, stdCost: number | null): string {
-  return meanCost === null || stdCost === null ? "n/a" : `$${meanCost.toFixed(3)}±${stdCost.toFixed(3)}`;
+function formatCost(
+  meanCost: number | null,
+  stdCost: number | null,
+  source: ConfigStats["costSource"],
+): string {
+  return meanCost === null || stdCost === null
+    ? "n/a"
+    : `$${meanCost.toFixed(3)}±${stdCost.toFixed(3)} (${source ?? "unknown"})`;
 }
 
 function completeMean(values: number[], expected: number): number | null {
@@ -335,6 +404,53 @@ function formatStages(stats: ConfigStats): string {
     ? ""
     : ` · ${stats.breadthInputTokensMean.toFixed(0)} / ${stats.investigationInputTokensMean.toFixed(0)} input tokens`;
   return `${stats.breadthDurationSecMean.toFixed(0)}s / ${stats.investigationDurationSecMean.toFixed(0)}s${tokens}`;
+}
+
+function formatDuration(stats: ConfigStats): string {
+  return stats.durationSecMean === null || stats.durationSecMedian === null
+    ? "n/a"
+    : `${stats.durationSecMean.toFixed(0)}s / ${stats.durationSecMedian.toFixed(0)}s`;
+}
+
+function formatUsage(stats: ConfigStats): string {
+  const tokenFields: Array<[string, number | null]> = [
+    ["uncached", stats.uncachedInputTokensMean],
+    ["write", stats.cacheWriteInputTokensMean],
+    ["read", stats.cacheReadInputTokensMean],
+    ["out", stats.outputTokensMean],
+    ["reasoning", stats.reasoningOutputTokensMean],
+  ];
+  const work = stats.turnsMean === null || stats.toolCallsMean === null ||
+    stats.toolOutputBytesMean === null || stats.promptBytesMean === null
+    ? "work n/a"
+    : `${stats.turnsMean.toFixed(1)} turns · ${stats.toolCallsMean.toFixed(1)} tools · ${stats.toolOutputBytesMean.toFixed(0)} tool B · ${stats.promptBytesMean.toFixed(0)} prompt B`;
+  return `${tokenFields.map(([label, value]) => `${label} ${value?.toFixed(0) ?? "n/a"}`).join(" · ")} · ${work}`;
+}
+
+function summarizeCostSource(
+  sources: Array<EngineResult["usage"]["costSource"]>,
+): ConfigStats["costSource"] {
+  if (sources.some((source) => source === undefined)) return "unknown";
+  const unique = new Set(sources);
+  if (unique.size > 1) return "mixed";
+  return sources[0] ?? "unknown";
+}
+
+function comparableEstimatedPricing(
+  references: Array<EngineResult["usage"]["pricing"]>,
+): boolean {
+  if (references.some((reference) => reference === undefined)) return false;
+  const [first] = references;
+  return references.every((reference) =>
+    reference!.catalogVersion === first!.catalogVersion &&
+    reference!.pricingAsOf === first!.pricingAsOf);
+}
+
+function formatAvailability(stats: ConfigStats): string {
+  const expected = stats.telemetryExpectedRuns;
+  return Object.entries(stats.telemetryObserved)
+    .map(([metric, observed]) => `${metric} ${observed}/${expected}`)
+    .join(" · ");
 }
 
 function groupBy<T>(values: T[], key: (value: T) => string): Map<string, T[]> {

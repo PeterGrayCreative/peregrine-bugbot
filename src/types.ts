@@ -63,12 +63,95 @@ export interface ReviewPayload {
   findings: Finding[];
 }
 
+export const USAGE_METRICS = [
+  "inputTokens",
+  "baseInputTokens",
+  "uncachedInputTokens",
+  "cachedInputTokens",
+  "cacheWriteInputTokens",
+  "cacheReadInputTokens",
+  "outputTokens",
+  "reasoningOutputTokens",
+  "turns",
+  "toolCalls",
+  "toolCallsByType",
+  "toolOutputBytes",
+  "promptBytes",
+  "costUsd",
+] as const;
+
+export type UsageMetric = (typeof USAGE_METRICS)[number];
+export type UsageProvider = "anthropic" | "openai" | "mock";
+export type CostSource = "provider" | "estimated";
+export type UsageAggregation = "single-envelope" | "single-snapshot" | "ambiguous" | "stage-sum";
+
+export interface PricingReference {
+  catalogVersion: string;
+  pricingAsOf: string;
+  contractModel: string;
+  serviceTier?: string;
+  tier: string;
+  assumptions: string[];
+}
+
 export interface Usage {
+  provider?: UsageProvider;
+  serviceTier?: string;
+  aggregation?: UsageAggregation;
+  /** Normalized total provider input when every input component is known. */
   inputTokens?: number;
+  /** Provider-reported base input, distinct from cache writes and reads. */
+  baseInputTokens?: number;
+  /** Uncached input, reported or safely derived from a provider total. */
+  uncachedInputTokens?: number;
+  /** Compatibility aggregate; provider-specific cache fields remain authoritative. */
   cachedInputTokens?: number;
+  cacheWriteInputTokens?: number;
+  cacheReadInputTokens?: number;
   outputTokens?: number;
   reasoningOutputTokens?: number;
+  turns?: number;
+  toolCalls?: number;
+  toolCallsByType?: Record<string, number>;
+  toolOutputBytes?: number;
+  promptBytes?: number;
   costUsd?: number;
+  costSource?: CostSource;
+  pricing?: PricingReference;
+  /** Metrics the provider did not expose or whose semantics were ambiguous. */
+  unavailable?: UsageMetric[];
+}
+
+export interface PricingRates {
+  baseInputPerMillionUsd?: number;
+  uncachedInputPerMillionUsd?: number;
+  cacheWriteInputPerMillionUsd?: number;
+  cacheReadInputPerMillionUsd?: number;
+  outputPerMillionUsd?: number;
+  reasoningOutputPerMillionUsd?: number;
+}
+
+export interface PricingTier extends PricingRates {
+  id: string;
+  /** Inclusive threshold. Omit on the final catch-all tier. */
+  upToInputTokens?: number;
+}
+
+export interface ProviderPriceContract {
+  provider: Exclude<UsageProvider, "mock">;
+  model: string;
+  serviceTier?: string;
+  reasoningOutputBilling: "included-in-output" | "separate";
+  tiers: PricingTier[];
+  assumptions: string[];
+}
+
+export interface PricingCatalog {
+  schemaVersion: 1;
+  version: string;
+  pricingAsOf: string;
+  currency: "USD";
+  contracts: ProviderPriceContract[];
 }
 
 export interface EngineResult {
@@ -147,6 +230,7 @@ export interface PeregrineConfig {
   filters: {
     ignorePaths: string[];
   };
+  pricing?: PricingCatalog;
 }
 
 /* ----------------------------- Eval harness ------------------------------ */

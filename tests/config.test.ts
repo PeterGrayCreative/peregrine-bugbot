@@ -217,3 +217,29 @@ test("schema version 1 configs without Claude breadth effort migrate to high", (
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("pricing catalogs require dated, provider-specific contracts", () => {
+  const priced = config();
+  priced.pricing = {
+    schemaVersion: 1,
+    version: "test-v1",
+    pricingAsOf: "2026-09-02",
+    currency: "USD",
+    contracts: [{
+      provider: "anthropic",
+      model: "claude-test",
+      reasoningOutputBilling: "included-in-output",
+      assumptions: ["test only"],
+      tiers: [{
+        id: "default",
+        baseInputPerMillionUsd: 1,
+        cacheWriteInputPerMillionUsd: 2,
+        cacheReadInputPerMillionUsd: 0.5,
+        outputPerMillionUsd: 4,
+      }],
+    }],
+  };
+  assert.doesNotThrow(() => validateConfig(priced));
+  priced.pricing.pricingAsOf = "today";
+  assert.throws(() => validateConfig(priced), /pricingAsOf/);
+});
