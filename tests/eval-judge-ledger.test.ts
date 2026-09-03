@@ -12,9 +12,10 @@ import {
   type JudgeLimits,
   type JudgePairInput,
 } from "../eval/judge-ledger.js";
-import { SemanticJudgeExecutionError, semanticJudgeArguments, unavailableJudgeUsage } from "../eval/judge-runtime.js";
+import { createContainedCodexSemanticJudge, SemanticJudgeExecutionError, semanticJudgeArguments, unavailableJudgeUsage } from "../eval/judge-runtime.js";
 import { parseContainedProviderArgs } from "../eval/runtime-containment.js";
 import type { Finding, GroundTruthBug } from "../src/types.js";
+import type { exec } from "../src/util/exec.js";
 
 const hashes = {
   experimentManifestSha256: "a".repeat(64),
@@ -264,6 +265,30 @@ test("semantic judge containment accepts only the exact Luna medium argv", () =>
     assert.throws(() => parseContainedProviderArgs(toolEnabled, "codex", "api-key", { uid, gid }, "semantic-judge"), /exact Luna medium/);
   } finally {
     rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("fake contained semantic judge translates host paths and completes end to end", async () => {
+  const previousKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "fake-judge-key";
+  let providerCalls = 0;
+  const fake: typeof exec = async (_command, args) => {
+    if (args[0] === "run") {
+      providerCalls += 1;
+      const parsed = parseContainedProviderArgs(args, "codex", "api-key", undefined, "semantic-judge");
+      assert.deepEqual(parsed.commandArgs, semanticJudgeArguments());
+      writeFileSync(join(parsed.outputDir, "verdict.json"), '{"same_root_cause":true}\n', { mode: 0o600 });
+    }
+    return { stdout: "", stderr: "", code: 0, timedOut: false };
+  };
+  try {
+    const judge = createContainedCodexSemanticJudge({ providerAccess: "api-key", run: fake });
+    const result = await judge("Compare these two sanitized root causes.");
+    assert.equal(result.verdict, true);
+    assert.equal(providerCalls, 1);
+  } finally {
+    if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previousKey;
   }
 });
 

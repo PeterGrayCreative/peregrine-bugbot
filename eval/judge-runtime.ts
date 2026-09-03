@@ -79,7 +79,11 @@ export function createContainedCodexSemanticJudge(options: {
     const started = Date.now();
     let result: ExecResult | undefined;
     try {
-      result = await contained("codex", semanticJudgeArguments(), {
+      result = await contained("codex", semanticJudgeArguments({
+        workspace: checkoutDir,
+        schema: join(assetsDir, "judge-result.schema.json"),
+        output: join(outputDir, "verdict.json"),
+      }), {
         timeoutMs: 60_000,
         stdin: prompt,
         env: {},
@@ -113,7 +117,15 @@ export function createContainedCodexSemanticJudge(options: {
   };
 }
 
-export function semanticJudgeArguments(): string[] {
+export function semanticJudgeArguments(paths: {
+  workspace: string;
+  schema: string;
+  output: string;
+} = {
+  workspace: "/workspace",
+  schema: "/opt/peregrine/judge-result.schema.json",
+  output: "/output/verdict.json",
+}): string[] {
   return [
     "exec", "--ephemeral", "--ignore-user-config", "--ignore-rules", "--strict-config",
     "--disable", "shell_tool", "--disable", "unified_exec",
@@ -122,8 +134,8 @@ export function semanticJudgeArguments(): string[] {
     "--config", "project_doc_max_bytes=0",
     "--config", "project_doc_fallback_filenames=[]",
     "--config", 'projects."/workspace".trust_level="untrusted"',
-    "--cd", "/workspace", "--output-schema", "/opt/peregrine/judge-result.schema.json",
-    "--output-last-message", "/output/verdict.json", "--json", "--color", "never", "-",
+    "--cd", paths.workspace, "--output-schema", paths.schema,
+    "--output-last-message", paths.output, "--json", "--color", "never", "-",
   ];
 }
 
