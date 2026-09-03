@@ -26,7 +26,8 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | P0 | Publish the approved plan | - | Merged | [#1](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/1) |
 | P0 follow-up | Add this implementation checklist | P0 | Merged | [#3](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/3) |
 | P1 / Plan PR 1 | Persist and report every matrix attempt | - | Merged | [#2](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/2) |
-| Plan PR 2 | Blind and isolate case materialization | PR 1 | Not started | - |
+| Plan PR 2 | Blind and isolate case materialization | PR 1 | In review | [#5](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/5) |
+| Safety PR 2A | OCI filesystem containment for live evaluation | PR 2 | Not started | - |
 | Plan PR 3 | Reproduce base/head history and production manifest path | PR 2 | Not started | - |
 | Plan PR 4 | Root-cause grading, adjudication, and miss stages | PR 3 | Not started | - |
 | Plan PR 5 | Provider-correct usage, cost, work, and experiment metadata | PR 1 | Not started | - |
@@ -80,22 +81,45 @@ Rollback boundary: revert PR #2; model prompts, routing, topology, posting behav
 
 ## Plan PR 2 - Blind and isolate case materialization
 
-- [ ] Use opaque IDs in case directories, temporary paths, logs, and model-visible metadata.
-- [ ] Create a fresh materialized repository for every case/configuration/repeat attempt.
-- [ ] Keep ground truth, later fixes, review threads, issue text, and curator notes outside the model-visible checkout.
-- [ ] Remove remotes, credentialed Git configuration, and commits newer than the reviewed head.
-- [ ] Separate structural-smoke fixtures from live-model development and validation cases.
-- [ ] Scan prompt text, checkout paths, repository files, and accessible history for answer leakage.
-- [ ] Reject undocumented answer markers such as `BUG`, `FIXME`, expected outcomes, and ground-truth IDs.
-- [ ] Record provider-host network-isolation capability or limitation.
-- [ ] Add negative tests demonstrating that descriptive paths and accessible answer material fail validation.
-- [ ] Run `npm run validate`.
-- [ ] Record a zero-provider-cost structural screening result.
+- [x] Use opaque IDs in case directories, temporary paths, logs, and model-visible metadata.
+- [x] Create a fresh materialized repository for every case/configuration/repeat attempt.
+- [x] Keep ground truth, later fixes, review threads, issue text, and curator notes outside the model-visible checkout.
+- [x] Remove remotes, credentialed Git configuration, and commits newer than the reviewed head.
+- [x] Separate structural-smoke fixtures from live-model development and validation cases.
+- [x] Scan prompt text, checkout paths, repository files, and accessible history for answer leakage.
+- [x] Reject undocumented answer markers such as `BUG`, `FIXME`, expected outcomes, and ground-truth IDs.
+- [x] Record provider-host network-isolation capability or limitation.
+- [x] Add negative tests demonstrating that descriptive paths and accessible answer material fail validation.
+- [x] Run `npm run validate` under Node `22.22.1` on final rebased head `64ad038edddffd343631325030c7f4fcf783c0be`.
+- [x] Record a zero-provider-cost structural screening result: 8/8 attempts completed, all 5 expected seeded markers transported and graded, and 0 findings on 3 clean controls. This is structural evidence only, not model-recall or provider-cost evidence.
 - [ ] Open, review, and merge the PR before starting PR 3.
+
+Evidence: [Plan PR 2 validation record](../validation/2026-09-02-eval-case-isolation.md) and [PR #5](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/5). Three independent adversarial reviews found no remaining code blocker before the branch was rebased and revalidated. Leave the final box open until the PR is merged and its terminal checks and merge SHA are recorded.
 
 Must stay untouched: production prompts, routing, posting, and model selection.
 
 Integration note: this slice establishes isolation, opaque identities, containment, cleanup, and leakage gates. Deterministic ancestry, exact `merge-base...head` equivalence, and production-manifest parity close in Plan PR 3.
+
+## Safety PR 2A - OCI filesystem containment for live evaluation
+
+Plan PR 2 proves that isolated homes, opaque paths, CLI flags, and read-only tool modes do not create a host-filesystem confidentiality boundary. Until this prerequisite lands, Claude and Codex live matrix attempts fail as configuration outcomes before either provider process starts.
+
+- [ ] Require a Linux OCI image pinned by immutable digest; never auto-pull during an experiment.
+- [ ] Mount only the sanitized checkout read-only, sanitized Peregrine assets read-only, and one attempt-owned output directory read-write.
+- [ ] Use container-only tmpfs mounts for provider state and scratch data.
+- [ ] Exclude the host home, source corpus, host temporary directories, Docker socket, SSH agent, Git credentials, and unrelated environment variables.
+- [ ] Pass provider secrets by allowlisted environment-variable name without placing values in argv, logs, manifests, or diagnostics.
+- [ ] Disable repository-controlled instructions, rules, hooks, MCP servers, plugins, skills, agents, and inherited shell environment inside both provider CLIs.
+- [ ] Probe checkout/assets/output permissions, sibling-host-file denial, provider CLI versions, daemon availability, image digest, mounts, and cleanup before live attempts.
+- [ ] Fail closed on unsupported platforms, missing or inaccessible runtimes, mutable image tags, digest mismatch, failed probes, or unknown provider flags.
+- [ ] Force-remove timed-out containers by opaque name and prove no process or container survives.
+- [ ] Record filesystem containment separately from network isolation; outbound provider access remains `limited` unless an egress allowlist is independently attested.
+- [ ] Add pure argv tests and a fake-provider containment smoke test that incurs no model cost.
+- [ ] Run `npm run validate`, open, review, and merge the PR before any live-model benchmark or Plan PR 7 baseline.
+
+Must stay untouched: model prompts, model selection, routing, grading policy, and production review execution.
+
+Decision gate: choose and own the provider-enabled OCI image source and immutable digest before implementation can be accepted. Do not substitute deprecated macOS `sandbox-exec` or an inner CLI read-only mode for the outer mount boundary.
 
 ## Plan PR 3 - Reproducible base/head history and production manifest path
 

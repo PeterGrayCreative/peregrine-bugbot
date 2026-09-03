@@ -16,7 +16,7 @@ The work continues until the implementation is complete, focused and end-to-end 
 
 This goal is complete only when all of the following are true:
 
-- Plan PR slices 2 through 15 have been implemented or explicitly removed from scope by the user. P0 and Plan PR 1 are already complete and must not be reimplemented.
+- Plan PR slices 2 through 15 and any safety prerequisite discovered while implementing them have been implemented or explicitly removed from scope by the user. P0 and Plan PR 1 are already complete and must not be reimplemented.
 - Every slice remains independently reviewable and preserves the plan's stated scope boundary, acceptance gate, and rollback boundary.
 - Required unit, integration, schema, packaging, structural-smoke, screening, checkpoint, and end-to-end validation has passed at the appropriate stage.
 - Live-model results are not claimed where provider authentication, corpus quality, sample size, or adjudication is insufficient.
@@ -76,9 +76,9 @@ The primary agent owns dependency ordering, integration, cross-slice compatibili
 | --- | --- | --- |
 | 0 | Reconcile PR #3; audit the GPT Pro handoff for reusable files; independently map current `origin/main` to Plan PRs 2 and 5 | Audits are read-only. Reuse nothing until the owning implementation slice validates it. |
 | 1 | Plan PR 2: blind and isolated case materialization; Plan PR 5: provider-correct usage/cost and experiment metadata | Both depend on merged Plan PR 1. Give agents disjoint ownership where possible and choose an integration order before either touches shared eval/result types. |
-| 2 | Plan PR 3 after PR 2; complete and integrate PR 5 | PR 3 must consume the accepted materialization contract rather than inventing a parallel one. |
+| 2 | Plan PR 3 and the OCI live-evaluation containment prerequisite after PR 2; complete and integrate PR 5 | PR 3 must consume the accepted materialization contract rather than inventing a parallel one. Containment may proceed independently but must land before live benchmarking. |
 | 3 | Plan PR 4 and Plan PR 6 in separate worktrees after PR 3 | Coordinate the canonical lane and typed-manifest contracts before parallel edits. Integrate one branch, rebase the other, and rerun the full gate. |
-| 4 | Plan PR 7: curated gold set v1 and unmodified baseline | Begins only after PRs 4, 5, and 6 satisfy Checkpoint 0. Human curation and holdout custody cannot be delegated away. |
+| 4 | Plan PR 7: curated gold set v1 and unmodified baseline | Begins only after PRs 4, 5, and 6 satisfy Checkpoint 0 and OCI containment permits live evaluation. Human curation and holdout custody cannot be delegated away. |
 | 5 | Plan PRs 8 through 12 | Implement and benchmark one behavioral intervention at a time. Read-only evaluation and review agents may run in parallel, but intervention code remains sequential so effects stay attributable. |
 | 6 | Plan PR 13 and Plan PR 14 | May proceed in parallel after PR 12, subject to the profile and large-diff file boundaries remaining separate. |
 | 7 | Plan PR 15 and final sealed-holdout gate | Starts only after PRs 13 and 14 pass their gates and the user-supplied holdout, budget, and routing decisions are recorded. |
@@ -142,6 +142,7 @@ Pause at the relevant gate rather than guessing when implementation reaches a de
 - provider spend, wall-time, and failure ceilings;
 - primary cold/warm-cache weighting;
 - price-table values and estimate policy;
+- provider-enabled OCI image source, immutable digest, and operational owner for the live-evaluation containment boundary;
 - future PR-body treatment of medium/follow-up findings;
 - any later runner-controlled verification design;
 - docs-only policy messaging.
@@ -160,6 +161,6 @@ These decisions do not prevent earlier independent slices from progressing.
 
 Mark this goal complete only after the completion contract is satisfied and the final remote-state audit confirms that no accepted local commit or required evidence remains unpublished. If an essential user decision or external dependency repeatedly prevents progress, document the exact blocker and request direction without weakening the success criteria.
 
-## Current-turn stop point
+## Current execution state
 
-The goal file was the only requested deliverable for its creation turn. Implementation and parallel subagents begin when the goal resumes.
+Implementation resumed after the goal-creation turn. Plan PR 2 is tracked in [PR #5](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/5); the implementation checklist and per-slice validation records remain the authoritative source for current branch, review, CI, and merge evidence.
