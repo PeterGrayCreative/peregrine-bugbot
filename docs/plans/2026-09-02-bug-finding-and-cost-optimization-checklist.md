@@ -24,7 +24,7 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | Slice | Deliverable | Depends on | Status | Pull request |
 | --- | --- | --- | --- | --- |
 | P0 | Publish the approved plan | - | Merged | [#1](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/1) |
-| P0 follow-up | Add this implementation checklist | P0 | Open | [#3](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/3) |
+| P0 follow-up | Add this implementation checklist | P0 | Merged | [#3](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/3) |
 | P1 / Plan PR 1 | Persist and report every matrix attempt | - | Merged | [#2](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/2) |
 | Plan PR 2 | Blind and isolate case materialization | PR 1 | Not started | - |
 | Plan PR 3 | Reproduce base/head history and production manifest path | PR 2 | Not started | - |
@@ -51,6 +51,7 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 - [x] Merge PR #1 as `74a0f6872359e388b1083a190d847c27435550f9`.
 - [x] Add this implementation checklist in a docs-only follow-up branch based on the latest `origin/main`.
 - [x] Confirm the follow-up docs-only diff passes `git diff --check`.
+- [x] Merge PR #3 as `7556a8dfe0300a076cdc2671bea0c92fed69a79f`.
 
 Rollback boundary: revert the documentation commit; no runtime behavior changes.
 
@@ -93,6 +94,8 @@ Rollback boundary: revert PR #2; model prompts, routing, topology, posting behav
 - [ ] Open, review, and merge the PR before starting PR 3.
 
 Must stay untouched: production prompts, routing, posting, and model selection.
+
+Integration note: this slice establishes isolation, opaque identities, containment, cleanup, and leakage gates. Deterministic ancestry, exact `merge-base...head` equivalence, and production-manifest parity close in Plan PR 3.
 
 ## Plan PR 3 - Reproducible base/head history and production manifest path
 
@@ -143,6 +146,8 @@ Must stay untouched: provider prompts and production posting thresholds.
 - [ ] Open, review, and merge the PR.
 
 Must stay untouched: model behavior and routing.
+
+Integration note: this slice must preserve the telemetry needed for cost per reliably found root cause. The derived metric is added after Plan PR 4 supplies root-cause-aware grading rather than using a temporary proxy.
 
 ## Plan PR 6 - Typed manifest shadow/parity mode
 
@@ -404,4 +409,5 @@ Rollback boundary: route every class through the strong path and retire the open
 | Date | Slice | Commit / PR | Validation | Result / notes |
 | --- | --- | --- | --- | --- |
 | 2026-09-02 | P0 | `a9f76aa` / [#1](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/1) / merge `74a0f68` | `git diff --check origin/main...HEAD`; final GitHub checks | Docs diff passed; `check` passed, `analyze` failed because Anthropic authentication was unavailable, and `post` was skipped. PR merged. |
+| 2026-09-02 | P0 follow-up | `da657c7` / [#3](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/3) / merge `7556a8d` | `git diff --check origin/main...HEAD`; final GitHub checks | Docs diff passed; `check` passed, `analyze` failed because Anthropic authentication was unavailable, and `post` was skipped. PR merged. |
 | 2026-09-02 | P1 / Plan PR 1 | `d685b3a` / [#2](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/2) / merge `e1e747a` | Node 22 focused gate; `npm run validate`; independent diff review; final GitHub checks | Passed locally: 31 Node tests, 25 skill checks, 9 packaging/install checks, 4 plugin-manager checks, and eight-case smoke benchmark. Remotely, `check` passed, `analyze` failed because Anthropic authentication was unavailable, and `post` was skipped. PR merged. |
