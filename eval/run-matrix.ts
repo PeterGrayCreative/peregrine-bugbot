@@ -30,6 +30,7 @@ import type {
   MatrixRunManifest,
   ReviewContext,
   RunFailureTelemetry,
+  RunOutcome,
   RunRecord,
   RunnerName,
   StageTelemetry,
@@ -262,15 +263,7 @@ export async function runMatrix(
             `${result.findings.length} finding(s), ${formatUsageCost(result.usage)}`,
           );
         } catch (err) {
-          const message = safeDiagnostic(err instanceof Error ? err.message : String(err));
-          const failureKind = runFailureKind(err);
-          const candidateTelemetry = runFailureTelemetry(err);
-          let telemetry = attempt.runner === "mock" ? undefined : candidateTelemetry;
-          try {
-            if (telemetry !== undefined) assertNoSecrets(telemetry, "failure telemetry");
-          } catch {
-            telemetry = undefined;
-          }
+          const outcome = failureOutcomeForArtifact(attempt.runner, err, 0);
           record = {
             schemaVersion: 1,
             attemptId,
@@ -284,15 +277,9 @@ export async function runMatrix(
             finishedAt: startedAt,
             attemptDurationMs: 0,
             ...(evaluationProvenance ? { evaluationProvenance } : {}),
-            outcome: {
-              status: "failed",
-              failureKind,
-              message,
-              durationMs: 0,
-              telemetry,
-            },
+            outcome,
           };
-          console.log(`FAILED [${failureKind}]: ${message}`);
+          console.log(`FAILED [${outcome.failureKind}]: ${outcome.message}`);
         } finally {
           let cleanupError: unknown;
           if (materialized) {
@@ -321,17 +308,15 @@ export async function runMatrix(
               : `isolated attempt cleanup failed after provider completion: ${detail}`);
             record = {
               ...record,
-              outcome: {
-                status: "failed",
-                failureKind: record.outcome.status === "failed"
-                  ? record.outcome.failureKind
-                  : "configuration",
-                message,
-                durationMs: attemptDurationMs,
-                telemetry: record.outcome.status === "failed"
-                  ? record.outcome.telemetry
-                  : completedResultFailureTelemetry(record.outcome.result),
-              },
+              outcome: record.outcome.status === "failed"
+                ? { ...record.outcome, message, durationMs: attemptDurationMs }
+                : {
+                    status: "failed",
+                    failureKind: "configuration",
+                    message,
+                    durationMs: attemptDurationMs,
+                    telemetry: completedResultFailureTelemetry(record.outcome.result),
+                  },
             };
             console.log(`CLEANUP FAILED: ${detail}`);
           }
@@ -343,6 +328,37 @@ export async function runMatrix(
   console.log(`\nRuns written to ${outDir}`);
   console.log(`Next: npm run eval:grade -- --runs ${outDir}`);
   return outDir;
+}
+
+export function failureOutcomeForArtifact(
+  runner: RunnerName,
+  error: unknown,
+  durationMs: number,
+): Extract<RunOutcome, { status: "failed" }> {
+  const failureKind = runFailureKind(error);
+  const message = safeDiagnostic(error instanceof Error ? error.message : String(error));
+  const candidateTelemetry = runner === "mock" ? undefined : runFailureTelemetry(error);
+  let telemetry = candidateTelemetry;
+  let telemetryUnavailableReason: "not-observed" | "secret-redacted" | undefined;
+  if (telemetry !== undefined) {
+    try {
+      assertNoSecrets(telemetry, "failure telemetry");
+    } catch {
+      telemetry = undefined;
+      telemetryUnavailableReason = "secret-redacted";
+    }
+  } else if (runner !== "mock" &&
+    (failureKind === "provider" || failureKind === "timeout" || failureKind === "parse")) {
+    telemetryUnavailableReason = "not-observed";
+  }
+  return {
+    status: "failed",
+    failureKind,
+    message,
+    durationMs,
+    ...(telemetry ? { telemetry } : {}),
+    ...(telemetryUnavailableReason ? { telemetryUnavailableReason } : {}),
+  };
 }
 
 function productionManifestSkillName(config: ReviewContext["config"], runner: RunnerName): string {

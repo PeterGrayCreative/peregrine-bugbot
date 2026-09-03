@@ -12,6 +12,7 @@ import {
   type EvaluationAttemptProvenance,
   type EvaluationHistoryProvenance,
   type EvaluationManifestProvenance,
+  type FailureTelemetryUnavailableReason,
   type GradedRun,
   type MatrixRunManifest,
   type NetworkIsolationCapability,
@@ -20,7 +21,7 @@ import {
   type RunRecord,
   type StageTelemetry,
 } from "../src/types.js";
-import { assertOpaqueCaseId, networkIsolationCapability } from "./case-isolation.js";
+import { assertOpaqueCaseId } from "./case-isolation.js";
 
 const RECORD_KEYS = new Set([
   "schemaVersion", "attemptId", "caseName", "caseKind", "configName", "repeat",
@@ -39,6 +40,26 @@ const PRE_TELEMETRY_GRADED_KEYS = new Set([...PRE_TELEMETRY_RECORD_KEYS, "matche
 const PRE_TELEMETRY_USAGE_KEYS = new Set([
   "inputTokens", "cachedInputTokens", "outputTokens", "reasoningOutputTokens", "costUsd",
 ]);
+
+// Schema-v1 artifacts record one of these immutable capability statements.
+// Runtime containment changes must introduce a new manifest schema instead of
+// rewriting the meaning of historical experiment evidence.
+const SCHEMA_V1_NETWORK_ISOLATION = {
+  mock: {
+    status: "not-applicable",
+    mechanism: "No provider process is started for structural smoke runs.",
+  },
+  claude: {
+    status: "unavailable",
+    mechanism:
+      "CLI customization surfaces are disabled, but external filesystem and network containment are not attested; live matrix attempts fail closed.",
+  },
+  codex: {
+    status: "unavailable",
+    mechanism:
+      "The runner requests an untrusted read-only project with local guidance disabled, but external read/network containment is not attested; live matrix attempts fail closed.",
+  },
+} as const satisfies Readonly<Record<RunRecord["runner"], NetworkIsolationCapability>>;
 
 export type LegacyRunAttempt = Omit<RunAttempt, "corpus" | "expectedBugCount" | "runner">;
 export interface LegacyMatrixRunManifest {
@@ -405,12 +426,6 @@ function assertUniqueLogicalAttempts(attempts: RunAttempt[], source: string): vo
 function parseRecordFields(root: Record<string, unknown>, source: string): RunRecord {
   if (root.schemaVersion !== 1) throw new Error(`${source}.schemaVersion must be 1`);
   const outcome = parseOutcome(root.outcome, `${source}.outcome`, true);
-  if (outcome.status === "failed" &&
-    root.runner !== "mock" &&
-    (outcome.failureKind === "provider" || outcome.failureKind === "timeout" || outcome.failureKind === "parse") &&
-    outcome.telemetry === undefined) {
-    throw new Error(`${source}.outcome.telemetry is required for ${outcome.failureKind} failures`);
-  }
   if (outcome.status === "completed") {
     if (outcome.result.status === "skipped") {
       throw new Error(`${source}.outcome.result.status cannot be skipped for a completed attempt`);
@@ -459,6 +474,24 @@ function parseRecordFields(root: Record<string, unknown>, source: string): RunRe
   }
   if (outcome.status === "failed" && outcome.telemetry && outcome.telemetry.engine !== parsedRunner) {
     throw new Error(`${source}.outcome.telemetry.engine does not match runner`);
+  }
+  if (outcome.status === "failed") {
+    const requiresWorkAccounting = outcome.failureKind === "provider" ||
+      outcome.failureKind === "timeout" || outcome.failureKind === "parse";
+    if (parsedRunner === "mock" && outcome.telemetryUnavailableReason !== undefined) {
+      throw new Error(`${source}.outcome.telemetryUnavailableReason must be absent for the current mock writer`);
+    }
+    if (parsedRunner !== "mock" && requiresWorkAccounting && outcome.telemetry === undefined &&
+      outcome.telemetryUnavailableReason === undefined) {
+      throw new Error(
+        `${source}.outcome must record telemetry or telemetryUnavailableReason for ${outcome.failureKind} failures`,
+      );
+    }
+    if (outcome.telemetryUnavailableReason === "not-observed" && !requiresWorkAccounting) {
+      throw new Error(
+        `${source}.outcome.telemetryUnavailableReason not-observed is invalid for ${outcome.failureKind} failures`,
+      );
+    }
   }
   const startedAt = isoDate(root.startedAt, `${source}.startedAt`);
   const finishedAt = isoDate(root.finishedAt, `${source}.finishedAt`);
@@ -868,7 +901,8 @@ function validateOutcomeProvenance(
       throw new Error(`${source}.evaluationProvenance is required for a completed attempt`);
     }
     if (outcome.status === "failed" &&
-      (outcome.failureKind !== "configuration" || outcome.telemetry !== undefined) &&
+      (outcome.failureKind !== "configuration" || outcome.telemetry !== undefined ||
+        outcome.telemetryUnavailableReason !== undefined) &&
       requireCompletedProvenance) {
       throw new Error(`${source}.evaluationProvenance is required for a post-materialization failure`);
     }
@@ -892,7 +926,8 @@ function validateOutcomeProvenance(
     if (outcome.result.reviewedHeadRef !== provenance.history.headRef) {
       throw new Error(`${source}.outcome.result.reviewedHeadRef does not match history provenance`);
     }
-  } else if ((outcome.failureKind !== "configuration" || outcome.telemetry !== undefined) &&
+  } else if ((outcome.failureKind !== "configuration" || outcome.telemetry !== undefined ||
+    outcome.telemetryUnavailableReason !== undefined) &&
     !provenance.manifest) {
     throw new Error(`${source}.evaluationProvenance.manifest is required for a post-preflight failure`);
   }
@@ -1226,24 +1261,50 @@ function parseOutcome(value: unknown, source: string, strictCurrentUsage: boolea
     return { status: "completed", result: parseEngineResult(root.result, `${source}.result`) };
   }
   if (root.status !== "failed") throw new Error(`${source}.status must be completed or failed`);
-  onlyKeys(root, new Set(["status", "failureKind", "message", "durationMs", "telemetry"]), source);
+  onlyKeys(root, new Set([
+    "status", "failureKind", "message", "durationMs", "telemetry", "telemetryUnavailableReason",
+  ]), source);
   if (!RUN_FAILURE_KINDS.includes(root.failureKind as (typeof RUN_FAILURE_KINDS)[number])) {
     throw new Error(`${source}.failureKind is invalid`);
+  }
+  const telemetry = root.telemetry === undefined
+    ? undefined
+    : parseFailureTelemetry(
+        root.telemetry,
+        `${source}.telemetry`,
+        strictCurrentUsage,
+        root.failureKind as (typeof RUN_FAILURE_KINDS)[number],
+      );
+  const telemetryUnavailableReason = root.telemetryUnavailableReason === undefined
+    ? undefined
+    : failureTelemetryUnavailableReason(
+        root.telemetryUnavailableReason,
+        `${source}.telemetryUnavailableReason`,
+      );
+  if (telemetry !== undefined && telemetryUnavailableReason !== undefined) {
+    throw new Error(`${source} cannot contain both telemetry and telemetryUnavailableReason`);
+  }
+  if (!strictCurrentUsage && telemetryUnavailableReason !== undefined) {
+    throw new Error(`${source}.telemetryUnavailableReason is not part of the legacy writer`);
   }
   return {
     status: "failed",
     failureKind: root.failureKind as (typeof RUN_FAILURE_KINDS)[number],
     message: boundedNonEmptyString(root.message, `${source}.message`, 4000),
     durationMs: nonNegativeSafeInteger(root.durationMs, `${source}.durationMs`),
-    telemetry: root.telemetry === undefined
-      ? undefined
-      : parseFailureTelemetry(
-          root.telemetry,
-          `${source}.telemetry`,
-          strictCurrentUsage,
-          root.failureKind as (typeof RUN_FAILURE_KINDS)[number],
-        ),
+    ...(telemetry ? { telemetry } : {}),
+    ...(telemetryUnavailableReason ? { telemetryUnavailableReason } : {}),
   };
+}
+
+function failureTelemetryUnavailableReason(
+  value: unknown,
+  source: string,
+): FailureTelemetryUnavailableReason {
+  if (value !== "not-observed" && value !== "secret-redacted") {
+    throw new Error(`${source} is invalid`);
+  }
+  return value;
 }
 
 function parseFailureTelemetry(
@@ -1814,7 +1875,7 @@ function validateCurrentNetworkIsolation(
   for (const [runnerName, capability] of Object.entries(capabilities) as Array<
     [RunRecord["runner"], NetworkIsolationCapability]
   >) {
-    if (!isDeepStrictEqual(capability, networkIsolationCapability(runnerName))) {
+    if (!isDeepStrictEqual(capability, SCHEMA_V1_NETWORK_ISOLATION[runnerName])) {
       throw new Error(
         `${source}.providerNetworkIsolation.${runnerName} does not match the runner capability`,
       );

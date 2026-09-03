@@ -12,7 +12,7 @@ import { basename, join, resolve } from "node:path";
 import test from "node:test";
 import { gradeRuns } from "../eval/grade.js";
 import { buildReport, calculateStats } from "../eval/report.js";
-import { runMatrix } from "../eval/run-matrix.js";
+import { failureOutcomeForArtifact, runMatrix } from "../eval/run-matrix.js";
 import { materializeCase, networkIsolationCapability } from "../eval/case-isolation.js";
 import { readCaseGroundTruth } from "../eval/case-truth.js";
 import {
@@ -242,6 +242,16 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
     },
   };
   assert.doesNotThrow(() => parseMatrixRunManifest(manifest));
+  assert.doesNotThrow(() => parseMatrixRunManifest({
+    ...manifest,
+    providerNetworkIsolation: {
+      claude: {
+        status: "unavailable",
+        mechanism:
+          "CLI customization surfaces are disabled, but external filesystem and network containment are not attested; live matrix attempts fail closed.",
+      },
+    },
+  }), "schema-v1 capability evidence remains readable independently of runtime evolution");
   assert.throws(
     () => parseMatrixRunManifest({ ...manifest, providerNetworkIsolation: {} }),
     /providerNetworkIsolation is missing claude/,
@@ -1037,7 +1047,15 @@ test("strict current failure telemetry requires provider identity and cost prove
     delete missingTelemetry.outcome.telemetry;
     assert.throws(
       () => parseRunRecord(missingTelemetry, `${failureKind} failure without telemetry`, validAttempt()),
-      new RegExp(`telemetry is required for ${failureKind} failures`),
+      new RegExp(`must record telemetry or telemetryUnavailableReason for ${failureKind} failures`),
+    );
+    missingTelemetry.outcome.telemetryUnavailableReason = "not-observed";
+    assert.doesNotThrow(
+      () => parseRunRecord(
+        missingTelemetry,
+        `${failureKind} failure with explicitly unavailable telemetry`,
+        validAttempt(),
+      ),
     );
   }
 
@@ -1080,6 +1098,24 @@ test("strict current failure telemetry requires provider identity and cost prove
     ),
     /telemetry must be absent for the current mock writer/,
   );
+  delete mockFailure.outcome.telemetry;
+  mockFailure.outcome.telemetryUnavailableReason = "secret-redacted";
+  assert.throws(
+    () => parseRunRecord(
+      mockFailure,
+      "current mock unavailable telemetry reason",
+      { ...validAttempt(), runner: "mock" },
+    ),
+    /telemetryUnavailableReason must be absent for the current mock writer/,
+  );
+
+  const conflictingAvailability = structuredClone(failed);
+  if (conflictingAvailability.outcome.status !== "failed") throw new Error("expected failure fixture");
+  conflictingAvailability.outcome.telemetryUnavailableReason = "secret-redacted";
+  assert.throws(
+    () => parseRunRecord(conflictingAvailability, "conflicting telemetry availability", validAttempt()),
+    /cannot contain both telemetry and telemetryUnavailableReason/,
+  );
 
   const ambiguousClaudeFailure = structuredClone(failed);
   if (ambiguousClaudeFailure.outcome.status !== "failed" || !ambiguousClaudeFailure.outcome.telemetry) {
@@ -1117,6 +1153,55 @@ test("strict current failure telemetry requires provider identity and cost prove
   assert.throws(
     () => parseRunRecord(incompleteConfiguration, "configuration failure with incomplete stage", validAttempt()),
     /configuration telemetry may contain only completed stages/,
+  );
+});
+
+test("failure artifact writing records why provider telemetry is unavailable", () => {
+  const stageUsage = withUnavailable({
+    provider: "anthropic",
+    aggregation: "single-envelope",
+    promptBytes: 1,
+  });
+  const secretTelemetry = {
+    engine: "claude" as const,
+    modelConfig: "token=abc123456789SECRET/low->strong/high",
+    usage: stageUsage,
+    durationMs: 10,
+    stages: [{
+      stage: "breadth" as const,
+      model: "token=abc123456789SECRET",
+      promptSha256: "a".repeat(64),
+      usage: stageUsage,
+      durationMs: 10,
+      completed: false,
+    }],
+  };
+  const secretRedacted = failureOutcomeForArtifact(
+    "claude",
+    new RunFailureError("provider", "provider failed", { telemetry: secretTelemetry }),
+    10,
+  );
+  assert.equal(secretRedacted.telemetry, undefined);
+  assert.equal(secretRedacted.telemetryUnavailableReason, "secret-redacted");
+  assert.doesNotMatch(JSON.stringify(secretRedacted), /abc123456789SECRET/);
+
+  const redactedRecord = structuredClone(validRecord());
+  redactedRecord.outcome = secretRedacted;
+  assert.doesNotThrow(
+    () => parseRunRecord(redactedRecord, "secret-redacted provider failure", validAttempt()),
+  );
+
+  const notObserved = failureOutcomeForArtifact(
+    "claude",
+    new RunFailureError("timeout", "provider timed out"),
+    10,
+  );
+  assert.equal(notObserved.telemetry, undefined);
+  assert.equal(notObserved.telemetryUnavailableReason, "not-observed");
+  const unavailableRecord = structuredClone(validRecord());
+  unavailableRecord.outcome = notObserved;
+  assert.doesNotThrow(
+    () => parseRunRecord(unavailableRecord, "unobserved provider telemetry", validAttempt()),
   );
 });
 

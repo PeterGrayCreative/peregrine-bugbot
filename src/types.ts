@@ -186,6 +186,8 @@ export interface RunFailureTelemetry {
   stages: StageTelemetry[];
 }
 
+export type FailureTelemetryUnavailableReason = "not-observed" | "secret-redacted";
+
 export interface ReviewContext {
   repoPath: string;
   diffPath: string;
@@ -391,6 +393,8 @@ export type RunOutcome =
       message: string;
       durationMs: number;
       telemetry?: RunFailureTelemetry;
+      /** Why provider work metadata is absent even though the attempt failed. */
+      telemetryUnavailableReason?: FailureTelemetryUnavailableReason;
     };
 
 export interface RunRecord {

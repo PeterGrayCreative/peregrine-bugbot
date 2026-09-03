@@ -396,7 +396,8 @@ function assertCrossAttemptProvenance(dir: string, manifest: MatrixRunManifest):
 function assertOutcomeCapability(record: RunRecord, manifest: MatrixRunManifest): void {
   if (record.runner === "mock") return;
   const preProviderFailure = record.outcome.status === "failed" &&
-    record.outcome.failureKind === "configuration" && record.outcome.telemetry === undefined;
+    record.outcome.failureKind === "configuration" && record.outcome.telemetry === undefined &&
+    record.outcome.telemetryUnavailableReason === undefined;
   if (record.caseCorpus === "structural-smoke" && !preProviderFailure) {
     throw new Error(`${record.attemptId} cannot record live provider work for structural-smoke`);
   }
