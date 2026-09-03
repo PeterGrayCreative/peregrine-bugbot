@@ -38,6 +38,7 @@ import type {
   CaseCorpus,
   CaseSpec,
   EvaluationAttemptProvenance,
+  EvaluationIsolation,
   EngineResult,
   MatrixConfig,
   MatrixRunManifest,
@@ -87,6 +88,14 @@ import {
   writeExperimentTerminalSeal,
 } from "./experiment-seals.js";
 import { parseMatrixRunManifest, parseRunRecord } from "./artifacts.js";
+import {
+  ACCEPTED_EVAL_RUNTIME_IMAGE,
+  containedNetworkCapability,
+  createContainedOutputReader,
+  createContainedProviderExec,
+  observeContainedCliVersion,
+  probeContainedRuntime,
+} from "./runtime-containment.js";
 
 interface RunMatrixOptions {
   casesDir?: string;
@@ -110,6 +119,17 @@ interface RunMatrixOptions {
   manifestPreparer?: EvaluationManifestPreparer;
   /** Test seam for verifying that attempt cleanup cannot erase incurred work. */
   materializeCaseFor?: typeof materializeCase;
+  /** Test seam for zero-cost containment integration; production always performs the Docker probe. */
+  prepareContainment?: (input: {
+    runner: "claude" | "codex";
+    providerAccess: "api-key" | "cli-session";
+    checkoutDir: string;
+    assetsDir: string;
+    outputDir: string;
+  }) => Promise<{
+    runProvider: NonNullable<EvaluationIsolation["runProvider"]>;
+    readProviderOutput: NonNullable<EvaluationIsolation["readProviderOutput"]>;
+  }>;
 }
 
 interface DiscoveredCase {
@@ -454,7 +474,29 @@ export async function runMatrix(
             );
           }
           try {
-            assertLiveProviderIsolationAvailable(modelConfig.runner);
+            if (modelConfig.runner !== "mock") {
+              if (!experimentManifest) {
+                assertLiveProviderIsolationAvailable(modelConfig.runner, materialized.evaluationIsolation);
+              }
+              const containment = {
+                runner: modelConfig.runner,
+                providerAccess: experimentManifest?.protocol.providerAccess as "api-key" | "cli-session",
+                checkoutDir: materialized.repoPath,
+                assetsDir: materialized.evaluationIsolation.providerAssetsRoot,
+                outputDir: materialized.evaluationIsolation.providerOutputRoot!,
+              };
+              const preparedContainment = experimentManifest && (options.prepareContainment
+                ? await options.prepareContainment(containment)
+                : (await probeContainedRuntime(containment), {
+                    runProvider: createContainedProviderExec(containment),
+                    readProviderOutput: createContainedOutputReader(containment.outputDir),
+                  }));
+              if (preparedContainment) {
+                materialized.evaluationIsolation.runProvider = preparedContainment.runProvider;
+                materialized.evaluationIsolation.readProviderOutput = preparedContainment.readProviderOutput;
+              }
+            }
+            assertLiveProviderIsolationAvailable(modelConfig.runner, materialized.evaluationIsolation);
           } catch (error) {
             throw new RunFailureError(
               "configuration",
@@ -693,15 +735,34 @@ function buildLegacyMatrixManifest(
 }
 
 function matrixManifestFromExperiment(experiment: ExperimentManifest): MatrixRunManifest {
-  return matrixManifestFromSchedule(experiment.createdAt, experiment.schedule);
+  return matrixManifestFromSchedule(
+    experiment.createdAt,
+    experiment.schedule,
+    experiment.protocol.providerCalls === "allow",
+  );
 }
 
 function matrixManifestFromSchedule(
   createdAt: string,
   schedule: readonly ExperimentScheduledAttempt[],
+  contained = false,
 ): MatrixRunManifest {
+  if (!contained) {
+    return {
+      schemaVersion: 1,
+      createdAt,
+      expectedAttempts: schedule.map((attempt) => ({
+        id: attempt.id, caseName: attempt.caseName, corpus: attempt.corpus,
+        expectedBugCount: attempt.expectedBugCount, configName: attempt.configName,
+        repeat: attempt.repeat, file: attempt.file, runner: attempt.runner,
+      })),
+      providerNetworkIsolation: Object.fromEntries(
+        [...new Set(schedule.map((attempt) => attempt.runner))].map((runner) => [runner, networkIsolationCapability(runner)]),
+      ),
+    };
+  }
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     createdAt,
     expectedAttempts: schedule.map((attempt) => ({
       id: attempt.id,
@@ -716,9 +777,20 @@ function matrixManifestFromSchedule(
     providerNetworkIsolation: Object.fromEntries(
       [...new Set(schedule.map((attempt) => attempt.runner))].map((runner) => [
         runner,
-        networkIsolationCapability(runner),
+        runner === "mock" ? networkIsolationCapability(runner) : containedNetworkCapability(),
       ]),
     ),
+    providerFilesystemIsolation: Object.fromEntries(
+      [...new Set(schedule.map((attempt) => attempt.runner))].map((runner) => [
+        runner,
+        runner === "mock"
+          ? { status: "not-applicable", mechanism: "No provider process is started for structural smoke runs." }
+          : { status: "enforced", mechanism: "Digest-pinned OCI container exposes only read-only checkout/assets, private attempt output, and tmpfs state." },
+      ]),
+    ),
+    runtimeImage: schedule.some((attempt) => attempt.runner !== "mock")
+      ? { reference: ACCEPTED_EVAL_RUNTIME_IMAGE, pullPolicy: "never" }
+      : null,
   };
 }
 
@@ -756,7 +828,11 @@ async function prepareExperimentManifest(
       );
   const matrixConfigSha256 = rawSha256(input.matrixSource);
   const matrixManifestSha256 = canonicalJsonSha256(
-    matrixManifestFromSchedule(input.createdAt, input.schedule),
+    matrixManifestFromSchedule(
+      input.createdAt,
+      input.schedule,
+      input.protocol.providerCalls === "allow",
+    ),
   );
   const peregrineConfigSha256 = canonicalJsonSha256(input.baseConfig);
   const repositorySha256 = hashPathTree(root, {
@@ -918,26 +994,32 @@ async function observeExperimentRuntime(
         providerAvailability.push({ runner, status: "not-applicable" });
         continue;
       }
-      const result = await exec(runner, ["--version"], {
-        timeoutMs: 10_000,
-        env: metadataProbeEnvironment(home),
-        inheritEnv: false,
-      });
+      const result = protocol.providerCalls === "allow"
+        ? await observeContainedCliVersion(runner)
+        : await exec(runner, ["--version"], {
+            timeoutMs: 10_000,
+            env: metadataProbeEnvironment(home),
+            inheritEnv: false,
+          });
       const version = result.code === 0 && !result.timedOut
         ? `${result.stdout}\n${result.stderr}`.match(/\b\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?\b/)?.[0]
         : undefined;
       cliVersions.push(version
         ? { runner, status: "observed", version }
         : { runner, status: "unavailable" });
-      const isolation = networkIsolationCapability(runner);
-      const credentialPresent = runner === "claude"
-        ? Boolean(process.env.ANTHROPIC_API_KEY)
-        : Boolean(process.env.OPENAI_API_KEY);
+      const isolation = protocol.providerCalls === "allow"
+        ? containedNetworkCapability()
+        : networkIsolationCapability(runner);
+      const credentialPresent = protocol.providerAccess === "cli-session"
+        ? Boolean(process.env[runner === "claude" ? "PEREGRINE_CLAUDE_SESSION_DIR" : "PEREGRINE_CODEX_SESSION_DIR"])
+        : runner === "claude"
+          ? Boolean(process.env.ANTHROPIC_API_KEY)
+          : Boolean(process.env.OPENAI_API_KEY);
       providerAvailability.push({
         runner,
         status: protocol.providerCalls === "deny"
           ? "denied"
-          : isolation.status !== "enforced"
+          : isolation.status === "unavailable"
             ? "blocked-isolation"
             : !version
               ? "missing-cli"

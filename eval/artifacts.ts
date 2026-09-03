@@ -22,7 +22,9 @@ import {
   type RunRecord,
   type StageTelemetry,
 } from "../src/types.js";
+import { parseTypedReviewManifest } from "../src/core/manifest.js";
 import { assertOpaqueCaseId } from "./case-isolation.js";
+import { ACCEPTED_EVAL_RUNTIME_IMAGE } from "./runtime-containment.js";
 
 const RECORD_KEYS = new Set([
   "schemaVersion", "attemptId", "caseName", "caseKind", "configName", "repeat",
@@ -92,8 +94,12 @@ type ComparableGradedRun = Pick<GradedRun,
 
 export function parseMatrixRunManifest(value: unknown, source = "matrix manifest"): MatrixRunManifest {
   const root = object(value, source);
-  onlyKeys(root, new Set(["schemaVersion", "createdAt", "expectedAttempts", "providerNetworkIsolation"]), source);
-  if (root.schemaVersion !== 1) throw new Error(`${source}.schemaVersion must be 1`);
+  const schemaVersion = root.schemaVersion;
+  if (schemaVersion !== 1 && schemaVersion !== 2) throw new Error(`${source}.schemaVersion must be 1 or 2`);
+  onlyKeys(root, new Set([
+    "schemaVersion", "createdAt", "expectedAttempts", "providerNetworkIsolation",
+    ...(schemaVersion === 2 ? ["providerFilesystemIsolation", "runtimeImage"] : []),
+  ]), source);
   const createdAt = isoDate(root.createdAt, `${source}.createdAt`);
   if (!Array.isArray(root.expectedAttempts)) throw new Error(`${source}.expectedAttempts must be an array`);
   const expectedAttempts = root.expectedAttempts.map((attempt, index) =>
@@ -105,10 +111,39 @@ export function parseMatrixRunManifest(value: unknown, source = "matrix manifest
     root.providerNetworkIsolation,
     `${source}.providerNetworkIsolation`,
   );
-  validateCurrentNetworkIsolation(expectedAttempts, providerNetworkIsolation, source);
-  const parsed = { schemaVersion: 1 as const, createdAt, expectedAttempts, providerNetworkIsolation };
+  if (schemaVersion === 1) {
+    validateCurrentNetworkIsolation(expectedAttempts, providerNetworkIsolation, source);
+  } else {
+    validateContainedNetworkIsolation(expectedAttempts, providerNetworkIsolation, source);
+  }
+  const providerFilesystemIsolation = schemaVersion === 2
+    ? parseNetworkIsolation(root.providerFilesystemIsolation, `${source}.providerFilesystemIsolation`)
+    : undefined;
+  if (providerFilesystemIsolation) validateFilesystemIsolation(expectedAttempts, providerFilesystemIsolation, source);
+  const runtimeImage = schemaVersion === 2 ? parseRuntimeImage(root.runtimeImage, expectedAttempts, source) : undefined;
+  const parsed: MatrixRunManifest = {
+    schemaVersion, createdAt, expectedAttempts, providerNetworkIsolation,
+    ...(providerFilesystemIsolation ? { providerFilesystemIsolation } : {}),
+    ...(schemaVersion === 2 ? { runtimeImage: runtimeImage ?? null } : {}),
+  };
   assertNoSecrets(parsed, `${source} artifact`);
   return parsed;
+}
+
+function parseRuntimeImage(value: unknown, attempts: RunAttempt[], source: string): MatrixRunManifest["runtimeImage"] {
+  const live = attempts.some((attempt) => attempt.runner !== "mock");
+  if (!live) {
+    if (value !== null) throw new Error(`${source}.runtimeImage must be null for mock-only runs`);
+    return null;
+  }
+  const image = object(value, `${source}.runtimeImage`);
+  onlyKeys(image, new Set(["reference", "pullPolicy"]), `${source}.runtimeImage`);
+  const reference = strictString(image.reference, `${source}.runtimeImage.reference`, 300);
+  if (reference !== ACCEPTED_EVAL_RUNTIME_IMAGE) {
+    throw new Error(`${source}.runtimeImage.reference must equal the accepted runtime image digest`);
+  }
+  if (image.pullPolicy !== "never") throw new Error(`${source}.runtimeImage.pullPolicy must be never`);
+  return { reference, pullPolicy: "never" };
 }
 
 /**
@@ -1071,7 +1106,7 @@ function parseManifestProvenance(
   const root = object(value, source);
   onlyKeys(root, new Set([
     "entryPoint", "skillName", "baseRef", "headRef", "mergeBase", "outputSha256",
-    "output", "profileSource", "headProfileChanged",
+    "output", "typed", "typedSha256", "profileSource", "headProfileChanged",
   ]), source);
   if (root.entryPoint !== "prepareReviewManifest") {
     throw new Error(`${source}.entryPoint must be prepareReviewManifest`);
@@ -1080,6 +1115,20 @@ function parseManifestProvenance(
   assertNoSecrets(output, `${source}.output`);
   const outputSha256 = sha256Hex(root.outputSha256, `${source}.outputSha256`);
   if (outputSha256 !== sha256(output)) throw new Error(`${source}.outputSha256 does not match output`);
+  let typed: EvaluationManifestProvenance["typed"];
+  let typedSha256: string | undefined;
+  if (root.typed !== undefined || root.typedSha256 !== undefined) {
+    if (root.typed === undefined || root.typedSha256 === undefined) throw new Error(`${source}.typed and typedSha256 must appear together`);
+    assertNoSecrets(root.typed, `${source}.typed`);
+    typed = parseTypedReviewManifest(JSON.stringify(root.typed));
+    typedSha256 = sha256Hex(root.typedSha256, `${source}.typedSha256`);
+    if (typedSha256 !== sha256(JSON.stringify(typed))) throw new Error(`${source}.typedSha256 does not match typed`);
+    if (typed.base.ref !== history.baseRef || typed.base.commit !== history.baseRef ||
+      typed.head.ref !== history.headRef || typed.head.commit !== history.headRef ||
+      typed.mergeBase !== history.mergeBase) {
+      throw new Error(`${source}.typed history provenance does not match attempt history`);
+    }
+  }
   if (!(root.profileSource === "none" || root.profileSource === "merge-base snapshot" ||
     root.profileSource === "ignored; absent at merge base")) {
     throw new Error(`${source}.profileSource is invalid`);
@@ -1092,6 +1141,12 @@ function parseManifestProvenance(
   }
   if (root.profileSource === "ignored; absent at merge base" && !root.headProfileChanged) {
     throw new Error(`${source}.ignored profile provenance requires headProfileChanged`);
+  }
+  if (typed) {
+    const expectedSource = root.profileSource === "merge-base snapshot" ? "merge-base" : "none";
+    if (typed.profile.source !== expectedSource || typed.profile.changedAtHead !== root.headProfileChanged) {
+      throw new Error(`${source}.typed profile provenance does not match outer provenance`);
+    }
   }
   for (const [field, actual, expected] of [
     ["baseRef", root.baseRef, history.baseRef],
@@ -1115,6 +1170,7 @@ function parseManifestProvenance(
     mergeBase: history.mergeBase,
     outputSha256,
     output,
+    ...(typed ? { typed, typedSha256 } : {}),
     profileSource: root.profileSource,
     headProfileChanged: root.headProfileChanged,
   };
@@ -1395,7 +1451,14 @@ function parseFailureTelemetry(
   failureKind: (typeof RUN_FAILURE_KINDS)[number],
 ): RunFailureTelemetry {
   const root = object(value, source);
-  onlyKeys(root, new Set(["engine", "modelConfig", "usage", "durationMs", "stages"]), source);
+  onlyKeys(root, new Set([
+    "engine",
+    "modelConfig",
+    "usage",
+    "durationMs",
+    "stages",
+    "containmentCleanupFailed",
+  ]), source);
   if (!(root.engine === "claude" || root.engine === "codex" || root.engine === "mock")) {
     throw new Error(`${source}.engine is invalid`);
   }
@@ -1437,7 +1500,7 @@ function parseFailureTelemetry(
     if (stages.length === 2 && !stages[0]!.completed) {
       throw new Error(`${source}.stages require completed breadth before investigation`);
     }
-    validateFailureStageState(failureKind, stages, source);
+    validateFailureStageState(failureKind, stages, root.containmentCleanupFailed, source);
     validateStageModelConfig(modelConfig, stages, source, engine);
     validateAggregateUsageShape(usage, stages, `${source}.usage`);
   }
@@ -1458,6 +1521,12 @@ function parseFailureTelemetry(
     durationMs,
     stages,
   };
+  if (root.containmentCleanupFailed !== undefined) {
+    if (root.containmentCleanupFailed !== true) {
+      throw new Error(`${source}.containmentCleanupFailed must be true when present`);
+    }
+    parsed.containmentCleanupFailed = true;
+  }
   if (strictCurrentUsage) assertNoSecrets(parsed, `${source} artifact`);
   return parsed;
 }
@@ -1465,10 +1534,16 @@ function parseFailureTelemetry(
 function validateFailureStageState(
   failureKind: (typeof RUN_FAILURE_KINDS)[number],
   stages: StageTelemetry[],
+  containmentCleanupFailed: unknown,
   source: string,
 ): void {
   const final = stages[stages.length - 1]!;
-  if ((failureKind === "configuration" || failureKind === "unknown") &&
+  if (containmentCleanupFailed !== undefined &&
+    (containmentCleanupFailed !== true || failureKind !== "configuration" || final.completed)) {
+    throw new Error(`${source}.containmentCleanupFailed requires configuration failure with an incomplete final stage`);
+  }
+  if ((failureKind === "unknown" ||
+      (failureKind === "configuration" && containmentCleanupFailed !== true)) &&
     stages.some((stage) => !stage.completed)) {
     throw new Error(`${source} ${failureKind} telemetry may contain only completed stages`);
   }
@@ -1960,6 +2035,44 @@ function validateCurrentNetworkIsolation(
       throw new Error(
         `${source}.providerNetworkIsolation.${runnerName} does not match the runner capability`,
       );
+    }
+  }
+}
+
+function validateContainedNetworkIsolation(
+  attempts: RunAttempt[],
+  capabilities: Partial<Record<RunRecord["runner"], NetworkIsolationCapability>>,
+  source: string,
+): void {
+  validateCapabilityCoverage(attempts, capabilities, `${source}.providerNetworkIsolation`);
+  for (const [runner, capability] of Object.entries(capabilities) as Array<[RunRecord["runner"], NetworkIsolationCapability]>) {
+    const expected = runner === "mock" ? "not-applicable" : "limited";
+    if (capability.status !== expected) throw new Error(`${source}.providerNetworkIsolation.${runner} must be ${expected}`);
+  }
+}
+
+function validateFilesystemIsolation(
+  attempts: RunAttempt[],
+  capabilities: Partial<Record<RunRecord["runner"], NetworkIsolationCapability>>,
+  source: string,
+): void {
+  validateCapabilityCoverage(attempts, capabilities, `${source}.providerFilesystemIsolation`);
+  for (const [runner, capability] of Object.entries(capabilities) as Array<[RunRecord["runner"], NetworkIsolationCapability]>) {
+    const expected = runner === "mock" ? "not-applicable" : "enforced";
+    if (capability.status !== expected) throw new Error(`${source}.providerFilesystemIsolation.${runner} must be ${expected}`);
+  }
+}
+
+function validateCapabilityCoverage(
+  attempts: RunAttempt[],
+  capabilities: Partial<Record<RunRecord["runner"], NetworkIsolationCapability>>,
+  field: string,
+): void {
+  const expected = new Set(attempts.map((attempt) => attempt.runner));
+  for (const runner of expected) if (!capabilities[runner]) throw new Error(`${field} is missing ${runner}`);
+  if (attempts.length > 0) {
+    for (const runner of Object.keys(capabilities) as RunRecord["runner"][]) {
+      if (!expected.has(runner)) throw new Error(`${field} has undeclared ${runner}`);
     }
   }
 }

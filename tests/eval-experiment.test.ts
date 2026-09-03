@@ -828,6 +828,26 @@ async function manifestPreparer(ctx: ReviewContext) {
       "M\tsrc/value.ts",
       "",
     ].join("\n"),
+    typed: {
+      schemaVersion: 1 as const,
+      available: true as const,
+      base: { ref: ctx.baseRef!, commit: ctx.baseRef!, source: "argument" as const },
+      head: { ref: ctx.headRef!, commit: ctx.headRef! },
+      mergeBase: ctx.baseRef!,
+      profile: { source: "none" as const, requestedPath: null, changedAtHead: false },
+      changedFiles: [{
+        path: "src/value.ts",
+        status: "M",
+        additions: 1,
+        deletions: 1,
+        binary: false,
+        activatedLanes: [{ id: "logic-correctness", reason: "content" as const }],
+      }],
+      activatedLanes: ["logic-correctness"],
+      customLanes: [],
+      largeFiles: [],
+      warnings: [],
+    },
   };
 }
 

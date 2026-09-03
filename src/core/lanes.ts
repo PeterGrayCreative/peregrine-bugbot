@@ -16,8 +16,9 @@ export const CORE_LANE_IDS = [
 ] as const;
 
 export type CoreLaneId = (typeof CORE_LANE_IDS)[number];
+export type ManifestLaneId = CoreLaneId | (string & {});
 
-export const CORE_LANE_CATEGORY = Object.freeze({
+export const CORE_LANE_CATEGORY: Readonly<Record<CoreLaneId, FindingCategory>> = {
   authorization: "authorization",
   identifiers: "identifiers",
   "data-integrity": "data-integrity",
@@ -30,7 +31,7 @@ export const CORE_LANE_CATEGORY = Object.freeze({
   "error-handling": "error-handling",
   "frontend-state": "frontend-state",
   "boundaries-pagination": "boundaries",
-} as const satisfies Readonly<Record<CoreLaneId, FindingCategory>>);
+};
 
 export function isCoreLaneId(value: unknown): value is CoreLaneId {
   return typeof value === "string" && (CORE_LANE_IDS as readonly string[]).includes(value);

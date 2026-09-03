@@ -1,5 +1,5 @@
 import type { RunFailureKind } from "./core/run-failure.js";
-import type { CoreLaneId } from "./core/review-lanes.js";
+import type { CoreLaneId } from "./core/lanes.js";
 
 export const RUNNER_NAMES = ["claude", "codex", "mock"] as const;
 export type RunnerName = (typeof RUNNER_NAMES)[number];
@@ -26,6 +26,28 @@ export type FindingDisposition = "fix-in-pr" | "follow-up";
 export type ReviewStatus = "completed" | "clean" | "skipped";
 export type CodexEffort = "low" | "medium" | "high" | "xhigh" | "max" | "ultra";
 export type ClaudeEffort = "low" | "medium" | "high" | "xhigh" | "max";
+
+export interface TypedReviewManifest {
+  schemaVersion: 1;
+  available: true;
+  base: { ref: string; commit: string; source: "argument" | "trusted profile review-base" | "origin/HEAD" | "fallback" };
+  head: { ref: string; commit: string };
+  mergeBase: string;
+  profile: { source: "merge-base" | "external" | "none"; requestedPath: string | null; changedAtHead: boolean };
+  changedFiles: Array<{
+    path: string;
+    oldPath?: string;
+    status: string;
+    additions: number | null;
+    deletions: number | null;
+    binary: boolean;
+    activatedLanes: Array<{ id: string; reason: "path" | "content" | "profile-extension" }>;
+  }>;
+  activatedLanes: string[];
+  customLanes: Array<{ id: string; trustedSource: string }>;
+  largeFiles: Array<{ path: string; baseLines: number; headLines: number }>;
+  warnings: string[];
+}
 
 export interface Finding {
   file: string;
@@ -185,6 +207,7 @@ export interface RunFailureTelemetry {
   usage: Usage;
   durationMs: number;
   stages: StageTelemetry[];
+  containmentCleanupFailed?: true;
 }
 
 export type FailureTelemetryUnavailableReason = "not-observed" | "secret-redacted";
@@ -208,6 +231,12 @@ export interface ReviewContext {
 export interface EvaluationIsolation {
   providerHome: string;
   providerAssetsRoot: string;
+  /** Attempt-owned host directory exposed to the provider only as /output. */
+  providerOutputRoot?: string;
+  /** Outer containment boundary for provider CLI execution. */
+  runProvider?: ProviderExec;
+  /** Race-resistant reader for hostile files created by a contained provider. */
+  readProviderOutput?: (path: string) => string;
   validatePrompt(input: {
     prompt: string;
     stage: "breadth" | "investigation";
@@ -215,6 +244,24 @@ export interface EvaluationIsolation {
     untrustedModelText?: string;
   }): void;
 }
+
+export type ProviderExec = (
+  cmd: string,
+  args: string[],
+  opts?: {
+    cwd?: string;
+    env?: Record<string, string>;
+    inheritEnv?: boolean;
+    timeoutMs?: number;
+    stdin?: string;
+  },
+) => Promise<{
+  stdout: string;
+  stderr: string;
+  code: number | null;
+  timedOut: boolean;
+  cleanupErrors?: readonly string[];
+}>;
 
 export interface ClaudeRunnerConfig {
   breadthModel: string;
@@ -371,10 +418,14 @@ export interface RunAttempt {
 }
 
 export interface MatrixRunManifest {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   createdAt: string;
   expectedAttempts: RunAttempt[];
   providerNetworkIsolation: Partial<Record<RunnerName, NetworkIsolationCapability>>;
+  /** Present only in schema 2 containment-aware manifests. */
+  providerFilesystemIsolation?: Partial<Record<RunnerName, NetworkIsolationCapability>>;
+  /** Immutable runtime identity; null only when every attempt uses the mock runner. */
+  runtimeImage?: { reference: string; pullPolicy: "never" } | null;
 }
 
 export interface NetworkIsolationCapability {
@@ -421,6 +472,9 @@ export interface EvaluationManifestProvenance {
   outputSha256: string;
   /** Exact bounded text returned by the production manifest entry point. */
   output: string;
+  /** Validated Stage-0 shadow metadata; never inserted into model prompts. */
+  typed?: TypedReviewManifest;
+  typedSha256?: string;
   profileSource:
     | "none"
     | "merge-base snapshot"

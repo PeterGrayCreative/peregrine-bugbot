@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, realpathSync } from "node:fs";
 import { join, resolve, sep } from "node:path";
 import type { GroundTruth } from "../src/types.js";
-import { isCoreLaneId } from "../src/core/review-lanes.js";
+import { isCoreLaneId } from "../src/core/lanes.js";
 
 export function readCaseGroundTruth(casesDir: string, caseName: string): GroundTruth {
   const root = realpathSync(resolve(casesDir));

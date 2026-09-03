@@ -497,6 +497,115 @@ test("provider adapters expose stable timeout failure codes", async () => {
   }
 });
 
+test("contained timeout cleanup evidence preserves provider classification and observed usage", async () => {
+  const fake: typeof exec = async () => ({
+    stdout: JSON.stringify({
+      usage: { input_tokens: 11, cache_creation_input_tokens: 0, cache_read_input_tokens: 2, output_tokens: 3 },
+      messages: [],
+    }),
+    stderr: "",
+    code: null,
+    timedOut: true,
+    cleanupErrors: ["force-removing evaluation container failed", "evaluation container survived force-removal"],
+  });
+  await assert.rejects(
+    () => createClaudeEngine(fake).review(context()),
+    (error: unknown) => {
+      assert.ok(error instanceof RunFailureError);
+      assert.equal(error.kind, "timeout");
+      assert.equal(error.telemetry?.usage.inputTokens, 13);
+      assert.equal(error.telemetry?.usage.outputTokens, 3);
+      assert.match(error.message, /containment cleanup failed/);
+      assertStrictFailureArtifact("claude", error);
+      return true;
+    },
+  );
+});
+
+test("code-zero containment cleanup failures retain incomplete Codex and Claude telemetry", async () => {
+  const codexFake: typeof exec = async (_cmd, args) => {
+    const output = args[args.indexOf("--output-last-message") + 1]!;
+    writeFileSync(output, JSON.stringify({ ...breadth, model: "gpt-5.6-luna" }));
+    return {
+      stdout: `${JSON.stringify({ type: "turn.completed", usage: { input_tokens: 11, cached_input_tokens: 2, output_tokens: 3 } })}\n`,
+      stderr: "", code: 0, timedOut: false,
+      cleanupErrors: ["evaluation container survived force-removal"],
+    };
+  };
+  const claudeFake: typeof exec = async () => ({
+    stdout: JSON.stringify({
+      structured_output: breadth,
+      usage: { input_tokens: 11, cache_creation_input_tokens: 0, cache_read_input_tokens: 2, output_tokens: 3 },
+      messages: [],
+    }),
+    stderr: "", code: 0, timedOut: false,
+    cleanupErrors: ["evaluation container survived force-removal"],
+  });
+  for (const [runner, engine] of [["codex", createCodexEngine(codexFake)], ["claude", createClaudeEngine(claudeFake)]] as const) {
+    await assert.rejects(() => engine.review(context()), (error: unknown) => {
+      assert.ok(error instanceof RunFailureError);
+      assert.equal(error.kind, "configuration");
+      assert.equal(error.telemetry?.usage.inputTokens, runner === "codex" ? 11 : 13);
+      assert.equal(error.telemetry?.usage.outputTokens, 3);
+      assert.equal(error.telemetry?.stages[0]?.completed, false);
+      assert.equal(error.telemetry?.containmentCleanupFailed, true);
+      assert.match(error.message, /completed but containment cleanup failed/);
+      assertStrictFailureArtifact(runner, error);
+      return true;
+    });
+  }
+});
+
+test("code-zero cleanup failure takes precedence over missing Codex provider output", async () => {
+  let providerOutputRead = false;
+  const fake: typeof exec = async () => ({
+    stdout: `${JSON.stringify({ type: "turn.completed", usage: { input_tokens: 11, cached_input_tokens: 2, output_tokens: 3 } })}\n`,
+    stderr: "", code: 0, timedOut: false,
+    cleanupErrors: ["evaluation container survived force-removal"],
+  });
+  const ctx = context();
+  ctx.evaluationIsolation = {
+    providerHome: "/tmp/peregrine-test-provider-home",
+    providerAssetsRoot: resolve("."),
+    providerOutputRoot: resolve("."),
+    runProvider: fake,
+    readProviderOutput() {
+      providerOutputRead = true;
+      throw new Error("provider output must not be read after failed cleanup");
+    },
+    validatePrompt() {},
+  };
+  await assert.rejects(() => createCodexEngine().review(ctx), (error: unknown) => {
+    assert.ok(error instanceof RunFailureError);
+    assert.equal(error.kind, "configuration");
+    assert.equal(error.telemetry?.usage.inputTokens, 11);
+    assert.equal(error.telemetry?.usage.outputTokens, 3);
+    assert.equal(error.telemetry?.containmentCleanupFailed, true);
+    assert.match(error.message, /completed but containment cleanup failed/);
+    assert.doesNotMatch(error.message, /did not write its structured output/);
+    return true;
+  });
+  assert.equal(providerOutputRead, false);
+});
+
+test("code-zero cleanup failure takes precedence over invalid Claude provider output", async () => {
+  const fake: typeof exec = async () => ({
+    stdout: "not-json",
+    stderr: "", code: 0, timedOut: false,
+    cleanupErrors: ["evaluation container survived force-removal"],
+  });
+  await assert.rejects(() => createClaudeEngine(fake).review(context()), (error: unknown) => {
+    assert.ok(error instanceof RunFailureError);
+    assert.equal(error.kind, "configuration");
+    assert.equal(error.telemetry?.usage.aggregation, "ambiguous");
+    assert.equal(error.telemetry?.usage.inputTokens, undefined);
+    assert.equal(error.telemetry?.containmentCleanupFailed, true);
+    assert.match(error.message, /completed but containment cleanup failed/);
+    assert.doesNotMatch(error.message, /invalid JSON/);
+    return true;
+  });
+});
+
 test("provider adapters expose stable parse failure codes", async () => {
   const fake: typeof exec = async () => ({
     stdout: "not-json",

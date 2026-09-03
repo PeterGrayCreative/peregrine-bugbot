@@ -275,14 +275,21 @@ reinterpret valid nested unified-diff context.
 
 After history verification and before any provider or mock engine invocation,
 every attempt calls the exported production `prepareReviewManifest` entry
-point. Unavailable, empty, oversized, secret-bearing, or ref-mismatched output
+point. That entry point emits the unchanged human-readable packet used by the
+models and a schema-v1 typed shadow from the same lane-matching pass. Evaluation
+artifacts retain and hash the typed shadow for parity analysis; no prompt or
+routing consumer reads it during the unmodified-baseline stage.
+The typed shadow also records the complete set of changed source files at or
+above the canonical 400-line threshold, including base and head line counts.
+Evaluation ingestion binds both typed commit fields to the reproduced history,
+and text/typed parity covers changed-file, lane, and large-file inventories.
+Unavailable, empty, oversized, secret-bearing, or ref-mismatched output
 is a configuration failure. Attempt records retain the verified history even
 when manifest preflight fails; successful preflight additionally retains the
-exact bounded manifest text, its UTF-8 SHA-256, refs, and profile provenance.
-Typed manifest parsing remains a later shadow/parity slice, so this work does
-not alter prompts, grading, routing, budgets, posting, or model choice. These
-history and manifest checks are evaluation-integrity evidence, not model-quality
-evidence.
+exact bounded manifest text, its UTF-8 SHA-256, typed shadow and hash, refs, and
+profile provenance. This work does not alter prompts, grading, routing, budgets,
+posting, or model choice. These history and manifest checks are
+evaluation-integrity evidence, not model-quality evidence.
 
 ## Runtime image bootstrap
 

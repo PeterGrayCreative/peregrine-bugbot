@@ -151,17 +151,12 @@ export function networkIsolationCapability(runner: RunnerName): NetworkIsolation
       mechanism: "No provider process is started for structural smoke runs.",
     };
   }
-  if (runner === "claude") {
-    return {
-      status: "unavailable",
-      mechanism:
-        "CLI customization surfaces are disabled, but external filesystem and network containment are not attested; live matrix attempts fail closed.",
-    };
-  }
   return {
     status: "unavailable",
     mechanism:
-      "The runner requests an untrusted read-only project with local guidance disabled, but external read/network containment is not attested; live matrix attempts fail closed.",
+      runner === "claude"
+        ? "CLI customization surfaces are disabled, but external filesystem and network containment are not attested; live matrix attempts fail closed."
+        : "The runner requests an untrusted read-only project with local guidance disabled, but external read/network containment is not attested; live matrix attempts fail closed.",
   };
 }
 
@@ -173,11 +168,11 @@ export function assertRunnerMayUseCorpus(corpus: CaseCorpus, runner: RunnerName)
   }
 }
 
-export function assertLiveProviderIsolationAvailable(runner: RunnerName): void {
+export function assertLiveProviderIsolationAvailable(runner: RunnerName, isolation?: EvaluationIsolation): void {
   if (runner === "mock") return;
-  throw new Error(
-    `live ${runner} evaluation is disabled until an externally enforced filesystem and network allowlist contains the checkout, sanitized assets, and output only`,
-  );
+  if (!isolation?.runProvider || !isolation.readProviderOutput || !isolation.providerOutputRoot) {
+    throw new Error(`live ${runner} evaluation requires the attested OCI filesystem containment adapter`);
+  }
 }
 
 export function assertLeakageFreeText(
@@ -279,10 +274,12 @@ export async function materializeCase(
   const materializedDiffPath = join(attemptRoot, "review.patch");
   const providerHome = join(attemptRoot, "provider-home");
   const providerAssetsRoot = join(attemptRoot, "provider-assets");
+  const providerOutputRoot = join(attemptRoot, "provider-output");
   const templateDir = join(attemptRoot, "empty-git-template");
   try {
     mkdirSync(repoPath);
     mkdirSync(providerHome);
+    mkdirSync(providerOutputRoot, { mode: 0o700 });
     mkdirSync(join(providerHome, "tmp"));
     mkdirSync(join(providerHome, "xdg-config"));
     mkdirSync(join(providerHome, "xdg-cache"));
@@ -334,6 +331,7 @@ export async function materializeCase(
     const evaluationIsolation: EvaluationIsolation = {
       providerHome,
       providerAssetsRoot,
+      providerOutputRoot,
       validatePrompt: createPromptValidator(policy),
     };
     return {

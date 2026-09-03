@@ -12,7 +12,7 @@ import { parseAdjudicationRecords } from "../eval/semantic-artifacts.js";
 import { buildSemanticJudgePrompt, gradeResult } from "../eval/grade.js";
 import { parseGroundTruth } from "../eval/case-truth.js";
 import { calculateStats, renderBenchmarkHtml } from "../eval/report.js";
-import { CORE_LANE_CATEGORY, CORE_LANE_IDS } from "../src/core/review-lanes.js";
+import { CORE_LANE_CATEGORY, CORE_LANE_IDS } from "../src/core/lanes.js";
 import type { EngineResult, Finding, GroundTruth } from "../src/types.js";
 
 const truth: GroundTruth = {
