@@ -5,7 +5,7 @@
   "basePreparation": "Apply diff.patch in reverse to an isolated copy of fixture.",
   "baseExitCode": 0,
   "headExitCode": 0,
-  "headTestsRun": 8,
+  "headTestsRun": 11,
   "headFailures": 0,
-  "verifiedAt": "2026-09-03T16:00:00Z"
+  "verifiedAt": "2026-09-03T18:43:12Z"
 }

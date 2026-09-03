@@ -6,6 +6,7 @@ from logsettings import (
     load_settings,
     normalize_level,
 )
+from logsettings.parsing import parse_boolean, parse_format, parse_handlers
 
 __all__ = [
     "HandlerSpec",
@@ -14,4 +15,7 @@ __all__ = [
     "load_profile",
     "load_settings",
     "normalize_level",
+    "parse_boolean",
+    "parse_format",
+    "parse_handlers",
 ]

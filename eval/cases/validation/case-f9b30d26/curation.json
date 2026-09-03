@@ -6,8 +6,8 @@
   "source": {
     "kind": "clean",
     "repositoryAlias": "service-launcher",
-    "repositoryIdentitySha256": "2dae0321da30f3fd2ee9272582442df469b290fcd7c045285319bf6ed2b94bdb",
-    "changeIdentitySha256": "a0f33b75111692940bf78f14ba4590bea6dee6f79cac8d51db8e16ec2088ee05",
+    "repositoryIdentitySha256": "fc8f23c2efb0cea1a0f373c81653d5a7fa9a13a56383374fe5315ce52de15a96",
+    "changeIdentitySha256": "436f6e817eeb7577ce11c2549b84e559d7e1fd660587852f981d65533882e104",
     "access": "curator-local-private"
   },
   "strata": {
@@ -20,7 +20,7 @@
   "proof": {
     "kind": "clean-control-review",
     "artifact": "proof.json",
-    "sha256": "746ef477d1104a861e0181e7009df6144cd2ca709a3162298e9fbc9a5b420f62"
+    "sha256": "0e56461be0245c31ea50d98797ebb5cafca7f0a1ad776431878746c56f823191"
   },
   "confirmations": []
 }
