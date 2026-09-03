@@ -2,10 +2,16 @@
   "bugs": [
     {
       "id": "null-deref-1",
+      "lane": "logic-correctness",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
       "file": "src/user-service.ts",
       "startLine": 14,
       "endLine": 15,
-      "description": "getUserLocale dereferences user and user.preferences with non-null assertions after the refactor removed the undefined guard; throws TypeError for unknown users or users without preferences (previously returned the 'en-US' fallback)."
+      "description": "getUserLocale dereferences user and user.preferences with non-null assertions after the refactor removed the undefined guard; throws TypeError for unknown users or users without preferences (previously returned the 'en-US' fallback).",
+      "reachablePreconditions": "The requested user or preferences record is absent.",
+      "observableImpact": "Locale lookup throws instead of returning the fallback locale.",
+      "provenance": "Curated structural-smoke fixture."
     }
   ]
 }

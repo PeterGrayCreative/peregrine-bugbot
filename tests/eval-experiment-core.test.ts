@@ -74,7 +74,7 @@ test("experiment protocol is explicit and mode-sensitive", () => {
   assert.deepEqual(parseExperimentProtocol(screeningProtocol), screeningProtocol);
   assert.throws(
     () => parseExperimentProtocol(providerEnabledProtocol),
-    /providerCalls=allow is deferred until PR 4/,
+    /providerCalls=allow remains disabled until contained review and judge execution/,
   );
   assert.throws(
     () => parseExperimentProtocol({ ...smokeProtocol, cacheCondition: "cold" }),

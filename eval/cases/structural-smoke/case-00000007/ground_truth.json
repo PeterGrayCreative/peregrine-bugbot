@@ -2,10 +2,16 @@
   "bugs": [
     {
       "id": "swallowed-error-1",
+      "lane": "error-handling",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
       "file": "src/save-settings.ts",
       "startLine": 7,
       "endLine": 9,
-      "description": "saveSettings catches a storage failure and returns true, causing callers to report success even though the settings were not persisted."
+      "description": "saveSettings catches a storage failure and returns true, causing callers to report success even though the settings were not persisted.",
+      "reachablePreconditions": "The storage write rejects.",
+      "observableImpact": "Callers report a successful save although no settings were persisted.",
+      "provenance": "Curated structural-smoke fixture."
     }
   ]
 }

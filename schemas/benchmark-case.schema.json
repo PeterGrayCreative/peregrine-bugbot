@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Peregrine Benchmark Ground Truth",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "bugs": { "type": "array", "items": { "$ref": "#/$defs/bug" } }
+  },
+  "required": ["bugs"],
+  "$defs": {
+    "bug": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "rootCauseGroup": { "type": "string", "minLength": 1 },
+        "lane": { "enum": ["authorization", "identifiers", "data-integrity", "persistence", "runtime-config", "contracts", "concurrency", "test-quality", "logic-correctness", "error-handling", "frontend-state", "boundaries-pagination"] },
+        "expectedDisposition": { "enum": ["fix-in-pr", "follow-up"] },
+        "expectedSeverity": { "enum": ["high", "medium", "low"] },
+        "file": { "type": "string", "minLength": 1 },
+        "startLine": { "type": "integer", "minimum": 1 },
+        "endLine": { "type": "integer", "minimum": 1 },
+        "description": { "type": "string", "minLength": 1 },
+        "reachablePreconditions": { "type": "string", "minLength": 1 },
+        "observableImpact": { "type": "string", "minLength": 1 },
+        "provenance": { "type": "string", "minLength": 1 }
+      },
+      "required": ["id", "lane", "expectedDisposition", "expectedSeverity", "file", "startLine", "endLine", "description", "reachablePreconditions", "observableImpact", "provenance"]
+    }
+  }
+}

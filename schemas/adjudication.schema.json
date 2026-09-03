@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Peregrine Blinded Finding Adjudication",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "findingEvidenceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "classification": { "enum": ["confirmed-new", "unsupported", "unresolved"] },
+          "reason": { "enum": ["variant-disagreement", "unmatched-high", "candidate-new", "agreement-audit"] },
+          "evidence": { "type": "string", "minLength": 1 }
+        },
+        "required": ["findingEvidenceSha256", "classification", "reason", "evidence"]
+      }
+    }
+  },
+  "required": ["schemaVersion", "records"]
+}

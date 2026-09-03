@@ -5,6 +5,19 @@ import { loadConfig } from "../src/config.js";
 import { claudeSchemaJson, packageRoot, schemaPath } from "../src/core/paths.js";
 import { exec, lastJsonBlock } from "../src/util/exec.js";
 import type { EngineResult, Finding, GradedRun, GroundTruth, RunRecord } from "../src/types.js";
+import type { GradingEvidence, SemanticJudgeDecision, UnmatchedFindingClassification } from "../src/types.js";
+import {
+  GRADING_VERSION,
+  assertGradingEvidenceConsistent,
+  classifyMissStage,
+  classifyUnmatchedFindings,
+  assertMatchReuseMatchesRootCause,
+  resolveMatches,
+  rootCauseKey,
+  rootCauseMatches,
+  semanticDecision,
+} from "./grading-contract.js";
+import { readAdjudications } from "./semantic-artifacts.js";
 import { readCaseGroundTruth } from "./case-truth.js";
 import {
   assertGradedMatchesRun,
@@ -65,7 +78,7 @@ type LegacyRunRecord = Omit<RunRecord, "schemaVersion" | "attemptId" | "finished
  * retained for analysis but are not scored as incorrect PR demands.
  */
 type Judge = "exact" | "claude" | "codex";
-type JudgeSelection =
+export type JudgeSelection =
   | { kind: "exact" }
   | { kind: Exclude<Judge, "exact">; model: string };
 
@@ -191,8 +204,15 @@ async function gradeRunsLocked(dir: string, casesDir: string, options: GradeRuns
         gradedPath,
         experimentAttempt,
       );
-      assertGradedMatchesRun(existing, run, gradedPath);
-      assertGradeMatchesGroundTruth(existing, gt, gradedPath);
+      try {
+        assertGradedMatchesRun(existing, run, gradedPath);
+        assertGradeMatchesGroundTruth(existing, gt, gradedPath);
+      } catch (error) {
+        if (judge.kind === "exact") {
+          throw new Error(`${gradedPath} does not match deterministic exact-v1 grading`, { cause: error });
+        }
+        throw error;
+      }
       if (judge.kind !== "exact") {
         throw new Error("resuming semantic experiment grading requires a sealed judge ledger");
       }
@@ -200,14 +220,20 @@ async function gradeRunsLocked(dir: string, casesDir: string, options: GradeRuns
       if (canonicalJson({
         matches: existing.matches,
         falsePositiveIndexes: existing.falsePositiveIndexes,
-      }) !== canonicalJson(expectedGrade)) {
+        grading: existing.grading,
+      }) !== canonicalJson({
+        matches: expectedGrade.matches,
+        falsePositiveIndexes: expectedGrade.falsePositiveIndexes,
+        grading: expectedGrade.grading,
+      })) {
         throw new Error(`${gradedPath} does not match deterministic exact-v1 grading`);
       }
       console.log(`${file}: already graded (validated)`);
       continue;
     }
 
-    const { matches, falsePositiveIndexes } = await gradeResult(result, gt, judge);
+    const grade = await gradeResult(result, gt, judge, readAdjudications(casesDir, run.caseName));
+    const { matches, falsePositiveIndexes } = grade;
 
     const normalizedRun = "outcome" in run
       ? run
@@ -225,6 +251,7 @@ async function gradeRunsLocked(dir: string, casesDir: string, options: GradeRuns
       outcome: { status: "completed", result },
       matches,
       falsePositiveIndexes,
+      ...(manifest ? { grading: grade.grading } : {}),
     };
     if (experiment) writeExclusiveJson(dir, gradedPath, graded);
     else writeFileSync(gradedPath, JSON.stringify(graded, null, 2));
@@ -251,35 +278,67 @@ function assertExperimentCorpusUnchanged(
   }
 }
 
-async function gradeResult(
+export async function gradeResult(
   result: EngineResult,
   groundTruth: GroundTruth,
   judge: JudgeSelection,
-): Promise<Pick<GradedRun, "matches" | "falsePositiveIndexes">> {
-  const matches: Record<string, number | null> = {};
-  const matchedFindingIdx = new Set<number>();
+  adjudications = new Map<string, UnmatchedFindingClassification>(),
+  semanticMatcher: typeof semanticMatch = semanticMatch,
+): Promise<Pick<GradedRun, "matches" | "falsePositiveIndexes"> & { grading: GradingEvidence }> {
+  const candidates: Array<{ bugId: string; findingIndex: number; sameRootCause: boolean; decisionId?: string }> = [];
+  const decisions: SemanticJudgeDecision[] = [];
+  const claimedFindingGroups = new Map<number, string>();
   for (const bug of groundTruth.bugs) {
-    let matched: number | null = null;
     for (let i = 0; i < result.findings.length; i++) {
-      if (matchedFindingIdx.has(i)) continue;
       const finding = result.findings[i]!;
-      const isMatch = judge.kind === "exact"
-        ? exactMatch(finding, bug)
-        : await semanticMatch(judge.kind, judge.model, finding, bug.description, bug.file);
+      let isMatch = false;
+      if (judge.kind === "exact") {
+        isMatch = exactMatch(finding, bug);
+      } else {
+        try {
+          isMatch = await semanticMatcher(judge.kind, judge.model, finding, bug);
+          decisions.push(semanticDecision(bug, finding, isMatch ? "same-root-cause" : "different-root-cause"));
+        } catch (error) {
+          decisions.push(semanticDecision(bug, finding, "failed", semanticFailureKind(error)));
+          continue;
+        }
+      }
       if (isMatch) {
-        matched = i;
-        matchedFindingIdx.add(i);
+        const group = rootCauseKey(bug);
+        const claimed = claimedFindingGroups.get(i);
+        if (claimed !== undefined && claimed !== group) continue;
+        claimedFindingGroups.set(i, group);
+        candidates.push({ bugId: bug.id, findingIndex: i, sameRootCause: true });
         break;
       }
     }
-    matches[bug.id] = matched;
   }
+  const matches = resolveMatches(groundTruth, result.findings.length, candidates);
+  const unmatchedFindings = classifyUnmatchedFindings(result.findings, matches, adjudications).map((item) =>
+    judge.kind === "exact" ? { ...item, classification: "unsupported" as const } : item);
   return {
     matches,
-    falsePositiveIndexes: result.findings
-      .map((finding, index) => ({ finding, index }))
-      .filter(({ finding, index }) => finding.disposition === "fix-in-pr" && !matchedFindingIdx.has(index))
-      .map(({ index }) => index),
+    // Compatibility field: only curator-confirmed unsupported findings are false
+    // discoveries. Exact structural smoke retains its deterministic transport check.
+    falsePositiveIndexes: judge.kind === "exact"
+      ? unmatchedFindings.map((item) => item.findingIndex)
+      : unmatchedFindings.filter((item) => item.classification === "unsupported").map((item) => item.findingIndex),
+    grading: {
+      version: GRADING_VERSION,
+      judge: { kind: judge.kind, version: judge.kind === "exact" ? "exact-v1" : "semantic-v1" },
+      decisions,
+      rootCauseMatches: rootCauseMatches(groundTruth, matches),
+      missStages: Object.fromEntries(groundTruth.bugs.map((bug) => [
+        bug.id,
+        classifyMissStage({
+          matched: matches[bug.id] !== null,
+          // Until runner-owned routing/breadth/budget/presentation evidence is
+          // present, fail closed instead of guessing a behavioral miss stage.
+          infrastructureFailure: matches[bug.id] === null,
+        }),
+      ])),
+      unmatchedFindings,
+    },
   };
 }
 
@@ -322,7 +381,9 @@ function experimentJudgeSelection(evidence: ExperimentRunEvidence): JudgeSelecti
   const declared = evidence.experiment.protocol.judge;
   const currentJudgeSha256 = canonicalJsonSha256({
     implementation: hashPathTree(join(packageRoot(), "eval", "grade.ts")),
-    schema: hashPathTree(schemaPath("judge-result")),
+    gradingContract: hashPathTree(join(packageRoot(), "eval", "grading-contract.ts")),
+    resultSchema: hashPathTree(schemaPath("judge-result")),
+    evidenceSchema: hashPathTree(join(packageRoot(), "schemas", "grading-evidence.schema.json")),
     judge: declared,
   });
   if (currentJudgeSha256 !== evidence.experiment.hashes.judgeSha256) {
@@ -356,7 +417,7 @@ function experimentJudgeSelection(evidence: ExperimentRunEvidence): JudgeSelecti
     return { kind: "exact" };
   }
   throw new Error(
-    `experiment ${declared.kind} semantic grading is deferred until PR 4 provides an immutable, contained, and budgeted judge ledger`,
+    `experiment ${declared.kind} semantic grading remains disabled until contained judge execution and its separate budgeted ledger are integrated`,
   );
 }
 
@@ -370,6 +431,16 @@ function assertGradeMatchesGroundTruth(
   if (expectedIds.length !== actualIds.length ||
     expectedIds.some((id, index) => id !== actualIds[index])) {
     throw new Error(`${source}.matches does not match ground truth bug IDs`);
+  }
+  assertMatchReuseMatchesRootCause(groundTruth, graded.matches, source);
+  if (graded.grading) {
+    assertGradingEvidenceConsistent(
+      groundTruth,
+      graded.outcome.result.findings,
+      graded.matches,
+      graded.grading,
+      source,
+    );
   }
 }
 
@@ -400,21 +471,35 @@ async function semanticMatch(
   judge: Exclude<Judge, "exact">,
   model: string,
   f: Finding,
-  bugDescription: string,
-  bugFile: string,
+  bug: GroundTruth["bugs"][number],
 ): Promise<boolean> {
-  const prompt = [
+  const prompt = buildSemanticJudgePrompt(f, bug);
+
+  return judge === "claude" ? claudeMatch(model, prompt) : codexMatch(model, prompt);
+}
+
+export function buildSemanticJudgePrompt(f: Finding, bug: GroundTruth["bugs"][number]): string {
+  return [
     `You are grading a code-review benchmark. Answer with JSON only: {"same_root_cause": true|false}`,
     ``,
-    `Known bug (ground truth): in ${bugFile} — ${bugDescription}`,
+    `Known bug (ground truth): in ${bug.file} — ${bug.description}`,
+    `Reachable preconditions: ${bug.reachablePreconditions}`,
+    `Observable impact: ${bug.observableImpact}`,
     ``,
     `Reviewer finding: in ${f.file} lines ${f.startLine}-${f.endLine} — ${f.title}. ${f.explanation}`,
     ``,
     `Does the finding describe the same underlying bug (same root cause), even if`,
     `worded differently or pointing at a slightly different line?`,
   ].join("\n");
+}
 
-  return judge === "claude" ? claudeMatch(model, prompt) : codexMatch(model, prompt);
+function semanticFailureKind(error: unknown): SemanticJudgeDecision["failureKind"] {
+  const message = error instanceof Error ? error.message.toLowerCase() : "";
+  if (message.includes("timeout")) return "timeout";
+  if (message.includes("parse") || message.includes("unparseable") || message.includes("invalid verdict")) return "parse";
+  if (message.includes("config")) return "configuration";
+  if (message.includes("failed")) return "provider";
+  return "unknown";
 }
 
 async function claudeMatch(model: string, prompt: string): Promise<boolean> {

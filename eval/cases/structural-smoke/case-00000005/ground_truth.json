@@ -2,10 +2,16 @@
   "bugs": [
     {
       "id": "pagination-overlap-1",
+      "lane": "boundaries-pagination",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "medium",
       "file": "src/paginate.ts",
       "startLine": 2,
       "endLine": 3,
-      "description": "The offset uses pageSize - 1, so every page after the first repeats one item from the previous page."
+      "description": "The offset uses pageSize - 1, so every page after the first repeats one item from the previous page.",
+      "reachablePreconditions": "A caller requests any page after the first.",
+      "observableImpact": "Adjacent pages contain a duplicate item.",
+      "provenance": "Curated structural-smoke fixture."
     }
   ]
 }
