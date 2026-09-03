@@ -28,7 +28,7 @@ export const EXPERIMENT_TERMINAL_SEAL_FILENAME = "experiment-terminal-seal.json"
 export const EXPERIMENT_GRADING_SEAL_FILENAME = "experiment-grading-seal.json";
 
 const SHA256 = /^[a-f0-9]{64}$/;
-const CANONICAL_ARTIFACT = /^(?:matrix-manifest\.json|experiment-manifest\.json|experiment-stop\.json|state\/attempt-[0-9]{6}\.(?:started|provider-started)\.json|attempt-[0-9]{6}(?:\.graded)?\.json)$/;
+const CANONICAL_ARTIFACT = /^(?:matrix-manifest\.json|experiment-manifest\.json|experiment-stop\.json|state\/attempt-[0-9]{6}\.(?:started|provider-started)\.json|attempt-[0-9]{6}(?:\.graded)?\.json|judge\/(?:manifest|terminal-seal)\.json)$/;
 
 export interface SealedArtifact {
   path: string;
@@ -237,10 +237,12 @@ function terminalArtifactPaths(evidence: ExperimentRunEvidence): string[] {
 }
 
 function expectedGradePaths(evidence: ExperimentRunEvidence): string[] {
-  return evidence.records
+  return [
+    ...(evidence.experiment.protocol.judge.kind === "exact" ? [] : ["judge/manifest.json", "judge/terminal-seal.json"]),
+    ...evidence.records
     .filter((record) => record.outcome.status === "completed")
-    .map((record) => evidence.experiment.schedule.find((attempt) => attempt.id === record.attemptId)!.file.replace(/\.json$/, ".graded.json"))
-    .sort(compareText);
+    .map((record) => evidence.experiment.schedule.find((attempt) => attempt.id === record.attemptId)!.file.replace(/\.json$/, ".graded.json")),
+  ].sort(compareText);
 }
 
 function assertSealIdentity(

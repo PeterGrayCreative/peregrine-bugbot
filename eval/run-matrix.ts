@@ -32,6 +32,7 @@ import {
   readSanitizedMetadata,
 } from "./case-isolation.js";
 import { prepareEvaluationManifest } from "./case-manifest.js";
+import { semanticJudgeImplementationSha256 } from "./judge-runtime.js";
 import type { EvaluationManifestPreparer } from "./case-manifest.js";
 import { CASE_CORPORA } from "../src/types.js";
 import type {
@@ -860,13 +861,7 @@ async function prepareExperimentManifest(
   const schemaSha256 = hashPathTree(join(root, "schemas"));
   const profileSha256 = input.reuseProfileSha256 ??
     await effectiveProfileSnapshotSha256(input.cases);
-  const judgeSha256 = canonicalJsonSha256({
-    implementation: hashPathTree(join(root, "eval", "grade.ts")),
-    gradingContract: hashPathTree(join(root, "eval", "grading-contract.ts")),
-    resultSchema: hashPathTree(join(root, "schemas", "judge-result.schema.json")),
-    evidenceSchema: hashPathTree(join(root, "schemas", "grading-evidence.schema.json")),
-    judge: input.protocol.judge,
-  });
+  const judgeSha256 = semanticJudgeImplementationSha256(input.protocol.judge);
   const configurationSha256 = canonicalJsonSha256({
     matrixManifestSha256,
     matrixConfigSha256,
