@@ -224,9 +224,9 @@ checks, verifies every truth line against the reviewed head, and reports whether
 the corpus meets the preregistered readiness quotas. It never executes proof
 artifacts or repository code and never starts a model. Run
 `npm run eval:admit-corpus` when seeded visible-benchmark readiness must be an
-exit-code gate. It permits the current development/validation checkpoint over
-admitted seeded and clean fixtures once at least three fixture families and all
-other visible quotas are proven. `npm run eval:admit-gold-corpus` is the later
+exit-code gate. It permits the current seeded benchmark over admitted seeded
+and clean fixtures once at least three distinct authenticated fixture source
+trees and all other visible quotas are proven. `npm run eval:admit-gold-corpus` is the later
 historical gold-set gate. Holdout readiness is reported separately and does not
 block seeded development/validation runs.
 
@@ -241,11 +241,20 @@ Each behavioral case has `curation.json` matching
 `schemas/benchmark-curation.schema.json`. Its source-change digest is the exact
 SHA-256 of the checked-in diff and must be unique across the visible corpus.
 The proof artifact is curator-only, case-relative, a direct regular file, and
-authenticated by its exact SHA-256. The validator does not execute it. An
-`admitted` case requires two distinct curator identity hashes, and each curator
-must affirm the complete ordered checklist for a bug or clean case. Each
+authenticated by its exact SHA-256. The validator does not execute it. The
+complete no-symlink fixture file tree, including file paths, content hashes, and
+executable bits, is authenticated as well. An `admitted` case requires two
+distinct identities registered in the direct-file `eval/curator-policy.json`,
+and each registered curator must affirm the complete ordered checklist for a
+bug or clean case. The stable policy ID and trust semantics are bundle-bound;
+ordinary registry additions or revocations do not invalidate unrelated bundle
+digests, but a revoked identity makes its cases inadmissible at the next run.
+The trust root is protected Git review of the registry and case changes. These
+checks enforce distinct registered identities; they are not cryptographic proof
+that two different humans performed the reviews. Each
 confirmation also binds `caseBundleSha256`, which authenticates exact case JSON,
-truth, diff, and proof bytes plus normalized source, strata, and proof metadata.
+truth, diff, proof, fixture-tree bytes, stable curator policy ID, and normalized
+source, strata, and proof metadata.
 Changing any of those inputs invalidates both confirmations. Use `draft` until
 independent confirmation is complete.
 
@@ -255,14 +264,24 @@ controls. Each core lane has an independent defect case in each corpus and a
 comparable clean surface. Clean controls remain at least 25% of the corpus.
 At least three cases are multi-observation; direct, seam, multi-observation,
 and large-diff shapes are represented; and at least three admitted cases are
-realistic large diffs. Seeded readiness requires at least three bound fixture
-families. Gold-set readiness separately requires at least three historical
+realistic large diffs. Seeded readiness requires at least three distinct
+authenticated fixture source trees; this is fixture diversity, not evidence of
+three independent repositories. Gold-set readiness separately requires at least three historical
 repository identities authenticated against their materialized local sources;
-seeded and clean fixture families never count as historical repositories. Both
+seeded and clean fixtures never count as historical repositories. Historical
+identity is location-independent: SHA-256 over a versioned canonical record of
+the Git object format and the sorted complete root commit OIDs reachable from
+the selected immutable head in a non-shallow, non-rewritten clone. Copies, path
+aliases, relocation, and remote URL spelling therefore do
+not inflate repository diversity. Forks with common complete roots are
+conservatively treated as one family; unrelated histories merged later may
+change this identity and require curator review. Both
 gates require at least two derived language families and two architecture
 families. Language is derived from the changed/head file extensions, while
 architecture uses a closed schema enum and must remain consistent within each
-source or fixture family.
+historical repository family. Fixture aliases are curator labels only: multiple
+distinct authenticated fixture trees may share an alias, and aliases do not
+contribute to either fixture-source or historical-repository diversity counts.
 Size strata are deterministic from the identity-normalized checked-in diff:
 small is at most 250 lines, medium is 251 through 1,500, and large is at least
 1,501. The `large-diff` shape and `large` size must agree exactly. This matches
@@ -440,8 +459,10 @@ Screening and checkpoint use the same config shape. Set `experiment.mode` to
 `screening` for a curated development subset or `checkpoint` for the planned
 historical gold development/validation gate, and name exactly one `control` and
 one `treatment` from `configs`. Before creating a run directory or starting a
-provider, screening fully validates every selected behavioral case. Checkpoint
-also requires the complete visible corpus to satisfy `goldSetReady`. There is
+provider, screening requires a non-empty selection and fully validates every
+selected behavioral case. Checkpoint schedules must contain both development
+and validation cases, contain no structural-smoke cases, and require the
+complete visible corpus to satisfy `goldSetReady`. There is
 no checked-in provider-enabled screening config while the containment gate is
 closed.
 

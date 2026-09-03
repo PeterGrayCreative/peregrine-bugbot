@@ -3,11 +3,12 @@
   "title": "Peregrine Behavioral Benchmark Curation",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "caseId", "status", "source", "strata", "proof", "confirmations"],
+  "required": ["schemaVersion", "caseId", "status", "curatorPolicyId", "source", "strata", "proof", "confirmations"],
   "properties": {
     "schemaVersion": { "const": 1 },
     "caseId": { "type": "string", "pattern": "^case-[a-f0-9]{8,32}$" },
     "status": { "enum": ["draft", "admitted"] },
+    "curatorPolicyId": { "const": "protected-git-review-v1" },
     "source": {
       "type": "object",
       "additionalProperties": false,

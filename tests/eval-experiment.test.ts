@@ -24,7 +24,12 @@ import {
 import { gradeRuns } from "../eval/grade.js";
 import { buildReport } from "../eval/report.js";
 import { runMatrix } from "../eval/run-matrix.js";
-import { caseBundleSha256, parseCaseCuration, requiredConfirmationChecks } from "../eval/case-curation.js";
+import {
+  caseBundleSha256,
+  fixtureFamilyIdentitySha256,
+  parseCaseCuration,
+  requiredConfirmationChecks,
+} from "../eval/case-curation.js";
 import {
   EXPERIMENT_GRADING_SEAL_FILENAME,
   EXPERIMENT_TERMINAL_SEAL_FILENAME,
@@ -788,15 +793,24 @@ function createFixtureCase(casesDir: string, id: string, corpus: CaseCorpus): st
   if (corpus !== "structural-smoke") {
     const proof = "Independent clean-control test fixture proof.\n";
     writeFileSync(join(caseDir, "proof.md"), proof);
+    const policy = `${JSON.stringify({
+      schemaVersion: 1,
+      policyId: "protected-git-review-v1",
+      trustRoot: "protected-git-review",
+      minimumIndependentConfirmations: 2,
+      curatorIdentitySha256s: ["1".repeat(64), "2".repeat(64)],
+    }, null, 2)}\n`;
+    writeFileSync(join(casesDir, "..", "curator-policy.json"), policy);
     const checks = requiredConfirmationChecks("clean");
     const curation = {
       schemaVersion: 1,
       caseId: id,
       status: "admitted",
+      curatorPolicyId: "protected-git-review-v1",
       source: {
         kind: "clean",
         repositoryAlias: "experiment-fixture",
-        repositoryIdentitySha256: createHash("sha256").update("experiment-fixture").digest("hex"),
+        repositoryIdentitySha256: fixtureFamilyIdentitySha256(caseDir, "fixture"),
         changeIdentitySha256: createHash("sha256").update(PATCH).digest("hex"),
         access: "public",
       },

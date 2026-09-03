@@ -449,6 +449,7 @@ export interface EvaluationHistoryProvenance {
   checkedOutTreeMatchesHead: true;
   treeReproductionVerified: true;
   historicalSource?: {
+    /** git-root-family-v1: object format plus sorted complete roots reachable from sourceHeadRef. */
     sourceIdentitySha256: string;
     sourceBaseRef: string;
     sourceHeadRef: string;

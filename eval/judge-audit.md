@@ -10,6 +10,12 @@ visible-corpus quotas, and the external holdout commitment. It does not decide
 whether a model finding matches a root cause and does not execute curator proof
 or repository code.
 
+“Independent confirmations” here means distinct identities registered in the
+protected-Git-review curator policy, not cryptographic proof of distinct humans.
+The stable policy ID is bundle-bound; the current direct-file registry is
+checked on every validation, so revocation makes affected cases inadmissible
+without invalidating unrelated bundle hashes.
+
 Semantic match decisions belong to the separately contained judge ledger. An
 unmatched behavioral finding remains `unresolved` until a run-bound,
 append-only curator adjudication ledger exists. Neither grading output nor this

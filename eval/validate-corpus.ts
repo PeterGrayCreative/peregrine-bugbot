@@ -13,9 +13,11 @@ import {
 } from "./case-isolation.js";
 import {
   parseHoldoutCommitment,
+  parseCuratorPolicy,
   readBehavioralCaseAdmission,
   type CaseCuration,
   type ChangeShape,
+  type CuratorPolicy,
 } from "./case-curation.js";
 import { loadCaseSpec } from "./run-matrix.js";
 
@@ -36,7 +38,7 @@ export interface CorpusValidationReport {
   multiObservationCases: number;
   largeDiffCases: number;
   provenHistoricalRepositories: number;
-  fixtureFamilies: number;
+  authenticatedFixtureSources: number;
   languageFamilies: number;
   architectureFamilies: number;
   corpora: Record<BehavioralCorpus, { total: number; bug: number; clean: number }>;
@@ -64,6 +66,7 @@ export async function validateBehavioralCorpus(casesDir = "eval/cases"): Promise
   const aliasesByRepository = new Map<string, string>();
   const repositoriesByAlias = new Map<string, string>();
   const architecturesByFamily = new Map<string, string>();
+  const policy = readCuratorPolicy(dirname(root));
 
   for (const corpus of BEHAVIORAL_CORPORA) {
     const corpusDir = join(root, corpus);
@@ -80,26 +83,28 @@ export async function validateBehavioralCorpus(casesDir = "eval/cases"): Promise
       const spec = loadCaseSpec(caseDir);
       if (spec.corpus !== corpus) throw new Error(`${corpus}/${entry.name} declares the wrong corpus`);
       const { truth, curation } = readBehavioralCaseAdmission(caseDir, spec, { requireAdmitted: false });
+      verifyCuratorTrust(curation, policy);
       if (changeIdentities.has(curation.source.changeIdentitySha256)) {
         throw new Error(`${corpus}/${entry.name} reuses another case's source change identity`);
       }
       changeIdentities.add(curation.source.changeIdentitySha256);
-      const priorAlias = aliasesByRepository.get(curation.source.repositoryIdentitySha256);
-      if (priorAlias !== undefined && priorAlias !== curation.source.repositoryAlias) {
-        throw new Error(`${corpus}/${entry.name} changes the alias for an existing repository identity`);
+      if (spec.kind === "historical") {
+        const priorAlias = aliasesByRepository.get(curation.source.repositoryIdentitySha256);
+        if (priorAlias !== undefined && priorAlias !== curation.source.repositoryAlias) {
+          throw new Error(`${corpus}/${entry.name} changes the alias for an existing historical repository identity`);
+        }
+        const priorIdentity = repositoriesByAlias.get(curation.source.repositoryAlias);
+        if (priorIdentity !== undefined && priorIdentity !== curation.source.repositoryIdentitySha256) {
+          throw new Error(`${corpus}/${entry.name} reuses a historical repository alias for a different identity`);
+        }
+        aliasesByRepository.set(curation.source.repositoryIdentitySha256, curation.source.repositoryAlias);
+        repositoriesByAlias.set(curation.source.repositoryAlias, curation.source.repositoryIdentitySha256);
+        const priorArchitecture = architecturesByFamily.get(curation.source.repositoryIdentitySha256);
+        if (priorArchitecture !== undefined && priorArchitecture !== curation.strata.architectureFamily) {
+          throw new Error(`${corpus}/${entry.name} changes architecture within one historical repository family`);
+        }
+        architecturesByFamily.set(curation.source.repositoryIdentitySha256, curation.strata.architectureFamily);
       }
-      const priorIdentity = repositoriesByAlias.get(curation.source.repositoryAlias);
-      if (priorIdentity !== undefined && priorIdentity !== curation.source.repositoryIdentitySha256) {
-        throw new Error(`${corpus}/${entry.name} reuses a repository alias for a different identity`);
-      }
-      aliasesByRepository.set(curation.source.repositoryIdentitySha256, curation.source.repositoryAlias);
-      repositoriesByAlias.set(curation.source.repositoryAlias, curation.source.repositoryIdentitySha256);
-      const familyKey = `${spec.kind === "historical" ? "historical" : "fixture"}:${curation.source.repositoryIdentitySha256}`;
-      const priorArchitecture = architecturesByFamily.get(familyKey);
-      if (priorArchitecture !== undefined && priorArchitecture !== curation.strata.architectureFamily) {
-        throw new Error(`${corpus}/${entry.name} changes architecture within one source or fixture family`);
-      }
-      architecturesByFamily.set(familyKey, curation.strata.architectureFamily);
       await verifySafeMaterialization(caseDir, spec, truth, curation);
       cases.push({ corpus, spec, truth, curation });
     }
@@ -120,7 +125,13 @@ export async function validateBehavioralCorpus(casesDir = "eval/cases"): Promise
   return buildCorpusValidationReport(cases, holdoutCommitted);
 }
 
-export async function validateSelectedBehavioralCases(caseDirs: readonly string[]): Promise<void> {
+export async function validateSelectedBehavioralCases(
+  caseDirs: readonly string[],
+  casesRoot?: string,
+): Promise<void> {
+  if (caseDirs.length === 0) throw new Error("behavioral selection must contain at least one admitted case");
+  const root = realpathSync(resolve(casesRoot ?? dirname(dirname(caseDirs[0]!))));
+  const policy = readCuratorPolicy(dirname(root));
   const ids = new Set<string>();
   const changes = new Set<string>();
   const aliasesByIdentity = new Map<string, string>();
@@ -132,22 +143,58 @@ export async function validateSelectedBehavioralCases(caseDirs: readonly string[
     if (ids.has(spec.id)) throw new Error(`duplicate opaque case id ${spec.id}`);
     ids.add(spec.id);
     const { truth, curation } = readBehavioralCaseAdmission(caseDir, spec);
+    verifyCuratorTrust(curation, policy);
     if (changes.has(curation.source.changeIdentitySha256)) throw new Error(`${spec.id} reuses another selected source change`);
     changes.add(curation.source.changeIdentitySha256);
-    const identity = curation.source.repositoryIdentitySha256;
-    const alias = curation.source.repositoryAlias;
-    if ((aliasesByIdentity.get(identity) ?? alias) !== alias || (identitiesByAlias.get(alias) ?? identity) !== identity) {
-      throw new Error(`${spec.id} has an inconsistent source or fixture family identity`);
+    if (spec.kind === "historical") {
+      const identity = curation.source.repositoryIdentitySha256;
+      const alias = curation.source.repositoryAlias;
+      if ((aliasesByIdentity.get(identity) ?? alias) !== alias || (identitiesByAlias.get(alias) ?? identity) !== identity) {
+        throw new Error(`${spec.id} has an inconsistent historical repository identity`);
+      }
+      aliasesByIdentity.set(identity, alias);
+      identitiesByAlias.set(alias, identity);
+      const architecture = curation.strata.architectureFamily;
+      if ((architecturesByFamily.get(identity) ?? architecture) !== architecture) {
+        throw new Error(`${spec.id} changes architecture within one historical repository family`);
+      }
+      architecturesByFamily.set(identity, architecture);
     }
-    aliasesByIdentity.set(identity, alias);
-    identitiesByAlias.set(alias, identity);
-    const familyKey = `${spec.kind === "historical" ? "historical" : "fixture"}:${identity}`;
-    const architecture = curation.strata.architectureFamily;
-    if ((architecturesByFamily.get(familyKey) ?? architecture) !== architecture) {
-      throw new Error(`${spec.id} changes architecture within one source or fixture family`);
-    }
-    architecturesByFamily.set(familyKey, architecture);
     await verifySafeMaterialization(caseDir, spec, truth, curation);
+  }
+}
+
+function readCuratorPolicy(evalRoot: string): CuratorPolicy {
+  const root = realpathSync(resolve(evalRoot));
+  const path = join(root, "curator-policy.json");
+  let stat;
+  try {
+    stat = lstatSync(path);
+  } catch (error) {
+    throw new Error(`curator policy is unavailable: ${error instanceof Error ? error.message : String(error)}`);
+  }
+  if (!stat.isFile() || stat.isSymbolicLink() || realpathSync(path) !== path) {
+    throw new Error("curator policy must be a direct regular non-symlink file in eval/");
+  }
+  return parseCuratorPolicy(JSON.parse(readFileSync(path, "utf8")) as unknown);
+}
+
+function verifyCuratorTrust(
+  curation: CaseCuration,
+  policy: CuratorPolicy,
+): void {
+  if (curation.curatorPolicyId !== policy.policyId) {
+    throw new Error(`${curation.caseId} curator policy ID does not match eval/curator-policy.json`);
+  }
+  const allowed = new Set(policy.curatorIdentitySha256s);
+  for (const confirmation of curation.confirmations) {
+    if (!allowed.has(confirmation.curatorIdentitySha256)) {
+      throw new Error(`${curation.caseId} confirmation is not registered by the curator policy`);
+    }
+  }
+  if (curation.status === "admitted" &&
+    curation.confirmations.length < policy.minimumIndependentConfirmations) {
+    throw new Error(`${curation.caseId} does not meet the curator policy confirmation minimum`);
   }
 }
 
@@ -305,7 +352,7 @@ export function buildCorpusValidationReport(
   const provenHistoricalRepositories = new Set(admitted
     .filter((item) => item.spec.kind === "historical")
     .map((item) => item.curation.source.repositoryIdentitySha256)).size;
-  const fixtureFamilies = new Set(admitted
+  const authenticatedFixtureSources = new Set(admitted
     .filter((item) => item.spec.kind !== "historical")
     .map((item) => item.curation.source.repositoryIdentitySha256)).size;
   const languageFamilies = new Set(admitted.map((item) => item.curation.strata.languageFamily)).size;
@@ -313,7 +360,9 @@ export function buildCorpusValidationReport(
   if (languageFamilies < 2) coreRequirements.push("at least two derived language families");
   if (architectureFamilies < 2) coreRequirements.push("at least two architecture families");
   const seededBenchmarkRequirements = [...coreRequirements];
-  if (fixtureFamilies < 3) seededBenchmarkRequirements.push("at least three bound fixture families");
+  if (authenticatedFixtureSources < 3) {
+    seededBenchmarkRequirements.push("at least three distinct authenticated fixture source trees");
+  }
   const goldSetRequirements = [...coreRequirements];
   if (provenHistoricalRepositories < 3) goldSetRequirements.push("at least three proven historical source repositories");
   const holdoutRequirements = holdoutCommitted
@@ -334,7 +383,7 @@ export function buildCorpusValidationReport(
     multiObservationCases,
     largeDiffCases,
     provenHistoricalRepositories,
-    fixtureFamilies,
+    authenticatedFixtureSources,
     languageFamilies,
     architectureFamilies,
     corpora: byCorpus,

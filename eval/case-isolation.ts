@@ -673,6 +673,7 @@ async function materializeHistorical(
 
   let sourceBaseTree = "";
   let sourceHeadTree = "";
+  let sourceIdentitySha256 = "";
   try {
     const sourceMergeBase = await git(
       staging,
@@ -700,6 +701,19 @@ async function materializeHistorical(
     if (sourceObjectFormat !== "sha1" && sourceObjectFormat !== "sha256") {
       throw new Error("historical source uses an unsupported Git object format");
     }
+    if (await git(staging, ["rev-parse", "--is-shallow-repository"], curatorHome) !== "false") {
+      throw new Error("historical source must expose complete, non-shallow ancestry");
+    }
+    if ((await git(staging, ["for-each-ref", "--format=%(refname)", "refs/replace"], curatorHome)).trim() ||
+      existsSync(join(staging, ".git", "info", "grafts"))) {
+      throw new Error("historical source cannot use replacement or grafted ancestry");
+    }
+    const sourceRoots = (await git(
+      staging,
+      ["rev-list", "--max-parents=0", spec.headCommit],
+      curatorHome,
+    )).split("\n").filter(Boolean).sort();
+    sourceIdentitySha256 = repositoryFamilyIdentitySha256(sourceObjectFormat, sourceRoots);
     await git(staging, ["checkout", "--quiet", "--detach", spec.baseCommit], curatorHome);
     assertTreeSafe(staging, undefined, { allowRootGit: true });
     copyTree(staging, repoPath, new Set([".git"]));
@@ -723,7 +737,7 @@ async function materializeHistorical(
     throw new Error("historical curator source was not removed");
   }
   return {
-    sourceIdentitySha256: createHash("sha256").update(sourcePath).digest("hex"),
+    sourceIdentitySha256,
     sourceBaseRef: spec.baseCommit,
     sourceHeadRef: spec.headCommit,
     sourceMergeBase: spec.baseCommit,
@@ -733,6 +747,22 @@ async function materializeHistorical(
     baseTreeMatches: true,
     headTreeMatches: true,
   };
+}
+
+export function repositoryFamilyIdentitySha256(
+  objectFormat: "sha1" | "sha256",
+  rootCommitOids: readonly string[],
+): string {
+  const oidPattern = objectFormat === "sha1" ? /^[a-f0-9]{40}$/ : /^[a-f0-9]{64}$/;
+  const roots = [...new Set(rootCommitOids)].sort();
+  if (roots.length === 0 || roots.some((oid) => !oidPattern.test(oid))) {
+    throw new Error("historical repository family requires complete root commit object IDs");
+  }
+  return createHash("sha256").update(JSON.stringify({
+    version: "git-root-family-v1",
+    objectFormat,
+    rootCommitOids: roots,
+  })).digest("hex");
 }
 
 async function assertExportedSourceTree(

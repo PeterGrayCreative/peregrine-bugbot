@@ -175,9 +175,21 @@ export async function runMatrix(
   const casesDir = resolve(options.casesDir ?? "eval/cases");
   const requireBehavioralAdmission = protocol?.mode === "screening" || protocol?.mode === "checkpoint";
   const cases = discoverCases(casesDir, matrix.corpora, requireBehavioralAdmission);
+  const behavioralCases = cases.filter((item) => item.corpus !== "structural-smoke");
+  if (protocol?.mode === "screening" && behavioralCases.length === 0) {
+    throw new Error("screening requires at least one selected behavioral case");
+  }
+  if (protocol?.mode === "checkpoint") {
+    const selectedCorpora = new Set(cases.map((item) => item.corpus));
+    if (selectedCorpora.has("structural-smoke") ||
+      !selectedCorpora.has("development") || !selectedCorpora.has("validation")) {
+      throw new Error("checkpoint schedule must contain development and validation cases and no structural-smoke cases");
+    }
+  }
   if (requireBehavioralAdmission) {
     await (await import("./validate-corpus.js")).validateSelectedBehavioralCases(
-      cases.filter((item) => item.corpus !== "structural-smoke").map((item) => item.caseDir),
+      behavioralCases.map((item) => item.caseDir),
+      casesDir,
     );
   }
   if (protocol?.mode === "checkpoint") {

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
-import { lstatSync, readFileSync, realpathSync } from "node:fs";
-import { resolve, sep } from "node:path";
+import { lstatSync, readFileSync, readdirSync, realpathSync } from "node:fs";
+import { join, relative, resolve, sep } from "node:path";
 import { CORE_LANE_IDS, isCoreLaneId, type CoreLaneId } from "../src/core/lanes.js";
 import type { CaseSpec, GroundTruth } from "../src/types.js";
 import { parseBehavioralGroundTruth } from "./case-truth.js";
@@ -52,6 +52,7 @@ export interface CaseCuration {
   schemaVersion: 1;
   caseId: string;
   status: "draft" | "admitted";
+  curatorPolicyId: "protected-git-review-v1";
   source: {
     kind: CaseSpec["kind"];
     repositoryAlias: string;
@@ -90,6 +91,14 @@ export interface HoldoutCommitment {
   committedAt: string;
 }
 
+export interface CuratorPolicy {
+  schemaVersion: 1;
+  policyId: "protected-git-review-v1";
+  trustRoot: "protected-git-review";
+  minimumIndependentConfirmations: 2;
+  curatorIdentitySha256s: string[];
+}
+
 export interface BehavioralCaseAdmission {
   truth: GroundTruth;
   curation: CaseCuration;
@@ -124,6 +133,12 @@ export function readBehavioralCaseAdmission(
   if (actual !== curation.source.changeIdentitySha256) {
     throw new Error(`${spec.id} source change identity does not match the checked-in diff`);
   }
+  if (spec.kind !== "historical") {
+    const fixtureIdentity = fixtureFamilyIdentitySha256(caseRoot, spec.fixtureDir);
+    if (curation.source.repositoryIdentitySha256 !== fixtureIdentity) {
+      throw new Error(`${spec.id} fixture family identity does not match its authenticated fixture tree`);
+    }
+  }
   const text = diff.toString("utf8");
   const diffLines = text.length === 0 ? 0 : text.split("\n").length - (text.endsWith("\n") ? 1 : 0);
   const expectedSize = diffSizeStratum(diffLines);
@@ -151,6 +166,7 @@ export function caseBundleSha256(caseDir: string, spec: CaseSpec, curation: Case
     groundTruthSha256: fileSha256(directFile(caseRoot, "ground_truth.json", `${spec.id} ground_truth.json`)),
     diffSha256: fileSha256(directFile(caseRoot, spec.diffFile, `${spec.id} diff`)),
     proofSha256: fileSha256(proofPath),
+    fixtureTreeSha256: spec.kind === "historical" ? null : fixtureTreeSha256(caseRoot, spec.fixtureDir),
   };
   return createHash("sha256").update(JSON.stringify({
     version: "case-bundle-v1",
@@ -160,6 +176,7 @@ export function caseBundleSha256(caseDir: string, spec: CaseSpec, curation: Case
       source: curation.source,
       strata: curation.strata,
       proof: curation.proof,
+      curatorPolicyId: curation.curatorPolicyId,
     },
   })).digest("hex");
 }
@@ -177,10 +194,15 @@ export function parseCaseCuration(
   truth: GroundTruth,
   label = "case curation",
 ): CaseCuration {
-  const root = strictObject(value, label, ["schemaVersion", "caseId", "status", "source", "strata", "proof", "confirmations"]);
+  const root = strictObject(value, label, [
+    "schemaVersion", "caseId", "status", "curatorPolicyId", "source", "strata", "proof", "confirmations",
+  ]);
   if (root.schemaVersion !== 1) throw new Error(`${label}.schemaVersion must be 1`);
   if (root.caseId !== spec.id) throw new Error(`${label}.caseId must match case.json`);
   if (root.status !== "draft" && root.status !== "admitted") throw new Error(`${label}.status is invalid`);
+  if (root.curatorPolicyId !== "protected-git-review-v1") {
+    throw new Error(`${label}.curatorPolicyId must be protected-git-review-v1`);
+  }
 
   const source = strictObject(root.source, `${label}.source`, [
     "kind", "repositoryAlias", "repositoryIdentitySha256", "changeIdentitySha256", "access",
@@ -273,6 +295,7 @@ export function parseCaseCuration(
     schemaVersion: 1,
     caseId: spec.id,
     status: root.status,
+    curatorPolicyId: "protected-git-review-v1",
     source: {
       kind: spec.kind,
       repositoryAlias,
@@ -290,6 +313,69 @@ export function parseCaseCuration(
     proof: { kind: proof.kind as CaseCuration["proof"]["kind"], artifact, sha256: proofSha256 },
     confirmations,
   };
+}
+
+export function parseCuratorPolicy(value: unknown, label = "curator policy"): CuratorPolicy {
+  const root = strictObject(value, label, [
+    "schemaVersion", "policyId", "trustRoot", "minimumIndependentConfirmations", "curatorIdentitySha256s",
+  ]);
+  if (root.schemaVersion !== 1 || root.policyId !== "protected-git-review-v1" || root.trustRoot !== "protected-git-review") {
+    throw new Error(`${label} must use the protected-git-review-v1 trust root`);
+  }
+  if (root.minimumIndependentConfirmations !== 2) {
+    throw new Error(`${label}.minimumIndependentConfirmations must be 2`);
+  }
+  if (!Array.isArray(root.curatorIdentitySha256s)) throw new Error(`${label}.curatorIdentitySha256s must be an array`);
+  const curatorIdentitySha256s = root.curatorIdentitySha256s.map((identity, index) =>
+    sha256(identity, `${label}.curatorIdentitySha256s[${index}]`));
+  if (new Set(curatorIdentitySha256s).size !== curatorIdentitySha256s.length) {
+    throw new Error(`${label}.curatorIdentitySha256s must not contain duplicates`);
+  }
+  return {
+    schemaVersion: 1,
+    policyId: "protected-git-review-v1",
+    trustRoot: "protected-git-review",
+    minimumIndependentConfirmations: 2,
+    curatorIdentitySha256s,
+  };
+}
+
+export function fixtureFamilyIdentitySha256(caseDir: string, fixtureDir: string): string {
+  return createHash("sha256").update(JSON.stringify({
+    version: "fixture-family-v1",
+    fixtureTreeSha256: fixtureTreeSha256(realpathSync(resolve(caseDir)), fixtureDir),
+  })).digest("hex");
+}
+
+export function fixtureTreeSha256(caseRoot: string, fixtureDir: string): string {
+  const root = directDirectory(caseRoot, fixtureDir, "fixture tree");
+  const entries: Array<
+    { type: "directory"; path: string } |
+    { type: "file"; path: string; executable: boolean; sha256: string }
+  > = [];
+  const visit = (directory: string): void => {
+    for (const name of readdirSync(directory).sort()) {
+      if (name === ".git") throw new Error("fixture tree cannot contain Git metadata");
+      const path = join(directory, name);
+      const stat = lstatSync(path);
+      if (stat.isSymbolicLink()) throw new Error("fixture tree cannot contain symlinks");
+      const resolved = realpathSync(path);
+      if (!resolved.startsWith(`${root}${sep}`)) throw new Error("fixture tree entry escapes its root");
+      const relativePath = relative(root, resolved).split(sep).join("/");
+      if (stat.isDirectory()) {
+        entries.push({ type: "directory", path: relativePath });
+        visit(resolved);
+      } else if (stat.isFile()) entries.push({
+        type: "file",
+        path: relativePath,
+        executable: (stat.mode & 0o111) !== 0,
+        sha256: fileSha256(resolved),
+      });
+      else throw new Error("fixture tree can contain only directories and regular files");
+    }
+  };
+  visit(root);
+  return createHash("sha256").update(JSON.stringify({ version: "fixture-tree-v1", entries })).digest("hex");
 }
 
 export function verifyCurationProof(caseDir: string, curation: CaseCuration): void {
@@ -428,6 +514,16 @@ function directFile(root: string, name: string, label: string): string {
   if (resolved !== path || !resolved.startsWith(`${root}${sep}`)) {
     throw new Error(`${label} must be confined directly inside its case directory`);
   }
+  return resolved;
+}
+
+function directDirectory(root: string, name: string, label: string): string {
+  const path = resolve(root, name);
+  if (!path.startsWith(`${root}${sep}`)) throw new Error(`${label} path escapes its case directory`);
+  const stat = lstatSync(path);
+  if (!stat.isDirectory() || stat.isSymbolicLink()) throw new Error(`${label} must be a direct regular non-symlink directory`);
+  const resolved = realpathSync(path);
+  if (resolved !== path || !resolved.startsWith(`${root}${sep}`)) throw new Error(`${label} must be confined inside its case directory`);
   return resolved;
 }
 

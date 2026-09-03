@@ -8,6 +8,7 @@ import {
   parseCaseCuration,
   caseBundleSha256,
   diffSizeStratum,
+  fixtureFamilyIdentitySha256,
   parseHoldoutCommitment,
   requiredConfirmationChecks,
   readBehavioralCaseAdmission,
@@ -15,6 +16,7 @@ import {
   type ChangeShape,
 } from "../eval/case-curation.js";
 import { parseBehavioralGroundTruth, parseGroundTruth } from "../eval/case-truth.js";
+import { repositoryFamilyIdentitySha256 } from "../eval/case-isolation.js";
 import { runMatrix } from "../eval/run-matrix.js";
 import {
   assertHistoricalRepositoryIdentity,
@@ -75,6 +77,7 @@ function curation(
     schemaVersion: 1,
     caseId: spec.id,
     status,
+    curatorPolicyId: "protected-git-review-v1",
     source: {
       kind: spec.kind,
       repositoryAlias: "fixture-one",
@@ -194,10 +197,11 @@ test("holdout commitment exposes no case identities or truth", () => {
 });
 
 test("zero-provider validator authenticates a draft case and reports readiness separately", async () => {
-  const root = mkdtempSync(join(tmpdir(), "peregrine-corpus-"));
+  const outer = mkdtempSync(join(tmpdir(), "peregrine-corpus-"));
+  const root = join(outer, "cases");
   try {
-    mkdirSync(join(root, "development"));
-    mkdirSync(join(root, "validation"));
+    mkdirSync(join(root, "development"), { recursive: true });
+    mkdirSync(join(root, "validation"), { recursive: true });
     const caseId = "case-aaaaaaaa";
     const target = join(root, "development", caseId);
     cpSync(join(process.cwd(), "eval/cases/structural-smoke/case-00000001"), target, { recursive: true });
@@ -209,11 +213,13 @@ test("zero-provider validator authenticates a draft case and reports readiness s
       diffFile: "diff.patch",
     };
     writeFileSync(join(target, "case.json"), `${JSON.stringify(caseSpec, null, 2)}\n`);
+    writeCuratorPolicyForCasesRoot(root);
     const proof = "Independent clean-control review evidence.\n";
     writeFileSync(join(target, "proof.md"), proof);
     const value = curation(caseSpec, "draft");
     const diff = readFileSync(join(target, "diff.patch"));
     const source = value.source as Record<string, unknown>;
+    source.repositoryIdentitySha256 = fixtureFamilyIdentitySha256(target, caseSpec.fixtureDir);
     source.changeIdentitySha256 = createHash("sha256").update(diff).digest("hex");
     const proofRecord = value.proof as Record<string, unknown>;
     proofRecord.sha256 = sha(proof);
@@ -229,23 +235,29 @@ test("zero-provider validator authenticates a draft case and reports readiness s
     assert.ok(report.seededBenchmarkRequirements.includes("every visible behavioral case is admitted"));
     assert.deepEqual(report.holdoutRequirements, ["external sealed holdout commitment metadata exists"]);
   } finally {
-    rmSync(root, { recursive: true, force: true });
+    rmSync(outer, { recursive: true, force: true });
   }
 });
 
 test("checked-in schemas retain strict parser discriminants", () => {
   const truthSchema = JSON.parse(readFileSync(join(process.cwd(), "schemas/benchmark-case.schema.json"), "utf8"));
   const curationSchema = JSON.parse(readFileSync(join(process.cwd(), "schemas/benchmark-curation.schema.json"), "utf8"));
+  const curatorPolicySchema = JSON.parse(readFileSync(join(process.cwd(), "schemas/curator-policy.schema.json"), "utf8"));
   const holdoutSchema = JSON.parse(readFileSync(join(process.cwd(), "schemas/holdout-commitment.schema.json"), "utf8"));
   assert.equal(truthSchema.$defs.bug.properties.id.pattern, "^bug-[a-f0-9]{8,32}$");
-  assert.deepEqual(curationSchema.required, ["schemaVersion", "caseId", "status", "source", "strata", "proof", "confirmations"]);
+  assert.deepEqual(curationSchema.required, [
+    "schemaVersion", "caseId", "status", "curatorPolicyId", "source", "strata", "proof", "confirmations",
+  ]);
   assert.ok(curationSchema.properties.confirmations.items.required.includes("caseBundleSha256"));
+  assert.equal(curatorPolicySchema.properties.trustRoot.const, "protected-git-review");
+  assert.equal(curatorPolicySchema.properties.minimumIndependentConfirmations.const, 2);
   assert.equal(holdoutSchema.properties.status.const, "unopened");
   assert.equal(holdoutSchema.properties.caseIds, undefined);
 });
 
 test("case bundle confirmations reject normalized curation drift", () => {
-  const root = mkdtempSync(join(tmpdir(), "peregrine-corpus-bundle-"));
+  const outer = mkdtempSync(join(tmpdir(), "peregrine-corpus-bundle-"));
+  const root = join(outer, "cases");
   try {
     const caseDir = createCleanBehavioralCase(root, "development", "case-aaaabbbb", "admitted");
     assert.equal(readBehavioralCaseAdmission(caseDir, JSON.parse(readFileSync(join(caseDir, "case.json"), "utf8"))).curation.status, "admitted");
@@ -257,7 +269,70 @@ test("case bundle confirmations reject normalized curation drift", () => {
       /does not authenticate the current case bundle/,
     );
   } finally {
-    rmSync(root, { recursive: true, force: true });
+    rmSync(outer, { recursive: true, force: true });
+  }
+});
+
+test("case bundles authenticate every fixture file and reject unreviewed context drift", () => {
+  const outer = mkdtempSync(join(tmpdir(), "peregrine-corpus-fixture-bundle-"));
+  const casesRoot = join(outer, "cases");
+  try {
+    const caseDir = createCleanBehavioralCase(casesRoot, "development", "case-aaaabbbc", "admitted");
+    const spec = JSON.parse(readFileSync(join(caseDir, "case.json"), "utf8")) as CaseSpec;
+    const admitted = readBehavioralCaseAdmission(caseDir, spec);
+    const before = caseBundleSha256(caseDir, spec, admitted.curation);
+    writeFileSync(join(caseDir, "fixture", "src", "unreviewed-context.ts"), "export const hidden = true;\n");
+    const after = caseBundleSha256(caseDir, spec, admitted.curation);
+    assert.notEqual(after, before);
+    assert.throws(
+      () => readBehavioralCaseAdmission(caseDir, spec),
+      /fixture family identity does not match its authenticated fixture tree/,
+    );
+  } finally {
+    rmSync(outer, { recursive: true, force: true });
+  }
+});
+
+test("admission trusts only identities registered by the bound protected-review policy", async () => {
+  const outer = mkdtempSync(join(tmpdir(), "peregrine-corpus-curator-policy-"));
+  const casesRoot = join(outer, "cases");
+  try {
+    const caseDir = createCleanBehavioralCase(casesRoot, "development", "case-aaaabbbd", "admitted");
+    await assert.doesNotReject(() => validateSelectedBehavioralCases([caseDir], casesRoot));
+
+    const policyPath = join(outer, "curator-policy.json");
+    const policy = JSON.parse(readFileSync(policyPath, "utf8"));
+    policy.curatorIdentitySha256s.push("6".repeat(64));
+    writeFileSync(policyPath, `${JSON.stringify(policy, null, 2)}\n`);
+    await assert.doesNotReject(
+      () => validateSelectedBehavioralCases([caseDir], casesRoot),
+      "registry additions do not invalidate unrelated case bundles",
+    );
+    policy.curatorIdentitySha256s = ["4".repeat(64)];
+    writeFileSync(policyPath, `${JSON.stringify(policy, null, 2)}\n`);
+    await assert.rejects(
+      () => validateSelectedBehavioralCases([caseDir], casesRoot),
+      /confirmation is not registered by the curator policy/,
+    );
+  } finally {
+    rmSync(outer, { recursive: true, force: true });
+  }
+});
+
+test("curator policy rejects symlink substitution", async () => {
+  const outer = mkdtempSync(join(tmpdir(), "peregrine-corpus-policy-symlink-"));
+  const casesRoot = join(outer, "cases");
+  try {
+    const caseDir = createCleanBehavioralCase(casesRoot, "development", "case-aaaabbbe", "admitted");
+    const externalPolicy = join(outer, "external-policy.json");
+    renameSync(join(outer, "curator-policy.json"), externalPolicy);
+    symlinkSync(externalPolicy, join(outer, "curator-policy.json"));
+    await assert.rejects(
+      () => validateSelectedBehavioralCases([caseDir], casesRoot),
+      /curator policy must be a direct regular non-symlink file/,
+    );
+  } finally {
+    rmSync(outer, { recursive: true, force: true });
   }
 });
 
@@ -283,13 +358,14 @@ test("curation and holdout metadata reject symlinks", async () => {
 });
 
 test("validator rejects duplicate opaque IDs across visible corpora", async () => {
-  const root = mkdtempSync(join(tmpdir(), "peregrine-corpus-duplicate-"));
+  const outer = mkdtempSync(join(tmpdir(), "peregrine-corpus-duplicate-"));
+  const root = join(outer, "cases");
   try {
     createCleanBehavioralCase(root, "development", "case-ddddaaaa", "draft");
     createCleanBehavioralCase(root, "validation", "case-ddddaaaa", "draft");
     await assert.rejects(() => validateBehavioralCorpus(root), /duplicate opaque case id case-ddddaaaa/);
   } finally {
-    rmSync(root, { recursive: true, force: true });
+    rmSync(outer, { recursive: true, force: true });
   }
 });
 
@@ -305,8 +381,20 @@ test("historical source identity is authenticated by materialized provenance", (
   );
 });
 
-test("selected admission derives language and enforces architecture per fixture family", async () => {
-  const root = mkdtempSync(join(tmpdir(), "peregrine-corpus-derived-strata-"));
+test("historical repository family identity is canonical over complete root commits", () => {
+  const first = "a".repeat(40);
+  const second = "b".repeat(40);
+  assert.equal(
+    repositoryFamilyIdentitySha256("sha1", [second, first]),
+    repositoryFamilyIdentitySha256("sha1", [first, second, first]),
+  );
+  assert.throws(() => repositoryFamilyIdentitySha256("sha1", []), /complete root commit object IDs/);
+  assert.throws(() => repositoryFamilyIdentitySha256("sha1", ["c".repeat(64)]), /complete root commit object IDs/);
+});
+
+test("selected admission derives language from the authenticated fixture", async () => {
+  const outer = mkdtempSync(join(tmpdir(), "peregrine-corpus-derived-strata-"));
+  const root = join(outer, "cases");
   try {
     const languageCase = createCleanBehavioralCase(root, "development", "case-eeeecccc", "admitted");
     rewriteAndSignCuration(languageCase, (value) => {
@@ -317,18 +405,29 @@ test("selected admission derives language and enforces architecture per fixture 
       /language family python does not match derived typescript/,
     );
 
-    const first = createCleanBehavioralCase(root, "development", "case-eeeecccd", "admitted");
-    const second = createCleanBehavioralCase(root, "development", "case-eeeeccce", "admitted");
-    writeFileSync(join(second, "diff.patch"), `${readFileSync(join(second, "diff.patch"), "utf8")}\n`);
-    rewriteAndSignCuration(second, (value) => {
-      (value.strata as Record<string, unknown>).architectureFamily = "cli-tool";
-    });
-    await assert.rejects(
-      () => validateSelectedBehavioralCases([first, second]),
-      /changes architecture within one source or fixture family/,
-    );
   } finally {
-    rmSync(root, { recursive: true, force: true });
+    rmSync(outer, { recursive: true, force: true });
+  }
+});
+
+test("distinct authenticated fixture trees may share one curator alias", async () => {
+  const outer = mkdtempSync(join(tmpdir(), "peregrine-corpus-fixture-alias-"));
+  const casesRoot = join(outer, "cases");
+  try {
+    const first = createCleanBehavioralCase(
+      casesRoot, "development", "case-eeeecccd", "admitted", "case-00000001",
+    );
+    const second = createCleanBehavioralCase(
+      casesRoot, "validation", "case-eeeeccce", "admitted", "case-00000002",
+    );
+    const firstCuration = JSON.parse(readFileSync(join(first, "curation.json"), "utf8"));
+    const secondCuration = JSON.parse(readFileSync(join(second, "curation.json"), "utf8"));
+    assert.equal(firstCuration.source.repositoryAlias, secondCuration.source.repositoryAlias);
+    assert.notEqual(firstCuration.source.repositoryIdentitySha256, secondCuration.source.repositoryIdentitySha256);
+    await assert.doesNotReject(() => validateSelectedBehavioralCases([first, second], casesRoot));
+    await assert.doesNotReject(() => validateBehavioralCorpus(casesRoot));
+  } finally {
+    rmSync(outer, { recursive: true, force: true });
   }
 });
 
@@ -344,6 +443,23 @@ test("screening rejects an unadmitted selected case before provider or run artif
     await assert.rejects(() => runMatrix(matrix, runsRoot, { casesDir: casesRoot }), /not admitted to the behavioral corpus/);
     assert.equal(existsSync(runsRoot), false);
     assert.ok(existsSync(caseDir));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("screening rejects an empty behavioral selection before creating run artifacts", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-screening-empty-"));
+  const casesRoot = join(root, "cases");
+  const runsRoot = join(root, "runs");
+  try {
+    mkdirSync(join(casesRoot, "development"), { recursive: true });
+    mkdirSync(join(casesRoot, "validation"), { recursive: true });
+    mkdirSync(join(casesRoot, "structural-smoke"), { recursive: true });
+    const matrix = join(root, "matrix.json");
+    writeFileSync(matrix, JSON.stringify(behavioralMatrix("screening", ["development"])));
+    await assert.rejects(() => runMatrix(matrix, runsRoot, { casesDir: casesRoot }), /at least one selected behavioral case/);
+    assert.equal(existsSync(runsRoot), false);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -365,16 +481,45 @@ test("screening rejects duplicate IDs across selected and unselected behavioral 
   }
 });
 
-test("checkpoint rejects a seeded-only corpus before provider or run artifacts", async () => {
+test("checkpoint requires both behavioral corpora before provider or run artifacts", async () => {
   const root = mkdtempSync(join(tmpdir(), "peregrine-checkpoint-gold-"));
   const casesRoot = join(root, "cases");
   const runsRoot = join(root, "runs");
   try {
     mkdirSync(join(casesRoot, "development"), { recursive: true });
     mkdirSync(join(casesRoot, "validation"), { recursive: true });
+    createCleanBehavioralCase(casesRoot, "development", "case-eeeeaaac", "admitted");
     const matrix = join(root, "matrix.json");
-    writeFileSync(matrix, JSON.stringify(behavioralMatrix("checkpoint", ["development", "validation"])));
-    await assert.rejects(() => runMatrix(matrix, runsRoot, { casesDir: casesRoot }), /checkpoint requires a ready historical gold set/);
+    writeFileSync(matrix, JSON.stringify(behavioralMatrix("checkpoint", ["development"])));
+    await assert.rejects(
+      () => runMatrix(matrix, runsRoot, { casesDir: casesRoot }),
+      /must contain development and validation cases and no structural-smoke/,
+    );
+    assert.equal(existsSync(runsRoot), false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("checkpoint rejects structural-smoke cases before provider or run artifacts", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-checkpoint-structural-"));
+  const casesRoot = join(root, "cases");
+  const runsRoot = join(root, "runs");
+  try {
+    mkdirSync(join(casesRoot, "development"), { recursive: true });
+    mkdirSync(join(casesRoot, "validation"), { recursive: true });
+    mkdirSync(join(casesRoot, "structural-smoke"), { recursive: true });
+    cpSync(
+      join(process.cwd(), "eval/cases/structural-smoke/case-00000001"),
+      join(casesRoot, "structural-smoke", "case-00000001"),
+      { recursive: true },
+    );
+    const matrix = join(root, "matrix.json");
+    writeFileSync(matrix, JSON.stringify(behavioralMatrix("checkpoint", ["structural-smoke"])));
+    await assert.rejects(
+      () => runMatrix(matrix, runsRoot, { casesDir: casesRoot }),
+      /must contain development and validation cases and no structural-smoke/,
+    );
     assert.equal(existsSync(runsRoot), false);
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -406,7 +551,7 @@ test("seeded, historical gold, and final holdout readiness remain distinct", () 
   assert.equal(seeded.cleanCases, 12);
   assert.equal(seeded.largeDiffCases, 3);
   assert.equal(seeded.multiObservationCases, 3);
-  assert.equal(seeded.fixtureFamilies, 4);
+  assert.equal(seeded.authenticatedFixtureSources, 4);
   assert.equal(seeded.provenHistoricalRepositories, 0);
   assert.equal(seeded.visibleSeededBenchmarkReady, true);
   assert.equal(seeded.goldSetReady, false);
@@ -471,6 +616,7 @@ function summaryCase(
       schemaVersion: 1,
       caseId: id,
       status: "admitted",
+      curatorPolicyId: "protected-git-review-v1",
       source: {
         kind: clean ? "clean" : "seeded",
         repositoryAlias: `repo-${index % 4}`,
@@ -500,9 +646,10 @@ function createCleanBehavioralCase(
   corpus: "development" | "validation",
   id: string,
   status: "draft" | "admitted",
+  templateCaseId = "case-00000001",
 ): string {
   const target = join(casesRoot, corpus, id);
-  cpSync(join(process.cwd(), "eval/cases/structural-smoke/case-00000001"), target, { recursive: true });
+  cpSync(join(process.cwd(), "eval/cases/structural-smoke", templateCaseId), target, { recursive: true });
   const spec: CaseSpec = { id, corpus, kind: "clean", fixtureDir: "fixture", diffFile: "diff.patch" };
   const truth = { bugs: [] };
   writeFileSync(join(target, "case.json"), JSON.stringify(spec));
@@ -510,6 +657,8 @@ function createCleanBehavioralCase(
   const proof = "Independent clean-control review evidence.\n";
   writeFileSync(join(target, "proof.md"), proof);
   const value = curation(spec, status);
+  writeCuratorPolicyForCasesRoot(casesRoot);
+  (value.source as Record<string, unknown>).repositoryIdentitySha256 = fixtureFamilyIdentitySha256(target, spec.fixtureDir);
   (value.source as Record<string, unknown>).changeIdentitySha256 = sha(readFileSync(join(target, "diff.patch"), "utf8"));
   (value.proof as Record<string, unknown>).sha256 = sha(proof);
   if (status === "admitted") {
@@ -519,6 +668,18 @@ function createCleanBehavioralCase(
   }
   writeFileSync(join(target, "curation.json"), JSON.stringify(value));
   return target;
+}
+
+function writeCuratorPolicyForCasesRoot(casesRoot: string): void {
+  const bytes = `${JSON.stringify({
+    schemaVersion: 1,
+    policyId: "protected-git-review-v1",
+    trustRoot: "protected-git-review",
+    minimumIndependentConfirmations: 2,
+    curatorIdentitySha256s: ["4".repeat(64), "5".repeat(64)],
+  }, null, 2)}\n`;
+  mkdirSync(join(casesRoot, ".."), { recursive: true });
+  writeFileSync(join(casesRoot, "..", "curator-policy.json"), bytes);
 }
 
 function rewriteAndSignCuration(caseDir: string, mutate: (value: Record<string, unknown>) => void): void {
@@ -549,7 +710,10 @@ function validHoldoutCommitment(): Record<string, unknown> {
   };
 }
 
-function behavioralMatrix(mode: "screening" | "checkpoint", corpora: Array<"development" | "validation">): Record<string, unknown> {
+function behavioralMatrix(
+  mode: "screening" | "checkpoint",
+  corpora: Array<"development" | "validation" | "structural-smoke">,
+): Record<string, unknown> {
   return {
     repeats: 1,
     corpora,
