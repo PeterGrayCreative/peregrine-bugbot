@@ -2,7 +2,15 @@ import json
 import unittest
 from pathlib import Path
 
-from logging_config import build_dict_config, load_profile, load_settings, normalize_level
+from logging_config import (
+    build_dict_config,
+    load_profile,
+    load_settings,
+    normalize_level,
+    parse_boolean,
+    parse_format,
+    parse_handlers,
+)
 
 
 class LoggingConfigTests(unittest.TestCase):
@@ -36,6 +44,22 @@ class LoggingConfigTests(unittest.TestCase):
     def test_rejects_invalid_handler(self):
         with self.assertRaises(ValueError):
             load_settings({"LOG_HANDLERS": "udp:localhost"})
+
+    def test_legacy_boolean_parser_remains_public(self):
+        self.assertTrue(parse_boolean(" yes ", False))
+        self.assertFalse(parse_boolean(None, False))
+        with self.assertRaises(ValueError):
+            parse_boolean("sometimes", False)
+
+    def test_legacy_format_parser_remains_public(self):
+        self.assertEqual(parse_format(" JSON "), "json")
+        with self.assertRaises(ValueError):
+            parse_format("xml")
+
+    def test_legacy_handler_parser_remains_public(self):
+        handlers = parse_handlers("console:error,file:service.log", "warning")
+        self.assertEqual([handler.kind for handler in handlers], ["console", "file"])
+        self.assertEqual(handlers[1].level, "warning")
 
     def test_renders_logging_dictionary(self):
         rendered = build_dict_config(

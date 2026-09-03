@@ -1,8 +1,8 @@
 diff --git a/logging_config.py b/logging_config.py
-index 212176d28fcf4d32fb0027f3bf078b0331b8d696..f4bc4f7b711b84d9deb00c7718f871d5992e426d 100644
+index 212176d28fcf4d32fb0027f3bf078b0331b8d696..38f5d98c84432f844ebdd29f180566a4cbc237e3 100644
 --- a/logging_config.py
 +++ b/logging_config.py
-@@ -1,116 +1,17 @@
+@@ -1,116 +1,21 @@
 -from collections.abc import Mapping
 -from dataclasses import dataclass
 -from typing import Any, Literal
@@ -127,6 +127,7 @@ index 212176d28fcf4d32fb0027f3bf078b0331b8d696..f4bc4f7b711b84d9deb00c7718f871d5
 +    load_settings,
 +    normalize_level,
 +)
++from logsettings.parsing import parse_boolean, parse_format, parse_handlers
 +
 +__all__ = [
 +    "HandlerSpec",
@@ -135,6 +136,9 @@ index 212176d28fcf4d32fb0027f3bf078b0331b8d696..f4bc4f7b711b84d9deb00c7718f871d5
 +    "load_profile",
 +    "load_settings",
 +    "normalize_level",
++    "parse_boolean",
++    "parse_format",
++    "parse_handlers",
 +]
 diff --git a/logsettings/__init__.py b/logsettings/__init__.py
 new file mode 100644
@@ -2519,16 +2523,24 @@ index 0000000000000000000000000000000000000000..551b3b09e4f6323caa7c54d4775b936f
 +        },
 +    }
 diff --git a/test_logging_config.py b/test_logging_config.py
-index 9a3d690c1f69005d5c0bb4121e631e01eea73db8..3a86c77ae20473e456772b2a62ba43c55d053bac 100644
+index 9a3d690c1f69005d5c0bb4121e631e01eea73db8..20c21b073cd5b128e4000f4d4d4102507817e130 100644
 --- a/test_logging_config.py
 +++ b/test_logging_config.py
-@@ -1,11 +1,17 @@
+@@ -1,11 +1,25 @@
 +import json
  import unittest
 +from pathlib import Path
  
 -from logging_config import normalize_level
-+from logging_config import build_dict_config, load_profile, load_settings, normalize_level
++from logging_config import (
++    build_dict_config,
++    load_profile,
++    load_settings,
++    normalize_level,
++    parse_boolean,
++    parse_format,
++    parse_handlers,
++)
  
  
  class LoggingConfigTests(unittest.TestCase):
@@ -2543,7 +2555,7 @@ index 9a3d690c1f69005d5c0bb4121e631e01eea73db8..3a86c77ae20473e456772b2a62ba43c5
  
      def test_normalizes_supported_level(self):
          self.assertEqual(normalize_level(" WARNING "), "warning")
-@@ -14,6 +20,54 @@ class LoggingConfigTests(unittest.TestCase):
+@@ -14,6 +28,70 @@ class LoggingConfigTests(unittest.TestCase):
          with self.assertRaises(ValueError):
              normalize_level("verbose")
  
@@ -2563,6 +2575,22 @@ index 9a3d690c1f69005d5c0bb4121e631e01eea73db8..3a86c77ae20473e456772b2a62ba43c5
 +    def test_rejects_invalid_handler(self):
 +        with self.assertRaises(ValueError):
 +            load_settings({"LOG_HANDLERS": "udp:localhost"})
++
++    def test_legacy_boolean_parser_remains_public(self):
++        self.assertTrue(parse_boolean(" yes ", False))
++        self.assertFalse(parse_boolean(None, False))
++        with self.assertRaises(ValueError):
++            parse_boolean("sometimes", False)
++
++    def test_legacy_format_parser_remains_public(self):
++        self.assertEqual(parse_format(" JSON "), "json")
++        with self.assertRaises(ValueError):
++            parse_format("xml")
++
++    def test_legacy_handler_parser_remains_public(self):
++        handlers = parse_handlers("console:error,file:service.log", "warning")
++        self.assertEqual([handler.kind for handler in handlers], ["console", "file"])
++        self.assertEqual(handlers[1].level, "warning")
 +
 +    def test_renders_logging_dictionary(self):
 +        rendered = build_dict_config(
