@@ -252,6 +252,12 @@ test("strict ingestion reconciles failure usage and cost with all observed stage
   }
   failed.outcome.telemetry.usage = aggregate;
   assert.doesNotThrow(() => parseRunRecord(failed, "reconciled failure", validAttempt()));
+
+  failed.outcome.telemetry.stages = [];
+  assert.throws(
+    () => parseRunRecord(failed, "stage-less failure", validAttempt()),
+    /stages must contain one or two stages/,
+  );
 });
 
 test("behavioral reports count failed and missing attempts and retain incurred failure cost", async () => {
@@ -722,6 +728,7 @@ test("cleanup failures preserve partial and completed provider telemetry", async
     configs: [
       { name: "partial", runner: "mock", overrides: { scenario: "partial" } },
       { name: "completed", runner: "mock", overrides: { scenario: "completed" } },
+      { name: "no-stages", runner: "mock", overrides: { scenario: "no-stages" } },
     ],
   }));
 
@@ -764,6 +771,17 @@ test("cleanup failures preserve partial and completed provider telemetry", async
             }],
           },
         });
+      }
+      if (scenario === "no-stages") {
+        return {
+          ...completedClean(),
+          usage: withUnavailable({
+            provider: "mock",
+            aggregation: "single-envelope",
+            costUsd: 5,
+            costSource: "provider",
+          }),
+        };
       }
       return {
         ...completedClean(),
@@ -828,6 +846,10 @@ test("cleanup failures preserve partial and completed provider telemetry", async
       completed.outcome.telemetry?.stages.map((stage) => stage.stage),
       ["breadth", "investigation"],
     );
+
+    const noStages = records.find((record) => record.configName === "no-stages");
+    assert.ok(noStages && noStages.outcome.status === "failed");
+    assert.equal(noStages.outcome.telemetry, undefined);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

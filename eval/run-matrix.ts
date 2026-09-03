@@ -347,13 +347,17 @@ function productionManifestSkillName(config: ReviewContext["config"], runner: Ru
  * already been incurred. Convert the completed result to failure telemetry so
  * accounting retains known spend without persisting model output.
  */
-function completedResultFailureTelemetry(result: EngineResult): RunFailureTelemetry {
+function completedResultFailureTelemetry(result: EngineResult): RunFailureTelemetry | undefined {
+  const stages = completedStages(result.raw);
+  // An aggregate without its contributing requests cannot be reconciled during
+  // strict artifact ingestion. Omit telemetry instead of inventing provenance.
+  if (stages.length === 0) return undefined;
   return {
     engine: result.engine,
     modelConfig: result.modelConfig,
     usage: result.usage,
     durationMs: result.durationMs,
-    stages: completedStages(result.raw),
+    stages,
   };
 }
 
@@ -362,8 +366,7 @@ function completedStages(raw: unknown): StageTelemetry[] {
   const record = raw as Record<string, unknown>;
   const breadth = completedStage("breadth", record.breadth);
   const investigation = completedStage("investigation", record.investigation);
-  // Partial raw stage metadata cannot be reconciled with aggregate usage. Keep
-  // the aggregate, but report stage detail as unavailable rather than forging it.
+  // Partial raw stage metadata cannot be reconciled with aggregate usage.
   return breadth && investigation ? [breadth, investigation] : [];
 }
 
