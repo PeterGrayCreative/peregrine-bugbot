@@ -14,6 +14,8 @@
 
 **Provider calls:** none
 
+**Merged as:** `5588bf0a80e613c714ff3289bc7ac273d1a7dc9b`
+
 ## Scope proved
 
 - Claude preserves base input, cache creation, cache read, output, reasoning output, turns, tool work, and provider-reported cost as independently available fields.
@@ -70,6 +72,14 @@ Production prompts, model selection, worker topology, routing, review thresholds
 
 ## Remote proof
 
-Pending terminal GitHub checks and merge state for PR #11.
+PR #11 was mergeable and clean at final head
+`ea26848d34a57f9397e21d0f10e817dad527ed42`. Repository `check`, Peregrine
+`analyze` and `post`, and the unprivileged `Build and smoke without credentials`
+job passed. The manual `Publish immutable candidate` job skipped on the pull
+request event as designed. The PR had no conversation comments, submitted
+reviews, or review threads.
+
+The PR merged on 2026-09-03 as
+`5588bf0a80e613c714ff3289bc7ac273d1a7dc9b`.
 
 Rollback boundary: revert Plan PR 5A. Plan PRs 1-3 and Safety PR 2A.1 remain independently usable.
