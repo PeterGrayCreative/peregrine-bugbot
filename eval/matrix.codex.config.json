@@ -1,0 +1,49 @@
+{
+  "repeats": 3,
+  "corpora": ["development", "validation"],
+  "configs": [
+    {
+      "name": "luna-to-sol",
+      "runner": "codex",
+      "overrides": {
+        "breadthModel": "gpt-5.6-luna",
+        "breadthEffort": "high",
+        "investigationModel": "gpt-5.6-sol",
+        "investigationEffort": "high"
+      }
+    },
+    {
+      "name": "spark-to-sol",
+      "runner": "codex",
+      "overrides": {
+        "breadthModel": "gpt-5.3-codex-spark",
+        "breadthEffort": "high",
+        "investigationModel": "gpt-5.6-sol",
+        "investigationEffort": "high"
+      }
+    }
+  ],
+  "experiment": {
+    "mode": "checkpoint",
+    "seed": 20260903,
+    "cacheCondition": "uncontrolled",
+    "providerCalls": "deny",
+    "providerAccess": "cli-session",
+    "costAccounting": "best-effort",
+    "control": "luna-to-sol",
+    "treatment": "spark-to-sol",
+    "judge": {
+      "kind": "codex",
+      "model": "gpt-5.6-sol",
+      "version": "semantic-v1"
+    },
+    "limits": {
+      "maxProviderCostUsd": null,
+      "maxProviderAttempts": 0,
+      "maxWallTimeMs": 0,
+      "maxFailureRate": 0,
+      "minAttemptsForFailureRate": 1,
+      "maxConsecutiveFailures": 1
+    }
+  }
+}

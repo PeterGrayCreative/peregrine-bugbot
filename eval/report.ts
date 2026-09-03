@@ -30,6 +30,16 @@ import {
   type LegacyMatrixRunManifest,
   type PreTelemetryMatrixRunManifest,
 } from "./artifacts.js";
+import {
+  EXPERIMENT_METADATA_FILENAMES,
+  readExperimentRunEvidence,
+} from "./experiment-evidence.js";
+import { acquireExperimentLock, hashExperimentCorpus, readExperimentJson } from "./experiment.js";
+import {
+  EXPERIMENT_GRADING_SEAL_FILENAME,
+  EXPERIMENT_TERMINAL_SEAL_FILENAME,
+  requireValidExperimentGradingSeal,
+} from "./experiment-seals.js";
 
 type LegacyGradedRun = Omit<GradedRun, "schemaVersion" | "attemptId" | "finishedAt" | "attemptDurationMs" | "outcome" | "caseCorpus" | "runner"> & {
   result: EngineResult;
@@ -123,13 +133,27 @@ export async function buildReport(
 ): Promise<ConfigStats[]> {
   const dir = resolve(runsDir ?? latestRunsDir());
   const casesDir = resolve(options.casesDir ?? "eval/cases");
+  const releaseLock = experimentMetadataPresent(dir) ? acquireExperimentLock(dir) : undefined;
+  try {
+    return buildReportLocked(dir, casesDir);
+  } finally {
+    releaseLock?.();
+  }
+}
+
+function buildReportLocked(dir: string, casesDir: string): ConfigStats[] {
   const manifestPath = join(dir, "matrix-manifest.json");
-  let stats: ConfigStats[];
+  const hasExperimentMetadata = experimentMetadataPresent(dir);
+  let stats: ConfigStats[] | undefined;
   if (existsSync(manifestPath)) {
-    const manifestValue: unknown = JSON.parse(readFileSync(manifestPath, "utf8"));
+    const manifestValue: unknown = readExperimentJson(manifestPath);
+    let currentManifest: MatrixRunManifest | undefined;
     try {
-      stats = trackedStats(dir, casesDir, parseMatrixRunManifest(manifestValue, manifestPath));
+      currentManifest = parseMatrixRunManifest(manifestValue, manifestPath);
     } catch (error) {
+      if (hasExperimentMetadata) {
+        throw new Error("experiment metadata requires a current matrix manifest", { cause: error });
+      }
       if (isPreTelemetryMatrixRunManifest(manifestValue)) {
         stats = preTelemetryStats(
           dir,
@@ -143,10 +167,18 @@ export async function buildReport(
         throw error;
       }
     }
+    if (currentManifest) {
+      if (hasExperimentMetadata) requireValidExperimentGradingSeal(dir, currentManifest);
+      stats = trackedStats(dir, casesDir, currentManifest);
+    }
   } else {
+    if (hasExperimentMetadata) {
+      throw new Error("experiment metadata requires matrix-manifest.json");
+    }
     stats = legacyStats(dir);
   }
 
+  if (!stats) throw new Error("internal error: benchmark manifest did not select a report format");
   if (stats.length === 0) {
     throw new Error(`No benchmark run artifacts in ${dir} — run eval:grade first.`);
   }
@@ -268,7 +300,7 @@ function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest
         if ((bugCount ?? 0) > 0) failureInclusiveRecalls.push(0);
         continue;
       }
-      const raw = parseRunRecord(JSON.parse(readFileSync(rawPath, "utf8")), rawPath, attempt);
+      const raw = parseRunRecord(readExperimentJson(rawPath), rawPath, attempt);
       if (raw.outcome.status === "failed") {
         failed.push({ outcome: raw.outcome, attemptDurationMs: raw.attemptDurationMs });
         if ((bugCount ?? 0) > 0) failureInclusiveRecalls.push(0);
@@ -277,7 +309,7 @@ function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest
       if (!existsSync(gradedPath)) {
         throw new Error(`${attempt.file} completed but has no graded artifact — run eval:grade first.`);
       }
-      const graded = parseGradedRun(JSON.parse(readFileSync(gradedPath, "utf8")), gradedPath, attempt);
+      const graded = parseGradedRun(readExperimentJson(gradedPath), gradedPath, attempt);
       assertGradedMatchesRun(graded, raw, gradedPath);
       const groundTruthIds = loadGroundTruthIds(casesDir, attempt.caseName);
       const gradedIds = Object.keys(graded.matches);
@@ -318,12 +350,27 @@ export function preflightTrackedRunSet(
   casesDir: string,
   manifest: MatrixRunManifest,
 ): void {
+  const hasExperimentMetadata = experimentMetadataPresent(dir);
+  const experiment = hasExperimentMetadata
+    ? readExperimentRunEvidence(dir, manifest)
+    : undefined;
+  if (experiment) {
+    const currentCorpusSha256 = hashExperimentCorpus(
+      casesDir,
+      [...new Set(experiment.experiment.schedule.map((attempt) => attempt.caseName))],
+    );
+    if (currentCorpusSha256 !== experiment.experiment.hashes.corpusSha256) {
+      throw new Error("experiment corpus no longer matches the immutable manifest");
+    }
+  }
   const declaredFiles = new Set(manifest.expectedAttempts.flatMap((attempt) => [
     attempt.file,
     attempt.file.replace(/\.json$/, ".graded.json"),
   ]));
+  const metadataFiles = experimentMetadataFiles(experiment !== undefined);
   const undeclared = readdirSync(dir).filter((file) =>
-    file.endsWith(".json") && file !== "matrix-manifest.json" && file !== "benchmark.json" &&
+    file.endsWith(".json") && !metadataFiles.has(file) &&
+    file !== "benchmark.json" &&
     !declaredFiles.has(file));
   if (undeclared.length > 0) {
     throw new Error(`run artifacts not declared by matrix manifest: ${undeclared.join(", ")}`);
@@ -339,12 +386,36 @@ export function preflightTrackedRunSet(
       }
       continue;
     }
-    const raw = parseRunRecord(JSON.parse(readFileSync(rawPath, "utf8")), rawPath, attempt);
+    const raw = parseRunRecord(readExperimentJson(rawPath), rawPath, attempt);
     assertOutcomeCapability(raw, manifest);
     if (raw.outcome.status === "failed" && existsSync(gradedPath)) {
       throw new Error(`${attempt.file} failed but its graded artifact exists`);
     }
   }
+}
+
+function experimentMetadataPresent(dir: string): boolean {
+  return [
+    EXPERIMENT_METADATA_FILENAMES.experimentManifest,
+    EXPERIMENT_METADATA_FILENAMES.experimentStop,
+    EXPERIMENT_METADATA_FILENAMES.stateDirectory,
+    EXPERIMENT_TERMINAL_SEAL_FILENAME,
+    EXPERIMENT_GRADING_SEAL_FILENAME,
+  ].some((name) => existsSync(join(dir, name)));
+}
+
+function experimentMetadataFiles(includeExperiment: boolean): ReadonlySet<string> {
+  return new Set([
+    EXPERIMENT_METADATA_FILENAMES.matrixManifest,
+    ...(includeExperiment
+      ? [
+          EXPERIMENT_METADATA_FILENAMES.experimentManifest,
+          EXPERIMENT_METADATA_FILENAMES.experimentStop,
+          EXPERIMENT_TERMINAL_SEAL_FILENAME,
+          EXPERIMENT_GRADING_SEAL_FILENAME,
+        ]
+      : []),
+  ]);
 }
 
 function assertCrossAttemptProvenance(dir: string, manifest: MatrixRunManifest): void {
@@ -357,7 +428,7 @@ function assertCrossAttemptProvenance(dir: string, manifest: MatrixRunManifest):
   for (const attempt of manifest.expectedAttempts) {
     const path = join(dir, attempt.file);
     if (!existsSync(path)) continue;
-    const record = parseRunRecord(JSON.parse(readFileSync(path, "utf8")), path, attempt);
+    const record = parseRunRecord(readExperimentJson(path), path, attempt);
     const modelConfig = record.outcome.status === "completed"
       ? record.outcome.result.modelConfig
       : record.outcome.telemetry?.modelConfig;

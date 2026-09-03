@@ -7,12 +7,14 @@ import { exec, lastJsonBlock } from "../src/util/exec.js";
 import type { EngineResult, Finding, GradedRun, GroundTruth, RunRecord } from "../src/types.js";
 import { readCaseGroundTruth } from "./case-truth.js";
 import {
+  assertGradedMatchesRun,
   isLegacyMatrixRunManifest,
   isPreTelemetryMatrixRunManifest,
   parseLegacyCompletedRun,
   parseLegacyMatrixRunManifest,
   parseLegacySchemaV1RunRecord,
   parseMatrixRunManifest,
+  parseGradedRun,
   parsePreTelemetryMatrixRunManifest,
   parsePreTelemetryRunRecord,
   parseRunRecord,
@@ -21,7 +23,27 @@ import {
   type PreTelemetryRunRecord,
   type LegacySchemaV1RunRecord,
 } from "./artifacts.js";
+import {
+  EXPERIMENT_METADATA_FILENAMES,
+  type ExperimentRunEvidence,
+} from "./experiment-evidence.js";
+import {
+  acquireExperimentLock,
+  canonicalJson,
+  canonicalJsonSha256,
+  hashExperimentCorpus,
+  hashPathTree,
+  readExperimentJson,
+  writeExclusiveJson,
+} from "./experiment.js";
 import { preflightTrackedRunSet } from "./report.js";
+import {
+  EXPERIMENT_GRADING_SEAL_FILENAME,
+  EXPERIMENT_TERMINAL_SEAL_FILENAME,
+  requireValidExperimentGradingSeal,
+  requireValidExperimentTerminalSeal,
+  writeExperimentGradingSeal,
+} from "./experiment-seals.js";
 
 type LegacyRunRecord = Omit<RunRecord, "schemaVersion" | "attemptId" | "finishedAt" | "attemptDurationMs" | "outcome" | "caseCorpus" | "runner"> & {
   result: EngineResult;
@@ -43,19 +65,33 @@ type LegacyRunRecord = Omit<RunRecord, "schemaVersion" | "attemptId" | "finished
  * retained for analysis but are not scored as incorrect PR demands.
  */
 type Judge = "exact" | "claude" | "codex";
+type JudgeSelection =
+  | { kind: "exact" }
+  | { kind: Exclude<Judge, "exact">; model: string };
 
-export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Promise<void> {
+interface GradeRunsOptions {
+  /** Test/embedding hook invoked after grades are durable but before the final corpus check and seal. */
+  beforeExperimentSeal?: () => void;
+}
+
+export async function gradeRuns(
+  runsDir?: string,
+  casesDir = "eval/cases",
+  options: GradeRunsOptions = {},
+): Promise<void> {
   const dir = resolve(runsDir ?? latestRunsDir());
-  const judge = parseJudge(process.env.JUDGE ?? "exact");
-  const config = loadConfig();
-  const judgeModel =
-    process.env.PEREGRINE_JUDGE_MODEL ??
-    (judge === "codex"
-      ? process.env.PEREGRINE_CODEX_JUDGE_MODEL ?? config.runners.codex.investigationModel
-      : process.env.PEREGRINE_CLAUDE_JUDGE_MODEL ?? config.runners.claude.investigationModel);
+  const releaseLock = experimentMetadataPresent(dir) ? acquireExperimentLock(dir) : undefined;
+  try {
+    await gradeRunsLocked(dir, casesDir, options);
+  } finally {
+    releaseLock?.();
+  }
+}
+
+async function gradeRunsLocked(dir: string, casesDir: string, options: GradeRunsOptions): Promise<void> {
   const manifestPath = join(dir, "matrix-manifest.json");
   const manifestValue: unknown = existsSync(manifestPath)
-    ? JSON.parse(readFileSync(manifestPath, "utf8"))
+    ? readExperimentJson(manifestPath)
     : undefined;
   let manifest: ReturnType<typeof parseMatrixRunManifest> | undefined;
   let preTelemetryManifest: ReturnType<typeof parsePreTelemetryMatrixRunManifest> | undefined;
@@ -73,18 +109,51 @@ export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Prom
       }
     }
   }
+  const hasExperimentMetadata = experimentMetadataPresent(dir);
+  if (hasExperimentMetadata && !manifest) {
+    throw new Error("experiment metadata requires a current matrix manifest");
+  }
+  const experiment = manifest && hasExperimentMetadata
+    ? requireValidExperimentTerminalSeal(dir, manifest).evidence
+    : undefined;
+  const experimentCaseNames = experiment
+    ? [...new Set(experiment.experiment.schedule.map((attempt) => attempt.caseName))]
+    : undefined;
+  if (experiment && experimentCaseNames) {
+    assertExperimentCorpusUnchanged(casesDir, experimentCaseNames, experiment.experiment.hashes.corpusSha256);
+  }
   if (manifest) preflightTrackedRunSet(dir, resolve(casesDir), manifest);
+
+  const experimentTruth = experiment && experimentCaseNames
+    ? new Map(experimentCaseNames.map((caseName) => [caseName, readCaseGroundTruth(casesDir, caseName)]))
+    : undefined;
+  if (experiment && experimentCaseNames) {
+    // Authenticate the exact ground-truth snapshot used below, closing the gap
+    // between the initial corpus check and loading the individual truth files.
+    assertExperimentCorpusUnchanged(casesDir, experimentCaseNames, experiment.experiment.hashes.corpusSha256);
+  }
+
+  const judge = experiment
+    ? experimentJudgeSelection(experiment)
+    : legacyJudgeSelection();
+  if (experiment && existsSync(join(dir, EXPERIMENT_GRADING_SEAL_FILENAME))) {
+    requireValidExperimentGradingSeal(dir, manifest!);
+    console.log("Experiment grading already complete (seal validated).");
+    return;
+  }
   const expectedByFile = new Map(
     (manifest?.expectedAttempts ?? preTelemetryManifest?.expectedAttempts ?? legacyManifest?.expectedAttempts ?? [])
       .map((attempt) => [attempt.file, attempt]),
   );
+  const metadataFiles = experimentMetadataFiles(experiment !== undefined);
   const files = readdirSync(dir).filter(
-    (f) => f.endsWith(".json") && !f.endsWith(".graded.json") && f !== "matrix-manifest.json" && f !== "benchmark.json",
+    (f) => f.endsWith(".json") && !f.endsWith(".graded.json") &&
+      !metadataFiles.has(f) && f !== "benchmark.json",
   );
 
   for (const file of files) {
     const path = join(dir, file);
-    const raw: unknown = JSON.parse(readFileSync(path, "utf8"));
+    const raw: unknown = experiment ? readExperimentJson(path) : JSON.parse(readFileSync(path, "utf8"));
     const expected = expectedByFile.get(file);
     if ((manifest || preTelemetryManifest || legacyManifest) && !expected) {
       throw new Error(`${file}: run artifact is not declared by matrix manifest`);
@@ -110,28 +179,35 @@ export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Prom
     } else {
       result = run.result;
     }
-    const gt = readCaseGroundTruth(casesDir, run.caseName) as GroundTruth;
-
-    const matches: Record<string, number | null> = {};
-    const matchedFindingIdx = new Set<number>();
-
-    for (const bug of gt.bugs) {
-      let matched: number | null = null;
-      for (let i = 0; i < result.findings.length; i++) {
-        if (matchedFindingIdx.has(i)) continue;
-        const f = result.findings[i]!;
-        const isMatch =
-          judge === "exact"
-            ? exactMatch(f, bug)
-            : await semanticMatch(judge, judgeModel, f, bug.description, bug.file);
-        if (isMatch) {
-          matched = i;
-          matchedFindingIdx.add(i);
-          break;
-        }
+    const gt = (experimentTruth?.get(run.caseName) ?? readCaseGroundTruth(casesDir, run.caseName)) as GroundTruth;
+    const gradedPath = join(dir, file.replace(/\.json$/, ".graded.json"));
+    if (experiment && existsSync(gradedPath)) {
+      const experimentAttempt = experiment.experiment.schedule.find((attempt) => attempt.file === file);
+      if (!manifest || !experimentAttempt || !("outcome" in run)) {
+        throw new Error("experiment grade validation requires a current tracked run");
       }
-      matches[bug.id] = matched;
+      const existing = parseGradedRun(
+        readExperimentJson(gradedPath),
+        gradedPath,
+        experimentAttempt,
+      );
+      assertGradedMatchesRun(existing, run, gradedPath);
+      assertGradeMatchesGroundTruth(existing, gt, gradedPath);
+      if (judge.kind !== "exact") {
+        throw new Error("resuming semantic experiment grading requires a sealed judge ledger");
+      }
+      const expectedGrade = await gradeResult(result, gt, judge);
+      if (canonicalJson({
+        matches: existing.matches,
+        falsePositiveIndexes: existing.falsePositiveIndexes,
+      }) !== canonicalJson(expectedGrade)) {
+        throw new Error(`${gradedPath} does not match deterministic exact-v1 grading`);
+      }
+      console.log(`${file}: already graded (validated)`);
+      continue;
     }
+
+    const { matches, falsePositiveIndexes } = await gradeResult(result, gt, judge);
 
     const normalizedRun = "outcome" in run
       ? run
@@ -148,18 +224,153 @@ export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Prom
       ...normalizedRun,
       outcome: { status: "completed", result },
       matches,
-      falsePositiveIndexes: result.findings
-        .map((finding, i) => ({ finding, i }))
-        .filter(({ finding, i }) => finding.disposition === "fix-in-pr" && !matchedFindingIdx.has(i))
-        .map(({ i }) => i),
+      falsePositiveIndexes,
     };
-    writeFileSync(join(dir, file.replace(/\.json$/, ".graded.json")), JSON.stringify(graded, null, 2));
+    if (experiment) writeExclusiveJson(dir, gradedPath, graded);
+    else writeFileSync(gradedPath, JSON.stringify(graded, null, 2));
     const found = Object.values(matches).filter((m) => m !== null).length;
     console.log(
       `${file}: ${found}/${gt.bugs.length} bugs found, ${graded.falsePositiveIndexes.length} FP`,
     );
   }
+  if (experiment && experimentCaseNames) {
+    options.beforeExperimentSeal?.();
+    assertExperimentCorpusUnchanged(casesDir, experimentCaseNames, experiment.experiment.hashes.corpusSha256);
+    writeExperimentGradingSeal(dir, manifest!, new Date().toISOString());
+  }
   console.log(`\nNext: npm run eval:report -- --runs ${dir}`);
+}
+
+function assertExperimentCorpusUnchanged(
+  casesDir: string,
+  caseNames: readonly string[],
+  expectedSha256: string,
+): void {
+  if (hashExperimentCorpus(casesDir, caseNames) !== expectedSha256) {
+    throw new Error("experiment corpus no longer matches the immutable manifest");
+  }
+}
+
+async function gradeResult(
+  result: EngineResult,
+  groundTruth: GroundTruth,
+  judge: JudgeSelection,
+): Promise<Pick<GradedRun, "matches" | "falsePositiveIndexes">> {
+  const matches: Record<string, number | null> = {};
+  const matchedFindingIdx = new Set<number>();
+  for (const bug of groundTruth.bugs) {
+    let matched: number | null = null;
+    for (let i = 0; i < result.findings.length; i++) {
+      if (matchedFindingIdx.has(i)) continue;
+      const finding = result.findings[i]!;
+      const isMatch = judge.kind === "exact"
+        ? exactMatch(finding, bug)
+        : await semanticMatch(judge.kind, judge.model, finding, bug.description, bug.file);
+      if (isMatch) {
+        matched = i;
+        matchedFindingIdx.add(i);
+        break;
+      }
+    }
+    matches[bug.id] = matched;
+  }
+  return {
+    matches,
+    falsePositiveIndexes: result.findings
+      .map((finding, index) => ({ finding, index }))
+      .filter(({ finding, index }) => finding.disposition === "fix-in-pr" && !matchedFindingIdx.has(index))
+      .map(({ index }) => index),
+  };
+}
+
+function experimentMetadataPresent(dir: string): boolean {
+  return [
+    EXPERIMENT_METADATA_FILENAMES.experimentManifest,
+    EXPERIMENT_METADATA_FILENAMES.experimentStop,
+    EXPERIMENT_METADATA_FILENAMES.stateDirectory,
+    EXPERIMENT_TERMINAL_SEAL_FILENAME,
+    EXPERIMENT_GRADING_SEAL_FILENAME,
+  ].some((name) => existsSync(join(dir, name)));
+}
+
+function experimentMetadataFiles(includeExperiment: boolean): ReadonlySet<string> {
+  return new Set([
+    EXPERIMENT_METADATA_FILENAMES.matrixManifest,
+    ...(includeExperiment
+      ? [
+          EXPERIMENT_METADATA_FILENAMES.experimentManifest,
+          EXPERIMENT_METADATA_FILENAMES.experimentStop,
+          EXPERIMENT_TERMINAL_SEAL_FILENAME,
+          EXPERIMENT_GRADING_SEAL_FILENAME,
+        ]
+      : []),
+  ]);
+}
+
+function legacyJudgeSelection(): JudgeSelection {
+  const kind = parseJudge(process.env.JUDGE ?? "exact");
+  if (kind === "exact") return { kind };
+  const config = loadConfig();
+  const model = process.env.PEREGRINE_JUDGE_MODEL ??
+    (kind === "codex"
+      ? process.env.PEREGRINE_CODEX_JUDGE_MODEL ?? config.runners.codex.investigationModel
+      : process.env.PEREGRINE_CLAUDE_JUDGE_MODEL ?? config.runners.claude.investigationModel);
+  return { kind, model };
+}
+
+function experimentJudgeSelection(evidence: ExperimentRunEvidence): JudgeSelection {
+  const declared = evidence.experiment.protocol.judge;
+  const currentJudgeSha256 = canonicalJsonSha256({
+    implementation: hashPathTree(join(packageRoot(), "eval", "grade.ts")),
+    schema: hashPathTree(schemaPath("judge-result")),
+    judge: declared,
+  });
+  if (currentJudgeSha256 !== evidence.experiment.hashes.judgeSha256) {
+    throw new Error("experiment judge implementation no longer matches the immutable manifest");
+  }
+  const expectedVersion = declared.kind === "exact" ? "exact-v1" : "semantic-v1";
+  if (declared.version !== expectedVersion) {
+    throw new Error(
+      `experiment judge version ${JSON.stringify(declared.version)} is not supported; expected ${expectedVersion}`,
+    );
+  }
+  if (process.env.JUDGE !== undefined) {
+    const requested = parseJudge(process.env.JUDGE);
+    if (requested !== declared.kind) {
+      throw new Error(
+        `JUDGE=${requested} conflicts with immutable experiment judge ${declared.kind}`,
+      );
+    }
+  }
+  if (declared.kind === "exact") {
+    const modelOverrides = [
+      "PEREGRINE_JUDGE_MODEL",
+      "PEREGRINE_CLAUDE_JUDGE_MODEL",
+      "PEREGRINE_CODEX_JUDGE_MODEL",
+    ].filter((name) => process.env[name] !== undefined);
+    if (modelOverrides.length > 0) {
+      throw new Error(
+        `${modelOverrides.join(", ")} conflicts with the immutable exact experiment judge`,
+      );
+    }
+    return { kind: "exact" };
+  }
+  throw new Error(
+    `experiment ${declared.kind} semantic grading is deferred until PR 4 provides an immutable, contained, and budgeted judge ledger`,
+  );
+}
+
+function assertGradeMatchesGroundTruth(
+  graded: GradedRun,
+  groundTruth: GroundTruth,
+  source: string,
+): void {
+  const expectedIds = groundTruth.bugs.map((bug) => bug.id).sort();
+  const actualIds = Object.keys(graded.matches).sort();
+  if (expectedIds.length !== actualIds.length ||
+    expectedIds.some((id, index) => id !== actualIds[index])) {
+    throw new Error(`${source}.matches does not match ground truth bug IDs`);
+  }
 }
 
 function parseLegacyRun(value: unknown, source: string): LegacyRunRecord {

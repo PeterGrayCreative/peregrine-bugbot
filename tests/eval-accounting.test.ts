@@ -2087,6 +2087,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
 
   try {
     const runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+      allowLegacyTestConfig: true,
       casesDir,
       engineFor: () => engine,
     });
@@ -2282,6 +2283,7 @@ test("malformed or missing truth remains failed and makes mixed denominators una
   };
   try {
     const runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+      allowLegacyTestConfig: true,
       casesDir,
       engineFor: () => engine,
     });
@@ -2350,6 +2352,7 @@ test("cleanup failures use terminal wall time and omit impossible mock telemetry
 
   try {
     const runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+      allowLegacyTestConfig: true,
       casesDir,
       engineFor: () => engine,
       materializeCaseFor: async (...args) => {
@@ -2496,6 +2499,7 @@ test("invalid case definitions are persisted as configuration failures", async (
   );
   try {
     const runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+      allowLegacyTestConfig: true,
       casesDir: join(root, "cases"),
       engineFor: () => {
         throw new Error("engine should not be selected for an invalid case");

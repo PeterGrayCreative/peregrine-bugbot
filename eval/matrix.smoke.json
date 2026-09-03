@@ -1,5 +1,22 @@
 {
   "repeats": 1,
   "corpora": ["structural-smoke"],
-  "configs": [{ "name": "mock", "runner": "mock" }]
+  "configs": [{ "name": "mock", "runner": "mock" }],
+  "experiment": {
+    "mode": "structural-smoke",
+    "seed": 20260903,
+    "cacheCondition": "not-applicable",
+    "providerCalls": "deny",
+    "providerAccess": "not-applicable",
+    "costAccounting": "not-applicable",
+    "judge": { "kind": "exact", "version": "exact-v1" },
+    "limits": {
+      "maxProviderCostUsd": null,
+      "maxProviderAttempts": 0,
+      "maxWallTimeMs": 300000,
+      "maxFailureRate": 0,
+      "minAttemptsForFailureRate": 1,
+      "maxConsecutiveFailures": 1
+    }
+  }
 }

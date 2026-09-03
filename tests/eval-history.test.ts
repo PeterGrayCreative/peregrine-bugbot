@@ -407,6 +407,7 @@ test("matrix records history and manifest provenance before engine success or fa
   };
   try {
     const runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+      allowLegacyTestConfig: true,
       casesDir,
       engineFor: () => engine,
       manifestPreparer: async (...args) => {
@@ -467,6 +468,7 @@ test("matrix records a configuration failure and never invokes the engine when m
   let calls = 0;
   try {
     const runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+      allowLegacyTestConfig: true,
       casesDir,
       engineFor: () => ({ name: "mock", async review() { calls++; return completed(); } }),
       manifestPreparer: async () => ({ available: false, reason: "forced unavailable" }),
@@ -481,6 +483,7 @@ test("matrix records a configuration failure and never invokes the engine when m
 
     const secretValue = "sk-proj-1234567890abcdefghijklmnop";
     const secretRunsDir = await runMatrix(matrixPath, join(root, "secret-runs"), {
+      allowLegacyTestConfig: true,
       casesDir,
       engineFor: () => ({ name: "mock", async review() { calls++; return completed(); } }),
       manifestPreparer: async (ctx) => ({

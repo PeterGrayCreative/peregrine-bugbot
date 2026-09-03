@@ -26,7 +26,7 @@ import { assertOpaqueCaseId } from "./case-isolation.js";
 const RECORD_KEYS = new Set([
   "schemaVersion", "attemptId", "caseName", "caseKind", "configName", "repeat",
   "caseCorpus", "startedAt", "finishedAt", "attemptDurationMs", "outcome",
-  "runner", "evaluationProvenance",
+  "runner", "evaluationProvenance", "experimentId", "experimentManifestSha256",
 ]);
 const GRADED_KEYS = new Set([...RECORD_KEYS, "matches", "falsePositiveIndexes"]);
 const LEGACY_SCHEMA_V1_RECORD_KEYS = new Set([
@@ -35,7 +35,8 @@ const LEGACY_SCHEMA_V1_RECORD_KEYS = new Set([
 ]);
 const LEGACY_SCHEMA_V1_GRADED_KEYS = new Set([...LEGACY_SCHEMA_V1_RECORD_KEYS, "matches", "falsePositiveIndexes"]);
 const PRE_TELEMETRY_RECORD_KEYS = new Set([...RECORD_KEYS].filter((key) =>
-  key !== "runner" && key !== "attemptDurationMs"));
+  key !== "runner" && key !== "attemptDurationMs" &&
+  key !== "experimentId" && key !== "experimentManifestSha256"));
 const PRE_TELEMETRY_GRADED_KEYS = new Set([...PRE_TELEMETRY_RECORD_KEYS, "matches", "falsePositiveIndexes"]);
 const PRE_TELEMETRY_USAGE_KEYS = new Set([
   "inputTokens", "cachedInputTokens", "outputTokens", "reasoningOutputTokens", "costUsd",
@@ -78,9 +79,12 @@ export interface PreTelemetryMatrixRunManifest {
 }
 export type PreTelemetryRunRecord = Omit<RunRecord, "runner" | "attemptDurationMs">;
 export type PreTelemetryGradedRun = Omit<GradedRun, "runner" | "attemptDurationMs">;
-type ComparableRunRecord = Pick<RunRecord, "caseKind" | "startedAt" | "finishedAt" | "evaluationProvenance" | "outcome">;
+type ComparableRunRecord = Pick<RunRecord,
+  "experimentId" | "experimentManifestSha256" | "caseKind" | "startedAt" | "finishedAt" |
+  "evaluationProvenance" | "outcome"
+>;
 type ComparableGradedRun = Pick<GradedRun,
-  "caseKind" | "startedAt" | "finishedAt" | "evaluationProvenance" |
+  "experimentId" | "experimentManifestSha256" | "caseKind" | "startedAt" | "finishedAt" | "evaluationProvenance" |
   "outcome" | "matches" | "falsePositiveIndexes"
 >;
 
@@ -265,6 +269,8 @@ export function assertGradedMatchesRun(
 ): void {
   if (run.outcome.status !== "completed") throw new Error(`${source}: graded artifact cannot match a failed run`);
   for (const [field, actual, expected] of [
+    ["experimentId", graded.experimentId, run.experimentId],
+    ["experimentManifestSha256", graded.experimentManifestSha256, run.experimentManifestSha256],
     ["caseKind", graded.caseKind, run.caseKind],
     ["startedAt", graded.startedAt, run.startedAt],
     ["finishedAt", graded.finishedAt, run.finishedAt],
@@ -534,8 +540,18 @@ function parseRecordFields(root: Record<string, unknown>, source: string): RunRe
       throw new Error(`${source}.outcome.result.raw.manifest does not match manifest provenance output`);
     }
   }
+  const experimentId = root.experimentId === undefined
+    ? undefined
+    : sha256Hex(root.experimentId, `${source}.experimentId`);
+  const experimentManifestSha256 = root.experimentManifestSha256 === undefined
+    ? undefined
+    : sha256Hex(root.experimentManifestSha256, `${source}.experimentManifestSha256`);
+  if ((experimentId === undefined) !== (experimentManifestSha256 === undefined)) {
+    throw new Error(`${source}: experimentId and experimentManifestSha256 must appear together`);
+  }
   const record: RunRecord = {
     schemaVersion: 1,
+    ...(experimentId === undefined ? {} : { experimentId, experimentManifestSha256 }),
     attemptId: strictString(root.attemptId, `${source}.attemptId`, 200),
     caseName: parsedCaseName,
     caseKind: parsedCaseKind,

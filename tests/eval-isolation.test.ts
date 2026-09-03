@@ -586,7 +586,11 @@ test("matrix creates and cleans a fresh checkout for every attempt, including fa
   };
 
   try {
-    await runMatrix(matrixPath, join(root, "runs"), { casesDir, engineFor: () => engine });
+    await runMatrix(matrixPath, join(root, "runs"), {
+      allowLegacyTestConfig: true,
+      casesDir,
+      engineFor: () => engine,
+    });
     assert.equal(calls, 4);
     assert.equal(new Set(paths).size, 4);
     assert.ok(paths.every((path) => !existsSync(path)), "every attempt checkout should be removed");
@@ -613,6 +617,7 @@ test("empty selected corpora produce a safe zero-attempt manifest", async () => 
   let calls = 0;
   try {
     const runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+      allowLegacyTestConfig: true,
       casesDir,
       engineFor: () => ({ name: "claude", async review() { calls++; return completed("claude"); } }),
     });
@@ -640,7 +645,10 @@ test("case discovery rejects missing specs and non-canonical directory layouts",
     );
     try {
       await assert.rejects(
-        () => runMatrix(matrixPath, join(root, "runs"), { casesDir }),
+        () => runMatrix(matrixPath, join(root, "runs"), {
+          allowLegacyTestConfig: true,
+          casesDir,
+        }),
         scenario === "missing-spec" ? /missing case\.json/ : /descriptive case IDs are forbidden/,
       );
       assert.equal(existsSync(join(root, "runs")), false);
@@ -668,6 +676,7 @@ test("leaking cases, structural smoke, and uncontained live runs never invoke an
     const engine: Engine = { name: "claude", async review() { calls++; return completed("claude"); } };
     try {
       const runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+        allowLegacyTestConfig: true,
         casesDir,
         engineFor: () => engine,
       });
@@ -707,6 +716,7 @@ test("leakage failures do not echo answer IDs or paths into records or stdout", 
   console.log = (...values: unknown[]) => { captured += `${values.map(String).join(" ")}\n`; };
   try {
     runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+      allowLegacyTestConfig: true,
       casesDir,
       engineFor: () => ({ name: "mock", async review() { calls++; return completed(); } }),
     });
