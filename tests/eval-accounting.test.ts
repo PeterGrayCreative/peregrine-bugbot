@@ -17,9 +17,13 @@ import { materializeCase } from "../eval/case-isolation.js";
 import { readCaseGroundTruth } from "../eval/case-truth.js";
 import {
   assertGradedMatchesRun,
+  isPreTelemetryMatrixRunManifest,
   parseGradedRun,
   parseLegacySchemaV1GradedRun,
   parseMatrixRunManifest,
+  parsePreTelemetryGradedRun,
+  parsePreTelemetryMatrixRunManifest,
+  parsePreTelemetryRunRecord,
   parseRunRecord,
 } from "../eval/artifacts.js";
 import { RunFailureError } from "../src/core/run-failure.js";
@@ -120,6 +124,15 @@ function validEvaluationProvenance(): EvaluationAttemptProvenance {
   };
 }
 
+function validProvenanceRecord(): RunRecord {
+  const record = validRecord();
+  record.evaluationProvenance = validEvaluationProvenance();
+  if (record.outcome.status !== "completed") throw new Error("expected completed fixture");
+  record.outcome.result.reviewedBaseRef = record.evaluationProvenance.history.baseRef;
+  record.outcome.result.reviewedHeadRef = record.evaluationProvenance.history.headRef;
+  return record;
+}
+
 test("evaluation artifact parsers reject schema, identity, enum, and numeric tampering", () => {
   const attempt = validAttempt();
   const manifest = {
@@ -179,8 +192,7 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
   assert.throws(() => parseRunRecord(badSchema, "record", attempt), /schemaVersion must be 1/);
   assert.throws(() => parseMatrixRunManifest({ ...manifest, surprise: true }), /unexpected field/);
 
-  const provenanceRecord = validRecord();
-  provenanceRecord.evaluationProvenance = validEvaluationProvenance();
+  const provenanceRecord = validProvenanceRecord();
   assert.deepEqual(
     parseRunRecord(provenanceRecord, "provenance record", attempt).evaluationProvenance,
     provenanceRecord.evaluationProvenance,
@@ -200,6 +212,72 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
   assert.throws(
     () => parseRunRecord(mismatchedManifest, "mismatched manifest", attempt),
     /output base provenance does not match history/,
+  );
+  const missingReviewedRef = structuredClone(provenanceRecord);
+  if (missingReviewedRef.outcome.status !== "completed") throw new Error("expected completed fixture");
+  delete missingReviewedRef.outcome.result.reviewedBaseRef;
+  assert.throws(
+    () => parseRunRecord(missingReviewedRef, "missing reviewed ref", attempt),
+    /reviewedBaseRef does not match history provenance/,
+  );
+  const mismatchedReviewedHead = structuredClone(provenanceRecord);
+  if (mismatchedReviewedHead.outcome.status !== "completed") throw new Error("expected completed fixture");
+  mismatchedReviewedHead.outcome.result.reviewedHeadRef = "9".repeat(40);
+  assert.throws(
+    () => parseRunRecord(mismatchedReviewedHead, "mismatched reviewed head", attempt),
+    /reviewedHeadRef does not match history provenance/,
+  );
+
+  const completedWithoutManifest = structuredClone(provenanceRecord);
+  delete completedWithoutManifest.evaluationProvenance!.manifest;
+  assert.throws(
+    () => parseRunRecord(completedWithoutManifest, "completed without manifest", attempt),
+    /manifest is required for a completed attempt/,
+  );
+  const failedWithoutManifest = structuredClone(completedWithoutManifest);
+  failedWithoutManifest.outcome = {
+    status: "failed",
+    failureKind: "provider",
+    message: "provider failed after preflight",
+    durationMs: 1,
+  };
+  assert.throws(
+    () => parseRunRecord(failedWithoutManifest, "failure without manifest", attempt),
+    /manifest is required for a post-preflight failure/,
+  );
+  failedWithoutManifest.outcome.failureKind = "configuration";
+  assert.doesNotThrow(
+    () => parseRunRecord(failedWithoutManifest, "preflight configuration failure", attempt),
+  );
+
+  const historicalMismatch = structuredClone(provenanceRecord);
+  const history = historicalMismatch.evaluationProvenance!.history;
+  history.materialization = "historical-sanitized-export";
+  history.historicalSource = {
+    sourceIdentitySha256: "6".repeat(64),
+    sourceBaseRef: history.baseRef,
+    sourceHeadRef: history.headRef,
+    sourceMergeBase: history.baseRef,
+    sourceBaseTree: "7".repeat(40),
+    sourceHeadTree: history.headTree,
+    baseCommitIsMergeBase: true,
+    baseTreeMatches: true,
+    headTreeMatches: true,
+  };
+  assert.throws(
+    () => parseRunRecord(historicalMismatch, "historical mismatch", attempt),
+    /historicalSource trees must match reproduced history trees/,
+  );
+
+  const secretManifest = structuredClone(provenanceRecord);
+  const secret = "sk-proj-1234567890abcdefghijklmnop";
+  secretManifest.evaluationProvenance!.manifest!.output += `secret-token=${secret}\n`;
+  secretManifest.evaluationProvenance!.manifest!.outputSha256 = sha256(
+    secretManifest.evaluationProvenance!.manifest!.output,
+  );
+  assert.throws(
+    () => parseRunRecord(secretManifest, "secret manifest", attempt),
+    /secret pattern/,
   );
 
   const graded = {
@@ -473,6 +551,90 @@ test("pre-corpus P1 schema-v1 artifacts remain readable only as legacy incomplet
   }
 });
 
+test("PR3 pre-telemetry schema-v1 artifacts grade and report only as legacy incomplete", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-pr3-artifact-test-"));
+  const runsDir = join(root, "runs");
+  const casesDir = join(root, "cases");
+  const fixtureDir = resolve("tests/fixtures/eval/pr3-pre-telemetry");
+  mkdirSync(runsDir);
+  mkdirSync(join(casesDir, "legacy-pr3-case"), { recursive: true });
+  for (const file of ["matrix-manifest.json", "attempt-000001.json"]) {
+    writeFileSync(join(runsDir, file), readFileSync(join(fixtureDir, file)));
+  }
+  writeFileSync(
+    join(casesDir, "legacy-pr3-case", "ground_truth.json"),
+    JSON.stringify({
+      bugs: [{
+        id: "bug-1",
+        file: "src/value.ts",
+        startLine: 1,
+        endLine: 1,
+        description: "invalid value",
+      }],
+    }),
+  );
+
+  try {
+    const manifestValue: unknown = JSON.parse(
+      readFileSync(join(fixtureDir, "matrix-manifest.json"), "utf8"),
+    );
+    assert.equal(isPreTelemetryMatrixRunManifest(manifestValue), true);
+    const manifest = parsePreTelemetryMatrixRunManifest(manifestValue, "PR3 manifest fixture");
+    assert.throws(
+      () => parseMatrixRunManifest(manifestValue, "strict telemetry manifest"),
+      /runner is invalid/,
+    );
+
+    const recordValue: unknown = JSON.parse(
+      readFileSync(join(fixtureDir, "attempt-000001.json"), "utf8"),
+    );
+    assert.doesNotThrow(() => parsePreTelemetryRunRecord(
+      recordValue,
+      "PR3 record fixture",
+      manifest.expectedAttempts[0],
+    ));
+    assert.throws(
+      () => parseRunRecord(recordValue, "strict telemetry record"),
+      /must include model, promptSha256, durationMs, and usage/,
+    );
+    const telemetryEraStage = structuredClone(recordValue) as {
+      outcome: { result: { raw: { breadth: Record<string, unknown> } } };
+    };
+    telemetryEraStage.outcome.result.raw.breadth.model = "claude-haiku";
+    assert.throws(
+      () => parsePreTelemetryRunRecord(telemetryEraStage, "mixed-era record"),
+      /unexpected field.*model/,
+    );
+
+    await gradeRuns(runsDir, casesDir);
+    const gradedPath = join(runsDir, "attempt-000001.graded.json");
+    const gradedValue = JSON.parse(readFileSync(gradedPath, "utf8")) as Record<string, unknown>;
+    assert.equal("runner" in gradedValue, false);
+    assert.doesNotThrow(() => parsePreTelemetryGradedRun(
+      gradedValue,
+      gradedPath,
+      manifest.expectedAttempts[0],
+    ));
+
+    const [stats] = await buildReport(runsDir, { casesDir });
+    assert.equal(stats?.config, "claude-pr3-route");
+    assert.equal(stats?.runner, null);
+    assert.equal(stats?.corpus, "development");
+    assert.equal(stats?.completeness, "legacy-incomplete");
+    assert.equal(stats?.benchmarkKind, "legacy-unknown");
+    assert.equal(stats?.completedRuns, 1);
+    assert.equal(stats?.expectedRuns, null);
+    assert.equal(stats?.completionRate, null);
+    assert.equal(stats?.recallMean, null);
+    assert.equal(stats?.costPerCaseMean, null);
+    assert.equal(stats?.incurredCostUsdTotal, null);
+    assert.equal(stats?.durationSecMean, null);
+    assert.equal(stats?.telemetryExpectedRuns, null);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("failed-only P1 schema-v1 folders report legacy incomplete instead of disappearing", async () => {
   const root = mkdtempSync(join(tmpdir(), "peregrine-p1-failed-artifact-test-"));
   const runsDir = join(root, "runs");
@@ -577,6 +739,8 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
         }],
         usage: {},
         durationMs: 10,
+        reviewedBaseRef: ctx.baseRef,
+        reviewedHeadRef: ctx.headRef,
       };
     },
   };
@@ -769,7 +933,12 @@ test("malformed or missing truth remains failed and makes mixed denominators una
     matrixPath,
     JSON.stringify({ repeats: 1, configs: [{ name: "mock", runner: "mock" }] }),
   );
-  const engine: Engine = { name: "mock", async review() { return completedClean(); } };
+  const engine: Engine = {
+    name: "mock",
+    async review(ctx) {
+      return { ...completedClean(), reviewedBaseRef: ctx.baseRef, reviewedHeadRef: ctx.headRef };
+    },
+  };
   try {
     const runsDir = await runMatrix(matrixPath, join(root, "runs"), {
       casesDir,

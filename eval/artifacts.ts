@@ -3,6 +3,7 @@ import { MAX_MANIFEST_CHARS } from "../src/core/manifest.js";
 import { parseEngineResult } from "../src/core/review-result.js";
 import { RUN_FAILURE_KINDS } from "../src/core/run-failure.js";
 import { combineUsage, parseUsage, sha256 } from "../src/core/telemetry.js";
+import { assertNoSecrets } from "../src/security/secrets.js";
 import {
   CASE_CORPORA,
   type CaseCorpus,
@@ -26,6 +27,11 @@ const RECORD_KEYS = new Set([
 const GRADED_KEYS = new Set([...RECORD_KEYS, "matches", "falsePositiveIndexes"]);
 const LEGACY_SCHEMA_V1_RECORD_KEYS = new Set([...RECORD_KEYS].filter((key) => key !== "caseCorpus" && key !== "runner"));
 const LEGACY_SCHEMA_V1_GRADED_KEYS = new Set([...LEGACY_SCHEMA_V1_RECORD_KEYS, "matches", "falsePositiveIndexes"]);
+const PRE_TELEMETRY_RECORD_KEYS = new Set([...RECORD_KEYS].filter((key) => key !== "runner"));
+const PRE_TELEMETRY_GRADED_KEYS = new Set([...PRE_TELEMETRY_RECORD_KEYS, "matches", "falsePositiveIndexes"]);
+const PRE_TELEMETRY_USAGE_KEYS = new Set([
+  "inputTokens", "cachedInputTokens", "outputTokens", "reasoningOutputTokens", "costUsd",
+]);
 
 export type LegacyRunAttempt = Omit<RunAttempt, "corpus" | "expectedBugCount" | "runner">;
 export interface LegacyMatrixRunManifest {
@@ -35,6 +41,20 @@ export interface LegacyMatrixRunManifest {
 }
 export type LegacySchemaV1RunRecord = Omit<RunRecord, "caseCorpus" | "runner">;
 export type LegacySchemaV1GradedRun = Omit<GradedRun, "caseCorpus" | "runner">;
+export type PreTelemetryRunAttempt = Omit<RunAttempt, "runner">;
+export interface PreTelemetryMatrixRunManifest {
+  schemaVersion: 1;
+  createdAt: string;
+  expectedAttempts: PreTelemetryRunAttempt[];
+  providerNetworkIsolation: Partial<Record<RunRecord["runner"], NetworkIsolationCapability>>;
+}
+export type PreTelemetryRunRecord = Omit<RunRecord, "runner">;
+export type PreTelemetryGradedRun = Omit<GradedRun, "runner">;
+type ComparableRunRecord = Pick<RunRecord, "caseKind" | "startedAt" | "finishedAt" | "evaluationProvenance" | "outcome">;
+type ComparableGradedRun = Pick<GradedRun,
+  "caseKind" | "startedAt" | "finishedAt" | "evaluationProvenance" |
+  "outcome" | "matches" | "falsePositiveIndexes"
+>;
 
 export function parseMatrixRunManifest(value: unknown, source = "matrix manifest"): MatrixRunManifest {
   const root = object(value, source);
@@ -78,6 +98,47 @@ export function parseLegacyMatrixRunManifest(
     parseLegacyAttempt(attempt, `${source}.expectedAttempts[${index}]`));
   assertUniqueAttempts(expectedAttempts, source);
   return { schemaVersion: 1, createdAt, expectedAttempts };
+}
+
+/**
+ * PR3 emitted schema-v1 artifacts after corpus isolation was introduced but
+ * before the manifest and records captured runner identity or telemetry
+ * provenance. Keep this exact writer-era shape separate from both P1 and the
+ * current strict format so it can be inspected without becoming comparable.
+ */
+export function isPreTelemetryMatrixRunManifest(value: unknown): boolean {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const root = value as Record<string, unknown>;
+  if (!sameKeys(root, new Set(["schemaVersion", "createdAt", "expectedAttempts", "providerNetworkIsolation"]))) {
+    return false;
+  }
+  if (!Array.isArray(root.expectedAttempts)) return false;
+  return root.expectedAttempts.every((attempt) => {
+    if (!attempt || typeof attempt !== "object" || Array.isArray(attempt)) return false;
+    return sameKeys(
+      attempt as Record<string, unknown>,
+      new Set(["id", "caseName", "configName", "repeat", "file", "corpus", "expectedBugCount"]),
+    );
+  });
+}
+
+export function parsePreTelemetryMatrixRunManifest(
+  value: unknown,
+  source = "pre-telemetry matrix manifest",
+): PreTelemetryMatrixRunManifest {
+  const root = object(value, source);
+  onlyKeys(root, new Set(["schemaVersion", "createdAt", "expectedAttempts", "providerNetworkIsolation"]), source);
+  if (root.schemaVersion !== 1) throw new Error(`${source}.schemaVersion must be 1`);
+  const createdAt = isoDate(root.createdAt, `${source}.createdAt`);
+  if (!Array.isArray(root.expectedAttempts)) throw new Error(`${source}.expectedAttempts must be an array`);
+  const expectedAttempts = root.expectedAttempts.map((attempt, index) =>
+    parsePreTelemetryAttempt(attempt, `${source}.expectedAttempts[${index}]`));
+  assertUniqueAttempts(expectedAttempts, source);
+  const providerNetworkIsolation = parseNetworkIsolation(
+    root.providerNetworkIsolation,
+    `${source}.providerNetworkIsolation`,
+  );
+  return { schemaVersion: 1, createdAt, expectedAttempts, providerNetworkIsolation };
 }
 
 export function parseRunRecord(value: unknown, source: string, expected?: RunAttempt): RunRecord {
@@ -129,7 +190,41 @@ export function parseLegacySchemaV1GradedRun(
   return { ...record, outcome: record.outcome, matches, falsePositiveIndexes };
 }
 
-export function assertGradedMatchesRun(graded: GradedRun, run: RunRecord, source: string): void {
+export function parsePreTelemetryRunRecord(
+  value: unknown,
+  source: string,
+  expected?: PreTelemetryRunAttempt,
+): PreTelemetryRunRecord {
+  const root = object(value, source);
+  onlyKeys(root, PRE_TELEMETRY_RECORD_KEYS, source);
+  const record = parsePreTelemetryRecordFields(root, source);
+  if (expected) assertPreTelemetryAttemptIdentity(record, expected, source);
+  return record;
+}
+
+export function parsePreTelemetryGradedRun(
+  value: unknown,
+  source: string,
+  expected?: PreTelemetryRunAttempt,
+): PreTelemetryGradedRun {
+  const root = object(value, source);
+  onlyKeys(root, PRE_TELEMETRY_GRADED_KEYS, source);
+  const record = parsePreTelemetryRecordFields(root, source);
+  if (record.outcome.status !== "completed") throw new Error(`${source}.outcome must be completed`);
+  if (expected) assertPreTelemetryAttemptIdentity(record, expected, source);
+  const { matches, falsePositiveIndexes } = parseGradeFields(
+    root,
+    record.outcome.result.findings.length,
+    source,
+  );
+  return { ...record, outcome: record.outcome, matches, falsePositiveIndexes };
+}
+
+export function assertGradedMatchesRun(
+  graded: ComparableGradedRun,
+  run: ComparableRunRecord,
+  source: string,
+): void {
   if (run.outcome.status !== "completed") throw new Error(`${source}: graded artifact cannot match a failed run`);
   for (const [field, actual, expected] of [
     ["caseKind", graded.caseKind, run.caseKind],
@@ -222,6 +317,30 @@ function parseAttempt(value: unknown, source: string): RunAttempt {
   };
 }
 
+function parsePreTelemetryAttempt(value: unknown, source: string): PreTelemetryRunAttempt {
+  const root = object(value, source);
+  onlyKeys(
+    root,
+    new Set(["id", "caseName", "configName", "repeat", "file", "corpus", "expectedBugCount"]),
+    source,
+  );
+  const id = strictString(root.id, `${source}.id`, 200);
+  if (!/^attempt-[a-z0-9-]+$/i.test(id)) throw new Error(`${source}.id is not a safe attempt id`);
+  const file = strictString(root.file, `${source}.file`, 240);
+  if (file !== `${id}.json`) throw new Error(`${source}.file must equal ${id}.json`);
+  return {
+    id,
+    caseName: strictString(root.caseName, `${source}.caseName`, 500),
+    configName: strictString(root.configName, `${source}.configName`, 500),
+    repeat: positiveSafeInteger(root.repeat, `${source}.repeat`),
+    file,
+    corpus: corpus(root.corpus, `${source}.corpus`),
+    expectedBugCount: root.expectedBugCount === null
+      ? null
+      : nonNegativeSafeInteger(root.expectedBugCount, `${source}.expectedBugCount`),
+  };
+}
+
 function parseLegacyAttempt(value: unknown, source: string): LegacyRunAttempt {
   const root = object(value, source);
   onlyKeys(root, new Set(["id", "caseName", "configName", "repeat", "file"]), source);
@@ -281,6 +400,7 @@ function parseRecordFields(root: Record<string, unknown>, source: string): RunRe
   const evaluationProvenance = root.evaluationProvenance === undefined
     ? undefined
     : parseEvaluationProvenance(root.evaluationProvenance, `${source}.evaluationProvenance`);
+  validateOutcomeProvenance(outcome, evaluationProvenance, source);
   return {
     schemaVersion: 1,
     attemptId: strictString(root.attemptId, `${source}.attemptId`, 200),
@@ -314,6 +434,7 @@ function parseLegacySchemaV1RecordFields(
   const evaluationProvenance = root.evaluationProvenance === undefined
     ? undefined
     : parseEvaluationProvenance(root.evaluationProvenance, `${source}.evaluationProvenance`);
+  validateOutcomeProvenance(outcome, evaluationProvenance, source);
   return {
     schemaVersion: 1,
     attemptId: strictString(root.attemptId, `${source}.attemptId`, 200),
@@ -326,6 +447,137 @@ function parseLegacySchemaV1RecordFields(
     ...(evaluationProvenance ? { evaluationProvenance } : {}),
     outcome,
   };
+}
+
+function parsePreTelemetryRecordFields(
+  root: Record<string, unknown>,
+  source: string,
+): PreTelemetryRunRecord {
+  if (root.schemaVersion !== 1) throw new Error(`${source}.schemaVersion must be 1`);
+  const outcome = parsePreTelemetryOutcome(root.outcome, `${source}.outcome`);
+  const startedAt = isoDate(root.startedAt, `${source}.startedAt`);
+  const finishedAt = isoDate(root.finishedAt, `${source}.finishedAt`);
+  if (Date.parse(finishedAt) < Date.parse(startedAt)) {
+    throw new Error(`${source}.finishedAt must not precede startedAt`);
+  }
+  const evaluationProvenance = root.evaluationProvenance === undefined
+    ? undefined
+    : parseEvaluationProvenance(root.evaluationProvenance, `${source}.evaluationProvenance`);
+  validateOutcomeProvenance(outcome, evaluationProvenance, source);
+  return {
+    schemaVersion: 1,
+    attemptId: strictString(root.attemptId, `${source}.attemptId`, 200),
+    caseName: strictString(root.caseName, `${source}.caseName`, 500),
+    caseKind: caseKind(root.caseKind, `${source}.caseKind`),
+    configName: strictString(root.configName, `${source}.configName`, 500),
+    repeat: positiveSafeInteger(root.repeat, `${source}.repeat`),
+    caseCorpus: corpus(root.caseCorpus, `${source}.caseCorpus`),
+    startedAt,
+    finishedAt,
+    ...(evaluationProvenance ? { evaluationProvenance } : {}),
+    outcome,
+  };
+}
+
+function parsePreTelemetryOutcome(value: unknown, source: string): RunRecord["outcome"] {
+  const root = object(value, source);
+  if (root.status === "completed") {
+    onlyKeys(root, new Set(["status", "result"]), source);
+    const result = parseEngineResult(root.result, `${source}.result`);
+    validatePreTelemetryEngineResult(root.result, result, `${source}.result`);
+    return { status: "completed", result };
+  }
+  if (root.status !== "failed") throw new Error(`${source}.status must be completed or failed`);
+  onlyKeys(root, new Set(["status", "failureKind", "message", "durationMs"]), source);
+  if (!RUN_FAILURE_KINDS.includes(root.failureKind as (typeof RUN_FAILURE_KINDS)[number])) {
+    throw new Error(`${source}.failureKind is invalid`);
+  }
+  return {
+    status: "failed",
+    failureKind: root.failureKind as (typeof RUN_FAILURE_KINDS)[number],
+    message: strictString(root.message, `${source}.message`, 4000),
+    durationMs: nonNegativeSafeInteger(root.durationMs, `${source}.durationMs`),
+  };
+}
+
+function validatePreTelemetryEngineResult(
+  value: unknown,
+  result: ReturnType<typeof parseEngineResult>,
+  source: string,
+): void {
+  const root = object(value, source);
+  parsePreTelemetryUsage(root.usage, `${source}.usage`);
+  const raw = object(root.raw, `${source}.raw`);
+  onlyKeys(raw, new Set(["manifest", "breadth", "investigation"]), `${source}.raw`);
+  boundedText(raw.manifest, `${source}.raw.manifest`, MAX_MANIFEST_CHARS);
+  const breadth = parsePreTelemetryStage(raw.breadth, `${source}.raw.breadth`, true);
+  const investigation = parsePreTelemetryStage(raw.investigation, `${source}.raw.investigation`, false);
+  const expectedUsage = combinePreTelemetryUsage(breadth, investigation, result.engine);
+  if (!isDeepStrictEqual(expectedUsage, result.usage)) {
+    throw new Error(`${source}.usage does not match pre-telemetry stage usage`);
+  }
+}
+
+function parsePreTelemetryStage(
+  value: unknown,
+  source: string,
+  outputRequired: boolean,
+): ReturnType<typeof parseUsage> {
+  const root = object(value, source);
+  onlyKeys(root, new Set(["output", "usage", "durationMs"]), source);
+  if (outputRequired && root.output === undefined) throw new Error(`${source}.output is required`);
+  nonNegativeSafeInteger(root.durationMs, `${source}.durationMs`);
+  return parsePreTelemetryUsage(root.usage, `${source}.usage`);
+}
+
+function parsePreTelemetryUsage(value: unknown, source: string): ReturnType<typeof parseUsage> {
+  const root = object(value, source);
+  onlyKeys(root, PRE_TELEMETRY_USAGE_KEYS, source);
+  return parseUsage(root, source);
+}
+
+function combinePreTelemetryUsage(
+  left: ReturnType<typeof parseUsage>,
+  right: ReturnType<typeof parseUsage>,
+  engine: RunRecord["runner"],
+): ReturnType<typeof parseUsage> {
+  const combined: Record<string, number> = {};
+  for (const key of PRE_TELEMETRY_USAGE_KEYS) {
+    const field = key as "inputTokens" | "cachedInputTokens" | "outputTokens" |
+      "reasoningOutputTokens" | "costUsd";
+    const values = [left[field], right[field]].filter((item): item is number => item !== undefined);
+    if (values.length === 0) continue;
+    const total = values.reduce((sum, item) => sum + item, 0);
+    if (!Number.isFinite(total) || (field !== "costUsd" && !Number.isSafeInteger(total))) {
+      throw new Error(`pre-telemetry ${field} aggregate is not safely representable`);
+    }
+    // Codex's writer omitted zero aggregate token values and did not aggregate
+    // cost. Claude preserved observed zeroes and provider-reported cost.
+    if (engine === "codex" && (field === "costUsd" || total === 0)) continue;
+    combined[field] = total;
+  }
+  return parseUsage(combined, "combined pre-telemetry usage");
+}
+
+function validateOutcomeProvenance(
+  outcome: RunRecord["outcome"],
+  provenance: EvaluationAttemptProvenance | undefined,
+  source: string,
+): void {
+  if (!provenance) return;
+  if (outcome.status === "completed") {
+    if (!provenance.manifest) {
+      throw new Error(`${source}.evaluationProvenance.manifest is required for a completed attempt`);
+    }
+    if (outcome.result.reviewedBaseRef !== provenance.history.baseRef) {
+      throw new Error(`${source}.outcome.result.reviewedBaseRef does not match history provenance`);
+    }
+    if (outcome.result.reviewedHeadRef !== provenance.history.headRef) {
+      throw new Error(`${source}.outcome.result.reviewedHeadRef does not match history provenance`);
+    }
+  } else if (outcome.failureKind !== "configuration" && !provenance.manifest) {
+    throw new Error(`${source}.evaluationProvenance.manifest is required for a post-preflight failure`);
+  }
 }
 
 function parseEvaluationProvenance(value: unknown, source: string): EvaluationAttemptProvenance {
@@ -357,6 +609,8 @@ function parseHistoryProvenance(value: unknown, source: string): EvaluationHisto
   const baseRef = gitObjectId(root.baseRef, objectFormat, `${source}.baseRef`);
   const headRef = gitObjectId(root.headRef, objectFormat, `${source}.headRef`);
   const mergeBase = gitObjectId(root.mergeBase, objectFormat, `${source}.mergeBase`);
+  const baseTree = gitObjectId(root.baseTree, objectFormat, `${source}.baseTree`);
+  const headTree = gitObjectId(root.headTree, objectFormat, `${source}.headTree`);
   if (mergeBase !== baseRef) throw new Error(`${source}.mergeBase must equal baseRef`);
   if (root.commitCount !== 2) throw new Error(`${source}.commitCount must be 2`);
   requireTrue(root.baseIsMergeBase, `${source}.baseIsMergeBase`);
@@ -371,6 +625,11 @@ function parseHistoryProvenance(value: unknown, source: string): EvaluationHisto
   if ((root.materialization === "historical-sanitized-export") !== (historicalSource !== undefined)) {
     throw new Error(`${source}.historicalSource must appear only for historical materialization`);
   }
+  if (historicalSource && (
+    historicalSource.sourceBaseTree !== baseTree || historicalSource.sourceHeadTree !== headTree
+  )) {
+    throw new Error(`${source}.historicalSource trees must match reproduced history trees`);
+  }
   return {
     schemaVersion: 1,
     materialization: root.materialization,
@@ -378,8 +637,8 @@ function parseHistoryProvenance(value: unknown, source: string): EvaluationHisto
     baseRef,
     headRef,
     mergeBase,
-    baseTree: gitObjectId(root.baseTree, objectFormat, `${source}.baseTree`),
-    headTree: gitObjectId(root.headTree, objectFormat, `${source}.headTree`),
+    baseTree,
+    headTree,
     commitCount: 2,
     baseIsMergeBase: true,
     checkedOutTreeMatchesHead: true,
@@ -436,6 +695,7 @@ function parseManifestProvenance(
     throw new Error(`${source}.entryPoint must be prepareReviewManifest`);
   }
   const output = boundedText(root.output, `${source}.output`, MAX_MANIFEST_CHARS);
+  assertNoSecrets(output, `${source}.output`);
   const outputSha256 = sha256Hex(root.outputSha256, `${source}.outputSha256`);
   if (outputSha256 !== sha256(output)) throw new Error(`${source}.outputSha256 does not match output`);
   if (!(root.profileSource === "none" || root.profileSource === "merge-base snapshot" ||
@@ -688,6 +948,22 @@ function assertLegacyAttemptIdentity(
   }
 }
 
+function assertPreTelemetryAttemptIdentity(
+  record: PreTelemetryRunRecord,
+  expected: PreTelemetryRunAttempt,
+  source: string,
+): void {
+  for (const [field, actual, wanted] of [
+    ["attemptId", record.attemptId, expected.id],
+    ["caseName", record.caseName, expected.caseName],
+    ["configName", record.configName, expected.configName],
+    ["repeat", record.repeat, expected.repeat],
+    ["caseCorpus", record.caseCorpus, expected.corpus],
+  ] as const) {
+    if (actual !== wanted) throw new Error(`${source}.${field} does not match pre-telemetry matrix manifest`);
+  }
+}
+
 function runner(value: unknown, source: string): RunRecord["runner"] {
   if (!(value === "claude" || value === "codex" || value === "mock")) throw new Error(`${source} is invalid`);
   return value;
@@ -711,6 +987,11 @@ function withoutUndefined(value: unknown): unknown {
 function onlyKeys(value: Record<string, unknown>, allowed: Set<string>, source: string): void {
   const unexpected = Object.keys(value).filter((key) => !allowed.has(key));
   if (unexpected.length > 0) throw new Error(`${source}: unexpected field(s): ${unexpected.join(", ")}`);
+}
+
+function sameKeys(value: Record<string, unknown>, expected: Set<string>): boolean {
+  const keys = Object.keys(value);
+  return keys.length === expected.size && keys.every((key) => expected.has(key));
 }
 
 function strictString(value: unknown, source: string, max: number): string {

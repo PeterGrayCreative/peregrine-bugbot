@@ -14,20 +14,26 @@ import { formatUsd } from "../src/core/telemetry.js";
 import {
   assertGradedMatchesRun,
   isLegacyMatrixRunManifest,
+  isPreTelemetryMatrixRunManifest,
   parseGradedRun,
   parseLegacyCompletedRun,
   parseLegacyMatrixRunManifest,
   parseLegacySchemaV1GradedRun,
   parseLegacySchemaV1RunRecord,
   parseMatrixRunManifest,
+  parsePreTelemetryGradedRun,
+  parsePreTelemetryMatrixRunManifest,
+  parsePreTelemetryRunRecord,
   parseRunRecord,
   type LegacyMatrixRunManifest,
+  type PreTelemetryMatrixRunManifest,
 } from "./artifacts.js";
 
 type LegacyGradedRun = Omit<GradedRun, "schemaVersion" | "attemptId" | "finishedAt" | "outcome" | "caseCorpus" | "runner"> & {
   result: EngineResult;
 };
 type ReportCostSource = "provider" | "estimated" | "mixed" | "mock" | "unknown" | null;
+type ScoredRun = Pick<GradedRun, "outcome" | "matches" | "falsePositiveIndexes">;
 
 export interface ConfigStats {
   config: string;
@@ -92,9 +98,18 @@ export async function buildReport(
     try {
       stats = trackedStats(dir, casesDir, parseMatrixRunManifest(manifestValue, manifestPath));
     } catch (error) {
-      if (!isLegacyMatrixRunManifest(manifestValue)) throw error;
-      const legacyManifest = parseLegacyMatrixRunManifest(manifestValue, manifestPath);
-      stats = legacyStats(dir, legacyManifest);
+      if (isPreTelemetryMatrixRunManifest(manifestValue)) {
+        stats = preTelemetryStats(
+          dir,
+          casesDir,
+          parsePreTelemetryMatrixRunManifest(manifestValue, manifestPath),
+        );
+      } else if (isLegacyMatrixRunManifest(manifestValue)) {
+        const legacyManifest = parseLegacyMatrixRunManifest(manifestValue, manifestPath);
+        stats = legacyStats(dir, legacyManifest);
+      } else {
+        throw error;
+      }
     }
   } else {
     stats = legacyStats(dir);
@@ -109,6 +124,73 @@ export async function buildReport(
   writeFileSync(join(dir, "benchmark.html"), renderHtml(stats));
   printStats(stats, dir);
   return stats;
+}
+
+function preTelemetryStats(
+  dir: string,
+  casesDir: string,
+  manifest: PreTelemetryMatrixRunManifest,
+): ConfigStats[] {
+  const declaredFiles = new Set(manifest.expectedAttempts.flatMap((attempt) => [
+    attempt.file,
+    attempt.file.replace(/\.json$/, ".graded.json"),
+  ]));
+  const undeclared = readdirSync(dir).filter((file) =>
+    file.endsWith(".json") && file !== "matrix-manifest.json" && file !== "benchmark.json" &&
+    !declaredFiles.has(file));
+  if (undeclared.length > 0) {
+    throw new Error(`run artifacts not declared by pre-telemetry matrix manifest: ${undeclared.join(", ")}`);
+  }
+  const byConfig = groupBy(
+    manifest.expectedAttempts,
+    (attempt) => `${attempt.configName}\0${attempt.corpus}`,
+  );
+  return [...byConfig.values()].map((attempts) => {
+    const completed: ScoredRun[] = [];
+    const failed: Array<Extract<RunRecord["outcome"], { status: "failed" }>> = [];
+    for (const attempt of attempts) {
+      const rawPath = join(dir, attempt.file);
+      if (!existsSync(rawPath)) continue;
+      const raw = parsePreTelemetryRunRecord(
+        JSON.parse(readFileSync(rawPath, "utf8")),
+        rawPath,
+        attempt,
+      );
+      if (raw.outcome.status === "failed") {
+        failed.push(raw.outcome);
+        continue;
+      }
+      const gradedPath = rawPath.replace(/\.json$/, ".graded.json");
+      if (!existsSync(gradedPath)) {
+        throw new Error(`${attempt.file} completed but has no graded artifact — run eval:grade first.`);
+      }
+      const graded = parsePreTelemetryGradedRun(
+        JSON.parse(readFileSync(gradedPath, "utf8")),
+        gradedPath,
+        attempt,
+      );
+      assertGradedMatchesRun(graded, raw, gradedPath);
+      const groundTruthIds = loadGroundTruthIds(casesDir, attempt.caseName);
+      const gradedIds = Object.keys(graded.matches);
+      if (groundTruthIds.length !== gradedIds.length ||
+        groundTruthIds.some((id) => !Object.prototype.hasOwnProperty.call(graded.matches, id))) {
+        throw new Error(`${gradedPath}.matches does not match ground truth bug IDs`);
+      }
+      completed.push(graded);
+    }
+    return calculateStats({
+      config: attempts[0]!.configName,
+      runner: null,
+      corpus: attempts[0]!.corpus,
+      benchmarkKind: "legacy-unknown",
+      completeness: "legacy-incomplete",
+      expectedRuns: null,
+      completed,
+      failed,
+      missing: null,
+      failureInclusiveRecalls: null,
+    });
+  });
 }
 
 function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest): ConfigStats[] {
@@ -278,7 +360,7 @@ function calculateStats(args: {
   benchmarkKind: ConfigStats["benchmarkKind"];
   completeness: ConfigStats["completeness"];
   expectedRuns: number | null;
-  completed: GradedRun[];
+  completed: ScoredRun[];
   failed: Array<Extract<RunRecord["outcome"], { status: "failed" }>>;
   missing: number | null;
   failureInclusiveRecalls: number[] | null;
@@ -421,7 +503,7 @@ function calculateStats(args: {
   };
 }
 
-function runRecall(run: GradedRun): number | null {
+function runRecall(run: ScoredRun): number | null {
   const total = Object.keys(run.matches).length;
   if (total === 0) return null;
   return Object.values(run.matches).filter((match) => match !== null).length / total;
@@ -523,7 +605,7 @@ function completeMean(values: number[], expected: number): number | null {
   return total === null ? null : total / values.length;
 }
 
-function rawStage(run: GradedRun, stage: "breadth" | "investigation"): Record<string, unknown> | undefined {
+function rawStage(run: ScoredRun, stage: "breadth" | "investigation"): Record<string, unknown> | undefined {
   const raw = run.outcome.result.raw;
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
   const value = (raw as Record<string, unknown>)[stage];
@@ -532,13 +614,13 @@ function rawStage(run: GradedRun, stage: "breadth" | "investigation"): Record<st
     : undefined;
 }
 
-function stageNumbers(runs: GradedRun[], stage: "breadth" | "investigation", field: string): number[] {
+function stageNumbers(runs: ScoredRun[], stage: "breadth" | "investigation", field: string): number[] {
   return runs
     .map((run) => rawStage(run, stage)?.[field])
     .filter((value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0);
 }
 
-function stageUsageNumbers(runs: GradedRun[], stage: "breadth" | "investigation", field: string): number[] {
+function stageUsageNumbers(runs: ScoredRun[], stage: "breadth" | "investigation", field: string): number[] {
   return runs
     .map((run) => {
       const usage = rawStage(run, stage)?.usage;
@@ -624,7 +706,7 @@ function formatAvailability(stats: ConfigStats): string {
 }
 
 function incurredCosts(
-  completed: GradedRun[],
+  completed: ScoredRun[],
   failed: Array<Extract<RunRecord["outcome"], { status: "failed" }>>,
 ): { costs: number[]; sources: Array<Exclude<ReportCostSource, null> | undefined>; observedAttempts: number } {
   const costs: number[] = [];

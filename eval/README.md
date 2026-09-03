@@ -41,8 +41,14 @@ older versions that have no attempt manifest, and P1 schema-v1 artifacts from
 before manifest attempts recorded corpus and runner identity, are labeled
 `legacy/incomplete`; their completion and failure-inclusive metrics are
 intentionally unavailable.
+PR3 schema-v1 artifacts that recorded corpus and reproducible-history
+provenance but predate manifest runner identity and provider-correct stage
+telemetry are recognized only by their exact writer-era shape. They are also
+`legacy/incomplete`: grading remains available, but their old aggregate usage,
+cost, duration, and recall are excluded from behavioral comparisons.
 Their telemetry denominator and all comparison telemetry means are also
-reported as `n/a` because the expected attempt count cannot be reconstructed.
+reported as `n/a` because these formats do not establish a comparison-safe
+attempt and telemetry identity.
 
 Runs using the deterministic mock are labeled `structural-only`. They verify
 fixture transport, accounting, and expected marker detection; their marker
