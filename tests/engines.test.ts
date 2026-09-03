@@ -109,7 +109,7 @@ test("Claude runner performs isolated, measurable breadth and investigation stag
   ctx.evaluationIsolation = {
     providerHome: "/tmp/peregrine-test-provider-home",
     providerAssetsRoot: resolve("."),
-    validatePrompt(_prompt, stage) { validatedStages.push(stage); },
+    validatePrompt({ stage }) { validatedStages.push(stage); },
   };
   const reviewed = await createClaudeEngine(fake).review(ctx);
   assert.equal(calls.length, 2);
@@ -117,6 +117,11 @@ test("Claude runner performs isolated, measurable breadth and investigation stag
   assert.ok(calls.every((call) => call.args.includes("--plugin-dir")));
   assert.ok(calls.every((call) => call.args.includes("--json-schema")));
   assert.ok(calls.every((call) => !call.args.includes("--agents")));
+  assert.ok(calls.every((call) => call.args.includes("--bare")));
+  assert.ok(calls.every((call) => call.args.includes("--disable-slash-commands")));
+  assert.ok(calls.every((call) => call.args.includes("--strict-mcp-config")));
+  assert.ok(calls.every((call) => call.args.includes("--no-chrome")));
+  assert.ok(calls.every((call) => call.args[call.args.indexOf("--setting-sources") + 1] === ""));
   assert.equal(calls[0]?.args[calls[0].args.indexOf("--model") + 1], context().config.runners.claude.breadthModel);
   assert.equal(calls[1]?.args[calls[1].args.indexOf("--model") + 1], context().config.runners.claude.investigationModel);
   assert.match(calls[0]?.args[calls[0].args.indexOf("-p") + 1] ?? "", /^PEREGRINE_ROLE: breadth-worker/);
@@ -163,12 +168,16 @@ test("Codex runner performs isolated breadth and investigation stages", async ()
   ctx.evaluationIsolation = {
     providerHome: "/tmp/peregrine-test-provider-home",
     providerAssetsRoot: resolve("."),
-    validatePrompt(_prompt, stage) { validatedStages.push(stage); },
+    validatePrompt({ stage }) { validatedStages.push(stage); },
   };
   const reviewed = await createCodexEngine(fake).review(ctx);
   assert.equal(calls.length, 2);
   assert.ok(calls.every((call) => call.args.includes("read-only")));
   assert.ok(calls.every((call) => call.args.includes("--ignore-user-config")));
+  assert.ok(calls.every((call) => call.args.includes("--ignore-rules")));
+  assert.ok(calls.every((call) => call.args.includes("project_doc_max_bytes=0")));
+  assert.ok(calls.every((call) => call.args.includes("project_doc_fallback_filenames=[]")));
+  assert.ok(calls.every((call) => call.args.some((arg) => /^projects\..+\.trust_level="untrusted"$/.test(arg))));
   assert.match(calls[0]?.stdin ?? "", /^PEREGRINE_ROLE: breadth-worker/);
   assert.match(calls[1]?.stdin ?? "", /^PEREGRINE_ROLE: investigation-worker/);
   assert.match(calls[1]?.stdin ?? "", /breadth pass produced the ledger/);
@@ -177,6 +186,90 @@ test("Codex runner performs isolated breadth and investigation stages", async ()
   assert.equal(reviewed.usage.inputTokens, 22);
   assert.equal(reviewed.usage.cachedInputTokens, 4);
   assert.deepEqual(validatedStages, ["breadth", "investigation"]);
+});
+
+test("evaluation prompt validation failures use stable configuration outcomes at both stages", async () => {
+  for (const runner of ["claude", "codex"] as const) {
+    for (const rejectedStage of ["breadth", "investigation"] as const) {
+      let calls = 0;
+      const fake: typeof exec = async (_cmd, args) => {
+        calls++;
+        if (runner === "claude") {
+          const schema = JSON.parse(args[args.indexOf("--json-schema") + 1]!) as { title?: string };
+          return {
+            stdout: JSON.stringify({
+              structured_output: schema.title === "Peregrine Breadth Sweep" ? breadth : { findings: [] },
+            }),
+            stderr: "",
+            code: 0,
+            timedOut: false,
+          };
+        }
+        const output = args[args.indexOf("--output-last-message") + 1]!;
+        writeFileSync(output, JSON.stringify({ ...breadth, model: "gpt-5.6-luna" }));
+        return { stdout: "", stderr: "", code: 0, timedOut: false };
+      };
+      const ctx = context();
+      ctx.evaluationIsolation = {
+        providerHome: "/tmp/peregrine-test-provider-home",
+        providerAssetsRoot: resolve("."),
+        validatePrompt({ stage }) {
+          if (stage === rejectedStage) throw new Error("forced prompt leak");
+        },
+      };
+      const engine = runner === "claude" ? createClaudeEngine(fake) : createCodexEngine(fake);
+      await assert.rejects(
+        () => engine.review(ctx),
+        (error: unknown) =>
+          error instanceof RunFailureError &&
+          error.kind === "configuration" &&
+          error.message.includes(`evaluation ${rejectedStage} prompt isolation failed`),
+      );
+      assert.equal(calls, rejectedStage === "breadth" ? 0 : 1);
+    }
+  }
+});
+
+test("production engine invocations retain their original prompts, assets, argv, and environment", async () => {
+  const claudeCalls: Array<{ args: string[]; options: Parameters<typeof exec>[2] }> = [];
+  const claudeFake: typeof exec = async (_cmd, args, options) => {
+    claudeCalls.push({ args, options });
+    const schema = JSON.parse(args[args.indexOf("--json-schema") + 1]!) as { title?: string };
+    return {
+      stdout: JSON.stringify({
+        structured_output: schema.title === "Peregrine Breadth Sweep" ? breadth : { findings: [] },
+      }),
+      stderr: "",
+      code: 0,
+      timedOut: false,
+    };
+  };
+  await createClaudeEngine(claudeFake).review(context());
+  assert.equal(claudeCalls.length, 2);
+  assert.ok(claudeCalls.every(({ args }) => !args.includes("--bare") && !args.includes("--strict-mcp-config")));
+  assert.ok(claudeCalls.every(({ args }) => args[args.indexOf("--plugin-dir") + 1] === resolve(".")));
+  assert.ok(claudeCalls.every(({ options }) => JSON.stringify(options?.env) === JSON.stringify(providerEnvironment("claude"))));
+  assert.match(claudeCalls[0]?.args[claudeCalls[0].args.indexOf("-p") + 1] ?? "", /^PEREGRINE_ROLE: breadth-worker/);
+
+  const codexCalls: Array<{ args: string[]; stdin?: string; env?: Record<string, string> }> = [];
+  const codexFake: typeof exec = async (_cmd, args, options) => {
+    codexCalls.push({ args, stdin: options?.stdin, env: options?.env });
+    const output = args[args.indexOf("--output-last-message") + 1]!;
+    const schema = args[args.indexOf("--output-schema") + 1]!;
+    writeFileSync(
+      output,
+      schema.endsWith("breadth-result.schema.json")
+        ? JSON.stringify({ ...breadth, model: "gpt-5.6-luna" })
+        : JSON.stringify({ findings: [] }),
+    );
+    return { stdout: "", stderr: "", code: 0, timedOut: false };
+  };
+  await createCodexEngine(codexFake).review(context());
+  assert.equal(codexCalls.length, 2);
+  assert.ok(codexCalls.every(({ args }) => !args.includes("--ignore-rules")));
+  assert.ok(codexCalls.every(({ args }) => !args.includes("project_doc_max_bytes=0")));
+  assert.ok(codexCalls.every(({ env }) => JSON.stringify(env) === JSON.stringify(providerEnvironment("codex"))));
+  assert.match(codexCalls[0]?.stdin ?? "", /^PEREGRINE_ROLE: breadth-worker/);
 });
 
 test("provider process failures are surfaced instead of becoming clean reviews", async () => {

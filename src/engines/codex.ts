@@ -31,16 +31,38 @@ async function runStage(args: {
   output: string;
   prompt: string;
   stage: "breadth" | "investigation";
+  untrustedModelText?: string;
   timeoutMs: number;
 }): Promise<CodexStageResult> {
   const started = Date.now();
-  args.ctx.evaluationIsolation?.validatePrompt(args.prompt, args.stage);
+  try {
+    args.ctx.evaluationIsolation?.validatePrompt({
+      prompt: args.prompt,
+      stage: args.stage,
+      untrustedModelText: args.untrustedModelText,
+    });
+  } catch (error) {
+    throw new RunFailureError(
+      "configuration",
+      `evaluation ${args.stage} prompt isolation failed: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
+    );
+  }
+  const isolationArgs = args.ctx.evaluationIsolation
+    ? [
+        "--ignore-rules",
+        "--config", "project_doc_max_bytes=0",
+        "--config", "project_doc_fallback_filenames=[]",
+        "--config", `projects.${JSON.stringify(args.ctx.repoPath)}.trust_level="untrusted"`,
+      ]
+    : [];
   const result = await args.run(
     "codex",
     [
       "exec",
       "--ephemeral",
       "--ignore-user-config",
+      ...isolationArgs,
       "--strict-config",
       "--sandbox",
       "read-only",
@@ -168,6 +190,7 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
           throw new RunFailureError("timeout", `codex review exhausted its ${cfg.timeoutMs}ms timeout`);
         }
         const reviewOutput = join(outDir, "review.json");
+        const breadthText = JSON.stringify(breadthPayload);
         const investigation = await runStage({
           run,
           ctx,
@@ -181,10 +204,11 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
             ctx,
             skillDir,
             `A separate ${cfg.breadthModel}/${cfg.breadthEffort} breadth pass produced the ledger below. Investigate and adjudicate on ${cfg.investigationModel}/${cfg.investigationEffort}.`,
-            JSON.stringify(breadthPayload),
+            breadthText,
             manifest,
           ),
           stage: "investigation",
+          untrustedModelText: breadthText,
           timeoutMs: remaining,
         });
 

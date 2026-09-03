@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import {
   cpSync,
   existsSync,
@@ -22,6 +23,7 @@ import type {
   RunnerName,
 } from "../src/types.js";
 import { exec } from "../src/util/exec.js";
+import { parseGroundTruth } from "./case-truth.js";
 
 const OPAQUE_CASE_ID = /^case-[a-f0-9]{8,32}$/;
 const COMMIT_OID = /^[a-f0-9]{40,64}$/;
@@ -34,19 +36,28 @@ const ANSWER_MARKERS = [
   /\blater(?:_|-|\s)+fix\b/i,
   /\bcurator(?:_|-|\s)+notes?\b/i,
 ];
+const NON_ANSWER_GROUND_TRUTH_KEYS = new Set([
+  "file", "lane", "invariantlane", "severity", "curatedseverity",
+  "disposition", "expecteddisposition", "riskclass", "expectedriskclass",
+  "status", "corpus", "language", "repository",
+]);
+const ANSWER_GROUND_TRUTH_KEY =
+  /(?:^id$|bugid|rootcause|description|precondition|impact|explanation|canary|expected|answer|needle|reason)/;
 
 export interface LeakagePolicy {
   caseId: string;
   corpus: CaseCorpus;
   forbiddenTerms: string[];
+  documentedMarkerHashes: ReadonlySet<string>;
 }
 
 export interface MaterializedCase {
   repoPath: string;
+  diffPath: string;
   baseRef: string;
   headRef: string;
   diffText: string;
-  exactDiffSha256: string;
+  materializedDiffSha256: string;
   evaluationIsolation: EvaluationIsolation;
   cleanup(): void;
 }
@@ -65,16 +76,15 @@ export function leakagePolicyForCase(caseDir: string, spec: CaseSpec): LeakagePo
   } catch (error) {
     throw new Error(`ground truth must be valid JSON: ${error instanceof Error ? error.message : String(error)}`);
   }
-  if (!value || typeof value !== "object" || !Array.isArray((value as { bugs?: unknown }).bugs)) {
-    throw new Error("ground truth must contain a bugs array");
-  }
-  const forbiddenTerms = (value as { bugs: unknown[] }).bugs.map((bug, index) => {
-    if (!bug || typeof bug !== "object" || typeof (bug as { id?: unknown }).id !== "string") {
-      throw new Error(`ground truth bug ${index} needs a string id`);
-    }
-    return (bug as { id: string }).id;
-  });
-  return { caseId: spec.id, corpus: spec.corpus, forbiddenTerms };
+  parseGroundTruth(value);
+  const forbiddenTerms: string[] = [];
+  collectAnswerTerms(value, forbiddenTerms);
+  return {
+    caseId: spec.id,
+    corpus: spec.corpus,
+    forbiddenTerms: [...new Set(forbiddenTerms.map(normalizeLeakageText).filter(Boolean))],
+    documentedMarkerHashes: readDocumentedMarkerHashes(caseRoot, spec),
+  };
 }
 
 export function readSanitizedMetadata(
@@ -123,15 +133,15 @@ export function networkIsolationCapability(runner: RunnerName): NetworkIsolation
   }
   if (runner === "claude") {
     return {
-      status: "limited",
+      status: "unavailable",
       mechanism:
-        "The runner exposes only Read, Grep, and Glob tools, but cannot independently attest provider-host network namespace isolation.",
+        "CLI customization surfaces are disabled, but external filesystem and network containment are not attested; live matrix attempts fail closed.",
     };
   }
   return {
-    status: "limited",
+    status: "unavailable",
     mechanism:
-      "The runner requests the Codex read-only sandbox, but cannot independently attest provider-host network namespace isolation.",
+      "The runner requests an untrusted read-only project with local guidance disabled, but external read/network containment is not attested; live matrix attempts fail closed.",
   };
 }
 
@@ -143,19 +153,32 @@ export function assertRunnerMayUseCorpus(corpus: CaseCorpus, runner: RunnerName)
   }
 }
 
+export function assertLiveProviderIsolationAvailable(runner: RunnerName): void {
+  if (runner === "mock") return;
+  throw new Error(
+    `live ${runner} evaluation is disabled until an externally enforced filesystem and network allowlist contains the checkout, sanitized assets, and output only`,
+  );
+}
+
 export function assertLeakageFreeText(
   label: string,
-  value: string,
+  value: string | Buffer,
   policy: LeakagePolicy,
+  options: { allowDocumentedMarkers?: boolean } = {},
 ): void {
+  const raw = typeof value === "string" ? Buffer.from(value) : value;
+  const normalized = normalizeLeakageText(raw.toString("utf8"));
   for (const term of policy.forbiddenTerms) {
-    if (term && value.toLocaleLowerCase().includes(term.toLocaleLowerCase())) {
-      throw new Error(`${label} contains forbidden answer-bearing term ${JSON.stringify(term)}`);
+    if (term && normalized.includes(term)) {
+      // Never echo the curator-only answer term into run artifacts or logs.
+      throw new Error(`${label} contains forbidden answer-bearing term`);
     }
   }
   if (policy.corpus !== "structural-smoke") {
     for (const marker of ANSWER_MARKERS) {
-      if (marker.test(value)) {
+      if (marker.test(raw.toString("utf8"))) {
+        const hash = createHash("sha256").update(raw).digest("hex");
+        if (options.allowDocumentedMarkers && policy.documentedMarkerHashes.has(hash)) continue;
         throw new Error(`${label} contains undocumented answer-bearing marker ${marker.source}`);
       }
     }
@@ -168,67 +191,94 @@ export function assertLeakageFreePath(path: string, policy: LeakagePolicy): void
 
 export function createPromptValidator(
   policy: LeakagePolicy,
-): (prompt: string, stage: "breadth" | "investigation") => void {
-  return (prompt, stage) => {
-    // The investigation prompt contains the untrusted breadth ledger. A model
-    // may legitimately use words such as BUG or FIXME in that ledger, so only
-    // runner-owned canaries remain meaningful at this second boundary.
-    const phasePolicy = stage === "breadth"
-      ? policy
-      : { ...policy, corpus: "structural-smoke" as const };
-    assertLeakageFreeText(`final ${stage} provider prompt`, prompt, phasePolicy);
+): EvaluationIsolation["validatePrompt"] {
+  return ({ prompt, stage, untrustedModelText }) => {
+    let trustedPrompt = prompt;
+    if (stage === "investigation") {
+      if (!untrustedModelText || !prompt.includes(untrustedModelText)) {
+        throw new Error("investigation prompt does not contain its declared model-output boundary");
+      }
+      // Generic marker language may legitimately be produced by breadth. Scan
+      // that boundary only for case-specific answer terms, then remove the
+      // exact bytes before validating runner-owned instructions and context.
+      const modelOnlyPolicy = { ...policy, corpus: "structural-smoke" as const };
+      assertLeakageFreeText("breadth model output", untrustedModelText, modelOnlyPolicy);
+      trustedPrompt = prompt.replace(untrustedModelText, "<validated-breadth-output>");
+    } else if (untrustedModelText !== undefined) {
+      throw new Error("breadth prompt cannot declare an embedded model-output boundary");
+    }
+    assertLeakageFreeText(`final ${stage} provider prompt`, trustedPrompt, policy);
   };
+}
+
+interface MaterializeOptions {
+  tempRoot?: string;
+  prepareProviderAssets?: boolean;
+  /** Test seam for setup and cleanup failure guarantees. */
+  assetPreparer?: typeof prepareProviderAssets;
+  removeAttempt?: (attemptRoot: string) => void;
 }
 
 export async function materializeCase(
   caseDir: string,
   spec: CaseSpec,
   policy: LeakagePolicy,
-  options: { tempRoot?: string; prepareProviderAssets?: boolean } = {},
+  options: MaterializeOptions = {},
 ): Promise<MaterializedCase> {
   assertOpaqueCaseId(spec.id);
   const caseRoot = realpathSync(caseDir);
   const diffPath = confinedFile(caseRoot, spec.diffFile, "diffFile");
   const expectedDiff = readFileSync(diffPath, "utf8");
   assertSafeDiffPaths(expectedDiff);
-  assertLeakageFreeText("review diff", expectedDiff, policy);
+  assertLeakageFreeText("review diff", expectedDiff, policy, { allowDocumentedMarkers: true });
 
   const attemptRoot = mkdtempSync(join(options.tempRoot ?? tmpdir(), "peregrine-eval-"));
-  const repoPath = join(attemptRoot, "checkout");
-  const providerHome = join(attemptRoot, "provider-home");
-  const providerAssetsRoot = join(attemptRoot, "provider-assets");
-  const templateDir = join(attemptRoot, "empty-git-template");
-  mkdirSync(repoPath);
-  mkdirSync(providerHome);
-  mkdirSync(join(providerHome, "tmp"));
-  mkdirSync(join(providerHome, "xdg-config"));
-  mkdirSync(join(providerHome, "xdg-cache"));
-  mkdirSync(join(providerHome, "xdg-data"));
-  mkdirSync(templateDir);
-  if (options.prepareProviderAssets === false) mkdirSync(providerAssetsRoot);
-  else prepareProviderAssets(providerAssetsRoot, policy);
-
   let cleaned = false;
   const cleanup = (): void => {
     if (cleaned) return;
+    try {
+      (options.removeAttempt ?? ((path) => rmSync(path, { recursive: true, force: true })))(attemptRoot);
+    } catch (error) {
+      throw new Error(
+        `isolated attempt cleanup failed: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error },
+      );
+    }
+    if (existsSync(attemptRoot)) throw new Error("isolated attempt cleanup did not remove its root");
     cleaned = true;
-    rmSync(attemptRoot, { recursive: true, force: true });
   };
 
+  const repoPath = join(attemptRoot, "checkout");
+  const materializedDiffPath = join(attemptRoot, "review.patch");
+  const providerHome = join(attemptRoot, "provider-home");
+  const providerAssetsRoot = join(attemptRoot, "provider-assets");
+  const templateDir = join(attemptRoot, "empty-git-template");
   try {
+    mkdirSync(repoPath);
+    mkdirSync(providerHome);
+    mkdirSync(join(providerHome, "tmp"));
+    mkdirSync(join(providerHome, "xdg-config"));
+    mkdirSync(join(providerHome, "xdg-cache"));
+    mkdirSync(join(providerHome, "xdg-data"));
+    mkdirSync(templateDir);
+    cpSync(diffPath, materializedDiffPath, { force: false, errorOnExist: true });
+    if (options.prepareProviderAssets === false) mkdirSync(providerAssetsRoot);
+    else (options.assetPreparer ?? prepareProviderAssets)(providerAssetsRoot, policy);
+
     if (spec.kind === "historical") {
       await materializeHistorical(spec, repoPath, attemptRoot, providerHome, templateDir);
     } else {
-      await materializeFixture(caseRoot, spec.fixtureDir, diffPath, repoPath, providerHome, templateDir);
+      await materializeFixture(caseRoot, spec.fixtureDir, materializedDiffPath, repoPath, providerHome, templateDir);
     }
 
     await assertSanitizedRepository(repoPath, providerHome);
     assertTreeSafe(repoPath, policy, { allowRootGit: true });
+    await assertReachableHistorySafe(repoPath, providerHome, policy);
     assertLeakageFreePath(realpathSync(repoPath), policy);
 
     const baseRef = await git(repoPath, ["rev-parse", "HEAD^"], providerHome);
     const headRef = await git(repoPath, ["rev-parse", "HEAD"], providerHome);
-    await assertPatchReproducesRange(repoPath, diffPath, baseRef, headRef, providerHome);
+    await assertPatchReproducesRange(repoPath, materializedDiffPath, baseRef, headRef, providerHome);
     const actualDiff = await git(repoPath, ["diff", "--no-ext-diff", `${baseRef}...${headRef}`], providerHome);
 
     const evaluationIsolation: EvaluationIsolation = {
@@ -238,15 +288,23 @@ export async function materializeCase(
     };
     return {
       repoPath,
+      diffPath: materializedDiffPath,
       baseRef,
       headRef,
       diffText: actualDiff,
-      exactDiffSha256: createHash("sha256").update(actualDiff).digest("hex"),
+      materializedDiffSha256: createHash("sha256").update(actualDiff).digest("hex"),
       evaluationIsolation,
       cleanup,
     };
   } catch (error) {
-    cleanup();
+    try {
+      cleanup();
+    } catch (cleanupError) {
+      throw new AggregateError(
+        [error, cleanupError],
+        `case materialization failed and cleanup also failed: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`,
+      );
+    }
     throw error;
   }
 }
@@ -290,6 +348,78 @@ function prepareProviderAssets(target: string, policy: LeakagePolicy): void {
     { ...policy, corpus: "structural-smoke" },
     { allowRootGit: false },
   );
+}
+
+function readDocumentedMarkerHashes(caseRoot: string, spec: CaseSpec): ReadonlySet<string> {
+  if (!spec.leakageExceptionsFile) return new Set();
+  const path = confinedFile(caseRoot, spec.leakageExceptionsFile, "leakageExceptionsFile");
+  let value: unknown;
+  try {
+    value = JSON.parse(readFileSync(path, "utf8"));
+  } catch (error) {
+    throw new Error(
+      `leakageExceptionsFile must be valid JSON: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("leakageExceptionsFile must contain an object");
+  }
+  const record = value as Record<string, unknown>;
+  if (record.version !== 1 || !Array.isArray(record.entries)) {
+    throw new Error("leakageExceptionsFile must contain version 1 and an entries array");
+  }
+  if (Object.keys(record).some((key) => key !== "version" && key !== "entries")) {
+    throw new Error("leakageExceptionsFile contains unsupported fields");
+  }
+  const hashes = new Set<string>();
+  record.entries.forEach((entry, index) => {
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) {
+      throw new Error(`leakage exception ${index} must be an object`);
+    }
+    const item = entry as Record<string, unknown>;
+    if (
+      Object.keys(item).some((key) => key !== "sha256" && key !== "reason") ||
+      typeof item.sha256 !== "string" ||
+      !/^[a-f0-9]{64}$/.test(item.sha256) ||
+      typeof item.reason !== "string" ||
+      item.reason.trim().length < 12
+    ) {
+      throw new Error(
+        `leakage exception ${index} needs only a lowercase sha256 and a substantive reason`,
+      );
+    }
+    if (hashes.has(item.sha256)) throw new Error(`duplicate leakage exception hash ${item.sha256}`);
+    hashes.add(item.sha256);
+  });
+  return hashes;
+}
+
+function collectAnswerTerms(value: unknown, output: string[], key?: string): void {
+  if (typeof value === "string") {
+    const normalizedKey = key?.replace(/[_-]/g, "").toLowerCase() ?? "";
+    // Do not turn generic schema vocabulary such as "high", "authorization",
+    // or "fix-in-pr" into global bans. IDs and answer prose are always denied;
+    // unknown future prose is denied once specific enough to be identifying.
+    if (
+      !NON_ANSWER_GROUND_TRUTH_KEYS.has(normalizedKey) &&
+      (ANSWER_GROUND_TRUTH_KEY.test(normalizedKey) || normalizeLeakageText(value).length >= 24)
+    ) {
+      output.push(value);
+    }
+    return;
+  }
+  if (Array.isArray(value)) {
+    value.forEach((entry) => collectAnswerTerms(entry, output, key));
+    return;
+  }
+  if (!value || typeof value !== "object") return;
+  for (const [childKey, child] of Object.entries(value as Record<string, unknown>)) {
+    collectAnswerTerms(child, output, childKey);
+  }
+}
+
+function normalizeLeakageText(value: string): string {
+  return value.normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
 async function materializeFixture(
@@ -404,6 +534,53 @@ async function assertSanitizedRepository(repoPath: string, providerHome: string)
   }
 }
 
+async function assertReachableHistorySafe(
+  repoPath: string,
+  providerHome: string,
+  policy: LeakagePolicy,
+): Promise<void> {
+  const commits = (await git(repoPath, ["rev-list", "--all"], providerHome)).split("\n").filter(Boolean);
+  const seenBlobs = new Set<string>();
+  for (const commit of commits) {
+    const commitObject = gitBuffer(repoPath, ["cat-file", "commit", commit], providerHome);
+    assertLeakageFreeText(`reachable commit ${commit}`, commitObject, policy);
+    const entries = gitBuffer(
+      repoPath,
+      ["ls-tree", "-r", "-z", "--full-tree", commit],
+      providerHome,
+    ).toString("utf8").split("\0").filter(Boolean);
+    for (const entry of entries) {
+      const separator = entry.indexOf("\t");
+      if (separator === -1) throw new Error("reachable Git tree contains an unparseable entry");
+      const header = entry.slice(0, separator).split(" ");
+      const objectType = header[1];
+      const oid = header[2];
+      const path = entry.slice(separator + 1);
+      assertLeakageFreeText(`reachable Git path ${path}`, path, policy);
+      if (objectType !== "blob" || !oid || seenBlobs.has(oid)) continue;
+      seenBlobs.add(oid);
+      const blob = gitBuffer(repoPath, ["cat-file", "blob", oid], providerHome);
+      assertLeakageFreeText(`reachable Git blob ${path}`, blob, policy, {
+        allowDocumentedMarkers: true,
+      });
+    }
+  }
+}
+
+function gitBuffer(cwd: string, args: string[], providerHome: string): Buffer {
+  try {
+    return execFileSync("git", args, {
+      cwd,
+      env: isolatedGitEnvironment(providerHome),
+      encoding: "buffer",
+      timeout: 60_000,
+      maxBuffer: 64 * 1024 * 1024,
+    });
+  } catch {
+    throw new Error(`git ${args[0] ?? "command"} failed while scanning reachable history`);
+  }
+}
+
 function assertTreeSafe(
   root: string,
   policy: LeakagePolicy | undefined,
@@ -421,6 +598,7 @@ function assertTreeSafe(
       }
       const full = join(directory, entry.name);
       const visiblePath = relative(rootReal, full);
+      if (policy) assertLeakageFreeText(`repository path ${visiblePath}`, visiblePath, policy);
       const stat = lstatSync(full);
       if (stat.isSymbolicLink()) throw new Error(`model-visible repository contains symlink ${visiblePath}`);
       if (stat.isDirectory()) {
@@ -431,7 +609,9 @@ function assertTreeSafe(
       const resolved = realpathSync(full);
       if (!isWithin(rootReal, resolved)) throw new Error(`model-visible file escapes repository: ${visiblePath}`);
       if (policy) {
-        assertLeakageFreeText(`repository file ${visiblePath}`, readFileSync(full).toString("utf8"), policy);
+        assertLeakageFreeText(`repository file ${visiblePath}`, readFileSync(full), policy, {
+          allowDocumentedMarkers: true,
+        });
       }
     }
   };
@@ -499,6 +679,15 @@ async function git(
   providerHome: string,
   date?: string,
 ): Promise<string> {
+  return (await gitRaw(cwd, args, providerHome, date)).trim();
+}
+
+async function gitRaw(
+  cwd: string,
+  args: string[],
+  providerHome: string,
+  date?: string,
+): Promise<string> {
   const result = await exec("git", args, {
     cwd,
     timeoutMs: 60_000,
@@ -508,7 +697,7 @@ async function git(
   if (result.code !== 0 || result.timedOut) {
     throw new Error(`git ${args[0] ?? "command"} failed: ${result.stderr || result.stdout}`);
   }
-  return result.stdout.trim();
+  return result.stdout;
 }
 
 function isolatedGitEnvironment(home: string, date?: string): Record<string, string> {

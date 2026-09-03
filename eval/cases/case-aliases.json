@@ -1,0 +1,10 @@
+{
+  "clean-error-propagation": "structural-smoke/case-00000001",
+  "clean-nullish-default": "structural-smoke/case-00000002",
+  "clean-rename": "structural-smoke/case-00000003",
+  "seeded-null-deref": "structural-smoke/case-00000004",
+  "seeded-pagination-overlap": "structural-smoke/case-00000005",
+  "seeded-stale-closure": "structural-smoke/case-00000006",
+  "seeded-swallowed-error": "structural-smoke/case-00000007",
+  "seeded-zero-fallback": "structural-smoke/case-00000008"
+}

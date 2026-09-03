@@ -2,12 +2,13 @@ import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type {
   EngineResult,
+  CaseCorpus,
   GradedRun,
-  GroundTruth,
   MatrixRunManifest,
   RunRecord,
 } from "../src/types.js";
 import type { RunFailureKind } from "../src/core/run-failure.js";
+import { readCaseGroundTruth } from "./case-truth.js";
 
 type LegacyGradedRun = Omit<GradedRun, "schemaVersion" | "attemptId" | "finishedAt" | "outcome"> & {
   result: EngineResult;
@@ -15,6 +16,7 @@ type LegacyGradedRun = Omit<GradedRun, "schemaVersion" | "attemptId" | "finished
 
 export interface ConfigStats {
   config: string;
+  corpus: CaseCorpus | "unknown";
   completeness: "tracked" | "legacy-incomplete";
   expectedRuns: number | null;
   runs: number;
@@ -61,35 +63,42 @@ export async function buildReport(
 }
 
 function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest): ConfigStats[] {
-  const byConfig = groupBy(manifest.expectedAttempts, (attempt) => attempt.configName);
-  const bugCounts = new Map<string, number>();
-  const countBugs = (caseName: string): number => {
-    const cached = bugCounts.get(caseName);
-    if (cached !== undefined) return cached;
-    const truth = JSON.parse(
-      readFileSync(join(casesDir, caseName, "ground_truth.json"), "utf8"),
-    ) as GroundTruth;
-    bugCounts.set(caseName, truth.bugs.length);
-    return truth.bugs.length;
+  const byConfig = groupBy(
+    manifest.expectedAttempts,
+    (attempt) => `${attempt.configName}\0${attempt.corpus ?? "unknown"}`,
+  );
+  const countBugs = (attempt: MatrixRunManifest["expectedAttempts"][number]): number | null => {
+    const snapshot = (attempt as { expectedBugCount?: number | null }).expectedBugCount;
+    if (snapshot !== undefined) return snapshot;
+    try {
+      return readCaseGroundTruth(casesDir, attempt.caseName).bugs.length;
+    } catch {
+      return null;
+    }
   };
 
-  return [...byConfig.entries()].map(([config, attempts]) => {
+  return [...byConfig.values()].map((attempts) => {
+    const config = attempts[0]!.configName;
+    const corpus = attempts[0]!.corpus ?? "unknown";
     const completed: GradedRun[] = [];
     const failed: Array<Extract<RunRecord["outcome"], { status: "failed" }>> = [];
     let missing = 0;
+    let denominatorUnavailable = false;
     const failureInclusiveRecalls: number[] = [];
 
     for (const attempt of attempts) {
+      const bugCount = countBugs(attempt);
+      if (bugCount === null) denominatorUnavailable = true;
       const rawPath = join(dir, attempt.file);
       if (!existsSync(rawPath)) {
         missing++;
-        if (countBugs(attempt.caseName) > 0) failureInclusiveRecalls.push(0);
+        if ((bugCount ?? 0) > 0) failureInclusiveRecalls.push(0);
         continue;
       }
       const raw = JSON.parse(readFileSync(rawPath, "utf8")) as RunRecord;
       if (raw.outcome.status === "failed") {
         failed.push(raw.outcome);
-        if (countBugs(attempt.caseName) > 0) failureInclusiveRecalls.push(0);
+        if ((bugCount ?? 0) > 0) failureInclusiveRecalls.push(0);
         continue;
       }
       const gradedPath = rawPath.replace(/\.json$/, ".graded.json");
@@ -104,12 +113,13 @@ function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest
 
     return calculateStats({
       config,
+      corpus,
       completeness: "tracked",
       expectedRuns: attempts.length,
       completed,
       failed,
       missing,
-      failureInclusiveRecalls,
+      failureInclusiveRecalls: denominatorUnavailable ? null : failureInclusiveRecalls,
     });
   });
 }
@@ -133,6 +143,7 @@ function legacyStats(dir: string): ConfigStats[] {
     );
     return calculateStats({
       config,
+      corpus: "unknown",
       completeness: "legacy-incomplete",
       expectedRuns: null,
       completed,
@@ -145,6 +156,7 @@ function legacyStats(dir: string): ConfigStats[] {
 
 function calculateStats(args: {
   config: string;
+  corpus: ConfigStats["corpus"];
   completeness: ConfigStats["completeness"];
   expectedRuns: number | null;
   completed: GradedRun[];
@@ -182,6 +194,7 @@ function calculateStats(args: {
 
   return {
     config: args.config,
+    corpus: args.corpus,
     completeness: args.completeness,
     expectedRuns: args.expectedRuns,
     runs: args.completed.length,
@@ -234,11 +247,11 @@ function renderHtml(stats: ConfigStats[]): string {
     .map((item, index) => {
       const x = 60 + (item.costPerCaseMean! / maxCost) * 480;
       const y = 320 - item.recallMean! * 280;
-      return `<circle cx="${x}" cy="${y}" r="6" fill="hsl(${(index * 67) % 360},70%,45%)"><title>${item.config}</title></circle>
-<text x="${x + 10}" y="${y + 4}" font-size="11">${item.config}</text>`;
+      return `<circle cx="${x}" cy="${y}" r="6" fill="hsl(${(index * 67) % 360},70%,45%)"><title>${item.config} · ${item.corpus}</title></circle>
+<text x="${x + 10}" y="${y + 4}" font-size="11">${item.config} · ${item.corpus}</text>`;
     })
     .join("\n");
-  const rows = stats.map((item) => `<tr><td>${item.config}</td><td>${formatCompletion(item)}</td>
+  const rows = stats.map((item) => `<tr><td>${item.config}</td><td>${item.corpus}</td><td>${formatCompletion(item)}</td>
 <td>${formatPercent(item.recallMean)} ± ${formatPercent(item.recallStd)}</td><td>${formatPercent(item.failureInclusiveRecallMean)}</td>
 <td>${formatNumber(item.fpPerCaseMean, 1)}</td><td>${formatCost(item.costPerCaseMean, item.costPerCaseStd)}</td>
 <td>${item.durationSecMean === null ? "n/a" : `${item.durationSecMean.toFixed(0)}s`}</td><td>${formatStages(item)}</td><td>${item.validFindingsPerDollar?.toFixed(1) ?? "—"}</td></tr>`).join("\n");
@@ -247,7 +260,7 @@ function renderHtml(stats: ConfigStats[]): string {
 <style>body{font-family:system-ui;margin:2rem;max-width:1050px}table{border-collapse:collapse;width:100%}
 td,th{border:1px solid #ddd;padding:6px 10px;text-align:left;font-size:14px}th{background:#f5f5f5}</style></head>
 <body><h1>peregrine-bugbot · model benchmark</h1>
-<table><tr><th>config</th><th>completion</th><th>conditional recall</th><th>failure-inclusive recall</th><th>FP/case</th><th>cost/case</th><th>time</th><th>breadth / investigation</th><th>valid findings / $</th></tr>
+<table><tr><th>config</th><th>corpus</th><th>completion</th><th>conditional recall</th><th>failure-inclusive recall</th><th>FP/case</th><th>cost/case</th><th>time</th><th>breadth / investigation</th><th>valid findings / $</th></tr>
 ${rows}</table>
 <h2>Cost vs recall — pick the knee</h2>
 <svg viewBox="0 0 600 360" width="600" style="border:1px solid #eee">
@@ -260,10 +273,10 @@ ${points}</svg>
 }
 
 function printStats(stats: ConfigStats[], dir: string): void {
-  console.log(`\n${"config".padEnd(28)} ${"completion".padEnd(35)} conditional  incl. failures  FP/case  $/case`);
+  console.log(`\n${"config".padEnd(24)} ${"corpus".padEnd(18)} ${"completion".padEnd(35)} conditional  incl. failures  FP/case  $/case`);
   for (const item of stats) {
     console.log(
-      `${item.config.padEnd(28)} ${formatCompletion(item).padEnd(35)} ${formatPercent(item.recallMean).padEnd(12)} ${formatPercent(item.failureInclusiveRecallMean).padEnd(14)} ${formatNumber(item.fpPerCaseMean, 1).padEnd(8)} ${formatCost(item.costPerCaseMean, item.costPerCaseStd)}`,
+      `${item.config.padEnd(24)} ${item.corpus.padEnd(18)} ${formatCompletion(item).padEnd(35)} ${formatPercent(item.recallMean).padEnd(12)} ${formatPercent(item.failureInclusiveRecallMean).padEnd(14)} ${formatNumber(item.fpPerCaseMean, 1).padEnd(8)} ${formatCost(item.costPerCaseMean, item.costPerCaseStd)}`,
     );
   }
   console.log(`\nReport: ${join(dir, "benchmark.html")}`);

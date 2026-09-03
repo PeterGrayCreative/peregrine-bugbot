@@ -5,6 +5,12 @@ const PROVIDER_KEYS: Record<"claude" | "codex", Set<string>> = {
   codex: new Set(["OPENAI_API_KEY"]),
 };
 
+const ISOLATED_PROVIDER_KEYS: Record<"claude" | "codex", Set<string>> = {
+  // Claude --bare explicitly disables OAuth and keychain reads.
+  claude: new Set(["ANTHROPIC_API_KEY"]),
+  codex: new Set(["OPENAI_API_KEY"]),
+};
+
 /** Keep normal process context but remove unrelated credentials from model subprocesses. */
 export function providerEnvironment(provider: "claude" | "codex"): Record<string, string> {
   const allowedSecrets = PROVIDER_KEYS[provider];
@@ -36,7 +42,7 @@ export function isolatedProviderEnvironment(
     const value = process.env[name];
     if (value !== undefined) environment[name] = value;
   }
-  for (const name of PROVIDER_KEYS[provider]) {
+  for (const name of ISOLATED_PROVIDER_KEYS[provider]) {
     const value = process.env[name];
     if (value !== undefined) environment[name] = value;
   }

@@ -30,6 +30,7 @@ eval/cases/
 ├── diff.patch         # runner-owned input, never copied into the checkout
 ├── ground_truth.json  # grader-owned input, never copied into the checkout
 ├── metadata.json      # optional sanitized title/body only
+├── leakage_exceptions.json # optional content hashes + curator reasons
 └── fixture/           # complete head-state tree for seeded/clean cases
 ```
 
@@ -39,6 +40,13 @@ all model-visible paths and metadata. Fixture cases use `fixtureDir`;
 historical cases use `repoSource`, `baseCommit`, and `headCommit`. Historical
 private sources should be supplied as local curator checkouts; `repoSource`
 may not embed credentials and the staging clone cannot use ambient credentials.
+`case-aliases.json` is a curator-only compatibility map so pre-isolation run
+artifacts with the former descriptive case names remain gradeable.
+When legitimate historical source contains a marker such as `BUG` or `FIXME`,
+`case.json` may name `leakageExceptionsFile`. Its version-1 entries contain
+only the exact artifact SHA-256 and a substantive curator reason. A stale,
+malformed, or non-matching hash does not bypass validation; exceptions never
+permit a ground-truth phrase or prompt marker.
 
 Build cases three ways:
 
@@ -66,23 +74,36 @@ no remotes, hooks, credentialed Git configuration, nested Git data, case
 artifacts, or commits newer than the reviewed head.
 
 Before provider inference, Peregrine scans the checkout path, repository tree,
-diff, sanitized metadata, and both final stage prompts for answer leakage. Live
+every reachable base/head Git blob (including binary and deleted files), diff,
+sanitized metadata, and both final stage prompts for answer leakage. Live
 cases fail closed on descriptive IDs, path traversal, symlinks, special files,
 answer artifacts, ground-truth IDs, and undocumented markers such as `BUG` and
 `FIXME`. The attempt manifest records whether provider-host network isolation
-is enforced, limited, or not applicable. Current Claude and Codex integrations
-record `limited`: tool/sandbox restrictions are present, but the runner cannot
-independently attest a provider-host network namespace. Do not admit a live
-case whose answer is publicly retrievable from supplied identifiers.
+is enforced, unavailable, or not applicable. Current Claude and Codex integrations
+record `unavailable`. CLI flags suppress local instructions, settings, hooks,
+rules, MCP configuration, and trust state where supported, but neither CLI
+attests a host filesystem allowlist or network namespace. Peregrine therefore
+fails all live matrix attempts closed before provider execution. Enabling live
+evaluation requires an externally enforced sandbox exposing only the sanitized
+checkout, sanitized assets, required output, and provider endpoint.
+Admin-managed provider policy may still apply and is not claimed as disabled;
+the host sandbox must prevent it from reaching curator-only material.
 
 Live provider processes also receive an attempt-specific `HOME`, XDG paths,
 temporary directory, and disabled global/system Git configuration. Ambient
 SSH agents, Git credential helpers, CLI home directories, proxy URLs, and
 unrelated credentials are not forwarded. Consequently, file-backed user-login
 sessions are not a supported eval authentication path: provide the selected
-provider's explicit environment credential (`ANTHROPIC_API_KEY`,
-`CLAUDE_CODE_OAUTH_TOKEN`, or `OPENAI_API_KEY`). A missing credential is a
+provider's explicit environment credential (`ANTHROPIC_API_KEY` or
+`OPENAI_API_KEY`). Claude's eval-only `--bare` mode intentionally disables
+OAuth and keychain authentication. A missing credential is a
 recorded provider failure, never a reason to fall back to the user's home.
+
+The isolation slice constructs the minimum fresh two-commit fixture needed by
+the existing review flow. Plan PR 3 remains responsible for exact textual diff
+equivalence, addition-only empty bases, original ancestry and merge-base proof,
+and fail-closed production-manifest provenance. Nothing in this slice is model
+quality evidence.
 
 ## Running
 
@@ -91,6 +112,12 @@ npm run eval:matrix                      # all configs × cases × repeats
 npm run eval:grade  -- --runs eval/runs/<dir>
 npm run eval:report -- --runs eval/runs/<dir>   # benchmark.json + benchmark.html
 ```
+
+Until genuine sanitized development and validation cases are admitted,
+`npm run eval:matrix` writes an empty manifest, prints that no provider process
+was started, and exits successfully. It never substitutes structural fixtures
+or presents synthetic results as model evidence. Reports group development and
+validation attempts separately.
 
 - Repeats (default 3, `eval/matrix.config.json`) are not optional — runs are
   stochastic, and single-run model comparisons will mislead you.

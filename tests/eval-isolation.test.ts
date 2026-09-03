@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   existsSync,
   mkdirSync,
@@ -17,6 +18,7 @@ import {
   assertLeakageFreePath,
   assertLeakageFreeText,
   assertOpaqueCaseId,
+  assertLiveProviderIsolationAvailable,
   createPromptValidator,
   leakagePolicyForCase,
   materializeCase,
@@ -51,7 +53,7 @@ test("fixture attempts use unique sanitized repositories with deterministic refs
     assert.notEqual(first.repoPath, second.repoPath);
     assert.equal(first.baseRef, second.baseRef);
     assert.equal(first.headRef, second.headRef);
-    assert.equal(first.exactDiffSha256, second.exactDiffSha256);
+    assert.equal(first.materializedDiffSha256, second.materializedDiffSha256);
     assert.equal(git(first.repoPath, "rev-list", "--all", "--count"), "2");
     assert.equal(git(first.repoPath, "remote"), "");
     assert.equal(readFileSync(join(first.repoPath, "src/value.ts"), "utf8"), HEAD);
@@ -65,7 +67,10 @@ test("fixture attempts use unique sanitized repositories with deterministic refs
       "empty-git-template",
       "provider-assets",
       "provider-home",
+      "review.patch",
     ]);
+    assert.equal(dirname(first.diffPath), firstRoot);
+    assert.notEqual(first.diffPath, join(caseDir, "diff.patch"));
 
     writeFileSync(join(first.repoPath, "src/value.ts"), "mutated\n");
     assert.equal(readFileSync(join(second.repoPath, "src/value.ts"), "utf8"), HEAD);
@@ -81,7 +86,7 @@ test("fixture attempts use unique sanitized repositories with deterministic refs
 test("historical attempts export only sanitized base and head trees", async () => {
   const root = mkdtempSync(join(tmpdir(), "peregrine-history-test-"));
   const source = join(root, "source");
-  const caseDir = join(root, "cases", "case-cafebabe");
+  const caseDir = join(root, "cases", "development", "case-cafebabe");
   mkdirSync(source, { recursive: true });
   git(source, "init", "-q", "-b", "main");
   git(source, "config", "user.name", "Curator");
@@ -106,7 +111,16 @@ test("historical attempts export only sanitized base and head trees", async () =
 
   mkdirSync(caseDir, { recursive: true });
   writeFileSync(join(caseDir, "diff.patch"), diff);
-  writeFileSync(join(caseDir, "ground_truth.json"), JSON.stringify({ bugs: [{ id: "truth-cafebabe" }] }));
+  writeFileSync(
+    join(caseDir, "ground_truth.json"),
+    JSON.stringify({ bugs: [{
+      id: "truth-cafebabe",
+      file: "src/value.ts",
+      startLine: 1,
+      endLine: 1,
+      description: "The historical change introduces the curated wrong count.",
+    }] }),
+  );
   writeFileSync(
     join(caseDir, "case.json"),
     JSON.stringify({
@@ -137,36 +151,227 @@ test("historical attempts export only sanitized base and head trees", async () =
   }
 });
 
+test("reachable deleted binary blobs are scanned before provider invocation", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-deleted-blob-test-"));
+  const source = join(root, "source");
+  const caseDir = join(root, "cases", "development", "case-b16b00b5");
+  const hiddenDescription = "Deleted binary contains the unreleased answer sentinel.";
+  mkdirSync(join(source, "assets"), { recursive: true });
+  git(source, "init", "-q", "-b", "main");
+  git(source, "config", "user.name", "Curator");
+  git(source, "config", "user.email", "curator@example.invalid");
+  writeFileSync(
+    join(source, "assets", "deleted.bin"),
+    Buffer.concat([Buffer.from([0, 1, 2]), Buffer.from(`${hiddenDescription}\0// BUG: hidden answer`)]),
+  );
+  git(source, "add", ".");
+  git(source, "commit", "-q", "-m", "source base");
+  const base = git(source, "rev-parse", "HEAD");
+  rmSync(join(source, "assets", "deleted.bin"));
+  git(source, "add", "--all");
+  git(source, "commit", "-q", "-m", "source head");
+  const head = git(source, "rev-parse", "HEAD");
+  const diff = git(source, "diff", "--binary", `${base}...${head}`) + "\n";
+
+  mkdirSync(caseDir, { recursive: true });
+  writeFileSync(join(caseDir, "diff.patch"), diff);
+  writeFileSync(
+    join(caseDir, "ground_truth.json"),
+    JSON.stringify({ bugs: [{
+      id: "binary-deletion-answer",
+      file: "assets/deleted.bin",
+      startLine: 1,
+      endLine: 1,
+      description: hiddenDescription,
+    }] }),
+  );
+  writeFileSync(
+    join(caseDir, "case.json"),
+    JSON.stringify({
+      id: "case-b16b00b5",
+      corpus: "development",
+      kind: "historical",
+      repoSource: source,
+      baseCommit: base,
+      headCommit: head,
+      diffFile: "diff.patch",
+    }),
+  );
+
+  try {
+    const spec = loadCaseSpec(caseDir);
+    await assert.rejects(
+      () => materializeCase(caseDir, spec, leakagePolicyForCase(caseDir, spec)),
+      /reachable Git blob .*forbidden answer-bearing term/,
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("content-addressed curator exceptions allow only an explicitly documented marker blob", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-marker-exception-"));
+  const caseDir = createFixtureCase(root, "case-e11e11e1", "development");
+  const marker = "// FIXME: retained historical terminology, not an answer\n";
+  writeFileSync(join(caseDir, "fixture", "src", "legacy.ts"), marker);
+  const specPath = join(caseDir, "case.json");
+  const specJson = JSON.parse(readFileSync(specPath, "utf8"));
+  specJson.leakageExceptionsFile = "leakage_exceptions.json";
+  writeFileSync(specPath, JSON.stringify(specJson));
+  const exceptionsPath = join(caseDir, "leakage_exceptions.json");
+  writeFileSync(
+    exceptionsPath,
+    JSON.stringify({
+      version: 1,
+      entries: [{ sha256: "0".repeat(64), reason: "Verified non-answer historical terminology." }],
+    }),
+  );
+  try {
+    let spec = loadCaseSpec(caseDir);
+    await assert.rejects(
+      () => materializeCase(caseDir, spec, leakagePolicyForCase(caseDir, spec)),
+      /undocumented answer-bearing marker/,
+    );
+    writeFileSync(
+      exceptionsPath,
+      JSON.stringify({
+        version: 1,
+        entries: [{
+          sha256: createHash("sha256").update(marker).digest("hex"),
+          reason: "Verified non-answer historical terminology.",
+        }],
+      }),
+    );
+    spec = loadCaseSpec(caseDir);
+    const materialized = await materializeCase(caseDir, spec, leakagePolicyForCase(caseDir, spec));
+    materialized.cleanup();
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("attempt cleanup is installed before asset setup and retries after removal failure", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-cleanup-guard-"));
+  const attempts = join(root, "attempts");
+  mkdirSync(attempts);
+  const caseDir = createFixtureCase(root, "case-c1ea4e55", "development");
+  const spec = loadCaseSpec(caseDir);
+  const policy = leakagePolicyForCase(caseDir, spec);
+  try {
+    await assert.rejects(
+      () => materializeCase(caseDir, spec, policy, {
+        tempRoot: attempts,
+        assetPreparer() { throw new Error("forced asset setup failure"); },
+      }),
+      /forced asset setup failure/,
+    );
+    assert.deepEqual(readdirSync(attempts), []);
+
+    await assert.rejects(
+      () => materializeCase(caseDir, spec, policy, {
+        tempRoot: attempts,
+        assetPreparer() { throw new Error("forced setup failure before provider"); },
+        removeAttempt() { throw new Error("forced setup cleanup failure"); },
+      }),
+      (error: unknown) =>
+        error instanceof AggregateError &&
+        error.message.includes("case materialization failed and cleanup also failed") &&
+        error.message.includes("forced setup cleanup failure"),
+    );
+    const leakedAttempt = readdirSync(attempts);
+    assert.equal(leakedAttempt.length, 1, "a failed removal remains visible for external cleanup");
+    rmSync(join(attempts, leakedAttempt[0]!), { recursive: true, force: true });
+
+    let failRemoval = true;
+    const materialized = await materializeCase(caseDir, spec, policy, {
+      tempRoot: attempts,
+      prepareProviderAssets: false,
+      removeAttempt(path) {
+        if (failRemoval) {
+          failRemoval = false;
+          throw new Error("forced removal failure");
+        }
+        rmSync(path, { recursive: true, force: true });
+      },
+    });
+    const attemptRoot = dirname(materialized.repoPath);
+    assert.throws(() => materialized.cleanup(), /isolated attempt cleanup failed.*forced removal failure/);
+    assert.equal(existsSync(attemptRoot), true);
+    materialized.cleanup();
+    assert.equal(existsSync(attemptRoot), false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("leakage validation rejects descriptive IDs, paths, prompts, metadata, and live answer markers", async () => {
   assert.throws(() => assertOpaqueCaseId("seeded-null-deref"), /descriptive case IDs are forbidden/);
   const policy = {
     caseId: "case-feedface",
     corpus: "development" as const,
     forbiddenTerms: ["truth-needle", "seeded-null-deref"],
+    documentedMarkerHashes: new Set<string>(),
   };
   assert.throws(() => assertLeakageFreePath("/tmp/seeded-null-deref", policy), /forbidden answer-bearing term/);
   assert.throws(
-    () => createPromptValidator(policy)("The answer is truth-needle", "breadth"),
+    () => createPromptValidator(policy)({ prompt: "The answer is truth-needle", stage: "breadth" }),
     /final breadth provider prompt/,
   );
   assert.doesNotThrow(() =>
-    createPromptValidator(policy)("Candidate says // BUG: check this", "investigation"),
+    createPromptValidator(policy)({
+      prompt: "Ledger: Candidate says // BUG: check this and mentions ground truth generically",
+      stage: "investigation",
+      untrustedModelText: "Candidate says // BUG: check this and mentions ground truth generically",
+    }),
+  );
+  assert.doesNotThrow(() =>
+    createPromptValidator(policy)({
+      prompt: "Inspect the authorization lane at high severity and use fix-in-pr when warranted.",
+      stage: "breadth",
+    }),
   );
   assert.throws(
-    () => createPromptValidator(policy)("Candidate exposes truth-needle", "investigation"),
+    () => createPromptValidator(policy)({
+      prompt: "Trusted instructions contain // BUG: direct answer\nLedger: ordinary candidate",
+      stage: "investigation",
+      untrustedModelText: "ordinary candidate",
+    }),
     /final investigation provider prompt/,
+  );
+  assert.throws(
+    () => createPromptValidator(policy)({
+      prompt: "Trusted instructions mention ground truth\nLedger: ordinary candidate",
+      stage: "investigation",
+      untrustedModelText: "ordinary candidate",
+    }),
+    /final investigation provider prompt/,
+  );
+  assert.throws(
+    () => createPromptValidator(policy)({
+      prompt: "Candidate exposes truth-needle",
+      stage: "investigation",
+      untrustedModelText: "Candidate exposes truth-needle",
+    }),
+    /breadth model output/,
   );
   assert.throws(() => assertLeakageFreeText("diff", "+ // BUG: answer", policy), /answer-bearing marker/);
   assert.throws(() => assertLeakageFreeText("profile", "# FIXME later", policy), /answer-bearing marker/);
 
   const root = mkdtempSync(join(tmpdir(), "peregrine-metadata-test-"));
   const caseDir = createFixtureCase(root, "case-feedface", "development", {
-    metadata: { title: "truth-needle" },
+    metadata: { title: "A hidden truth description with enough detail." },
   });
   try {
     const spec = loadCaseSpec(caseDir);
     const casePolicy = leakagePolicyForCase(caseDir, spec);
     assert.throws(() => readSanitizedMetadata(caseDir, spec, casePolicy), /model-visible metadata/);
+    assert.throws(
+      () => createPromptValidator(casePolicy)({
+        prompt: "A hidden truth   description with enough detail.",
+        stage: "breadth",
+      }),
+      /forbidden answer-bearing term/,
+    );
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -227,6 +432,13 @@ test("case materialization rejects traversal, symlinks, nested Git data, answer 
       expected: /forbidden answer-bearing term/,
     },
     {
+      name: "ground-truth-id-filename",
+      mutate(caseDir) {
+        writeFileSync(join(caseDir, "fixture", "src", "truth-needle.ts"), "export {};\n");
+      },
+      expected: /repository path .*forbidden answer-bearing term/,
+    },
+    {
       name: "profile-marker",
       mutate(caseDir) {
         mkdirSync(join(caseDir, "fixture", ".peregrine"), { recursive: true });
@@ -267,12 +479,16 @@ test("matrix creates and cleans a fresh checkout for every attempt, including fa
   writeFileSync(matrixPath, JSON.stringify({ repeats: 2, configs }));
 
   const paths: string[] = [];
+  const diffPaths: string[] = [];
   let calls = 0;
   const engine: Engine = {
     name: "mock",
     async review(ctx): Promise<EngineResult> {
       calls++;
       paths.push(ctx.repoPath);
+      diffPaths.push(ctx.diffPath);
+      assert.equal(dirname(ctx.diffPath), dirname(ctx.repoPath));
+      assert.doesNotMatch(ctx.diffPath, /case-aabbccdd|\/cases\//);
       assert.equal(readFileSync(join(ctx.repoPath, "src/value.ts"), "utf8"), HEAD);
       writeFileSync(join(ctx.repoPath, "src/value.ts"), `mutation-${calls}\n`);
       if (calls === 2) throw new Error("forced provider failure");
@@ -285,16 +501,71 @@ test("matrix creates and cleans a fresh checkout for every attempt, including fa
     assert.equal(calls, 4);
     assert.equal(new Set(paths).size, 4);
     assert.ok(paths.every((path) => !existsSync(path)), "every attempt checkout should be removed");
+    assert.ok(diffPaths.every((path) => !existsSync(path)), "every materialized diff should be removed");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
 });
 
-test("leaking cases and structural smoke/live mismatches never invoke an engine", async () => {
-  for (const scenario of ["leak", "live-structural"] as const) {
+test("empty selected corpora produce a safe zero-attempt manifest", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-empty-matrix-"));
+  const casesDir = join(root, "cases");
+  mkdirSync(join(casesDir, "development"), { recursive: true });
+  mkdirSync(join(casesDir, "validation"));
+  const matrixPath = join(root, "matrix.json");
+  writeFileSync(
+    matrixPath,
+    JSON.stringify({
+      repeats: 1,
+      corpora: ["development", "validation"],
+      configs: [{ name: "live", runner: "claude" }],
+    }),
+  );
+  let calls = 0;
+  try {
+    const runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+      casesDir,
+      engineFor: () => ({ name: "claude", async review() { calls++; return completed("claude"); } }),
+    });
+    const manifest = JSON.parse(readFileSync(join(runsDir, "matrix-manifest.json"), "utf8"));
+    assert.deepEqual(manifest.expectedAttempts, []);
+    assert.equal(calls, 0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("case discovery rejects missing specs and non-canonical directory layouts", async () => {
+  for (const scenario of ["missing-spec", "descriptive-layer"] as const) {
+    const root = mkdtempSync(join(tmpdir(), `peregrine-layout-${scenario}-`));
+    const casesDir = join(root, "cases");
+    if (scenario === "missing-spec") {
+      mkdirSync(join(casesDir, "development", "case-acde1234"), { recursive: true });
+    } else {
+      mkdirSync(join(casesDir, "development", "authorization-examples"), { recursive: true });
+    }
+    const matrixPath = join(root, "matrix.json");
+    writeFileSync(
+      matrixPath,
+      JSON.stringify({ repeats: 1, configs: [{ name: "mock", runner: "mock" }] }),
+    );
+    try {
+      await assert.rejects(
+        () => runMatrix(matrixPath, join(root, "runs"), { casesDir }),
+        scenario === "missing-spec" ? /missing case\.json/ : /descriptive case IDs are forbidden/,
+      );
+      assert.equal(existsSync(join(root, "runs")), false);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  }
+});
+
+test("leaking cases, structural smoke, and uncontained live runs never invoke an engine", async () => {
+  for (const scenario of ["leak", "live-structural", "live-uncontained"] as const) {
     const root = mkdtempSync(join(tmpdir(), `peregrine-no-engine-${scenario}-`));
     const casesDir = join(root, "cases");
-    const corpus: CaseCorpus = scenario === "leak" ? "development" : "structural-smoke";
+    const corpus: CaseCorpus = scenario === "live-structural" ? "structural-smoke" : "development";
     const caseDir = createFixtureCase(casesDir, "case-11223344", corpus);
     if (scenario === "leak") {
       writeFileSync(join(caseDir, "fixture", "src", "leak.ts"), "// BUG: exposed answer\n");
@@ -318,6 +589,7 @@ test("leaking cases and structural smoke/live mismatches never invoke an engine"
       assert.equal(record.outcome.status, "failed");
       assert.equal(record.outcome.failureKind, "configuration");
       assert.match(record.outcome.message, /isolation failed/);
+      if (scenario === "live-uncontained") assert.match(record.outcome.message, /filesystem and network allowlist/);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -327,6 +599,7 @@ test("leaking cases and structural smoke/live mismatches never invoke an engine"
 test("isolated provider environments omit ambient Git, SSH, CLI homes, and unrelated credentials", () => {
   const previous = { ...process.env };
   process.env.ANTHROPIC_API_KEY = "allowed-provider-key";
+  process.env.CLAUDE_CODE_OAUTH_TOKEN = "disallowed-bare-oauth-token";
   process.env.OPENAI_API_KEY = "other-provider-key";
   process.env.GITHUB_TOKEN = "unrelated-token";
   process.env.SSH_AUTH_SOCK = "/tmp/agent.sock";
@@ -337,6 +610,7 @@ test("isolated provider environments omit ambient Git, SSH, CLI homes, and unrel
     const environment = isolatedProviderEnvironment("claude", "/tmp/isolated-home");
     assert.equal(environment.HOME, "/tmp/isolated-home");
     assert.equal(environment.ANTHROPIC_API_KEY, "allowed-provider-key");
+    assert.equal(environment.CLAUDE_CODE_OAUTH_TOKEN, undefined);
     assert.equal(environment.OPENAI_API_KEY, undefined);
     assert.equal(environment.GITHUB_TOKEN, undefined);
     assert.equal(environment.SSH_AUTH_SOCK, undefined);
@@ -350,10 +624,12 @@ test("isolated provider environments omit ambient Git, SSH, CLI homes, and unrel
   }
 });
 
-test("matrix manifest records network-isolation capability without claiming unsupported enforcement", () => {
+test("matrix manifest records live network isolation as unavailable", () => {
   assert.equal(networkIsolationCapability("mock").status, "not-applicable");
-  assert.equal(networkIsolationCapability("claude").status, "limited");
-  assert.equal(networkIsolationCapability("codex").status, "limited");
+  assert.equal(networkIsolationCapability("claude").status, "unavailable");
+  assert.equal(networkIsolationCapability("codex").status, "unavailable");
+  assert.throws(() => assertLiveProviderIsolationAvailable("claude"), /filesystem and network allowlist/);
+  assert.throws(() => assertLiveProviderIsolationAvailable("codex"), /filesystem and network allowlist/);
 });
 
 function createFixtureCase(
@@ -362,11 +638,25 @@ function createFixtureCase(
   corpus: CaseCorpus,
   options: { metadata?: Record<string, unknown> } = {},
 ): string {
-  const caseDir = join(casesDir, id);
+  const caseDir = join(casesDir, corpus, id);
   mkdirSync(join(caseDir, "fixture", "src"), { recursive: true });
   writeFileSync(join(caseDir, "fixture", "src", "value.ts"), HEAD);
   writeFileSync(join(caseDir, "diff.patch"), PATCH);
-  writeFileSync(join(caseDir, "ground_truth.json"), JSON.stringify({ bugs: [{ id: "truth-needle" }] }));
+  writeFileSync(
+    join(caseDir, "ground_truth.json"),
+    JSON.stringify({
+      bugs: [{
+        id: "truth-needle",
+        file: "src/value.ts",
+        startLine: 1,
+        endLine: 1,
+        description: "A hidden truth description with enough detail.",
+        lane: "authorization",
+        severity: "high",
+        expectedDisposition: "fix-in-pr",
+      }],
+    }),
+  );
   const spec: CaseSpec = {
     id,
     corpus,

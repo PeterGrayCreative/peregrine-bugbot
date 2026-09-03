@@ -6,6 +6,7 @@ import { RunFailureError, runFailureKind } from "../src/core/run-failure.js";
 import { getEngine } from "../src/engines/engine.js";
 import { safeDiagnostic } from "../src/security/secrets.js";
 import {
+  assertLiveProviderIsolationAvailable,
   assertOpaqueCaseId,
   assertRunnerMayUseCorpus,
   caseIdFromDirectory,
@@ -26,10 +27,18 @@ import type {
   RunnerName,
 } from "../src/types.js";
 import type { Engine } from "../src/engines/engine.js";
+import { parseGroundTruth } from "./case-truth.js";
 
 interface RunMatrixOptions {
   casesDir?: string;
   engineFor?: (runner: RunnerName) => Engine;
+}
+
+interface DiscoveredCase {
+  caseName: string;
+  caseDir: string;
+  corpus: CaseCorpus | "unknown";
+  expectedBugCount: number | null;
 }
 
 /**
@@ -63,11 +72,19 @@ export async function runMatrix(
 
   let sequence = 0;
   const expectedAttempts = matrix.configs.flatMap((modelConfig) =>
-    cases.flatMap(({ caseName }) =>
+    cases.flatMap(({ caseName, corpus, expectedBugCount }) =>
       Array.from({ length: matrix.repeats }, (_, index) => {
         const repeat = index + 1;
         const id = `attempt-${String(++sequence).padStart(6, "0")}`;
-        return { id, caseName, configName: modelConfig.name, repeat, file: `${id}.json` };
+        return {
+          id,
+          caseName,
+          corpus,
+          expectedBugCount,
+          configName: modelConfig.name,
+          repeat,
+          file: `${id}.json`,
+        };
       }),
     ),
   );
@@ -85,10 +102,17 @@ export async function runMatrix(
   writeFileSync(join(outDir, "matrix-manifest.json"), JSON.stringify(manifest, null, 2));
 
   const total = expectedAttempts.length;
+  if (total === 0) {
+    console.log(
+      `No eval cases matched ${matrix.corpora?.join(", ") ?? "the configured corpus"}; no provider processes were started.`,
+    );
+    console.log(`Empty run manifest written to ${outDir}`);
+    return outDir;
+  }
   let done = 0;
 
   for (const modelConfig of matrix.configs) {
-    for (const { caseName, caseDir } of cases) {
+    for (const { caseName, caseDir, corpus } of cases) {
       let spec: CaseSpec | undefined;
       let policy: ReturnType<typeof leakagePolicyForCase> | undefined;
       let metadata: ReturnType<typeof readSanitizedMetadata> | undefined;
@@ -127,6 +151,7 @@ export async function runMatrix(
             materialized = await materializeCase(caseDir, spec, policy, {
               prepareProviderAssets: modelConfig.runner !== "mock",
             });
+            assertLiveProviderIsolationAvailable(modelConfig.runner);
           } catch (error) {
             throw new RunFailureError(
               "configuration",
@@ -160,7 +185,7 @@ export async function runMatrix(
 
           const ctx: ReviewContext = {
             repoPath: materialized.repoPath,
-            diffPath: join(caseDir, spec.diffFile),
+            diffPath: materialized.diffPath,
             diffText: materialized.diffText,
             baseRef: materialized.baseRef,
             headRef: materialized.headRef,
@@ -175,6 +200,7 @@ export async function runMatrix(
             schemaVersion: 1,
             attemptId,
             caseName,
+            caseCorpus: spec.corpus,
             caseKind: spec.kind,
             configName: modelConfig.name,
             repeat,
@@ -193,6 +219,7 @@ export async function runMatrix(
             schemaVersion: 1,
             attemptId,
             caseName,
+            caseCorpus: spec?.corpus ?? corpus,
             caseKind: spec?.kind ?? "unknown",
             configName: modelConfig.name,
             repeat,
@@ -208,7 +235,33 @@ export async function runMatrix(
           writeFileSync(file, JSON.stringify(record, null, 2));
           console.log(`FAILED [${failureKind}]: ${message}`);
         } finally {
-          materialized?.cleanup();
+          if (materialized) {
+            try {
+              materialized.cleanup();
+            } catch (cleanupError) {
+              const detail = safeDiagnostic(
+                cleanupError instanceof Error ? cleanupError.message : String(cleanupError),
+              );
+              const prior = JSON.parse(readFileSync(file, "utf8")) as RunRecord;
+              const message = prior.outcome.status === "failed"
+                ? `${prior.outcome.message}; cleanup also failed: ${detail}`
+                : `isolated attempt cleanup failed after provider completion: ${detail}`;
+              const replacement: RunRecord = {
+                ...prior,
+                finishedAt: new Date().toISOString(),
+                outcome: {
+                  status: "failed",
+                  failureKind: prior.outcome.status === "failed"
+                    ? prior.outcome.failureKind
+                    : "configuration",
+                  message,
+                  durationMs: Date.now() - started,
+                },
+              };
+              writeFileSync(file, JSON.stringify(replacement, null, 2));
+              console.log(`CLEANUP FAILED: ${detail}`);
+            }
+          }
         }
       }
     }
@@ -260,6 +313,15 @@ export function loadCaseSpec(caseDir: string): CaseSpec {
   if (spec.metadataFile !== undefined && typeof spec.metadataFile !== "string") {
     throw new RunFailureError("configuration", `case ${caseId}: metadataFile must be a string`);
   }
+  if (
+    spec.leakageExceptionsFile !== undefined &&
+    typeof spec.leakageExceptionsFile !== "string"
+  ) {
+    throw new RunFailureError(
+      "configuration",
+      `case ${caseId}: leakageExceptionsFile must be a string`,
+    );
+  }
   if (spec.kind === "historical") {
     const historical = spec as Partial<Extract<CaseSpec, { kind: "historical" }>>;
     if (
@@ -273,7 +335,7 @@ export function loadCaseSpec(caseDir: string): CaseSpec {
       );
     }
     rejectUnexpectedKeys(value as Record<string, unknown>, [
-      "id", "corpus", "kind", "repoSource", "baseCommit", "headCommit", "diffFile", "metadataFile",
+      "id", "corpus", "kind", "repoSource", "baseCommit", "headCommit", "diffFile", "metadataFile", "leakageExceptionsFile",
     ], caseId);
   } else {
     const fixture = spec as Partial<Extract<CaseSpec, { kind: "seeded" | "clean" }>>;
@@ -281,7 +343,7 @@ export function loadCaseSpec(caseDir: string): CaseSpec {
       throw new RunFailureError("configuration", `case ${caseId}: fixture cases need fixtureDir`);
     }
     rejectUnexpectedKeys(value as Record<string, unknown>, [
-      "id", "corpus", "kind", "fixtureDir", "diffFile", "metadataFile",
+      "id", "corpus", "kind", "fixtureDir", "diffFile", "metadataFile", "leakageExceptionsFile",
     ], caseId);
   }
   return spec as CaseSpec;
@@ -290,25 +352,52 @@ export function loadCaseSpec(caseDir: string): CaseSpec {
 function discoverCases(
   casesDir: string,
   corpora?: CaseCorpus[],
-): Array<{ caseName: string; caseDir: string }> {
-  const discovered: Array<{ caseName: string; caseDir: string }> = [];
-  const visit = (directory: string): void => {
-    for (const entry of readdirSync(directory, { withFileTypes: true })) {
-      if (!entry.isDirectory()) continue;
-      const path = join(directory, entry.name);
-      const entries = readdirSync(path, { withFileTypes: true });
-      if (entries.some((candidate) => candidate.isFile() && candidate.name === "case.json")) {
-        const corpus = corpusFromDirectory(path);
-        if (!corpora || (corpus !== undefined && corpora.includes(corpus))) {
-          discovered.push({ caseName: relative(casesDir, path), caseDir: path });
-        }
-      } else {
-        visit(path);
+): DiscoveredCase[] {
+  const discovered: DiscoveredCase[] = [];
+  for (const corpusEntry of readdirSync(casesDir, { withFileTypes: true })) {
+    if (!corpusEntry.isDirectory()) {
+      if (corpusEntry.name === "README.md" || corpusEntry.name === "case-aliases.json") continue;
+      throw new Error(
+        `unexpected case-root entry ${corpusEntry.name}; expected only corpus directories and curator metadata`,
+      );
+    }
+    if (!CASE_CORPORA.includes(corpusEntry.name as CaseCorpus)) {
+      throw new Error(
+        `unexpected case directory ${corpusEntry.name}; expected <cases-root>/<corpus>/<opaque-id>`,
+      );
+    }
+    const corpus = corpusEntry.name as CaseCorpus;
+    const corpusDir = join(casesDir, corpus);
+    for (const entry of readdirSync(corpusDir, { withFileTypes: true })) {
+      if (!entry.isDirectory()) {
+        if (entry.name === "README.md") continue;
+        throw new Error(`unexpected ${corpus} corpus entry ${entry.name}; expected an opaque case directory`);
+      }
+      try {
+        assertOpaqueCaseId(entry.name, `case directory ${corpus}/${entry.name}`);
+      } catch (error) {
+        throw new Error(
+          `${error instanceof Error ? error.message : String(error)}; expected <cases-root>/<corpus>/<opaque-id>`,
+        );
+      }
+      const path = join(corpusDir, entry.name);
+      const hasCaseSpec = readdirSync(path, { withFileTypes: true })
+        .some((candidate) => candidate.isFile() && candidate.name === "case.json");
+      if (!hasCaseSpec) {
+        throw new Error(
+          `case directory ${relative(casesDir, path)} is missing case.json; refusing to construct a partial manifest`,
+        );
+      }
+      if (!corpora || corpora.includes(corpus)) {
+        discovered.push({
+          caseName: relative(casesDir, path),
+          caseDir: path,
+          corpus,
+          expectedBugCount: readExpectedBugCount(path),
+        });
       }
     }
   }
-  visit(casesDir);
-  if (discovered.length === 0) throw new Error(`no eval cases found under ${casesDir}`);
   discovered.sort((left, right) => left.caseName.localeCompare(right.caseName));
   const ids = new Set<string>();
   for (const item of discovered) {
@@ -317,6 +406,15 @@ function discoverCases(
     ids.add(id);
   }
   return discovered;
+}
+
+function readExpectedBugCount(caseDir: string): number | null {
+  try {
+    const value = JSON.parse(readFileSync(join(caseDir, "ground_truth.json"), "utf8"));
+    return parseGroundTruth(value).bugs.length;
+  } catch {
+    return null;
+  }
 }
 
 function validateMatrixCaseSelection(matrix: MatrixConfig): void {

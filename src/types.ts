@@ -102,7 +102,12 @@ export interface ReviewContext {
 export interface EvaluationIsolation {
   providerHome: string;
   providerAssetsRoot: string;
-  validatePrompt(prompt: string, stage: "breadth" | "investigation"): void;
+  validatePrompt(input: {
+    prompt: string;
+    stage: "breadth" | "investigation";
+    /** Exact provider output embedded into the investigation prompt. */
+    untrustedModelText?: string;
+  }): void;
 }
 
 export interface ClaudeRunnerConfig {
@@ -168,6 +173,8 @@ interface CaseSpecBase {
   diffFile: string;
   /** Optional sanitized title/body JSON. Curator notes do not belong here. */
   metadataFile?: string;
+  /** Curator-only, content-addressed exceptions for legitimate source markers. */
+  leakageExceptionsFile?: string;
 }
 
 export interface FixtureCaseSpec extends CaseSpecBase {
@@ -199,6 +206,9 @@ export interface MatrixConfig {
 export interface RunAttempt {
   id: string;
   caseName: string;
+  corpus: CaseCorpus | "unknown";
+  /** Immutable count used by reporting when curator truth later moves or is invalid. */
+  expectedBugCount: number | null;
   configName: string;
   repeat: number;
   file: string;
@@ -212,7 +222,7 @@ export interface MatrixRunManifest {
 }
 
 export interface NetworkIsolationCapability {
-  status: "enforced" | "limited" | "not-applicable";
+  status: "enforced" | "limited" | "unavailable" | "not-applicable";
   mechanism: string;
 }
 
@@ -229,6 +239,7 @@ export interface RunRecord {
   schemaVersion: 1;
   attemptId: string;
   caseName: string;
+  caseCorpus: CaseCorpus | "unknown";
   caseKind: CaseSpec["kind"] | "unknown";
   configName: string;
   repeat: number;
