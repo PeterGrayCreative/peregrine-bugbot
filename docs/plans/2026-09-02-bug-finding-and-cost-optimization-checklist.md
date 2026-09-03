@@ -31,7 +31,7 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | Safety PR 2A.2 | Pin the accepted digest and enforce live filesystem containment | PR 2A.1 | Not started | - |
 | Plan PR 3 | Reproduce base/head history and production manifest path | PR 2 | Merged | [#7](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/7) |
 | Plan PR 4 | Root-cause grading, adjudication, and miss stages | PRs 3, 6 | Not started | - |
-| Plan PR 5A | Provider-correct usage, cost, and observed work | PR 1 | Open; independently reviewed | [#11](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/11) |
+| Plan PR 5A | Provider-correct usage, cost, and observed work | PR 1 | Merged | [#11](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/11) |
 | Plan PR 5B | Immutable experiment scheduling, resume, and ceilings | PR 5A | Not started | - |
 | Plan PR 6 | Typed manifest shadow/parity mode | PR 3 | Not started | - |
 | Plan PR 7 | Curated gold set v1 and unmodified baseline | PRs 4-6 | Not started | - |
@@ -189,7 +189,7 @@ Must stay untouched: provider prompts and production posting thresholds.
 - [x] Add captured Claude and Codex provider-envelope fixtures plus aggregation, malformed-stream, cleanup, pricing, and reader/writer tests.
 - [x] Run `npm run validate` under Node `22.22.1`: 115/115 Node tests, all skill/package checks, and 8/8 zero-cost structural smoke attempts passed.
 - [x] Open and independently review [PR #11](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/11).
-- [ ] Merge PR #11.
+- [x] Merge PR #11 as `5588bf0a80e613c714ff3289bc7ac273d1a7dc9b`.
 
 Evidence: [Plan PR 5A validation record](../validation/2026-09-03-provider-usage-cost-metadata.md). No live provider was invoked, so this is implementation and structural evidence rather than a measured provider-cost comparison.
 
