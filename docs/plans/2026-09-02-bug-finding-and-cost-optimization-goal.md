@@ -163,4 +163,4 @@ Mark this goal complete only after the completion contract is satisfied and the 
 
 ## Current execution state
 
-Implementation resumed after the goal-creation turn. Plan PR 2 is tracked in [PR #5](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/5); the implementation checklist and per-slice validation records remain the authoritative source for current branch, review, CI, and merge evidence.
+Implementation resumed after the goal-creation turn. Plan PR 2 merged through [PR #5](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/5) as `4e99748ba57208c86976a632ad4efb85011f7e7a`; the implementation checklist and per-slice validation records remain the authoritative source for current branch, review, CI, and merge evidence.
