@@ -92,6 +92,7 @@ export function buildContainedProviderArgs(
   const translated = commandArgs.map((value) => translateArgument(value, checkoutDir, assetsDir, outputDir));
   const args = [
     "run", "--name", containerName, "--pull", "never",
+    ...(options.runner === "codex" ? ["--interactive"] : []),
     "--network", "bridge", "--read-only", "--cap-drop", "ALL",
     "--security-opt", "no-new-privileges", "--pids-limit", "256", "--user", `${identity.uid}:${identity.gid}`,
     "--workdir", "/workspace",
@@ -136,7 +137,9 @@ export function parseContainedProviderArgs(
   take("run"); take("--name");
   const containerName = take();
   if (!CONTAINER_NAME.test(containerName)) throw new Error("invalid opaque evaluation container name");
-  take("--pull"); take("never"); take("--network"); take("bridge");
+  take("--pull"); take("never");
+  if (runner === "codex") take("--interactive");
+  take("--network"); take("bridge");
   take("--read-only"); take("--cap-drop"); take("ALL");
   take("--security-opt"); take("no-new-privileges"); take("--pids-limit"); take("256");
   take("--user"); take(`${expectedIdentity.uid}:${expectedIdentity.gid}`); take("--workdir"); take("/workspace");
