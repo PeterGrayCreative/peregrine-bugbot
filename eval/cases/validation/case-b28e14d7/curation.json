@@ -1,10 +1,23 @@
 {
   "schemaVersion": 1,
   "caseId": "case-b28e14d7",
-  "status": "draft",
+  "status": "admitted",
   "curatorPolicyId": "protected-git-review-v1",
   "source": { "kind": "seeded", "repositoryAlias": "repo-a", "repositoryIdentitySha256": "1ccf1ffc7774608327a565daeec9316bf77ec98896c78b9a700fd452882a5d02", "changeIdentitySha256": "933c7c1af6eef272948d99ea53d667ed184f94137519799279b13834533cdedf", "access": "sanitized-private" },
   "strata": { "languageFamily": "typescript", "architectureFamily": "backend-service", "size": "small", "changeShapes": ["multi-observation", "seam"], "surfaceLanes": ["error-handling"] },
   "proof": { "kind": "regression-test", "artifact": "proof.json", "sha256": "6e3fa31efb2b0b18d453c642250f5eaa2c715b5cb09d5fea1f52178c81a5c09e" },
-  "confirmations": []
+  "confirmations": [
+    {
+      "curatorIdentitySha256": "2d4b7fdd9a078f91ce591d9612439409de1fe9fca25f4450be46c825790a4ae8",
+      "confirmedAt": "2026-09-03T18:46:18Z",
+      "caseBundleSha256": "4fa984aca9dc74c9200b75cf4c01f563a3644b56d9b71efbba9443db245623f2",
+      "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
+    },
+    {
+      "curatorIdentitySha256": "1579301d3d445bbab2930daf6e87d486c9325abfe8cac8d8e9424f2e9bb70caf",
+      "confirmedAt": "2026-09-03T18:46:42Z",
+      "caseBundleSha256": "4fa984aca9dc74c9200b75cf4c01f563a3644b56d9b71efbba9443db245623f2",
+      "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
+    }
+  ]
 }
