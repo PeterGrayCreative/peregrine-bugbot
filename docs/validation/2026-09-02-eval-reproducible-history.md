@@ -2,6 +2,8 @@
 
 **Date:** 2026-09-02
 
+**Pull request:** [#7](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/7)
+
 **Branch:** `feat/eval-reproducible-history`
 
 **Base:** `2e4ae2ad5deb34aba8b91cde78d8e4662dcf109d`
