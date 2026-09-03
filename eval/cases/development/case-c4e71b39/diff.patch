@@ -1,0 +1,15 @@
+diff --git a/src/report-service.ts b/src/report-service.ts
+index a5f5ae8dc5aabfd1756ba5ac05e7e6e74069c339..ee8837046520c075c642cf6b505d71491ed9b05a 100644
+--- a/src/report-service.ts
++++ b/src/report-service.ts
+@@ -8,7 +8,8 @@ export interface Report {
+   status: "draft" | "published";
+ }
+ 
++const READ_SCOPES = new Set(["report:read", "report:admin"]);
++
+ export function canReadReport(viewer: Viewer, report: Report): boolean {
+-  return viewer.tenantId === report.tenantId &&
+-    (viewer.scopes.includes("report:read") || viewer.scopes.includes("report:admin"));
++  return viewer.tenantId === report.tenantId && viewer.scopes.some((scope) => READ_SCOPES.has(scope));
+ }

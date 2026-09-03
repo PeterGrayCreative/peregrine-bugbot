@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "caseId": "case-2d91ac76",
+  "status": "admitted",
+  "curatorPolicyId": "protected-git-review-v1",
+  "source": {
+    "kind": "seeded",
+    "repositoryAlias": "identity-service",
+    "repositoryIdentitySha256": "029d0773c2963ea5eb1f8aa7963585ff13383b2674f12fa7627fce5ca1a3f0ea",
+    "changeIdentitySha256": "361588fbd42203981944aebe7400c5523d62d61603404b26f9d336112e1bd784",
+    "access": "sanitized-private"
+  },
+  "strata": {
+    "languageFamily": "typescript",
+    "architectureFamily": "backend-service",
+    "size": "small",
+    "changeShapes": ["direct"],
+    "surfaceLanes": ["identifiers"]
+  },
+  "proof": {
+    "kind": "regression-test",
+    "artifact": "proof.mjs",
+    "sha256": "c5f19e5d9aadf58a46821ce57520eee9b11ac9b055241b7af15d065d7cef31d1"
+  },
+  "confirmations": [
+    {
+      "curatorIdentitySha256": "16cc773f8b36edb7951cbe25b689a81696e187d68bb78bac500be431b9b9274f",
+      "confirmedAt": "2026-09-03T16:48:21Z",
+      "caseBundleSha256": "b11da426fb860752b50ca92a728ecb68a6f869f2cc33316be91fa40a380d0438",
+      "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
+    },
+    {
+      "curatorIdentitySha256": "47ecc656c1d06b3646efa3642f75cd99656909eefc8aeb3de662d309c300ca8a",
+      "confirmedAt": "2026-09-03T17:04:29Z",
+      "caseBundleSha256": "b11da426fb860752b50ca92a728ecb68a6f869f2cc33316be91fa40a380d0438",
+      "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
+    }
+  ]
+}

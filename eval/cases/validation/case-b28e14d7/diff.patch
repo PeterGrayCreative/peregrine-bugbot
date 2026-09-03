@@ -1,0 +1,17 @@
+diff --git a/src/repository-import.ts b/src/repository-import.ts
+index 9137104e12f3667b7706b87d2d8c18181c89b44a..ad87bce60d8c77c9afa92377f58d76d15c74777c 100644
+--- a/src/repository-import.ts
++++ b/src/repository-import.ts
+@@ -2,7 +2,11 @@ export interface ImportStore { persist(id: string): Promise<void> }
+ export interface IndexQueue { enqueue(id: string): Promise<void> }
+ 
+ export async function acceptImport(store: ImportStore, id: string): Promise<number> {
+-  await store.persist(id);
++  try {
++    await store.persist(id);
++  } catch {
++    return 202;
++  }
+   return 202;
+ }
+ 

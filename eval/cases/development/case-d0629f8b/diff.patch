@@ -1,0 +1,13 @@
+diff --git a/settings.py b/settings.py
+index 3314df725b6aaf74924d335f7b158f41edaf993a..bf9f931d3d96b732f349444963a2821535b81a3c 100644
+--- a/settings.py
++++ b/settings.py
+@@ -4,7 +4,7 @@ import os
+ def load_port(environment: dict[str, str] | None = None) -> int:
+     values = os.environ if environment is None else environment
+     raw = values.get("SERVICE_PORT")
+-    if raw is None:
++    if not raw:
+         return 8080
+     port = int(raw)
+     if not 1 <= port <= 65535:

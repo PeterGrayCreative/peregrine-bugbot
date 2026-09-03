@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-4e2c189a",
+      "description": "The lookup failure is converted into a fabricated closed account instead of remaining an error.",
+      "reachablePreconditions": "The account service rejects a lookup for any transient or permanent upstream failure.",
+      "observableImpact": "Callers render an account as closed and cannot retry or return the intended service error.",
+      "lane": "error-handling",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "medium",
+      "file": "src/load-account.ts",
+      "startLine": 16,
+      "endLine": 16,
+      "provenance": "Seeded mutation with a paired deterministic base and head proof."
+    }
+  ]
+}

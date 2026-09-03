@@ -318,6 +318,7 @@ test("behavioral reporting separates root-cause cost and blocking clean-control 
     failed: [],
     missing: 0,
     failureInclusiveRecalls: [1, 1],
+    expectedRootCauseRuns: 2,
     structuralExpectedMarkers: null,
   });
   assert.equal(stats.rootCauseRecallMean, 1);
@@ -329,6 +330,58 @@ test("behavioral reporting separates root-cause cost and blocking clean-control 
     costUnavailableAttempts: 2, inputTokens: 20, cachedInputTokens: 4,
     outputTokens: 2, reasoningTokens: 1, turns: 2, toolCalls: 0,
   }), /Semantic judge accounting[\s\S]*20 \/ 4 \/ 2 \/ 1/);
+});
+
+test("root-cause recall excludes clean controls and fails closed for incomplete bug attempts", () => {
+  const result = engineResult([reviewFinding()]);
+  const evidence = (rootCauseMatches: Record<string, boolean>) => ({
+    version: "root-cause-v1" as const,
+    judge: JUDGE_IDENTITY,
+    decisions: [],
+    rootCauseMatches,
+    missStages: {},
+    unmatchedFindings: [],
+  });
+  const bugRun = {
+    outcome: { status: "completed" as const, result },
+    matches: { "symptom-a": 0 },
+    falsePositiveIndexes: [],
+    grading: evidence({ first: true, second: false }),
+  };
+  const cleanRun = {
+    outcome: { status: "completed" as const, result },
+    matches: {},
+    falsePositiveIndexes: [],
+    grading: evidence({}),
+  };
+  const stats = (
+    completed: Parameters<typeof calculateStats>[0]["completed"],
+    expectedRuns: number,
+    expectedRootCauseRuns: number,
+    failed: Parameters<typeof calculateStats>[0]["failed"] = [],
+    missing = 0,
+  ) => calculateStats({
+    config: "route",
+    runner: "codex",
+    corpus: "development",
+    benchmarkKind: "behavioral",
+    completeness: "tracked",
+    expectedRuns,
+    completed,
+    failed,
+    missing,
+    failureInclusiveRecalls: [],
+    expectedRootCauseRuns,
+    structuralExpectedMarkers: null,
+  });
+
+  assert.equal(stats([bugRun, cleanRun], 2, 1).rootCauseRecallMean, 0.5);
+  assert.equal(stats([cleanRun], 1, 0).rootCauseRecallMean, null);
+  assert.equal(stats([bugRun, cleanRun], 3, 2, [], 1).rootCauseRecallMean, null);
+  assert.equal(stats([bugRun, cleanRun], 3, 2, [{
+    outcome: { status: "failed", failureKind: "provider", message: "provider failed", durationMs: 1 },
+  }]).rootCauseRecallMean, null);
+  assert.equal(stats([{ ...bugRun, grading: undefined }, cleanRun], 2, 1).rootCauseRecallMean, null);
 });
 
 test("reliable root-cause cost uses a strict majority including two of three repeats", () => {
@@ -362,6 +415,7 @@ test("reliable root-cause cost uses a strict majority including two of three rep
     failed: [],
     missing: 0,
     failureInclusiveRecalls: [1, 1, 0],
+    expectedRootCauseRuns: 3,
     structuralExpectedMarkers: null,
   });
   assert.equal(stats.costPerReliablyFoundRootCause, 1.5);

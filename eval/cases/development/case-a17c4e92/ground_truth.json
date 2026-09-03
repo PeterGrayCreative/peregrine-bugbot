@@ -1,0 +1,32 @@
+{
+  "bugs": [
+    {
+      "id": "bug-5a91d230",
+      "rootCauseGroup": "root-7c42ea19",
+      "lane": "concurrency",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
+      "file": "ledger/account.go",
+      "startLine": 11,
+      "endLine": 15,
+      "description": "Credit uses a value receiver, so each goroutine updates a copied balance and copied mutex instead of the shared account.",
+      "reachablePreconditions": "Any caller invokes Credit on an Account, including the concurrent worker path exercised by the fixture test.",
+      "observableImpact": "Successful credits disappear from the shared balance, causing later balance checks and reservations to use stale funds.",
+      "provenance": "Seeded from the established Go copylocks failure mode; the unchanged regression test deterministically distinguishes the two revisions."
+    },
+    {
+      "id": "bug-c1486f72",
+      "rootCauseGroup": "root-7c42ea19",
+      "lane": "concurrency",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
+      "file": "ledger/account.go",
+      "startLine": 17,
+      "endLine": 25,
+      "description": "Reserve also copies the account and mutex, so a reported successful hold is discarded when the method returns.",
+      "reachablePreconditions": "The account has enough available balance and a caller invokes Reserve, as in the fixture test after credits complete.",
+      "observableImpact": "The caller receives true even though the shared held amount remains unchanged, permitting the same funds to be reserved repeatedly.",
+      "provenance": "Second independently observable symptom of the same seeded receiver change, verified by the shared-state snapshot assertion."
+    }
+  ]
+}

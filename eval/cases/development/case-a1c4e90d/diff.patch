@@ -1,0 +1,20 @@
+diff --git a/order_store.py b/order_store.py
+index 873dba70ceb322fae440218faae6314d658ae9f5..0780417858a0ea38d744941f889c227a303657a5 100644
+--- a/order_store.py
++++ b/order_store.py
+@@ -15,6 +15,7 @@ def apply_order(connection: sqlite3.Connection, order_id: str, sku: str) -> None
+     connection.execute("BEGIN")
+     try:
+         connection.execute("INSERT INTO orders (id, sku) VALUES (?, ?)", (order_id, sku))
++        connection.commit()
+         updated = connection.execute(
+             "UPDATE inventory SET available = available - 1 "
+             "WHERE sku = ? AND available > 0",
+@@ -22,7 +23,6 @@ def apply_order(connection: sqlite3.Connection, order_id: str, sku: str) -> None
+         )
+         if updated.rowcount != 1:
+             raise ValueError("out of stock")
+-        connection.commit()
+     except Exception:
+         connection.rollback()
+         raise

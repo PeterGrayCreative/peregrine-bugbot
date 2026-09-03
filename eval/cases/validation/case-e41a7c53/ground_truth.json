@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-e03c684a",
+      "lane": "runtime-config",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "medium",
+      "file": "cli_config.py",
+      "startLine": 10,
+      "endLine": 10,
+      "description": "resolve_config uses truthiness for CLI precedence, so the supported zero value is discarded in favor of the environment or default.",
+      "reachablePreconditions": "An operator passes a zero-second shutdown grace while the environment contains a nonzero value or uses the default.",
+      "observableImpact": "Workers wait before shutdown even though the invocation explicitly disabled the grace period.",
+      "provenance": "Seeded mutation replacing an explicit None check with boolean fallback. test_cli_config.py demonstrates the precedence contract."
+    }
+  ]
+}

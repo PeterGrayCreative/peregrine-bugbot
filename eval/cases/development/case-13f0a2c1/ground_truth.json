@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-a1f04c2e",
+      "lane": "authorization",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
+      "file": "src/invoice-service.ts",
+      "startLine": 14,
+      "endLine": 14,
+      "description": "Invoice approval checks the role but no longer verifies that the invoice belongs to the session tenant, so an approver can approve another tenant's invoice.",
+      "reachablePreconditions": "A billing approver knows or receives an invoice object whose tenantId differs from the authenticated session tenantId.",
+      "observableImpact": "A cross-tenant invoice is approved despite the tenant isolation boundary.",
+      "provenance": "Seeded from a base implementation whose approval predicate required both tenant equality and the billing-approver role. Confirmed by curator-only executable proof."
+    }
+  ]
+}

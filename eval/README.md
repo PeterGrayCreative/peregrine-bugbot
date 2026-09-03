@@ -66,7 +66,8 @@ Every new matrix config must declare one of three experiment modes:
   access. It proves only the deterministic harness path.
 - `screening` is a small development-corpus control/treatment comparison used
   to reject an unsafe or clearly inferior intervention. It is not release-level
-  efficacy evidence.
+  efficacy evidence, holdout evidence, or proof that the visible gold-set gate
+  is ready.
 - `checkpoint` is the larger contemporaneous control/treatment comparison used
   at a planned evaluation gate. Development and validation results remain
   separate in the report.
@@ -185,6 +186,11 @@ eval/cases/
 ├── leakage_exceptions.json # optional content hashes + curator reasons
 └── fixture/           # complete head-state tree for seeded/clean cases
 ```
+
+Behavioral fixture trees are excluded from the repository's root TypeScript
+typecheck because defect cases may intentionally contain code that does not
+compile. Fixture correctness is governed by corpus admission, content-addressed
+curator proof, and exact materialization/diff validation instead.
 
 Case IDs and directory names must match `case-[a-f0-9]{8,32}`. Descriptive
 names, curator notes, issue text, review threads, and later fixes stay outside
@@ -420,6 +426,10 @@ npm run eval:matrix -- --config eval/matrix.config.json
 # Codex CLI-session checkpoint contract (also currently disabled).
 npm run eval:matrix -- --config eval/matrix.codex.config.json
 
+# Explicit provider-enabled diagnostic screening (16 review attempts).
+PEREGRINE_CODEX_SESSION_DIR=/path/to/sanitized/session \
+  npm run eval:matrix -- --config eval/matrix.codex.screening.json
+
 # Continue only untouched, unsealed evidence. A sealed run is already terminal.
 npm run eval:matrix -- --config eval/matrix.config.json \
   --resume eval/runs/<dir>
@@ -446,6 +456,11 @@ quietly producing incomparable evidence.
 example; `eval/matrix.codex.config.json` is the corresponding Codex example.
 Both live examples retain `providerCalls: "deny"` by default. Provider-enabled
 copies must separately preregister review-run limits and semantic-judge limits.
+`eval/matrix.codex.screening.json` is the explicit opt-in, provider-enabled
+diagnostic used to compare the current Luna-high-to-Sol-high route with a
+Luna-medium-only treatment over eight admitted development cases. It uses one
+repeat and uncontrolled cache state, so its result is screening evidence only,
+not checkpoint, routing-approval, or holdout evidence.
 The only immutable semantic judge profile is Codex `gpt-5.6-luna` at medium
 effort using `semantic-v1`.
 Before enabling any screening or checkpoint config, set explicit positive
@@ -456,22 +471,36 @@ authenticated API-key or sanitized CLI-session setup, and deliberate ceilings.
 Live cache state remains `uncontrolled` until a separate cache
 protocol can enforce and attest cold or warm conditions.
 
-Screening and checkpoint use the same config shape. Set `experiment.mode` to
-`screening` for a curated development subset or `checkpoint` for the planned
+Screening and checkpoint share the control/treatment protocol. Set
+`experiment.mode` to `screening` for a curated development subset or
+`checkpoint` for the planned
 historical gold development/validation gate, and name exactly one `control` and
 one `treatment` from `configs`. Before creating a run directory or starting a
 provider, screening requires a non-empty selection and fully validates every
 selected behavioral case. Checkpoint schedules must contain both development
 and validation cases, contain no structural-smoke cases, and require the
-complete visible corpus to satisfy `goldSetReady`. There is no checked-in
-provider-enabled screening config; enabling one is an explicit operator
-decision backed by the private-image and credential setup.
+complete visible corpus to satisfy `goldSetReady`. The checked-in
+provider-enabled screening config is intentionally separate from the fail-closed
+checkpoint examples. Running it is an explicit operator decision backed by the
+private-image and credential setup; do not broaden its case list or reuse its
+result as holdout evidence after inspecting model output.
 
-Until genuine sanitized development and validation cases are admitted, a
-screening or checkpoint matrix fails before creating run artifacts or starting
-a provider. It never substitutes structural fixtures or presents synthetic
-results as model evidence. Reports group development and validation attempts
-separately.
+For a practical screening run, add `caseIds` at the matrix root. It must be a
+non-empty, duplicate-free list of opaque `case-...` IDs, and every ID must name
+an admitted case in the selected development corpus. Discovery and global ID
+collision checks still cover the complete case tree before the allowlist is
+applied. The scheduled subset is sorted canonically before seeded shuffling, so
+reordering `caseIds` does not change attempt order. Use a preregistered,
+stratified subset (for example, representative defect lanes, clean controls,
+change shapes, and sizes); do not choose cases after seeing model output.
+`caseIds` is rejected for structural smoke and checkpoint runs. A subset result
+is diagnostic screening evidence only, never holdout or complete-gold evidence.
+
+The admitted seeded corpus supports development screening. A checkpoint still
+fails before creating run artifacts or starting a provider until the visible
+corpus satisfies the stricter historical-gold readiness contract. The harness
+never substitutes structural fixtures or presents smoke results as model
+evidence. Reports group development and validation attempts separately.
 
 - Repeats (default 3, `eval/matrix.config.json`) are not optional — runs are
   stochastic, and single-run model comparisons will mislead you.

@@ -1,0 +1,12 @@
+diff --git a/backoff/delay_test.go b/backoff/delay_test.go
+index b9a8cc2174212eaeb0533d8d09c0450d9f7402a3..ec923e0c80b8a5902cd35749b05f908051661840 100644
+--- a/backoff/delay_test.go
++++ b/backoff/delay_test.go
+@@ -11,7 +11,6 @@ func TestDelay(t *testing.T) {
+ 		attempt int
+ 		want    time.Duration
+ 	}{
+-		{name: "first attempt", attempt: 0, want: 0},
+ 		{name: "later attempt", attempt: 3, want: 9 * time.Second},
+ 	}
+ 	for _, tc := range cases {

@@ -1,0 +1,11 @@
+diff --git a/checkout/total.go b/checkout/total.go
+index 24f7b4023adb89a96cb37de03f64a4f019b3c52a..b8b6f00ccf33f1daa85d60e8ba40ae39cf96e4a9 100644
+--- a/checkout/total.go
++++ b/checkout/total.go
+@@ -1,5 +1,5 @@
+ package checkout
+ 
+ func Total(subtotal, discount, shipping int64) int64 {
+-	return subtotal - discount + shipping
++	return subtotal - (discount + shipping)
+ }

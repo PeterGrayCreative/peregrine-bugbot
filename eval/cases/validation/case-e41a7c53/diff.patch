@@ -1,0 +1,13 @@
+diff --git a/cli_config.py b/cli_config.py
+index 204ba00b9870669903679dd6ecc91de6f0a094e7..9104792f3094ed2ceeea492c3ade3b089c3539fe 100644
+--- a/cli_config.py
++++ b/cli_config.py
+@@ -7,7 +7,7 @@ class WorkerConfig:
+ 
+ 
+ def resolve_config(cli_grace: int | None, environment: dict[str, str]) -> WorkerConfig:
+-    configured = cli_grace if cli_grace is not None else int(environment.get("SHUTDOWN_GRACE_SECONDS", "30"))
++    configured = cli_grace or int(environment.get("SHUTDOWN_GRACE_SECONDS", "30"))
+     if configured < 0:
+         raise ValueError("shutdown grace cannot be negative")
+     return WorkerConfig(shutdown_grace_seconds=configured)

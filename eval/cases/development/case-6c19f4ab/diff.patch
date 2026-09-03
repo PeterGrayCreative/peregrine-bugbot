@@ -1,0 +1,14 @@
+diff --git a/src/ledger-service.ts b/src/ledger-service.ts
+index c6204c5a02dad8064c7a10ea12569ac3fcb83a98..0ea354ca5319b8d35279db164ac17aec448c42f8 100644
+--- a/src/ledger-service.ts
++++ b/src/ledger-service.ts
+@@ -9,8 +9,8 @@ export function transfer(accounts: Map<string, Account>, fromId: string, toId: s
+   const to = accounts.get(toId);
+   if (!from || !to) throw new Error("account not found");
+   if (from.balanceCents < cents) throw new Error("insufficient funds");
+-  if (to.id.startsWith("locked-")) throw new Error("destination locked");
+ 
+   from.balanceCents -= cents;
++  if (to.id.startsWith("locked-")) throw new Error("destination locked");
+   to.balanceCents += cents;
+ }

@@ -1,0 +1,12 @@
+diff --git a/src/page-items.ts b/src/page-items.ts
+index 0d2d14f387f2925efe941e9313923e48f3fdc0a9..a94d0ab75604b32893021a54cad0ce4f4e6d712f 100644
+--- a/src/page-items.ts
++++ b/src/page-items.ts
+@@ -2,6 +2,6 @@ export function pageItems<T>(items: readonly T[], page: number, pageSize: number
+   if (!Number.isInteger(page) || page < 1) throw new RangeError("page must be positive");
+   if (!Number.isInteger(pageSize) || pageSize < 1) throw new RangeError("page size must be positive");
+   const start = (page - 1) * pageSize;
+-  const endExclusive = Math.min(start + pageSize, items.length);
++  const endExclusive = Math.min(start + pageSize - 1, items.length);
+   return items.slice(start, endExclusive);
+ }

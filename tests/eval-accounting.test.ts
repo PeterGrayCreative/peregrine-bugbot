@@ -1556,6 +1556,7 @@ test("behavioral reports count failed and missing attempts and retain incurred f
       }],
       missing: 1,
       failureInclusiveRecalls: [1, 0, 0],
+      expectedRootCauseRuns: 3,
       structuralExpectedMarkers: null,
     });
     assert.equal(stats.benchmarkKind, "behavioral");

@@ -298,6 +298,7 @@ function preTelemetryStats(
       failed,
       missing: null,
       failureInclusiveRecalls: null,
+      expectedRootCauseRuns: null,
       structuralExpectedMarkers: null,
     });
   });
@@ -384,6 +385,9 @@ function trackedStats(
       failed,
       missing,
       failureInclusiveRecalls: denominatorUnavailable ? null : failureInclusiveRecalls,
+      expectedRootCauseRuns: denominatorUnavailable
+        ? null
+        : attempts.filter((attempt) => countBugs(attempt)! > 0).length,
       structuralExpectedMarkers: attempts.every((attempt) => attempt.expectedBugCount !== null)
         ? attempts.reduce((sum, attempt) => sum + attempt.expectedBugCount!, 0)
         : null,
@@ -637,6 +641,7 @@ function legacyStats(dir: string, manifest?: LegacyMatrixRunManifest): ConfigSta
       failed,
       missing: null,
       failureInclusiveRecalls: null,
+      expectedRootCauseRuns: null,
       structuralExpectedMarkers: null,
     });
   });
@@ -692,6 +697,7 @@ export function calculateStats(args: {
   failed: FailedRun[];
   missing: number | null;
   failureInclusiveRecalls: number[] | null;
+  expectedRootCauseRuns: number | null;
   structuralExpectedMarkers: number | null;
 }): ConfigStats {
   const behavioral = args.benchmarkKind === "behavioral";
@@ -818,7 +824,9 @@ export function calculateStats(args: {
     failureRatesByKind,
     recallMean: behavioral && recalls.length > 0 ? mean(recalls) : null,
     recallStd: behavioral && recalls.length > 0 ? std(recalls) : null,
-    rootCauseRecallMean: behavioral && rootCauseRecalls.length === args.completed.length && rootCauseRecalls.length > 0 ? mean(rootCauseRecalls) : null,
+    rootCauseRecallMean: behavioral && rootCauseRecalls.length === args.expectedRootCauseRuns && rootCauseRecalls.length > 0
+      ? mean(rootCauseRecalls)
+      : null,
     adjudicatedPrecision: behavioral && isTrackedComplete && unresolvedFindings === 0 && precisionDenominator > 0
       ? (matchedFindings + confirmedNewFindings) / precisionDenominator
       : null,

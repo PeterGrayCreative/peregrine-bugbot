@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-c134ae70",
+      "lane": "data-integrity",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
+      "file": "src/ledger-service.ts",
+      "startLine": 13,
+      "endLine": 14,
+      "description": "The transfer debits the source before checking whether the destination is locked, so the failure path leaves balances partially mutated.",
+      "reachablePreconditions": "The source has sufficient funds and the destination account ID starts with locked-.",
+      "observableImpact": "The transfer throws, but the source balance remains reduced and total ledger value is no longer conserved.",
+      "provenance": "Seeded from a base implementation that performed all validation before either balance mutation. Confirmed by curator-only executable proof."
+    }
+  ]
+}

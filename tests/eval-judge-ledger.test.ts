@@ -12,9 +12,10 @@ import {
   type JudgeLimits,
   type JudgePairInput,
 } from "../eval/judge-ledger.js";
-import { SemanticJudgeExecutionError, semanticJudgeArguments, unavailableJudgeUsage } from "../eval/judge-runtime.js";
+import { createContainedCodexSemanticJudge, SemanticJudgeExecutionError, semanticJudgeArguments, unavailableJudgeUsage } from "../eval/judge-runtime.js";
 import { parseContainedProviderArgs } from "../eval/runtime-containment.js";
 import type { Finding, GroundTruthBug } from "../src/types.js";
+import type { exec } from "../src/util/exec.js";
 
 const hashes = {
   experimentManifestSha256: "a".repeat(64),
@@ -242,7 +243,7 @@ test("semantic judge containment accepts only the exact Luna medium argv", () =>
   try {
     const uid = process.getuid!(); const gid = process.getgid!();
     const args = [
-      "run", "--name", "peregrine-eval-00000000-0000-4000-8000-000000000000", "--pull", "never",
+      "run", "--name", "peregrine-eval-00000000-0000-4000-8000-000000000000", "--pull", "never", "--interactive",
       "--network", "bridge", "--read-only", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
       "--pids-limit", "256", "--user", `${uid}:${gid}`, "--workdir", "/workspace",
       "--mount", `type=bind,source=${checkout},target=/workspace,readonly`,
@@ -250,6 +251,7 @@ test("semantic judge containment accepts only the exact Luna medium argv", () =>
       "--mount", `type=bind,source=${output},target=/output`,
       "--tmpfs", `/tmp:rw,noexec,nosuid,nodev,size=64m,uid=${uid},gid=${gid}`,
       "--tmpfs", `/home/peregrine:rw,noexec,nosuid,nodev,size=128m,uid=${uid},gid=${gid}`,
+      "--tmpfs", `/home/peregrine/.codex:rw,noexec,nosuid,nodev,size=128m,uid=${uid},gid=${gid},mode=0700`,
       "--env", "OPENAI_API_KEY", "image", "codex", ...semanticJudgeArguments(),
     ];
     // The parser enforces the accepted image before argv, so reuse a placeholder
@@ -261,8 +263,35 @@ test("semantic judge containment accepts only the exact Luna medium argv", () =>
     const toolEnabled = [...args];
     toolEnabled.splice(toolEnabled.indexOf("shell_tool") - 1, 2);
     assert.throws(() => parseContainedProviderArgs(toolEnabled, "codex", "api-key", { uid, gid }, "semantic-judge"), /exact Luna medium/);
+    const gitCheckRequired = [...args];
+    gitCheckRequired.splice(gitCheckRequired.indexOf("--skip-git-repo-check"), 1);
+    assert.throws(() => parseContainedProviderArgs(gitCheckRequired, "codex", "api-key", { uid, gid }, "semantic-judge"), /exact Luna medium/);
   } finally {
     rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("fake contained semantic judge translates host paths and completes end to end", async () => {
+  const previousKey = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "fake-judge-key";
+  let providerCalls = 0;
+  const fake: typeof exec = async (_command, args) => {
+    if (args[0] === "run") {
+      providerCalls += 1;
+      const parsed = parseContainedProviderArgs(args, "codex", "api-key", undefined, "semantic-judge");
+      assert.deepEqual(parsed.commandArgs, semanticJudgeArguments());
+      writeFileSync(join(parsed.outputDir, "verdict.json"), '{"same_root_cause":true}\n', { mode: 0o600 });
+    }
+    return { stdout: "", stderr: "", code: 0, timedOut: false };
+  };
+  try {
+    const judge = createContainedCodexSemanticJudge({ providerAccess: "api-key", run: fake });
+    const result = await judge("Compare these two sanitized root causes.");
+    assert.equal(result.verdict, true);
+    assert.equal(providerCalls, 1);
+  } finally {
+    if (previousKey === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previousKey;
   }
 });
 

@@ -1,0 +1,32 @@
+{
+  "bugs": [
+    {
+      "id": "bug-5f3d290b",
+      "rootCauseGroup": "root-8b23d5fa",
+      "description": "A repository-import storage rejection is translated into an accepted HTTP status.",
+      "reachablePreconditions": "Import persistence rejects before writing the repository record.",
+      "observableImpact": "The API acknowledges an import that was never stored.",
+      "lane": "error-handling",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
+      "file": "src/repository-import.ts",
+      "startLine": 8,
+      "endLine": 8,
+      "provenance": "Seeded mutation with a paired deterministic base and head proof."
+    },
+    {
+      "id": "bug-6a4e301c",
+      "rootCauseGroup": "root-8b23d5fa",
+      "description": "The swallowed persistence error lets the unchanged caller enqueue indexing for a missing import record.",
+      "reachablePreconditions": "Persistence fails and processImport continues after acceptImport resolves.",
+      "observableImpact": "Downstream indexers receive an identifier whose repository import record does not exist.",
+      "lane": "error-handling",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
+      "file": "src/repository-import.ts",
+      "startLine": 19,
+      "endLine": 19,
+      "provenance": "Seeded mutation with a paired deterministic base and head proof."
+    }
+  ]
+}

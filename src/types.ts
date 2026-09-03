@@ -405,6 +405,8 @@ export interface MatrixConfig {
   repeats: number;
   configs: MatrixModelConfig[];
   corpora?: CaseCorpus[];
+  /** Optional opaque case allowlist for diagnostic development-corpus screening only. */
+  caseIds?: string[];
   experiment: ExperimentProtocol;
 }
 

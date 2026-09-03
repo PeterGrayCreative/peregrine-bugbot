@@ -1,0 +1,32 @@
+diff --git a/settings/save_test.go b/settings/save_test.go
+index 7a933711a4400ecb23419dfaf989a626ac468c6b..9cbd232916d00f282c7723b94f60d6bc6fe83d9e 100644
+--- a/settings/save_test.go
++++ b/settings/save_test.go
+@@ -1,19 +1,16 @@
+ package settings
+ 
+ import (
+-	"errors"
++	"bytes"
+ 	"testing"
+ )
+ 
+-type failingWriter struct{ err error }
+-
+-func (writer failingWriter) Write([]byte) (int, error) {
+-	return 0, writer.err
+-}
+-
+-func TestSavePropagatesWriterError(t *testing.T) {
+-	failure := errors.New("disk full")
+-	if err := Save(failingWriter{err: failure}, []byte("enabled=true")); !errors.Is(err, failure) {
+-		t.Fatalf("Save error = %v, want %v", err, failure)
++func TestSaveWritesPayload(t *testing.T) {
++	var target bytes.Buffer
++	if err := Save(&target, []byte("enabled=true")); err != nil {
++		t.Fatalf("Save returned an error: %v", err)
++	}
++	if target.String() != "enabled=true" {
++		t.Fatalf("payload = %q", target.String())
+ 	}
+ }

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "caseId": "case-f9b30d26",
+  "testCommand": ["python3", "-m", "unittest", "discover", "-s", "fixture", "-p", "test_*.py"],
+  "basePreparation": "Apply diff.patch in reverse to an isolated copy of fixture.",
+  "baseExitCode": 0,
+  "headExitCode": 0,
+  "headTestsRun": 11,
+  "headFailures": 0,
+  "verifiedAt": "2026-09-03T18:43:12Z"
+}

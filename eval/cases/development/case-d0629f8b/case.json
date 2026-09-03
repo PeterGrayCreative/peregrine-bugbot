@@ -1,0 +1,7 @@
+{
+  "id": "case-d0629f8b",
+  "corpus": "development",
+  "kind": "seeded",
+  "fixtureDir": "fixture",
+  "diffFile": "diff.patch"
+}

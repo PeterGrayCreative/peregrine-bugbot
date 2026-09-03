@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-7b5f412d",
+      "description": "Responses from superseded searches are applied to the current result state.",
+      "reachablePreconditions": "Two queries overlap and the earlier request resolves after the later request.",
+      "observableImpact": "The interface displays results for an older query while the input shows the newer query.",
+      "lane": "frontend-state",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "medium",
+      "file": "src/search-state.ts",
+      "startLine": 11,
+      "endLine": 11,
+      "provenance": "Seeded mutation with a paired deterministic base and head proof."
+    }
+  ]
+}

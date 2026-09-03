@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "profile": "delivery-production",
+  "service": "delivery",
+  "deployment": {
+    "environment": "production",
+    "region": "eu-central",
+    "ownerGroup": "platform-observability",
+    "tier": "critical"
+  },
+  "environment": {
+    "LOG_LEVEL": "warning",
+    "LOG_FORMAT": "json",
+    "LOG_PROPAGATE": "false",
+    "LOG_HANDLERS": "console:warning,file:/var/log/delivery.log:info"
+  },
+  "retention": {
+    "days": 30,
+    "maxFiles": 20,
+    "compress": true,
+    "legalHold": false
+  },
+  "sampling": {
+    "requestRate": 0.25,
+    "errorRate": 1.00,
+    "healthRate": 0.01,
+    "metricsRate": 0.10
+  },
+  "redaction": {
+    "fields": [
+      "authorization",
+      "cookie",
+      "email",
+      "session_id",
+      "user_token"
+    ],
+    "replacement": "[redacted]"
+  },
+  "routing": {
+    "primary": "central-eu-central",
+    "secondary": "archive-eu-central",
+    "deadLetter": "logging-failures-eu-central"
+  },
+  "labels": {
+    "team": "delivery",
+    "costCenter": "cc-4118",
+    "dataClass": "internal"
+  }
+}

@@ -12,6 +12,7 @@ import {
   parseContainedProviderArgs,
 } from "../eval/runtime-containment.js";
 import { parseMatrixRunManifest } from "../eval/artifacts.js";
+import type { exec } from "../src/util/exec.js";
 
 const image = ACCEPTED_EVAL_RUNTIME_IMAGE;
 
@@ -49,6 +50,7 @@ test("API-key launch is immutable, no-pull, narrow, and passes only a credential
   assert.ok(parsed.commandArgs.includes("/output/result.json"));
   assert.equal(args.includes("must-not-appear"), false);
   assert.equal(args.includes("never"), true);
+  assert.equal(args.filter((value) => value === "--interactive").length, 1);
   assert.equal(args.some((value) => value.includes("docker.sock") || value === "/"), false);
 });
 
@@ -63,10 +65,24 @@ test("CLI-session launch mounts only the selected provider session and never fal
     "peregrine-eval-00000000-0000-4000-8000-000000000001",
   );
   const parsed = parseContainedProviderArgs(args, "codex", "cli-session");
-  assert.equal(parsed.sessionDir, realpathSync(session));
+  const resolvedSession = realpathSync(session);
+  assert.equal(parsed.sessionDir, resolvedSession);
   assert.equal(parsed.secretName, undefined);
   assert.equal(args.includes("OPENAI_API_KEY"), false);
+  assert.equal(args.some((value) => value === `type=bind,source=${resolvedSession},target=/home/peregrine/.codex,readonly`), false);
+  assert.equal(args.some((value) => value === `type=bind,source=${join(resolvedSession, "auth.json")},target=/home/peregrine/.codex/auth.json,readonly`), true);
+  assert.equal(args.some((value) => value.startsWith("/home/peregrine/.codex:rw,noexec,nosuid,nodev,")), true);
   assert.throws(() => parseContainedProviderArgs(args, "claude", "cli-session"));
+
+  const directoryMount = [...args];
+  directoryMount[directoryMount.findIndex((value) => value.includes("target=/home/peregrine/.codex/auth.json"))] =
+    `type=bind,source=${session},target=/home/peregrine/.codex/auth.json,readonly`;
+  assert.throws(() => parseContainedProviderArgs(directoryMount, "codex", "cli-session"), /source must be a regular file/);
+
+  const writableAuth = [...args];
+  const authIndex = writableAuth.findIndex((value) => value.includes("target=/home/peregrine/.codex/auth.json"));
+  writableAuth[authIndex] = writableAuth[authIndex]!.replace(",readonly", "");
+  assert.throws(() => parseContainedProviderArgs(writableAuth, "codex", "cli-session"), /invalid \/home\/peregrine\/\.codex\/auth\.json bind mount/);
 });
 
 test("mutations that weaken mounts, pull policy, privileges, or image identity are rejected", () => {
@@ -77,6 +93,15 @@ test("mutations that weaken mounts, pull policy, privileges, or image identity a
   );
   for (const mutate of [
     (args: string[]) => { args[args.indexOf("never")] = "always"; },
+    (args: string[]) => { args.splice(args.indexOf("--interactive"), 1); },
+    (args: string[]) => {
+      const index = args.findIndex((value) => value.startsWith("/home/peregrine/.codex:"));
+      args.splice(index - 1, 2);
+    },
+    (args: string[]) => {
+      const index = args.findIndex((value) => value.startsWith("/home/peregrine/.codex:"));
+      args[index] = args[index]!.replace("mode=0700", "mode=0777");
+    },
     (args: string[]) => { args.splice(args.indexOf("--read-only"), 1); },
     (args: string[]) => { args[args.findIndex((value) => value.includes("target=/workspace"))] = `type=bind,source=${paths.checkoutDir},target=/workspace`; },
     (args: string[]) => { args[args.indexOf(image)] = "peregrine:latest"; },
@@ -87,6 +112,23 @@ test("mutations that weaken mounts, pull policy, privileges, or image identity a
     const changed = [...original]; mutate(changed);
     assert.throws(() => parseContainedProviderArgs(changed, "codex", "api-key"));
   }
+});
+
+test("fake contained launch keeps Docker stdin open and delivers the prompt", async () => {
+  const paths = roots(); process.env.OPENAI_API_KEY = "x";
+  const prompt = "PEREGRINE_ROLE: breadth-worker\nInspect the changed invariant.";
+  let delivered = "";
+  const fake: typeof exec = async (_cmd, args, options) => {
+    if (args[0] === "run") {
+      assert.equal(args.includes("--interactive"), true);
+      delivered = options?.stdin ?? "";
+    }
+    return { stdout: "", stderr: "", code: 0, timedOut: false };
+  };
+  const run = createContainedProviderExec({ runner: "codex", providerAccess: "api-key", image, ...paths, run: fake });
+  const result = await run("codex", codexCommand(paths), { inheritEnv: false, stdin: prompt });
+  assert.equal(result.code, 0);
+  assert.equal(delivered, prompt);
 });
 
 test("a different well-formed runtime digest is rejected before launch", () => {

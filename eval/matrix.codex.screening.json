@@ -1,0 +1,68 @@
+{
+  "repeats": 1,
+  "corpora": ["development"],
+  "caseIds": [
+    "case-13f0a2c1",
+    "case-17ac84e2",
+    "case-1ab7d3c9",
+    "case-39e6a1c4",
+    "case-6c19f4ab",
+    "case-a17c4e92",
+    "case-a1c4e90d",
+    "case-d40b36f9"
+  ],
+  "configs": [
+    {
+      "name": "production-luna-high-to-sol-high",
+      "runner": "codex",
+      "overrides": {
+        "breadthModel": "gpt-5.6-luna",
+        "breadthEffort": "high",
+        "investigationModel": "gpt-5.6-sol",
+        "investigationEffort": "high"
+      }
+    },
+    {
+      "name": "luna-medium-only",
+      "runner": "codex",
+      "overrides": {
+        "breadthModel": "gpt-5.6-luna",
+        "breadthEffort": "medium",
+        "investigationModel": "gpt-5.6-luna",
+        "investigationEffort": "medium"
+      }
+    }
+  ],
+  "experiment": {
+    "mode": "screening",
+    "seed": 20260903,
+    "cacheCondition": "uncontrolled",
+    "providerCalls": "allow",
+    "providerAccess": "cli-session",
+    "costAccounting": "best-effort",
+    "control": "production-luna-high-to-sol-high",
+    "treatment": "luna-medium-only",
+    "judge": {
+      "kind": "codex",
+      "model": "gpt-5.6-luna",
+      "effort": "medium",
+      "version": "semantic-v1",
+      "limits": {
+        "maxProviderCostUsd": null,
+        "maxProviderAttempts": 100,
+        "maxWallTimeMs": 10800000,
+        "maxFailureRate": 0.25,
+        "minAttemptsForFailureRate": 8,
+        "maxConsecutiveFailures": 3
+      }
+    },
+    "limits": {
+      "maxProviderCostUsd": null,
+      "maxProviderAttempts": 16,
+      "maxWallTimeMs": 10800000,
+      "maxFailureRate": 0.25,
+      "minAttemptsForFailureRate": 8,
+      "maxConsecutiveFailures": 3
+    }
+  }
+}

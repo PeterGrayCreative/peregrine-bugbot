@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-19c805bf",
+      "lane": "contracts",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
+      "file": "page_response.py",
+      "startLine": 13,
+      "endLine": 13,
+      "description": "serialize_page changes the published response field from next_cursor to cursor without a versioned contract change.",
+      "reachablePreconditions": "Any API request serializes a page for a client that implements the existing version-one response schema.",
+      "observableImpact": "Existing clients cannot find next_cursor and therefore stop pagination or reject the response.",
+      "provenance": "Seeded wire-key mutation in an otherwise unchanged serializer; test_page_response.py asserts both populated and terminal page shapes."
+    }
+  ]
+}

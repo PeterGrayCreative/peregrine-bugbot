@@ -1,0 +1,15 @@
+diff --git a/batch_store.py b/batch_store.py
+index d6493f7f7f19fdf53ed383bda5479e6619e4c129..6819c3b294f937d08abe035d6e9a369ed1651d66 100644
+--- a/batch_store.py
++++ b/batch_store.py
+@@ -2,9 +2,5 @@ import sqlite3
+ 
+ 
+ def record_batch(connection: sqlite3.Connection, rows: list[tuple[str, int]]) -> None:
+-    try:
++    with connection:
+         connection.executemany("INSERT INTO readings (sensor, value) VALUES (?, ?)", rows)
+-    except Exception:
+-        connection.rollback()
+-        raise
+-    connection.commit()

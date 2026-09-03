@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-8b14c3e2",
+      "lane": "test-quality",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "medium",
+      "file": "settings/save_test.go",
+      "startLine": 8,
+      "endLine": 16,
+      "description": "The replacement test covers only a successful write and removes the assertion that Save propagates an io.Writer failure.",
+      "reachablePreconditions": "A future implementation ignores or replaces the error returned by writer.Write, while ordinary successful writes still work.",
+      "observableImpact": "The suite stays green even if persistence failures are silently reported as success to callers.",
+      "provenance": "Seeded test-regression case; comparing named test inventories and the unchanged production contract proves the error-path coverage was removed."
+    }
+  ]
+}

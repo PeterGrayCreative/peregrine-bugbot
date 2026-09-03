@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-8c60423e",
+      "description": "A failed response from an obsolete mutation rolls back state confirmed by a newer mutation.",
+      "reachablePreconditions": "Two preference saves overlap, the later save succeeds, and the earlier save fails afterward.",
+      "observableImpact": "The visible preference reverts even though the server retained the newer value.",
+      "lane": "frontend-state",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "medium",
+      "file": "src/preferences-state.ts",
+      "startLine": 14,
+      "endLine": 14,
+      "provenance": "Seeded mutation with a paired deterministic base and head proof."
+    }
+  ]
+}

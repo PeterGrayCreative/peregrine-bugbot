@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -26,7 +26,7 @@ import {
   type ValidatedBehavioralCase,
 } from "../eval/validate-corpus.js";
 import type { CoreLaneId } from "../src/core/lanes.js";
-import type { CaseSpec, GroundTruth } from "../src/types.js";
+import type { CaseSpec, GroundTruth, RunnerName } from "../src/types.js";
 
 const sha = (value: string): string => createHash("sha256").update(value).digest("hex");
 
@@ -319,6 +319,30 @@ test("admission trusts only identities registered by the bound protected-review 
   }
 });
 
+test("admission scans trusted provider assets with the case leakage policy", async () => {
+  const outer = mkdtempSync(join(tmpdir(), "peregrine-corpus-provider-assets-"));
+  const casesRoot = join(outer, "cases");
+  const caseDir = join(casesRoot, "development", "case-6c19f4ab");
+  try {
+    mkdirSync(join(casesRoot, "development"), { recursive: true });
+    cpSync(join(process.cwd(), "eval/cases/development/case-6c19f4ab"), caseDir, { recursive: true });
+    cpSync(join(process.cwd(), "eval/curator-policy.json"), join(outer, "curator-policy.json"));
+    const truthPath = join(caseDir, "ground_truth.json");
+    const truth = JSON.parse(readFileSync(truthPath, "utf8"));
+    truth.bugs[0].description =
+      "Review the source branch against its merge base and ticket contract, then consolidate every candidate by root invariant before drafting comments.";
+    writeFileSync(truthPath, JSON.stringify(truth));
+    rewriteAndSignCuration(caseDir, () => {});
+
+    await assert.rejects(
+      () => validateSelectedBehavioralCases([caseDir], casesRoot),
+      /repository file contains forbidden answer-bearing term/,
+    );
+  } finally {
+    rmSync(outer, { recursive: true, force: true });
+  }
+});
+
 test("curator policy rejects symlink substitution", async () => {
   const outer = mkdtempSync(join(tmpdir(), "peregrine-corpus-policy-symlink-"));
   const casesRoot = join(outer, "cases");
@@ -439,7 +463,10 @@ test("screening rejects an unadmitted selected case before provider or run artif
     const caseDir = createCleanBehavioralCase(casesRoot, "development", "case-eeeeaaaa", "draft");
     mkdirSync(join(casesRoot, "validation"), { recursive: true });
     const matrix = join(root, "matrix.json");
-    writeFileSync(matrix, JSON.stringify(behavioralMatrix("screening", ["development"])));
+    writeFileSync(matrix, JSON.stringify({
+      ...behavioralMatrix("screening", ["development"]),
+      caseIds: ["case-eeeeaaaa"],
+    }));
     await assert.rejects(() => runMatrix(matrix, runsRoot, { casesDir: casesRoot }), /not admitted to the behavioral corpus/);
     assert.equal(existsSync(runsRoot), false);
     assert.ok(existsSync(caseDir));
@@ -476,6 +503,129 @@ test("screening rejects duplicate IDs across selected and unselected behavioral 
     writeFileSync(matrix, JSON.stringify(behavioralMatrix("screening", ["development"])));
     await assert.rejects(() => runMatrix(matrix, runsRoot, { casesDir: casesRoot }), /duplicate opaque case id/);
     assert.equal(existsSync(runsRoot), false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("screening caseIds must be non-empty, unique opaque IDs and are rejected by other modes", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-screening-case-id-config-"));
+  try {
+    for (const [index, [caseIds, pattern]] of ([
+      [[], /non-empty array/],
+      [["case-eeeeaaaa", "case-eeeeaaaa"], /must not contain duplicates/],
+      [["friendly-name"], /must match \^case-/],
+    ] as const).entries()) {
+      const matrix = join(root, `matrix-${index}.json`);
+      writeFileSync(matrix, JSON.stringify({ ...behavioralMatrix("screening", ["development"]), caseIds }));
+      await assert.rejects(() => runMatrix(matrix, join(root, "runs")), pattern);
+    }
+
+    const structural = join(root, "structural.json");
+    writeFileSync(structural, JSON.stringify({
+      repeats: 1,
+      corpora: ["structural-smoke"],
+      caseIds: ["case-00000001"],
+      configs: [{ name: "mock", runner: "mock" }],
+      experiment: {
+        mode: "structural-smoke",
+        seed: 1,
+        cacheCondition: "not-applicable",
+        providerCalls: "deny",
+        providerAccess: "not-applicable",
+        costAccounting: "not-applicable",
+        judge: { kind: "exact", version: "exact-v1" },
+        limits: {
+          maxProviderCostUsd: null,
+          maxProviderAttempts: 0,
+          maxWallTimeMs: 1,
+          maxFailureRate: 1,
+          minAttemptsForFailureRate: 1,
+          maxConsecutiveFailures: 1,
+        },
+      },
+    }));
+    await assert.rejects(() => runMatrix(structural, join(root, "runs")), /only for screening/);
+
+    const checkpoint = join(root, "checkpoint.json");
+    writeFileSync(checkpoint, JSON.stringify({
+      ...behavioralMatrix("checkpoint", ["development", "validation"]),
+      caseIds: ["case-eeeeaaaa"],
+    }));
+    await assert.rejects(() => runMatrix(checkpoint, join(root, "runs")), /only for screening/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("screening caseIds reject unknown, out-of-corpus, and tampered selected cases before artifacts", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-screening-case-id-selection-"));
+  const casesRoot = join(root, "cases");
+  try {
+    const admitted = createCleanBehavioralCase(casesRoot, "development", "case-eeeeaaba", "admitted");
+    createCleanBehavioralCase(casesRoot, "validation", "case-eeeeaabb", "admitted", "case-00000002");
+
+    const unknownMatrix = join(root, "unknown.json");
+    writeFileSync(unknownMatrix, JSON.stringify({
+      ...behavioralMatrix("screening", ["development"]),
+      caseIds: ["case-eeeeaabc"],
+    }));
+    const unknownRuns = join(root, "unknown-runs");
+    await assert.rejects(() => runMatrix(unknownMatrix, unknownRuns, { casesDir: casesRoot }), /unknown case/);
+    assert.equal(existsSync(unknownRuns), false);
+
+    const outsideMatrix = join(root, "outside.json");
+    writeFileSync(outsideMatrix, JSON.stringify({
+      ...behavioralMatrix("screening", ["development"]),
+      caseIds: ["case-eeeeaabb"],
+    }));
+    const outsideRuns = join(root, "outside-runs");
+    await assert.rejects(() => runMatrix(outsideMatrix, outsideRuns, { casesDir: casesRoot }), /not in the selected corpora/);
+    assert.equal(existsSync(outsideRuns), false);
+
+    writeFileSync(join(admitted, "proof.md"), "tampered after admission\n");
+    const tamperedMatrix = join(root, "tampered.json");
+    writeFileSync(tamperedMatrix, JSON.stringify({
+      ...behavioralMatrix("screening", ["development"]),
+      caseIds: ["case-eeeeaaba"],
+    }));
+    const tamperedRuns = join(root, "tampered-runs");
+    await assert.rejects(() => runMatrix(tamperedMatrix, tamperedRuns, { casesDir: casesRoot }), /proof digest does not match/);
+    assert.equal(existsSync(tamperedRuns), false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("screening caseIds ignore unselected drafts and schedule selected cases independent of allowlist order", async () => {
+  const root = mkdtempSync(join(realpathSync(tmpdir()), "peregrine-screening-case-id-order-"));
+  const casesRoot = join(root, "cases");
+  try {
+    createCleanBehavioralCase(casesRoot, "development", "case-eeeeaaca", "admitted", "case-00000001");
+    createCleanBehavioralCase(casesRoot, "development", "case-eeeeaacb", "admitted", "case-00000002");
+    createCleanBehavioralCase(casesRoot, "development", "case-eeeeaacc", "draft", "case-00000003");
+    mkdirSync(join(casesRoot, "validation"), { recursive: true });
+
+    const schedules: string[][] = [];
+    for (const [index, caseIds] of [
+      ["case-eeeeaacb", "case-eeeeaaca"],
+      ["case-eeeeaaca", "case-eeeeaacb"],
+    ].entries()) {
+      const matrix = join(root, `matrix-${index}.json`);
+      writeFileSync(matrix, JSON.stringify({
+        ...behavioralMatrix("screening", ["development"]),
+        caseIds,
+      }));
+      const outDir = await runMatrix(matrix, join(root, `runs-${index}`), {
+        casesDir: casesRoot,
+        runtimeMetadataFor,
+        now: () => Date.parse(`2026-09-03T12:00:0${index}.000Z`),
+      });
+      const manifest = JSON.parse(readFileSync(join(outDir, "experiment-manifest.json"), "utf8"));
+      schedules.push(manifest.schedule.map((attempt: { caseName: string }) => attempt.caseName));
+      assert.equal(manifest.schedule.some((attempt: { caseName: string }) => attempt.caseName.endsWith("case-eeeeaacc")), false);
+    }
+    assert.deepEqual(schedules[0], schedules[1]);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -753,5 +903,21 @@ function behavioralMatrix(
         maxConsecutiveFailures: 1,
       },
     },
+  };
+}
+
+async function runtimeMetadataFor(runners: readonly RunnerName[], observedAt: string) {
+  const sorted = [...runners].sort();
+  return {
+    observedAt,
+    nodeVersion: process.version,
+    platform: process.platform,
+    arch: process.arch,
+    cliVersions: sorted.map((runner) => runner === "mock"
+      ? { runner, status: "not-applicable" as const }
+      : { runner, status: "observed" as const, version: "1.0.0" }),
+    providerAvailability: sorted.map((runner) => runner === "mock"
+      ? { runner, status: "not-applicable" as const }
+      : { runner, status: "denied" as const }),
   };
 }
