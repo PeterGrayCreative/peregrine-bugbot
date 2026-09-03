@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-9d71534f",
+      "description": "The exclusive slice endpoint subtracts one and removes the final item from every full page.",
+      "reachablePreconditions": "A caller requests a page that contains at least pageSize remaining items.",
+      "observableImpact": "Each full page is short and records at page boundaries are never returned on that page.",
+      "lane": "boundaries-pagination",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "medium",
+      "file": "src/page-items.ts",
+      "startLine": 5,
+      "endLine": 5,
+      "provenance": "Seeded mutation with a paired deterministic base and head proof."
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-ae826450",
+      "description": "The one-based public page number is used as a zero-based multiplier.",
+      "reachablePreconditions": "Any valid page is requested, including the first page.",
+      "observableImpact": "The first page is skipped and every later page reads the following window.",
+      "lane": "boundaries-pagination",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "medium",
+      "file": "src/list-orders.ts",
+      "startLine": 6,
+      "endLine": 6,
+      "provenance": "Seeded mutation with a paired deterministic base and head proof."
+    }
+  ]
+}

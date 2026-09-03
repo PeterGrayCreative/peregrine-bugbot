@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "caseId": "case-c95a81e4",
+  "status": "draft",
+  "source": { "kind": "clean", "repositoryAlias": "repo-c", "repositoryIdentitySha256": "4da261d5320a6a542667c0a506d566c927e14d20aef844ef141a9db00c1b728d", "changeIdentitySha256": "92217feb08df3aec8f9def5be5c7821cea284a855e8e3a2ea6632d085b3f5052", "access": "sanitized-private" },
+  "strata": { "languageFamily": "typescript", "architectureFamily": "collection-api", "size": "small", "changeShapes": ["direct"], "surfaceLanes": ["boundaries-pagination"] },
+  "proof": { "kind": "clean-control-review", "artifact": "proof.json", "sha256": "8c5f5fff882bedc65cabb2ae8826d5520dd5b05d761c04ac59b7f9a3cace194f" },
+  "confirmations": []
+}

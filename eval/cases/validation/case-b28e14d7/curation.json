@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "caseId": "case-b28e14d7",
+  "status": "draft",
+  "source": { "kind": "seeded", "repositoryAlias": "repo-a", "repositoryIdentitySha256": "393df8ca1e2a9cd6070724e44f8a5ebd20a96c5ba80d54cc85f7a54489c69f99", "changeIdentitySha256": "9beee384ecf1cb5c6e504d38a76e2fbc2f6c8b4a820e4ec8ac775182b74f67de", "access": "sanitized-private" },
+  "strata": { "languageFamily": "typescript", "architectureFamily": "integration-monorepo", "size": "large", "changeShapes": ["large-diff", "multi-observation", "seam"], "surfaceLanes": ["error-handling"] },
+  "proof": { "kind": "regression-test", "artifact": "proof.json", "sha256": "6e3fa31efb2b0b18d453c642250f5eaa2c715b5cb09d5fea1f52178c81a5c09e" },
+  "confirmations": []
+}

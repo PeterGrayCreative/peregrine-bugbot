@@ -1,0 +1,12 @@
+diff --git a/src/window.ts b/src/window.ts
+index f4908900faa74f1001623455a1d7f3193249e775..a8a8a6b886cc6431dfe8a8b75efa5f12f5a46313 100644
+--- a/src/window.ts
++++ b/src/window.ts
+@@ -1,4 +1,5 @@
+ export function windowItems<T>(items: readonly T[], offset: number, limit: number): T[] {
+-  const endExclusive = Math.min(offset + limit, items.length);
+-  return items.slice(offset, endExclusive);
++  const lastIndex = Math.min(offset + limit - 1, items.length - 1);
++  if (lastIndex < offset) return [];
++  return items.slice(offset, lastIndex + 1);
+ }

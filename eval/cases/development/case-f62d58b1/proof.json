@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "contract": "base-good-head-good-v1",
+  "command": ["node", "--test", "test/display-name.test.mjs"],
+  "nodeVersion": "22.22.1",
+  "networkRequired": false,
+  "baseExitCode": 0,
+  "headExitCode": 0
+}
