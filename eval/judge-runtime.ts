@@ -127,7 +127,7 @@ export function semanticJudgeArguments(paths: {
   output: "/output/verdict.json",
 }): string[] {
   return [
-    "exec", "--ephemeral", "--ignore-user-config", "--ignore-rules", "--strict-config",
+    "exec", "--ephemeral", "--ignore-user-config", "--ignore-rules", "--skip-git-repo-check", "--strict-config",
     "--disable", "shell_tool", "--disable", "unified_exec",
     "--sandbox", "read-only", "--model", CODEX_SEMANTIC_JUDGE.model,
     "--config", `model_reasoning_effort="${CODEX_SEMANTIC_JUDGE.effort}"`,

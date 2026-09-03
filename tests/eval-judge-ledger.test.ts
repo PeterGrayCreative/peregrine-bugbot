@@ -263,6 +263,9 @@ test("semantic judge containment accepts only the exact Luna medium argv", () =>
     const toolEnabled = [...args];
     toolEnabled.splice(toolEnabled.indexOf("shell_tool") - 1, 2);
     assert.throws(() => parseContainedProviderArgs(toolEnabled, "codex", "api-key", { uid, gid }, "semantic-judge"), /exact Luna medium/);
+    const gitCheckRequired = [...args];
+    gitCheckRequired.splice(gitCheckRequired.indexOf("--skip-git-repo-check"), 1);
+    assert.throws(() => parseContainedProviderArgs(gitCheckRequired, "codex", "api-key", { uid, gid }, "semantic-judge"), /exact Luna medium/);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
