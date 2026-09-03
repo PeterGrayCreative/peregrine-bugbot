@@ -205,7 +205,7 @@ Evidence: [Plan PR 5A validation record](../validation/2026-09-03-provider-usage
 - [x] Add spend, wall-clock, failure-rate, and early-stop ceilings.
 - [x] Add resume behavior that never overwrites failed evidence.
 - [x] Add deterministic schedule, retry-lineage, resume, ceiling, immutable-manifest, lock, evidence-binding, schema-parity, and symlink-safe-write tests.
-- [x] Run `npm run validate` under Node `22.22.1`: 133/133 Node tests, all skill/package checks, and 8/8 zero-cost structural smoke attempts passed with 5/5 expected markers.
+- [x] Run `npm run validate` under Node `22.22.1`: 138/138 Node tests, all skill/package checks, and 8/8 zero-cost structural smoke attempts passed with 5/5 expected markers.
 - [ ] Open, review, and merge the PR.
 
 Must stay untouched: model behavior and routing.

@@ -8,14 +8,14 @@
 
 **Base:** `e6137edad32bfb5d45e277eec463cedab6d64c8e`
 
-**Validated code head:** pending
+**Validated code head:** `d6fbf18ef9ea60ad925cf5da06e06186773f7293`
 
 **Node:** repository pin `22`; validation runtime `22.22.1`
 
 **Provider calls:** none performed for this draft record
 
-**Status:** local implementation and validation passed; exact committed-head,
-remote CI, and PR review evidence remain pending.
+**Status:** local implementation, exact committed-head validation, and two
+independent review lanes passed; remote CI and PR review evidence remain pending.
 
 ## Scope under validation
 
@@ -109,17 +109,18 @@ Focused experiment tests must additionally prove:
 ## Results
 
 - TypeScript typecheck: passed under Node `22.22.1`.
-- TypeScript tests: 136/136 passed.
-- Focused experiment tests: 21/21 passed after adversarial hardening.
+- TypeScript tests: 138/138 passed.
+- Focused experiment tests: 23/23 passed after adversarial hardening.
 - Skill and manifest tests: 26/26 passed.
 - Packaging/install tests: 9/9 passed; plugin-management checks: 4/4 passed.
 - Structural smoke: 8/8 attempts completed; 5/5 expected markers found; no
   unexpected findings; no provider process was started.
 - JSON schema parse and working-tree `git diff --check`: passed.
-- Independent review: an adversarial pre-commit review identified locking,
-  judge containment, model binding, stale-corpus, schema-parity, and safe-write
-  gaps. Those findings are covered by the passing local suite; an exact
-  committed-head re-review remains pending.
+- Independent review: adversarial reviews identified and verified fixes for
+  locking, judge containment, model binding, stale-corpus, schema-parity,
+  safe-write, cross-experiment substitution, evidence sealing, partial-grade
+  trust, and corpus-mutation gaps. Functional and security reviewers both
+  returned ready on the exact validated code head.
 - Remote CI and review state: pending.
 
 The structural smoke can prove schedule construction, immutable metadata,
