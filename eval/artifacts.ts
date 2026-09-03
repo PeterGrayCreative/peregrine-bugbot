@@ -1,10 +1,14 @@
 import { isDeepStrictEqual } from "node:util";
+import { MAX_MANIFEST_CHARS } from "../src/core/manifest.js";
 import { parseEngineResult } from "../src/core/review-result.js";
 import { RUN_FAILURE_KINDS } from "../src/core/run-failure.js";
-import { combineUsage, parseUsage } from "../src/core/telemetry.js";
+import { combineUsage, parseUsage, sha256 } from "../src/core/telemetry.js";
 import {
   CASE_CORPORA,
   type CaseCorpus,
+  type EvaluationAttemptProvenance,
+  type EvaluationHistoryProvenance,
+  type EvaluationManifestProvenance,
   type GradedRun,
   type MatrixRunManifest,
   type NetworkIsolationCapability,
@@ -17,7 +21,7 @@ import {
 const RECORD_KEYS = new Set([
   "schemaVersion", "attemptId", "caseName", "caseKind", "configName", "repeat",
   "caseCorpus", "startedAt", "finishedAt", "outcome",
-  "runner",
+  "runner", "evaluationProvenance",
 ]);
 const GRADED_KEYS = new Set([...RECORD_KEYS, "matches", "falsePositiveIndexes"]);
 const LEGACY_SCHEMA_V1_RECORD_KEYS = new Set([...RECORD_KEYS].filter((key) => key !== "caseCorpus" && key !== "runner"));
@@ -136,6 +140,9 @@ export function assertGradedMatchesRun(graded: GradedRun, run: RunRecord, source
   }
   if (!isDeepStrictEqual(graded.outcome.result, run.outcome.result)) {
     throw new Error(`${source}.outcome.result does not match the run artifact`);
+  }
+  if (!isDeepStrictEqual(graded.evaluationProvenance, run.evaluationProvenance)) {
+    throw new Error(`${source}.evaluationProvenance does not match the run artifact`);
   }
   const matchedFindingIndexes = new Set(Object.values(graded.matches).filter((index): index is number => index !== null));
   const expectedFalsePositives = graded.outcome.result.findings
@@ -271,6 +278,9 @@ function parseRecordFields(root: Record<string, unknown>, source: string): RunRe
   if (Date.parse(finishedAt) < Date.parse(startedAt)) {
     throw new Error(`${source}.finishedAt must not precede startedAt`);
   }
+  const evaluationProvenance = root.evaluationProvenance === undefined
+    ? undefined
+    : parseEvaluationProvenance(root.evaluationProvenance, `${source}.evaluationProvenance`);
   return {
     schemaVersion: 1,
     attemptId: strictString(root.attemptId, `${source}.attemptId`, 200),
@@ -282,6 +292,7 @@ function parseRecordFields(root: Record<string, unknown>, source: string): RunRe
     runner: parsedRunner,
     startedAt,
     finishedAt,
+    ...(evaluationProvenance ? { evaluationProvenance } : {}),
     outcome,
   };
 }
@@ -300,6 +311,9 @@ function parseLegacySchemaV1RecordFields(
   if (Date.parse(finishedAt) < Date.parse(startedAt)) {
     throw new Error(`${source}.finishedAt must not precede startedAt`);
   }
+  const evaluationProvenance = root.evaluationProvenance === undefined
+    ? undefined
+    : parseEvaluationProvenance(root.evaluationProvenance, `${source}.evaluationProvenance`);
   return {
     schemaVersion: 1,
     attemptId: strictString(root.attemptId, `${source}.attemptId`, 200),
@@ -309,8 +323,189 @@ function parseLegacySchemaV1RecordFields(
     repeat: positiveSafeInteger(root.repeat, `${source}.repeat`),
     startedAt,
     finishedAt,
+    ...(evaluationProvenance ? { evaluationProvenance } : {}),
     outcome,
   };
+}
+
+function parseEvaluationProvenance(value: unknown, source: string): EvaluationAttemptProvenance {
+  const root = object(value, source);
+  onlyKeys(root, new Set(["history", "manifest"]), source);
+  const history = parseHistoryProvenance(root.history, `${source}.history`);
+  const manifest = root.manifest === undefined
+    ? undefined
+    : parseManifestProvenance(root.manifest, history, `${source}.manifest`);
+  return { history, ...(manifest ? { manifest } : {}) };
+}
+
+function parseHistoryProvenance(value: unknown, source: string): EvaluationHistoryProvenance {
+  const root = object(value, source);
+  onlyKeys(root, new Set([
+    "schemaVersion", "materialization", "objectFormat", "baseRef", "headRef",
+    "mergeBase", "baseTree", "headTree", "commitCount", "baseIsMergeBase",
+    "checkedOutTreeMatchesHead", "treeReproductionVerified", "historicalSource",
+    "diffNormalization", "diffSha256",
+  ]), source);
+  if (root.schemaVersion !== 1) throw new Error(`${source}.schemaVersion must be 1`);
+  if (!(root.materialization === "fixture-patch" || root.materialization === "historical-sanitized-export")) {
+    throw new Error(`${source}.materialization is invalid`);
+  }
+  if (!(root.objectFormat === "sha1" || root.objectFormat === "sha256")) {
+    throw new Error(`${source}.objectFormat is invalid`);
+  }
+  const objectFormat = root.objectFormat;
+  const baseRef = gitObjectId(root.baseRef, objectFormat, `${source}.baseRef`);
+  const headRef = gitObjectId(root.headRef, objectFormat, `${source}.headRef`);
+  const mergeBase = gitObjectId(root.mergeBase, objectFormat, `${source}.mergeBase`);
+  if (mergeBase !== baseRef) throw new Error(`${source}.mergeBase must equal baseRef`);
+  if (root.commitCount !== 2) throw new Error(`${source}.commitCount must be 2`);
+  requireTrue(root.baseIsMergeBase, `${source}.baseIsMergeBase`);
+  requireTrue(root.checkedOutTreeMatchesHead, `${source}.checkedOutTreeMatchesHead`);
+  requireTrue(root.treeReproductionVerified, `${source}.treeReproductionVerified`);
+  if (root.diffNormalization !== "identity-v1") {
+    throw new Error(`${source}.diffNormalization must be identity-v1`);
+  }
+  const historicalSource = root.historicalSource === undefined
+    ? undefined
+    : parseHistoricalSource(root.historicalSource, objectFormat, `${source}.historicalSource`);
+  if ((root.materialization === "historical-sanitized-export") !== (historicalSource !== undefined)) {
+    throw new Error(`${source}.historicalSource must appear only for historical materialization`);
+  }
+  return {
+    schemaVersion: 1,
+    materialization: root.materialization,
+    objectFormat,
+    baseRef,
+    headRef,
+    mergeBase,
+    baseTree: gitObjectId(root.baseTree, objectFormat, `${source}.baseTree`),
+    headTree: gitObjectId(root.headTree, objectFormat, `${source}.headTree`),
+    commitCount: 2,
+    baseIsMergeBase: true,
+    checkedOutTreeMatchesHead: true,
+    treeReproductionVerified: true,
+    ...(historicalSource ? { historicalSource } : {}),
+    diffNormalization: "identity-v1",
+    diffSha256: sha256Hex(root.diffSha256, `${source}.diffSha256`),
+  };
+}
+
+function parseHistoricalSource(
+  value: unknown,
+  objectFormat: EvaluationHistoryProvenance["objectFormat"],
+  source: string,
+): NonNullable<EvaluationHistoryProvenance["historicalSource"]> {
+  const root = object(value, source);
+  onlyKeys(root, new Set([
+    "sourceIdentitySha256", "sourceBaseRef", "sourceHeadRef", "sourceMergeBase",
+    "sourceBaseTree", "sourceHeadTree", "baseCommitIsMergeBase", "baseTreeMatches",
+    "headTreeMatches",
+  ]), source);
+  const sourceBaseRef = gitObjectId(root.sourceBaseRef, objectFormat, `${source}.sourceBaseRef`);
+  const sourceMergeBase = gitObjectId(root.sourceMergeBase, objectFormat, `${source}.sourceMergeBase`);
+  if (sourceMergeBase !== sourceBaseRef) {
+    throw new Error(`${source}.sourceMergeBase must equal sourceBaseRef`);
+  }
+  requireTrue(root.baseCommitIsMergeBase, `${source}.baseCommitIsMergeBase`);
+  requireTrue(root.baseTreeMatches, `${source}.baseTreeMatches`);
+  requireTrue(root.headTreeMatches, `${source}.headTreeMatches`);
+  return {
+    sourceIdentitySha256: sha256Hex(root.sourceIdentitySha256, `${source}.sourceIdentitySha256`),
+    sourceBaseRef,
+    sourceHeadRef: gitObjectId(root.sourceHeadRef, objectFormat, `${source}.sourceHeadRef`),
+    sourceMergeBase,
+    sourceBaseTree: gitObjectId(root.sourceBaseTree, objectFormat, `${source}.sourceBaseTree`),
+    sourceHeadTree: gitObjectId(root.sourceHeadTree, objectFormat, `${source}.sourceHeadTree`),
+    baseCommitIsMergeBase: true,
+    baseTreeMatches: true,
+    headTreeMatches: true,
+  };
+}
+
+function parseManifestProvenance(
+  value: unknown,
+  history: EvaluationHistoryProvenance,
+  source: string,
+): EvaluationManifestProvenance {
+  const root = object(value, source);
+  onlyKeys(root, new Set([
+    "entryPoint", "skillName", "baseRef", "headRef", "mergeBase", "outputSha256",
+    "output", "profileSource", "headProfileChanged",
+  ]), source);
+  if (root.entryPoint !== "prepareReviewManifest") {
+    throw new Error(`${source}.entryPoint must be prepareReviewManifest`);
+  }
+  const output = boundedText(root.output, `${source}.output`, MAX_MANIFEST_CHARS);
+  const outputSha256 = sha256Hex(root.outputSha256, `${source}.outputSha256`);
+  if (outputSha256 !== sha256(output)) throw new Error(`${source}.outputSha256 does not match output`);
+  if (!(root.profileSource === "none" || root.profileSource === "merge-base snapshot" ||
+    root.profileSource === "ignored; absent at merge base")) {
+    throw new Error(`${source}.profileSource is invalid`);
+  }
+  if (typeof root.headProfileChanged !== "boolean") {
+    throw new Error(`${source}.headProfileChanged must be boolean`);
+  }
+  if (root.profileSource === "none" && root.headProfileChanged) {
+    throw new Error(`${source}.headProfileChanged requires a selected profile source`);
+  }
+  if (root.profileSource === "ignored; absent at merge base" && !root.headProfileChanged) {
+    throw new Error(`${source}.ignored profile provenance requires headProfileChanged`);
+  }
+  for (const [field, actual, expected] of [
+    ["baseRef", root.baseRef, history.baseRef],
+    ["headRef", root.headRef, history.headRef],
+    ["mergeBase", root.mergeBase, history.mergeBase],
+  ] as const) {
+    if (actual !== expected) throw new Error(`${source}.${field} does not match history provenance`);
+  }
+  validateManifestOutputProvenance(
+    output,
+    history,
+    root.profileSource,
+    root.headProfileChanged,
+    source,
+  );
+  return {
+    entryPoint: "prepareReviewManifest",
+    skillName: strictString(root.skillName, `${source}.skillName`, 500),
+    baseRef: history.baseRef,
+    headRef: history.headRef,
+    mergeBase: history.mergeBase,
+    outputSha256,
+    output,
+    profileSource: root.profileSource,
+    headProfileChanged: root.headProfileChanged,
+  };
+}
+
+function validateManifestOutputProvenance(
+  output: string,
+  history: EvaluationHistoryProvenance,
+  profileSource: EvaluationManifestProvenance["profileSource"],
+  headProfileChanged: boolean,
+  source: string,
+): void {
+  const lines = output.split("\n");
+  for (const [label, expected] of [
+    ["base", `base: ${history.baseRef} (argument)`],
+    ["head", `head: ${history.headRef}`],
+    ["merge-base", `merge-base: ${history.mergeBase}`],
+  ] as const) {
+    if (lines.filter((line) => line === expected).length !== 1) {
+      throw new Error(`${source}.output ${label} provenance does not match history`);
+    }
+  }
+  const profileLines = lines.filter((line) => line.startsWith("profile: "));
+  if (profileSource === "none") {
+    if (profileLines.length !== 0) throw new Error(`${source}.output reports an unselected profile`);
+  } else if (profileLines.length !== 1 || !profileLines[0]!.endsWith(` (${profileSource})`)) {
+    throw new Error(`${source}.output profile provenance does not match profileSource`);
+  }
+  const warning = "warning: head changes to the repository profile or custom lanes are ignored; review them as untrusted code or rerun with --trust-working-tree-profile after explicit approval";
+  const warningCount = lines.filter((line) => line === warning).length;
+  if (warningCount !== (headProfileChanged ? 1 : 0)) {
+    throw new Error(`${source}.output profile-change warning does not match headProfileChanged`);
+  }
 }
 
 function validateEngineStageTelemetry(
@@ -523,6 +718,36 @@ function strictString(value: unknown, source: string, max: number): string {
     throw new Error(`${source} must be a trimmed non-empty string of at most ${max} characters`);
   }
   return value;
+}
+
+function boundedText(value: unknown, source: string, max: number): string {
+  if (typeof value !== "string" || value.length === 0 || value.length > max || value.includes("\0")) {
+    throw new Error(`${source} must be non-empty text of at most ${max} characters without NUL bytes`);
+  }
+  return value;
+}
+
+function sha256Hex(value: unknown, source: string): string {
+  const text = strictString(value, source, 64);
+  if (!/^[a-f0-9]{64}$/.test(text)) throw new Error(`${source} must be lowercase SHA-256 hex`);
+  return text;
+}
+
+function gitObjectId(
+  value: unknown,
+  objectFormat: EvaluationHistoryProvenance["objectFormat"],
+  source: string,
+): string {
+  const length = objectFormat === "sha1" ? 40 : 64;
+  const text = strictString(value, source, length);
+  if (!new RegExp(`^[a-f0-9]{${length}}$`).test(text)) {
+    throw new Error(`${source} must be a full lowercase ${objectFormat} object ID`);
+  }
+  return text;
+}
+
+function requireTrue(value: unknown, source: string): void {
+  if (value !== true) throw new Error(`${source} must be true`);
 }
 
 function isoDate(value: unknown, source: string): string {

@@ -23,9 +23,9 @@ import {
   parseRunRecord,
 } from "../eval/artifacts.js";
 import { RunFailureError } from "../src/core/run-failure.js";
-import { combineUsage, withUnavailable } from "../src/core/telemetry.js";
+import { combineUsage, sha256, withUnavailable } from "../src/core/telemetry.js";
 import type { Engine } from "../src/engines/engine.js";
-import type { GradedRun, MatrixModelConfig, MatrixRunManifest, RunAttempt, RunRecord } from "../src/types.js";
+import type { EvaluationAttemptProvenance, GradedRun, MatrixModelConfig, MatrixRunManifest, RunAttempt, RunRecord } from "../src/types.js";
 
 function validAttempt(): RunAttempt {
   return {
@@ -74,6 +74,48 @@ function validRecord(): RunRecord {
         usage: { provider: "anthropic", inputTokens: 10, unavailable: [] },
         durationMs: 1000,
       },
+    },
+  };
+}
+
+function validEvaluationProvenance(): EvaluationAttemptProvenance {
+  const baseRef = "1".repeat(40);
+  const headRef = "2".repeat(40);
+  const output = [
+    `base: ${baseRef} (argument)`,
+    `head: ${headRef}`,
+    `merge-base: ${baseRef}`,
+    "Changed files",
+    "(none)",
+    "",
+  ].join("\n");
+  return {
+    history: {
+      schemaVersion: 1,
+      materialization: "fixture-patch",
+      objectFormat: "sha1",
+      baseRef,
+      headRef,
+      mergeBase: baseRef,
+      baseTree: "3".repeat(40),
+      headTree: "4".repeat(40),
+      commitCount: 2,
+      baseIsMergeBase: true,
+      checkedOutTreeMatchesHead: true,
+      treeReproductionVerified: true,
+      diffNormalization: "identity-v1",
+      diffSha256: "5".repeat(64),
+    },
+    manifest: {
+      entryPoint: "prepareReviewManifest",
+      skillName: "invariant-first-pr-review",
+      baseRef,
+      headRef,
+      mergeBase: baseRef,
+      outputSha256: sha256(output),
+      output,
+      profileSource: "none",
+      headProfileChanged: false,
     },
   };
 }
@@ -137,6 +179,29 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
   assert.throws(() => parseRunRecord(badSchema, "record", attempt), /schemaVersion must be 1/);
   assert.throws(() => parseMatrixRunManifest({ ...manifest, surprise: true }), /unexpected field/);
 
+  const provenanceRecord = validRecord();
+  provenanceRecord.evaluationProvenance = validEvaluationProvenance();
+  assert.deepEqual(
+    parseRunRecord(provenanceRecord, "provenance record", attempt).evaluationProvenance,
+    provenanceRecord.evaluationProvenance,
+  );
+  const forgedProvenance = structuredClone(provenanceRecord);
+  forgedProvenance.evaluationProvenance!.manifest!.outputSha256 = "0".repeat(64);
+  assert.throws(
+    () => parseRunRecord(forgedProvenance, "forged provenance", attempt),
+    /outputSha256 does not match output/,
+  );
+  const mismatchedManifest = structuredClone(provenanceRecord);
+  mismatchedManifest.evaluationProvenance!.manifest!.output =
+    mismatchedManifest.evaluationProvenance!.manifest!.output.replace(`base: ${"1".repeat(40)}`, `base: ${"0".repeat(40)}`);
+  mismatchedManifest.evaluationProvenance!.manifest!.outputSha256 = sha256(
+    mismatchedManifest.evaluationProvenance!.manifest!.output,
+  );
+  assert.throws(
+    () => parseRunRecord(mismatchedManifest, "mismatched manifest", attempt),
+    /output base provenance does not match history/,
+  );
+
   const graded = {
     ...validRecord(),
     matches: { bug: 0 },
@@ -154,6 +219,14 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
   assert.throws(
     () => assertGradedMatchesRun({ ...graded, falsePositiveIndexes: [0] }, validRecord(), "graded"),
     /does not match the graded findings/,
+  );
+  assert.throws(
+    () => assertGradedMatchesRun(
+      { ...graded, evaluationProvenance: validEvaluationProvenance() },
+      validRecord(),
+      "graded",
+    ),
+    /evaluationProvenance does not match the run artifact/,
   );
 });
 
@@ -590,7 +663,16 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     const graded = JSON.parse(readFileSync(join(runsDir, gradedFile), "utf8")) as Record<string, unknown>;
     writeFileSync(join(legacyDir, "new-shape.graded.json"), JSON.stringify(graded));
     const outcome = graded.outcome as { result: unknown };
-    const { schemaVersion: _schema, attemptId: _attempt, finishedAt: _finished, outcome: _outcome, caseCorpus: _corpus, runner: _runner, ...legacy } = graded;
+    const {
+      schemaVersion: _schema,
+      attemptId: _attempt,
+      finishedAt: _finished,
+      outcome: _outcome,
+      caseCorpus: _corpus,
+      runner: _runner,
+      evaluationProvenance: _provenance,
+      ...legacy
+    } = graded;
     writeFileSync(join(legacyDir, "legacy.graded.json"), JSON.stringify({ ...legacy, result: outcome.result }));
     const legacyStats = await buildReport(legacyDir, { casesDir });
     assert.equal(legacyStats[0]?.completeness, "legacy-incomplete");
@@ -715,7 +797,7 @@ test("cleanup failures preserve partial and completed provider telemetry", async
   writeFileSync(join(caseDir, "fixture", "src", "value.ts"), "export const value = false;\n");
   writeFileSync(
     join(caseDir, "diff.patch"),
-    "diff --git a/src/value.ts b/src/value.ts\n--- a/src/value.ts\n+++ b/src/value.ts\n@@ -1 +1 @@\n-export const value = true;\n+export const value = false;\n",
+    CANONICAL_VALUE_PATCH,
   );
   writeFileSync(
     join(caseDir, "case.json"),
