@@ -2,6 +2,10 @@
 
 Date: 2026-09-03
 
+Pull request: [#9](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/9)
+
+Validated head: `f58cd55bd298b51eef973179913299dfe99eabf2`
+
 Scope: Safety PR 2A.1 image bootstrap only, based on
 `8f667f4fa1c59e679efa08ce2776ab1908c3a4d2`. This slice does not execute a live
 provider, publish or pull an image, add a container runtime to the evaluator, or
@@ -38,7 +42,8 @@ All Node commands ran after `nvm use 22`, which selected Node `22.22.1` and npm
 
 The local Docker daemon was reachable (Docker Engine `29.7.2`, Linux arm64), but
 the exact pinned Node base image was not cached. A local image build would
-therefore have pulled image layers, which this task explicitly prohibited. The
+therefore have required an external image-layer pull that was not needed for the
+pure local gate. The
 zero-credential container build/smoke remains to be exercised by the unprivileged
 pull-request job; it is not claimed as locally passed.
 
