@@ -340,6 +340,64 @@ test("provider adapters expose stable parse failure codes", async () => {
   }
 });
 
+test("second-stage failures retain already incurred stage usage and cost", async () => {
+  let calls = 0;
+  const fake: typeof exec = async (_cmd, args) => {
+    calls++;
+    const schema = JSON.parse(args[args.indexOf("--json-schema") + 1]!) as { title?: string };
+    return {
+      stdout: JSON.stringify({
+        structured_output: schema.title === "Peregrine Breadth Sweep" ? breadth : { invalid: true },
+        total_cost_usd: 0.01,
+        usage: {
+          input_tokens: 10,
+          cache_creation_input_tokens: 0,
+          cache_read_input_tokens: 0,
+          output_tokens: 2,
+        },
+      }),
+      stderr: "",
+      code: 0,
+      timedOut: false,
+    };
+  };
+  await assert.rejects(
+    () => createClaudeEngine(fake).review(context()),
+    (error: unknown) => {
+      assert.ok(error instanceof RunFailureError);
+      assert.equal(error.kind, "parse");
+      assert.equal(error.telemetry?.stages.length, 2);
+      assert.equal(error.telemetry?.stages[0]?.completed, true);
+      assert.equal(error.telemetry?.stages[1]?.completed, false);
+      assert.equal(error.telemetry?.usage.costUsd, 0.02);
+      assert.equal(error.telemetry?.usage.costSource, "provider");
+      return true;
+    },
+  );
+  assert.equal(calls, 2);
+});
+
+test("malformed Codex JSONL never becomes trusted provider usage", async () => {
+  const fake: typeof exec = async (_cmd, args) => {
+    const output = args[args.indexOf("--output-last-message") + 1]!;
+    const schema = args[args.indexOf("--output-schema") + 1]!;
+    writeFileSync(output, schema.endsWith("breadth-result.schema.json")
+      ? JSON.stringify({ ...breadth, model: "gpt-5.6-luna" })
+      : JSON.stringify({ findings: [finding] }));
+    return {
+      stdout: `${JSON.stringify({ type: "turn.completed", usage: { input_tokens: 11, cached_input_tokens: 2, output_tokens: 3 } })}\nmalformed\n`,
+      stderr: "",
+      code: 0,
+      timedOut: false,
+    };
+  };
+  const reviewed = await createCodexEngine(fake).review(context());
+  assert.equal(reviewed.usage.inputTokens, undefined);
+  assert.equal(reviewed.usage.outputTokens, undefined);
+  assert.equal(reviewed.usage.costUsd, undefined);
+  assert.ok(reviewed.usage.promptBytes);
+});
+
 test("provider failures never echo credential-like diagnostics", async () => {
   const secret = "token=abc123456789SECRET";
   const fake: typeof exec = async () => ({

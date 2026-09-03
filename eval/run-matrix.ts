@@ -2,9 +2,10 @@ import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join, relative, resolve } from "node:path";
 import { loadConfig } from "../src/config.js";
 import { validateConfig } from "../src/config.js";
-import { RunFailureError, runFailureKind } from "../src/core/run-failure.js";
+import { RunFailureError, runFailureKind, runFailureTelemetry } from "../src/core/run-failure.js";
 import { getEngine } from "../src/engines/engine.js";
-import { safeDiagnostic } from "../src/security/secrets.js";
+import { assertNoSecrets, safeDiagnostic } from "../src/security/secrets.js";
+import { formatUsageCost } from "../src/core/telemetry.js";
 import {
   assertLiveProviderIsolationAvailable,
   assertLeakageFreeText,
@@ -249,11 +250,18 @@ export async function runMatrix(
           };
           writeFileSync(file, JSON.stringify(record, null, 2));
           console.log(
-            `${result.findings.length} finding(s), $${result.usage.costUsd?.toFixed(3) ?? "?"}`,
+            `${result.findings.length} finding(s), ${formatUsageCost(result.usage)}`,
           );
         } catch (err) {
           const message = safeDiagnostic(err instanceof Error ? err.message : String(err));
           const failureKind = runFailureKind(err);
+          const candidateTelemetry = runFailureTelemetry(err);
+          let telemetry = candidateTelemetry;
+          try {
+            if (telemetry !== undefined) assertNoSecrets(telemetry, "failure telemetry");
+          } catch {
+            telemetry = undefined;
+          }
           const record: RunRecord = {
             schemaVersion: 1,
             attemptId,
@@ -270,6 +278,7 @@ export async function runMatrix(
               failureKind,
               message,
               durationMs: Date.now() - started,
+              telemetry,
             },
           };
           writeFileSync(file, JSON.stringify(record, null, 2));

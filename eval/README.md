@@ -14,13 +14,21 @@ and reasoning output. A normalized total is present only when every contributing
 component is known. Each stage also records UTF-8 prompt bytes, duration, model
 ID, a prompt hash, and turns/tool work when the provider exposes a complete event
 stream.
-Raw provider envelopes and tool output are not persisted.
+Raw provider envelopes and tool output are not persisted. If a later stage
+fails, its attempt artifact retains sanitized stage telemetry and already
+incurred spend from earlier stages.
 
-Reports label cost as provider-reported, estimated, mixed, or unattributed.
+Reports label cost as provider-reported, estimated, mixed-source, or
+unattributed.
 An estimate requires an exact dated pricing contract; unknown models and
 partial usage stay `n/a`. Aggregate token, work, and cost values are emitted
-only when every contributing stage or expected completed attempt supplied the
-field, so a missing value cannot silently become zero.
+only when every contributing stage and every expected attempt supplied the
+field, so a failure or missing value cannot silently improve a route's mean.
+Wall-time mean and median include failed attempts when every expected attempt
+has an artifact; they are `n/a` when an attempt is missing. P95 uses the
+nearest-rank definition and is shown only with at least 20 attempts. Known
+spend from failed attempts is shown separately as an incurred-cost lower bound,
+not as a comparable cost-per-case result.
 
 Each new matrix directory starts with `matrix-manifest.json`, which inventories
 every expected configuration/case/repeat before provider work begins. Every
@@ -30,6 +38,8 @@ conditional recall, and recall with
 failed or interrupted bug-bearing attempts counted as misses. Directories from
 older versions that have no attempt manifest are labeled `legacy/incomplete`;
 their completion and failure-inclusive metrics are intentionally unavailable.
+Their telemetry denominator and all comparison telemetry means are also
+reported as `n/a` because the expected attempt count cannot be reconstructed.
 
 ## Case library
 

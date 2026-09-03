@@ -53,7 +53,7 @@ export function claudeUsageFromEnvelope(
   );
   const totalInput = sumIfComplete(base, cacheWrite, cacheRead);
   const cachedInput = sumIfComplete(cacheWrite, cacheRead);
-  const providerCost = numberFrom(envelope, "total_cost_usd");
+  const providerCost = finiteNonNegativeFrom(envelope, "total_cost_usd");
   const serviceTier = firstString(raw.service_tier, envelope.service_tier);
 
   const usage: Usage = {
@@ -89,12 +89,26 @@ export function codexUsageFromEvents(
   prompt: string,
   options: { completeEventStream?: boolean } = {},
 ): Usage {
+  if (options.completeEventStream === false) {
+    return withUnavailable({
+      provider: "openai",
+      aggregation: "ambiguous",
+      promptBytes: promptBytes(prompt),
+    });
+  }
   const completed = events
     .map((event) => record(event))
     .filter((event) => event.type === "turn.completed");
   const usageSnapshots = completed
     .map((event) => record(event.usage))
     .filter((usage) => Object.keys(usage).length > 0);
+  if (completed.length === 0 || usageSnapshots.length === 0) {
+    return withUnavailable({
+      provider: "openai",
+      aggregation: "ambiguous",
+      promptBytes: promptBytes(prompt),
+    });
+  }
   const raw = usageSnapshots.length === 1 ? usageSnapshots[0]! : {};
   const input = numberFrom(raw, "input_tokens");
   const cacheRead = numberFrom(raw, "cached_input_tokens");
@@ -104,7 +118,7 @@ export function codexUsageFromEvents(
   const output = numberFrom(raw, "output_tokens");
   const reasoning = numberFrom(raw, "reasoning_output_tokens");
   const serviceTier = firstString(raw.service_tier);
-  const work = observedWork(events, options.completeEventStream !== false);
+  const work = observedWork(events, true);
 
   return withUnavailable({
     provider: "openai",
@@ -159,23 +173,28 @@ export function combineUsage(...stages: Usage[]): Usage {
     if (metric === "toolCallsByType") continue;
     const values = stages.map((stage) => stage[metric]).filter(isNumber);
     if (values.length === stages.length) {
-      (result as Record<string, unknown>)[metric] = values.reduce((sum, value) => sum + value, 0);
+      const total = sumMetric(metric, values);
+      if (total !== undefined) (result as Record<string, unknown>)[metric] = total;
     }
   }
   if (stages.every((stage) => stage.toolCallsByType !== undefined)) {
     result.toolCallsByType = {};
     for (const stage of stages) {
       for (const [type, count] of Object.entries(stage.toolCallsByType!)) {
-        result.toolCallsByType[type] = (result.toolCallsByType[type] ?? 0) + count;
+        const total = safeIntegerSum([result.toolCallsByType[type] ?? 0, count]);
+        if (total === undefined) {
+          result.toolCallsByType = undefined;
+          break;
+        }
+        result.toolCallsByType[type] = total;
       }
+      if (result.toolCallsByType === undefined) break;
     }
   }
   if (result.costUsd !== undefined) {
-    if (stages.every((stage) => stage.costSource === "provider")) {
-      result.costSource = "provider";
-    } else if (stages.every((stage) => stage.costSource !== undefined)) {
-      result.costSource = "estimated";
-    }
+    const costSources = stages.map((stage) => stage.costSource);
+    result.costSource = same(costSources) ??
+      (costSources.every((source) => source !== undefined) ? "mixed" : undefined);
     const references = stages.map((stage) => stage.pricing);
     if (stages.every((stage) => stage.costSource === "estimated") && references.every(isPricingReference)) {
       const first = references[0]!;
@@ -209,10 +228,7 @@ export function parseUsage(value: unknown, source: string): Usage {
     parsed.provider = raw.provider as UsageProvider;
   }
   if (raw.serviceTier !== undefined) {
-    if (typeof raw.serviceTier !== "string" || raw.serviceTier.length === 0 || raw.serviceTier.length > 100) {
-      throw new Error(`${source}.serviceTier must be a non-empty string of at most 100 characters`);
-    }
-    parsed.serviceTier = raw.serviceTier;
+    parsed.serviceTier = strictString(raw.serviceTier, `${source}.serviceTier`, 100);
   }
   if (raw.aggregation !== undefined) {
     if (!USAGE_AGGREGATIONS.includes(raw.aggregation as (typeof USAGE_AGGREGATIONS)[number])) {
@@ -227,8 +243,8 @@ export function parseUsage(value: unknown, source: string): Usage {
     if (!isNumber(candidate) || candidate < 0) {
       throw new Error(`${source}.${metric} must be a non-negative number`);
     }
-    if (["turns", "toolCalls", "toolOutputBytes", "promptBytes"].includes(metric) && !Number.isInteger(candidate)) {
-      throw new Error(`${source}.${metric} must be an integer`);
+    if (metric !== "costUsd" && !Number.isSafeInteger(candidate)) {
+      throw new Error(`${source}.${metric} must be a safe integer`);
     }
     (parsed as Record<string, unknown>)[metric] = candidate;
   }
@@ -236,15 +252,15 @@ export function parseUsage(value: unknown, source: string): Usage {
     const byType = requiredRecord(raw.toolCallsByType, `${source}.toolCallsByType`);
     parsed.toolCallsByType = {};
     for (const [type, count] of Object.entries(byType)) {
-      if (!/^[a-z0-9][a-z0-9._-]{0,99}$/i.test(type) || !Number.isInteger(count) || Number(count) < 0) {
-        throw new Error(`${source}.toolCallsByType must contain safe names and non-negative integer counts`);
+      if (!/^[a-z0-9][a-z0-9._-]{0,99}$/i.test(type) || !Number.isSafeInteger(count) || Number(count) < 0) {
+        throw new Error(`${source}.toolCallsByType must contain safe names and non-negative safe-integer counts`);
       }
       parsed.toolCallsByType[type] = Number(count);
     }
   }
   if (raw.costSource !== undefined) {
-    if (raw.costSource !== "provider" && raw.costSource !== "estimated") {
-      throw new Error(`${source}.costSource must be provider or estimated`);
+    if (raw.costSource !== "provider" && raw.costSource !== "estimated" && raw.costSource !== "mixed") {
+      throw new Error(`${source}.costSource must be provider, estimated, or mixed`);
     }
     parsed.costSource = raw.costSource as CostSource;
   }
@@ -292,6 +308,7 @@ function observedWork(value: unknown, completeStream: boolean): {
   const outputCallIds = new Set<string>();
   let anonymousLifecycle = false;
   let outputBytes = 0;
+  let outputBytesOverflow = false;
   const visit = (entry: unknown, path: string): void => {
     if (Array.isArray(entry)) {
       entry.forEach((child, index) => visit(child, `${path}[${index}]`));
@@ -320,7 +337,9 @@ function observedWork(value: unknown, completeStream: boolean): {
         if (!calls.has(id)) calls.set(id, callType);
       }
       if (isResult && (!id || !outputCallIds.has(id))) {
-        outputBytes += workOutputBytes(nested, object);
+        const next = safeIntegerSum([outputBytes, workOutputBytes(nested, object)]);
+        if (next === undefined) outputBytesOverflow = true;
+        else outputBytes = next;
         if (id) outputCallIds.add(id);
       }
     }
@@ -332,9 +351,10 @@ function observedWork(value: unknown, completeStream: boolean): {
   const byType: Record<string, number> = {};
   for (const type of calls.values()) byType[type] = (byType[type] ?? 0) + 1;
   if (!completeStream) return {};
+  const observedOutputBytes = outputBytesOverflow ? undefined : outputBytes;
   return anonymousLifecycle
-    ? { toolOutputBytes: outputBytes }
-    : { toolCalls: calls.size, toolCallsByType: byType, toolOutputBytes: outputBytes };
+    ? { toolOutputBytes: observedOutputBytes }
+    : { toolCalls: calls.size, toolCallsByType: byType, toolOutputBytes: observedOutputBytes };
 }
 
 function normalizedWorkType(value: unknown): string | undefined {
@@ -367,17 +387,14 @@ function parsePricingReference(value: unknown, source: string): PricingReference
   const allowed = new Set(["catalogVersion", "pricingAsOf", "contractModel", "serviceTier", "tier", "assumptions"]);
   const unexpected = Object.keys(raw).filter((key) => !allowed.has(key));
   if (unexpected.length > 0) throw new Error(`${source}: unexpected field(s): ${unexpected.join(", ")}`);
-  const string = (key: string): string => {
-    if (typeof raw[key] !== "string" || (raw[key] as string).length === 0) {
-      throw new Error(`${source}.${key} must be a non-empty string`);
-    }
-    return raw[key] as string;
-  };
-  if (!Array.isArray(raw.assumptions) || raw.assumptions.some((item) => typeof item !== "string")) {
-    throw new Error(`${source}.assumptions must be an array of strings`);
+  const string = (key: string): string => strictString(raw[key], `${source}.${key}`, 500);
+  if (!Array.isArray(raw.assumptions) || raw.assumptions.length > 100) {
+    throw new Error(`${source}.assumptions must be an array of at most 100 strings`);
   }
+  const assumptions = raw.assumptions.map((item, index) =>
+    strictString(item, `${source}.assumptions[${index}]`, 1000));
   const pricingAsOf = string("pricingAsOf");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(pricingAsOf)) {
+  if (!isCalendarDate(pricingAsOf)) {
     throw new Error(`${source}.pricingAsOf must be YYYY-MM-DD`);
   }
   return {
@@ -386,12 +403,12 @@ function parsePricingReference(value: unknown, source: string): PricingReference
     contractModel: string("contractModel"),
     serviceTier: raw.serviceTier === undefined ? undefined : string("serviceTier"),
     tier: string("tier"),
-    assumptions: raw.assumptions as string[],
+    assumptions,
   };
 }
 
 function sumIfComplete(...values: Array<number | undefined>): number | undefined {
-  return values.every(isNumber) ? (values as number[]).reduce((sum, value) => sum + value, 0) : undefined;
+  return values.every(isSafeNonNegativeInteger) ? safeIntegerSum(values as number[]) : undefined;
 }
 
 function same<T>(values: Array<T | undefined>): T | undefined {
@@ -400,6 +417,11 @@ function same<T>(values: Array<T | undefined>): T | undefined {
 }
 
 function numberFrom(value: Record<string, unknown>, key: string): number | undefined {
+  const candidate = value[key];
+  return isSafeNonNegativeInteger(candidate) ? candidate : undefined;
+}
+
+function finiteNonNegativeFrom(value: Record<string, unknown>, key: string): number | undefined {
   const candidate = value[key];
   return isNumber(candidate) && candidate >= 0 ? candidate : undefined;
 }
@@ -410,7 +432,8 @@ function integerFrom(value: Record<string, unknown>, key: string): number | unde
 }
 
 function firstString(...values: unknown[]): string | undefined {
-  return values.find((value): value is string => typeof value === "string" && value.length > 0);
+  return values.find((value): value is string =>
+    typeof value === "string" && value === value.trim() && value.length > 0 && value.length <= 100);
 }
 
 function record(value: unknown): Record<string, unknown> {
@@ -429,6 +452,51 @@ function requiredRecord(value: unknown, source: string): Record<string, unknown>
 
 function isNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
+}
+
+function isSafeNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+}
+
+function safeIntegerSum(values: number[]): number | undefined {
+  const total = values.reduce((sum, value) => sum + value, 0);
+  return Number.isSafeInteger(total) && total >= 0 ? total : undefined;
+}
+
+function sumMetric(metric: UsageMetric, values: number[]): number | undefined {
+  if (metric === "costUsd") {
+    const total = values.reduce((sum, value) => sum + value, 0);
+    return Number.isFinite(total) && total >= 0 ? total : undefined;
+  }
+  return values.every(isSafeNonNegativeInteger) ? safeIntegerSum(values) : undefined;
+}
+
+function strictString(value: unknown, source: string, maxLength: number): string {
+  if (typeof value !== "string" || value.length === 0 || value !== value.trim() || value.length > maxLength) {
+    throw new Error(`${source} must be a trimmed non-empty string of at most ${maxLength} characters`);
+  }
+  return value;
+}
+
+export function isCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const parsed = new Date(Date.UTC(year!, month! - 1, day!));
+  return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month! - 1 && parsed.getUTCDate() === day;
+}
+
+export function formatUsageCost(usage: Usage): string {
+  if (usage.costUsd === undefined) return "n/a";
+  const label = usage.provider === "mock"
+    ? "mock"
+    : usage.costSource === "provider"
+      ? "provider-reported"
+      : usage.costSource === "estimated"
+        ? "estimated"
+        : usage.costSource === "mixed"
+          ? "mixed-source"
+          : "unattributed";
+  return `${label} $${usage.costUsd.toFixed(3)}`;
 }
 
 function isPricingReference(value: PricingReference | undefined): value is PricingReference {

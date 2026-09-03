@@ -13,6 +13,7 @@ import { readCaseGroundTruth } from "./case-truth.js";
 type LegacyGradedRun = Omit<GradedRun, "schemaVersion" | "attemptId" | "finishedAt" | "outcome"> & {
   result: EngineResult;
 };
+type ReportCostSource = "provider" | "estimated" | "mixed" | "mock" | "unknown" | null;
 
 export interface ConfigStats {
   config: string;
@@ -32,9 +33,10 @@ export interface ConfigStats {
   fpPerCaseMean: number | null;
   costPerCaseMean: number | null;
   costPerCaseStd: number | null;
-  costSource: "provider" | "estimated" | "mixed" | "unknown" | null;
+  costSource: ReportCostSource;
   durationSecMean: number | null;
   durationSecMedian: number | null;
+  durationSecP95: number | null;
   breadthDurationSecMean: number | null;
   investigationDurationSecMean: number | null;
   breadthInputTokensMean: number | null;
@@ -49,8 +51,12 @@ export interface ConfigStats {
   toolCallsMean: number | null;
   toolOutputBytesMean: number | null;
   promptBytesMean: number | null;
-  telemetryExpectedRuns: number;
+  telemetryExpectedRuns: number | null;
   telemetryObserved: Record<string, number>;
+  /** Known spend actually incurred; a lower bound when some attempts lack cost. */
+  incurredCostUsdTotal: number | null;
+  incurredCostObservedAttempts: number;
+  incurredCostSource: ReportCostSource;
   validFindingsPerDollar: number | null;
 }
 
@@ -182,15 +188,26 @@ function calculateStats(args: {
   const fps = args.completed.map((run) => run.falsePositiveIndexes.length);
   const costs = args.completed
     .map((run) => run.outcome.result.usage.costUsd)
-    .filter((cost): cost is number => typeof cost === "number");
-  const durations = args.completed.map((run) => run.outcome.result.durationMs / 1000);
+    .filter((cost): cost is number => typeof cost === "number" && Number.isFinite(cost) && cost >= 0);
+  const durations = [
+    ...args.completed.map((run) => run.outcome.result.durationMs),
+    ...args.failed.map((failure) => failure.durationMs),
+  ].filter((duration): duration is number =>
+    typeof duration === "number" && Number.isFinite(duration) && duration >= 0).map((duration) => duration / 1000);
   const usage = (field: keyof EngineResult["usage"]): number[] => args.completed
     .map((run) => run.outcome.result.usage[field])
-    .filter((value): value is number => typeof value === "number");
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0);
   const breadthDurations = stageNumbers(args.completed, "breadth", "durationMs").map((value) => value / 1000);
   const investigationDurations = stageNumbers(args.completed, "investigation", "durationMs").map((value) => value / 1000);
   const breadthInputs = stageUsageNumbers(args.completed, "breadth", "inputTokens");
   const investigationInputs = stageUsageNumbers(args.completed, "investigation", "inputTokens");
+  const failedTelemetry = args.failed.flatMap((failure) => failure.telemetry ? [failure.telemetry] : []);
+  const failedStages = failedTelemetry.flatMap((telemetry) => telemetry.stages);
+  const observedFailureUsage = (field: keyof EngineResult["usage"]): number => failedTelemetry
+    .filter((telemetry) => {
+      const value = telemetry.usage[field];
+      return typeof value === "number" && Number.isFinite(value) && value >= 0;
+    }).length;
   const usageValues = {
     inputTokens: usage("inputTokens"),
     uncachedInputTokens: usage("uncachedInputTokens"),
@@ -207,16 +224,23 @@ function calculateStats(args: {
     (sum, run) => sum + Object.values(run.matches).filter((match) => match !== null).length,
     0,
   );
-  const totalCost = costs.reduce((sum, cost) => sum + cost, 0);
-  const hasCompleteCost =
+  const totalCost = finiteSum(costs);
+  const isTrackedComplete =
     args.completeness === "tracked" &&
     args.expectedRuns === args.completed.length &&
+    args.failed.length === 0 &&
+    args.missing === 0;
+  const hasCompleteDuration = args.completeness === "tracked" &&
+    args.expectedRuns !== null && args.missing === 0 && durations.length === args.expectedRuns;
+  const hasCompleteCost =
+    isTrackedComplete &&
     costs.length === args.completed.length;
-  const costSources = args.completed.map((run) => run.outcome.result.usage.costSource);
+  const costSources = args.completed.map((run) => usageCostSource(run.outcome.result.usage));
   const costSource = hasCompleteCost ? summarizeCostSource(costSources) : null;
   const estimatedPricing = args.completed.map((run) => run.outcome.result.usage.pricing);
-  const hasComparableCost = hasCompleteCost && costSource !== "mixed" && costSource !== "unknown" &&
+  const hasComparableCost = hasCompleteCost && totalCost !== null && costSource !== "mixed" && costSource !== "unknown" &&
     (costSource !== "estimated" || comparableEstimatedPricing(estimatedPricing));
+  const incurred = incurredCosts(args.completed, args.failed);
 
   const failuresByKind = countBy(args.failed, (failure) => failure.failureKind);
   const failureRatesByKind = Object.fromEntries(
@@ -248,33 +272,44 @@ function calculateStats(args: {
     costPerCaseMean: hasComparableCost ? mean(costs) : null,
     costPerCaseStd: hasComparableCost ? std(costs) : null,
     costSource,
-    durationSecMean: durations.length > 0 ? mean(durations) : null,
-    durationSecMedian: durations.length > 0 ? median(durations) : null,
-    breadthDurationSecMean: completeMean(breadthDurations, args.completed.length),
-    investigationDurationSecMean: completeMean(investigationDurations, args.completed.length),
-    breadthInputTokensMean: completeMean(breadthInputs, args.completed.length),
-    investigationInputTokensMean: completeMean(investigationInputs, args.completed.length),
-    inputTokensMean: completeMean(usageValues.inputTokens, args.completed.length),
-    uncachedInputTokensMean: completeMean(usageValues.uncachedInputTokens, args.completed.length),
-    cacheWriteInputTokensMean: completeMean(usageValues.cacheWriteInputTokens, args.completed.length),
-    cacheReadInputTokensMean: completeMean(usageValues.cacheReadInputTokens, args.completed.length),
-    outputTokensMean: completeMean(usageValues.outputTokens, args.completed.length),
-    reasoningOutputTokensMean: completeMean(usageValues.reasoningOutputTokens, args.completed.length),
-    turnsMean: completeMean(usageValues.turns, args.completed.length),
-    toolCallsMean: completeMean(usageValues.toolCalls, args.completed.length),
-    toolOutputBytesMean: completeMean(usageValues.toolOutputBytes, args.completed.length),
-    promptBytesMean: completeMean(usageValues.promptBytes, args.completed.length),
-    telemetryExpectedRuns: args.expectedRuns ?? args.completed.length,
+    durationSecMean: completeMean(durations, hasCompleteDuration ? args.expectedRuns! : 0),
+    durationSecMedian: hasCompleteDuration ? median(durations) : null,
+    durationSecP95: hasCompleteDuration ? durationP95(durations) : null,
+    breadthDurationSecMean: completeMean(breadthDurations, isTrackedComplete ? args.expectedRuns! : 0),
+    investigationDurationSecMean: completeMean(investigationDurations, isTrackedComplete ? args.expectedRuns! : 0),
+    breadthInputTokensMean: completeMean(breadthInputs, isTrackedComplete ? args.expectedRuns! : 0),
+    investigationInputTokensMean: completeMean(investigationInputs, isTrackedComplete ? args.expectedRuns! : 0),
+    inputTokensMean: completeMean(usageValues.inputTokens, isTrackedComplete ? args.expectedRuns! : 0),
+    uncachedInputTokensMean: completeMean(usageValues.uncachedInputTokens, isTrackedComplete ? args.expectedRuns! : 0),
+    cacheWriteInputTokensMean: completeMean(usageValues.cacheWriteInputTokens, isTrackedComplete ? args.expectedRuns! : 0),
+    cacheReadInputTokensMean: completeMean(usageValues.cacheReadInputTokens, isTrackedComplete ? args.expectedRuns! : 0),
+    outputTokensMean: completeMean(usageValues.outputTokens, isTrackedComplete ? args.expectedRuns! : 0),
+    reasoningOutputTokensMean: completeMean(usageValues.reasoningOutputTokens, isTrackedComplete ? args.expectedRuns! : 0),
+    turnsMean: completeMean(usageValues.turns, isTrackedComplete ? args.expectedRuns! : 0),
+    toolCallsMean: completeMean(usageValues.toolCalls, isTrackedComplete ? args.expectedRuns! : 0),
+    toolOutputBytesMean: completeMean(usageValues.toolOutputBytes, isTrackedComplete ? args.expectedRuns! : 0),
+    promptBytesMean: completeMean(usageValues.promptBytes, isTrackedComplete ? args.expectedRuns! : 0),
+    telemetryExpectedRuns: args.expectedRuns,
     telemetryObserved: {
-      costUsd: costs.length,
-      durationMs: durations.length,
-      breadthDurationMs: breadthDurations.length,
-      investigationDurationMs: investigationDurations.length,
-      breadthInputTokens: breadthInputs.length,
-      investigationInputTokens: investigationInputs.length,
-      ...Object.fromEntries(Object.entries(usageValues).map(([key, values]) => [key, values.length])),
+      costUsd: incurred.observedAttempts,
+      durationMs: args.completeness === "tracked" ? durations.length : 0,
+      breadthDurationMs: breadthDurations.length + failedStages.filter((stage) => stage.stage === "breadth").length,
+      investigationDurationMs: investigationDurations.length + failedStages.filter((stage) => stage.stage === "investigation").length,
+      breadthInputTokens: breadthInputs.length + failedStages.filter((stage) =>
+        stage.stage === "breadth" && stage.usage.inputTokens !== undefined).length,
+      investigationInputTokens: investigationInputs.length + failedStages.filter((stage) =>
+        stage.stage === "investigation" && stage.usage.inputTokens !== undefined).length,
+      ...Object.fromEntries(Object.entries(usageValues).map(([key, values]) => [
+        key,
+        values.length + observedFailureUsage(key as keyof EngineResult["usage"]),
+      ])),
     },
-    validFindingsPerDollar: hasComparableCost && totalCost > 0 ? totalValid / totalCost : null,
+    incurredCostUsdTotal: args.completeness === "tracked" ? finiteSum(incurred.costs) : null,
+    incurredCostObservedAttempts: args.completeness === "tracked" ? incurred.observedAttempts : 0,
+    incurredCostSource: args.completeness === "tracked" && incurred.costs.length > 0
+      ? summarizeCostSource(incurred.sources)
+      : null,
+    validFindingsPerDollar: hasComparableCost && totalCost !== null && totalCost > 0 ? totalValid / totalCost : null,
   };
 }
 
@@ -300,6 +335,12 @@ const std = (values: number[]) => {
     values.reduce((sum, value) => sum + (value - average) ** 2, 0) / (values.length - 1),
   );
 };
+export const P95_MIN_SAMPLES = 20;
+export const durationP95 = (values: number[]): number | null => {
+  if (values.length < P95_MIN_SAMPLES) return null;
+  const ordered = [...values].sort((left, right) => left - right);
+  return ordered[Math.ceil(0.95 * ordered.length) - 1]!;
+};
 const pct = (value: number) => `${(value * 100).toFixed(0)}%`;
 
 function renderHtml(stats: ConfigStats[]): string {
@@ -317,13 +358,13 @@ function renderHtml(stats: ConfigStats[]): string {
   const rows = stats.map((item) => `<tr><td>${item.config}</td><td>${item.corpus}</td><td>${formatCompletion(item)}</td>
 <td>${formatPercent(item.recallMean)} ± ${formatPercent(item.recallStd)}</td><td>${formatPercent(item.failureInclusiveRecallMean)}</td>
 <td>${formatNumber(item.fpPerCaseMean, 1)}</td><td>${formatCost(item.costPerCaseMean, item.costPerCaseStd, item.costSource)}</td>
-<td>${formatDuration(item)}</td><td>${formatUsage(item)}</td><td>${formatAvailability(item)}</td><td>${formatStages(item)}</td><td>${item.validFindingsPerDollar?.toFixed(1) ?? "—"}</td></tr>`).join("\n");
+<td>${formatDuration(item)}</td><td>${formatUsage(item)}</td><td>${formatAvailability(item)}</td><td>${formatIncurredCost(item)}</td><td>${formatStages(item)}</td><td>${item.validFindingsPerDollar?.toFixed(1) ?? "—"}</td></tr>`).join("\n");
 
   return `<!doctype html><html><head><meta charset="utf-8"><title>peregrine-bugbot benchmark</title>
 <style>body{font-family:system-ui;margin:2rem;max-width:1050px}table{border-collapse:collapse;width:100%}
 td,th{border:1px solid #ddd;padding:6px 10px;text-align:left;font-size:14px}th{background:#f5f5f5}</style></head>
 <body><h1>peregrine-bugbot · model benchmark</h1>
-<table><tr><th>config</th><th>corpus</th><th>completion</th><th>conditional recall</th><th>failure-inclusive recall</th><th>FP/case</th><th>cost/case</th><th>time mean / median</th><th>usage / work</th><th>telemetry observed</th><th>breadth / investigation</th><th>valid findings / $</th></tr>
+<table><tr><th>config</th><th>corpus</th><th>completion</th><th>conditional recall</th><th>failure-inclusive recall</th><th>FP/case</th><th>cost/case</th><th>time mean / median / p95</th><th>usage / work</th><th>telemetry observed</th><th>incurred cost lower bound</th><th>breadth / investigation</th><th>valid findings / $</th></tr>
 ${rows}</table>
 <h2>Cost vs recall — pick the knee</h2>
 <svg viewBox="0 0 600 360" width="600" style="border:1px solid #eee">
@@ -331,7 +372,7 @@ ${rows}</table>
 <text x="300" y="350" font-size="12" text-anchor="middle">cost per case ($, max $${maxCost.toFixed(2)})</text>
 <text x="20" y="170" font-size="12" transform="rotate(-90 20 170)">conditional recall</text>
 ${points}</svg>
-<p style="color:#666;font-size:13px">Conditional recall includes completed bug-bearing attempts. Failure-inclusive recall counts failed or missing bug-bearing attempts as misses. Legacy folders are explicitly incomplete. Cost is n/a unless every expected attempt completed with cost telemetry; provider and estimated costs are labeled.</p>
+<p style="color:#666;font-size:13px">Conditional recall includes completed bug-bearing attempts. Failure-inclusive recall counts failed or missing bug-bearing attempts as misses. Comparison time and usage are n/a unless every expected attempt has the required telemetry; wall time includes failed attempts. P95 requires at least 20 attempts. Incurred cost is a lower bound that retains known spend from failed attempts. Legacy folders are explicitly incomplete.</p>
 </body></html>`;
 }
 
@@ -365,11 +406,13 @@ function formatCost(
 ): string {
   return meanCost === null || stdCost === null
     ? "n/a"
-    : `$${meanCost.toFixed(3)}±${stdCost.toFixed(3)} (${source ?? "unknown"})`;
+    : `$${meanCost.toFixed(3)}±${stdCost.toFixed(3)} (${costSourceLabel(source)})`;
 }
 
 function completeMean(values: number[], expected: number): number | null {
-  return expected > 0 && values.length === expected ? mean(values) : null;
+  if (expected <= 0 || values.length !== expected) return null;
+  const total = finiteSum(values);
+  return total === null ? null : total / values.length;
 }
 
 function rawStage(run: GradedRun, stage: "breadth" | "investigation"): Record<string, unknown> | undefined {
@@ -384,7 +427,7 @@ function rawStage(run: GradedRun, stage: "breadth" | "investigation"): Record<st
 function stageNumbers(runs: GradedRun[], stage: "breadth" | "investigation", field: string): number[] {
   return runs
     .map((run) => rawStage(run, stage)?.[field])
-    .filter((value): value is number => typeof value === "number");
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0);
 }
 
 function stageUsageNumbers(runs: GradedRun[], stage: "breadth" | "investigation", field: string): number[] {
@@ -395,7 +438,7 @@ function stageUsageNumbers(runs: GradedRun[], stage: "breadth" | "investigation"
         ? (usage as Record<string, unknown>)[field]
         : undefined;
     })
-    .filter((value): value is number => typeof value === "number");
+    .filter((value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0);
 }
 
 function formatStages(stats: ConfigStats): string {
@@ -409,7 +452,16 @@ function formatStages(stats: ConfigStats): string {
 function formatDuration(stats: ConfigStats): string {
   return stats.durationSecMean === null || stats.durationSecMedian === null
     ? "n/a"
-    : `${stats.durationSecMean.toFixed(0)}s / ${stats.durationSecMedian.toFixed(0)}s`;
+    : `${stats.durationSecMean.toFixed(0)}s / ${stats.durationSecMedian.toFixed(0)}s / ${stats.durationSecP95 === null ? "n/a" : `${stats.durationSecP95.toFixed(0)}s`}`;
+}
+
+function formatIncurredCost(stats: ConfigStats): string {
+  if (stats.incurredCostUsdTotal === null) return "n/a";
+  return `$${stats.incurredCostUsdTotal.toFixed(3)} (${costSourceLabel(stats.incurredCostSource)}; ${stats.incurredCostObservedAttempts} attempt(s))`;
+}
+
+function costSourceLabel(source: ConfigStats["costSource"]): string {
+  return source === "provider" ? "provider-reported" : source === "mixed" ? "mixed-source" : source ?? "unknown";
 }
 
 function formatUsage(stats: ConfigStats): string {
@@ -428,12 +480,16 @@ function formatUsage(stats: ConfigStats): string {
 }
 
 function summarizeCostSource(
-  sources: Array<EngineResult["usage"]["costSource"]>,
+  sources: Array<Exclude<ReportCostSource, null> | undefined>,
 ): ConfigStats["costSource"] {
   if (sources.some((source) => source === undefined)) return "unknown";
   const unique = new Set(sources);
   if (unique.size > 1) return "mixed";
   return sources[0] ?? "unknown";
+}
+
+function usageCostSource(usage: EngineResult["usage"]): Exclude<ReportCostSource, null> | undefined {
+  return usage.provider === "mock" ? "mock" : usage.costSource;
 }
 
 function comparableEstimatedPricing(
@@ -449,8 +505,37 @@ function comparableEstimatedPricing(
 function formatAvailability(stats: ConfigStats): string {
   const expected = stats.telemetryExpectedRuns;
   return Object.entries(stats.telemetryObserved)
-    .map(([metric, observed]) => `${metric} ${observed}/${expected}`)
+    .map(([metric, observed]) => `${metric} ${observed}/${expected ?? "n/a"}`)
     .join(" · ");
+}
+
+function incurredCosts(
+  completed: GradedRun[],
+  failed: Array<Extract<RunRecord["outcome"], { status: "failed" }>>,
+): { costs: number[]; sources: Array<Exclude<ReportCostSource, null> | undefined>; observedAttempts: number } {
+  const costs: number[] = [];
+  const sources: Array<Exclude<ReportCostSource, null> | undefined> = [];
+  let observedAttempts = 0;
+  for (const run of completed) {
+    const usage = run.outcome.result.usage;
+    if (usage.costUsd === undefined) continue;
+    costs.push(usage.costUsd);
+    sources.push(usageCostSource(usage));
+    observedAttempts++;
+  }
+  for (const failure of failed) {
+    const stageCosts = failure.telemetry?.stages
+      .map((stage) => ({ cost: stage.usage.costUsd, source: usageCostSource(stage.usage) }))
+      .filter((item): item is { cost: number; source: Exclude<ReportCostSource, null> | undefined } =>
+        typeof item.cost === "number" && Number.isFinite(item.cost) && item.cost >= 0) ?? [];
+    if (stageCosts.length === 0) continue;
+    const attemptCost = stageCosts.reduce((sum, item) => sum + item.cost, 0);
+    if (!Number.isFinite(attemptCost)) continue;
+    costs.push(attemptCost);
+    sources.push(...stageCosts.map((item) => item.source));
+    observedAttempts++;
+  }
+  return { costs, sources, observedAttempts };
 }
 
 function groupBy<T>(values: T[], key: (value: T) => string): Map<string, T[]> {
@@ -460,6 +545,12 @@ function groupBy<T>(values: T[], key: (value: T) => string): Map<string, T[]> {
     grouped.set(group, [...(grouped.get(group) ?? []), value]);
   }
   return grouped;
+}
+
+function finiteSum(values: number[]): number | null {
+  if (values.length === 0) return null;
+  const total = values.reduce((sum, value) => sum + value, 0);
+  return Number.isFinite(total) ? total : null;
 }
 
 function countBy<T>(values: T[], key: (value: T) => string): Record<string, number> {

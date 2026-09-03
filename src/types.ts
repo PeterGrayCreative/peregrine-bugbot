@@ -82,7 +82,7 @@ export const USAGE_METRICS = [
 
 export type UsageMetric = (typeof USAGE_METRICS)[number];
 export type UsageProvider = "anthropic" | "openai" | "mock";
-export type CostSource = "provider" | "estimated";
+export type CostSource = "provider" | "estimated" | "mixed";
 export type UsageAggregation = "single-envelope" | "single-snapshot" | "ambiguous" | "stage-sum";
 
 export interface PricingReference {
@@ -164,6 +164,23 @@ export interface EngineResult {
   usage: Usage;
   durationMs: number;
   raw?: unknown;
+}
+
+export interface StageTelemetry {
+  stage: "breadth" | "investigation";
+  model: string;
+  promptSha256: string;
+  usage: Usage;
+  durationMs: number;
+  completed: boolean;
+}
+
+export interface RunFailureTelemetry {
+  engine: RunnerName;
+  modelConfig: string;
+  usage: Usage;
+  durationMs: number;
+  stages: StageTelemetry[];
 }
 
 export interface ReviewContext {
@@ -369,6 +386,7 @@ export type RunOutcome =
       failureKind: RunFailureKind;
       message: string;
       durationMs: number;
+      telemetry?: RunFailureTelemetry;
     };
 
 export interface RunRecord {

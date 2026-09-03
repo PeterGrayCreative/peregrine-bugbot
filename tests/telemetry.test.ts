@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
-import { buildReport } from "../eval/report.js";
+import { buildReport, durationP95, P95_MIN_SAMPLES } from "../eval/report.js";
 import { applyUsageCost, validatePricingCatalog } from "../src/core/pricing.js";
 import {
   claudeUsageFromEnvelope,
@@ -11,6 +11,7 @@ import {
   combineUsage,
   parseUsage,
   promptBytes,
+  formatUsageCost,
 } from "../src/core/telemetry.js";
 import type { PricingCatalog, Usage } from "../src/types.js";
 
@@ -119,6 +120,16 @@ test("ambiguous multiple Codex usage snapshots remain unavailable", () => {
   assert.ok(usage.unavailable?.includes("inputTokens"));
 });
 
+test("Codex streams without a completed usage event remain entirely unavailable", () => {
+  const usage = codexUsageFromEvents([
+    { type: "item.completed", item: { id: "tool-1", type: "command_execution", output: "done" } },
+  ], "prompt");
+  assert.equal(usage.inputTokens, undefined);
+  assert.equal(usage.turns, undefined);
+  assert.equal(usage.toolCalls, undefined);
+  assert.equal(usage.aggregation, "ambiguous");
+});
+
 test("aggregation preserves observed zero and refuses partial totals", () => {
   const complete: Usage = {
     provider: "openai",
@@ -149,6 +160,20 @@ test("aggregation preserves observed zero and refuses partial totals", () => {
   assert.equal(total.toolCalls, 1);
   assert.equal(total.costUsd, undefined);
   assert.ok(total.unavailable?.includes("costUsd"));
+});
+
+test("aggregation retains mixed cost provenance and refuses unsafe sums", () => {
+  const aggregate = combineUsage(
+    { costUsd: 1, costSource: "provider", inputTokens: Number.MAX_SAFE_INTEGER },
+    { costUsd: 2, costSource: "estimated", inputTokens: 1 },
+  );
+  assert.equal(aggregate.costUsd, 3);
+  assert.equal(aggregate.costSource, "mixed");
+  assert.equal(aggregate.inputTokens, undefined);
+  assert.equal(formatUsageCost(aggregate), "mixed-source $3.000");
+  assert.equal(formatUsageCost({ provider: "openai", costUsd: 1, costSource: "provider" }), "provider-reported $1.000");
+  assert.equal(formatUsageCost({ provider: "mock", costUsd: 0, costSource: "provider" }), "mock $0.000");
+  assert.equal(combineUsage({ costUsd: Number.MAX_VALUE }, { costUsd: Number.MAX_VALUE }).costUsd, undefined);
 });
 
 test("aggregate estimated cost retains shared dated catalog provenance", () => {
@@ -198,10 +223,13 @@ test("dated pricing handles cache classes, context tiers, and provider precedenc
   assert.equal(codex.costUsd, (80 * 2 + 30 * 0.5 + 20 * 10) / 1_000_000);
   assert.equal(codex.costSource, "estimated");
 
-  const reported = applyUsageCost({ provider: "anthropic", costUsd: 0.25 }, "claude-test", pricing);
+  const reported = applyUsageCost({ provider: "anthropic", costUsd: 0.25, costSource: "provider" }, "claude-test", pricing);
   assert.equal(reported.costUsd, 0.25);
   assert.equal(reported.costSource, "provider");
   assert.equal(reported.pricing, undefined);
+  const unattributed = applyUsageCost({ provider: "anthropic", costUsd: 0.25 }, "claude-test", pricing);
+  assert.equal(unattributed.costSource, undefined);
+  assert.equal(formatUsageCost(unattributed), "unattributed $0.250");
 
   const unknown = applyUsageCost({ provider: "openai", inputTokens: 10 }, "unknown", pricing);
   assert.equal(unknown.costUsd, undefined);
@@ -214,6 +242,41 @@ test("dated pricing handles cache classes, context tiers, and provider precedenc
     outputTokens: 1,
   }, "codex-test", pricing, "batch");
   assert.equal(unknownTier.costUsd, undefined);
+});
+
+test("pricing requires exact service tiers and prices each request context independently", () => {
+  const genericUsage = {
+    provider: "anthropic" as const,
+    serviceTier: "priority",
+    inputTokens: 10,
+    baseInputTokens: 10,
+    cacheWriteInputTokens: 0,
+    cacheReadInputTokens: 0,
+    outputTokens: 1,
+  };
+  assert.equal(applyUsageCost(genericUsage, "claude-test", pricing).costUsd, undefined);
+  assert.equal(applyUsageCost({ ...genericUsage, serviceTier: undefined, aggregation: "stage-sum" }, "claude-test", pricing).costUsd, undefined);
+});
+
+test("reasoning tokens are billed once according to the provider contract", () => {
+  const catalog = structuredClone(pricing);
+  const included = catalog.contracts.find((contract) => contract.model === "codex-test")!;
+  included.tiers[0]!.reasoningOutputPerMillionUsd = 1000;
+  const usage = {
+    provider: "openai" as const,
+    serviceTier: "priority",
+    inputTokens: 10,
+    uncachedInputTokens: 10,
+    cacheReadInputTokens: 0,
+    outputTokens: 5,
+    reasoningOutputTokens: 3,
+  };
+  const includedCost = applyUsageCost(usage, "codex-test", catalog).costUsd;
+  assert.ok(Math.abs((includedCost ?? 0) - (10 * 2 + 5 * 10) / 1_000_000) < 1e-12);
+  included.reasoningOutputBilling = "separate";
+  const separateCost = applyUsageCost(usage, "codex-test", catalog).costUsd;
+  assert.ok(Math.abs((separateCost ?? 0) - (10 * 2 + (5 - 3) * 10 + 3 * 1000) / 1_000_000) < 1e-12);
+  assert.equal(applyUsageCost({ ...usage, outputTokens: 2 }, "codex-test", catalog).costUsd, undefined);
 });
 
 test("anonymous or incomplete tool event streams do not invent tool-call counts", () => {
@@ -229,6 +292,10 @@ test("anonymous or incomplete tool event streams do not invent tool-call counts"
   ], "prompt", { completeEventStream: false });
   assert.equal(incomplete.toolCalls, undefined);
   assert.equal(incomplete.toolOutputBytes, undefined);
+  assert.equal(incomplete.inputTokens, undefined);
+  assert.equal(incomplete.outputTokens, undefined);
+  assert.equal(incomplete.turns, undefined);
+  assert.equal(incomplete.aggregation, "ambiguous");
 });
 
 test("usage validation distinguishes unavailable fields from observed zero", () => {
@@ -242,8 +309,11 @@ test("usage validation distinguishes unavailable fields from observed zero", () 
   assert.equal(parsed.inputTokens, 0);
   assert.deepEqual(parsed.unavailable, ["baseInputTokens"]);
   assert.equal(parseUsage({ costUsd: 0 }, "usage").costSource, undefined);
+  assert.equal(parseUsage({ costUsd: 1, costSource: "mixed" }, "usage").costSource, "mixed");
   assert.throws(() => parseUsage({ costSource: "provider" }, "usage"), /requires costUsd/);
   assert.throws(() => parseUsage({ inputTokens: null }, "usage"), /non-negative number/);
+  assert.throws(() => parseUsage({ inputTokens: 1.5 }, "usage"), /safe integer/);
+  assert.throws(() => parseUsage({ inputTokens: Number.MAX_SAFE_INTEGER + 1 }, "usage"), /safe integer/);
   assert.throws(() => parseUsage({ unavailable: ["costUsd", "costUsd"] }, "usage"), /duplicates/);
   assert.throws(() => parseUsage({ inputTokens: 1, unavailable: ["inputTokens"] }, "usage"), /cannot also/);
   assert.equal(promptBytes("é"), 2);
@@ -256,6 +326,35 @@ test("pricing validation rejects ambiguous or overlapping contracts", () => {
   const invalidTier = structuredClone(pricing);
   invalidTier.contracts[0]!.tiers[0]!.upToInputTokens = undefined;
   assert.throws(() => validatePricingCatalog(invalidTier), /only the final tier/);
+  const invalidDate = structuredClone(pricing);
+  invalidDate.pricingAsOf = "2026-02-30";
+  assert.throws(() => validatePricingCatalog(invalidDate), /real .* calendar date/);
+  const unexpected = structuredClone(pricing) as PricingCatalog & { surprise: boolean };
+  unexpected.surprise = true;
+  assert.throws(() => validatePricingCatalog(unexpected), /unexpected field/);
+  assert.throws(() => validatePricingCatalog(null as unknown as PricingCatalog), /must be an object/);
+  const unsafeTier = structuredClone(pricing);
+  unsafeTier.contracts[0]!.tiers[0]!.upToInputTokens = Number.MAX_SAFE_INTEGER + 1;
+  assert.throws(() => validatePricingCatalog(unsafeTier), /safe integer/);
+  const blankModel = structuredClone(pricing);
+  blankModel.contracts[0]!.model = "   ";
+  assert.throws(() => validatePricingCatalog(blankModel), /non-empty string/);
+  const overflowing = structuredClone(pricing);
+  overflowing.contracts[0]!.tiers[1]!.baseInputPerMillionUsd = Number.MAX_VALUE;
+  assert.equal(applyUsageCost({
+    provider: "anthropic",
+    inputTokens: Number.MAX_SAFE_INTEGER,
+    baseInputTokens: Number.MAX_SAFE_INTEGER,
+    cacheWriteInputTokens: 0,
+    cacheReadInputTokens: 0,
+    outputTokens: 0,
+  }, "claude-test", overflowing).costUsd, undefined);
+});
+
+test("duration p95 uses nearest-rank only with the documented minimum sample", () => {
+  assert.equal(P95_MIN_SAMPLES, 20);
+  assert.equal(durationP95(Array.from({ length: 19 }, (_, index) => index + 1)), null);
+  assert.equal(durationP95(Array.from({ length: 20 }, (_, index) => index + 1)), 19);
 });
 
 test("reports aggregate provider cost, token classes, work, and stage duration", async () => {
@@ -319,6 +418,7 @@ test("reports aggregate provider cost, token classes, work, and stage duration",
     assert.equal(stats?.costSource, "provider");
     assert.equal(stats?.costPerCaseMean, 0.0123);
     assert.equal(stats?.durationSecMedian, 4);
+    assert.equal(stats?.durationSecP95, null);
     assert.equal(stats?.uncachedInputTokensMean, 100);
     assert.equal(stats?.cacheWriteInputTokensMean, 50);
     assert.equal(stats?.cacheReadInputTokensMean, 25);
@@ -329,6 +429,7 @@ test("reports aggregate provider cost, token classes, work, and stage duration",
     assert.equal(stats?.telemetryExpectedRuns, 1);
     assert.equal(stats?.telemetryObserved.costUsd, 1);
     assert.equal(stats?.telemetryObserved.cacheWriteInputTokens, 1);
+    assert.equal(stats?.incurredCostUsdTotal, 0.0123);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

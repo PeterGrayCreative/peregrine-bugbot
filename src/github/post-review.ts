@@ -1,5 +1,6 @@
 import { Octokit } from "@octokit/rest";
 import type { EngineResult, Finding, PeregrineConfig } from "../types.js";
+import { formatUsageCost } from "../core/telemetry.js";
 import { extractFingerprints, fingerprint, marker } from "./fingerprint.js";
 import { assertNoSecrets } from "../security/secrets.js";
 
@@ -195,9 +196,7 @@ function buildBody(
   skipped: number,
   heading: string,
 ): string {
-  const cost = result.usage.costUsd === undefined
-    ? "n/a"
-    : `${result.usage.costSource ?? "unattributed"} $${result.usage.costUsd.toFixed(3)}`;
+  const cost = formatUsageCost(result.usage);
   const sections = [
     "### 🦅 peregrine-bugbot",
     "",

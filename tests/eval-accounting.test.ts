@@ -64,7 +64,22 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     async review(ctx) {
       const scenario = (ctx.config.runners.mock as Record<string, unknown>).scenario;
       if (scenario === "mixed" && ++mixedCalls === 2) {
-        throw new RunFailureError("timeout", "timed out");
+        throw new RunFailureError("timeout", "timed out", {
+          telemetry: {
+            engine: "mock",
+            modelConfig: "mock",
+            usage: { provider: "mock", costUsd: 0.01, costSource: "provider" },
+            durationMs: 20,
+            stages: [{
+              stage: "breadth",
+              model: "mock",
+              promptSha256: "a".repeat(64),
+              usage: { provider: "mock", costUsd: 0.01, costSource: "provider" },
+              durationMs: 20,
+              completed: true,
+            }],
+          },
+        });
       }
       if (scenario === "timeout") throw new RunFailureError("timeout", "timed out");
       if (scenario === "provider") throw new RunFailureError("provider", "provider unavailable");
@@ -147,10 +162,19 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     assert.equal(mixed?.completionRate, 0.5);
     assert.equal(mixed?.recallMean, 1);
     assert.equal(mixed?.failureInclusiveRecallMean, 0.5);
-    assert.equal(stats.find((item) => item.config === "timeout")?.completionRate, 0);
-    assert.equal(stats.find((item) => item.config === "timeout")?.recallMean, null);
-    assert.equal(stats.find((item) => item.config === "timeout")?.failureInclusiveRecallMean, 0);
-    assert.equal(stats.find((item) => item.config === "missing")?.missingRuns, 1);
+    assert.notEqual(mixed?.durationSecMean, null);
+    assert.equal(mixed?.inputTokensMean, null);
+    assert.equal(mixed?.incurredCostUsdTotal, 0.01);
+    assert.equal(mixed?.incurredCostObservedAttempts, 1);
+    assert.equal(mixed?.telemetryObserved.costUsd, 1);
+    const timeout = stats.find((item) => item.config === "timeout");
+    assert.equal(timeout?.completionRate, 0);
+    assert.equal(timeout?.recallMean, null);
+    assert.equal(timeout?.failureInclusiveRecallMean, 0);
+    assert.notEqual(timeout?.durationSecMean, null);
+    const missing = stats.find((item) => item.config === "missing");
+    assert.equal(missing?.missingRuns, 1);
+    assert.equal(missing?.durationSecMean, null);
     assert.equal(stats.find((item) => item.config === "configuration")?.failuresByKind.configuration, 2);
     assert.equal(stats.find((item) => item.config === "configuration")?.failureRatesByKind.configuration, 1);
 
@@ -172,6 +196,9 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     assert.equal(legacyStats[0]?.completionRate, null);
     assert.equal(legacyStats[0]?.failureInclusiveRecallMean, null);
     assert.equal(legacyStats[0]?.costPerCaseMean, null);
+    assert.equal(legacyStats[0]?.durationSecMean, null);
+    assert.equal(legacyStats[0]?.inputTokensMean, null);
+    assert.equal(legacyStats[0]?.telemetryExpectedRuns, null);
     assert.equal(legacyStats[0]?.completedRuns, 2);
 
     const cleanCaseDir = join(casesDir, "clean-case");
