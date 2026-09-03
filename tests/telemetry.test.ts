@@ -220,18 +220,27 @@ test("aggregate estimated cost retains shared dated catalog provenance", () => {
 
 test("dated pricing handles cache classes, context tiers, and provider precedence", () => {
   validatePricingCatalog(pricing);
-  const claude = applyUsageCost({
+  const claudeUsage = {
     provider: "anthropic",
     inputTokens: 175,
     baseInputTokens: 100,
     cacheWriteInputTokens: 50,
     cacheReadInputTokens: 25,
     outputTokens: 20,
-  }, "claude-test", pricing);
+  } as const;
+  assert.equal(applyUsageCost(claudeUsage, "claude-test", pricing).costUsd, undefined);
+
+  const linearPricing = structuredClone(pricing);
+  linearPricing.contracts[0]!.tiers = [{
+    ...linearPricing.contracts[0]!.tiers[1]!,
+    id: "single-catch-all",
+  }];
+  validatePricingCatalog(linearPricing);
+  const claude = applyUsageCost(claudeUsage, "claude-test", linearPricing);
   assert.equal(claude.costUsd, (100 * 2 + 50 * 4 + 25 * 1 + 20 * 8) / 1_000_000);
   assert.equal(claude.costSource, "estimated");
   assert.equal(claude.pricing?.pricingAsOf, "2026-09-02");
-  assert.equal(claude.pricing?.tier, "long-context");
+  assert.equal(claude.pricing?.tier, "single-catch-all");
 
   const codex = applyUsageCost({
     provider: "openai",
@@ -265,7 +274,7 @@ test("dated pricing handles cache classes, context tiers, and provider precedenc
   assert.equal(unknownTier.costUsd, undefined);
 });
 
-test("pricing requires exact service tiers and prices each request context independently", () => {
+test("pricing requires exact service tiers and per-request provenance for context tiers", () => {
   const genericUsage = {
     provider: "anthropic" as const,
     serviceTier: "priority",
@@ -277,18 +286,16 @@ test("pricing requires exact service tiers and prices each request context indep
   };
   assert.equal(applyUsageCost(genericUsage, "claude-test", pricing).costUsd, undefined);
   assert.equal(applyUsageCost({ ...genericUsage, serviceTier: undefined, aggregation: "stage-sum" }, "claude-test", pricing).costUsd, undefined);
-  assert.notEqual(applyUsageCost({
-    ...genericUsage,
-    serviceTier: undefined,
-    aggregation: "single-envelope",
-    turns: 1,
-  }, "claude-test", pricing).costUsd, undefined);
-  assert.equal(applyUsageCost({
-    ...genericUsage,
-    serviceTier: undefined,
-    aggregation: "single-envelope",
-    turns: 2,
-  }, "claude-test", pricing).costUsd, undefined);
+  for (const turns of [undefined, 1, 2]) {
+    for (const aggregation of ["single-envelope", "single-snapshot"] as const) {
+      assert.equal(applyUsageCost({
+        ...genericUsage,
+        serviceTier: undefined,
+        aggregation,
+        turns,
+      }, "claude-test", pricing).costUsd, undefined);
+    }
+  }
   const codexPriorityUsage = {
     provider: "openai" as const,
     serviceTier: "priority",
@@ -405,6 +412,21 @@ test("usage validation distinguishes unavailable fields from observed zero", () 
   assert.throws(() => parseUsage({ costSource: "provider" }, "usage"), /requires costUsd/);
   assert.throws(() => parseUsage({ costUsd: 1, costSource: "provider" }, "usage"), /provider provenance/);
   assert.throws(() => parseUsage({ provider: "openai", costUsd: 1, costSource: "estimated" }, "usage"), /pricing provenance/);
+  assert.throws(() => parseUsage({
+    provider: "openai",
+    aggregation: "single-snapshot",
+    costUsd: 1,
+    costSource: "estimated",
+    malformed: ["serviceTier"],
+    pricing: {
+      catalogVersion: "v1",
+      pricingAsOf: "2026-09-02",
+      contractModel: "model",
+      serviceTier: "priority",
+      tier: "default",
+      assumptions: [],
+    },
+  }, "usage"), /cannot coexist with malformed/);
   assert.throws(() => parseUsage({ provider: "openai", costUsd: 1, costSource: "mixed", aggregation: "single-snapshot" }, "usage"), /stage-sum/);
   assert.throws(() => parseUsage({ provider: "openai", costUsd: 1, costSource: "mixed", aggregation: "stage-sum", pricing: {
     catalogVersion: "v1", pricingAsOf: "2026-09-02", contractModel: "model", tier: "default", assumptions: [],

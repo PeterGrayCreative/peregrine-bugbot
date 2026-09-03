@@ -43,7 +43,10 @@ export function applyUsageCost(
     candidate.provider === usage.provider && candidate.model === model);
   const contract = candidates.find((candidate) => candidate.serviceTier === effectiveServiceTier);
   if (!contract) return withUnavailable(usage);
-  if (contract.tiers.length > 1 && usage.turns !== undefined && usage.turns > 1) {
+  // A run-level envelope/snapshot can aggregate several billable requests even
+  // when its observed turn count is zero, one, or unavailable. Context tiers
+  // are therefore unsafe until the provider supplies per-request usage buckets.
+  if (contract.tiers.length > 1) {
     return withUnavailable(usage);
   }
   const tier = selectTier(contract, usage.inputTokens);

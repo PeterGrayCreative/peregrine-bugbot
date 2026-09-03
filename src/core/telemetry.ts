@@ -331,6 +331,9 @@ export function parseUsage(value: unknown, source: string): Usage {
     (parsed.pricing === undefined || parsed.provider === undefined || parsed.provider === "mock")) {
     throw new Error(`${source}.costSource estimated requires provider and pricing provenance`);
   }
+  if (parsed.costSource === "estimated" && parsed.malformed && parsed.malformed.length > 0) {
+    throw new Error(`${source}.costSource estimated cannot coexist with malformed provider fields`);
+  }
   if (parsed.costSource === "provider" && parsed.provider === undefined) {
     throw new Error(`${source}.costSource provider requires provider provenance`);
   }

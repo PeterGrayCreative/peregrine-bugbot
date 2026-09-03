@@ -55,8 +55,10 @@ use increasing inclusive thresholds.
 
 Service-tier matching is exact; a tier-specific request never falls back to a
 generic contract. Context thresholds apply to each provider request before
-stage totals are combined. A multi-request aggregate without per-request usage
-stays `n/a` when the matching contract has context tiers. For
+stage totals are combined. Run-level envelopes and snapshots do not prove that
+they represent a single billable request, regardless of the observed turn
+count, so a multi-tier contract stays `n/a` until per-request usage buckets are
+available. A single catch-all tier remains safe. For
 `reasoningOutputBilling: "separate"`, provider
 output totals are treated as including reasoning tokens: Peregrine subtracts
 the reasoning count from ordinary output before applying the separate rate. If
