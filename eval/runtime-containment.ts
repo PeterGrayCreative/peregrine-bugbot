@@ -187,7 +187,7 @@ function validateProviderCommand(
   if (profile === "semantic-judge") {
     if (runner !== "codex") throw new Error("semantic judge containment currently supports only Codex");
     const expected = [
-      "exec", "--ephemeral", "--ignore-user-config", "--ignore-rules", "--strict-config",
+      "exec", "--ephemeral", "--ignore-user-config", "--ignore-rules", "--skip-git-repo-check", "--strict-config",
       "--disable", "shell_tool", "--disable", "unified_exec",
       "--sandbox", "read-only", "--model", "gpt-5.6-luna",
       "--config", 'model_reasoning_effort="medium"',
