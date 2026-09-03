@@ -14,6 +14,8 @@
 
 **Provider calls:** none
 
+**Merged as:** `8edcc9f573e4e8186d1ec504329e58a4818aeba9`
+
 ## Scope proved
 
 - Fixture cases produce deterministic base and head commits, including a real empty base for addition-only changes.
@@ -64,5 +66,11 @@ Plan PR 2's unique attempt isolation, leakage scanning, provider-home isolation,
 The preserved manifest remains human-readable text. Plan PR 6 owns the typed shadow representation and must land before Plan PR 4 emits definitive routing-versus-breadth miss classifications. Live model evaluation remains disabled until Safety PR 2A provides an attested outer filesystem boundary.
 
 Production prompts, grading, budgets, routing, posting, model choice, and worker topology are unchanged.
+
+## Remote proof
+
+PR #7 was ready and mergeable at head `3e75b410eb237667b40eb569396b330c81fc5e6b`. On that final ready head, `check`, `analyze`, and `post` passed. The PR had no conversation comments, submitted reviews, or review threads. Earlier draft-triggered `analyze` and `post` jobs were skipped and were not counted as successful evidence.
+
+The PR merged on 2026-09-02 as `8edcc9f573e4e8186d1ec504329e58a4818aeba9`.
 
 Rollback boundary: revert Plan PR 3. Plan PR 2 isolation and Plan PR 1 accounting remain independently usable.
