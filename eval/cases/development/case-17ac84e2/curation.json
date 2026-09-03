@@ -22,12 +22,5 @@
     "artifact": "proof.json",
     "sha256": "390a074087959e4f615070e719b41f1fa451868369d67dd735fc1df14e210194"
   },
-  "confirmations": [
-    {
-      "curatorIdentitySha256": "617ac849db736678cc50ccdba46a2eab92738cafb44bda4ccd1eee1c585a4bc1",
-      "confirmedAt": "2026-09-03T16:00:00Z",
-      "caseBundleSha256": "10adb0ee64bf22ec62b64cb86de02a24ba96ebc799bcb472aa91112e05031535",
-      "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
-    }
-  ]
+  "confirmations": []
 }
