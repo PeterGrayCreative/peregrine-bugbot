@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "caseId": "case-b62f09d4",
-  "status": "draft",
+  "status": "admitted",
   "source": {
     "kind": "seeded",
     "repositoryAlias": "repo-01",
@@ -25,6 +25,11 @@
     {
       "curatorIdentitySha256": "47ecc656c1d06b3646efa3642f75cd99656909eefc8aeb3de662d309c300ca8a",
       "confirmedAt": "2026-09-03T12:00:00Z",
+      "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
+    },
+    {
+      "curatorIdentitySha256": "1dd4d415859719bfed2d06cda019c0f3745b742344ac0022aed40dbd46592f9e",
+      "confirmedAt": "2026-09-03T17:06:48Z",
       "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
     }
   ]
