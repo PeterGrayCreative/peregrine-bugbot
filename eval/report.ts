@@ -18,8 +18,10 @@ import {
   parseLegacyCompletedRun,
   parseLegacyMatrixRunManifest,
   parseLegacySchemaV1GradedRun,
+  parseLegacySchemaV1RunRecord,
   parseMatrixRunManifest,
   parseRunRecord,
+  type LegacyMatrixRunManifest,
 } from "./artifacts.js";
 
 type LegacyGradedRun = Omit<GradedRun, "schemaVersion" | "attemptId" | "finishedAt" | "outcome" | "caseCorpus" | "runner"> & {
@@ -91,8 +93,8 @@ export async function buildReport(
       stats = trackedStats(dir, casesDir, parseMatrixRunManifest(manifestValue, manifestPath));
     } catch (error) {
       if (!isLegacyMatrixRunManifest(manifestValue)) throw error;
-      parseLegacyMatrixRunManifest(manifestValue, manifestPath);
-      stats = legacyStats(dir);
+      const legacyManifest = parseLegacyMatrixRunManifest(manifestValue, manifestPath);
+      stats = legacyStats(dir, legacyManifest);
     }
   } else {
     stats = legacyStats(dir);
@@ -193,7 +195,7 @@ function loadGroundTruthIds(casesDir: string, caseName: string): string[] {
   return readCaseGroundTruth(casesDir, caseName).bugs.map((bug) => bug.id);
 }
 
-function legacyStats(dir: string): ConfigStats[] {
+function legacyStats(dir: string, manifest?: LegacyMatrixRunManifest): ConfigStats[] {
   const graded = readdirSync(dir)
     .filter((file) => file.endsWith(".graded.json"))
     .map((file): LegacyGradedRun | GradedRun => {
@@ -214,8 +216,28 @@ function legacyStats(dir: string): ConfigStats[] {
       if (!parsed.matches || !parsed.falsePositiveIndexes) throw new Error(`${path}: expected a graded legacy artifact`);
       return { ...parsed, matches: parsed.matches, falsePositiveIndexes: parsed.falsePositiveIndexes };
     });
+  const failedRecords = (manifest?.expectedAttempts ?? []).flatMap((attempt) => {
+    const path = join(dir, attempt.file);
+    if (!existsSync(path)) return [];
+    const parsed = parseLegacySchemaV1RunRecord(
+      JSON.parse(readFileSync(path, "utf8")),
+      path,
+      attempt,
+    );
+    return parsed.outcome.status === "failed"
+      ? [{ configName: parsed.configName, outcome: parsed.outcome }]
+      : [];
+  });
   const byConfig = groupBy(graded, (run) => run.configName);
-  return [...byConfig.entries()].map(([config, legacyRuns]) => {
+  const failuresByConfig = groupBy(failedRecords, (run) => run.configName);
+  const configNames = new Set([
+    ...byConfig.keys(),
+    ...failuresByConfig.keys(),
+    ...(manifest?.expectedAttempts.map((attempt) => attempt.configName) ?? []),
+  ]);
+  return [...configNames].map((config) => {
+    const legacyRuns = byConfig.get(config) ?? [];
+    const failed = (failuresByConfig.get(config) ?? []).map((record) => record.outcome);
     const completed = legacyRuns.map((run): GradedRun =>
       "outcome" in run
         ? run
@@ -236,13 +258,13 @@ function legacyStats(dir: string): ConfigStats[] {
         ? completed[0]!.outcome.result.engine
         : null,
       corpus: null,
-      benchmarkKind: completed.every((run) => run.outcome.result.engine === "mock")
+      benchmarkKind: completed.length > 0 && completed.every((run) => run.outcome.result.engine === "mock")
         ? "structural-only"
         : "legacy-unknown",
       completeness: "legacy-incomplete",
       expectedRuns: null,
       completed,
-      failed: [],
+      failed,
       missing: null,
       failureInclusiveRecalls: null,
     });
@@ -321,12 +343,11 @@ function calculateStats(args: {
   const incurred = incurredCosts(args.completed, args.failed);
 
   const failuresByKind = countBy(args.failed, (failure) => failure.failureKind);
-  const failureRatesByKind = Object.fromEntries(
-    Object.entries(failuresByKind).map(([kind, count]) => [
-      kind,
-      args.expectedRuns === null ? 0 : count / args.expectedRuns,
-    ]),
-  );
+  const failureRatesByKind = args.expectedRuns === null
+    ? {}
+    : Object.fromEntries(
+        Object.entries(failuresByKind).map(([kind, count]) => [kind, count / args.expectedRuns!]),
+      );
 
   return {
     config: args.config,

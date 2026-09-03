@@ -421,6 +421,12 @@ function parseFailureTelemetry(value: unknown, source: string): RunFailureTeleme
   for (const [index, stage] of stages.entries()) {
     validateUsageProvider(engine, stage.usage, `${source}.stages[${index}].usage`);
   }
+  const expectedUsage = stages.length === 1
+    ? stages[0]!.usage
+    : combineUsage(...stages.map((stage) => stage.usage));
+  if (!isDeepStrictEqual(withoutUndefined(expectedUsage), withoutUndefined(usage))) {
+    throw new Error(`${source}.usage does not match aggregate stage telemetry`);
+  }
   return {
     engine,
     modelConfig: strictString(root.modelConfig, `${source}.modelConfig`, 1000),

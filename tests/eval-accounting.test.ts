@@ -200,6 +200,59 @@ test("strict ingestion rejects aggregate usage forged below its two stages", () 
   assert.doesNotThrow(() => parseRunRecord(forged, "reconciled", validAttempt()));
 });
 
+test("strict ingestion reconciles failure usage and cost with all observed stages", () => {
+  const stageUsage = withUnavailable({
+    provider: "anthropic",
+    aggregation: "single-envelope",
+    costUsd: 1,
+    costSource: "provider",
+  });
+  const aggregate = combineUsage(stageUsage, stageUsage);
+  const failed: RunRecord = {
+    ...structuredClone(validRecord()),
+    outcome: {
+      status: "failed",
+      failureKind: "parse",
+      message: "investigation output was invalid",
+      durationMs: 30,
+      telemetry: {
+        engine: "claude",
+        modelConfig: "fast->strong",
+        usage: { ...aggregate, costUsd: 0.01 },
+        durationMs: 30,
+        stages: [
+          {
+            stage: "breadth",
+            model: "fast",
+            promptSha256: "a".repeat(64),
+            usage: stageUsage,
+            durationMs: 10,
+            completed: true,
+          },
+          {
+            stage: "investigation",
+            model: "strong",
+            promptSha256: "b".repeat(64),
+            usage: stageUsage,
+            durationMs: 20,
+            completed: false,
+          },
+        ],
+      },
+    },
+  };
+  assert.throws(
+    () => parseRunRecord(failed, "forged failure", validAttempt()),
+    /usage does not match aggregate stage telemetry/,
+  );
+
+  if (failed.outcome.status !== "failed" || !failed.outcome.telemetry) {
+    throw new Error("expected failure telemetry fixture");
+  }
+  failed.outcome.telemetry.usage = aggregate;
+  assert.doesNotThrow(() => parseRunRecord(failed, "reconciled failure", validAttempt()));
+});
+
 test("pre-corpus P1 schema-v1 artifacts remain readable only as legacy incomplete", async () => {
   const root = mkdtempSync(join(tmpdir(), "peregrine-p1-artifact-test-"));
   const runsDir = join(root, "runs");
@@ -230,6 +283,35 @@ test("pre-corpus P1 schema-v1 artifacts remain readable only as legacy incomplet
     assert.equal(stats?.completionRate, null);
     assert.equal(stats?.telemetryExpectedRuns, null);
     assert.equal(stats?.costPerCaseMean, null);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("failed-only P1 schema-v1 folders report legacy incomplete instead of disappearing", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-p1-failed-artifact-test-"));
+  const runsDir = join(root, "runs");
+  const fixtureDir = resolve("tests/fixtures/eval/p1-schema-v1-failed");
+  mkdirSync(runsDir);
+  for (const file of ["matrix-manifest.json", "attempt-000001.json"]) {
+    writeFileSync(join(runsDir, file), readFileSync(join(fixtureDir, file)));
+  }
+
+  try {
+    const [stats] = await buildReport(runsDir);
+    assert.equal(stats?.config, "claude-p1-failed-route");
+    assert.equal(stats?.completeness, "legacy-incomplete");
+    assert.equal(stats?.benchmarkKind, "legacy-unknown");
+    assert.equal(stats?.completedRuns, 0);
+    assert.equal(stats?.failedRuns, null);
+    assert.equal(stats?.failuresByKind.timeout, 1);
+    assert.deepEqual(stats?.failureRatesByKind, {});
+    assert.equal(stats?.recallMean, null);
+    assert.equal(stats?.failureInclusiveRecallMean, null);
+    assert.equal(stats?.costPerCaseMean, null);
+    assert.equal(stats?.incurredCostUsdTotal, null);
+    assert.equal(stats?.durationSecMean, null);
+    assert.equal(stats?.telemetryExpectedRuns, null);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
