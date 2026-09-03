@@ -180,8 +180,21 @@ function buildReportLocked(dir: string, casesDir: string): ConfigStats[] {
       }
     }
     if (currentManifest) {
-      if (hasExperimentMetadata) requireValidExperimentGradingSeal(dir, currentManifest);
-      stats = trackedStats(dir, casesDir, currentManifest);
+      const gradingEvidence = hasExperimentMetadata
+        ? requireValidExperimentGradingSeal(dir, currentManifest).evidence
+        : undefined;
+      let expectedJudge: NonNullable<GradedRun["grading"]>["judge"] | undefined;
+      if (gradingEvidence) {
+        const declaredJudge = gradingEvidence.experiment.protocol.judge;
+        expectedJudge = declaredJudge.kind === "exact"
+          ? { kind: "exact", version: "exact-v1" }
+          : {
+              kind: declaredJudge.kind,
+              version: "semantic-v1",
+              configSha256: gradingEvidence.experiment.hashes.judgeSha256,
+            };
+      }
+      stats = trackedStats(dir, casesDir, currentManifest, expectedJudge);
     }
   } else {
     if (hasExperimentMetadata) {
@@ -286,7 +299,12 @@ function preTelemetryStats(
   });
 }
 
-function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest): ConfigStats[] {
+function trackedStats(
+  dir: string,
+  casesDir: string,
+  manifest: MatrixRunManifest,
+  expectedJudge?: NonNullable<GradedRun["grading"]>["judge"],
+): ConfigStats[] {
   preflightTrackedRunSet(dir, casesDir, manifest);
   const byConfig = groupBy(manifest.expectedAttempts, (attempt) =>
     `${attempt.configName}\0${attempt.corpus}\0${attempt.runner}`);
@@ -344,6 +362,7 @@ function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest
         graded.matches,
         graded.grading,
         gradedPath,
+        expectedJudge,
       );
       completed.push(graded);
       const recall = runRecall(graded);
@@ -804,7 +823,8 @@ export function calculateStats(args: {
     unresolvedFindings: behavioral ? unresolvedFindings : null,
     blockingFalsePositivesOnCleanCases: behavioral ? blockingFalsePositivesOnCleanCases : null,
     missesByStage: behavioral ? missesByStage : {},
-    costPerReliablyFoundRootCause: behavioral && hasComparableCost && totalCost !== null && reliableRootCauses > 0
+    costPerReliablyFoundRootCause: behavioral && hasComparableCost && totalCost !== null &&
+      reliableRootCauses !== null && reliableRootCauses > 0
       ? totalCost / reliableRootCauses
       : null,
     failureInclusiveRecallMean:
@@ -991,8 +1011,8 @@ function formatMisses(stats: ConfigStats): string {
   return entries.length === 0 ? "none" : entries.map(([stage, count]) => `${stage}: ${count}`).join("; ");
 }
 
-function reliablyFoundRootCauses(runs: readonly ScoredRun[]): number {
-  if (runs.length === 0 || runs.some((run) => !run.caseName || !run.grading)) return 0;
+function reliablyFoundRootCauses(runs: readonly ScoredRun[]): number | null {
+  if (runs.length === 0 || runs.some((run) => !run.caseName || !run.grading)) return null;
   const groups = new Map<string, boolean[]>();
   for (const run of runs) {
     for (const [group, found] of Object.entries(run.grading!.rootCauseMatches)) {
@@ -1000,7 +1020,11 @@ function reliablyFoundRootCauses(runs: readonly ScoredRun[]): number {
       groups.set(key, [...(groups.get(key) ?? []), found]);
     }
   }
-  return [...groups.values()].filter((observations) => observations.length > 0 && observations.every(Boolean)).length;
+  const observations = [...groups.values()];
+  // "Reliably found" is a preregistered 2-of-3 measure, not a generic
+  // majority label. With any other repeat shape the denominator is unknown.
+  if (observations.some((items) => items.length !== 3)) return null;
+  return observations.filter((items) => items.filter(Boolean).length >= 2).length;
 }
 
 function formatCost(

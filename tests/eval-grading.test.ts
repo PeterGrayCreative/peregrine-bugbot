@@ -22,6 +22,12 @@ const truth: GroundTruth = {
     bug("unrelated", "other"),
   ],
 };
+const JUDGE_CONFIG_SHA256 = "c".repeat(64);
+const JUDGE_IDENTITY = {
+  kind: "codex" as const,
+  version: "semantic-v1",
+  configSha256: JUDGE_CONFIG_SHA256,
+};
 
 test("canonical lane registry maps all twelve lanes to finding categories", () => {
   assert.equal(CORE_LANE_IDS.length, 12);
@@ -38,41 +44,124 @@ test("one systemic finding credits observations only in the same root-cause grou
     { bugId: "unrelated", findingIndex: 1, sameRootCause: true },
   ]);
   assert.deepEqual(matches, { "symptom-a": 0, "symptom-b": 0, unrelated: 1 });
-  assert.deepEqual(rootCauseMatches(truth, matches), { shared: true, other: true });
+  assert.deepEqual(rootCauseMatches(truth, matches), {
+    '["group","shared"]': true,
+    '["group","other"]': true,
+  });
+});
+
+test("grouped and ungrouped root-cause namespaces cannot collide", () => {
+  const collisionTruth: GroundTruth = {
+    bugs: [bug("foo", undefined), bug("grouped", "bug:foo")],
+  };
+  const matches = resolveMatches(collisionTruth, 2, [
+    { bugId: "foo", findingIndex: 0, sameRootCause: true },
+    { bugId: "grouped", findingIndex: 0, sameRootCause: true },
+    { bugId: "grouped", findingIndex: 1, sameRootCause: true },
+  ]);
+  assert.deepEqual(matches, { foo: 0, grouped: 1 });
+  assert.equal(Object.keys(rootCauseMatches(collisionTruth, matches)).length, 2);
 });
 
 test("persisted semantic evidence rejects cross-group, digest, and stage tampering", () => {
   const finding = reviewFinding();
   const decisions = [
-    semanticDecision(truth.bugs[0]!, finding, "same-root-cause"),
-    semanticDecision(truth.bugs[1]!, finding, "same-root-cause"),
+    semanticDecision(truth.bugs[0]!, finding, 0, "same-root-cause", JUDGE_CONFIG_SHA256),
+    semanticDecision(truth.bugs[1]!, finding, 0, "same-root-cause", JUDGE_CONFIG_SHA256),
+    semanticDecision(truth.bugs[2]!, finding, 0, "different-root-cause", JUDGE_CONFIG_SHA256),
   ];
   const evidence = {
     version: "root-cause-v1" as const,
-    judge: { kind: "codex" as const, version: "semantic-v1" },
+    judge: JUDGE_IDENTITY,
     decisions,
-    rootCauseMatches: { shared: true, other: false },
+    rootCauseMatches: { '["group","shared"]': true, '["group","other"]': false },
     missStages: { "symptom-a": "none" as const, "symptom-b": "none" as const, unrelated: "infrastructure" as const },
     unmatchedFindings: [],
   };
   assert.doesNotThrow(() => assertGradingEvidenceConsistent(
-    truth, [finding], { "symptom-a": 0, "symptom-b": 0, unrelated: null }, evidence, "grade",
+    truth, [finding], { "symptom-a": 0, "symptom-b": 0, unrelated: null }, evidence, "grade", JUDGE_IDENTITY,
   ));
   assert.throws(() => assertGradingEvidenceConsistent(
     truth,
     [finding],
     { "symptom-a": 0, "symptom-b": 0, unrelated: 0 },
-    { ...evidence, rootCauseMatches: { shared: true, other: true }, missStages: { ...evidence.missStages, unrelated: "none" } },
-    "grade",
+    { ...evidence, rootCauseMatches: { '["group","shared"]': true, '["group","other"]': true }, missStages: { ...evidence.missStages, unrelated: "none" } },
+    "grade", JUDGE_IDENTITY,
   ), /reuses finding/);
   assert.throws(() => assertGradingEvidenceConsistent(
     truth, [finding], { "symptom-a": 0, "symptom-b": 0, unrelated: null },
-    { ...evidence, decisions: [{ ...decisions[0]!, decisionId: "a".repeat(64) }, decisions[1]!] }, "grade",
+    { ...evidence, decisions: [{ ...decisions[0]!, decisionId: "a".repeat(64) }, decisions[1]!] }, "grade", JUDGE_IDENTITY,
   ), /content address/);
   assert.throws(() => assertGradingEvidenceConsistent(
     truth, [finding], { "symptom-a": 0, "symptom-b": 0, unrelated: null },
-    { ...evidence, missStages: { ...evidence.missStages, unrelated: "breadth" } }, "grade",
+    { ...evidence, missStages: { ...evidence.missStages, unrelated: "breadth" } }, "grade", JUDGE_IDENTITY,
   ), /lacks authenticated stage evidence/);
+  assert.throws(() => assertGradingEvidenceConsistent(
+    truth, [finding], { "symptom-a": 0, "symptom-b": 0, unrelated: null },
+    { ...evidence, decisions: [{ ...decisions[0]!, verdict: "different-root-cause" as const }, decisions[1]!] }, "grade", JUDGE_IDENTITY,
+  ), /content address/);
+  assert.throws(() => assertGradingEvidenceConsistent(
+    truth, [finding], { "symptom-a": 0, "symptom-b": 0, unrelated: null },
+    { ...evidence, decisions: [{ ...decisions[0]!, judgeConfigSha256: "d".repeat(64) }, decisions[1]!] }, "grade", JUDGE_IDENTITY,
+  ), /fingerprint/);
+  const alternateConfig = "d".repeat(64);
+  assert.throws(() => assertGradingEvidenceConsistent(
+    truth, [finding], { "symptom-a": 0, "symptom-b": 0, unrelated: null },
+    {
+      ...evidence,
+      judge: { ...evidence.judge, configSha256: alternateConfig },
+      decisions: [
+        semanticDecision(truth.bugs[0]!, finding, 0, "same-root-cause", alternateConfig),
+        semanticDecision(truth.bugs[1]!, finding, 0, "same-root-cause", alternateConfig),
+        semanticDecision(truth.bugs[2]!, finding, 0, "different-root-cause", alternateConfig),
+      ],
+    },
+    "grade", JUDGE_IDENTITY,
+  ), /immutable anchor/);
+  assert.throws(() => assertGradingEvidenceConsistent(
+    truth,
+    [finding],
+    { "symptom-a": 0, "symptom-b": 0, unrelated: null },
+    { ...evidence, judge: { ...evidence.judge, kind: "claude" as const } },
+    "grade",
+    JUDGE_IDENTITY,
+  ), /judge identity/);
+  assert.throws(() => assertGradingEvidenceConsistent(
+    truth,
+    [finding],
+    { "symptom-a": 0, "symptom-b": 0, unrelated: null },
+    { ...evidence, judge: { ...evidence.judge, version: "exact-v1" } },
+    "grade",
+    JUDGE_IDENTITY,
+  ), /kind\/version/);
+});
+
+test("semantic decisions bind exact duplicate-finding occurrences", async () => {
+  const duplicate = reviewFinding();
+  const graded = await gradeResult(
+    engineResult([duplicate, { ...duplicate }]),
+    truth,
+    { kind: "codex", model: "fixed-model", configSha256: JUDGE_CONFIG_SHA256 },
+    async () => true,
+  );
+  assert.deepEqual(graded.matches, { "symptom-a": 0, "symptom-b": 0, unrelated: 1 });
+  const unrelated = graded.grading.decisions.filter((decision) => decision.bugId === "unrelated");
+  assert.deepEqual(unrelated.map((decision) => decision.findingIndex), [0, 1]);
+  assert.notEqual(unrelated[0]!.decisionId, unrelated[1]!.decisionId);
+  assert.doesNotThrow(() => assertGradingEvidenceConsistent(
+    truth,
+    [duplicate, { ...duplicate }],
+    graded.matches,
+    graded.grading,
+    "duplicate grade", JUDGE_IDENTITY,
+  ));
+  assert.throws(() => assertGradingEvidenceConsistent(
+    truth,
+    [duplicate, { ...duplicate, title: "tampered occurrence" }],
+    graded.matches,
+    graded.grading,
+    "duplicate grade", JUDGE_IDENTITY,
+  ), /indexed finding occurrence/);
 });
 
 test("unmatched findings remain unresolved until blinded adjudication", () => {
@@ -85,6 +174,27 @@ test("unmatched findings remain unresolved until blinded adjudication", () => {
     new Map([[unresolved[0]!.findingEvidenceSha256, "confirmed-new"]]),
   );
   assert.equal(confirmed[0]?.classification, "confirmed-new");
+});
+
+test("persisted behavioral classifications remain unresolved without a sealed adjudication ledger", () => {
+  const finding = reviewFinding();
+  const evidence = {
+    version: "root-cause-v1" as const,
+    judge: JUDGE_IDENTITY,
+    decisions: [semanticDecision(
+      truth.bugs[0]!, finding, 0, "different-root-cause", JUDGE_CONFIG_SHA256,
+    )],
+    rootCauseMatches: { '["group","shared"]': false },
+    missStages: { "symptom-a": "infrastructure" as const },
+    unmatchedFindings: [{
+      findingIndex: 0,
+      findingEvidenceSha256: classifyUnmatchedFindings([finding], { "symptom-a": null }, new Map())[0]!.findingEvidenceSha256,
+      classification: "unsupported" as const,
+    }],
+  };
+  assert.throws(() => assertGradingEvidenceConsistent(
+    { bugs: [truth.bugs[0]!] }, [finding], { "symptom-a": null }, evidence, "grade", JUDGE_IDENTITY,
+  ), /unmatchedFindings is inconsistent/);
 });
 
 test("miss attribution is deterministic and presentation is not a detection miss", () => {
@@ -115,7 +225,7 @@ test("semantic judge packet is blind to runner, route, config, and treatment", (
 test("semantic disagreements and judge failures remain explicit fail-closed evidence", async () => {
   const result = engineResult([reviewFinding(), { ...reviewFinding(), title: "Unrelated report", explanation: "A separate symptom." }]);
   let calls = 0;
-  const graded = await gradeResult(result, { bugs: [truth.bugs[0]!] }, { kind: "codex", model: "fixed-model" }, new Map(), async () => {
+  const graded = await gradeResult(result, { bugs: [truth.bugs[0]!] }, { kind: "codex", model: "fixed-model", configSha256: JUDGE_CONFIG_SHA256 }, async () => {
     calls += 1;
     if (calls === 1) throw new Error("Codex judge failed: timeout");
     return false;
@@ -128,14 +238,32 @@ test("semantic disagreements and judge failures remain explicit fail-closed evid
   assert.equal(graded.grading.missStages["symptom-a"], "infrastructure");
   assert.equal(graded.grading.unmatchedFindings.length, 2);
   assert.equal(graded.falsePositiveIndexes.length, 0);
+  assert.doesNotThrow(() => assertGradingEvidenceConsistent(
+    { bugs: [truth.bugs[0]!] }, result.findings, graded.matches, graded.grading, "grade", JUDGE_IDENTITY,
+  ));
+  assert.throws(() => assertGradingEvidenceConsistent(
+    { bugs: [truth.bugs[0]!] },
+    result.findings,
+    graded.matches,
+    { ...graded.grading, decisions: graded.grading.decisions.slice(1) },
+    "grade",
+    JUDGE_IDENTITY,
+  ), /coverage\/order/);
+  assert.throws(() => assertGradingEvidenceConsistent(
+    { bugs: [truth.bugs[0]!] },
+    result.findings,
+    graded.matches,
+    { ...graded.grading, decisions: graded.grading.decisions.slice(0, 1) },
+    "grade",
+    JUDGE_IDENTITY,
+  ), /coverage\/order/);
 });
 
 test("semantic grading continues past a positive claimed by another root cause", async () => {
   const graded = await gradeResult(
     engineResult([reviewFinding(), { ...reviewFinding(), title: "Second finding" }]),
     truth,
-    { kind: "codex", model: "fixed-model" },
-    new Map(),
+    { kind: "codex", model: "fixed-model", configSha256: JUDGE_CONFIG_SHA256 },
     async () => true,
   );
   assert.deepEqual(graded.matches, { "symptom-a": 0, "symptom-b": 0, unrelated: 1 });
@@ -150,6 +278,17 @@ test("clean controls preserve unsupported findings and ground truth rejects dupl
   assert.deepEqual(graded.matches, {});
   assert.deepEqual(graded.falsePositiveIndexes, [0]);
   assert.equal(graded.grading.unmatchedFindings[0]?.classification, "unsupported");
+  assert.doesNotThrow(() => assertGradingEvidenceConsistent(
+    { bugs: [] }, [reviewFinding()], {}, graded.grading, "exact grade", { kind: "exact", version: "exact-v1" },
+  ));
+  assert.throws(() => assertGradingEvidenceConsistent(
+    { bugs: [] },
+    [reviewFinding()],
+    {},
+    { ...graded.grading, judge: { kind: "exact", version: "semantic-v1" } },
+    "exact grade",
+    { kind: "exact", version: "exact-v1" },
+  ), /kind\/version/);
   assert.throws(() => parseGroundTruth({ bugs: [bug("duplicate", "a"), bug("duplicate", "a")] }), /duplicate id/);
 });
 
@@ -157,7 +296,7 @@ test("behavioral reporting separates root-cause cost and blocking clean-control 
   const result = engineResult([reviewFinding()]);
   const common = {
     version: "root-cause-v1" as const,
-    judge: { kind: "codex" as const, version: "semantic-v1" },
+    judge: JUDGE_IDENTITY,
     decisions: [],
     missStages: { "symptom-a": "none" as const },
     unmatchedFindings: [],
@@ -174,7 +313,7 @@ test("behavioral reporting separates root-cause cost and blocking clean-control 
       outcome: { status: "completed" as const, result },
       matches: { "symptom-a": 0 },
       falsePositiveIndexes: [],
-      grading: { ...common, rootCauseMatches: { shared: true } },
+      grading: { ...common, rootCauseMatches: { '["group","shared"]': true } },
     })),
     failed: [],
     missing: 0,
@@ -182,15 +321,51 @@ test("behavioral reporting separates root-cause cost and blocking clean-control 
     structuralExpectedMarkers: null,
   });
   assert.equal(stats.rootCauseRecallMean, 1);
-  assert.equal(stats.costPerReliablyFoundRootCause, 1);
+  assert.equal(stats.costPerReliablyFoundRootCause, null);
   assert.equal(stats.blockingFalsePositivesOnCleanCases, 0);
   assert.match(renderBenchmarkHtml([stats]), /cost\/reliably found root cause/);
 });
 
-function bug(id: string, rootCauseGroup: string): GroundTruth["bugs"][number] {
+test("reliable root-cause cost uses a strict majority including two of three repeats", () => {
+  const result = engineResult([reviewFinding()]);
+  const completed = [true, true, false].map((found) => ({
+    caseName: "development/case-one",
+    outcome: { status: "completed" as const, result },
+    matches: { "symptom-a": found ? 0 : null },
+    falsePositiveIndexes: [],
+    grading: {
+      version: "root-cause-v1" as const,
+      judge: JUDGE_IDENTITY,
+      decisions: [],
+      missStages: { "symptom-a": found ? "none" as const : "infrastructure" as const },
+      unmatchedFindings: found ? [] : [{
+        findingIndex: 0,
+        findingEvidenceSha256: "a".repeat(64),
+        classification: "unresolved" as const,
+      }],
+      rootCauseMatches: { '["group","shared"]': found },
+    },
+  }));
+  const stats = calculateStats({
+    config: "route",
+    runner: "codex",
+    corpus: "development",
+    benchmarkKind: "behavioral",
+    completeness: "tracked",
+    expectedRuns: 3,
+    completed,
+    failed: [],
+    missing: 0,
+    failureInclusiveRecalls: [1, 1, 0],
+    structuralExpectedMarkers: null,
+  });
+  assert.equal(stats.costPerReliablyFoundRootCause, 1.5);
+});
+
+function bug(id: string, rootCauseGroup?: string): GroundTruth["bugs"][number] {
   return {
     id,
-    rootCauseGroup,
+    ...(rootCauseGroup === undefined ? {} : { rootCauseGroup }),
     lane: "logic-correctness",
     expectedDisposition: "fix-in-pr",
     expectedSeverity: "high",

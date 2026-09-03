@@ -35,7 +35,11 @@ export function findingEvidenceSha256(finding: Finding): string {
 }
 
 export function rootCauseKey(bug: GroundTruthBug): string {
-  return bug.rootCauseGroup ?? `bug:${bug.id}`;
+  // Structured namespaces prevent an ungrouped bug id from colliding with a
+  // curator-supplied group that happens to contain the same textual prefix.
+  return JSON.stringify(bug.rootCauseGroup === undefined
+    ? ["bug", bug.id]
+    : ["group", bug.rootCauseGroup]);
 }
 
 /**
@@ -113,31 +117,89 @@ export function assertGradingEvidenceConsistent(
   matches: Readonly<Record<string, number | null>>,
   evidence: GradingEvidence,
   source: string,
+  expectedJudge?: GradingEvidence["judge"],
 ): void {
   assertMatchReuseMatchesRootCause(truth, matches, source);
   const bugs = new Map(truth.bugs.map((bug) => [bug.id, bug]));
   const decisions = new Set<string>();
   const candidates: MatchCandidate[] = [];
 
+  const expectedJudgeVersion = evidence.judge.kind === "exact" ? "exact-v1" : SEMANTIC_JUDGE_VERSION;
+  if (evidence.judge.version !== expectedJudgeVersion) {
+    throw new Error(`${source}.grading judge kind/version pairing is invalid`);
+  }
   if (evidence.judge.kind === "exact" && evidence.decisions.length !== 0) {
     throw new Error(`${source}.grading exact evidence cannot contain semantic decisions`);
   }
+  if (evidence.judge.kind === "exact" && evidence.judge.configSha256 !== undefined) {
+    throw new Error(`${source}.grading exact evidence cannot declare a semantic judge fingerprint`);
+  }
+  if (evidence.judge.kind !== "exact" && evidence.judge.configSha256 === undefined) {
+    throw new Error(`${source}.grading semantic evidence needs a judge config fingerprint`);
+  }
+  if (evidence.judge.kind !== "exact" && expectedJudge === undefined) {
+    throw new Error(`${source}.grading semantic evidence has no immutable judge identity anchor`);
+  }
+  if (expectedJudge !== undefined && !isDeepStrictEqual(evidence.judge, expectedJudge)) {
+    throw new Error(`${source}.grading judge identity does not match its immutable anchor`);
+  }
+  const pairs = new Set<string>();
   for (const decision of evidence.decisions) {
     if (evidence.judge.kind === "exact") throw new Error(`${source}.grading has a decision for an exact judge`);
     const bug = bugs.get(decision.bugId);
     if (!bug) throw new Error(`${source}.grading decision references unknown bug ${decision.bugId}`);
-    const findingIndex = findings.findIndex((finding) => findingEvidenceSha256(finding) === decision.findingEvidenceSha256);
-    if (findingIndex === -1) throw new Error(`${source}.grading decision references unknown finding evidence`);
-    if (decision.decisionId !== judgeDecisionId(bug, findings[findingIndex]!)) {
+    if (!Number.isSafeInteger(decision.findingIndex) || decision.findingIndex < 0 || decision.findingIndex >= findings.length) {
+      throw new Error(`${source}.grading decision references a missing finding occurrence`);
+    }
+    const finding = findings[decision.findingIndex]!;
+    if (findingEvidenceSha256(finding) !== decision.findingEvidenceSha256) {
+      throw new Error(`${source}.grading decision does not match its indexed finding occurrence`);
+    }
+    if (decision.judgeConfigSha256 !== evidence.judge.configSha256) {
+      throw new Error(`${source}.grading decision judge config fingerprint is inconsistent`);
+    }
+    if (decision.decisionId !== judgeDecisionId({
+      bug,
+      finding,
+      findingIndex: decision.findingIndex,
+      verdict: decision.verdict,
+      failureKind: decision.failureKind,
+      judgeConfigSha256: decision.judgeConfigSha256,
+    })) {
       throw new Error(`${source}.grading decision content address is invalid`);
     }
+    const pair = JSON.stringify([decision.bugId, decision.findingIndex]);
+    if (pairs.has(pair)) throw new Error(`${source}.grading contains duplicate decisions for one bug/finding occurrence`);
+    pairs.add(pair);
     if (decisions.has(decision.decisionId)) throw new Error(`${source}.grading contains a duplicate decision`);
     decisions.add(decision.decisionId);
-    if (decision.verdict === "same-root-cause") {
-      candidates.push({ bugId: bug.id, findingIndex, sameRootCause: true, decisionId: decision.decisionId });
-    }
   }
   if (evidence.judge.kind !== "exact") {
+    // Reconstruct the deterministic bug-major traversal used by gradeResult.
+    // Every attempted pair is evidence: failures and negative decisions may
+    // not be dropped, and a positive already claimed by another root group is
+    // retained before traversal continues to the next occurrence.
+    let cursor = 0;
+    const claimedFindingGroups = new Map<number, string>();
+    for (const bug of truth.bugs) {
+      for (let findingIndex = 0; findingIndex < findings.length; findingIndex++) {
+        const decision = evidence.decisions[cursor];
+        if (!decision || decision.bugId !== bug.id || decision.findingIndex !== findingIndex) {
+          throw new Error(`${source}.grading semantic decision coverage/order is incomplete`);
+        }
+        cursor += 1;
+        if (decision.verdict !== "same-root-cause") continue;
+        const group = rootCauseKey(bug);
+        const claimed = claimedFindingGroups.get(findingIndex);
+        if (claimed !== undefined && claimed !== group) continue;
+        claimedFindingGroups.set(findingIndex, group);
+        candidates.push({ bugId: bug.id, findingIndex, sameRootCause: true, decisionId: decision.decisionId });
+        break;
+      }
+    }
+    if (cursor !== evidence.decisions.length) {
+      throw new Error(`${source}.grading semantic decision coverage/order contains extra decisions`);
+    }
     const resolved = resolveMatches(truth, findings.length, candidates);
     if (!isDeepStrictEqual(resolved, matches)) {
       throw new Error(`${source}.grading decisions do not support its matches`);
@@ -155,11 +217,11 @@ export function assertGradingEvidenceConsistent(
     }
   }
 
-  const classifications = new Map(evidence.unmatchedFindings.map((item) => [
-    item.findingEvidenceSha256,
-    item.classification,
-  ]));
-  const expectedUnmatched = classifyUnmatchedFindings(findings, matches, classifications);
+  // A run-bound, append-only curator adjudication ledger is a later slice.
+  // Until it exists, behavioral classifications are deliberately unresolved;
+  // accepting classifications from the artifact itself would self-authenticate
+  // precision and FDR. Exact smoke remains deterministic transport evidence.
+  const expectedUnmatched = classifyUnmatchedFindings(findings, matches, new Map());
   if (evidence.judge.kind === "exact") {
     for (const item of expectedUnmatched) item.classification = "unsupported";
   }
@@ -202,31 +264,46 @@ export function classifyMissStage(args: {
   return "investigation";
 }
 
-export function judgeDecisionId(bug: GroundTruthBug, finding: Finding): string {
+export function judgeDecisionId(input: {
+  bug: GroundTruthBug;
+  finding: Finding;
+  findingIndex: number;
+  verdict: SemanticJudgeDecision["verdict"];
+  failureKind?: SemanticJudgeDecision["failureKind"];
+  judgeConfigSha256: string;
+}): string {
   return createHash("sha256").update(JSON.stringify({
     judgeVersion: SEMANTIC_JUDGE_VERSION,
+    judgeConfigSha256: input.judgeConfigSha256,
     bug: {
-      id: bug.id,
-      file: bug.file,
-      description: bug.description,
-      reachablePreconditions: bug.reachablePreconditions,
-      observableImpact: bug.observableImpact,
-      rootCauseGroup: bug.rootCauseGroup ?? null,
+      id: input.bug.id,
+      file: input.bug.file,
+      description: input.bug.description,
+      reachablePreconditions: input.bug.reachablePreconditions,
+      observableImpact: input.bug.observableImpact,
+      rootCauseGroup: input.bug.rootCauseGroup ?? null,
     },
-    findingEvidenceSha256: findingEvidenceSha256(finding),
+    findingIndex: input.findingIndex,
+    findingEvidenceSha256: findingEvidenceSha256(input.finding),
+    verdict: input.verdict,
+    failureKind: input.failureKind ?? null,
   })).digest("hex");
 }
 
 export function semanticDecision(
   bug: GroundTruthBug,
   finding: Finding,
+  findingIndex: number,
   verdict: SemanticJudgeDecision["verdict"],
+  judgeConfigSha256: string,
   failureKind?: SemanticJudgeDecision["failureKind"],
 ): SemanticJudgeDecision {
   return {
-    decisionId: judgeDecisionId(bug, finding),
+    decisionId: judgeDecisionId({ bug, finding, findingIndex, verdict, failureKind, judgeConfigSha256 }),
     judgeVersion: SEMANTIC_JUDGE_VERSION,
+    judgeConfigSha256,
     bugId: bug.id,
+    findingIndex,
     findingEvidenceSha256: findingEvidenceSha256(finding),
     verdict,
     ...(failureKind ? { failureKind } : {}),

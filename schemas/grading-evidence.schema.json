@@ -10,9 +10,23 @@
       "additionalProperties": false,
       "properties": {
         "kind": { "enum": ["exact", "claude", "codex"] },
-        "version": { "type": "string", "minLength": 1 }
+        "version": { "type": "string", "minLength": 1 },
+        "configSha256": { "$ref": "#/$defs/sha256" }
       },
-      "required": ["kind", "version"]
+      "required": ["kind", "version"],
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "exact" } }, "required": ["kind"] },
+          "then": {
+            "properties": { "version": { "const": "exact-v1" } },
+            "not": { "required": ["configSha256"] }
+          },
+          "else": {
+            "properties": { "version": { "const": "semantic-v1" } },
+            "required": ["configSha256"]
+          }
+        }
+      ]
     },
     "decisions": {
       "type": "array",
@@ -22,12 +36,14 @@
         "properties": {
           "decisionId": { "$ref": "#/$defs/sha256" },
           "judgeVersion": { "const": "semantic-v1" },
+          "judgeConfigSha256": { "$ref": "#/$defs/sha256" },
           "bugId": { "type": "string", "minLength": 1 },
+          "findingIndex": { "type": "integer", "minimum": 0 },
           "findingEvidenceSha256": { "$ref": "#/$defs/sha256" },
           "verdict": { "enum": ["same-root-cause", "different-root-cause", "failed"] },
           "failureKind": { "enum": ["timeout", "provider", "parse", "configuration", "unknown"] }
         },
-        "required": ["decisionId", "judgeVersion", "bugId", "findingEvidenceSha256", "verdict"]
+        "required": ["decisionId", "judgeVersion", "judgeConfigSha256", "bugId", "findingIndex", "findingEvidenceSha256", "verdict"]
       }
     },
     "rootCauseMatches": { "type": "object", "additionalProperties": { "type": "boolean" } },

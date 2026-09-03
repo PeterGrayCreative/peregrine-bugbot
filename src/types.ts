@@ -535,7 +535,11 @@ export type UnmatchedFindingClassification = "confirmed-new" | "unsupported" | "
 export interface SemanticJudgeDecision {
   decisionId: string;
   judgeVersion: "semantic-v1";
+  /** Immutable fingerprint of the complete judge implementation/config snapshot. */
+  judgeConfigSha256: string;
   bugId: string;
+  /** Stable occurrence in the ordered review result, even for byte-identical findings. */
+  findingIndex: number;
   findingEvidenceSha256: string;
   verdict: "same-root-cause" | "different-root-cause" | "failed";
   failureKind?: "timeout" | "provider" | "parse" | "configuration" | "unknown";
@@ -549,7 +553,7 @@ export interface UnmatchedFindingAdjudication {
 
 export interface GradingEvidence {
   version: "root-cause-v1";
-  judge: { kind: ExperimentJudge; version: string };
+  judge: { kind: ExperimentJudge; version: string; configSha256?: string };
   decisions: SemanticJudgeDecision[];
   rootCauseMatches: Record<string, boolean>;
   missStages: Record<string, MissStage>;

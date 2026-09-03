@@ -1344,23 +1344,37 @@ function parseGradingEvidence(
   onlyKeys(root, new Set(["version", "judge", "decisions", "rootCauseMatches", "missStages", "unmatchedFindings"]), `${source}.grading`);
   if (root.version !== "root-cause-v1") throw new Error(`${source}.grading.version is invalid`);
   const judge = object(root.judge, `${source}.grading.judge`);
-  onlyKeys(judge, new Set(["kind", "version"]), `${source}.grading.judge`);
+  onlyKeys(judge, new Set(["kind", "version", "configSha256"]), `${source}.grading.judge`);
   if (judge.kind !== "exact" && judge.kind !== "claude" && judge.kind !== "codex") throw new Error(`${source}.grading.judge.kind is invalid`);
   const version = strictString(judge.version, `${source}.grading.judge.version`, 100);
+  const expectedVersion = judge.kind === "exact" ? "exact-v1" : "semantic-v1";
+  if (version !== expectedVersion) throw new Error(`${source}.grading.judge kind/version pairing is invalid`);
+  const configSha256 = judge.configSha256 === undefined
+    ? undefined
+    : strictString(judge.configSha256, `${source}.grading.judge.configSha256`, 64);
+  if (configSha256 !== undefined && !/^[a-f0-9]{64}$/.test(configSha256)) {
+    throw new Error(`${source}.grading.judge.configSha256 is invalid`);
+  }
+  if (judge.kind === "exact" ? configSha256 !== undefined : configSha256 === undefined) {
+    throw new Error(`${source}.grading.judge.configSha256 must be present only for semantic judges`);
+  }
   if (!Array.isArray(root.decisions)) throw new Error(`${source}.grading.decisions must be an array`);
   const decisions = root.decisions.map((value, index) => {
     const item = object(value, `${source}.grading.decisions[${index}]`);
-    onlyKeys(item, new Set(["decisionId", "judgeVersion", "bugId", "findingEvidenceSha256", "verdict", "failureKind"]), `${source}.grading.decisions[${index}]`);
+    onlyKeys(item, new Set(["decisionId", "judgeVersion", "judgeConfigSha256", "bugId", "findingIndex", "findingEvidenceSha256", "verdict", "failureKind"]), `${source}.grading.decisions[${index}]`);
     const decisionId = strictString(item.decisionId, `${source}.grading.decisions[${index}].decisionId`, 64);
+    const judgeConfigSha256 = strictString(item.judgeConfigSha256, `${source}.grading.decisions[${index}].judgeConfigSha256`, 64);
     const findingEvidenceSha256 = strictString(item.findingEvidenceSha256, `${source}.grading.decisions[${index}].findingEvidenceSha256`, 64);
-    if (!/^[a-f0-9]{64}$/.test(decisionId) || !/^[a-f0-9]{64}$/.test(findingEvidenceSha256)) throw new Error(`${source}.grading.decisions[${index}] has an invalid digest`);
+    if (!/^[a-f0-9]{64}$/.test(decisionId) || !/^[a-f0-9]{64}$/.test(judgeConfigSha256) || !/^[a-f0-9]{64}$/.test(findingEvidenceSha256)) throw new Error(`${source}.grading.decisions[${index}] has an invalid digest`);
+    const findingIndex = nonNegativeSafeInteger(item.findingIndex, `${source}.grading.decisions[${index}].findingIndex`);
+    if (findingIndex >= findingCount) throw new Error(`${source}.grading.decisions[${index}].findingIndex references a missing finding`);
     if (item.judgeVersion !== "semantic-v1") throw new Error(`${source}.grading.decisions[${index}].judgeVersion is invalid`);
     if (item.verdict !== "same-root-cause" && item.verdict !== "different-root-cause" && item.verdict !== "failed") throw new Error(`${source}.grading.decisions[${index}].verdict is invalid`);
     const failureKind = item.failureKind;
     if (item.verdict === "failed") {
       if (failureKind !== "timeout" && failureKind !== "provider" && failureKind !== "parse" && failureKind !== "configuration" && failureKind !== "unknown") throw new Error(`${source}.grading.decisions[${index}].failureKind is required`);
     } else if (failureKind !== undefined) throw new Error(`${source}.grading.decisions[${index}].failureKind is only valid for failed decisions`);
-    return { decisionId, judgeVersion: "semantic-v1" as const, bugId: strictString(item.bugId, `${source}.grading.decisions[${index}].bugId`, 500), findingEvidenceSha256, verdict: item.verdict, ...(failureKind ? { failureKind } : {}) } as GradingEvidence["decisions"][number];
+    return { decisionId, judgeVersion: "semantic-v1" as const, judgeConfigSha256, bugId: strictString(item.bugId, `${source}.grading.decisions[${index}].bugId`, 500), findingIndex, findingEvidenceSha256, verdict: item.verdict, ...(failureKind ? { failureKind } : {}) } as GradingEvidence["decisions"][number];
   });
   const rootCauseRaw = object(root.rootCauseMatches, `${source}.grading.rootCauseMatches`);
   const rootCauseMatches = Object.fromEntries(Object.entries(rootCauseRaw).map(([key, matched]) => {
@@ -1388,7 +1402,7 @@ function parseGradingEvidence(
     if (item.classification !== "confirmed-new" && item.classification !== "unsupported" && item.classification !== "unresolved") throw new Error(`${source}.grading.unmatchedFindings[${index}].classification is invalid`);
     return { findingIndex, findingEvidenceSha256, classification: item.classification as GradingEvidence["unmatchedFindings"][number]["classification"] };
   });
-  return { version: "root-cause-v1", judge: { kind: judge.kind, version }, decisions, rootCauseMatches, missStages, unmatchedFindings };
+  return { version: "root-cause-v1", judge: { kind: judge.kind, version, ...(configSha256 ? { configSha256 } : {}) }, decisions, rootCauseMatches, missStages, unmatchedFindings };
 }
 
 function parseOutcome(value: unknown, source: string, strictCurrentUsage: boolean): RunRecord["outcome"] {

@@ -5,9 +5,10 @@ import { loadConfig } from "../src/config.js";
 import { claudeSchemaJson, packageRoot, schemaPath } from "../src/core/paths.js";
 import { exec, lastJsonBlock } from "../src/util/exec.js";
 import type { EngineResult, Finding, GradedRun, GroundTruth, RunRecord } from "../src/types.js";
-import type { GradingEvidence, SemanticJudgeDecision, UnmatchedFindingClassification } from "../src/types.js";
+import type { GradingEvidence, SemanticJudgeDecision } from "../src/types.js";
 import {
   GRADING_VERSION,
+  SEMANTIC_JUDGE_VERSION,
   assertGradingEvidenceConsistent,
   classifyMissStage,
   classifyUnmatchedFindings,
@@ -17,7 +18,6 @@ import {
   rootCauseMatches,
   semanticDecision,
 } from "./grading-contract.js";
-import { readAdjudications } from "./semantic-artifacts.js";
 import { readCaseGroundTruth } from "./case-truth.js";
 import {
   assertGradedMatchesRun,
@@ -80,7 +80,7 @@ type LegacyRunRecord = Omit<RunRecord, "schemaVersion" | "attemptId" | "finished
 type Judge = "exact" | "claude" | "codex";
 export type JudgeSelection =
   | { kind: "exact" }
-  | { kind: Exclude<Judge, "exact">; model: string };
+  | { kind: Exclude<Judge, "exact">; model: string; configSha256: string };
 
 interface GradeRunsOptions {
   /** Test/embedding hook invoked after grades are durable but before the final corpus check and seal. */
@@ -206,7 +206,12 @@ async function gradeRunsLocked(dir: string, casesDir: string, options: GradeRuns
       );
       try {
         assertGradedMatchesRun(existing, run, gradedPath);
-        assertGradeMatchesGroundTruth(existing, gt, gradedPath);
+        assertGradeMatchesGroundTruth(
+          existing,
+          gt,
+          gradedPath,
+          judgeEvidenceIdentity(judge),
+        );
       } catch (error) {
         if (judge.kind === "exact") {
           throw new Error(`${gradedPath} does not match deterministic exact-v1 grading`, { cause: error });
@@ -232,7 +237,7 @@ async function gradeRunsLocked(dir: string, casesDir: string, options: GradeRuns
       continue;
     }
 
-    const grade = await gradeResult(result, gt, judge, readAdjudications(casesDir, run.caseName));
+    const grade = await gradeResult(result, gt, judge);
     const { matches, falsePositiveIndexes } = grade;
 
     const normalizedRun = "outcome" in run
@@ -282,7 +287,6 @@ export async function gradeResult(
   result: EngineResult,
   groundTruth: GroundTruth,
   judge: JudgeSelection,
-  adjudications = new Map<string, UnmatchedFindingClassification>(),
   semanticMatcher: typeof semanticMatch = semanticMatch,
 ): Promise<Pick<GradedRun, "matches" | "falsePositiveIndexes"> & { grading: GradingEvidence }> {
   const candidates: Array<{ bugId: string; findingIndex: number; sameRootCause: boolean; decisionId?: string }> = [];
@@ -297,9 +301,16 @@ export async function gradeResult(
       } else {
         try {
           isMatch = await semanticMatcher(judge.kind, judge.model, finding, bug);
-          decisions.push(semanticDecision(bug, finding, isMatch ? "same-root-cause" : "different-root-cause"));
+          decisions.push(semanticDecision(
+            bug,
+            finding,
+            i,
+            isMatch ? "same-root-cause" : "different-root-cause",
+            judge.configSha256,
+          ));
         } catch (error) {
-          decisions.push(semanticDecision(bug, finding, "failed", semanticFailureKind(error)));
+          const failureKind = semanticFailureKind(error);
+          decisions.push(semanticDecision(bug, finding, i, "failed", judge.configSha256, failureKind));
           continue;
         }
       }
@@ -314,7 +325,7 @@ export async function gradeResult(
     }
   }
   const matches = resolveMatches(groundTruth, result.findings.length, candidates);
-  const unmatchedFindings = classifyUnmatchedFindings(result.findings, matches, adjudications).map((item) =>
+  const unmatchedFindings = classifyUnmatchedFindings(result.findings, matches, new Map()).map((item) =>
     judge.kind === "exact" ? { ...item, classification: "unsupported" as const } : item);
   return {
     matches,
@@ -325,7 +336,11 @@ export async function gradeResult(
       : unmatchedFindings.filter((item) => item.classification === "unsupported").map((item) => item.findingIndex),
     grading: {
       version: GRADING_VERSION,
-      judge: { kind: judge.kind, version: judge.kind === "exact" ? "exact-v1" : "semantic-v1" },
+      judge: {
+        kind: judge.kind,
+        version: judge.kind === "exact" ? "exact-v1" : "semantic-v1",
+        ...(judge.kind === "exact" ? {} : { configSha256: judge.configSha256 }),
+      },
       decisions,
       rootCauseMatches: rootCauseMatches(groundTruth, matches),
       missStages: Object.fromEntries(groundTruth.bugs.map((bug) => [
@@ -374,7 +389,11 @@ function legacyJudgeSelection(): JudgeSelection {
     (kind === "codex"
       ? process.env.PEREGRINE_CODEX_JUDGE_MODEL ?? config.runners.codex.investigationModel
       : process.env.PEREGRINE_CLAUDE_JUDGE_MODEL ?? config.runners.claude.investigationModel);
-  return { kind, model };
+  return {
+    kind,
+    model,
+    configSha256: canonicalJsonSha256({ kind, model, version: "semantic-v1" }),
+  };
 }
 
 function experimentJudgeSelection(evidence: ExperimentRunEvidence): JudgeSelection {
@@ -425,6 +444,7 @@ function assertGradeMatchesGroundTruth(
   graded: GradedRun,
   groundTruth: GroundTruth,
   source: string,
+  expectedJudge?: GradingEvidence["judge"],
 ): void {
   const expectedIds = groundTruth.bugs.map((bug) => bug.id).sort();
   const actualIds = Object.keys(graded.matches).sort();
@@ -440,8 +460,15 @@ function assertGradeMatchesGroundTruth(
       graded.matches,
       graded.grading,
       source,
+      expectedJudge,
     );
   }
+}
+
+function judgeEvidenceIdentity(judge: JudgeSelection): GradingEvidence["judge"] {
+  return judge.kind === "exact"
+    ? { kind: "exact", version: "exact-v1" }
+    : { kind: judge.kind, version: SEMANTIC_JUDGE_VERSION, configSha256: judge.configSha256 };
 }
 
 function parseLegacyRun(value: unknown, source: string): LegacyRunRecord {
