@@ -26,6 +26,28 @@ export type ReviewStatus = "completed" | "clean" | "skipped";
 export type CodexEffort = "low" | "medium" | "high" | "xhigh" | "max" | "ultra";
 export type ClaudeEffort = "low" | "medium" | "high" | "xhigh" | "max";
 
+export interface TypedReviewManifest {
+  schemaVersion: 1;
+  available: true;
+  base: { ref: string; commit: string; source: "argument" | "trusted profile review-base" | "origin/HEAD" | "fallback" };
+  head: { ref: string; commit: string };
+  mergeBase: string;
+  profile: { source: "merge-base" | "external" | "none"; requestedPath: string | null; changedAtHead: boolean };
+  changedFiles: Array<{
+    path: string;
+    oldPath?: string;
+    status: string;
+    additions: number | null;
+    deletions: number | null;
+    binary: boolean;
+    activatedLanes: Array<{ id: string; reason: "path" | "content" | "profile-extension" }>;
+  }>;
+  activatedLanes: string[];
+  customLanes: Array<{ id: string; trustedSource: string }>;
+  largeFiles: Array<{ path: string; baseLines: number; headLines: number }>;
+  warnings: string[];
+}
+
 export interface Finding {
   file: string;
   startLine: number;
@@ -413,6 +435,9 @@ export interface EvaluationManifestProvenance {
   outputSha256: string;
   /** Exact bounded text returned by the production manifest entry point. */
   output: string;
+  /** Validated Stage-0 shadow metadata; never inserted into model prompts. */
+  typed?: TypedReviewManifest;
+  typedSha256?: string;
   profileSource:
     | "none"
     | "merge-base snapshot"

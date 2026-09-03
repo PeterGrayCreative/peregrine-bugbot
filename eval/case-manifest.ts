@@ -36,6 +36,7 @@ export async function prepareEvaluationManifest(
     throw new Error(`production review manifest exceeds ${MAX_MANIFEST_CHARS} characters`);
   }
   assertNoSecrets(manifest.output, "production review manifest");
+  assertNoSecrets(manifest.typed, "typed production review manifest");
   validateOutput?.(manifest.output);
 
   requireSingleLine(manifest.output, `base: ${history.baseRef} (argument)`, "base");
@@ -76,6 +77,16 @@ export async function prepareEvaluationManifest(
   if (profileSource === "ignored; absent at merge base" && warningCount !== 1) {
     throw new Error("production review manifest omitted required ignored-profile change provenance");
   }
+  if (!manifest.typed) throw new Error("production review manifest omitted its typed shadow");
+  if (manifest.typed.base.ref !== history.baseRef || manifest.typed.base.commit !== history.baseRef ||
+      manifest.typed.head.ref !== history.headRef || manifest.typed.head.commit !== history.headRef ||
+      manifest.typed.mergeBase !== history.mergeBase) {
+    throw new Error("typed production review manifest commits do not match materialized history");
+  }
+  const expectedTypedProfileSource = profileSource === "merge-base snapshot" ? "merge-base" : "none";
+  if (manifest.typed.profile.source !== expectedTypedProfileSource || manifest.typed.profile.changedAtHead !== (warningCount === 1)) {
+    throw new Error("typed production review manifest profile provenance does not match canonical text");
+  }
 
   return {
     manifest,
@@ -87,6 +98,8 @@ export async function prepareEvaluationManifest(
       mergeBase: history.mergeBase,
       outputSha256: createHash("sha256").update(manifest.output).digest("hex"),
       output: manifest.output,
+      typed: manifest.typed,
+      typedSha256: createHash("sha256").update(JSON.stringify(manifest.typed)).digest("hex"),
       profileSource,
       headProfileChanged: warningCount === 1,
     },

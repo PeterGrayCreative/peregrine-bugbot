@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://peregrine.local/schemas/review-manifest.schema.json",
+  "title": "Peregrine typed review manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "available", "base", "head", "mergeBase", "profile", "changedFiles", "activatedLanes", "customLanes", "largeFiles", "warnings"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "available": { "const": true },
+    "base": { "$ref": "#/$defs/base" },
+    "head": { "$ref": "#/$defs/head" },
+    "mergeBase": { "$ref": "#/$defs/objectId" },
+    "profile": { "$ref": "#/$defs/profile" },
+    "changedFiles": { "type": "array", "items": { "$ref": "#/$defs/file" } },
+    "activatedLanes": { "type": "array", "items": { "$ref": "#/$defs/laneId" }, "uniqueItems": true },
+    "customLanes": { "type": "array", "items": { "$ref": "#/$defs/customLane" } },
+    "largeFiles": { "type": "array", "items": { "$ref": "#/$defs/largeFile" } },
+    "warnings": { "type": "array", "items": { "type": "string", "minLength": 1 } }
+  },
+  "$defs": {
+    "objectId": { "type": "string", "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$" },
+    "safePath": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|[\\\\/])\\.\\.(?:[\\\\/]|$))(?!.*\\u0000)" },
+    "laneId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "base": {
+      "type": "object", "additionalProperties": false, "required": ["ref", "commit", "source"],
+      "properties": { "ref": { "type": "string", "minLength": 1 }, "commit": { "$ref": "#/$defs/objectId" }, "source": { "enum": ["argument", "trusted profile review-base", "origin/HEAD", "fallback"] } }
+    },
+    "head": {
+      "type": "object", "additionalProperties": false, "required": ["ref", "commit"],
+      "properties": { "ref": { "type": "string", "minLength": 1 }, "commit": { "$ref": "#/$defs/objectId" } }
+    },
+    "profile": {
+      "type": "object", "additionalProperties": false, "required": ["source", "requestedPath", "changedAtHead"],
+      "properties": { "source": { "enum": ["merge-base", "external", "none"] }, "requestedPath": { "type": ["string", "null"], "minLength": 1 }, "changedAtHead": { "type": "boolean" } }
+    },
+    "activation": {
+      "type": "object", "additionalProperties": false, "required": ["id", "reason"],
+      "properties": { "id": { "$ref": "#/$defs/laneId" }, "reason": { "enum": ["path", "content", "profile-extension"] } }
+    },
+    "file": {
+      "type": "object", "additionalProperties": false,
+      "required": ["path", "status", "additions", "deletions", "binary", "activatedLanes"],
+      "properties": {
+        "path": { "$ref": "#/$defs/safePath" }, "oldPath": { "$ref": "#/$defs/safePath" }, "status": { "type": "string", "pattern": "^[ACDMRTUXB][0-9]*$" },
+        "additions": { "type": ["integer", "null"], "minimum": 0 }, "deletions": { "type": ["integer", "null"], "minimum": 0 }, "binary": { "type": "boolean" },
+        "activatedLanes": { "type": "array", "items": { "$ref": "#/$defs/activation" }, "uniqueItems": true }
+      }
+    },
+    "customLane": {
+      "type": "object", "additionalProperties": false, "required": ["id", "trustedSource"],
+      "properties": { "id": { "$ref": "#/$defs/laneId" }, "trustedSource": { "type": "string", "minLength": 1 } }
+    },
+    "largeFile": {
+      "type": "object", "additionalProperties": false, "required": ["path", "baseLines", "headLines"],
+      "properties": {
+        "path": { "$ref": "#/$defs/safePath" },
+        "baseLines": { "type": "integer", "minimum": 0 },
+        "headLines": { "type": "integer", "minimum": 400 }
+      }
+    }
+  }
+}

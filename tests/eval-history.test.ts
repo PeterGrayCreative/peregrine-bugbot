@@ -30,6 +30,7 @@ import type {
   EvaluationHistoryProvenance,
   PeregrineConfig,
   ReviewContext,
+  TypedReviewManifest,
 } from "../src/types.js";
 import type { Engine } from "../src/engines/engine.js";
 
@@ -147,6 +148,27 @@ test("materialized history exactly reproduces additions, deletions, renames, bin
     assert.match(custom, /trusted lane source: git\\ show\\ (?:[a-f0-9]{40}|[a-f0-9]{64}):\.peregrine\/lanes\/09-project-policy\.md/);
     assert.match(custom, /config\/base-policy\.cfg/);
     assert.doesNotMatch(custom, /config\/head-policy\.cfg/);
+    const typed = prepared.provenance.typed!;
+    assert.equal(typed.profile.source, "merge-base");
+    assert.equal(typed.profile.changedAtHead, true);
+    assert.deepEqual(typed.warnings.length, 1);
+    assert.deepEqual(
+      typed.changedFiles.find((file) => file.path === "src/new-name.ts"),
+      {
+        path: "src/new-name.ts",
+        oldPath: "src/old-name.ts",
+        status: "R100",
+        additions: 0,
+        deletions: 0,
+        binary: false,
+        activatedLanes: typed.changedFiles.find((file) => file.path === "src/new-name.ts")!.activatedLanes,
+      },
+    );
+    assert.equal(typed.changedFiles.find((file) => file.path === "assets/payload.bin")?.binary, true);
+    assert.ok(typed.changedFiles.find((file) => file.path === "src/policy.txt")?.activatedLanes.some(
+      (lane) => lane.id === "runtime-config" && lane.reason === "profile-extension",
+    ));
+    assert.match(typed.customLanes.find((lane) => lane.id === "project-policy")?.trustedSource ?? "", /^git show [a-f0-9]+:/);
   } finally {
     materialized.cleanup();
     rmSync(root, { recursive: true, force: true });
@@ -330,9 +352,21 @@ test("manifest preflight rejects unavailable, empty, and mismatched production o
     ctx,
     "invariant-first-pr-review",
     history,
-    async () => ({ available: true, output: boundary }),
+    async () => ({ available: true, output: boundary, typed: validTypedManifest(history) }),
   );
   assert.equal(accepted.provenance.output.length, MAX_MANIFEST_CHARS);
+  for (const field of ["base", "head"] as const) {
+    const typed = validTypedManifest(history);
+    typed[field].commit = "f".repeat(40);
+    await assert.rejects(
+      () => prepareEvaluationManifest(ctx, "invariant-first-pr-review", history, async () => ({
+        available: true,
+        output: valid,
+        typed,
+      })),
+      /typed production review manifest commits do not match materialized history/,
+    );
+  }
   await assert.rejects(
     () => prepareEvaluationManifest(
       ctx,
@@ -438,9 +472,34 @@ test("matrix records history and manifest provenance before engine success or fa
         persistedManifest.outputSha256,
       );
       assert.equal(persistedManifest.output, producedManifests[index]);
+      assert.equal(persistedManifest.typed?.schemaVersion, 1);
+      assert.match(persistedManifest.typedSha256 ?? "", /^[a-f0-9]{64}$/);
+      assert.equal(
+        createHash("sha256").update(JSON.stringify(persistedManifest.typed)).digest("hex"),
+        persistedManifest.typedSha256,
+      );
     }
     assert.equal(records[0]!.outcome.status, "completed");
     assert.equal(records[1]!.outcome.status, "failed");
+    const inconsistent = structuredClone(JSON.parse(readFileSync(join(runsDir, manifest.expectedAttempts[0]!.file), "utf8")));
+    inconsistent.evaluationProvenance.manifest.typed.profile.source = "external";
+    inconsistent.evaluationProvenance.manifest.typed.profile.requestedPath = "/tmp/profile.md";
+    inconsistent.evaluationProvenance.manifest.typedSha256 = createHash("sha256")
+      .update(JSON.stringify(inconsistent.evaluationProvenance.manifest.typed)).digest("hex");
+    assert.throws(
+      () => parseRunRecord(inconsistent, "inconsistent typed profile", manifest.expectedAttempts[0]),
+      /typed profile provenance does not match outer provenance/,
+    );
+    for (const field of ["base", "head"] as const) {
+      const tamperedCommit = structuredClone(JSON.parse(readFileSync(join(runsDir, manifest.expectedAttempts[0]!.file), "utf8")));
+      tamperedCommit.evaluationProvenance.manifest.typed[field].commit = "f".repeat(40);
+      tamperedCommit.evaluationProvenance.manifest.typedSha256 = createHash("sha256")
+        .update(JSON.stringify(tamperedCommit.evaluationProvenance.manifest.typed)).digest("hex");
+      assert.throws(
+        () => parseRunRecord(tamperedCommit, `tampered typed ${field} commit`, manifest.expectedAttempts[0]),
+        /typed history provenance does not match attempt history/,
+      );
+    }
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -878,6 +937,22 @@ function validManifestText(history: EvaluationHistoryProvenance): string {
     "(none)",
     "",
   ].join("\n");
+}
+
+function validTypedManifest(history: EvaluationHistoryProvenance): TypedReviewManifest {
+  return {
+    schemaVersion: 1,
+    available: true,
+    base: { ref: history.baseRef, commit: history.baseRef, source: "argument" },
+    head: { ref: history.headRef, commit: history.headRef },
+    mergeBase: history.mergeBase,
+    profile: { source: "none", requestedPath: null, changedAtHead: false },
+    changedFiles: [],
+    activatedLanes: [],
+    customLanes: [],
+    largeFiles: [],
+    warnings: [],
+  };
 }
 
 function customLane(label: string, pathPattern: string, contentPattern: string): string {

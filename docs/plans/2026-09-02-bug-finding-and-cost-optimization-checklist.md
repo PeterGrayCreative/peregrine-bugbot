@@ -214,16 +214,16 @@ Integration note: this slice must preserve the telemetry needed for cost per rel
 
 ## Plan PR 6 - Typed manifest shadow/parity mode
 
-- [ ] Add JSON output to the canonical manifest producer without removing human-readable output.
-- [ ] Define and version the manifest schema.
-- [ ] Strictly parse root fields, file entries, lane activations, profile provenance, warnings, and safe repository-relative paths.
-- [ ] Preserve base/head/merge-base provenance, rename statistics, binary metadata, and activation reasons.
-- [ ] Read repository profiles and custom lanes only from the merge base unless an explicit trusted external profile is supplied.
-- [ ] Treat head-authored profile changes as reviewed code, not active policy.
-- [ ] Run text and JSON manifest paths together in shadow mode.
-- [ ] Prove parity across the representative fixture matrix before changing prompt or routing consumers.
-- [ ] Add macOS realpath/symlink-path regression coverage.
-- [ ] Run `npm run validate` and manifest parity tests.
+- [x] Add JSON output to the canonical manifest producer without removing human-readable output.
+- [x] Define and version the manifest schema.
+- [x] Strictly parse root fields, file entries, lane activations, profile provenance, warnings, and safe repository-relative paths.
+- [x] Preserve base/head/merge-base provenance, rename statistics, binary metadata, and activation reasons.
+- [x] Read repository profiles and custom lanes only from the merge base unless an explicit trusted external profile is supplied.
+- [x] Treat head-authored profile changes as reviewed code, not active policy.
+- [x] Run text and JSON manifest paths together in shadow mode.
+- [x] Prove parity across the representative fixture matrix before changing prompt or routing consumers.
+- [x] Add macOS realpath/symlink-path regression coverage.
+- [x] Run `npm run validate` and manifest parity tests.
 - [ ] Open, review, and merge the PR.
 
 Must stay untouched: prompt content and route selection.
