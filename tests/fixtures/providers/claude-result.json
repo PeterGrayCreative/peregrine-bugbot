@@ -1,0 +1,19 @@
+{
+  "structured_output": { "findings": [] },
+  "total_cost_usd": 0.0123,
+  "num_turns": 3,
+  "usage": {
+    "input_tokens": 100,
+    "cache_creation_input_tokens": 50,
+    "cache_read_input_tokens": 25,
+    "output_tokens": 20,
+    "reasoning_output_tokens": 5,
+    "service_tier": "standard"
+  },
+  "messages": [
+    { "type": "tool_use", "id": "tool-1", "name": "Read" },
+    { "type": "tool_result", "tool_use_id": "tool-1", "content": "héllo" }
+  ],
+  "sanitized": true,
+  "fixtureProvenance": "synthetic-contract-sample-matching-the-documented-claude-json-envelope"
+}

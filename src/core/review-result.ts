@@ -9,6 +9,7 @@ import {
 } from "../types.js";
 import { claudeSchemaJson } from "./paths.js";
 import { assertNoSecrets } from "../security/secrets.js";
+import { parseUsage } from "./telemetry.js";
 
 const MAX_RAW_SERIALIZED_CHARS = 200_000;
 
@@ -36,14 +37,6 @@ const RESULT_KEYS = new Set([
   "durationMs",
   "raw",
 ]);
-const USAGE_KEYS = new Set([
-  "inputTokens",
-  "cachedInputTokens",
-  "outputTokens",
-  "reasoningOutputTokens",
-  "costUsd",
-]);
-
 export function reviewSchemaJson(): string {
   return claudeSchemaJson("review-result");
 }
@@ -78,20 +71,11 @@ export function parseEngineResult(value: unknown, source = "review result"): Eng
   if (root.status === "completed" && payload.findings.length === 0) {
     throw new Error(`${source}: completed results must contain findings`);
   }
-  if (typeof root.durationMs !== "number" || !Number.isFinite(root.durationMs) || root.durationMs < 0) {
-    throw new Error(`${source}.durationMs must be a non-negative number`);
+  if (!Number.isSafeInteger(root.durationMs) || Number(root.durationMs) < 0) {
+    throw new Error(`${source}.durationMs must be a non-negative safe integer`);
   }
-  const usageObject = plainObject(root.usage, `${source}.usage`);
-  assertOnlyKeys(usageObject, USAGE_KEYS, `${source}.usage`);
-  const usage: Usage = {};
-  for (const key of USAGE_KEYS) {
-    const usageValue = usageObject[key];
-    if (usageValue === undefined) continue;
-    if (typeof usageValue !== "number" || !Number.isFinite(usageValue) || usageValue < 0) {
-      throw new Error(`${source}.usage.${key} must be a non-negative number`);
-    }
-    usage[key as keyof Usage] = usageValue;
-  }
+  const usage = parseUsage(root.usage, `${source}.usage`);
+  assertNoSecrets(usage, `${source}.usage`);
   const reviewedBaseRef = optionalString(root.reviewedBaseRef, `${source}.reviewedBaseRef`, 1024);
   const reviewedHeadRef = optionalString(root.reviewedHeadRef, `${source}.reviewedHeadRef`, 1024);
 
@@ -111,7 +95,7 @@ export function parseEngineResult(value: unknown, source = "review result"): Eng
     reviewedHeadRef,
     findings: payload.findings,
     usage,
-    durationMs: root.durationMs,
+    durationMs: Number(root.durationMs),
     raw: root.raw,
   };
 }
@@ -126,6 +110,7 @@ export function buildEngineResult(args: {
   raw?: unknown;
 }): EngineResult {
   assertNoSecrets(args.payload, `${args.engine} review output`);
+  assertNoSecrets(args.usage, `${args.engine} usage telemetry`);
   if (args.raw !== undefined) {
     const serializedRaw = JSON.stringify(args.raw);
     if (serializedRaw.length > MAX_RAW_SERIALIZED_CHARS) {
@@ -175,8 +160,9 @@ function parseFinding(value: unknown, source: string): Finding {
   if (!FINDING_CATEGORIES.includes(finding.category as Finding["category"])) {
     throw new Error(`${source}.category is not a supported finding category`);
   }
-  if (typeof finding.confidence !== "number" || finding.confidence < 0 || finding.confidence > 1) {
-    throw new Error(`${source}.confidence must be a number between 0 and 1`);
+  if (typeof finding.confidence !== "number" || !Number.isFinite(finding.confidence) ||
+    finding.confidence < 0 || finding.confidence > 1) {
+    throw new Error(`${source}.confidence must be a finite number between 0 and 1`);
   }
 
   return {
@@ -228,8 +214,8 @@ function optionalString(value: unknown, source: string, maxLength: number): stri
 }
 
 function positiveInteger(value: unknown, source: string): number {
-  if (typeof value !== "number" || !Number.isInteger(value) || value < 1) {
-    throw new Error(`${source} must be a positive integer`);
+  if (!Number.isSafeInteger(value) || Number(value) < 1) {
+    throw new Error(`${source} must be a positive safe integer`);
   }
-  return value;
+  return Number(value);
 }

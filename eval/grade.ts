@@ -1,4 +1,4 @@
-import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { loadConfig } from "../src/config.js";
@@ -6,8 +6,24 @@ import { claudeSchemaJson, packageRoot, schemaPath } from "../src/core/paths.js"
 import { exec, lastJsonBlock } from "../src/util/exec.js";
 import type { EngineResult, Finding, GradedRun, GroundTruth, RunRecord } from "../src/types.js";
 import { readCaseGroundTruth } from "./case-truth.js";
+import {
+  isLegacyMatrixRunManifest,
+  isPreTelemetryMatrixRunManifest,
+  parseLegacyCompletedRun,
+  parseLegacyMatrixRunManifest,
+  parseLegacySchemaV1RunRecord,
+  parseMatrixRunManifest,
+  parsePreTelemetryMatrixRunManifest,
+  parsePreTelemetryRunRecord,
+  parseRunRecord,
+  type LegacySchemaV1GradedRun,
+  type PreTelemetryGradedRun,
+  type PreTelemetryRunRecord,
+  type LegacySchemaV1RunRecord,
+} from "./artifacts.js";
+import { preflightTrackedRunSet } from "./report.js";
 
-type LegacyRunRecord = Omit<RunRecord, "schemaVersion" | "attemptId" | "finishedAt" | "outcome"> & {
+type LegacyRunRecord = Omit<RunRecord, "schemaVersion" | "attemptId" | "finishedAt" | "attemptDurationMs" | "outcome" | "caseCorpus" | "runner"> & {
   result: EngineResult;
 };
 
@@ -37,12 +53,53 @@ export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Prom
     (judge === "codex"
       ? process.env.PEREGRINE_CODEX_JUDGE_MODEL ?? config.runners.codex.investigationModel
       : process.env.PEREGRINE_CLAUDE_JUDGE_MODEL ?? config.runners.claude.investigationModel);
+  const manifestPath = join(dir, "matrix-manifest.json");
+  const manifestValue: unknown = existsSync(manifestPath)
+    ? JSON.parse(readFileSync(manifestPath, "utf8"))
+    : undefined;
+  let manifest: ReturnType<typeof parseMatrixRunManifest> | undefined;
+  let preTelemetryManifest: ReturnType<typeof parsePreTelemetryMatrixRunManifest> | undefined;
+  let legacyManifest: ReturnType<typeof parseLegacyMatrixRunManifest> | undefined;
+  if (manifestValue !== undefined) {
+    try {
+      manifest = parseMatrixRunManifest(manifestValue, manifestPath);
+    } catch (error) {
+      if (isPreTelemetryMatrixRunManifest(manifestValue)) {
+        preTelemetryManifest = parsePreTelemetryMatrixRunManifest(manifestValue, manifestPath);
+      } else if (isLegacyMatrixRunManifest(manifestValue)) {
+        legacyManifest = parseLegacyMatrixRunManifest(manifestValue, manifestPath);
+      } else {
+        throw error;
+      }
+    }
+  }
+  if (manifest) preflightTrackedRunSet(dir, resolve(casesDir), manifest);
+  const expectedByFile = new Map(
+    (manifest?.expectedAttempts ?? preTelemetryManifest?.expectedAttempts ?? legacyManifest?.expectedAttempts ?? [])
+      .map((attempt) => [attempt.file, attempt]),
+  );
   const files = readdirSync(dir).filter(
     (f) => f.endsWith(".json") && !f.endsWith(".graded.json") && f !== "matrix-manifest.json" && f !== "benchmark.json",
   );
 
   for (const file of files) {
-    const run = JSON.parse(readFileSync(join(dir, file), "utf8")) as RunRecord | LegacyRunRecord;
+    const path = join(dir, file);
+    const raw: unknown = JSON.parse(readFileSync(path, "utf8"));
+    const expected = expectedByFile.get(file);
+    if ((manifest || preTelemetryManifest || legacyManifest) && !expected) {
+      throw new Error(`${file}: run artifact is not declared by matrix manifest`);
+    }
+    const run: RunRecord | PreTelemetryRunRecord | LegacySchemaV1RunRecord | LegacyRunRecord = manifest
+      ? parseRunRecord(raw, path, expected as (typeof manifest.expectedAttempts)[number])
+      : preTelemetryManifest
+        ? parsePreTelemetryRunRecord(
+            raw,
+            path,
+            expected as (typeof preTelemetryManifest.expectedAttempts)[number],
+          )
+        : legacyManifest
+          ? parseLegacySchemaV1RunRecord(raw, path, expected as (typeof legacyManifest.expectedAttempts)[number])
+          : parseLegacyRun(raw, path);
     let result: EngineResult;
     if ("outcome" in run) {
       if (run.outcome.status === "failed") {
@@ -83,10 +140,11 @@ export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Prom
           schemaVersion: 1 as const,
           attemptId: `${run.configName}--${run.caseName}--${run.repeat}`,
           caseCorpus: "unknown" as const,
+          runner: result.engine,
           finishedAt: run.startedAt,
           outcome: { status: "completed" as const, result },
         };
-    const graded: GradedRun = {
+    const graded: GradedRun | PreTelemetryGradedRun | LegacySchemaV1GradedRun = {
       ...normalizedRun,
       outcome: { status: "completed", result },
       matches,
@@ -102,6 +160,18 @@ export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Prom
     );
   }
   console.log(`\nNext: npm run eval:report -- --runs ${dir}`);
+}
+
+function parseLegacyRun(value: unknown, source: string): LegacyRunRecord {
+  const parsed = parseLegacyCompletedRun(value, source);
+  return {
+    caseName: parsed.caseName,
+    caseKind: parsed.caseKind,
+    configName: parsed.configName,
+    repeat: parsed.repeat,
+    startedAt: parsed.startedAt,
+    result: parsed.result,
+  };
 }
 
 function parseJudge(value: string): Judge {

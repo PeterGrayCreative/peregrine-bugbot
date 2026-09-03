@@ -20,8 +20,10 @@ import {
   materializeCase,
 } from "../eval/case-isolation.js";
 import { prepareEvaluationManifest } from "../eval/case-manifest.js";
+import { parseMatrixRunManifest, parseRunRecord } from "../eval/artifacts.js";
 import { loadCaseSpec, runMatrix } from "../eval/run-matrix.js";
 import { MAX_MANIFEST_CHARS, prepareReviewManifest } from "../src/core/manifest.js";
+import { mockUsage } from "../src/core/telemetry.js";
 import type {
   CaseCorpus,
   EngineResult,
@@ -397,10 +399,10 @@ test("matrix records history and manifest provenance before engine success or fa
   const producedManifests: string[] = [];
   const engine: Engine = {
     name: "mock",
-    async review(): Promise<EngineResult> {
+    async review(ctx): Promise<EngineResult> {
       calls++;
       if (calls === 2) throw new Error("forced post-preflight failure");
-      return completed();
+      return completed(ctx);
     },
   };
   try {
@@ -413,23 +415,31 @@ test("matrix records history and manifest provenance before engine success or fa
         return produced;
       },
     });
-    const records = readdirSync(runsDir)
-      .filter((name) => /^attempt-.*\.json$/.test(name))
-      .map((name) => JSON.parse(readFileSync(join(runsDir, name), "utf8")));
+    const manifest = parseMatrixRunManifest(
+      JSON.parse(readFileSync(join(runsDir, "matrix-manifest.json"), "utf8")),
+    );
+    const records = manifest.expectedAttempts.map((attempt) => parseRunRecord(
+      JSON.parse(readFileSync(join(runsDir, attempt.file), "utf8")),
+      attempt.file,
+      attempt,
+    ));
     assert.equal(records.length, 2);
     for (const [index, record] of records.entries()) {
-      assert.equal(record.evaluationProvenance.history.checkedOutTreeMatchesHead, true);
-      assert.equal(record.evaluationProvenance.manifest.entryPoint, "prepareReviewManifest");
-      assert.equal(record.evaluationProvenance.manifest.baseRef, record.evaluationProvenance.history.baseRef);
-      assert.match(record.evaluationProvenance.history.diffSha256, /^[a-f0-9]{64}$/);
+      assert.ok(record.evaluationProvenance?.manifest);
+      const provenance = record.evaluationProvenance;
+      const persistedManifest = provenance.manifest!;
+      assert.equal(provenance.history.checkedOutTreeMatchesHead, true);
+      assert.equal(persistedManifest.entryPoint, "prepareReviewManifest");
+      assert.equal(persistedManifest.baseRef, provenance.history.baseRef);
+      assert.match(provenance.history.diffSha256, /^[a-f0-9]{64}$/);
       assert.equal(
-        createHash("sha256").update(record.evaluationProvenance.manifest.output).digest("hex"),
-        record.evaluationProvenance.manifest.outputSha256,
+        createHash("sha256").update(persistedManifest.output).digest("hex"),
+        persistedManifest.outputSha256,
       );
-      assert.equal(record.evaluationProvenance.manifest.output, producedManifests[index]);
+      assert.equal(persistedManifest.output, producedManifests[index]);
     }
-    assert.equal(records[0].outcome.status, "completed");
-    assert.equal(records[1].outcome.status, "failed");
+    assert.equal(records[0]!.outcome.status, "completed");
+    assert.equal(records[1]!.outcome.status, "failed");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -888,14 +898,15 @@ function runtimeSection(output: string): string {
   return output.match(/Runtime configuration, containers, and harnesses[\s\S]*?Response, error, transport, and observability contracts/)?.[0] ?? "";
 }
 
-function completed(): EngineResult {
+function completed(ctx?: ReviewContext): EngineResult {
   return {
     engine: "mock",
     status: "clean",
     modelConfig: "mock",
     findings: [],
-    usage: { costUsd: 0 },
+    usage: mockUsage(),
     durationMs: 1,
+    ...(ctx ? { reviewedBaseRef: ctx.baseRef, reviewedHeadRef: ctx.headRef } : {}),
   };
 }
 

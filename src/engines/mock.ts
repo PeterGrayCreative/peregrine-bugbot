@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { mockUsage } from "../core/telemetry.js";
 import type { EngineResult, Finding, ReviewContext } from "../types.js";
 import type { Engine } from "./engine.js";
 
@@ -56,7 +57,7 @@ export const mockEngine: Engine = {
       reviewedBaseRef: ctx.baseRef,
       reviewedHeadRef: ctx.headRef,
       findings,
-      usage: { costUsd: 0, inputTokens: 0, outputTokens: 0 },
+      usage: mockUsage(),
       durationMs: Date.now() - started,
     };
   },

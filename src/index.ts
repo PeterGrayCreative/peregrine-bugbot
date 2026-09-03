@@ -7,6 +7,7 @@ import { filterDiff } from "./core/diff.js";
 import { packageRoot } from "./core/paths.js";
 import { parseEngineResult } from "./core/review-result.js";
 import { getEngine } from "./engines/engine.js";
+import { formatUsageCost } from "./core/telemetry.js";
 import { postReview } from "./github/post-review.js";
 import type { EngineResult, ReviewContext, RunnerName } from "./types.js";
 import { exec } from "./util/exec.js";
@@ -67,7 +68,7 @@ async function cmdReview(): Promise<void> {
 
   writeResult(outputPath, result);
   console.log(
-    `[peregrine] ${result.status} · ${result.findings.length} finding(s) · cost $${result.usage.costUsd?.toFixed(3) ?? "?"} · ${(result.durationMs / 1000).toFixed(0)}s`,
+    `[peregrine] ${result.status} · ${result.findings.length} finding(s) · cost ${formatUsageCost(result.usage)} · ${(result.durationMs / 1000).toFixed(0)}s`,
   );
 
   if (has("--post")) {

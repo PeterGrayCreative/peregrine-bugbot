@@ -6,14 +6,57 @@ curve, not the top of the leaderboard. Claude and Codex runs also report
 separate breadth/investigation duration and input-token means; missing provider
 cost telemetry is shown as `n/a`, never as free.
 
+Review artifacts preserve provider token semantics instead of forcing both
+providers into one lossy cached-token field. Claude records base input, cache
+creation, cache reads, output, and reasoning output separately. Codex records
+the reported input total, safely derived uncached input, cache reads, output,
+and reasoning output. A normalized total is present only when every contributing
+component is known. Each stage also records UTF-8 prompt bytes, duration, the
+configured/requested model name, a prompt hash, and turns/tool work when the
+provider exposes a complete event stream. Provider-resolved model identity stays
+unavailable unless the provider reports it explicitly.
+Raw provider envelopes and tool output are not persisted. If a later stage
+fails, its attempt artifact retains sanitized stage telemetry and already
+incurred spend from earlier stages.
+
+Reports label cost as provider-reported, estimated, mixed-source, or
+unattributed.
+An estimate requires an exact dated pricing contract; unknown models and
+partial usage stay `n/a`. Aggregate token, work, and cost values are emitted
+only when every contributing stage and every expected attempt supplied the
+field, so a failure or missing value cannot silently improve a route's mean.
+Wall-time mean and median include failed attempts when every expected attempt
+has an artifact; they are `n/a` when an attempt is missing. P95 uses the
+nearest-rank definition and is shown only with at least 20 attempts. Known
+spend from failed attempts is shown separately as an incurred-cost lower bound,
+not as a comparable cost-per-case result.
+
 Each new matrix directory starts with `matrix-manifest.json`, which inventories
 every expected configuration/case/repeat before provider work begins. Every
 finished attempt then records either a completed result or a sanitized failure
 with a stable kind. Reports show completion and failure rates by kind,
 conditional recall, and recall with
 failed or interrupted bug-bearing attempts counted as misses. Directories from
-older versions that have no attempt manifest are labeled `legacy/incomplete`;
-their completion and failure-inclusive metrics are intentionally unavailable.
+older versions that have no attempt manifest, and P1 schema-v1 artifacts from
+before manifest attempts recorded corpus and runner identity, are labeled
+`legacy/incomplete`; their completion and failure-inclusive metrics are
+intentionally unavailable.
+PR3 schema-v1 artifacts that recorded corpus and reproducible-history
+provenance but predate manifest runner identity and provider-correct stage
+telemetry are recognized only by their exact writer-era shape. They are also
+`legacy/incomplete`: grading remains available, but their old aggregate usage,
+cost, duration, and recall are excluded from behavioral comparisons.
+The corresponding PR3 mock shape remains raw-less and is accepted only with
+its exact zero-valued legacy usage fields; it is not promoted to a behavioral
+or telemetry benchmark.
+Their telemetry denominator and all comparison telemetry means are also
+reported as `n/a` because these formats do not establish a comparison-safe
+attempt and telemetry identity.
+
+Runs using the deterministic mock are labeled `structural-only`. They verify
+fixture transport, accounting, and expected marker detection; their marker
+counts are never presented as model recall, provider cost, or findings-per-dollar
+and are excluded from the behavioral cost-versus-recall plot.
 
 ## Case library
 

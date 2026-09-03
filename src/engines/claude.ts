@@ -4,19 +4,24 @@ import { buildBreadthPrompt, buildInvestigationPrompt } from "../core/prompt.js"
 import { bundledSkillDir, packageRoot } from "../core/paths.js";
 import { join } from "node:path";
 import { buildEngineResult, parseReviewPayload, reviewSchemaJson } from "../core/review-result.js";
-import { RunFailureError } from "../core/run-failure.js";
+import { applyUsageCost } from "../core/pricing.js";
+import { RunFailureError, runFailureKind, runFailureTelemetry } from "../core/run-failure.js";
+import { claudeUsageFromEnvelope, combineUsage, promptBytes, sha256, withUnavailable } from "../core/telemetry.js";
 import { assertNoSecrets, safeDiagnostic } from "../security/secrets.js";
 import { isolatedProviderEnvironment, providerEnvironment } from "../security/provider-env.js";
-import type { ClaudeEffort, EngineResult, ReviewContext, Usage } from "../types.js";
+import type { ClaudeEffort, EngineResult, ReviewContext, StageTelemetry, Usage } from "../types.js";
 import { type ExecResult, exec, lastJsonBlock } from "../util/exec.js";
 import type { Engine } from "./engine.js";
 
 type ExecFunction = typeof exec;
+type BuildEngineResult = typeof buildEngineResult;
 
 interface ClaudeStageResult<T> {
   output: T;
   usage: Usage;
   durationMs: number;
+  model: string;
+  promptSha256: string;
 }
 
 async function runStage<T>(args: {
@@ -25,13 +30,13 @@ async function runStage<T>(args: {
   model: string;
   effort: ClaudeEffort;
   prompt: string;
-  stage: "breadth" | "investigation";
   untrustedModelText?: string;
   schema: string;
   maxTurns: number;
   maxBudgetUsd: number;
   timeoutMs: number;
   allowedTools: string;
+  stage: StageTelemetry["stage"];
   parse: (value: unknown) => T;
 }): Promise<ClaudeStageResult<T>> {
   const started = Date.now();
@@ -82,32 +87,54 @@ async function runStage<T>(args: {
       inheritEnv: false,
     },
   );
+  const observed = claudeUsageFromResult(result, args.prompt);
+  const failureTelemetry = (usage = observed): StageTelemetry => ({
+    stage: args.stage,
+    model: args.model,
+    promptSha256: sha256(args.prompt),
+    usage: applyUsageCost(usage, args.model, args.ctx.config.pricing),
+    durationMs: Date.now() - started,
+    completed: false,
+  });
   if (result.timedOut) {
-    throw new RunFailureError("timeout", `claude ${args.model} stage timed out after ${args.timeoutMs}ms`);
+    throw stageFailure("timeout", `claude ${args.model} stage timed out after ${args.timeoutMs}ms`, failureTelemetry());
   }
   if (result.code !== 0) {
-    throw new RunFailureError(
+    throw stageFailure(
       "provider",
       `claude ${args.model} stage exited with code ${result.code}: ${claudeFailureDetail(result)}`,
+      failureTelemetry(),
     );
   }
   let parsed: ReturnType<typeof parseClaudeEnvelope>;
   let output: T;
   try {
-    parsed = parseClaudeEnvelope(result);
+    parsed = parseClaudeEnvelope(result, args.prompt);
     output = args.parse(parsed.structured);
+    assertNoSecrets(output, `claude ${args.model} stage output`);
   } catch (error) {
     throw new RunFailureError(
       "parse",
       error instanceof Error ? error.message : "claude returned invalid structured output",
-      { cause: error },
+      {
+        cause: error,
+        telemetry: singleStageFailure("claude", args.model, failureTelemetry(observed)),
+      },
     );
   }
-  assertNoSecrets(output, `claude ${args.model} stage output`);
-  return { output, usage: parsed.usage, durationMs: Date.now() - started };
+  return {
+    output,
+    usage: applyUsageCost(parsed.usage, args.model, args.ctx.config.pricing),
+    durationMs: Date.now() - started,
+    model: args.model,
+    promptSha256: sha256(args.prompt),
+  };
 }
 
-function parseClaudeEnvelope(result: ExecResult): { structured: unknown; usage: Usage } {
+function parseClaudeEnvelope(
+  result: ExecResult,
+  prompt: string,
+): { structured: unknown; usage: Usage } {
   let outer: Record<string, unknown>;
   try {
     outer = JSON.parse(result.stdout) as Record<string, unknown>;
@@ -121,27 +148,75 @@ function parseClaudeEnvelope(result: ExecResult): { structured: unknown; usage: 
   if (structured === undefined) {
     throw new Error("claude returned no structured output");
   }
-  const usage = outer.usage as Record<string, unknown> | undefined;
   return {
     structured,
-    usage: {
-      costUsd: typeof outer.total_cost_usd === "number" ? outer.total_cost_usd : undefined,
-      inputTokens: typeof usage?.input_tokens === "number" ? usage.input_tokens : undefined,
-      outputTokens: typeof usage?.output_tokens === "number" ? usage.output_tokens : undefined,
-    },
+    usage: claudeUsageFromEnvelope(outer, prompt),
   };
 }
 
-function combineUsage(left: Usage, right: Usage): Usage {
-  const combined: Usage = {};
-  for (const key of ["inputTokens", "cachedInputTokens", "outputTokens", "reasoningOutputTokens", "costUsd"] as const) {
-    const values = [left[key], right[key]].filter((value): value is number => typeof value === "number");
-    if (values.length > 0) combined[key] = values.reduce((sum, value) => sum + value, 0);
+function claudeUsageFromResult(result: ExecResult, prompt: string): Usage {
+  try {
+    const envelope = JSON.parse(result.stdout) as unknown;
+    return envelope && typeof envelope === "object" && !Array.isArray(envelope)
+      ? claudeUsageFromEnvelope(envelope as Record<string, unknown>, prompt, {
+          completeEventStream: !result.timedOut && result.code === 0 &&
+            (Array.isArray((envelope as Record<string, unknown>).messages) ||
+              Array.isArray((envelope as Record<string, unknown>).events)),
+        })
+      : unknownClaudeUsage(prompt);
+  } catch {
+    return unknownClaudeUsage(prompt);
   }
-  return combined;
 }
 
-export function createClaudeEngine(run: ExecFunction = exec): Engine {
+function unknownClaudeUsage(prompt: string): Usage {
+  return withUnavailable({
+    provider: "anthropic",
+    aggregation: "ambiguous",
+    promptBytes: promptBytes(prompt),
+  });
+}
+
+function singleStageFailure(engine: "claude", modelConfig: string, stage: StageTelemetry) {
+  return { engine, modelConfig, usage: stage.usage, durationMs: stage.durationMs, stages: [stage] };
+}
+
+function stageFailure(kind: "timeout" | "provider", message: string, stage: StageTelemetry): RunFailureError {
+  return new RunFailureError(kind, message, { telemetry: singleStageFailure("claude", stage.model, stage) });
+}
+
+function completedStage<T>(stage: StageTelemetry["stage"], result: ClaudeStageResult<T>): StageTelemetry {
+  return { stage, model: result.model, promptSha256: result.promptSha256, usage: result.usage, durationMs: result.durationMs, completed: true };
+}
+
+function wrapClaudeFailure(error: unknown, modelConfig: string, started: number, completed: StageTelemetry[]): RunFailureError {
+  const partial = runFailureTelemetry(error)?.stages ?? [];
+  const stages = [...completed, ...partial];
+  const telemetry = stages.length === 0
+    ? undefined
+    : {
+        engine: "claude" as const,
+        modelConfig,
+        usage: stages.length === 1
+          ? stages[0]!.usage
+          : combineUsage(...stages.map((stage) => stage.usage)),
+        durationMs: Date.now() - started,
+        stages,
+      };
+  return new RunFailureError(
+    runFailureKind(error),
+    error instanceof Error ? error.message : "claude review failed",
+    {
+      cause: error,
+      ...(telemetry ? { telemetry } : {}),
+    },
+  );
+}
+
+export function createClaudeEngine(
+  run: ExecFunction = exec,
+  buildResult: BuildEngineResult = buildEngineResult,
+): Engine {
   return {
     name: "claude",
     async review(ctx: ReviewContext): Promise<EngineResult> {
@@ -156,63 +231,102 @@ export function createClaudeEngine(run: ExecFunction = exec): Engine {
       const breadthTurns = Math.max(1, Math.floor(totalTurns * 0.25));
       const breadthBudget = totalBudget * 0.25;
       const breadthTimeout = Math.min(300_000, Math.floor(cfg.timeoutMs * 0.35));
-
-      const breadth = await runStage({
-        run,
-        ctx,
-        model: cfg.breadthModel,
-        effort: cfg.breadthEffort,
-        prompt: buildBreadthPrompt(ctx, skillDir, manifest),
-        stage: "breadth",
-        schema: breadthSchemaJson(),
-        maxTurns: breadthTurns,
-        maxBudgetUsd: breadthBudget,
-        timeoutMs: breadthTimeout,
-        allowedTools: ["Read", "Grep", "Glob"].join(","),
-        parse: (value) => parseBreadthResult(value, "claude breadth output"),
-      });
+      const modelConfig = `${cfg.breadthModel}/${cfg.breadthEffort}->${cfg.investigationModel}/${cfg.investigationEffort}`;
+      let breadth: ClaudeStageResult<ReturnType<typeof parseBreadthResult>>;
+      try {
+        breadth = await runStage({
+          run,
+          ctx,
+          model: cfg.breadthModel,
+          effort: cfg.breadthEffort,
+          prompt: buildBreadthPrompt(ctx, skillDir, manifest),
+          schema: breadthSchemaJson(),
+          maxTurns: breadthTurns,
+          maxBudgetUsd: breadthBudget,
+          timeoutMs: breadthTimeout,
+          allowedTools: ["Read", "Grep", "Glob"].join(","),
+          stage: "breadth",
+          parse: (value) => parseBreadthResult(value, "claude breadth output"),
+        });
+      } catch (error) {
+        throw wrapClaudeFailure(error, modelConfig, started, []);
+      }
 
       const elapsed = Date.now() - started;
       const remaining = cfg.timeoutMs - elapsed;
       if (remaining <= 0) {
-        throw new RunFailureError("timeout", `claude review exhausted its ${cfg.timeoutMs}ms timeout`);
+        throw wrapClaudeFailure(
+          new RunFailureError("timeout", `claude review exhausted its ${cfg.timeoutMs}ms timeout`),
+          modelConfig,
+          started,
+          [completedStage("breadth", breadth)],
+        );
       }
       const breadthText = JSON.stringify(breadth.output);
-      const investigation = await runStage({
-        run,
-        ctx,
-        model: cfg.investigationModel,
-        effort: cfg.investigationEffort,
-        prompt: buildInvestigationPrompt(
+      let investigation: ClaudeStageResult<ReturnType<typeof parseReviewPayload>>;
+      try {
+        investigation = await runStage({
+          run,
           ctx,
-          skillDir,
-          `A separate ${cfg.breadthModel}/${cfg.breadthEffort} breadth process produced the ledger below. Investigate and adjudicate on ${cfg.investigationModel}/${cfg.investigationEffort}.`,
-          breadthText,
-          manifest,
-        ),
-        stage: "investigation",
-        untrustedModelText: breadthText,
-        schema: reviewSchemaJson(),
-        maxTurns: Math.max(1, totalTurns - breadthTurns),
-        maxBudgetUsd: totalBudget - breadthBudget,
-        timeoutMs: remaining,
-        allowedTools: ["Read", "Grep", "Glob"].join(","),
-        parse: (value) => parseReviewPayload(value, "claude review output"),
-      });
+          model: cfg.investigationModel,
+          effort: cfg.investigationEffort,
+          prompt: buildInvestigationPrompt(
+            ctx,
+            skillDir,
+            `A separate ${cfg.breadthModel}/${cfg.breadthEffort} breadth process produced the ledger below. Investigate and adjudicate on ${cfg.investigationModel}/${cfg.investigationEffort}.`,
+            breadthText,
+            manifest,
+          ),
+          untrustedModelText: breadthText,
+          schema: reviewSchemaJson(),
+          maxTurns: Math.max(1, totalTurns - breadthTurns),
+          maxBudgetUsd: totalBudget - breadthBudget,
+          timeoutMs: remaining,
+          allowedTools: ["Read", "Grep", "Glob"].join(","),
+          stage: "investigation",
+          parse: (value) => parseReviewPayload(value, "claude review output"),
+        });
+      } catch (error) {
+        throw wrapClaudeFailure(error, modelConfig, started, [completedStage("breadth", breadth)]);
+      }
 
-      return buildEngineResult({
-        engine: "claude",
-        modelConfig: `${cfg.breadthModel}/${cfg.breadthEffort}->${cfg.investigationModel}/${cfg.investigationEffort}`,
-        ctx,
-        payload: investigation.output,
-        usage: combineUsage(breadth.usage, investigation.usage),
-        durationMs: Date.now() - started,
-        raw: {
-          manifest: manifest.available ? "runner-generated" : manifest.reason,
-          breadth: { output: breadth.output, usage: breadth.usage, durationMs: breadth.durationMs },
-          investigation: { usage: investigation.usage, durationMs: investigation.durationMs },
-        },
-      });
+      try {
+        return buildResult({
+          engine: "claude",
+          modelConfig,
+          ctx,
+          payload: investigation.output,
+          usage: combineUsage(breadth.usage, investigation.usage),
+          durationMs: Date.now() - started,
+          raw: {
+            manifest: manifest.available ? manifest.output : manifest.reason,
+            breadth: {
+              output: breadth.output,
+              model: breadth.model,
+              promptSha256: breadth.promptSha256,
+              usage: breadth.usage,
+              durationMs: breadth.durationMs,
+            },
+            investigation: {
+              model: investigation.model,
+              promptSha256: investigation.promptSha256,
+              usage: investigation.usage,
+              durationMs: investigation.durationMs,
+            },
+          },
+        });
+      } catch (error) {
+        throw wrapClaudeFailure(
+          new RunFailureError(
+            "parse",
+            error instanceof Error ? error.message : "could not construct Claude review artifact",
+            { cause: error },
+          ),
+          modelConfig,
+          started,
+          [completedStage("breadth", breadth), completedStage("investigation", investigation)],
+        );
+      }
     },
   };
 }

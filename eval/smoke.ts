@@ -12,18 +12,17 @@ try {
   await gradeRuns(runsDir);
   const stats = await buildReport(runsDir);
   const mock = stats.find((item) => item.config === "mock");
-  if (
-    !mock ||
-    mock.completionRate !== 1 ||
-    mock.missingRuns !== 0 ||
-    mock.failedRuns !== 0 ||
-    mock.failureInclusiveRecallMean !== 1 ||
-    mock.recallMean !== 1 ||
-    mock.fpPerCaseMean !== 0
-  ) {
-    throw new Error(`mock benchmark regression: ${JSON.stringify(mock)}`);
+  if (!mock || mock.benchmarkKind !== "structural-only" || mock.completedRuns !== mock.expectedRuns ||
+    mock.failedRuns !== 0 || mock.missingRuns !== 0 ||
+    mock.structuralExpectedMarkers !== mock.structuralMatchedMarkers ||
+    mock.structuralUnexpectedFindings !== 0 || mock.recallMean !== null ||
+    mock.costPerCaseMean !== null) {
+    throw new Error(`mock structural smoke regression: ${JSON.stringify(mock)}`);
   }
-  console.log("mock benchmark OK: recall 100%, 0 FP");
+  console.log(
+    `mock structural smoke OK: ${mock.completedRuns}/${mock.expectedRuns} attempts; ` +
+    `${mock.structuralMatchedMarkers}/${mock.structuralExpectedMarkers} expected markers`,
+  );
 } finally {
   rmSync(smokeRoot, { recursive: true, force: true });
 }

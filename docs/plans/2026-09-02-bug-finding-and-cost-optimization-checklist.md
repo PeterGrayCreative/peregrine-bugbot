@@ -31,7 +31,8 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | Safety PR 2A.2 | Pin the accepted digest and enforce live filesystem containment | PR 2A.1 | Not started | - |
 | Plan PR 3 | Reproduce base/head history and production manifest path | PR 2 | Merged | [#7](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/7) |
 | Plan PR 4 | Root-cause grading, adjudication, and miss stages | PRs 3, 6 | Not started | - |
-| Plan PR 5 | Provider-correct usage, cost, work, and experiment metadata | PR 1 | Not started | - |
+| Plan PR 5A | Provider-correct usage, cost, and observed work | PR 1 | Open; independently reviewed | [#11](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/11) |
+| Plan PR 5B | Immutable experiment scheduling, resume, and ceilings | PR 5A | Not started | - |
 | Plan PR 6 | Typed manifest shadow/parity mode | PR 3 | Not started | - |
 | Plan PR 7 | Curated gold set v1 and unmodified baseline | PRs 4-6 | Not started | - |
 | Plan PR 8 | Stable investigator core and variable appendix | PR 7 | Not started | - |
@@ -176,18 +177,32 @@ Must stay untouched: provider prompts and production posting thresholds.
 
 ## Plan PR 5 - Provider-correct usage, cost, work, and experiment metadata
 
-- [ ] Preserve provider-specific base, uncached, cache-write, cache-read, output, and reasoning-output fields without flattening semantics.
-- [ ] Record turns, tool calls, stage duration, total duration, and provider-reported cost.
-- [ ] Keep missing usage or price data unavailable rather than free.
-- [ ] Version price tables with `pricingAsOf` and tier assumptions.
+### Plan PR 5A - Provider-correct usage, cost, and observed work
+
+- [x] Preserve provider-specific base, uncached, cache-write, cache-read, output, and reasoning-output fields without flattening semantics.
+- [x] Record turns, tool calls, tool-output bytes, prompt bytes, stage duration, total duration, and provider-reported cost when exposed.
+- [x] Keep missing usage, work, or price data unavailable rather than free.
+- [x] Version price tables with `pricingAsOf`, service-tier, context-tier, cache, and reasoning assumptions.
+- [x] Preserve completed-stage work and partial incurred cost on provider, timeout, parse, artifact-construction, and cleanup failures.
+- [x] Record an explicit unavailable reason when provider failure telemetry was not observed or had to be secret-redacted.
+- [x] Keep immutable schema-v1 isolation evidence readable independently of later runtime capability changes.
+- [x] Add captured Claude and Codex provider-envelope fixtures plus aggregation, malformed-stream, cleanup, pricing, and reader/writer tests.
+- [x] Run `npm run validate` under Node `22.22.1`: 115/115 Node tests, all skill/package checks, and 8/8 zero-cost structural smoke attempts passed.
+- [x] Open and independently review [PR #11](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/11).
+- [ ] Merge PR #11.
+
+Evidence: [Plan PR 5A validation record](../validation/2026-09-03-provider-usage-cost-metadata.md). No live provider was invoked, so this is implementation and structural evidence rather than a measured provider-cost comparison.
+
+### Plan PR 5B - Immutable experiment scheduling, resume, and ceilings
+
 - [ ] Record repository, corpus, prompt, method, schema, profile, judge, and configuration hashes.
 - [ ] Record exact model identifiers, CLI versions, run order, random seed, timestamps, cache condition, and provider availability.
 - [ ] Randomize and interleave contemporaneous control/treatment attempts.
 - [ ] Represent retries as new attempts linked to the original attempt.
 - [ ] Add spend, wall-clock, failure-rate, and early-stop ceilings.
 - [ ] Add resume behavior that never overwrites failed evidence.
-- [ ] Add provider-envelope fixtures and aggregation tests.
-- [ ] Run `npm run validate` and a zero-cost metadata smoke test.
+- [ ] Add deterministic schedule, retry-lineage, resume, ceiling, and immutable-manifest tests.
+- [ ] Run `npm run validate` and a zero-cost experiment-metadata smoke test.
 - [ ] Open, review, and merge the PR.
 
 Must stay untouched: model behavior and routing.

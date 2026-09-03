@@ -1,0 +1,3 @@
+{"type":"item.started","item":{"id":"item-1","type":"command_execution","command":"rg TODO"}}
+{"type":"item.completed","item":{"id":"item-1","type":"command_execution","aggregated_output":"héllo"}}
+{"type":"turn.completed","usage":{"input_tokens":110,"cached_input_tokens":30,"output_tokens":20,"reasoning_output_tokens":5}}

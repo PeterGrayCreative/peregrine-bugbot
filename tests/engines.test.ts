@@ -5,9 +5,11 @@ import test from "node:test";
 import { createClaudeEngine } from "../src/engines/claude.js";
 import { createCodexEngine } from "../src/engines/codex.js";
 import { RunFailureError } from "../src/core/run-failure.js";
-import type { PeregrineConfig, ReviewContext } from "../src/types.js";
+import { parseRunRecord } from "../eval/artifacts.js";
+import type { PeregrineConfig, ReviewContext, RunRecord, RunnerName } from "../src/types.js";
 import type { exec } from "../src/util/exec.js";
 import { nonSensitiveEnvironment, providerEnvironment } from "../src/security/provider-env.js";
+import { sha256 } from "../src/core/telemetry.js";
 
 function config(): PeregrineConfig {
   return JSON.parse(readFileSync(resolve("peregrine.config.json"), "utf8")) as PeregrineConfig;
@@ -22,6 +24,69 @@ function context(): ReviewContext {
     headRef: "head-sha",
     config: config(),
   };
+}
+
+function assertStrictFailureArtifact(runner: RunnerName, error: RunFailureError): void {
+  const baseRef = "1".repeat(40);
+  const headRef = "2".repeat(40);
+  const output = [
+    `base: ${baseRef} (argument)`,
+    `head: ${headRef}`,
+    `merge-base: ${baseRef}`,
+    "Changed files",
+    "(none)",
+    "",
+  ].join("\n");
+  const record: RunRecord = {
+    schemaVersion: 1,
+    attemptId: "attempt-prompt-isolation",
+    caseName: "development/case-00000001",
+    caseKind: "seeded",
+    configName: `${runner}-prompt-isolation`,
+    repeat: 1,
+    caseCorpus: "development",
+    runner,
+    startedAt: "2026-09-03T00:00:00.000Z",
+    finishedAt: "2026-09-03T00:00:10.000Z",
+    attemptDurationMs: 10_000,
+    evaluationProvenance: {
+      history: {
+        schemaVersion: 1,
+        materialization: "fixture-patch",
+        objectFormat: "sha1",
+        baseRef,
+        headRef,
+        mergeBase: baseRef,
+        baseTree: "3".repeat(40),
+        headTree: "4".repeat(40),
+        commitCount: 2,
+        baseIsMergeBase: true,
+        checkedOutTreeMatchesHead: true,
+        treeReproductionVerified: true,
+        diffNormalization: "identity-v1",
+        diffSha256: "5".repeat(64),
+      },
+      manifest: {
+        entryPoint: "prepareReviewManifest",
+        skillName: "invariant-first-pr-review",
+        baseRef,
+        headRef,
+        mergeBase: baseRef,
+        outputSha256: sha256(output),
+        output,
+        profileSource: "none",
+        headProfileChanged: false,
+      },
+    },
+    outcome: {
+      status: "failed",
+      failureKind: error.kind,
+      message: error.message,
+      durationMs: error.telemetry?.durationMs ?? 1,
+      ...(error.telemetry ? { telemetry: error.telemetry } : {}),
+    },
+  };
+  assert.doesNotThrow(() => parseRunRecord(record, `${runner} prompt-isolation failure`));
 }
 
 const finding = {
@@ -98,7 +163,12 @@ test("Claude runner performs isolated, measurable breadth and investigation stag
       stdout: JSON.stringify({
         structured_output: schema.title === "Peregrine Breadth Sweep" ? breadth : { findings: [finding] },
         total_cost_usd: 0.01,
-        usage: { input_tokens: 10, output_tokens: 20 },
+        usage: {
+          input_tokens: 10,
+          cache_creation_input_tokens: 0,
+          cache_read_input_tokens: 0,
+          output_tokens: 20,
+        },
       }),
       stderr: "",
       code: 0,
@@ -132,7 +202,15 @@ test("Claude runner performs isolated, measurable breadth and investigation stag
   assert.equal(reviewed.findings.length, 1);
   assert.equal(reviewed.reviewedHeadRef, "head-sha");
   assert.equal(reviewed.usage.inputTokens, 20);
+  assert.equal(reviewed.usage.baseInputTokens, 20);
+  assert.equal(reviewed.usage.cacheWriteInputTokens, 0);
+  assert.equal(reviewed.usage.cacheReadInputTokens, 0);
   assert.equal(reviewed.usage.costUsd, 0.02);
+  assert.equal(reviewed.usage.costSource, "provider");
+  const raw = reviewed.raw as { breadth: { model: string; promptSha256: string } };
+  const breadthPrompt = calls[0]?.args[calls[0].args.indexOf("-p") + 1] ?? "";
+  assert.equal(raw.breadth.model, context().config.runners.claude.breadthModel);
+  assert.equal(raw.breadth.promptSha256, sha256(breadthPrompt));
   assert.deepEqual(validatedStages, ["breadth", "investigation"]);
 });
 
@@ -185,7 +263,49 @@ test("Codex runner performs isolated breadth and investigation stages", async ()
   assert.equal(reviewed.findings.length, 1);
   assert.equal(reviewed.usage.inputTokens, 22);
   assert.equal(reviewed.usage.cachedInputTokens, 4);
+  assert.equal(reviewed.usage.uncachedInputTokens, 18);
+  assert.equal(reviewed.usage.cacheReadInputTokens, 4);
+  assert.equal(reviewed.usage.costUsd, undefined);
+  const raw = reviewed.raw as { breadth: { model: string; promptSha256: string } };
+  assert.equal(raw.breadth.model, context().config.runners.codex.breadthModel);
+  assert.equal(raw.breadth.promptSha256, sha256(calls[0]?.stdin ?? ""));
   assert.deepEqual(validatedStages, ["breadth", "investigation"]);
+});
+
+test("Codex temporary-output cleanup failures retain completed provider telemetry", async () => {
+  const fake: typeof exec = async (_cmd, args) => {
+    const output = args[args.indexOf("--output-last-message") + 1]!;
+    const schema = args[args.indexOf("--output-schema") + 1]!;
+    writeFileSync(
+      output,
+      schema.endsWith("breadth-result.schema.json")
+        ? JSON.stringify({ ...breadth, model: "gpt-5.6-luna" })
+        : JSON.stringify({ findings: [finding] }),
+    );
+    return {
+      stdout: `${JSON.stringify({
+        type: "turn.completed",
+        usage: { input_tokens: 11, cached_input_tokens: 2, output_tokens: 3 },
+      })}\n`,
+      stderr: "",
+      code: 0,
+      timedOut: false,
+    };
+  };
+  await assert.rejects(
+    () => createCodexEngine(fake, () => {
+      throw new Error("forced temp cleanup failure");
+    }).review(context()),
+    (error: unknown) => {
+      assert.ok(error instanceof RunFailureError);
+      assert.equal(error.kind, "configuration");
+      assert.match(error.message, /temporary-output cleanup also failed/);
+      assert.equal(error.telemetry?.stages.length, 2);
+      assert.ok(error.telemetry?.stages.every((stage) => stage.completed));
+      assert.equal(error.telemetry?.usage.inputTokens, 22);
+      return true;
+    },
+  );
 });
 
 test("evaluation prompt validation failures use stable configuration outcomes at both stages", async () => {
@@ -220,10 +340,20 @@ test("evaluation prompt validation failures use stable configuration outcomes at
       const engine = runner === "claude" ? createClaudeEngine(fake) : createCodexEngine(fake);
       await assert.rejects(
         () => engine.review(ctx),
-        (error: unknown) =>
-          error instanceof RunFailureError &&
-          error.kind === "configuration" &&
-          error.message.includes(`evaluation ${rejectedStage} prompt isolation failed`),
+        (error: unknown) => {
+          assert.ok(error instanceof RunFailureError);
+          assert.equal(error.kind, "configuration");
+          assert.match(error.message, new RegExp(`evaluation ${rejectedStage} prompt isolation failed`));
+          if (rejectedStage === "breadth") {
+            assert.equal(error.telemetry, undefined);
+          } else {
+            assert.equal(error.telemetry?.stages.length, 1);
+            assert.equal(error.telemetry?.stages[0]?.stage, "breadth");
+            assert.equal(error.telemetry?.stages[0]?.completed, true);
+          }
+          assertStrictFailureArtifact(runner, error);
+          return true;
+        },
       );
       assert.equal(calls, rejectedStage === "breadth" ? 0 : 1);
     }
@@ -290,6 +420,68 @@ test("provider process failures are surfaced instead of becoming clean reviews",
   }
 });
 
+test("Claude provider failures retain tokens without inventing complete work metrics", async () => {
+  const fake: typeof exec = async () => ({
+    stdout: JSON.stringify({
+      usage: {
+        input_tokens: 10,
+        cache_creation_input_tokens: 0,
+        cache_read_input_tokens: 0,
+        output_tokens: 2,
+      },
+      messages: [],
+    }),
+    stderr: "provider failed",
+    code: 1,
+    timedOut: false,
+  });
+  await assert.rejects(
+    () => createClaudeEngine(fake).review(context()),
+    (error: unknown) => {
+      assert.ok(error instanceof RunFailureError);
+      assert.equal(error.kind, "provider");
+      assert.equal(error.telemetry?.usage.inputTokens, 10);
+      assert.equal(error.telemetry?.usage.outputTokens, 2);
+      assert.equal(error.telemetry?.usage.toolCalls, undefined);
+      assert.equal(error.telemetry?.usage.toolCallsByType, undefined);
+      assert.equal(error.telemetry?.usage.toolOutputBytes, undefined);
+      assertStrictFailureArtifact("claude", error);
+      return true;
+    },
+  );
+});
+
+test("Claude code-zero parse failures without lifecycle arrays do not invent zero work", async () => {
+  const fake: typeof exec = async () => ({
+    stdout: JSON.stringify({
+      usage: {
+        input_tokens: 10,
+        cache_creation_input_tokens: 0,
+        cache_read_input_tokens: 0,
+        output_tokens: 2,
+      },
+      structured_output: { invalid: true },
+    }),
+    stderr: "",
+    code: 0,
+    timedOut: false,
+  });
+  await assert.rejects(
+    () => createClaudeEngine(fake).review(context()),
+    (error: unknown) => {
+      assert.ok(error instanceof RunFailureError);
+      assert.equal(error.kind, "parse");
+      assert.equal(error.telemetry?.usage.inputTokens, 10);
+      assert.equal(error.telemetry?.usage.outputTokens, 2);
+      assert.equal(error.telemetry?.usage.toolCalls, undefined);
+      assert.equal(error.telemetry?.usage.toolCallsByType, undefined);
+      assert.equal(error.telemetry?.usage.toolOutputBytes, undefined);
+      assertStrictFailureArtifact("claude", error);
+      return true;
+    },
+  );
+});
+
 test("provider adapters expose stable timeout failure codes", async () => {
   const fake: typeof exec = async () => ({
     stdout: "",
@@ -318,6 +510,149 @@ test("provider adapters expose stable parse failure codes", async () => {
       (error: unknown) => error instanceof RunFailureError && error.kind === "parse",
     );
   }
+});
+
+test("second-stage failures retain already incurred stage usage and cost", async () => {
+  let calls = 0;
+  const fake: typeof exec = async (_cmd, args) => {
+    calls++;
+    const schema = JSON.parse(args[args.indexOf("--json-schema") + 1]!) as { title?: string };
+    return {
+      stdout: JSON.stringify({
+        structured_output: schema.title === "Peregrine Breadth Sweep" ? breadth : { invalid: true },
+        total_cost_usd: 0.01,
+        usage: {
+          input_tokens: 10,
+          cache_creation_input_tokens: 0,
+          cache_read_input_tokens: 0,
+          output_tokens: 2,
+        },
+      }),
+      stderr: "",
+      code: 0,
+      timedOut: false,
+    };
+  };
+  await assert.rejects(
+    () => createClaudeEngine(fake).review(context()),
+    (error: unknown) => {
+      assert.ok(error instanceof RunFailureError);
+      assert.equal(error.kind, "parse");
+      assert.equal(error.telemetry?.stages.length, 2);
+      assert.equal(error.telemetry?.stages[0]?.completed, true);
+      assert.equal(error.telemetry?.stages[1]?.completed, false);
+      assert.equal(error.telemetry?.usage.costUsd, 0.02);
+      assert.equal(error.telemetry?.usage.costSource, "provider");
+      return true;
+    },
+  );
+  assert.equal(calls, 2);
+});
+
+test("malformed Codex JSONL never becomes trusted provider usage", async () => {
+  const fake: typeof exec = async (_cmd, args) => {
+    const output = args[args.indexOf("--output-last-message") + 1]!;
+    const schema = args[args.indexOf("--output-schema") + 1]!;
+    writeFileSync(output, schema.endsWith("breadth-result.schema.json")
+      ? JSON.stringify({ ...breadth, model: "gpt-5.6-luna" })
+      : JSON.stringify({ findings: [finding] }));
+    return {
+      stdout: `${JSON.stringify({ type: "turn.completed", usage: { input_tokens: 11, cached_input_tokens: 2, output_tokens: 3 } })}\nmalformed\n`,
+      stderr: "",
+      code: 0,
+      timedOut: false,
+    };
+  };
+  const reviewed = await createCodexEngine(fake).review(context());
+  assert.equal(reviewed.usage.inputTokens, undefined);
+  assert.equal(reviewed.usage.outputTokens, undefined);
+  assert.equal(reviewed.usage.costUsd, undefined);
+  assert.ok(reviewed.usage.promptBytes);
+});
+
+test("Codex artifact construction failures retain both completed stages", async () => {
+  const maxFindings = Array.from({ length: 20 }, (_, index) => ({
+    ...finding,
+    startLine: index + 1,
+    endLine: index + 1,
+    explanation: "e".repeat(8000),
+    failurePath: "f".repeat(8000),
+  }));
+  let calls = 0;
+  const fake: typeof exec = async (_cmd, args) => {
+    calls++;
+    const output = args[args.indexOf("--output-last-message") + 1]!;
+    const schema = args[args.indexOf("--output-schema") + 1]!;
+    writeFileSync(output, schema.endsWith("breadth-result.schema.json")
+      ? JSON.stringify({ ...breadth, model: "gpt-5.6-luna" })
+      : JSON.stringify({ findings: maxFindings }));
+    return {
+      stdout: `${JSON.stringify({
+        type: "turn.completed",
+        usage: { input_tokens: 11, cached_input_tokens: 2, output_tokens: 3 },
+      })}\n`,
+      stderr: "",
+      code: 0,
+      timedOut: false,
+    };
+  };
+
+  await assert.rejects(
+    () => createCodexEngine(fake).review(context()),
+    (error: unknown) => {
+      assert.ok(error instanceof RunFailureError);
+      assert.equal(error.kind, "parse");
+      assert.match(error.message, /raw telemetry exceeds/);
+      assert.equal(error.telemetry?.stages.length, 2);
+      assert.ok(error.telemetry?.stages.every((stage) => stage.completed));
+      assert.equal(error.telemetry?.usage.inputTokens, 22);
+      assert.equal(error.telemetry?.usage.outputTokens, 6);
+      return true;
+    },
+  );
+  assert.equal(calls, 2);
+});
+
+test("Claude artifact construction failures retain both completed stages", async () => {
+  let calls = 0;
+  const fake: typeof exec = async (_cmd, args) => {
+    calls++;
+    const schema = JSON.parse(args[args.indexOf("--json-schema") + 1]!) as { title?: string };
+    return {
+      stdout: JSON.stringify({
+        structured_output: schema.title === "Peregrine Breadth Sweep" ? breadth : { findings: [finding] },
+        total_cost_usd: 0.01,
+        usage: {
+          input_tokens: 10,
+          cache_creation_input_tokens: 0,
+          cache_read_input_tokens: 0,
+          output_tokens: 2,
+        },
+      }),
+      stderr: "",
+      code: 0,
+      timedOut: false,
+    };
+  };
+
+  await assert.rejects(
+    () => createClaudeEngine(fake, () => {
+      throw new Error("artifact construction failed");
+    }).review(context()),
+    (error: unknown) => {
+      assert.ok(error instanceof RunFailureError);
+      assert.equal(error.kind, "parse");
+      assert.match(error.message, /artifact construction failed/);
+      assert.equal(error.telemetry?.stages.length, 2);
+      assert.ok(error.telemetry?.stages.every((stage) => stage.completed));
+      assert.equal(error.telemetry?.usage.inputTokens, 20);
+      assert.equal(error.telemetry?.usage.outputTokens, 4);
+      assert.equal(error.telemetry?.usage.costUsd, 0.02);
+      assert.equal(error.telemetry?.usage.costSource, "provider");
+      return true;
+    },
+  );
+  assert.equal(calls, 2);
 });
 
 test("provider failures never echo credential-like diagnostics", async () => {

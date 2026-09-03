@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "attemptId": "attempt-000001",
+  "caseName": "legacy-p1-failed-case",
+  "caseKind": "seeded",
+  "configName": "claude-p1-failed-route",
+  "repeat": 1,
+  "startedAt": "2026-09-02T00:00:00.000Z",
+  "finishedAt": "2026-09-02T00:00:01.000Z",
+  "outcome": {
+    "status": "failed",
+    "failureKind": "timeout",
+    "message": "claude breadth stage timed out",
+    "durationMs": 1000
+  }
+}

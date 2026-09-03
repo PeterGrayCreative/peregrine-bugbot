@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-09-02T00:00:00.000Z",
+  "expectedAttempts": [{
+    "id": "attempt-000001", "caseName": "legacy-p1-codex-case",
+    "configName": "codex-p1-route", "repeat": 1, "file": "attempt-000001.json"
+  }]
+}

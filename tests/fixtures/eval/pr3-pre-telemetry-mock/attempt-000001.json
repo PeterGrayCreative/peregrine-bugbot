@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "attemptId": "attempt-000001",
+  "caseName": "legacy-pr3-mock-case",
+  "caseCorpus": "structural-smoke",
+  "caseKind": "seeded",
+  "configName": "mock-pr3-route",
+  "repeat": 1,
+  "startedAt": "2026-09-02T00:00:00.000Z",
+  "finishedAt": "2026-09-02T00:00:01.000Z",
+  "evaluationProvenance": {
+    "history": {
+      "schemaVersion": 1,
+      "materialization": "fixture-patch",
+      "objectFormat": "sha1",
+      "baseRef": "1111111111111111111111111111111111111111",
+      "headRef": "2222222222222222222222222222222222222222",
+      "mergeBase": "1111111111111111111111111111111111111111",
+      "baseTree": "3333333333333333333333333333333333333333",
+      "headTree": "4444444444444444444444444444444444444444",
+      "commitCount": 2,
+      "baseIsMergeBase": true,
+      "checkedOutTreeMatchesHead": true,
+      "treeReproductionVerified": true,
+      "diffNormalization": "identity-v1",
+      "diffSha256": "5555555555555555555555555555555555555555555555555555555555555555"
+    },
+    "manifest": {
+      "entryPoint": "prepareReviewManifest",
+      "skillName": "invariant-first-pr-review",
+      "baseRef": "1111111111111111111111111111111111111111",
+      "headRef": "2222222222222222222222222222222222222222",
+      "mergeBase": "1111111111111111111111111111111111111111",
+      "outputSha256": "dc2e7020636643df10d6be6372879d0afd1eee7a0742ad0e05af6c0922ab70b6",
+      "output": "base: 1111111111111111111111111111111111111111 (argument)\nhead: 2222222222222222222222222222222222222222\nmerge-base: 1111111111111111111111111111111111111111\nChanged files\n(none)\n",
+      "profileSource": "none",
+      "headProfileChanged": false
+    }
+  },
+  "outcome": {
+    "status": "completed",
+    "result": {
+      "engine": "mock",
+      "status": "completed",
+      "modelConfig": "mock",
+      "reviewedBaseRef": "1111111111111111111111111111111111111111",
+      "reviewedHeadRef": "2222222222222222222222222222222222222222",
+      "findings": [
+        {
+          "file": "src/value.ts",
+          "startLine": 1,
+          "endLine": 1,
+          "severity": "high",
+          "disposition": "fix-in-pr",
+          "category": "logic",
+          "invariant": "seeded-mock-marker",
+          "title": "Suspicious change in src/value.ts",
+          "explanation": "// BUG: deterministic marker",
+          "failurePath": "Marker-based mock detection.",
+          "confidence": 0.95
+        }
+      ],
+      "usage": {
+        "costUsd": 0,
+        "inputTokens": 0,
+        "outputTokens": 0
+      },
+      "durationMs": 1000
+    }
+  }
+}

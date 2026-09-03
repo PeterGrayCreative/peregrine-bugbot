@@ -2,9 +2,10 @@ import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join, relative, resolve } from "node:path";
 import { loadConfig } from "../src/config.js";
 import { validateConfig } from "../src/config.js";
-import { RunFailureError, runFailureKind } from "../src/core/run-failure.js";
+import { RunFailureError, runFailureKind, runFailureTelemetry } from "../src/core/run-failure.js";
 import { getEngine } from "../src/engines/engine.js";
-import { safeDiagnostic } from "../src/security/secrets.js";
+import { assertNoSecrets, safeDiagnostic } from "../src/security/secrets.js";
+import { formatUsageCost } from "../src/core/telemetry.js";
 import {
   assertLiveProviderIsolationAvailable,
   assertLeakageFreeText,
@@ -24,11 +25,15 @@ import type {
   CaseCorpus,
   CaseSpec,
   EvaluationAttemptProvenance,
+  EngineResult,
   MatrixConfig,
   MatrixRunManifest,
   ReviewContext,
+  RunFailureTelemetry,
+  RunOutcome,
   RunRecord,
   RunnerName,
+  StageTelemetry,
 } from "../src/types.js";
 import type { Engine } from "../src/engines/engine.js";
 import { parseGroundTruth } from "./case-truth.js";
@@ -38,6 +43,8 @@ interface RunMatrixOptions {
   engineFor?: (runner: RunnerName) => Engine;
   /** Test seam; production and normal eval calls use prepareReviewManifest. */
   manifestPreparer?: EvaluationManifestPreparer;
+  /** Test seam for verifying that attempt cleanup cannot erase incurred work. */
+  materializeCaseFor?: typeof materializeCase;
 }
 
 interface DiscoveredCase {
@@ -90,6 +97,7 @@ export async function runMatrix(
           configName: modelConfig.name,
           repeat,
           file: `${id}.json`,
+          runner: modelConfig.runner,
         };
       }),
     ),
@@ -105,6 +113,7 @@ export async function runMatrix(
       ]),
     ),
   };
+  assertNoSecrets(manifest, "matrix manifest");
   writeFileSync(join(outDir, "matrix-manifest.json"), JSON.stringify(manifest, null, 2));
 
   const total = expectedAttempts.length;
@@ -137,14 +146,15 @@ export async function runMatrix(
         if (!attempt) throw new Error(`internal error: missing matrix attempt ${done}`);
         const attemptId = attempt.id;
         const file = join(outDir, attempt.file);
-        const startedAt = new Date().toISOString();
         const started = Date.now();
+        const startedAt = new Date(started).toISOString();
         process.stdout.write(
           `[${done}/${total}] ${modelConfig.name} × ${caseName} (run ${repeat}) ... `,
         );
 
         let materialized: Awaited<ReturnType<typeof materializeCase>> | undefined;
         let evaluationProvenance: EvaluationAttemptProvenance | undefined;
+        let record: RunRecord | undefined;
         try {
           if (!spec || !policy || !metadata) {
             throw new RunFailureError(
@@ -155,7 +165,7 @@ export async function runMatrix(
           }
           try {
             assertRunnerMayUseCorpus(spec.corpus, modelConfig.runner);
-            materialized = await materializeCase(caseDir, spec, policy, {
+            materialized = await (options.materializeCaseFor ?? materializeCase)(caseDir, spec, policy, {
               prepareProviderAssets: modelConfig.runner !== "mock",
             });
             evaluationProvenance = { history: materialized.historyProvenance };
@@ -234,7 +244,7 @@ export async function runMatrix(
           }
 
           const result = await (options.engineFor ?? getEngine)(modelConfig.runner).review(ctx);
-          const record: RunRecord = {
+          record = {
             schemaVersion: 1,
             attemptId,
             caseName,
@@ -242,19 +252,19 @@ export async function runMatrix(
             caseKind: spec.kind,
             configName: modelConfig.name,
             repeat,
+            runner: attempt.runner,
             startedAt,
-            finishedAt: new Date().toISOString(),
+            finishedAt: startedAt,
+            attemptDurationMs: 0,
             evaluationProvenance,
             outcome: { status: "completed", result },
           };
-          writeFileSync(file, JSON.stringify(record, null, 2));
           console.log(
-            `${result.findings.length} finding(s), $${result.usage.costUsd?.toFixed(3) ?? "?"}`,
+            `${result.findings.length} finding(s), ${formatUsageCost(result.usage)}`,
           );
         } catch (err) {
-          const message = safeDiagnostic(err instanceof Error ? err.message : String(err));
-          const failureKind = runFailureKind(err);
-          const record: RunRecord = {
+          const outcome = failureOutcomeForArtifact(attempt.runner, err, 0);
+          record = {
             schemaVersion: 1,
             attemptId,
             caseName,
@@ -262,46 +272,55 @@ export async function runMatrix(
             caseKind: spec?.kind ?? "unknown",
             configName: modelConfig.name,
             repeat,
+            runner: attempt.runner,
             startedAt,
-            finishedAt: new Date().toISOString(),
+            finishedAt: startedAt,
+            attemptDurationMs: 0,
             ...(evaluationProvenance ? { evaluationProvenance } : {}),
-            outcome: {
-              status: "failed",
-              failureKind,
-              message,
-              durationMs: Date.now() - started,
-            },
+            outcome,
           };
-          writeFileSync(file, JSON.stringify(record, null, 2));
-          console.log(`FAILED [${failureKind}]: ${message}`);
+          console.log(`FAILED [${outcome.failureKind}]: ${outcome.message}`);
         } finally {
+          let cleanupError: unknown;
           if (materialized) {
             try {
               materialized.cleanup();
-            } catch (cleanupError) {
-              const detail = safeDiagnostic(
-                cleanupError instanceof Error ? cleanupError.message : String(cleanupError),
-              );
-              const prior = JSON.parse(readFileSync(file, "utf8")) as RunRecord;
-              const message = prior.outcome.status === "failed"
-                ? `${prior.outcome.message}; cleanup also failed: ${detail}`
-                : `isolated attempt cleanup failed after provider completion: ${detail}`;
-              const replacement: RunRecord = {
-                ...prior,
-                finishedAt: new Date().toISOString(),
-                outcome: {
-                  status: "failed",
-                  failureKind: prior.outcome.status === "failed"
-                    ? prior.outcome.failureKind
-                    : "configuration",
-                  message,
-                  durationMs: Date.now() - started,
-                },
-              };
-              writeFileSync(file, JSON.stringify(replacement, null, 2));
-              console.log(`CLEANUP FAILED: ${detail}`);
+            } catch (error) {
+              cleanupError = error;
             }
           }
+          if (!record) throw new Error(`internal error: attempt ${attemptId} produced no record`);
+          const attemptDurationMs = Date.now() - started;
+          record = {
+            ...record,
+            finishedAt: new Date(started + attemptDurationMs).toISOString(),
+            attemptDurationMs,
+            outcome: record.outcome.status === "failed"
+              ? { ...record.outcome, durationMs: attemptDurationMs }
+              : record.outcome,
+          };
+          if (cleanupError !== undefined) {
+            const detail = safeDiagnostic(
+              cleanupError instanceof Error ? cleanupError.message : String(cleanupError),
+            );
+            const message = safeDiagnostic(record.outcome.status === "failed"
+              ? `${record.outcome.message}; cleanup also failed: ${detail}`
+              : `isolated attempt cleanup failed after provider completion: ${detail}`);
+            record = {
+              ...record,
+              outcome: record.outcome.status === "failed"
+                ? { ...record.outcome, message, durationMs: attemptDurationMs }
+                : {
+                    status: "failed",
+                    failureKind: "configuration",
+                    message,
+                    durationMs: attemptDurationMs,
+                    telemetry: completedResultFailureTelemetry(record.outcome.result),
+                  },
+            };
+            console.log(`CLEANUP FAILED: ${detail}`);
+          }
+          writeFileSync(file, JSON.stringify(record, null, 2));
         }
       }
     }
@@ -309,6 +328,37 @@ export async function runMatrix(
   console.log(`\nRuns written to ${outDir}`);
   console.log(`Next: npm run eval:grade -- --runs ${outDir}`);
   return outDir;
+}
+
+export function failureOutcomeForArtifact(
+  runner: RunnerName,
+  error: unknown,
+  durationMs: number,
+): Extract<RunOutcome, { status: "failed" }> {
+  const failureKind = runFailureKind(error);
+  const message = safeDiagnostic(error instanceof Error ? error.message : String(error));
+  const candidateTelemetry = runner === "mock" ? undefined : runFailureTelemetry(error);
+  let telemetry = candidateTelemetry;
+  let telemetryUnavailableReason: "not-observed" | "secret-redacted" | undefined;
+  if (telemetry !== undefined) {
+    try {
+      assertNoSecrets(telemetry, "failure telemetry");
+    } catch {
+      telemetry = undefined;
+      telemetryUnavailableReason = "secret-redacted";
+    }
+  } else if (runner !== "mock" &&
+    (failureKind === "provider" || failureKind === "timeout" || failureKind === "parse")) {
+    telemetryUnavailableReason = "not-observed";
+  }
+  return {
+    status: "failed",
+    failureKind,
+    message,
+    durationMs,
+    ...(telemetry ? { telemetry } : {}),
+    ...(telemetryUnavailableReason ? { telemetryUnavailableReason } : {}),
+  };
 }
 
 function productionManifestSkillName(config: ReviewContext["config"], runner: RunnerName): string {
@@ -320,6 +370,60 @@ function productionManifestSkillName(config: ReviewContext["config"], runner: Ru
     );
   }
   return config.runners.claude.skillName;
+}
+
+/**
+ * Cleanup is part of attempt validity, but it happens after provider work has
+ * already been incurred. Convert the completed result to failure telemetry so
+ * accounting retains known spend without persisting model output.
+ */
+function completedResultFailureTelemetry(result: EngineResult): RunFailureTelemetry | undefined {
+  if (result.engine === "mock") return undefined;
+  const stages = completedStages(result.raw);
+  // An aggregate without its contributing requests cannot be reconciled during
+  // strict artifact ingestion. Omit telemetry instead of inventing provenance.
+  if (stages.length === 0) return undefined;
+  return {
+    engine: result.engine,
+    modelConfig: result.modelConfig,
+    usage: result.usage,
+    durationMs: result.durationMs,
+    stages,
+  };
+}
+
+function completedStages(raw: unknown): StageTelemetry[] {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return [];
+  const record = raw as Record<string, unknown>;
+  const breadth = completedStage("breadth", record.breadth);
+  const investigation = completedStage("investigation", record.investigation);
+  // Partial raw stage metadata cannot be reconciled with aggregate usage.
+  return breadth && investigation ? [breadth, investigation] : [];
+}
+
+function completedStage(
+  stage: StageTelemetry["stage"],
+  value: unknown,
+): StageTelemetry | undefined {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.model !== "string" ||
+    typeof record.promptSha256 !== "string" ||
+    !/^[a-f0-9]{64}$/.test(record.promptSha256) ||
+    !record.usage || typeof record.usage !== "object" || Array.isArray(record.usage) ||
+    !Number.isSafeInteger(record.durationMs) || Number(record.durationMs) < 0
+  ) {
+    return undefined;
+  }
+  return {
+    stage,
+    model: record.model,
+    promptSha256: record.promptSha256,
+    usage: record.usage as StageTelemetry["usage"],
+    durationMs: Number(record.durationMs),
+    completed: true,
+  };
 }
 
 export function loadCaseSpec(caseDir: string): CaseSpec {
@@ -469,6 +573,11 @@ function readExpectedBugCount(caseDir: string): number | null {
 }
 
 function validateMatrixCaseSelection(matrix: MatrixConfig): void {
+  if (!Array.isArray(matrix.configs)) throw new Error("matrix configs must be an array");
+  const configNames = matrix.configs.map((config) => config.name);
+  if (new Set(configNames).size !== configNames.length) {
+    throw new Error("matrix config names must not contain duplicates");
+  }
   if (matrix.corpora === undefined) return;
   if (
     !Array.isArray(matrix.corpora) ||
