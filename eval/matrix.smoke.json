@@ -1,4 +1,5 @@
 {
   "repeats": 1,
+  "corpora": ["structural-smoke"],
   "configs": [{ "name": "mock", "runner": "mock" }]
 }

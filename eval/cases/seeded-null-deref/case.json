@@ -1,7 +1,0 @@
-{
-  "name": "seeded-null-deref",
-  "kind": "seeded",
-  "fixtureDir": "fixture",
-  "diffFile": "diff.patch",
-  "notes": "Synthetic seed case demonstrating the format: refactor drops a null guard."
-}

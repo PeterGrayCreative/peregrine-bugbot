@@ -17,20 +17,33 @@ their completion and failure-inclusive metrics are intentionally unavailable.
 
 ## Case library
 
-Each directory under `eval/cases/` is one case:
+Cases are separated by intended use before any provider run:
 
 ```
-eval/cases/<name>/
-├── case.json          # kind: seeded | historical | clean; fixture or repo+commit
-├── diff.patch         # the diff under review (base...head)
-├── ground_truth.json  # known bugs ({"bugs": []} for clean cases)
-└── fixture/           # head-state code (or use repo+commit in case.json)
+eval/cases/
+├── structural-smoke/  # marker-driven fixtures; mock runner only
+├── development/       # live cases used while designing an intervention
+└── validation/        # live checkpoint cases, never used for prompt tuning
+
+<corpus>/case-<opaque-id>/
+├── case.json          # discriminated fixture or historical source contract
+├── diff.patch         # runner-owned input, never copied into the checkout
+├── ground_truth.json  # grader-owned input, never copied into the checkout
+├── metadata.json      # optional sanitized title/body only
+└── fixture/           # complete head-state tree for seeded/clean cases
 ```
+
+Case IDs and directory names must match `case-[a-f0-9]{8,32}`. Descriptive
+names, curator notes, issue text, review threads, and later fixes stay outside
+all model-visible paths and metadata. Fixture cases use `fixtureDir`;
+historical cases use `repoSource`, `baseCommit`, and `headCommit`. Historical
+private sources should be supplied as local curator checkouts; `repoSource`
+may not embed credentials and the staging clone cannot use ambient credentials.
 
 Build cases three ways:
 
-1. **historical** — mine your repos for bug-fix PRs; the case is the PR that
-   *introduced* the bug (repo+commit at its head, diff of that PR). Gold
+1. **historical** — mine your repos for bug-fix PRs; the case identifies the
+   introducing PR's source plus full base/head object IDs and checked-in diff. Gold
    standard: real bugs that escaped review.
 2. **seeded** — take a clean merged PR and inject a realistic mutation
    (inverted conditional, off-by-one, dropped guard). Cheap recall data.
@@ -39,11 +52,37 @@ Build cases three ways:
 
 Keep a handful of cases as a holdout you never tune prompts against.
 
-The checked-in seed suite covers nullability, ordinary zero/fallback logic,
-swallowed errors, stale frontend closures, and pagination overlap, with clean
-rename, nullish-default, and error-propagation controls. This is a regression
-floor, not a statistically meaningful production benchmark. Add historical
-cases and grow beyond 20 cases before making cost/recall routing decisions.
+The checked-in marker-driven suite covers nullability, ordinary zero/fallback
+logic, swallowed errors, stale frontend closures, and pagination overlap,
+with clean rename, nullish-default, and error-propagation controls. It is a
+structural regression floor, not a model corpus or evidence of recall. The
+runner refuses to send it to Claude or Codex.
+
+Every scheduled case/configuration/repeat receives a new temporary repository.
+The runner reconstructs deterministic base/head commits, supplies those refs
+to the normal review path, then destroys the checkout and isolated provider
+home whether the attempt succeeds or fails. Provider-visible repositories have
+no remotes, hooks, credentialed Git configuration, nested Git data, case
+artifacts, or commits newer than the reviewed head.
+
+Before provider inference, Peregrine scans the checkout path, repository tree,
+diff, sanitized metadata, and both final stage prompts for answer leakage. Live
+cases fail closed on descriptive IDs, path traversal, symlinks, special files,
+answer artifacts, ground-truth IDs, and undocumented markers such as `BUG` and
+`FIXME`. The attempt manifest records whether provider-host network isolation
+is enforced, limited, or not applicable. Current Claude and Codex integrations
+record `limited`: tool/sandbox restrictions are present, but the runner cannot
+independently attest a provider-host network namespace. Do not admit a live
+case whose answer is publicly retrievable from supplied identifiers.
+
+Live provider processes also receive an attempt-specific `HOME`, XDG paths,
+temporary directory, and disabled global/system Git configuration. Ambient
+SSH agents, Git credential helpers, CLI home directories, proxy URLs, and
+unrelated credentials are not forwarded. Consequently, file-backed user-login
+sessions are not a supported eval authentication path: provide the selected
+provider's explicit environment credential (`ANTHROPIC_API_KEY`,
+`CLAUDE_CODE_OAUTH_TOKEN`, or `OPENAI_API_KEY`). A missing credential is a
+recorded provider failure, never a reason to fall back to the user's home.
 
 ## Running
 
@@ -65,7 +104,7 @@ npm run eval:report -- --runs eval/runs/<dir>   # benchmark.json + benchmark.htm
 ## Zero-cost smoke test
 
 ```bash
-# mock engine "detects" lines marked `// BUG:` — verifies the whole pipeline
+# mock engine detects structural markers; no provider process is started
 npm run eval:smoke
 ```
 

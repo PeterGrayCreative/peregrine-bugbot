@@ -11,7 +11,7 @@ import type { CodexEffort, EngineResult, ReviewContext, Usage } from "../types.j
 import { type ExecResult, exec } from "../util/exec.js";
 import type { Engine } from "./engine.js";
 import { assertNoSecrets, safeDiagnostic } from "../security/secrets.js";
-import { providerEnvironment } from "../security/provider-env.js";
+import { isolatedProviderEnvironment, providerEnvironment } from "../security/provider-env.js";
 
 type ExecFunction = typeof exec;
 
@@ -30,9 +30,11 @@ async function runStage(args: {
   schema: string;
   output: string;
   prompt: string;
+  stage: "breadth" | "investigation";
   timeoutMs: number;
 }): Promise<CodexStageResult> {
   const started = Date.now();
+  args.ctx.evaluationIsolation?.validatePrompt(args.prompt, args.stage);
   const result = await args.run(
     "codex",
     [
@@ -61,7 +63,9 @@ async function runStage(args: {
       cwd: args.ctx.repoPath,
       timeoutMs: args.timeoutMs,
       stdin: args.prompt,
-      env: providerEnvironment("codex"),
+      env: args.ctx.evaluationIsolation
+        ? isolatedProviderEnvironment("codex", args.ctx.evaluationIsolation.providerHome)
+        : providerEnvironment("codex"),
       inheritEnv: false,
     },
   );
@@ -129,7 +133,9 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
     async review(ctx: ReviewContext): Promise<EngineResult> {
       const cfg = ctx.config.runners.codex;
       const started = Date.now();
-      const skillDir = bundledSkillDir(cfg.skillName);
+      const skillDir = ctx.evaluationIsolation
+        ? join(ctx.evaluationIsolation.providerAssetsRoot, "skills", cfg.skillName)
+        : bundledSkillDir(cfg.skillName);
       const manifest = await prepareReviewManifest(ctx, cfg.skillName);
       const outDir = mkdtempSync(join(tmpdir(), "peregrine-codex-"));
       try {
@@ -140,9 +146,12 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
           ctx,
           model: cfg.breadthModel,
           effort: cfg.breadthEffort,
-          schema: schemaPath("breadth-result"),
+          schema: ctx.evaluationIsolation
+            ? join(ctx.evaluationIsolation.providerAssetsRoot, "schemas", "breadth-result.schema.json")
+            : schemaPath("breadth-result"),
           output: breadthOutput,
           prompt: buildBreadthPrompt(ctx, skillDir, manifest),
+          stage: "breadth",
           timeoutMs: breadthTimeout,
         });
         let breadthPayload;
@@ -164,7 +173,9 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
           ctx,
           model: cfg.investigationModel,
           effort: cfg.investigationEffort,
-          schema: schemaPath("review-result"),
+          schema: ctx.evaluationIsolation
+            ? join(ctx.evaluationIsolation.providerAssetsRoot, "schemas", "review-result.schema.json")
+            : schemaPath("review-result"),
           output: reviewOutput,
           prompt: buildInvestigationPrompt(
             ctx,
@@ -173,6 +184,7 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
             JSON.stringify(breadthPayload),
             manifest,
           ),
+          stage: "investigation",
           timeoutMs: remaining,
         });
 

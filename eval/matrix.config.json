@@ -1,10 +1,7 @@
 {
   "repeats": 3,
+  "corpora": ["development", "validation"],
   "configs": [
-    {
-      "name": "mock",
-      "runner": "mock"
-    },
     {
       "name": "sonnet5-to-opus5",
       "runner": "claude",

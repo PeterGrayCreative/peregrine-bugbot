@@ -8,7 +8,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, join } from "node:path";
+import { join } from "node:path";
 import test from "node:test";
 import { gradeRuns } from "../eval/grade.js";
 import { buildReport } from "../eval/report.js";
@@ -20,9 +20,9 @@ import type { MatrixModelConfig, MatrixRunManifest, RunRecord } from "../src/typ
 test("matrix accounting preserves failures, missing attempts, recall, and unknown cost", async () => {
   const root = mkdtempSync(join(tmpdir(), "peregrine-accounting-test-"));
   const casesDir = join(root, "cases");
-  const caseDir = join(casesDir, "case");
+  const caseName = "case-a11ce001";
+  const caseDir = join(casesDir, caseName);
   const fixtureDir = join(caseDir, "fixture", "src");
-  const caseName = `accounting-${basename(root)}`;
   mkdirSync(fixtureDir, { recursive: true });
   writeFileSync(join(fixtureDir, "value.ts"), "export const value = false;\n");
   writeFileSync(
@@ -31,7 +31,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
   );
   writeFileSync(
     join(caseDir, "case.json"),
-    JSON.stringify({ name: caseName, kind: "seeded", fixtureDir: "fixture", diffFile: "diff.patch" }),
+    JSON.stringify({ id: caseName, corpus: "development", kind: "seeded", fixtureDir: "fixture", diffFile: "diff.patch" }),
   );
   writeFileSync(
     join(caseDir, "ground_truth.json"),
@@ -92,6 +92,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     assert.equal(manifest.expectedAttempts.length, 18);
     assert.equal(new Set(manifest.expectedAttempts.map((attempt) => attempt.id)).size, 18);
     assert.equal(new Set(manifest.expectedAttempts.map((attempt) => attempt.file)).size, 18);
+    assert.equal(manifest.providerNetworkIsolation.mock?.status, "not-applicable");
 
     const records = readdirSync(runsDir)
       .filter((file) => file.endsWith(".json") && file !== "matrix-manifest.json")
@@ -193,17 +194,16 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     assert.equal(cleanStats[0]?.failureInclusiveRecallMean, null);
   } finally {
     rmSync(root, { recursive: true, force: true });
-    rmSync(join(tmpdir(), `peregrine-case-${caseName}`), { recursive: true, force: true });
   }
 });
 
 test("invalid case definitions are persisted as configuration failures", async () => {
   const root = mkdtempSync(join(tmpdir(), "peregrine-invalid-case-test-"));
-  const caseDir = join(root, "cases", "invalid-case");
+  const caseDir = join(root, "cases", "case-badbad00");
   mkdirSync(caseDir, { recursive: true });
   writeFileSync(
     join(caseDir, "case.json"),
-    JSON.stringify({ name: "invalid-case", kind: "seeded", diffFile: "diff.patch" }),
+    JSON.stringify({ id: "case-badbad00", corpus: "development", kind: "seeded", diffFile: "diff.patch" }),
   );
   const matrixPath = join(root, "matrix.json");
   writeFileSync(

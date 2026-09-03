@@ -1,0 +1,7 @@
+{
+  "id": "case-00000003",
+  "corpus": "structural-smoke",
+  "kind": "clean",
+  "fixtureDir": "fixture",
+  "diffFile": "diff.patch"
+}

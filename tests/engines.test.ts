@@ -16,7 +16,7 @@ function config(): PeregrineConfig {
 function context(): ReviewContext {
   return {
     repoPath: resolve("."),
-    diffPath: resolve("eval/cases/seeded-null-deref/diff.patch"),
+    diffPath: resolve("eval/cases/structural-smoke/case-00000004/diff.patch"),
     diffText: "diff --git a/src/app.ts b/src/app.ts\n+unsafe\n",
     baseRef: "base-sha",
     headRef: "head-sha",
@@ -90,6 +90,7 @@ const breadth = {
 
 test("Claude runner performs isolated, measurable breadth and investigation stages", async () => {
   const calls: Array<{ command: string; args: string[] }> = [];
+  const validatedStages: string[] = [];
   const fake: typeof exec = async (cmd, args) => {
     calls.push({ command: cmd, args });
     const schema = JSON.parse(args[args.indexOf("--json-schema") + 1]!) as { title?: string };
@@ -104,7 +105,13 @@ test("Claude runner performs isolated, measurable breadth and investigation stag
       timedOut: false,
     };
   };
-  const reviewed = await createClaudeEngine(fake).review(context());
+  const ctx = context();
+  ctx.evaluationIsolation = {
+    providerHome: "/tmp/peregrine-test-provider-home",
+    providerAssetsRoot: resolve("."),
+    validatePrompt(_prompt, stage) { validatedStages.push(stage); },
+  };
+  const reviewed = await createClaudeEngine(fake).review(ctx);
   assert.equal(calls.length, 2);
   assert.ok(calls.every((call) => call.command === "claude"));
   assert.ok(calls.every((call) => call.args.includes("--plugin-dir")));
@@ -121,10 +128,12 @@ test("Claude runner performs isolated, measurable breadth and investigation stag
   assert.equal(reviewed.reviewedHeadRef, "head-sha");
   assert.equal(reviewed.usage.inputTokens, 20);
   assert.equal(reviewed.usage.costUsd, 0.02);
+  assert.deepEqual(validatedStages, ["breadth", "investigation"]);
 });
 
 test("Codex runner performs isolated breadth and investigation stages", async () => {
   const calls: Array<{ args: string[]; stdin?: string }> = [];
+  const validatedStages: string[] = [];
   const fake: typeof exec = async (_cmd, args, options) => {
     calls.push({ args, stdin: options?.stdin });
     const outputIndex = args.indexOf("--output-last-message");
@@ -150,7 +159,13 @@ test("Codex runner performs isolated breadth and investigation stages", async ()
       timedOut: false,
     };
   };
-  const reviewed = await createCodexEngine(fake).review(context());
+  const ctx = context();
+  ctx.evaluationIsolation = {
+    providerHome: "/tmp/peregrine-test-provider-home",
+    providerAssetsRoot: resolve("."),
+    validatePrompt(_prompt, stage) { validatedStages.push(stage); },
+  };
+  const reviewed = await createCodexEngine(fake).review(ctx);
   assert.equal(calls.length, 2);
   assert.ok(calls.every((call) => call.args.includes("read-only")));
   assert.ok(calls.every((call) => call.args.includes("--ignore-user-config")));
@@ -161,6 +176,7 @@ test("Codex runner performs isolated breadth and investigation stages", async ()
   assert.equal(reviewed.findings.length, 1);
   assert.equal(reviewed.usage.inputTokens, 22);
   assert.equal(reviewed.usage.cachedInputTokens, 4);
+  assert.deepEqual(validatedStages, ["breadth", "investigation"]);
 });
 
 test("provider process failures are surfaced instead of becoming clean reviews", async () => {

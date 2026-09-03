@@ -94,7 +94,15 @@ export interface ReviewContext {
   prBody?: string;
   profilePath?: string;
   deep?: boolean;
+  /** Eval-only process isolation. Production review callers leave this unset. */
+  evaluationIsolation?: EvaluationIsolation;
   config: PeregrineConfig;
+}
+
+export interface EvaluationIsolation {
+  providerHome: string;
+  providerAssetsRoot: string;
+  validatePrompt(prompt: string, stage: "breadth" | "investigation"): void;
 }
 
 export interface ClaudeRunnerConfig {
@@ -150,15 +158,31 @@ export interface GroundTruth {
   bugs: GroundTruthBug[];
 }
 
-export interface CaseSpec {
-  name: string;
-  kind: "seeded" | "historical" | "clean";
-  fixtureDir?: string;
-  repo?: string;
-  commit?: string;
+export const CASE_CORPORA = ["structural-smoke", "development", "validation"] as const;
+export type CaseCorpus = (typeof CASE_CORPORA)[number];
+
+interface CaseSpecBase {
+  /** Opaque identifier; must also be the case directory basename. */
+  id: string;
+  corpus: CaseCorpus;
   diffFile: string;
-  notes?: string;
+  /** Optional sanitized title/body JSON. Curator notes do not belong here. */
+  metadataFile?: string;
 }
+
+export interface FixtureCaseSpec extends CaseSpecBase {
+  kind: "seeded" | "clean";
+  fixtureDir: string;
+}
+
+export interface HistoricalCaseSpec extends CaseSpecBase {
+  kind: "historical";
+  repoSource: string;
+  baseCommit: string;
+  headCommit: string;
+}
+
+export type CaseSpec = FixtureCaseSpec | HistoricalCaseSpec;
 
 export interface MatrixModelConfig {
   name: string;
@@ -169,6 +193,7 @@ export interface MatrixModelConfig {
 export interface MatrixConfig {
   repeats: number;
   configs: MatrixModelConfig[];
+  corpora?: CaseCorpus[];
 }
 
 export interface RunAttempt {
@@ -183,6 +208,12 @@ export interface MatrixRunManifest {
   schemaVersion: 1;
   createdAt: string;
   expectedAttempts: RunAttempt[];
+  providerNetworkIsolation: Partial<Record<RunnerName, NetworkIsolationCapability>>;
+}
+
+export interface NetworkIsolationCapability {
+  status: "enforced" | "limited" | "not-applicable";
+  mechanism: string;
 }
 
 export type RunOutcome =

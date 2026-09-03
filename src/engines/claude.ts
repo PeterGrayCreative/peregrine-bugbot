@@ -2,10 +2,11 @@ import { breadthSchemaJson, parseBreadthResult } from "../core/breadth-result.js
 import { prepareReviewManifest } from "../core/manifest.js";
 import { buildBreadthPrompt, buildInvestigationPrompt } from "../core/prompt.js";
 import { bundledSkillDir, packageRoot } from "../core/paths.js";
+import { join } from "node:path";
 import { buildEngineResult, parseReviewPayload, reviewSchemaJson } from "../core/review-result.js";
 import { RunFailureError } from "../core/run-failure.js";
 import { assertNoSecrets, safeDiagnostic } from "../security/secrets.js";
-import { providerEnvironment } from "../security/provider-env.js";
+import { isolatedProviderEnvironment, providerEnvironment } from "../security/provider-env.js";
 import type { ClaudeEffort, EngineResult, ReviewContext, Usage } from "../types.js";
 import { type ExecResult, exec, lastJsonBlock } from "../util/exec.js";
 import type { Engine } from "./engine.js";
@@ -24,6 +25,7 @@ async function runStage<T>(args: {
   model: string;
   effort: ClaudeEffort;
   prompt: string;
+  stage: "breadth" | "investigation";
   schema: string;
   maxTurns: number;
   maxBudgetUsd: number;
@@ -32,10 +34,11 @@ async function runStage<T>(args: {
   parse: (value: unknown) => T;
 }): Promise<ClaudeStageResult<T>> {
   const started = Date.now();
+  args.ctx.evaluationIsolation?.validatePrompt(args.prompt, args.stage);
   const result = await args.run(
     "claude",
     [
-      "--plugin-dir", packageRoot(),
+      "--plugin-dir", args.ctx.evaluationIsolation?.providerAssetsRoot ?? packageRoot(),
       "-p", args.prompt,
       "--output-format", "json",
       "--json-schema", args.schema,
@@ -50,7 +53,9 @@ async function runStage<T>(args: {
     {
       cwd: args.ctx.repoPath,
       timeoutMs: args.timeoutMs,
-      env: providerEnvironment("claude"),
+      env: args.ctx.evaluationIsolation
+        ? isolatedProviderEnvironment("claude", args.ctx.evaluationIsolation.providerHome)
+        : providerEnvironment("claude"),
       inheritEnv: false,
     },
   );
@@ -119,7 +124,9 @@ export function createClaudeEngine(run: ExecFunction = exec): Engine {
     async review(ctx: ReviewContext): Promise<EngineResult> {
       const cfg = ctx.config.runners.claude;
       const started = Date.now();
-      const skillDir = bundledSkillDir(cfg.skillName);
+      const skillDir = ctx.evaluationIsolation
+        ? join(ctx.evaluationIsolation.providerAssetsRoot, "skills", cfg.skillName)
+        : bundledSkillDir(cfg.skillName);
       const manifest = await prepareReviewManifest(ctx, cfg.skillName);
       const totalTurns = ctx.deep ? cfg.maxTurns * 2 : cfg.maxTurns;
       const totalBudget = ctx.deep ? cfg.maxBudgetUsd * 2 : cfg.maxBudgetUsd;
@@ -133,6 +140,7 @@ export function createClaudeEngine(run: ExecFunction = exec): Engine {
         model: cfg.breadthModel,
         effort: cfg.breadthEffort,
         prompt: buildBreadthPrompt(ctx, skillDir, manifest),
+        stage: "breadth",
         schema: breadthSchemaJson(),
         maxTurns: breadthTurns,
         maxBudgetUsd: breadthBudget,
@@ -158,6 +166,7 @@ export function createClaudeEngine(run: ExecFunction = exec): Engine {
           JSON.stringify(breadth.output),
           manifest,
         ),
+        stage: "investigation",
         schema: reviewSchemaJson(),
         maxTurns: Math.max(1, totalTurns - breadthTurns),
         maxBudgetUsd: totalBudget - breadthBudget,
