@@ -274,11 +274,7 @@ function fakeProbeRuntime(
   };
 }
 
-test("the merged live-provider gate remains closed", () => {
+test("live providers require the outer OCI adapter", () => {
   const isolation = readFileSync(resolve("eval/case-isolation.ts"), "utf8");
-  assert.match(
-    isolation,
-    /export function assertLiveProviderIsolationAvailable\(runner: RunnerName\): void \{\n  if \(runner === "mock"\) return;\n  throw new Error\(/,
-  );
-  assert.match(isolation, /live \$\{runner\} evaluation is disabled until an externally enforced filesystem and network allowlist/);
+  assert.match(isolation, /live \$\{runner\} evaluation requires the attested OCI filesystem containment adapter/);
 });
