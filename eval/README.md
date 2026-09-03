@@ -66,7 +66,8 @@ Every new matrix config must declare one of three experiment modes:
   access. It proves only the deterministic harness path.
 - `screening` is a small development-corpus control/treatment comparison used
   to reject an unsafe or clearly inferior intervention. It is not release-level
-  efficacy evidence.
+  efficacy evidence, holdout evidence, or proof that the visible gold-set gate
+  is ready.
 - `checkpoint` is the larger contemporaneous control/treatment comparison used
   at a planned evaluation gate. Development and validation results remain
   separate in the report.
@@ -185,6 +186,11 @@ eval/cases/
 ├── leakage_exceptions.json # optional content hashes + curator reasons
 └── fixture/           # complete head-state tree for seeded/clean cases
 ```
+
+Behavioral fixture trees are excluded from the repository's root TypeScript
+typecheck because defect cases may intentionally contain code that does not
+compile. Fixture correctness is governed by corpus admission, content-addressed
+curator proof, and exact materialization/diff validation instead.
 
 Case IDs and directory names must match `case-[a-f0-9]{8,32}`. Descriptive
 names, curator notes, issue text, review threads, and later fixes stay outside
@@ -456,8 +462,9 @@ authenticated API-key or sanitized CLI-session setup, and deliberate ceilings.
 Live cache state remains `uncontrolled` until a separate cache
 protocol can enforce and attest cold or warm conditions.
 
-Screening and checkpoint use the same config shape. Set `experiment.mode` to
-`screening` for a curated development subset or `checkpoint` for the planned
+Screening and checkpoint share the control/treatment protocol. Set
+`experiment.mode` to `screening` for a curated development subset or
+`checkpoint` for the planned
 historical gold development/validation gate, and name exactly one `control` and
 one `treatment` from `configs`. Before creating a run directory or starting a
 provider, screening requires a non-empty selection and fully validates every
@@ -466,6 +473,17 @@ and validation cases, contain no structural-smoke cases, and require the
 complete visible corpus to satisfy `goldSetReady`. There is no checked-in
 provider-enabled screening config; enabling one is an explicit operator
 decision backed by the private-image and credential setup.
+
+For a practical screening run, add `caseIds` at the matrix root. It must be a
+non-empty, duplicate-free list of opaque `case-...` IDs, and every ID must name
+an admitted case in the selected development corpus. Discovery and global ID
+collision checks still cover the complete case tree before the allowlist is
+applied. The scheduled subset is sorted canonically before seeded shuffling, so
+reordering `caseIds` does not change attempt order. Use a preregistered,
+stratified subset (for example, representative defect lanes, clean controls,
+change shapes, and sizes); do not choose cases after seeing model output.
+`caseIds` is rejected for structural smoke and checkpoint runs. A subset result
+is diagnostic screening evidence only, never holdout or complete-gold evidence.
 
 Until genuine sanitized development and validation cases are admitted, a
 screening or checkpoint matrix fails before creating run artifacts or starting
