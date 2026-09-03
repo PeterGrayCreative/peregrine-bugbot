@@ -194,7 +194,9 @@ function calculateStats(args: {
     recallMean: recalls.length > 0 ? mean(recalls) : null,
     recallStd: recalls.length > 0 ? std(recalls) : null,
     failureInclusiveRecallMean:
-      args.failureInclusiveRecalls === null ? null : mean(args.failureInclusiveRecalls),
+      args.failureInclusiveRecalls === null || args.failureInclusiveRecalls.length === 0
+        ? null
+        : mean(args.failureInclusiveRecalls),
     fpPerCaseMean: fps.length > 0 ? mean(fps) : null,
     costPerCaseMean: hasCompleteCost ? mean(costs) : null,
     costPerCaseStd: hasCompleteCost ? std(costs) : null,

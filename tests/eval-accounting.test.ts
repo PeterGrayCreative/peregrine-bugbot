@@ -41,6 +41,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
   const configs: MatrixModelConfig[] = ["completed", "mixed", "timeout", "provider", "parse", "unknown", "missing"].map(
     (name) => ({ name, runner: "mock", overrides: { scenario: name } }),
   );
+  configs.push({ name: "completed", runner: "mock", overrides: { scenario: "completed" } });
   configs.push({ name: "configuration", runner: "codex", overrides: { timeoutMs: 0 } });
   const matrixPath = join(root, "matrix.json");
   writeFileSync(matrixPath, JSON.stringify({ repeats: 2, configs }));
@@ -88,12 +89,14 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     const manifest = JSON.parse(
       readFileSync(join(runsDir, "matrix-manifest.json"), "utf8"),
     ) as MatrixRunManifest;
-    assert.equal(manifest.expectedAttempts.length, 16);
+    assert.equal(manifest.expectedAttempts.length, 18);
+    assert.equal(new Set(manifest.expectedAttempts.map((attempt) => attempt.id)).size, 18);
+    assert.equal(new Set(manifest.expectedAttempts.map((attempt) => attempt.file)).size, 18);
 
     const records = readdirSync(runsDir)
       .filter((file) => file.endsWith(".json") && file !== "matrix-manifest.json")
       .map((file) => JSON.parse(readFileSync(join(runsDir, file), "utf8")) as RunRecord);
-    assert.equal(records.length, 16);
+    assert.equal(records.length, 18);
     const failures = records.filter(
       (record): record is RunRecord & { outcome: Extract<RunRecord["outcome"], { status: "failed" }> } =>
         record.outcome.status === "failed",
@@ -116,6 +119,8 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     const stats = await buildReport(runsDir, { casesDir });
     const completed = stats.find((item) => item.config === "completed");
     assert.equal(completed?.completionRate, 1);
+    assert.equal(completed?.expectedRuns, 4);
+    assert.equal(completed?.completedRuns, 4);
     assert.equal(completed?.recallMean, 1);
     assert.equal(completed?.failureInclusiveRecallMean, 1);
     assert.equal(completed?.costPerCaseMean, null);
@@ -135,7 +140,10 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
 
     const legacyDir = join(root, "legacy");
     mkdirSync(legacyDir);
-    const gradedFile = readdirSync(runsDir).find((file) => file.startsWith("completed--") && file.endsWith(".graded.json"));
+    const gradedFile = readdirSync(runsDir).find((file) => {
+      if (!file.endsWith(".graded.json")) return false;
+      return (JSON.parse(readFileSync(join(runsDir, file), "utf8")) as RunRecord).configName === "completed";
+    });
     assert.ok(gradedFile);
     const graded = JSON.parse(readFileSync(join(runsDir, gradedFile), "utf8")) as Record<string, unknown>;
     writeFileSync(join(legacyDir, "new-shape.graded.json"), JSON.stringify(graded));
@@ -149,8 +157,74 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     assert.equal(legacyStats[0]?.failureInclusiveRecallMean, null);
     assert.equal(legacyStats[0]?.costPerCaseMean, null);
     assert.equal(legacyStats[0]?.completedRuns, 2);
+
+    const cleanCaseDir = join(casesDir, "clean-case");
+    mkdirSync(cleanCaseDir);
+    writeFileSync(join(cleanCaseDir, "ground_truth.json"), JSON.stringify({ bugs: [] }));
+    const cleanRunsDir = join(root, "clean-runs");
+    mkdirSync(cleanRunsDir);
+    const cleanAttempt = {
+      id: "attempt-000001",
+      caseName: "clean-case",
+      configName: "clean-only",
+      repeat: 1,
+      file: "attempt-000001.json",
+    };
+    writeFileSync(
+      join(cleanRunsDir, "matrix-manifest.json"),
+      JSON.stringify({ schemaVersion: 1, createdAt: new Date().toISOString(), expectedAttempts: [cleanAttempt] }),
+    );
+    const completedRun = records.find((record) => record.outcome.status === "completed");
+    assert.ok(completedRun && completedRun.outcome.status === "completed");
+    const cleanRun: RunRecord = {
+      ...completedRun,
+      attemptId: cleanAttempt.id,
+      caseName: cleanAttempt.caseName,
+      configName: cleanAttempt.configName,
+      outcome: { ...completedRun.outcome, result: { ...completedRun.outcome.result, findings: [] } },
+    };
+    writeFileSync(join(cleanRunsDir, cleanAttempt.file), JSON.stringify(cleanRun));
+    writeFileSync(
+      join(cleanRunsDir, "attempt-000001.graded.json"),
+      JSON.stringify({ ...cleanRun, matches: {}, falsePositiveIndexes: [] }),
+    );
+    const cleanStats = await buildReport(cleanRunsDir, { casesDir });
+    assert.equal(cleanStats[0]?.recallMean, null);
+    assert.equal(cleanStats[0]?.failureInclusiveRecallMean, null);
   } finally {
     rmSync(root, { recursive: true, force: true });
     rmSync(join(tmpdir(), `peregrine-case-${caseName}`), { recursive: true, force: true });
+  }
+});
+
+test("invalid case definitions are persisted as configuration failures", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-invalid-case-test-"));
+  const caseDir = join(root, "cases", "invalid-case");
+  mkdirSync(caseDir, { recursive: true });
+  writeFileSync(
+    join(caseDir, "case.json"),
+    JSON.stringify({ name: "invalid-case", kind: "seeded", diffFile: "diff.patch" }),
+  );
+  const matrixPath = join(root, "matrix.json");
+  writeFileSync(
+    matrixPath,
+    JSON.stringify({ repeats: 1, configs: [{ name: "mock", runner: "mock" }] }),
+  );
+  try {
+    const runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+      casesDir: join(root, "cases"),
+      engineFor: () => {
+        throw new Error("engine should not be selected for an invalid case");
+      },
+    });
+    const recordFile = readdirSync(runsDir).find((file) => file.startsWith("attempt-") && file.endsWith(".json"));
+    assert.ok(recordFile);
+    const record = JSON.parse(readFileSync(join(runsDir, recordFile), "utf8")) as RunRecord;
+    assert.equal(record.outcome.status, "failed");
+    if (record.outcome.status === "failed") {
+      assert.equal(record.outcome.failureKind, "configuration");
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
   }
 });

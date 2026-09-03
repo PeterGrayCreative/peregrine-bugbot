@@ -45,11 +45,12 @@ export async function runMatrix(
   );
   mkdirSync(outDir, { recursive: true });
 
+  let sequence = 0;
   const expectedAttempts = matrix.configs.flatMap((modelConfig) =>
     caseNames.flatMap((caseName) =>
       Array.from({ length: matrix.repeats }, (_, index) => {
         const repeat = index + 1;
-        const id = `${modelConfig.name}--${caseName}--${repeat}`;
+        const id = `attempt-${String(++sequence).padStart(6, "0")}`;
         return { id, caseName, configName: modelConfig.name, repeat, file: `${id}.json` };
       }),
     ),
@@ -70,7 +71,7 @@ export async function runMatrix(
       let prepared: { spec: CaseSpec; repoPath: string } | undefined;
       let preparationError: unknown;
       try {
-        const spec = JSON.parse(readFileSync(join(caseDir, "case.json"), "utf8")) as CaseSpec;
+        const spec = loadCaseSpec(caseDir, caseName);
         prepared = { spec, repoPath: await materializeCase(caseDir, spec) };
       } catch (error) {
         preparationError = error;
@@ -78,8 +79,10 @@ export async function runMatrix(
 
       for (let repeat = 1; repeat <= matrix.repeats; repeat++) {
         done++;
-        const attemptId = `${modelConfig.name}--${caseName}--${repeat}`;
-        const file = join(outDir, `${attemptId}.json`);
+        const attempt = expectedAttempts[done - 1];
+        if (!attempt) throw new Error(`internal error: missing matrix attempt ${done}`);
+        const attemptId = attempt.id;
+        const file = join(outDir, attempt.file);
         const startedAt = new Date().toISOString();
         const started = Date.now();
         process.stdout.write(
@@ -164,6 +167,36 @@ export async function runMatrix(
   return outDir;
 }
 
+function loadCaseSpec(caseDir: string, caseName: string): CaseSpec {
+  let value: unknown;
+  try {
+    value = JSON.parse(readFileSync(join(caseDir, "case.json"), "utf8"));
+  } catch (error) {
+    throw new RunFailureError(
+      "configuration",
+      `case ${caseName}: could not load case.json: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
+    );
+  }
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new RunFailureError("configuration", `case ${caseName}: case.json must be an object`);
+  }
+  const spec = value as Partial<CaseSpec>;
+  if (spec.kind !== "seeded" && spec.kind !== "historical" && spec.kind !== "clean") {
+    throw new RunFailureError("configuration", `case ${caseName}: invalid kind`);
+  }
+  if (typeof spec.diffFile !== "string" || spec.diffFile.length === 0) {
+    throw new RunFailureError("configuration", `case ${caseName}: needs diffFile`);
+  }
+  if (!spec.fixtureDir && !(spec.repo && spec.commit)) {
+    throw new RunFailureError(
+      "configuration",
+      `case ${caseName}: needs fixtureDir or repo+commit`,
+    );
+  }
+  return spec as CaseSpec;
+}
+
 /** Copy a fixture (or clone repo@commit) into a temp dir for review. */
 async function materializeCase(caseDir: string, spec: CaseSpec): Promise<string> {
   const target = join(tmpdir(), `peregrine-case-${spec.name}`);
@@ -180,5 +213,5 @@ async function materializeCase(caseDir: string, spec: CaseSpec): Promise<string>
     if (checkout.code !== 0) throw new Error(`checkout failed: ${checkout.stderr}`);
     return target;
   }
-  throw new Error(`case ${spec.name}: needs fixtureDir or repo+commit`);
+  throw new RunFailureError("configuration", `case ${spec.name}: needs fixtureDir or repo+commit`);
 }
