@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "caseId": "case-d40b36f9",
-  "status": "draft",
+  "status": "admitted",
   "source": { "kind": "seeded", "repositoryAlias": "repo-b", "repositoryIdentitySha256": "102efdd8a0fbfac7febddecbade286e344c0fabd3b96fba2b0315c57248a6fc1", "changeIdentitySha256": "eef05e8838a317f92979e9b2094180fcc1a2926f7d17b7e030d42b0be0f81324", "access": "sanitized-private" },
   "strata": { "languageFamily": "typescript", "architectureFamily": "react-search", "size": "small", "changeShapes": ["seam"], "surfaceLanes": ["frontend-state"] },
   "proof": { "kind": "regression-test", "artifact": "proof.json", "sha256": "7e0402b5011e35b4de29076bf2ea7cc17d15701f5c4bbfd81ae9a2a557e3c2b9" },
@@ -9,5 +9,9 @@
     "curatorIdentitySha256": "00552f42243ca2ac60485b8e49c11d392813f2c29f38bb56ea4ee0423336fc65",
     "confirmedAt": "2026-09-03T17:04:24Z",
     "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
+  }, {
+    "curatorIdentitySha256": "617ac849db736678cc50ccdba46a2eab92738cafb44bda4ccd1eee1c585a4bc1",
+    "confirmedAt": "2026-09-03T17:20:00Z",
+    "checks": ["classification","consequentiality","disposition","line-range","provenance","reachability","root-cause","severity","source-authenticity","truth-completeness"]
   }]
 }
