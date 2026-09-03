@@ -742,6 +742,7 @@ test("pure report aggregation preserves provider cost, token classes, work, and 
     failed: [],
     missing: 0,
     failureInclusiveRecalls: [1],
+    expectedRootCauseRuns: 1,
     structuralExpectedMarkers: null,
   });
   assert.equal(stats.costSource, "provider");
