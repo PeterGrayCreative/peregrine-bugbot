@@ -16,7 +16,7 @@ try {
     mock.failedRuns !== 0 || mock.missingRuns !== 0 ||
     mock.structuralExpectedMarkers !== mock.structuralMatchedMarkers ||
     mock.structuralUnexpectedFindings !== 0 || mock.recallMean !== null ||
-    mock.costPerCaseMean !== null || mock.validFindingsPerDollar !== null) {
+    mock.costPerCaseMean !== null) {
     throw new Error(`mock structural smoke regression: ${JSON.stringify(mock)}`);
   }
   console.log(

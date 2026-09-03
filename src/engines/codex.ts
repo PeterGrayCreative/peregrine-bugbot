@@ -172,15 +172,20 @@ function codexStage(stage: StageTelemetry["stage"], result: CodexStageResult, co
 function wrapCodexFailure(error: unknown, modelConfig: string, started: number, completed: StageTelemetry[]): RunFailureError {
   const partial = runFailureTelemetry(error)?.stages ?? [];
   const stages = [...completed, ...partial];
+  const telemetry = stages.length === 0
+    ? undefined
+    : {
+        engine: "codex" as const,
+        modelConfig,
+        usage: stages.length === 1
+          ? stages[0]!.usage
+          : combineUsage(...stages.map((stage) => stage.usage)),
+        durationMs: Date.now() - started,
+        stages,
+      };
   return new RunFailureError(runFailureKind(error), error instanceof Error ? error.message : "codex review failed", {
     cause: error,
-    telemetry: {
-      engine: "codex",
-      modelConfig,
-      usage: combineUsage(...stages.map((stage) => stage.usage)),
-      durationMs: Date.now() - started,
-      stages,
-    },
+    ...(telemetry ? { telemetry } : {}),
   });
 }
 
@@ -302,7 +307,7 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
             usage: combineUsage(breadth.usage, investigation.usage),
             durationMs: Date.now() - started,
             raw: {
-              manifest: manifest.available ? "runner-generated" : manifest.reason,
+              manifest: manifest.available ? manifest.output : manifest.reason,
               breadth: {
                 output: breadthPayload,
                 model: breadth.model,

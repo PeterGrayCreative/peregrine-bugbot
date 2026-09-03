@@ -144,14 +144,15 @@ export async function runMatrix(
         if (!attempt) throw new Error(`internal error: missing matrix attempt ${done}`);
         const attemptId = attempt.id;
         const file = join(outDir, attempt.file);
-        const startedAt = new Date().toISOString();
         const started = Date.now();
+        const startedAt = new Date(started).toISOString();
         process.stdout.write(
           `[${done}/${total}] ${modelConfig.name} × ${caseName} (run ${repeat}) ... `,
         );
 
         let materialized: Awaited<ReturnType<typeof materializeCase>> | undefined;
         let evaluationProvenance: EvaluationAttemptProvenance | undefined;
+        let record: RunRecord | undefined;
         try {
           if (!spec || !policy || !metadata) {
             throw new RunFailureError(
@@ -241,7 +242,7 @@ export async function runMatrix(
           }
 
           const result = await (options.engineFor ?? getEngine)(modelConfig.runner).review(ctx);
-          const record: RunRecord = {
+          record = {
             schemaVersion: 1,
             attemptId,
             caseName,
@@ -251,11 +252,11 @@ export async function runMatrix(
             repeat,
             runner: attempt.runner,
             startedAt,
-            finishedAt: new Date().toISOString(),
+            finishedAt: startedAt,
+            attemptDurationMs: 0,
             evaluationProvenance,
             outcome: { status: "completed", result },
           };
-          writeFileSync(file, JSON.stringify(record, null, 2));
           console.log(
             `${result.findings.length} finding(s), ${formatUsageCost(result.usage)}`,
           );
@@ -269,7 +270,7 @@ export async function runMatrix(
           } catch {
             telemetry = undefined;
           }
-          const record: RunRecord = {
+          record = {
             schemaVersion: 1,
             attemptId,
             caseName,
@@ -279,49 +280,61 @@ export async function runMatrix(
             repeat,
             runner: attempt.runner,
             startedAt,
-            finishedAt: new Date().toISOString(),
+            finishedAt: startedAt,
+            attemptDurationMs: 0,
             ...(evaluationProvenance ? { evaluationProvenance } : {}),
             outcome: {
               status: "failed",
               failureKind,
               message,
-              durationMs: Date.now() - started,
+              durationMs: 0,
               telemetry,
             },
           };
-          writeFileSync(file, JSON.stringify(record, null, 2));
           console.log(`FAILED [${failureKind}]: ${message}`);
         } finally {
+          let cleanupError: unknown;
           if (materialized) {
             try {
               materialized.cleanup();
-            } catch (cleanupError) {
-              const detail = safeDiagnostic(
-                cleanupError instanceof Error ? cleanupError.message : String(cleanupError),
-              );
-              const prior = JSON.parse(readFileSync(file, "utf8")) as RunRecord;
-              const message = prior.outcome.status === "failed"
-                ? `${prior.outcome.message}; cleanup also failed: ${detail}`
-                : `isolated attempt cleanup failed after provider completion: ${detail}`;
-              const replacement: RunRecord = {
-                ...prior,
-                finishedAt: new Date().toISOString(),
-                outcome: {
-                  status: "failed",
-                  failureKind: prior.outcome.status === "failed"
-                    ? prior.outcome.failureKind
-                    : "configuration",
-                  message,
-                  durationMs: Date.now() - started,
-                  telemetry: prior.outcome.status === "failed"
-                    ? prior.outcome.telemetry
-                    : completedResultFailureTelemetry(prior.outcome.result),
-                },
-              };
-              writeFileSync(file, JSON.stringify(replacement, null, 2));
-              console.log(`CLEANUP FAILED: ${detail}`);
+            } catch (error) {
+              cleanupError = error;
             }
           }
+          if (!record) throw new Error(`internal error: attempt ${attemptId} produced no record`);
+          const attemptDurationMs = Date.now() - started;
+          record = {
+            ...record,
+            finishedAt: new Date(started + attemptDurationMs).toISOString(),
+            attemptDurationMs,
+            outcome: record.outcome.status === "failed"
+              ? { ...record.outcome, durationMs: attemptDurationMs }
+              : record.outcome,
+          };
+          if (cleanupError !== undefined) {
+            const detail = safeDiagnostic(
+              cleanupError instanceof Error ? cleanupError.message : String(cleanupError),
+            );
+            const message = safeDiagnostic(record.outcome.status === "failed"
+              ? `${record.outcome.message}; cleanup also failed: ${detail}`
+              : `isolated attempt cleanup failed after provider completion: ${detail}`);
+            record = {
+              ...record,
+              outcome: {
+                status: "failed",
+                failureKind: record.outcome.status === "failed"
+                  ? record.outcome.failureKind
+                  : "configuration",
+                message,
+                durationMs: attemptDurationMs,
+                telemetry: record.outcome.status === "failed"
+                  ? record.outcome.telemetry
+                  : completedResultFailureTelemetry(record.outcome.result),
+              },
+            };
+            console.log(`CLEANUP FAILED: ${detail}`);
+          }
+          writeFileSync(file, JSON.stringify(record, null, 2));
         }
       }
     }
@@ -542,6 +555,11 @@ function readExpectedBugCount(caseDir: string): number | null {
 }
 
 function validateMatrixCaseSelection(matrix: MatrixConfig): void {
+  if (!Array.isArray(matrix.configs)) throw new Error("matrix configs must be an array");
+  const configNames = matrix.configs.map((config) => config.name);
+  if (new Set(configNames).size !== configNames.length) {
+    throw new Error("matrix config names must not contain duplicates");
+  }
   if (matrix.corpora === undefined) return;
   if (
     !Array.isArray(matrix.corpora) ||

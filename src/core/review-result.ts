@@ -201,8 +201,8 @@ function assertOnlyKeys(value: Record<string, unknown>, allowed: Set<string>, so
 }
 
 function requiredString(value: unknown, source: string, maxLength: number): string {
-  if (typeof value !== "string" || value.length === 0 || value !== value.trim()) {
-    throw new Error(`${source} must be a trimmed non-empty string`);
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error(`${source} must be a non-empty string`);
   }
   if (value.length > maxLength) throw new Error(`${source} exceeds ${maxLength} characters`);
   return value;

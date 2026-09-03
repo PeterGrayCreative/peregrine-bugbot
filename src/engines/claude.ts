@@ -166,7 +166,11 @@ function claudeUsageFromResult(result: ExecResult, prompt: string): Usage {
 }
 
 function unknownClaudeUsage(prompt: string): Usage {
-  return withUnavailable({ provider: "anthropic", promptBytes: promptBytes(prompt) });
+  return withUnavailable({
+    provider: "anthropic",
+    aggregation: "ambiguous",
+    promptBytes: promptBytes(prompt),
+  });
 }
 
 function singleStageFailure(engine: "claude", modelConfig: string, stage: StageTelemetry) {
@@ -184,18 +188,23 @@ function completedStage<T>(stage: StageTelemetry["stage"], result: ClaudeStageRe
 function wrapClaudeFailure(error: unknown, modelConfig: string, started: number, completed: StageTelemetry[]): RunFailureError {
   const partial = runFailureTelemetry(error)?.stages ?? [];
   const stages = [...completed, ...partial];
+  const telemetry = stages.length === 0
+    ? undefined
+    : {
+        engine: "claude" as const,
+        modelConfig,
+        usage: stages.length === 1
+          ? stages[0]!.usage
+          : combineUsage(...stages.map((stage) => stage.usage)),
+        durationMs: Date.now() - started,
+        stages,
+      };
   return new RunFailureError(
     runFailureKind(error),
     error instanceof Error ? error.message : "claude review failed",
     {
       cause: error,
-      telemetry: {
-        engine: "claude",
-        modelConfig,
-        usage: combineUsage(...stages.map((stage) => stage.usage)),
-        durationMs: Date.now() - started,
-        stages,
-      },
+      ...(telemetry ? { telemetry } : {}),
     },
   );
 }
@@ -286,7 +295,7 @@ export function createClaudeEngine(
           usage: combineUsage(breadth.usage, investigation.usage),
           durationMs: Date.now() - started,
           raw: {
-            manifest: manifest.available ? "runner-generated" : manifest.reason,
+            manifest: manifest.available ? manifest.output : manifest.reason,
             breadth: {
               output: breadth.output,
               model: breadth.model,

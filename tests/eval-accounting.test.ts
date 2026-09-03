@@ -13,13 +13,15 @@ import test from "node:test";
 import { gradeRuns } from "../eval/grade.js";
 import { buildReport } from "../eval/report.js";
 import { runMatrix } from "../eval/run-matrix.js";
-import { materializeCase } from "../eval/case-isolation.js";
+import { materializeCase, networkIsolationCapability } from "../eval/case-isolation.js";
 import { readCaseGroundTruth } from "../eval/case-truth.js";
 import {
   assertGradedMatchesRun,
   isPreTelemetryMatrixRunManifest,
   parseGradedRun,
+  parseLegacyMatrixRunManifest,
   parseLegacySchemaV1GradedRun,
+  parseLegacySchemaV1RunRecord,
   parseMatrixRunManifest,
   parsePreTelemetryGradedRun,
   parsePreTelemetryMatrixRunManifest,
@@ -27,14 +29,14 @@ import {
   parseRunRecord,
 } from "../eval/artifacts.js";
 import { RunFailureError } from "../src/core/run-failure.js";
-import { combineUsage, sha256, withUnavailable } from "../src/core/telemetry.js";
+import { combineUsage, mockUsage, sha256, withUnavailable } from "../src/core/telemetry.js";
 import type { Engine } from "../src/engines/engine.js";
 import type { EvaluationAttemptProvenance, GradedRun, MatrixModelConfig, MatrixRunManifest, RunAttempt, RunRecord } from "../src/types.js";
 
 function validAttempt(): RunAttempt {
   return {
     id: "attempt-000001",
-    caseName: "case",
+    caseName: "development/case-00000001",
     configName: "route",
     repeat: 1,
     file: "attempt-000001.json",
@@ -44,22 +46,48 @@ function validAttempt(): RunAttempt {
   };
 }
 
+function emptyBreadthOutput(model = "fast") {
+  return {
+    model,
+    candidates: [],
+    clear: [],
+    escalations: [],
+    coverage: { coveredFiles: ["src/value.ts"], unavailable: [] },
+  };
+}
+
 function validRecord(): RunRecord {
   const provenance = validEvaluationProvenance();
   const breadthUsage = withUnavailable({
     provider: "anthropic",
     aggregation: "single-envelope",
     inputTokens: 4,
+    baseInputTokens: 4,
+    uncachedInputTokens: 4,
+    cachedInputTokens: 0,
+    cacheWriteInputTokens: 0,
+    cacheReadInputTokens: 0,
+    toolCalls: 0,
+    toolCallsByType: {},
+    promptBytes: 40,
   });
   const investigationUsage = withUnavailable({
     provider: "anthropic",
     aggregation: "single-envelope",
     inputTokens: 6,
+    baseInputTokens: 6,
+    uncachedInputTokens: 6,
+    cachedInputTokens: 0,
+    cacheWriteInputTokens: 0,
+    cacheReadInputTokens: 0,
+    toolCalls: 0,
+    toolCallsByType: {},
+    promptBytes: 60,
   });
   return {
     schemaVersion: 1,
     attemptId: "attempt-000001",
-    caseName: "case",
+    caseName: "development/case-00000001",
     caseKind: "seeded",
     configName: "route",
     repeat: 1,
@@ -67,13 +95,14 @@ function validRecord(): RunRecord {
     runner: "claude",
     startedAt: "2026-09-02T00:00:00.000Z",
     finishedAt: "2026-09-02T00:00:01.000Z",
+    attemptDurationMs: 1000,
     evaluationProvenance: provenance,
     outcome: {
       status: "completed",
       result: {
         engine: "claude",
         status: "completed",
-        modelConfig: "fast->strong",
+        modelConfig: "fast/low->strong/high",
         reviewedBaseRef: provenance.history.baseRef,
         reviewedHeadRef: provenance.history.headRef,
         findings: [{
@@ -92,7 +121,9 @@ function validRecord(): RunRecord {
         usage: combineUsage(breadthUsage, investigationUsage),
         durationMs: 1000,
         raw: {
+          manifest: provenance.manifest!.output,
           breadth: {
+            output: emptyBreadthOutput(),
             model: "fast",
             promptSha256: "a".repeat(64),
             usage: breadthUsage,
@@ -108,6 +139,50 @@ function validRecord(): RunRecord {
       },
     },
   };
+}
+
+function validCodexRecord(): RunRecord {
+  const record = structuredClone(validRecord());
+  if (record.outcome.status !== "completed") throw new Error("expected completed fixture");
+  const stageUsage = (inputTokens: number, promptBytes: number) => withUnavailable({
+    provider: "openai" as const,
+    aggregation: "single-snapshot" as const,
+    inputTokens,
+    uncachedInputTokens: inputTokens,
+    cachedInputTokens: 0,
+    cacheReadInputTokens: 0,
+    outputTokens: 1,
+    turns: 1,
+    toolCalls: 0,
+    toolCallsByType: {},
+    toolOutputBytes: 0,
+    promptBytes,
+  });
+  const breadthUsage = stageUsage(4, 40);
+  const investigationUsage = stageUsage(6, 60);
+  record.runner = "codex";
+  record.outcome.result.engine = "codex";
+  record.outcome.result.usage = combineUsage(breadthUsage, investigationUsage);
+  record.outcome.result.raw = {
+    manifest: record.evaluationProvenance!.manifest!.output,
+    breadth: {
+      output: emptyBreadthOutput(),
+      model: "fast",
+      promptSha256: "a".repeat(64),
+      usage: breadthUsage,
+      durationMs: 400,
+      malformedEventLines: 0,
+    },
+    investigation: {
+      output: { findings: structuredClone(record.outcome.result.findings) },
+      model: "strong",
+      promptSha256: "b".repeat(64),
+      usage: investigationUsage,
+      durationMs: 600,
+      malformedEventLines: 0,
+    },
+  };
+  return record;
 }
 
 function validEvaluationProvenance(): EvaluationAttemptProvenance {
@@ -163,10 +238,63 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
     createdAt: "2026-09-02T00:00:00.000Z",
     expectedAttempts: [attempt],
     providerNetworkIsolation: {
-      claude: { status: "limited", mechanism: "provider-specific sandbox" },
+      claude: { status: "enforced", mechanism: "test-enforced provider sandbox" },
     },
   };
   assert.doesNotThrow(() => parseMatrixRunManifest(manifest));
+  assert.throws(
+    () => parseMatrixRunManifest({ ...manifest, providerNetworkIsolation: {} }),
+    /providerNetworkIsolation is missing claude/,
+  );
+  assert.doesNotThrow(
+    () => parseMatrixRunManifest({
+      ...manifest,
+      providerNetworkIsolation: {
+        claude: { status: "limited", mechanism: "provider-specific sandbox" },
+      },
+    }),
+  );
+  assert.throws(
+    () => parseMatrixRunManifest({
+      ...manifest,
+      providerNetworkIsolation: {
+        claude: { status: "not-applicable", mechanism: "no provider process" },
+      },
+    }),
+    /providerNetworkIsolation\.claude cannot be not-applicable/,
+  );
+  assert.throws(
+    () => parseMatrixRunManifest({
+      ...manifest,
+      providerNetworkIsolation: {
+        claude: networkIsolationCapability("claude"),
+        codex: networkIsolationCapability("codex"),
+      },
+    }),
+    /providerNetworkIsolation has undeclared codex/,
+  );
+  const relabeledCorpus = structuredClone(manifest);
+  relabeledCorpus.expectedAttempts[0]!.corpus = "validation";
+  assert.throws(
+    () => parseMatrixRunManifest(relabeledCorpus),
+    /caseName must be nested directly under its corpus/,
+  );
+  const descriptiveCase = structuredClone(manifest);
+  descriptiveCase.expectedAttempts[0]!.caseName = "development/descriptive-case";
+  assert.throws(
+    () => parseMatrixRunManifest(descriptiveCase),
+    /caseName basename must match/,
+  );
+  const duplicateLogicalAttempt = structuredClone(manifest);
+  duplicateLogicalAttempt.expectedAttempts.push({
+    ...duplicateLogicalAttempt.expectedAttempts[0]!,
+    id: "attempt-000002",
+    file: "attempt-000002.json",
+  });
+  assert.throws(
+    () => parseMatrixRunManifest(duplicateLogicalAttempt),
+    /duplicate logical attempt/,
+  );
   assert.doesNotThrow(() => parseRunRecord(validRecord(), "record", attempt));
   const currentWithoutProvenance = structuredClone(validRecord());
   delete currentWithoutProvenance.evaluationProvenance;
@@ -211,6 +339,153 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
   if (wrongProvider.outcome.status !== "completed") throw new Error("expected completed fixture");
   wrongProvider.outcome.result.usage.provider = "openai";
   assert.throws(() => parseRunRecord(wrongProvider, "record", attempt), /does not match claude runner/);
+
+  const missingAggregateProvider = structuredClone(validRecord());
+  if (missingAggregateProvider.outcome.status !== "completed") throw new Error("expected completed fixture");
+  delete missingAggregateProvider.outcome.result.usage.provider;
+  assert.throws(
+    () => parseRunRecord(missingAggregateProvider, "current aggregate without provider", attempt),
+    /usage\.provider does not match claude runner/,
+  );
+
+  const missingStageProvider = structuredClone(validRecord());
+  if (missingStageProvider.outcome.status !== "completed") throw new Error("expected completed fixture");
+  const raw = missingStageProvider.outcome.result.raw as {
+    breadth: { usage: { provider?: string } };
+  };
+  delete raw.breadth.usage.provider;
+  assert.throws(
+    () => parseRunRecord(missingStageProvider, "current stage without provider", attempt),
+    /raw\.breadth\.usage\.provider does not match claude runner/,
+  );
+
+  const unattributedCost = structuredClone(validRecord());
+  if (unattributedCost.outcome.status !== "completed") throw new Error("expected completed fixture");
+  const unattributedBreadth = withUnavailable({
+    provider: "anthropic",
+    aggregation: "single-envelope",
+    promptBytes: 0,
+    costUsd: 0.4,
+  });
+  const unattributedInvestigation = withUnavailable({
+    provider: "anthropic",
+    aggregation: "single-envelope",
+    promptBytes: 0,
+    costUsd: 0.6,
+  });
+  unattributedCost.outcome.result.usage = combineUsage(
+    unattributedBreadth,
+    unattributedInvestigation,
+  );
+  unattributedCost.outcome.result.raw = {
+    breadth: {
+      model: "fast",
+      promptSha256: "a".repeat(64),
+      usage: unattributedBreadth,
+      durationMs: 400,
+    },
+    investigation: {
+      model: "strong",
+      promptSha256: "b".repeat(64),
+      usage: unattributedInvestigation,
+      durationMs: 600,
+    },
+  };
+  assert.throws(
+    () => parseRunRecord(unattributedCost, "current cost without source", attempt),
+    /costSource is required when costUsd is present in current telemetry/,
+  );
+
+  const mismatchedPricingModel = structuredClone(validRecord());
+  if (mismatchedPricingModel.outcome.status !== "completed") throw new Error("expected completed fixture");
+  const estimatedBreadth = withUnavailable({
+    provider: "anthropic",
+    aggregation: "single-envelope",
+    promptBytes: 0,
+    costUsd: 0.4,
+    costSource: "estimated",
+    pricing: {
+      catalogVersion: "v1",
+      pricingAsOf: "2026-09-03",
+      contractModel: "different-fast-model",
+      tier: "default",
+      assumptions: [],
+    },
+  });
+  const estimatedInvestigation = withUnavailable({
+    provider: "anthropic",
+    aggregation: "single-envelope",
+    promptBytes: 0,
+    costUsd: 0.6,
+    costSource: "estimated",
+    pricing: {
+      catalogVersion: "v1",
+      pricingAsOf: "2026-09-03",
+      contractModel: "strong",
+      tier: "default",
+      assumptions: [],
+    },
+  });
+  mismatchedPricingModel.outcome.result.usage = combineUsage(
+    estimatedBreadth,
+    estimatedInvestigation,
+  );
+  mismatchedPricingModel.outcome.result.raw = {
+    breadth: {
+      model: "fast",
+      promptSha256: "a".repeat(64),
+      usage: estimatedBreadth,
+      durationMs: 400,
+    },
+    investigation: {
+      model: "strong",
+      promptSha256: "b".repeat(64),
+      usage: estimatedInvestigation,
+      durationMs: 600,
+    },
+  };
+  assert.throws(
+    () => parseRunRecord(mismatchedPricingModel, "current stage with mismatched pricing", attempt),
+    /pricing\.contractModel must match the stage model/,
+  );
+
+  const malformedBreadth = structuredClone(validRecord());
+  if (malformedBreadth.outcome.status !== "completed") throw new Error("expected completed fixture");
+  (malformedBreadth.outcome.result.raw as { breadth: { output: unknown } }).breadth.output = {};
+  assert.throws(
+    () => parseRunRecord(malformedBreadth, "current malformed breadth", attempt),
+    /candidates.*array/,
+  );
+
+  const splitBrainCodex = validCodexRecord();
+  const codexRaw = splitBrainCodex.outcome.status === "completed"
+    ? splitBrainCodex.outcome.result.raw as { investigation: { output: { findings: unknown[] } } }
+    : undefined;
+  codexRaw!.investigation.output.findings = [];
+  assert.throws(
+    () => parseRunRecord(splitBrainCodex, "current split-brain Codex", { ...attempt, runner: "codex" }),
+    /output findings do not match the result findings/,
+  );
+
+  const mismatchedRawManifest = structuredClone(validRecord());
+  if (mismatchedRawManifest.outcome.status !== "completed") throw new Error("expected completed fixture");
+  (mismatchedRawManifest.outcome.result.raw as { manifest: string }).manifest = "different manifest";
+  assert.throws(
+    () => parseRunRecord(mismatchedRawManifest, "current mismatched raw manifest", attempt),
+    /raw\.manifest does not match manifest provenance output/,
+  );
+
+  const forgedMock = structuredClone(validRecord());
+  if (forgedMock.outcome.status !== "completed") throw new Error("expected completed fixture");
+  forgedMock.runner = "mock";
+  forgedMock.outcome.result.engine = "mock";
+  forgedMock.outcome.result.modelConfig = "mock";
+  forgedMock.outcome.result.usage = { ...mockUsage(), outputTokens: 1 };
+  delete forgedMock.outcome.result.raw;
+  assert.throws(
+    () => parseRunRecord(forgedMock, "forged current mock", { ...attempt, runner: "mock" }),
+    /does not match the current mock writer/,
+  );
 
   const unsafeDuration = structuredClone(validRecord());
   if (unsafeDuration.outcome.status !== "completed") throw new Error("expected completed fixture");
@@ -439,6 +714,7 @@ test("strict ingestion rejects aggregate usage forged below its two stages", () 
   const stageUsage = withUnavailable({
     provider: "anthropic",
     aggregation: "single-envelope",
+    promptBytes: 0,
     costUsd: 1,
     costSource: "provider",
   });
@@ -446,7 +722,9 @@ test("strict ingestion rejects aggregate usage forged below its two stages", () 
   if (forged.outcome.status !== "completed") throw new Error("expected completed fixture");
   forged.outcome.result.usage = { ...combineUsage(stageUsage, stageUsage), costUsd: 0.01 };
   forged.outcome.result.raw = {
+    manifest: validEvaluationProvenance().manifest!.output,
     breadth: {
+      output: emptyBreadthOutput(),
       model: "fast",
       promptSha256: "a".repeat(64),
       durationMs: 10,
@@ -472,6 +750,7 @@ test("strict ingestion reconciles failure usage and cost with all observed stage
   const stageUsage = withUnavailable({
     provider: "anthropic",
     aggregation: "single-envelope",
+    promptBytes: 0,
     costUsd: 1,
     costSource: "provider",
   });
@@ -485,7 +764,7 @@ test("strict ingestion reconciles failure usage and cost with all observed stage
       durationMs: 30,
       telemetry: {
         engine: "claude",
-        modelConfig: "fast->strong",
+        modelConfig: "fast/low->strong/high",
         usage: { ...aggregate, costUsd: 0.01 },
         durationMs: 30,
         stages: [
@@ -527,6 +806,284 @@ test("strict ingestion reconciles failure usage and cost with all observed stage
   );
 });
 
+test("strict current failure telemetry requires provider identity and cost provenance", () => {
+  const stageUsage = withUnavailable({
+    provider: "anthropic",
+    aggregation: "single-envelope",
+    inputTokens: 5,
+    baseInputTokens: 5,
+    uncachedInputTokens: 5,
+    cachedInputTokens: 0,
+    cacheWriteInputTokens: 0,
+    cacheReadInputTokens: 0,
+    promptBytes: 0,
+  });
+  const failed: RunRecord = {
+    ...structuredClone(validRecord()),
+    outcome: {
+      status: "failed",
+      failureKind: "provider",
+      message: "provider failed after breadth",
+      durationMs: 10,
+      telemetry: {
+        engine: "claude",
+        modelConfig: "fast/low->strong/high",
+        usage: stageUsage,
+        durationMs: 10,
+        stages: [{
+          stage: "breadth",
+          model: "fast",
+          promptSha256: "a".repeat(64),
+          usage: stageUsage,
+          durationMs: 10,
+          completed: false,
+        }],
+      },
+    },
+  };
+
+  const missingProvider = structuredClone(failed);
+  if (missingProvider.outcome.status !== "failed" || !missingProvider.outcome.telemetry) {
+    throw new Error("expected failure telemetry fixture");
+  }
+  delete missingProvider.outcome.telemetry.usage.provider;
+  delete missingProvider.outcome.telemetry.stages[0]!.usage.provider;
+  assert.throws(
+    () => parseRunRecord(missingProvider, "current failure without provider", validAttempt()),
+    /telemetry\.usage\.provider does not match claude runner/,
+  );
+
+  const stageMissingProvider = structuredClone(failed);
+  if (stageMissingProvider.outcome.status !== "failed" || !stageMissingProvider.outcome.telemetry) {
+    throw new Error("expected failure telemetry fixture");
+  }
+  stageMissingProvider.outcome.telemetry.stages[0]!.usage = {
+    ...stageMissingProvider.outcome.telemetry.stages[0]!.usage,
+  };
+  delete stageMissingProvider.outcome.telemetry.stages[0]!.usage.provider;
+  assert.throws(
+    () => parseRunRecord(stageMissingProvider, "current failure stage without provider", validAttempt()),
+    /stages\[0\]\.usage\.provider does not match claude runner/,
+  );
+
+  const unattributedCost = structuredClone(failed);
+  if (unattributedCost.outcome.status !== "failed" || !unattributedCost.outcome.telemetry) {
+    throw new Error("expected failure telemetry fixture");
+  }
+  const unattributedFailureUsage = withUnavailable({
+    provider: "anthropic",
+    aggregation: "single-envelope",
+    inputTokens: 5,
+    baseInputTokens: 5,
+    uncachedInputTokens: 5,
+    cachedInputTokens: 0,
+    cacheWriteInputTokens: 0,
+    cacheReadInputTokens: 0,
+    promptBytes: 0,
+    costUsd: 0.5,
+  });
+  unattributedCost.outcome.telemetry.usage = unattributedFailureUsage;
+  unattributedCost.outcome.telemetry.stages[0]!.usage = structuredClone(unattributedFailureUsage);
+  assert.throws(
+    () => parseRunRecord(unattributedCost, "current failure cost without source", validAttempt()),
+    /costSource is required when costUsd is present in current telemetry/,
+  );
+});
+
+test("strict current telemetry rejects impossible provider token decompositions", () => {
+  const anthropicUsage = (inputTokens: number) => withUnavailable({
+    provider: "anthropic" as const,
+    aggregation: "single-envelope" as const,
+    inputTokens,
+    baseInputTokens: 6,
+    uncachedInputTokens: 6,
+    cachedInputTokens: 4,
+    cacheWriteInputTokens: 1,
+    cacheReadInputTokens: 3,
+    promptBytes: 0,
+  });
+  const aggregateMismatch = structuredClone(validRecord());
+  if (aggregateMismatch.outcome.status !== "completed") throw new Error("expected completed fixture");
+  const invalidAnthropic = anthropicUsage(11);
+  const validAnthropic = anthropicUsage(10);
+  aggregateMismatch.outcome.result.usage = combineUsage(invalidAnthropic, validAnthropic);
+  aggregateMismatch.outcome.result.raw = {
+    breadth: {
+      model: "fast",
+      promptSha256: "a".repeat(64),
+      usage: invalidAnthropic,
+      durationMs: 400,
+    },
+    investigation: {
+      model: "strong",
+      promptSha256: "b".repeat(64),
+      usage: validAnthropic,
+      durationMs: 600,
+    },
+  };
+  assert.throws(
+    () => parseRunRecord(aggregateMismatch, "anthropic aggregate mismatch", validAttempt()),
+    /result\.usage\.inputTokens must equal baseInputTokens \+ cacheWriteInputTokens \+ cacheReadInputTokens/,
+  );
+
+  const stageMismatch = structuredClone(validRecord());
+  if (stageMismatch.outcome.status !== "completed") throw new Error("expected completed fixture");
+  const highAnthropic = anthropicUsage(11);
+  const lowAnthropic = anthropicUsage(9);
+  stageMismatch.outcome.result.usage = combineUsage(highAnthropic, lowAnthropic);
+  stageMismatch.outcome.result.raw = {
+    breadth: {
+      model: "fast",
+      promptSha256: "a".repeat(64),
+      usage: highAnthropic,
+      durationMs: 400,
+    },
+    investigation: {
+      model: "strong",
+      promptSha256: "b".repeat(64),
+      usage: lowAnthropic,
+      durationMs: 600,
+    },
+  };
+  assert.throws(
+    () => parseRunRecord(stageMismatch, "anthropic stage mismatch", validAttempt()),
+    /raw\.breadth\.usage\.inputTokens must equal baseInputTokens \+ cacheWriteInputTokens \+ cacheReadInputTokens/,
+  );
+
+  const anthropicCachedMismatch = structuredClone(validRecord());
+  if (anthropicCachedMismatch.outcome.status !== "completed") throw new Error("expected completed fixture");
+  const invalidAnthropicCached = withUnavailable({
+    ...validAnthropic,
+    cachedInputTokens: 5,
+    unavailable: undefined,
+  });
+  anthropicCachedMismatch.outcome.result.usage = combineUsage(invalidAnthropicCached, validAnthropic);
+  anthropicCachedMismatch.outcome.result.raw = {
+    breadth: {
+      model: "fast",
+      promptSha256: "a".repeat(64),
+      usage: invalidAnthropicCached,
+      durationMs: 400,
+    },
+    investigation: {
+      model: "strong",
+      promptSha256: "b".repeat(64),
+      usage: validAnthropic,
+      durationMs: 600,
+    },
+  };
+  assert.throws(
+    () => parseRunRecord(anthropicCachedMismatch, "anthropic cached mismatch", validAttempt()),
+    /cachedInputTokens must equal cacheWriteInputTokens \+ cacheReadInputTokens/,
+  );
+
+  const anthropicUncachedMismatch = structuredClone(validRecord());
+  if (anthropicUncachedMismatch.outcome.status !== "completed") throw new Error("expected completed fixture");
+  const invalidAnthropicUncached = withUnavailable({
+    ...validAnthropic,
+    uncachedInputTokens: 7,
+    unavailable: undefined,
+  });
+  anthropicUncachedMismatch.outcome.result.usage = combineUsage(invalidAnthropicUncached, validAnthropic);
+  anthropicUncachedMismatch.outcome.result.raw = {
+    breadth: {
+      model: "fast",
+      promptSha256: "a".repeat(64),
+      usage: invalidAnthropicUncached,
+      durationMs: 400,
+    },
+    investigation: {
+      model: "strong",
+      promptSha256: "b".repeat(64),
+      usage: validAnthropic,
+      durationMs: 600,
+    },
+  };
+  assert.throws(
+    () => parseRunRecord(anthropicUncachedMismatch, "anthropic uncached mismatch", validAttempt()),
+    /uncachedInputTokens must equal baseInputTokens/,
+  );
+
+  const codexMismatch = structuredClone(validRecord());
+  if (codexMismatch.outcome.status !== "completed") throw new Error("expected completed fixture");
+  codexMismatch.runner = "codex";
+  codexMismatch.outcome.result.engine = "codex";
+  const invalidOpenAi = withUnavailable({
+    provider: "openai",
+    aggregation: "single-snapshot",
+    inputTokens: 11,
+    uncachedInputTokens: 6,
+    cachedInputTokens: 4,
+    cacheReadInputTokens: 4,
+    outputTokens: 0,
+    promptBytes: 0,
+  });
+  const validOpenAi = withUnavailable({
+    provider: "openai",
+    aggregation: "single-snapshot",
+    inputTokens: 10,
+    uncachedInputTokens: 6,
+    cachedInputTokens: 4,
+    cacheReadInputTokens: 4,
+    outputTokens: 0,
+    promptBytes: 0,
+  });
+  codexMismatch.outcome.result.usage = combineUsage(invalidOpenAi, validOpenAi);
+  codexMismatch.outcome.result.raw = {
+    breadth: {
+      model: "fast",
+      promptSha256: "a".repeat(64),
+      usage: invalidOpenAi,
+      durationMs: 400,
+    },
+    investigation: {
+      model: "strong",
+      promptSha256: "b".repeat(64),
+      usage: validOpenAi,
+      durationMs: 600,
+    },
+  };
+  assert.throws(
+    () => parseRunRecord(
+      codexMismatch,
+      "openai aggregate mismatch",
+      { ...validAttempt(), runner: "codex" },
+    ),
+    /result\.usage\.inputTokens must equal uncachedInputTokens \+ cacheReadInputTokens/,
+  );
+
+  const codexCachedMismatch = structuredClone(codexMismatch);
+  if (codexCachedMismatch.outcome.status !== "completed") throw new Error("expected completed fixture");
+  const invalidOpenAiCached = withUnavailable({
+    ...validOpenAi,
+    cachedInputTokens: 5,
+    unavailable: undefined,
+  });
+  codexCachedMismatch.outcome.result.usage = combineUsage(invalidOpenAiCached, validOpenAi);
+  codexCachedMismatch.outcome.result.raw = {
+    breadth: {
+      model: "fast",
+      promptSha256: "a".repeat(64),
+      usage: invalidOpenAiCached,
+      durationMs: 400,
+    },
+    investigation: {
+      model: "strong",
+      promptSha256: "b".repeat(64),
+      usage: validOpenAi,
+      durationMs: 600,
+    },
+  };
+  assert.throws(
+    () => parseRunRecord(
+      codexCachedMismatch,
+      "openai cached mismatch",
+      { ...validAttempt(), runner: "codex" },
+    ),
+    /cachedInputTokens must equal cacheReadInputTokens/,
+  );
+});
+
 test("behavioral reports count failed and missing attempts and retain incurred failure cost", async () => {
   const root = mkdtempSync(join(tmpdir(), "peregrine-behavioral-accounting-"));
   const runsDir = join(root, "runs");
@@ -553,14 +1110,15 @@ test("behavioral reports count failed and missing attempts and retain incurred f
     file: `attempt-00000${repeat}.json`,
     runner: "claude",
   }));
-  writeFileSync(join(runsDir, "matrix-manifest.json"), JSON.stringify({
+  const runManifest: MatrixRunManifest = {
     schemaVersion: 1,
     createdAt: "2026-09-02T00:00:00.000Z",
     expectedAttempts: attempts,
     providerNetworkIsolation: {
-      claude: { status: "unavailable", mechanism: "artifact-only test" },
+      claude: { status: "enforced", mechanism: "test-enforced provider sandbox" },
     },
-  }));
+  };
+  writeFileSync(join(runsDir, "matrix-manifest.json"), JSON.stringify(runManifest));
   const completed = structuredClone(validRecord());
   completed.attemptId = attempts[0]!.id;
   completed.caseName = caseName;
@@ -568,18 +1126,22 @@ test("behavioral reports count failed and missing attempts and retain incurred f
   const completedBreadthUsage = withUnavailable({
     provider: "anthropic",
     aggregation: "single-envelope",
+    promptBytes: 0,
     costUsd: 0.004,
     costSource: "provider",
   });
   const completedInvestigationUsage = withUnavailable({
     provider: "anthropic",
     aggregation: "single-envelope",
+    promptBytes: 0,
     costUsd: 0.006,
     costSource: "provider",
   });
   completed.outcome.result.usage = combineUsage(completedBreadthUsage, completedInvestigationUsage);
   completed.outcome.result.raw = {
+    manifest: completed.evaluationProvenance!.manifest!.output,
     breadth: {
+      output: emptyBreadthOutput(),
       model: "fast",
       promptSha256: "a".repeat(64),
       durationMs: 400,
@@ -601,6 +1163,7 @@ test("behavioral reports count failed and missing attempts and retain incurred f
   const stageUsage = withUnavailable({
     provider: "anthropic" as const,
     aggregation: "single-envelope" as const,
+    promptBytes: 0,
     costUsd: 0.02,
     costSource: "provider" as const,
   });
@@ -615,6 +1178,7 @@ test("behavioral reports count failed and missing attempts and retain incurred f
     runner: "claude",
     startedAt: "2026-09-02T00:00:00.000Z",
     finishedAt: "2026-09-02T00:00:02.000Z",
+    attemptDurationMs: 2000,
     evaluationProvenance: validEvaluationProvenance(),
     outcome: {
       status: "failed",
@@ -623,7 +1187,7 @@ test("behavioral reports count failed and missing attempts and retain incurred f
       durationMs: 2000,
       telemetry: {
         engine: "claude",
-        modelConfig: "fast->strong",
+        modelConfig: "fast/low->strong/high",
         usage: stageUsage,
         durationMs: 2000,
         stages: [{
@@ -640,6 +1204,25 @@ test("behavioral reports count failed and missing attempts and retain incurred f
   writeFileSync(join(runsDir, attempts[1]!.file), JSON.stringify(failed));
 
   try {
+    const inconsistentRepeats = structuredClone(runManifest);
+    inconsistentRepeats.expectedAttempts[1]!.expectedBugCount = 0;
+    writeFileSync(join(runsDir, "matrix-manifest.json"), JSON.stringify(inconsistentRepeats));
+    await assert.rejects(
+      () => buildReport(runsDir, { casesDir }),
+      /expectedBugCount must be identical across attempts/,
+    );
+
+    const truthMismatch = structuredClone(runManifest);
+    for (const manifestAttempt of truthMismatch.expectedAttempts) {
+      manifestAttempt.expectedBugCount = 0;
+    }
+    writeFileSync(join(runsDir, "matrix-manifest.json"), JSON.stringify(truthMismatch));
+    await assert.rejects(
+      () => buildReport(runsDir, { casesDir }),
+      /expectedBugCount.*does not match readable ground truth/,
+    );
+
+    writeFileSync(join(runsDir, "matrix-manifest.json"), JSON.stringify(runManifest));
     const [stats] = await buildReport(runsDir, { casesDir });
     assert.equal(stats?.benchmarkKind, "behavioral");
     assert.equal(stats?.completionRate, 1 / 3);
@@ -675,6 +1258,42 @@ test("pre-corpus P1 schema-v1 artifacts remain readable only as legacy incomplet
       readFileSync(join(fixtureDir, "attempt-000001.graded.json"), "utf8"),
     );
     assert.doesNotThrow(() => parseLegacySchemaV1GradedRun(fixtureGraded, "P1 fixture"));
+    const p1Record = JSON.parse(
+      readFileSync(join(fixtureDir, "attempt-000001.json"), "utf8"),
+    ) as Record<string, unknown>;
+    for (const variant of ["p1-schema-v1-codex", "p1-schema-v1-mock"]) {
+      const variantDir = resolve("tests/fixtures/eval", variant);
+      const variantManifest = parseLegacyMatrixRunManifest(
+        JSON.parse(readFileSync(join(variantDir, "matrix-manifest.json"), "utf8")),
+        `${variant} manifest`,
+      );
+      assert.doesNotThrow(() => parseLegacySchemaV1RunRecord(
+        JSON.parse(readFileSync(join(variantDir, "attempt-000001.json"), "utf8")),
+        `${variant} record`,
+        variantManifest.expectedAttempts[0],
+      ));
+    }
+    const currentUsageInP1 = structuredClone(p1Record) as {
+      outcome: { result: { usage: Record<string, unknown> } };
+    };
+    currentUsageInP1.outcome.result.usage.provider = "anthropic";
+    assert.throws(
+      () => parseLegacySchemaV1RunRecord(currentUsageInP1, "P1 current usage"),
+      /unexpected field.*provider/,
+    );
+    const providerWithoutRaw = structuredClone(p1Record) as {
+      outcome: { result: { raw?: unknown } };
+    };
+    delete providerWithoutRaw.outcome.result.raw;
+    assert.throws(
+      () => parseLegacySchemaV1RunRecord(providerWithoutRaw, "P1 provider without raw"),
+      /raw must be an object/,
+    );
+    const paddedFinding = structuredClone(p1Record) as {
+      outcome: { result: { findings: Array<{ title: string }> } };
+    };
+    paddedFinding.outcome.result.findings[0]!.title = " Invalid value ";
+    assert.doesNotThrow(() => parseLegacySchemaV1RunRecord(paddedFinding, "P1 padded finding"));
     rmSync(join(runsDir, "attempt-000001.graded.json"));
     await gradeRuns(runsDir, casesDir);
     const [stats] = await buildReport(runsDir, { casesDir });
@@ -721,7 +1340,7 @@ test("PR3 pre-telemetry schema-v1 artifacts grade and report only as legacy inco
     const manifest = parsePreTelemetryMatrixRunManifest(manifestValue, "PR3 manifest fixture");
     assert.throws(
       () => parseMatrixRunManifest(manifestValue, "strict telemetry manifest"),
-      /runner is invalid/,
+      /caseName must be nested directly under its corpus/,
     );
 
     const recordValue: unknown = JSON.parse(
@@ -732,6 +1351,22 @@ test("PR3 pre-telemetry schema-v1 artifacts grade and report only as legacy inco
       "PR3 record fixture",
       manifest.expectedAttempts[0],
     ));
+    const missingBreadthOutput = structuredClone(recordValue) as {
+      outcome: { result: { raw: { breadth: { output?: unknown } } } };
+    };
+    delete missingBreadthOutput.outcome.result.raw.breadth.output;
+    assert.throws(
+      () => parsePreTelemetryRunRecord(missingBreadthOutput, "PR3 missing breadth output"),
+      /output must be an object/,
+    );
+    const claudeInvestigationOutput = structuredClone(recordValue) as {
+      outcome: { result: { raw: { investigation: Record<string, unknown> } } };
+    };
+    claudeInvestigationOutput.outcome.result.raw.investigation.output = { findings: [] };
+    assert.throws(
+      () => parsePreTelemetryRunRecord(claudeInvestigationOutput, "PR3 Claude investigation output"),
+      /unexpected field.*output/,
+    );
     const recordWithoutProvenance = structuredClone(recordValue) as Record<string, unknown>;
     delete recordWithoutProvenance.evaluationProvenance;
     assert.throws(
@@ -778,25 +1413,66 @@ test("PR3 pre-telemetry schema-v1 artifacts grade and report only as legacy inco
     );
     assert.throws(
       () => parseRunRecord(recordValue, "strict telemetry record"),
-      /must include model, promptSha256, durationMs, and usage/,
+      /usage\.provider does not match claude runner/,
     );
-    const currentWithoutRaw = structuredClone(recordValue) as {
+    const mixedCurrent = structuredClone(recordValue) as {
       runner?: "claude";
-      outcome: { result: { usage: ReturnType<typeof withUnavailable>; raw?: unknown } };
+      outcome: {
+        result: {
+          usage: ReturnType<typeof withUnavailable>;
+          raw: {
+            breadth: {
+              model?: string;
+              promptSha256?: string;
+              usage: ReturnType<typeof withUnavailable>;
+            };
+            investigation: {
+              model?: string;
+              promptSha256?: string;
+              usage: ReturnType<typeof withUnavailable>;
+            };
+          };
+        };
+      };
     };
-    currentWithoutRaw.runner = "claude";
-    currentWithoutRaw.outcome.result.usage = withUnavailable({
-      provider: "anthropic",
-      aggregation: "stage-sum",
-      inputTokens: 30,
-      outputTokens: 7,
-    });
+    mixedCurrent.runner = "claude";
+    mixedCurrent.outcome.result.raw.breadth.model = "claude-haiku";
+    mixedCurrent.outcome.result.raw.breadth.promptSha256 = "a".repeat(64);
+    mixedCurrent.outcome.result.raw.investigation.model = "claude-sonnet";
+    mixedCurrent.outcome.result.raw.investigation.promptSha256 = "b".repeat(64);
+    mixedCurrent.outcome.result.usage = combineUsage(
+      mixedCurrent.outcome.result.raw.breadth.usage,
+      mixedCurrent.outcome.result.raw.investigation.usage,
+    );
+    assert.throws(
+      () => parseRunRecord(
+        mixedCurrent,
+        "PR3 usage relabeled as current",
+        { ...manifest.expectedAttempts[0]!, runner: "claude" },
+      ),
+      /usage\.provider does not match claude runner/,
+    );
+    const mixedCurrentWithProvider = structuredClone(mixedCurrent);
+    mixedCurrentWithProvider.outcome.result.usage.provider = "anthropic";
+    mixedCurrentWithProvider.outcome.result.raw.breadth.usage.provider = "anthropic";
+    mixedCurrentWithProvider.outcome.result.raw.investigation.usage.provider = "anthropic";
+    assert.throws(
+      () => parseRunRecord(
+        mixedCurrentWithProvider,
+        "PR3 unattributed cost relabeled as current",
+        { ...manifest.expectedAttempts[0]!, runner: "claude" },
+      ),
+      /costSource is required when costUsd is present in current telemetry/,
+    );
+    const currentWithoutRaw = validRecord() as RunRecord & {
+      outcome: { status: "completed"; result: { raw?: unknown } };
+    };
     delete currentWithoutRaw.outcome.result.raw;
     assert.throws(
       () => parseRunRecord(
         currentWithoutRaw,
         "current provider record without stages",
-        { ...manifest.expectedAttempts[0]!, runner: "claude" },
+        validAttempt(),
       ),
       /raw must include both provider stage records/,
     );
@@ -970,7 +1646,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
   const configs: MatrixModelConfig[] = ["completed", "mixed", "timeout", "provider", "parse", "unknown", "missing"].map(
     (name) => ({ name, runner: "mock", overrides: { scenario: name } }),
   );
-  configs.push({ name: "completed", runner: "mock", overrides: { scenario: "completed" } });
+  configs.push({ name: "completed-alt", runner: "mock", overrides: { scenario: "completed" } });
   configs.push({ name: "configuration", runner: "codex", overrides: { timeoutMs: 0 } });
   const matrixPath = join(root, "matrix.json");
   writeFileSync(matrixPath, JSON.stringify({ repeats: 2, configs }));
@@ -981,22 +1657,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     async review(ctx) {
       const scenario = (ctx.config.runners.mock as Record<string, unknown>).scenario;
       if (scenario === "mixed" && ++mixedCalls === 2) {
-        throw new RunFailureError("timeout", "timed out", {
-          telemetry: {
-            engine: "mock",
-            modelConfig: "mock-test",
-            usage: { provider: "mock" },
-            durationMs: 20,
-            stages: [{
-              stage: "breadth",
-              model: "mock-test",
-              promptSha256: "a".repeat(64),
-              usage: { provider: "mock" },
-              durationMs: 20,
-              completed: true,
-            }],
-          },
-        });
+        throw new RunFailureError("timeout", "timed out");
       }
       if (scenario === "timeout") throw new RunFailureError("timeout", "timed out");
       if (scenario === "provider") throw new RunFailureError("provider", "provider unavailable");
@@ -1005,7 +1666,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
       return {
         engine: "mock",
         status: "completed",
-        modelConfig: "mock-test",
+        modelConfig: "mock",
         findings: [{
           file: "src/value.ts",
           startLine: 1,
@@ -1019,7 +1680,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
           failurePath: "A caller observes false.",
           confidence: 0.99,
         }],
-        usage: {},
+        usage: mockUsage(),
         durationMs: 10,
         reviewedBaseRef: ctx.baseRef,
         reviewedHeadRef: ctx.headRef,
@@ -1070,8 +1731,8 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     const completed = stats.find((item) => item.config === "completed");
     assert.equal(completed?.completionRate, 1);
     assert.equal(completed?.corpus, "development");
-    assert.equal(completed?.expectedRuns, 4);
-    assert.equal(completed?.completedRuns, 4);
+    assert.equal(completed?.expectedRuns, 2);
+    assert.equal(completed?.completedRuns, 2);
     assert.equal(completed?.benchmarkKind, "structural-only");
     assert.equal(completed?.recallMean, null);
     assert.equal(completed?.failureInclusiveRecallMean, null);
@@ -1087,7 +1748,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     assert.equal(mixed?.inputTokensMean, null);
     assert.equal(mixed?.incurredCostUsdTotal, null);
     assert.equal(mixed?.incurredCostObservedAttempts, 0);
-    assert.equal(mixed?.telemetryObserved.costUsd, 0);
+    assert.equal(mixed?.telemetryObserved.costUsd, 1);
     const timeout = stats.find((item) => item.config === "timeout");
     assert.equal(timeout?.completionRate, 0);
     assert.equal(timeout?.recallMean, null);
@@ -1117,6 +1778,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
       caseCorpus: _corpus,
       runner: _runner,
       evaluationProvenance: _provenance,
+      attemptDurationMs: _attemptDuration,
       ...legacy
     } = graded;
     writeFileSync(join(legacyDir, "legacy.graded.json"), JSON.stringify({ ...legacy, result: outcome.result }));
@@ -1131,7 +1793,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     assert.equal(legacyStats[0]?.telemetryExpectedRuns, null);
     assert.equal(legacyStats[0]?.completedRuns, 2);
 
-    const cleanCaseName = "structural-smoke/clean-case";
+    const cleanCaseName = "structural-smoke/case-00000009";
     const cleanCaseDir = join(casesDir, cleanCaseName);
     mkdirSync(cleanCaseDir, { recursive: true });
     writeFileSync(join(cleanCaseDir, "ground_truth.json"), JSON.stringify({ bugs: [] }));
@@ -1153,7 +1815,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
         schemaVersion: 1,
         createdAt: new Date().toISOString(),
         expectedAttempts: [cleanAttempt],
-        providerNetworkIsolation: { mock: { status: "not-applicable", mechanism: "no provider process" } },
+        providerNetworkIsolation: { mock: networkIsolationCapability("mock") },
       }),
     );
     const completedRun = records.find((record) => record.outcome.status === "completed");
@@ -1172,7 +1834,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
           engine: cleanAttempt.runner,
           status: "clean",
           findings: [],
-          usage: { provider: "mock" },
+          usage: mockUsage(),
         },
       },
     };
@@ -1226,6 +1888,19 @@ test("malformed or missing truth remains failed and makes mixed denominators una
       casesDir,
       engineFor: () => engine,
     });
+    const manifestPath = join(runsDir, "matrix-manifest.json");
+    const manifest = JSON.parse(readFileSync(manifestPath, "utf8")) as MatrixRunManifest;
+    const forgedUnreadableCount = structuredClone(manifest);
+    const unreadableAttempt = forgedUnreadableCount.expectedAttempts.find((attempt) =>
+      attempt.caseName === "development/case-600d0002");
+    assert.ok(unreadableAttempt);
+    unreadableAttempt.expectedBugCount = 1;
+    writeFileSync(manifestPath, JSON.stringify(forgedUnreadableCount));
+    await assert.rejects(
+      () => buildReport(runsDir, { casesDir }),
+      /numeric expectedBugCount for unreadable ground truth/,
+    );
+    writeFileSync(manifestPath, JSON.stringify(manifest));
     await gradeRuns(runsDir, casesDir);
     const stats = await buildReport(runsDir, { casesDir });
     assert.equal(stats.length, 1);
@@ -1268,18 +1943,21 @@ test("cleanup failures preserve partial and completed provider telemetry", async
   const partialUsage = withUnavailable({
     provider: "mock" as const,
     aggregation: "single-envelope" as const,
+    promptBytes: 0,
     costUsd: 0.75,
     costSource: "provider" as const,
   });
   const breadthUsage = withUnavailable({
     provider: "mock" as const,
     aggregation: "single-envelope" as const,
+    promptBytes: 0,
     costUsd: 1,
     costSource: "provider" as const,
   });
   const investigationUsage = withUnavailable({
     provider: "mock" as const,
     aggregation: "single-envelope" as const,
+    promptBytes: 0,
     costUsd: 2,
     costSource: "provider" as const,
   });
@@ -1291,7 +1969,7 @@ test("cleanup failures preserve partial and completed provider telemetry", async
         throw new RunFailureError("timeout", "investigation timed out", {
           telemetry: {
             engine: "mock",
-            modelConfig: "mock-partial",
+            modelConfig: "mock-breadth/none->mock-investigation/none",
             usage: partialUsage,
             durationMs: 12,
             stages: [{
@@ -1311,6 +1989,7 @@ test("cleanup failures preserve partial and completed provider telemetry", async
           usage: withUnavailable({
             provider: "mock",
             aggregation: "single-envelope",
+            promptBytes: 0,
             costUsd: 5,
             costSource: "provider",
           }),
@@ -1318,7 +1997,7 @@ test("cleanup failures preserve partial and completed provider telemetry", async
       }
       return {
         ...completedClean(),
-        modelConfig: "mock-completed",
+        modelConfig: "mock-breadth/none->mock-investigation/none",
         usage: combineUsage(breadthUsage, investigationUsage),
         durationMs: 30,
         raw: {
@@ -1408,7 +2087,7 @@ test("tracked reports keep development and validation rows separate", async () =
       schemaVersion: 1,
       createdAt: new Date().toISOString(),
       expectedAttempts,
-      providerNetworkIsolation: { mock: { status: "not-applicable", mechanism: "no provider process" } },
+      providerNetworkIsolation: { mock: networkIsolationCapability("mock") },
     }),
   );
   for (const attempt of expectedAttempts) {
@@ -1421,8 +2100,9 @@ test("tracked reports keep development and validation rows separate", async () =
       configName: attempt.configName,
       repeat: 1,
       runner: attempt.runner,
-      startedAt: new Date().toISOString(),
-      finishedAt: new Date().toISOString(),
+      startedAt: "2026-09-02T00:00:00.000Z",
+      finishedAt: "2026-09-02T00:00:00.001Z",
+      attemptDurationMs: 1,
       outcome: { status: "failed", failureKind: "configuration", message: "fixture unavailable", durationMs: 1 },
     };
     writeFileSync(join(runsDir, attempt.file), JSON.stringify(record));
@@ -1513,7 +2193,7 @@ function completedClean(): Awaited<ReturnType<Engine["review"]>> {
     status: "clean",
     modelConfig: "mock",
     findings: [],
-    usage: {},
+    usage: mockUsage(),
     durationMs: 1,
   };
 }

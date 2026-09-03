@@ -1,5 +1,6 @@
 import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { isDeepStrictEqual } from "node:util";
 import type {
   EngineResult,
   CaseCorpus,
@@ -7,6 +8,7 @@ import type {
   MatrixRunManifest,
   RunRecord,
   RunnerName,
+  StageTelemetry,
 } from "../src/types.js";
 import type { RunFailureKind } from "../src/core/run-failure.js";
 import { readCaseGroundTruth } from "./case-truth.js";
@@ -29,11 +31,18 @@ import {
   type PreTelemetryMatrixRunManifest,
 } from "./artifacts.js";
 
-type LegacyGradedRun = Omit<GradedRun, "schemaVersion" | "attemptId" | "finishedAt" | "outcome" | "caseCorpus" | "runner"> & {
+type LegacyGradedRun = Omit<GradedRun, "schemaVersion" | "attemptId" | "finishedAt" | "attemptDurationMs" | "outcome" | "caseCorpus" | "runner"> & {
   result: EngineResult;
 };
+type CompatibilityGradedRun = Omit<GradedRun, "attemptDurationMs"> & { attemptDurationMs?: number };
 type ReportCostSource = "provider" | "estimated" | "mixed" | "mock" | "unknown" | null;
-type ScoredRun = Pick<GradedRun, "outcome" | "matches" | "falsePositiveIndexes">;
+type ScoredRun = Pick<GradedRun, "outcome" | "matches" | "falsePositiveIndexes"> & {
+  attemptDurationMs?: number;
+};
+type FailedRun = {
+  outcome: Extract<RunRecord["outcome"], { status: "failed" }>;
+  attemptDurationMs?: number;
+};
 
 export interface ConfigStats {
   config: string;
@@ -59,18 +68,42 @@ export interface ConfigStats {
   durationSecMean: number | null;
   durationSecMedian: number | null;
   durationSecP95: number | null;
+  engineDurationSecMean: number | null;
   breadthDurationSecMean: number | null;
   investigationDurationSecMean: number | null;
   breadthInputTokensMean: number | null;
   investigationInputTokensMean: number | null;
+  breadthBaseInputTokensMean: number | null;
+  investigationBaseInputTokensMean: number | null;
+  breadthUncachedInputTokensMean: number | null;
+  investigationUncachedInputTokensMean: number | null;
+  breadthCachedInputTokensMean: number | null;
+  investigationCachedInputTokensMean: number | null;
+  breadthCacheWriteInputTokensMean: number | null;
+  investigationCacheWriteInputTokensMean: number | null;
+  breadthCacheReadInputTokensMean: number | null;
+  investigationCacheReadInputTokensMean: number | null;
+  breadthTurnsMean: number | null;
+  investigationTurnsMean: number | null;
+  breadthToolCallsMean: number | null;
+  investigationToolCallsMean: number | null;
+  breadthToolCallsByTypeMean: Record<string, number> | null;
+  investigationToolCallsByTypeMean: Record<string, number> | null;
+  breadthToolOutputBytesMean: number | null;
+  investigationToolOutputBytesMean: number | null;
+  breadthPromptBytesMean: number | null;
+  investigationPromptBytesMean: number | null;
   inputTokensMean: number | null;
+  baseInputTokensMean: number | null;
   uncachedInputTokensMean: number | null;
+  cachedInputTokensMean: number | null;
   cacheWriteInputTokensMean: number | null;
   cacheReadInputTokensMean: number | null;
   outputTokensMean: number | null;
   reasoningOutputTokensMean: number | null;
   turnsMean: number | null;
   toolCallsMean: number | null;
+  toolCallsByTypeMean: Record<string, number> | null;
   toolOutputBytesMean: number | null;
   promptBytesMean: number | null;
   telemetryExpectedRuns: number | null;
@@ -79,7 +112,6 @@ export interface ConfigStats {
   incurredCostUsdTotal: number | null;
   incurredCostObservedAttempts: number;
   incurredCostSource: ReportCostSource;
-  validFindingsPerDollar: number | null;
   structuralExpectedMarkers: number | null;
   structuralMatchedMarkers: number | null;
   structuralUnexpectedFindings: number | null;
@@ -147,20 +179,28 @@ function preTelemetryStats(
   );
   return [...byConfig.values()].map((attempts) => {
     const completed: ScoredRun[] = [];
-    const failed: Array<Extract<RunRecord["outcome"], { status: "failed" }>> = [];
+    const failed: FailedRun[] = [];
     for (const attempt of attempts) {
       const rawPath = join(dir, attempt.file);
-      if (!existsSync(rawPath)) continue;
+      const gradedPath = rawPath.replace(/\.json$/, ".graded.json");
+      if (!existsSync(rawPath)) {
+        if (existsSync(gradedPath)) {
+          throw new Error(`${attempt.file} is missing but its pre-telemetry graded artifact exists`);
+        }
+        continue;
+      }
       const raw = parsePreTelemetryRunRecord(
         JSON.parse(readFileSync(rawPath, "utf8")),
         rawPath,
         attempt,
       );
       if (raw.outcome.status === "failed") {
-        failed.push(raw.outcome);
+        if (existsSync(gradedPath)) {
+          throw new Error(`${attempt.file} failed but its pre-telemetry graded artifact exists`);
+        }
+        failed.push({ outcome: raw.outcome });
         continue;
       }
-      const gradedPath = rawPath.replace(/\.json$/, ".graded.json");
       if (!existsSync(gradedPath)) {
         throw new Error(`${attempt.file} completed but has no graded artifact — run eval:grade first.`);
       }
@@ -189,21 +229,13 @@ function preTelemetryStats(
       failed,
       missing: null,
       failureInclusiveRecalls: null,
+      structuralExpectedMarkers: null,
     });
   });
 }
 
 function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest): ConfigStats[] {
-  const declaredFiles = new Set(manifest.expectedAttempts.flatMap((attempt) => [
-    attempt.file,
-    attempt.file.replace(/\.json$/, ".graded.json"),
-  ]));
-  const undeclared = readdirSync(dir).filter((file) =>
-    file.endsWith(".json") && file !== "matrix-manifest.json" && file !== "benchmark.json" &&
-    !declaredFiles.has(file));
-  if (undeclared.length > 0) {
-    throw new Error(`run artifacts not declared by matrix manifest: ${undeclared.join(", ")}`);
-  }
+  preflightTrackedRunSet(dir, casesDir, manifest);
   const byConfig = groupBy(manifest.expectedAttempts, (attempt) =>
     `${attempt.configName}\0${attempt.corpus}\0${attempt.runner}`);
   const countBugs = (attempt: MatrixRunManifest["expectedAttempts"][number]): number | null => {
@@ -221,7 +253,7 @@ function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest
     const corpus = attempts[0]!.corpus;
     const runner = attempts[0]!.runner;
     const completed: GradedRun[] = [];
-    const failed: Array<Extract<RunRecord["outcome"], { status: "failed" }>> = [];
+    const failed: FailedRun[] = [];
     let missing = 0;
     let denominatorUnavailable = false;
     const failureInclusiveRecalls: number[] = [];
@@ -230,6 +262,7 @@ function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest
       const bugCount = countBugs(attempt);
       if (bugCount === null) denominatorUnavailable = true;
       const rawPath = join(dir, attempt.file);
+      const gradedPath = rawPath.replace(/\.json$/, ".graded.json");
       if (!existsSync(rawPath)) {
         missing++;
         if ((bugCount ?? 0) > 0) failureInclusiveRecalls.push(0);
@@ -237,11 +270,10 @@ function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest
       }
       const raw = parseRunRecord(JSON.parse(readFileSync(rawPath, "utf8")), rawPath, attempt);
       if (raw.outcome.status === "failed") {
-        failed.push(raw.outcome);
+        failed.push({ outcome: raw.outcome, attemptDurationMs: raw.attemptDurationMs });
         if ((bugCount ?? 0) > 0) failureInclusiveRecalls.push(0);
         continue;
       }
-      const gradedPath = rawPath.replace(/\.json$/, ".graded.json");
       if (!existsSync(gradedPath)) {
         throw new Error(`${attempt.file} completed but has no graded artifact — run eval:grade first.`);
       }
@@ -269,8 +301,137 @@ function trackedStats(dir: string, casesDir: string, manifest: MatrixRunManifest
       failed,
       missing,
       failureInclusiveRecalls: denominatorUnavailable ? null : failureInclusiveRecalls,
+      structuralExpectedMarkers: attempts.every((attempt) => attempt.expectedBugCount !== null)
+        ? attempts.reduce((sum, attempt) => sum + attempt.expectedBugCount!, 0)
+        : null,
     });
   });
+}
+
+/**
+ * Validates a complete current run set before reporting or invoking a semantic
+ * judge. This keeps invalid isolation, provenance, and denominator metadata
+ * from reaching a paid evaluator.
+ */
+export function preflightTrackedRunSet(
+  dir: string,
+  casesDir: string,
+  manifest: MatrixRunManifest,
+): void {
+  const declaredFiles = new Set(manifest.expectedAttempts.flatMap((attempt) => [
+    attempt.file,
+    attempt.file.replace(/\.json$/, ".graded.json"),
+  ]));
+  const undeclared = readdirSync(dir).filter((file) =>
+    file.endsWith(".json") && file !== "matrix-manifest.json" && file !== "benchmark.json" &&
+    !declaredFiles.has(file));
+  if (undeclared.length > 0) {
+    throw new Error(`run artifacts not declared by matrix manifest: ${undeclared.join(", ")}`);
+  }
+  assertExpectedBugCountsMatchTruth(manifest, casesDir);
+  assertCrossAttemptProvenance(dir, manifest);
+  for (const attempt of manifest.expectedAttempts) {
+    const rawPath = join(dir, attempt.file);
+    const gradedPath = rawPath.replace(/\.json$/, ".graded.json");
+    if (!existsSync(rawPath)) {
+      if (existsSync(gradedPath)) {
+        throw new Error(`${attempt.file} is missing but its graded artifact exists`);
+      }
+      continue;
+    }
+    const raw = parseRunRecord(JSON.parse(readFileSync(rawPath, "utf8")), rawPath, attempt);
+    assertOutcomeCapability(raw, manifest);
+    if (raw.outcome.status === "failed" && existsSync(gradedPath)) {
+      throw new Error(`${attempt.file} failed but its graded artifact exists`);
+    }
+  }
+}
+
+function assertCrossAttemptProvenance(dir: string, manifest: MatrixRunManifest): void {
+  const canonical = new Map<string, {
+    caseKind?: RunRecord["caseKind"];
+    history?: NonNullable<RunRecord["evaluationProvenance"]>["history"];
+    manifest?: NonNullable<RunRecord["evaluationProvenance"]>["manifest"];
+  }>();
+  const modelConfigs = new Map<string, string>();
+  for (const attempt of manifest.expectedAttempts) {
+    const path = join(dir, attempt.file);
+    if (!existsSync(path)) continue;
+    const record = parseRunRecord(JSON.parse(readFileSync(path, "utf8")), path, attempt);
+    const modelConfig = record.outcome.status === "completed"
+      ? record.outcome.result.modelConfig
+      : record.outcome.telemetry?.modelConfig;
+    if (modelConfig !== undefined) {
+      const configIdentity = `${record.configName}\0${record.runner}`;
+      const prior = modelConfigs.get(configIdentity);
+      if (prior !== undefined && prior !== modelConfig) {
+        throw new Error(`${record.configName} has inconsistent effective modelConfig across attempts`);
+      }
+      modelConfigs.set(configIdentity, modelConfig);
+    }
+    const identity = canonical.get(attempt.caseName) ?? {};
+    if (record.caseKind !== "unknown") {
+      if (identity.caseKind !== undefined && identity.caseKind !== record.caseKind) {
+        throw new Error(`${attempt.caseName} has inconsistent caseKind across attempts`);
+      }
+      identity.caseKind = record.caseKind;
+    }
+    const provenance = record.evaluationProvenance;
+    if (provenance) {
+      if (identity.history !== undefined && !isDeepStrictEqual(identity.history, provenance.history)) {
+        throw new Error(`${attempt.caseName} has inconsistent history provenance across attempts`);
+      }
+      identity.history = provenance.history;
+      if (provenance.manifest) {
+        if (identity.manifest !== undefined && !isDeepStrictEqual(identity.manifest, provenance.manifest)) {
+          throw new Error(`${attempt.caseName} has inconsistent manifest provenance across attempts`);
+        }
+        identity.manifest = provenance.manifest;
+      }
+    }
+    canonical.set(attempt.caseName, identity);
+  }
+}
+
+function assertOutcomeCapability(record: RunRecord, manifest: MatrixRunManifest): void {
+  if (record.runner === "mock") return;
+  const preProviderFailure = record.outcome.status === "failed" &&
+    record.outcome.failureKind === "configuration" && record.outcome.telemetry === undefined;
+  if (record.caseCorpus === "structural-smoke" && !preProviderFailure) {
+    throw new Error(`${record.attemptId} cannot record live provider work for structural-smoke`);
+  }
+  if (!preProviderFailure && manifest.providerNetworkIsolation[record.runner]?.status !== "enforced") {
+    throw new Error(
+      `${record.attemptId} records live provider work without enforced providerNetworkIsolation`,
+    );
+  }
+}
+
+function assertExpectedBugCountsMatchTruth(manifest: MatrixRunManifest, casesDir: string): void {
+  const checked = new Set<string>();
+  for (const attempt of manifest.expectedAttempts) {
+    if (checked.has(attempt.caseName)) continue;
+    checked.add(attempt.caseName);
+    let bugCount: number;
+    try {
+      bugCount = readCaseGroundTruth(casesDir, attempt.caseName).bugs.length;
+    } catch {
+      if (manifest.expectedAttempts.some((item) =>
+        item.caseName === attempt.caseName && item.expectedBugCount !== null)) {
+        throw new Error(
+          `matrix manifest has a numeric expectedBugCount for unreadable ground truth ${attempt.caseName}`,
+        );
+      }
+      continue;
+    }
+    for (const sameCase of manifest.expectedAttempts.filter((item) => item.caseName === attempt.caseName)) {
+      if (sameCase.expectedBugCount !== bugCount) {
+        throw new Error(
+          `matrix manifest expectedBugCount for ${attempt.caseName} does not match readable ground truth`,
+        );
+      }
+    }
+  }
 }
 
 function loadGroundTruthIds(casesDir: string, caseName: string): string[] {
@@ -278,9 +439,10 @@ function loadGroundTruthIds(casesDir: string, caseName: string): string[] {
 }
 
 function legacyStats(dir: string, manifest?: LegacyMatrixRunManifest): ConfigStats[] {
+  if (manifest) validateLegacyManifestArtifacts(dir, manifest);
   const graded = readdirSync(dir)
     .filter((file) => file.endsWith(".graded.json"))
-    .map((file): LegacyGradedRun | GradedRun => {
+    .map((file): LegacyGradedRun | CompatibilityGradedRun => {
       const path = join(dir, file);
       const raw: unknown = JSON.parse(readFileSync(path, "utf8"));
       if (raw && typeof raw === "object" && !Array.isArray(raw) && "outcome" in raw) {
@@ -319,8 +481,8 @@ function legacyStats(dir: string, manifest?: LegacyMatrixRunManifest): ConfigSta
   ]);
   return [...configNames].map((config) => {
     const legacyRuns = byConfig.get(config) ?? [];
-    const failed = (failuresByConfig.get(config) ?? []).map((record) => record.outcome);
-    const completed = legacyRuns.map((run): GradedRun =>
+    const failed = (failuresByConfig.get(config) ?? []).map((record) => ({ outcome: record.outcome }));
+    const completed = legacyRuns.map((run) =>
       "outcome" in run
         ? run
         : {
@@ -330,7 +492,7 @@ function legacyStats(dir: string, manifest?: LegacyMatrixRunManifest): ConfigSta
             caseCorpus: "unknown" as const,
             runner: run.result.engine,
             finishedAt: run.startedAt,
-            outcome: { status: "completed", result: run.result },
+            outcome: { status: "completed" as const, result: run.result },
           },
     );
     return calculateStats({
@@ -349,8 +511,48 @@ function legacyStats(dir: string, manifest?: LegacyMatrixRunManifest): ConfigSta
       failed,
       missing: null,
       failureInclusiveRecalls: null,
+      structuralExpectedMarkers: null,
     });
   });
+}
+
+function validateLegacyManifestArtifacts(dir: string, manifest: LegacyMatrixRunManifest): void {
+  const declared = new Set(manifest.expectedAttempts.flatMap((attempt) => [
+    attempt.file,
+    attempt.file.replace(/\.json$/, ".graded.json"),
+  ]));
+  const undeclared = readdirSync(dir).filter((file) =>
+    file.endsWith(".json") && file !== "matrix-manifest.json" && file !== "benchmark.json" &&
+    !declared.has(file));
+  if (undeclared.length > 0) {
+    throw new Error(`run artifacts not declared by legacy matrix manifest: ${undeclared.join(", ")}`);
+  }
+  for (const attempt of manifest.expectedAttempts) {
+    const rawPath = join(dir, attempt.file);
+    const gradedPath = rawPath.replace(/\.json$/, ".graded.json");
+    if (!existsSync(rawPath)) {
+      if (existsSync(gradedPath)) throw new Error(`${attempt.file} is missing but its graded artifact exists`);
+      continue;
+    }
+    const raw = parseLegacySchemaV1RunRecord(
+      JSON.parse(readFileSync(rawPath, "utf8")),
+      rawPath,
+      attempt,
+    );
+    if (raw.outcome.status === "failed") {
+      if (existsSync(gradedPath)) throw new Error(`${attempt.file} failed but its graded artifact exists`);
+      continue;
+    }
+    if (!existsSync(gradedPath)) {
+      throw new Error(`${attempt.file} completed but has no graded artifact — run eval:grade first.`);
+    }
+    const graded = parseLegacySchemaV1GradedRun(
+      JSON.parse(readFileSync(gradedPath, "utf8")),
+      gradedPath,
+      attempt,
+    );
+    assertGradedMatchesRun(graded, raw, gradedPath);
+  }
 }
 
 function calculateStats(args: {
@@ -361,9 +563,10 @@ function calculateStats(args: {
   completeness: ConfigStats["completeness"];
   expectedRuns: number | null;
   completed: ScoredRun[];
-  failed: Array<Extract<RunRecord["outcome"], { status: "failed" }>>;
+  failed: FailedRun[];
   missing: number | null;
   failureInclusiveRecalls: number[] | null;
+  structuralExpectedMarkers: number | null;
 }): ConfigStats {
   const behavioral = args.benchmarkKind === "behavioral";
   const recalls = args.completed.map(runRecall).filter((value): value is number => value !== null);
@@ -372,27 +575,45 @@ function calculateStats(args: {
     .map((run) => run.outcome.result.usage.costUsd)
     .filter((cost): cost is number => typeof cost === "number" && Number.isFinite(cost) && cost >= 0);
   const durations = [
-    ...args.completed.map((run) => run.outcome.result.durationMs),
-    ...args.failed.map((failure) => failure.durationMs),
+    ...args.completed.map((run) => run.attemptDurationMs),
+    ...args.failed.map((failure) => failure.attemptDurationMs),
   ].filter((duration): duration is number =>
     typeof duration === "number" && Number.isFinite(duration) && duration >= 0).map((duration) => duration / 1000);
-  const usage = (field: keyof EngineResult["usage"]): number[] => args.completed
-    .map((run) => run.outcome.result.usage[field])
+  const engineDurations = [
+    ...args.completed.map((run) => run.outcome.result.durationMs),
+    ...args.failed.map((failure) => failure.outcome.telemetry?.durationMs),
+  ].filter((duration): duration is number =>
+    typeof duration === "number" && Number.isFinite(duration) && duration >= 0).map((duration) => duration / 1000);
+  const failedTelemetry = args.failed.flatMap((failure) => failure.outcome.telemetry ? [failure.outcome.telemetry] : []);
+  const allUsages = [
+    ...args.completed.map((run) => run.outcome.result.usage),
+    ...failedTelemetry.map((telemetry) => telemetry.usage),
+  ];
+  const usage = (field: keyof EngineResult["usage"]): number[] => allUsages
+    .map((item) => item[field])
     .filter((value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0);
-  const breadthDurations = stageNumbers(args.completed, "breadth", "durationMs").map((value) => value / 1000);
-  const investigationDurations = stageNumbers(args.completed, "investigation", "durationMs").map((value) => value / 1000);
-  const breadthInputs = stageUsageNumbers(args.completed, "breadth", "inputTokens");
-  const investigationInputs = stageUsageNumbers(args.completed, "investigation", "inputTokens");
-  const failedTelemetry = args.failed.flatMap((failure) => failure.telemetry ? [failure.telemetry] : []);
   const failedStages = failedTelemetry.flatMap((telemetry) => telemetry.stages);
-  const observedFailureUsage = (field: keyof EngineResult["usage"]): number => failedTelemetry
-    .filter((telemetry) => {
-      const value = telemetry.usage[field];
-      return typeof value === "number" && Number.isFinite(value) && value >= 0;
-    }).length;
+  const completedStages = args.completed.flatMap((run) => completedStageRecords(run));
+  const stages = [...completedStages, ...failedStages];
+  const stageValues = (
+    stage: StageTelemetry["stage"],
+    field: keyof EngineResult["usage"] | "durationMs",
+  ): number[] => stages.filter((item) => item.stage === stage).map((item) =>
+    field === "durationMs" ? item.durationMs : item.usage[field],
+  ).filter((value): value is number =>
+    typeof value === "number" && Number.isFinite(value) && value >= 0);
+  const stageToolTypes = (stage: StageTelemetry["stage"]): Array<Record<string, number> | undefined> => stages
+    .filter((item) => item.stage === stage)
+    .map((item) => item.usage.toolCallsByType);
+  const breadthDurations = stageValues("breadth", "durationMs").map((value) => value / 1000);
+  const investigationDurations = stageValues("investigation", "durationMs").map((value) => value / 1000);
+  const breadthInputs = stageValues("breadth", "inputTokens");
+  const investigationInputs = stageValues("investigation", "inputTokens");
   const usageValues = {
     inputTokens: usage("inputTokens"),
+    baseInputTokens: usage("baseInputTokens"),
     uncachedInputTokens: usage("uncachedInputTokens"),
+    cachedInputTokens: usage("cachedInputTokens"),
     cacheWriteInputTokens: usage("cacheWriteInputTokens"),
     cacheReadInputTokens: usage("cacheReadInputTokens"),
     outputTokens: usage("outputTokens"),
@@ -412,8 +633,10 @@ function calculateStats(args: {
     args.expectedRuns === args.completed.length &&
     args.failed.length === 0 &&
     args.missing === 0;
-  const hasCompleteDuration = args.completeness === "tracked" &&
-    args.expectedRuns !== null && args.missing === 0 && durations.length === args.expectedRuns;
+  const comparisonExpected = args.completeness === "tracked" && args.expectedRuns !== null
+    ? args.expectedRuns
+    : 0;
+  const hasCompleteDuration = comparisonExpected > 0 && durations.length === comparisonExpected;
   const hasCompleteCost =
     isTrackedComplete &&
     costs.length === args.completed.length;
@@ -424,7 +647,7 @@ function calculateStats(args: {
     (costSource !== "estimated" || comparableEstimatedPricing(estimatedPricing));
   const incurred = incurredCosts(args.completed, args.failed);
 
-  const failuresByKind = countBy(args.failed, (failure) => failure.failureKind);
+  const failuresByKind = countBy(args.failed, (failure) => failure.outcome.failureKind);
   const failureRatesByKind = args.expectedRuns === null
     ? {}
     : Object.fromEntries(
@@ -451,40 +674,71 @@ function calculateStats(args: {
       !behavioral || args.failureInclusiveRecalls === null || args.failureInclusiveRecalls.length === 0
         ? null
         : mean(args.failureInclusiveRecalls),
-    fpPerCaseMean: behavioral && fps.length > 0 ? mean(fps) : null,
+    fpPerCaseMean: behavioral && isTrackedComplete && fps.length > 0 ? mean(fps) : null,
     costPerCaseMean: behavioral && hasComparableCost ? mean(costs) : null,
     costPerCaseStd: behavioral && hasComparableCost ? std(costs) : null,
     costSource: behavioral ? costSource : null,
     durationSecMean: completeMean(durations, hasCompleteDuration ? args.expectedRuns! : 0),
     durationSecMedian: hasCompleteDuration ? median(durations) : null,
     durationSecP95: hasCompleteDuration ? durationP95(durations) : null,
-    breadthDurationSecMean: completeMean(breadthDurations, isTrackedComplete ? args.expectedRuns! : 0),
-    investigationDurationSecMean: completeMean(investigationDurations, isTrackedComplete ? args.expectedRuns! : 0),
-    breadthInputTokensMean: completeMean(breadthInputs, isTrackedComplete ? args.expectedRuns! : 0),
-    investigationInputTokensMean: completeMean(investigationInputs, isTrackedComplete ? args.expectedRuns! : 0),
-    inputTokensMean: completeMean(usageValues.inputTokens, isTrackedComplete ? args.expectedRuns! : 0),
-    uncachedInputTokensMean: completeMean(usageValues.uncachedInputTokens, isTrackedComplete ? args.expectedRuns! : 0),
-    cacheWriteInputTokensMean: completeMean(usageValues.cacheWriteInputTokens, isTrackedComplete ? args.expectedRuns! : 0),
-    cacheReadInputTokensMean: completeMean(usageValues.cacheReadInputTokens, isTrackedComplete ? args.expectedRuns! : 0),
-    outputTokensMean: completeMean(usageValues.outputTokens, isTrackedComplete ? args.expectedRuns! : 0),
-    reasoningOutputTokensMean: completeMean(usageValues.reasoningOutputTokens, isTrackedComplete ? args.expectedRuns! : 0),
-    turnsMean: completeMean(usageValues.turns, isTrackedComplete ? args.expectedRuns! : 0),
-    toolCallsMean: completeMean(usageValues.toolCalls, isTrackedComplete ? args.expectedRuns! : 0),
-    toolOutputBytesMean: completeMean(usageValues.toolOutputBytes, isTrackedComplete ? args.expectedRuns! : 0),
-    promptBytesMean: completeMean(usageValues.promptBytes, isTrackedComplete ? args.expectedRuns! : 0),
+    engineDurationSecMean: completeMean(engineDurations, comparisonExpected),
+    breadthDurationSecMean: completeMean(breadthDurations, comparisonExpected),
+    investigationDurationSecMean: completeMean(investigationDurations, comparisonExpected),
+    breadthInputTokensMean: completeMean(breadthInputs, comparisonExpected),
+    investigationInputTokensMean: completeMean(investigationInputs, comparisonExpected),
+    breadthBaseInputTokensMean: completeMean(stageValues("breadth", "baseInputTokens"), comparisonExpected),
+    investigationBaseInputTokensMean: completeMean(stageValues("investigation", "baseInputTokens"), comparisonExpected),
+    breadthUncachedInputTokensMean: completeMean(stageValues("breadth", "uncachedInputTokens"), comparisonExpected),
+    investigationUncachedInputTokensMean: completeMean(stageValues("investigation", "uncachedInputTokens"), comparisonExpected),
+    breadthCachedInputTokensMean: completeMean(stageValues("breadth", "cachedInputTokens"), comparisonExpected),
+    investigationCachedInputTokensMean: completeMean(stageValues("investigation", "cachedInputTokens"), comparisonExpected),
+    breadthCacheWriteInputTokensMean: completeMean(stageValues("breadth", "cacheWriteInputTokens"), comparisonExpected),
+    investigationCacheWriteInputTokensMean: completeMean(stageValues("investigation", "cacheWriteInputTokens"), comparisonExpected),
+    breadthCacheReadInputTokensMean: completeMean(stageValues("breadth", "cacheReadInputTokens"), comparisonExpected),
+    investigationCacheReadInputTokensMean: completeMean(stageValues("investigation", "cacheReadInputTokens"), comparisonExpected),
+    breadthTurnsMean: completeMean(stageValues("breadth", "turns"), comparisonExpected),
+    investigationTurnsMean: completeMean(stageValues("investigation", "turns"), comparisonExpected),
+    breadthToolCallsMean: completeMean(stageValues("breadth", "toolCalls"), comparisonExpected),
+    investigationToolCallsMean: completeMean(stageValues("investigation", "toolCalls"), comparisonExpected),
+    breadthToolCallsByTypeMean: stageToolTypes("breadth").length === comparisonExpected
+      ? meanToolCallsByType(stageToolTypes("breadth"))
+      : null,
+    investigationToolCallsByTypeMean: stageToolTypes("investigation").length === comparisonExpected
+      ? meanToolCallsByType(stageToolTypes("investigation"))
+      : null,
+    breadthToolOutputBytesMean: completeMean(stageValues("breadth", "toolOutputBytes"), comparisonExpected),
+    investigationToolOutputBytesMean: completeMean(stageValues("investigation", "toolOutputBytes"), comparisonExpected),
+    breadthPromptBytesMean: completeMean(stageValues("breadth", "promptBytes"), comparisonExpected),
+    investigationPromptBytesMean: completeMean(stageValues("investigation", "promptBytes"), comparisonExpected),
+    inputTokensMean: completeMean(usageValues.inputTokens, comparisonExpected),
+    baseInputTokensMean: completeMean(usageValues.baseInputTokens, comparisonExpected),
+    uncachedInputTokensMean: completeMean(usageValues.uncachedInputTokens, comparisonExpected),
+    cachedInputTokensMean: completeMean(usageValues.cachedInputTokens, comparisonExpected),
+    cacheWriteInputTokensMean: completeMean(usageValues.cacheWriteInputTokens, comparisonExpected),
+    cacheReadInputTokensMean: completeMean(usageValues.cacheReadInputTokens, comparisonExpected),
+    outputTokensMean: completeMean(usageValues.outputTokens, comparisonExpected),
+    reasoningOutputTokensMean: completeMean(usageValues.reasoningOutputTokens, comparisonExpected),
+    turnsMean: completeMean(usageValues.turns, comparisonExpected),
+    toolCallsMean: completeMean(usageValues.toolCalls, comparisonExpected),
+    toolCallsByTypeMean: allUsages.length === comparisonExpected
+      ? meanToolCallsByType(allUsages.map((item) => item.toolCallsByType))
+      : null,
+    toolOutputBytesMean: completeMean(usageValues.toolOutputBytes, comparisonExpected),
+    promptBytesMean: completeMean(usageValues.promptBytes, comparisonExpected),
     telemetryExpectedRuns: args.expectedRuns,
     telemetryObserved: {
-      costUsd: incurred.observedAttempts,
+      costUsd: allUsages.filter((usage) => usage.costUsd !== undefined).length,
       durationMs: args.completeness === "tracked" ? durations.length : 0,
-      breadthDurationMs: breadthDurations.length + failedStages.filter((stage) => stage.stage === "breadth").length,
-      investigationDurationMs: investigationDurations.length + failedStages.filter((stage) => stage.stage === "investigation").length,
-      breadthInputTokens: breadthInputs.length + failedStages.filter((stage) =>
-        stage.stage === "breadth" && stage.usage.inputTokens !== undefined).length,
-      investigationInputTokens: investigationInputs.length + failedStages.filter((stage) =>
-        stage.stage === "investigation" && stage.usage.inputTokens !== undefined).length,
+      engineDurationMs: args.completeness === "tracked" ? engineDurations.length : 0,
+      breadthDurationMs: breadthDurations.length,
+      investigationDurationMs: investigationDurations.length,
+      breadthInputTokens: breadthInputs.length,
+      investigationInputTokens: investigationInputs.length,
+      toolCallsByType: allUsages.filter((usage) => usage.toolCallsByType !== undefined).length,
+      ...stageTelemetryObserved(stages),
       ...Object.fromEntries(Object.entries(usageValues).map(([key, values]) => [
         key,
-        values.length + observedFailureUsage(key as keyof EngineResult["usage"]),
+        values.length,
       ])),
     },
     incurredCostUsdTotal: behavioral && args.completeness === "tracked" ? finiteSum(incurred.costs) : null,
@@ -492,9 +746,8 @@ function calculateStats(args: {
     incurredCostSource: behavioral && args.completeness === "tracked" && incurred.costs.length > 0
       ? summarizeCostSource(incurred.sources)
       : null,
-    validFindingsPerDollar: behavioral && hasComparableCost && totalCost !== null && totalCost > 0 ? totalValid / totalCost : null,
     structuralExpectedMarkers: args.benchmarkKind === "structural-only"
-      ? args.completed.reduce((sum, run) => sum + Object.keys(run.matches).length, 0)
+      ? args.structuralExpectedMarkers
       : null,
     structuralMatchedMarkers: args.benchmarkKind === "structural-only" ? totalValid : null,
     structuralUnexpectedFindings: args.benchmarkKind === "structural-only"
@@ -548,13 +801,13 @@ function renderHtml(stats: ConfigStats[]): string {
   const rows = stats.map((item) => `<tr><td>${item.config}</td><td>${item.benchmarkKind}${item.corpus ? ` (${item.corpus})` : ""}</td><td>${formatCompletion(item)}</td>
 <td>${formatPercent(item.recallMean)} ± ${formatPercent(item.recallStd)}</td><td>${formatPercent(item.failureInclusiveRecallMean)}</td>
 <td>${formatNumber(item.fpPerCaseMean, 1)}</td><td>${formatCost(item.costPerCaseMean, item.costPerCaseStd, item.costSource)}</td>
-<td>${formatDuration(item)}</td><td>${formatUsage(item)}</td><td>${formatAvailability(item)}</td><td>${formatIncurredCost(item)}</td><td>${formatStructural(item)}</td><td>${formatStages(item)}</td><td>${item.validFindingsPerDollar?.toFixed(1) ?? "—"}</td></tr>`).join("\n");
+<td>${formatDuration(item)}</td><td>${formatUsage(item)}</td><td>${formatAvailability(item)}</td><td>${formatIncurredCost(item)}</td><td>${formatStructural(item)}</td><td>${formatStages(item)}</td></tr>`).join("\n");
 
   return `<!doctype html><html><head><meta charset="utf-8"><title>peregrine-bugbot benchmark</title>
 <style>body{font-family:system-ui;margin:2rem;max-width:1050px}table{border-collapse:collapse;width:100%}
 td,th{border:1px solid #ddd;padding:6px 10px;text-align:left;font-size:14px}th{background:#f5f5f5}</style></head>
 <body><h1>peregrine-bugbot · evaluation report</h1>
-<table><tr><th>config</th><th>class</th><th>completion</th><th>conditional recall</th><th>failure-inclusive recall</th><th>FP/case</th><th>cost/case</th><th>time mean / median / p95</th><th>usage / work</th><th>telemetry observed</th><th>incurred cost lower bound</th><th>structural markers</th><th>breadth / investigation</th><th>valid findings / $</th></tr>
+<table><tr><th>config</th><th>class</th><th>completion</th><th>conditional recall</th><th>failure-inclusive recall</th><th>FP/case</th><th>cost/case</th><th>time mean / median / p95</th><th>usage / work</th><th>telemetry observed</th><th>incurred cost lower bound</th><th>structural markers</th><th>breadth / investigation</th></tr>
 ${rows}</table>
 <h2>Behavioral cost vs recall — pick the knee</h2>
 <svg viewBox="0 0 600 360" width="600" style="border:1px solid #eee">
@@ -631,18 +884,66 @@ function stageUsageNumbers(runs: ScoredRun[], stage: "breadth" | "investigation"
     .filter((value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0);
 }
 
+function completedStageRecords(run: ScoredRun): StageTelemetry[] {
+  return (["breadth", "investigation"] as const).flatMap((stageName) => {
+    const stage = rawStage(run, stageName);
+    if (!stage || typeof stage.model !== "string" || typeof stage.promptSha256 !== "string" ||
+      typeof stage.durationMs !== "number" || !stage.usage || typeof stage.usage !== "object" ||
+      Array.isArray(stage.usage)) return [];
+    return [{
+      stage: stageName,
+      model: stage.model,
+      promptSha256: stage.promptSha256,
+      usage: stage.usage as StageTelemetry["usage"],
+      durationMs: stage.durationMs,
+      completed: true,
+    }];
+  });
+}
+
+function stageTelemetryObserved(stages: StageTelemetry[]): Record<string, number> {
+  const observed: Record<string, number> = {};
+  for (const stageName of ["breadth", "investigation"] as const) {
+    const matching = stages.filter((stage) => stage.stage === stageName);
+    for (const metric of [
+      "baseInputTokens", "uncachedInputTokens", "cachedInputTokens", "cacheWriteInputTokens",
+      "cacheReadInputTokens", "turns", "toolCalls", "toolOutputBytes", "promptBytes",
+    ] as const) {
+      observed[`${stageName}${metric[0]!.toUpperCase()}${metric.slice(1)}`] = matching.filter(
+        (stage) => stage.usage[metric] !== undefined,
+      ).length;
+    }
+    observed[`${stageName}ToolCallsByType`] = matching.filter(
+      (stage) => stage.usage.toolCallsByType !== undefined,
+    ).length;
+  }
+  return observed;
+}
+
 function formatStages(stats: ConfigStats): string {
-  if (stats.breadthDurationSecMean === null || stats.investigationDurationSecMean === null) return "n/a";
-  const tokens = stats.breadthInputTokensMean === null || stats.investigationInputTokensMean === null
-    ? ""
-    : ` · ${stats.breadthInputTokensMean.toFixed(0)} / ${stats.investigationInputTokensMean.toFixed(0)} input tokens`;
-  return `${stats.breadthDurationSecMean.toFixed(0)}s / ${stats.investigationDurationSecMean.toFixed(0)}s${tokens}`;
+  const stage = (name: "breadth" | "investigation"): string => {
+    const label = name === "breadth" ? "B" : "I";
+    const value = (suffix: string): unknown => stats[`${name}${suffix}` as keyof ConfigStats];
+    const number = (suffix: string) => {
+      const item = value(suffix);
+      return typeof item === "number" ? item.toFixed(0) : "n/a";
+    };
+    const toolTypes = value("ToolCallsByTypeMean");
+    return `${label}: ${number("DurationSecMean")}s; input ${number("InputTokensMean")}` +
+      ` (base ${number("BaseInputTokensMean")}, uncached ${number("UncachedInputTokensMean")},` +
+      ` cached ${number("CachedInputTokensMean")}, write ${number("CacheWriteInputTokensMean")},` +
+      ` read ${number("CacheReadInputTokensMean")}); turns ${number("TurnsMean")};` +
+      ` tools ${number("ToolCallsMean")} ${toolTypes && typeof toolTypes === "object" ? JSON.stringify(toolTypes) : "n/a"};` +
+      ` tool B ${number("ToolOutputBytesMean")}; prompt B ${number("PromptBytesMean")}`;
+  };
+  return `${stage("breadth")}<br>${stage("investigation")}`;
 }
 
 function formatDuration(stats: ConfigStats): string {
   return stats.durationSecMean === null || stats.durationSecMedian === null
     ? "n/a"
-    : `${stats.durationSecMean.toFixed(0)}s / ${stats.durationSecMedian.toFixed(0)}s / ${stats.durationSecP95 === null ? "n/a" : `${stats.durationSecP95.toFixed(0)}s`}`;
+    : `wall ${stats.durationSecMean.toFixed(0)}s / ${stats.durationSecMedian.toFixed(0)}s / ${stats.durationSecP95 === null ? "n/a" : `${stats.durationSecP95.toFixed(0)}s`}` +
+      ` · engine ${stats.engineDurationSecMean === null ? "n/a" : `${stats.engineDurationSecMean.toFixed(0)}s`}`;
 }
 
 function formatIncurredCost(stats: ConfigStats): string {
@@ -662,7 +963,9 @@ function costSourceLabel(source: ConfigStats["costSource"]): string {
 
 function formatUsage(stats: ConfigStats): string {
   const tokenFields: Array<[string, number | null]> = [
+    ["base", stats.baseInputTokensMean],
     ["uncached", stats.uncachedInputTokensMean],
+    ["cached", stats.cachedInputTokensMean],
     ["write", stats.cacheWriteInputTokensMean],
     ["read", stats.cacheReadInputTokensMean],
     ["out", stats.outputTokensMean],
@@ -673,6 +976,21 @@ function formatUsage(stats: ConfigStats): string {
     ? "work n/a"
     : `${stats.turnsMean.toFixed(1)} turns · ${stats.toolCallsMean.toFixed(1)} tools · ${stats.toolOutputBytesMean.toFixed(0)} tool B · ${stats.promptBytesMean.toFixed(0)} prompt B`;
   return `${tokenFields.map(([label, value]) => `${label} ${value?.toFixed(0) ?? "n/a"}`).join(" · ")} · ${work}`;
+}
+
+function meanToolCallsByType(
+  values: Array<Record<string, number> | undefined>,
+): Record<string, number> | null {
+  if (values.length === 0 || values.some((value) => value === undefined)) return null;
+  const observed = values as Array<Record<string, number>>;
+  const types = new Set(observed.flatMap((value) => Object.keys(value)));
+  const result: Record<string, number> = {};
+  for (const type of [...types].sort()) {
+    const total = finiteSum(observed.map((value) => value[type] ?? 0));
+    if (total === null) return null;
+    result[type] = total / observed.length;
+  }
+  return result;
 }
 
 function summarizeCostSource(
@@ -707,20 +1025,32 @@ function formatAvailability(stats: ConfigStats): string {
 
 function incurredCosts(
   completed: ScoredRun[],
-  failed: Array<Extract<RunRecord["outcome"], { status: "failed" }>>,
+  failed: FailedRun[],
 ): { costs: number[]; sources: Array<Exclude<ReportCostSource, null> | undefined>; observedAttempts: number } {
   const costs: number[] = [];
   const sources: Array<Exclude<ReportCostSource, null> | undefined> = [];
   let observedAttempts = 0;
   for (const run of completed) {
     const usage = run.outcome.result.usage;
-    if (usage.costUsd === undefined) continue;
-    costs.push(usage.costUsd);
-    sources.push(usageCostSource(usage));
+    if (usage.costUsd !== undefined) {
+      costs.push(usage.costUsd);
+      sources.push(usageCostSource(usage));
+      observedAttempts++;
+      continue;
+    }
+    const stageCosts = completedStageRecords(run)
+      .map((stage) => ({ cost: stage.usage.costUsd, source: usageCostSource(stage.usage) }))
+      .filter((item): item is { cost: number; source: Exclude<ReportCostSource, null> | undefined } =>
+        typeof item.cost === "number" && Number.isFinite(item.cost) && item.cost >= 0);
+    if (stageCosts.length === 0) continue;
+    const attemptCost = finiteSum(stageCosts.map((item) => item.cost));
+    if (attemptCost === null) continue;
+    costs.push(attemptCost);
+    sources.push(...stageCosts.map((item) => item.source));
     observedAttempts++;
   }
   for (const failure of failed) {
-    const stageCosts = failure.telemetry?.stages
+    const stageCosts = failure.outcome.telemetry?.stages
       .map((stage) => ({ cost: stage.usage.costUsd, source: usageCostSource(stage.usage) }))
       .filter((item): item is { cost: number; source: Exclude<ReportCostSource, null> | undefined } =>
         typeof item.cost === "number" && Number.isFinite(item.cost) && item.cost >= 0) ?? [];

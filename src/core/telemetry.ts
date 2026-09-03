@@ -47,7 +47,10 @@ export function claudeUsageFromEnvelope(
   const cacheWrite = numberFrom(raw, "cache_creation_input_tokens");
   const cacheRead = numberFrom(raw, "cache_read_input_tokens");
   const output = numberFrom(raw, "output_tokens");
-  const reasoning = numberFrom(raw, "reasoning_output_tokens");
+  const rawReasoning = numberFrom(raw, "reasoning_output_tokens");
+  const reasoning = rawReasoning !== undefined && output !== undefined && rawReasoning > output
+    ? undefined
+    : rawReasoning;
   const turns = integerFrom(envelope, "num_turns");
   const work = observedWork(
     envelope,
@@ -115,10 +118,15 @@ export function codexUsageFromEvents(
   const usageSnapshots = completed
     .map((event) => record(event.usage))
     .filter((usage) => Object.keys(usage).length > 0);
+  const work = observedWork(events, true);
   if (completed.length !== 1 || usageSnapshots.length !== 1) {
     return withUnavailable({
       provider: "openai",
       aggregation: "ambiguous",
+      turns: completed.length > 0 ? completed.length : undefined,
+      toolCalls: work.toolCalls,
+      toolCallsByType: work.toolCallsByType,
+      toolOutputBytes: work.toolOutputBytes,
       promptBytes: promptBytes(prompt),
     });
   }
@@ -133,15 +141,13 @@ export function codexUsageFromEvents(
   const lastEvent = record(events[events.length - 1]);
   if (lastEvent.type !== "turn.completed" || input === undefined || cacheRead === undefined ||
     output === undefined || cacheRead > input ||
-    (raw.reasoning_output_tokens !== undefined && reasoning === undefined)) {
+    (raw.reasoning_output_tokens !== undefined && (reasoning === undefined || reasoning > output))) {
     return withUnavailable({ provider: "openai", aggregation: "ambiguous", promptBytes: promptBytes(prompt) });
   }
   const serviceTier = firstString(raw.service_tier);
   const malformed: MalformedUsageField[] = raw.service_tier !== undefined && serviceTier === undefined
     ? ["serviceTier"]
     : [];
-  const work = observedWork(events, true);
-
   return withUnavailable({
     provider: "openai",
     serviceTier,
@@ -366,6 +372,7 @@ function observedWork(value: unknown, completeStream: boolean): {
   const calls = new Map<string, string>();
   const outputCallIds = new Set<string>();
   let anonymousLifecycle = false;
+  let ambiguousLifecycle = false;
   let outputBytes = 0;
   let outputBytesOverflow = false;
   const visit = (entry: unknown, path: string): void => {
@@ -389,12 +396,13 @@ function observedWork(value: unknown, completeStream: boolean): {
       const callType = normalizedToolName(nested.name ?? object.name) ?? type;
       const phase = String(object.type ?? "").toLowerCase();
       const isResult = /result|output/.test(type) || /completed|result/.test(phase);
+      if (!id) anonymousLifecycle = true;
       if (!isResult) {
         if (id) calls.set(id, callType);
-        else if (/started|created|requested|call|use/.test(phase)) anonymousLifecycle = true;
-      } else if (id && type !== "tool_result" && type !== "function_result") {
-        if (!calls.has(id)) calls.set(id, callType);
+      } else if (id && !calls.has(id)) {
+        ambiguousLifecycle = true;
       }
+      if (isResult && id && outputCallIds.has(id)) ambiguousLifecycle = true;
       if (isResult && (!id || !outputCallIds.has(id))) {
         const next = safeIntegerSum([outputBytes, workOutputBytes(nested, object)]);
         if (next === undefined) outputBytesOverflow = true;
@@ -410,8 +418,9 @@ function observedWork(value: unknown, completeStream: boolean): {
   const byType: Record<string, number> = {};
   for (const type of calls.values()) byType[type] = (byType[type] ?? 0) + 1;
   if (!completeStream) return {};
-  const observedOutputBytes = outputBytesOverflow ? undefined : outputBytes;
-  return anonymousLifecycle
+  const hasUnobservedCallOutput = [...calls.keys()].some((id) => !outputCallIds.has(id));
+  const observedOutputBytes = outputBytesOverflow || hasUnobservedCallOutput ? undefined : outputBytes;
+  return anonymousLifecycle || ambiguousLifecycle
     ? { toolOutputBytes: observedOutputBytes }
     : { toolCalls: calls.size, toolCallsByType: byType, toolOutputBytes: observedOutputBytes };
 }
@@ -427,7 +436,8 @@ function normalizedWorkType(value: unknown): string | undefined {
 
 function normalizedToolName(value: unknown): string | undefined {
   if (typeof value !== "string" || value.length === 0) return undefined;
-  return value.toLowerCase().replace(/[^a-z0-9._-]+/g, "_").slice(0, 100);
+  const normalized = value.toLowerCase().replace(/[^a-z0-9._-]+/g, "_").slice(0, 100);
+  return /^[a-z0-9]/.test(normalized) ? normalized : "unknown_tool";
 }
 
 function workOutputBytes(...objects: Record<string, unknown>[]): number {

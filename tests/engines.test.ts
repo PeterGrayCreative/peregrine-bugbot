@@ -5,7 +5,8 @@ import test from "node:test";
 import { createClaudeEngine } from "../src/engines/claude.js";
 import { createCodexEngine } from "../src/engines/codex.js";
 import { RunFailureError } from "../src/core/run-failure.js";
-import type { PeregrineConfig, ReviewContext } from "../src/types.js";
+import { parseRunRecord } from "../eval/artifacts.js";
+import type { PeregrineConfig, ReviewContext, RunRecord, RunnerName } from "../src/types.js";
 import type { exec } from "../src/util/exec.js";
 import { nonSensitiveEnvironment, providerEnvironment } from "../src/security/provider-env.js";
 import { sha256 } from "../src/core/telemetry.js";
@@ -23,6 +24,69 @@ function context(): ReviewContext {
     headRef: "head-sha",
     config: config(),
   };
+}
+
+function assertStrictFailureArtifact(runner: RunnerName, error: RunFailureError): void {
+  const baseRef = "1".repeat(40);
+  const headRef = "2".repeat(40);
+  const output = [
+    `base: ${baseRef} (argument)`,
+    `head: ${headRef}`,
+    `merge-base: ${baseRef}`,
+    "Changed files",
+    "(none)",
+    "",
+  ].join("\n");
+  const record: RunRecord = {
+    schemaVersion: 1,
+    attemptId: "attempt-prompt-isolation",
+    caseName: "development/case-00000001",
+    caseKind: "seeded",
+    configName: `${runner}-prompt-isolation`,
+    repeat: 1,
+    caseCorpus: "development",
+    runner,
+    startedAt: "2026-09-03T00:00:00.000Z",
+    finishedAt: "2026-09-03T00:00:10.000Z",
+    attemptDurationMs: 10_000,
+    evaluationProvenance: {
+      history: {
+        schemaVersion: 1,
+        materialization: "fixture-patch",
+        objectFormat: "sha1",
+        baseRef,
+        headRef,
+        mergeBase: baseRef,
+        baseTree: "3".repeat(40),
+        headTree: "4".repeat(40),
+        commitCount: 2,
+        baseIsMergeBase: true,
+        checkedOutTreeMatchesHead: true,
+        treeReproductionVerified: true,
+        diffNormalization: "identity-v1",
+        diffSha256: "5".repeat(64),
+      },
+      manifest: {
+        entryPoint: "prepareReviewManifest",
+        skillName: "invariant-first-pr-review",
+        baseRef,
+        headRef,
+        mergeBase: baseRef,
+        outputSha256: sha256(output),
+        output,
+        profileSource: "none",
+        headProfileChanged: false,
+      },
+    },
+    outcome: {
+      status: "failed",
+      failureKind: error.kind,
+      message: error.message,
+      durationMs: error.telemetry?.durationMs ?? 1,
+      ...(error.telemetry ? { telemetry: error.telemetry } : {}),
+    },
+  };
+  assert.doesNotThrow(() => parseRunRecord(record, `${runner} prompt-isolation failure`));
 }
 
 const finding = {
@@ -240,10 +304,20 @@ test("evaluation prompt validation failures use stable configuration outcomes at
       const engine = runner === "claude" ? createClaudeEngine(fake) : createCodexEngine(fake);
       await assert.rejects(
         () => engine.review(ctx),
-        (error: unknown) =>
-          error instanceof RunFailureError &&
-          error.kind === "configuration" &&
-          error.message.includes(`evaluation ${rejectedStage} prompt isolation failed`),
+        (error: unknown) => {
+          assert.ok(error instanceof RunFailureError);
+          assert.equal(error.kind, "configuration");
+          assert.match(error.message, new RegExp(`evaluation ${rejectedStage} prompt isolation failed`));
+          if (rejectedStage === "breadth") {
+            assert.equal(error.telemetry, undefined);
+          } else {
+            assert.equal(error.telemetry?.stages.length, 1);
+            assert.equal(error.telemetry?.stages[0]?.stage, "breadth");
+            assert.equal(error.telemetry?.stages[0]?.completed, true);
+          }
+          assertStrictFailureArtifact(runner, error);
+          return true;
+        },
       );
       assert.equal(calls, rejectedStage === "breadth" ? 0 : 1);
     }

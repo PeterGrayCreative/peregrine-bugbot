@@ -21,8 +21,9 @@ import {
   type PreTelemetryRunRecord,
   type LegacySchemaV1RunRecord,
 } from "./artifacts.js";
+import { preflightTrackedRunSet } from "./report.js";
 
-type LegacyRunRecord = Omit<RunRecord, "schemaVersion" | "attemptId" | "finishedAt" | "outcome" | "caseCorpus" | "runner"> & {
+type LegacyRunRecord = Omit<RunRecord, "schemaVersion" | "attemptId" | "finishedAt" | "attemptDurationMs" | "outcome" | "caseCorpus" | "runner"> & {
   result: EngineResult;
 };
 
@@ -72,6 +73,7 @@ export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Prom
       }
     }
   }
+  if (manifest) preflightTrackedRunSet(dir, resolve(casesDir), manifest);
   const expectedByFile = new Map(
     (manifest?.expectedAttempts ?? preTelemetryManifest?.expectedAttempts ?? legacyManifest?.expectedAttempts ?? [])
       .map((attempt) => [attempt.file, attempt]),

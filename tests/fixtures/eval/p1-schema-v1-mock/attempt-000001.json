@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "attemptId": "attempt-000001",
+  "caseName": "legacy-p1-mock-case",
+  "caseKind": "clean",
+  "configName": "mock-p1-route",
+  "repeat": 1,
+  "startedAt": "2026-09-02T00:00:00.000Z",
+  "finishedAt": "2026-09-02T00:00:00.001Z",
+  "outcome": {
+    "status": "completed",
+    "result": {
+      "engine": "mock",
+      "status": "clean",
+      "modelConfig": "mock",
+      "findings": [],
+      "usage": { "costUsd": 0, "inputTokens": 0, "outputTokens": 0 },
+      "durationMs": 1
+    }
+  }
+}

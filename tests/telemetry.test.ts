@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
 import { buildReport, durationP95, P95_MIN_SAMPLES } from "../eval/report.js";
+import { networkIsolationCapability } from "../eval/case-isolation.js";
 import { applyUsageCost, validatePricingCatalog } from "../src/core/pricing.js";
 import {
   claudeUsageFromEnvelope,
@@ -86,6 +87,23 @@ test("Claude envelope preserves provider token classes and observed work", () =>
   assert.ok(!JSON.stringify(usage).includes("rg TODO"));
 });
 
+test("provider tool names normalize to artifact-safe keys", () => {
+  const usage = claudeUsageFromEnvelope({
+    usage: {
+      input_tokens: 1,
+      cache_creation_input_tokens: 0,
+      cache_read_input_tokens: 0,
+      output_tokens: 1,
+    },
+    messages: [
+      { type: "tool_use", id: "call-1", name: "!!!" },
+      { type: "tool_result", tool_use_id: "call-1", content: "" },
+    ],
+  }, "prompt");
+  assert.deepEqual(usage.toolCallsByType, { unknown_tool: 1 });
+  assert.doesNotThrow(() => parseUsage(usage, "normalized provider usage"));
+});
+
 test("Codex captured events preserve one final usage snapshot without double counting", () => {
   const events = readFileSync(resolve("tests/fixtures/providers/codex-events.jsonl"), "utf8")
     .trim()
@@ -110,13 +128,17 @@ test("Codex captured events preserve one final usage snapshot without double cou
 
 test("ambiguous multiple Codex usage snapshots remain unavailable", () => {
   const usage = codexUsageFromEvents([
+    { type: "item.started", item: { id: "tool-1", type: "command_execution" } },
+    { type: "item.completed", item: { id: "tool-1", type: "command_execution", aggregated_output: "ok" } },
     { type: "turn.completed", usage: { input_tokens: 10, cached_input_tokens: 2, output_tokens: 1 } },
     { type: "turn.completed", usage: { input_tokens: 20, cached_input_tokens: 4, output_tokens: 2 } },
   ], "prompt");
   assert.equal(usage.inputTokens, undefined);
   assert.equal(usage.aggregation, "ambiguous");
   assert.equal(usage.outputTokens, undefined);
-  assert.equal(usage.turns, undefined);
+  assert.equal(usage.turns, 2);
+  assert.equal(usage.toolCalls, 1);
+  assert.equal(usage.toolOutputBytes, 2);
   assert.ok(usage.unavailable?.includes("inputTokens"));
 });
 
@@ -129,12 +151,12 @@ test("Codex rejects malformed, non-object, and non-terminal usage streams", () =
     [{ type: "turn.completed", usage: { input_tokens: 1 } }, valid],
     [valid, { type: "item.completed", item: { id: "later", type: "command_execution" } }],
   ];
-  for (const events of malformedStreams) {
+  for (const [index, events] of malformedStreams.entries()) {
     const usage = codexUsageFromEvents(events, "prompt");
     assert.equal(usage.aggregation, "ambiguous");
     assert.equal(usage.inputTokens, undefined);
     assert.equal(usage.outputTokens, undefined);
-    assert.equal(usage.turns, undefined);
+    assert.equal(usage.turns, index === 3 ? 2 : undefined);
     assert.equal(usage.costUsd, undefined);
   }
 });
@@ -397,6 +419,66 @@ test("anonymous or incomplete tool event streams do not invent tool-call counts"
   assert.equal(incomplete.aggregation, "ambiguous");
 });
 
+test("anonymous result-only work keeps output bytes but not invented tool-call zeroes", () => {
+  const claude = claudeUsageFromEnvelope({
+    usage: {
+      input_tokens: 1,
+      cache_creation_input_tokens: 0,
+      cache_read_input_tokens: 0,
+      output_tokens: 1,
+    },
+    messages: [{ type: "tool_result", content: "abc" }],
+  }, "prompt");
+  assert.equal(claude.toolCalls, undefined);
+  assert.equal(claude.toolCallsByType, undefined);
+  assert.equal(claude.toolOutputBytes, 3);
+
+  const codex = codexUsageFromEvents([
+    { type: "item.completed", item: { type: "command_execution", aggregated_output: "abcdef" } },
+    { type: "turn.completed", usage: { input_tokens: 1, cached_input_tokens: 0, output_tokens: 1 } },
+  ], "prompt");
+  assert.equal(codex.toolCalls, undefined);
+  assert.equal(codex.toolCallsByType, undefined);
+  assert.equal(codex.toolOutputBytes, 6);
+
+  const orphan = codexUsageFromEvents([
+    { type: "item.completed", item: { id: "orphan-1", type: "tool_result", output: "abc" } },
+    { type: "turn.completed", usage: { input_tokens: 1, cached_input_tokens: 0, output_tokens: 1 } },
+  ], "prompt");
+  assert.equal(orphan.toolCalls, undefined);
+  assert.equal(orphan.toolCallsByType, undefined);
+  assert.equal(orphan.toolOutputBytes, 3);
+});
+
+test("started calls without a terminal keep call count but not invented output bytes", () => {
+  const usage = codexUsageFromEvents([
+    { type: "item.started", item: { id: "tool-1", type: "command_execution" } },
+    { type: "turn.completed", usage: { input_tokens: 1, cached_input_tokens: 0, output_tokens: 1 } },
+  ], "prompt");
+  assert.equal(usage.toolCalls, 1);
+  assert.deepEqual(usage.toolCallsByType, { command_execution: 1 });
+  assert.equal(usage.toolOutputBytes, undefined);
+});
+
+test("provider usage never accepts reasoning tokens above total output", () => {
+  const claude = claudeUsageFromEnvelope({
+    usage: {
+      input_tokens: 1,
+      cache_creation_input_tokens: 0,
+      cache_read_input_tokens: 0,
+      output_tokens: 1,
+      reasoning_output_tokens: 2,
+    },
+  }, "prompt");
+  assert.equal(claude.reasoningOutputTokens, undefined);
+  const codex = codexUsageFromEvents([{
+    type: "turn.completed",
+    usage: { input_tokens: 1, cached_input_tokens: 0, output_tokens: 1, reasoning_output_tokens: 2 },
+  }], "prompt");
+  assert.equal(codex.aggregation, "ambiguous");
+  assert.equal(codex.outputTokens, undefined);
+});
+
 test("usage validation distinguishes unavailable fields from observed zero", () => {
   const parsed = parseUsage({
     provider: "openai",
@@ -496,14 +578,15 @@ test("reports aggregate provider cost, token classes, work, and stage duration",
   const root = mkdtempSync(join(tmpdir(), "peregrine-telemetry-report-"));
   const casesDir = join(root, "cases");
   const runsDir = join(root, "runs");
-  mkdirSync(join(casesDir, "case"), { recursive: true });
+  const caseName = "development/case-00000001";
+  mkdirSync(join(casesDir, caseName), { recursive: true });
   mkdirSync(runsDir);
-  writeFileSync(join(casesDir, "case", "ground_truth.json"), JSON.stringify({
+  writeFileSync(join(casesDir, caseName, "ground_truth.json"), JSON.stringify({
     bugs: [{ id: "bug", file: "src/value.ts", startLine: 1, endLine: 1, description: "invalid value" }],
   }));
   const attempt = {
     id: "attempt-000001",
-    caseName: "case",
+    caseName,
     configName: "route",
     repeat: 1,
     file: "attempt-000001.json",
@@ -516,13 +599,13 @@ test("reports aggregate provider cost, token classes, work, and stage duration",
     createdAt: "2026-09-02T00:00:00.000Z",
     expectedAttempts: [attempt],
     providerNetworkIsolation: {
-      claude: { status: "unavailable", mechanism: "test fixture" },
+      claude: { status: "enforced", mechanism: "test-enforced provider sandbox" },
     },
   }));
   const result = {
     engine: "claude",
     status: "completed",
-    modelConfig: "fast->strong",
+    modelConfig: "fast/low->strong/high",
     reviewedBaseRef: "1111111111111111111111111111111111111111",
     reviewedHeadRef: "2222222222222222222222222222222222222222",
     findings: [{
@@ -560,7 +643,15 @@ test("reports aggregate provider cost, token classes, work, and stage duration",
     },
     durationMs: 4000,
     raw: {
+      manifest: "base: 1111111111111111111111111111111111111111 (argument)\nhead: 2222222222222222222222222222222222222222\nmerge-base: 1111111111111111111111111111111111111111\nChanged files\n(none)\n",
       breadth: {
+        output: {
+          model: "fast",
+          candidates: [],
+          clear: [],
+          escalations: [],
+          coverage: { coveredFiles: ["src/value.ts"], unavailable: [] },
+        },
         model: "fast",
         promptSha256: "a".repeat(64),
         durationMs: 1000,
@@ -615,7 +706,7 @@ test("reports aggregate provider cost, token classes, work, and stage duration",
   const record = {
     schemaVersion: 1,
     attemptId: attempt.id,
-    caseName: "case",
+    caseName,
     caseKind: "seeded",
     configName: "route",
     repeat: 1,
@@ -623,6 +714,7 @@ test("reports aggregate provider cost, token classes, work, and stage duration",
     runner: "claude",
     startedAt: "2026-09-02T00:00:00.000Z",
     finishedAt: "2026-09-02T00:00:04.000Z",
+    attemptDurationMs: 4000,
     evaluationProvenance: {
       history: {
         schemaVersion: 1,

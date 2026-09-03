@@ -12,44 +12,30 @@
     "result": {
       "engine": "claude",
       "status": "completed",
-      "modelConfig": "claude-haiku->claude-sonnet",
-      "findings": [
-        {
-          "file": "src/value.ts",
-          "startLine": 1,
-          "endLine": 1,
-          "severity": "high",
-          "disposition": "fix-in-pr",
-          "category": "logic",
-          "invariant": "value-remains-valid",
-          "title": "Invalid value",
-          "explanation": "The changed value violates the invariant.",
-          "failurePath": "A caller observes the invalid value.",
-          "confidence": 0.99
+      "modelConfig": "claude-3-5-haiku-latest/low->claude-sonnet-4-20250514/high",
+      "findings": [{
+        "file": "src/value.ts", "startLine": 1, "endLine": 1, "severity": "high",
+        "disposition": "fix-in-pr", "category": "logic", "invariant": "value-remains-valid",
+        "title": "Invalid value", "explanation": "The changed value violates the invariant.",
+        "failurePath": "A caller observes the invalid value.", "confidence": 0.99
+      }],
+      "usage": { "inputTokens": 10, "outputTokens": 2, "costUsd": 0.01 },
+      "durationMs": 1000,
+      "raw": {
+        "manifest": "base/head refs were not supplied",
+        "breadth": {
+          "output": {
+            "model": "claude-3-5-haiku-latest", "candidates": [], "clear": [],
+            "escalations": [], "coverage": { "coveredFiles": ["src/value.ts"], "unavailable": [] }
+          },
+          "usage": { "inputTokens": 4, "outputTokens": 1, "costUsd": 0.004 },
+          "durationMs": 400
+        },
+        "investigation": {
+          "usage": { "inputTokens": 6, "outputTokens": 1, "costUsd": 0.006 },
+          "durationMs": 600
         }
-      ],
-      "usage": {
-        "provider": "anthropic",
-        "aggregation": "stage-sum",
-        "inputTokens": 10,
-        "outputTokens": 2,
-        "costUsd": 0.01,
-        "costSource": "provider",
-        "unavailable": [
-          "baseInputTokens",
-          "uncachedInputTokens",
-          "cachedInputTokens",
-          "cacheWriteInputTokens",
-          "cacheReadInputTokens",
-          "reasoningOutputTokens",
-          "turns",
-          "toolCalls",
-          "toolCallsByType",
-          "toolOutputBytes",
-          "promptBytes"
-        ]
-      },
-      "durationMs": 1000
+      }
     }
   }
 }

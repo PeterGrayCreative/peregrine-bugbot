@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "attemptId": "attempt-000001",
+  "caseName": "legacy-p1-codex-case",
+  "caseKind": "seeded",
+  "configName": "codex-p1-route",
+  "repeat": 1,
+  "startedAt": "2026-09-02T00:00:00.000Z",
+  "finishedAt": "2026-09-02T00:00:01.000Z",
+  "outcome": {
+    "status": "completed",
+    "result": {
+      "engine": "codex",
+      "status": "clean",
+      "modelConfig": "gpt-5-mini/low->gpt-5/high",
+      "findings": [],
+      "usage": { "inputTokens": 10, "cachedInputTokens": 3, "outputTokens": 5, "reasoningOutputTokens": 2 },
+      "durationMs": 1000,
+      "raw": {
+        "manifest": "base/head refs were not supplied",
+        "breadth": {
+          "output": {
+            "model": "gpt-5-mini", "candidates": [], "clear": [], "escalations": [],
+            "coverage": { "coveredFiles": ["src/value.ts"], "unavailable": [] }
+          },
+          "usage": { "inputTokens": 4, "cachedInputTokens": 1, "outputTokens": 2, "reasoningOutputTokens": 1 },
+          "durationMs": 400
+        },
+        "investigation": {
+          "output": { "findings": [] },
+          "usage": { "inputTokens": 6, "cachedInputTokens": 2, "outputTokens": 3, "reasoningOutputTokens": 1 },
+          "durationMs": 600
+        }
+      }
+    }
+  }
+}

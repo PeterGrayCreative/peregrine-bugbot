@@ -404,6 +404,8 @@ export interface RunRecord {
   runner: RunnerName;
   startedAt: string;
   finishedAt: string;
+  /** Terminal wall time for materialization, provider work, and isolated cleanup. */
+  attemptDurationMs: number;
   /** Present after history materialization; manifest is added only after its preflight passes. */
   evaluationProvenance?: EvaluationAttemptProvenance;
   outcome: RunOutcome;
