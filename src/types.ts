@@ -390,7 +390,10 @@ export interface ExperimentProtocol {
     kind: ExperimentJudge;
     /** Required for provider-backed semantic judges; absent for exact grading. */
     model?: string;
+    effort?: string;
     version: string;
+    /** Independently enforced; review attempts never consume this budget. */
+    limits?: ExperimentLimits;
   };
   /** Required together for screening and checkpoint comparisons. */
   control?: string;

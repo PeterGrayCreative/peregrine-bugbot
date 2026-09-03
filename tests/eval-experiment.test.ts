@@ -23,12 +23,15 @@ import {
 import { gradeRuns } from "../eval/grade.js";
 import { buildReport } from "../eval/report.js";
 import { runMatrix } from "../eval/run-matrix.js";
+import { runSemanticJudge } from "../eval/run-semantic-judge.js";
+import { unavailableJudgeUsage } from "../eval/judge-runtime.js";
+import { materializeCase } from "../eval/case-isolation.js";
 import {
   EXPERIMENT_GRADING_SEAL_FILENAME,
   EXPERIMENT_TERMINAL_SEAL_FILENAME,
   parseExperimentTerminalSeal,
 } from "../eval/experiment-seals.js";
-import { mockUsage } from "../src/core/telemetry.js";
+import { codexUsageFromEvents, combineUsage, mockUsage } from "../src/core/telemetry.js";
 import type {
   CaseCorpus,
   EngineResult,
@@ -51,6 +54,36 @@ const PATCH = [
   "",
 ].join("\n");
 
+function validateAgainstSchema(value: unknown, schema: any, root = schema, path = "$"): void {
+  if (schema.$ref) {
+    const target = schema.$ref.split("/").slice(1).reduce(
+      (current: any, key: string) => current[key.replaceAll("~1", "/").replaceAll("~0", "~")],
+      root,
+    );
+    return validateAgainstSchema(value, target, root, path);
+  }
+  if (schema.const !== undefined) assert.deepEqual(value, schema.const, `${path} const`);
+  const types = Array.isArray(schema.type) ? schema.type : schema.type ? [schema.type] : [];
+  if (types.length > 0) {
+    const actual = value === null ? "null" : Array.isArray(value) ? "array" : Number.isInteger(value) ? "integer" : typeof value;
+    assert.ok(types.includes(actual), `${path} type ${actual}`);
+  }
+  if (typeof value === "string" && schema.pattern) assert.match(value, new RegExp(schema.pattern), `${path} pattern`);
+  if (Array.isArray(value) && schema.items) {
+    value.forEach((item, index) => validateAgainstSchema(item, schema.items, root, `${path}[${index}]`));
+  }
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    const record = value as Record<string, unknown>;
+    for (const key of schema.required ?? []) assert.ok(key in record, `${path}.${key} required`);
+    if (schema.additionalProperties === false) {
+      for (const key of Object.keys(record)) assert.ok(key in (schema.properties ?? {}), `${path}.${key} allowed`);
+    }
+    for (const [key, child] of Object.entries(schema.properties ?? {})) {
+      if (key in record) validateAgainstSchema(record[key], child, root, `${path}.${key}`);
+    }
+  }
+}
+
 const structuralProtocol: ExperimentProtocol = {
   mode: "structural-smoke",
   seed: 20260903,
@@ -69,6 +102,15 @@ const structuralProtocol: ExperimentProtocol = {
   },
 };
 
+const judgeLimits = {
+  maxProviderCostUsd: null,
+  maxProviderAttempts: 500,
+  maxWallTimeMs: 3_600_000,
+  maxFailureRate: 0.25,
+  minAttemptsForFailureRate: 8,
+  maxConsecutiveFailures: 3,
+};
+
 const cliSessionProtocol: ExperimentProtocol = {
   mode: "screening",
   seed: 20260903,
@@ -76,7 +118,7 @@ const cliSessionProtocol: ExperimentProtocol = {
   providerCalls: "deny",
   providerAccess: "cli-session",
   costAccounting: "best-effort",
-  judge: { kind: "codex", model: "gpt-5.6-sol", version: "semantic-v1" },
+  judge: { kind: "codex", model: "gpt-5.6-luna", effort: "medium", version: "semantic-v1", limits: judgeLimits },
   control: "control",
   treatment: "treatment",
   limits: {
@@ -329,7 +371,7 @@ test("a denied Codex CLI-session experiment seals its decision before provider o
   }
 });
 
-test("provider-enabled protocols fail before creating a run directory", async () => {
+test("provider-enabled protocols pass the former global gate and preserve contained preflight failures", async () => {
   const root = mkdtempSync(join(realpathSync(tmpdir()), "peregrine-experiment-live-gate-"));
   const casesDir = join(root, "cases");
   createFixtureCase(casesDir, "case-66666666", "development");
@@ -349,14 +391,134 @@ test("provider-enabled protocols fail before creating a run directory", async ()
   }));
 
   try {
-    await assert.rejects(
-      () => runMatrix(matrixPath, runsRoot, { casesDir, runtimeMetadataFor }),
-      /providerCalls=allow remains disabled until contained review and judge execution/,
-    );
-    assert.equal(existsSync(runsRoot), false);
+    const runsDir = await runMatrix(matrixPath, runsRoot, {
+      casesDir,
+      runtimeMetadataFor: availableRuntimeMetadataFor,
+      manifestPreparer,
+    });
+    const attempts = readdirSync(runsDir).filter((path) => /^attempt-[0-9]{6}\.json$/.test(path));
+    assert.equal(attempts.length, 2);
+    for (const path of attempts) {
+      const record = JSON.parse(readFileSync(join(runsDir, path), "utf8"));
+      assert.equal(record.outcome.status, "failed");
+      assert.equal(record.outcome.failureKind, "configuration");
+      assert.match(record.outcome.message, /(?:image|CLI session|containment|isolation|credential)/);
+    }
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
+});
+
+test("fake contained semantic judge completes grading seals and report accounting end to end", async () => {
+  const root = mkdtempSync(join(realpathSync(tmpdir()), "peregrine-experiment-semantic-e2e-"));
+  const materializationRoot = join(root, "materialized");
+  mkdirSync(materializationRoot);
+  const casesDir = join(root, "cases");
+  const caseDir = createFixtureCase(casesDir, "case-67676767", "development");
+  writeFileSync(join(caseDir, "ground_truth.json"), JSON.stringify({ bugs: [{
+    id: "p1", rootCauseGroup: "r1", lane: "logic-correctness",
+    expectedDisposition: "fix-in-pr", expectedSeverity: "high", file: "src/value.ts",
+    startLine: 1, endLine: 1, description: "Polarity reversed.",
+    reachablePreconditions: "Export is consumed.", observableImpact: "Feature stays off.",
+    provenance: "fixture",
+  }] }));
+  const matrixPath = join(root, "matrix.json");
+  writeFileSync(matrixPath, JSON.stringify({
+    repeats: 1,
+    corpora: ["development"],
+    configs: [{ name: "control", runner: "codex" }, { name: "treatment", runner: "codex" }],
+    experiment: {
+      ...cliSessionProtocol,
+      providerCalls: "allow",
+      limits: { ...cliSessionProtocol.limits, maxProviderAttempts: 10 },
+    },
+  }));
+  const engine: Engine = {
+    name: "codex",
+    review: async (ctx) => {
+      const result = completedWithFinding(ctx);
+      const breadthUsage = codexUsageFromEvents([{
+        type: "turn.completed",
+        usage: { input_tokens: 1, cached_input_tokens: 0, output_tokens: 1, reasoning_output_tokens: 0 },
+      }], "fake breadth prompt");
+      const investigationUsage = codexUsageFromEvents([{
+        type: "turn.completed",
+        usage: { input_tokens: 1, cached_input_tokens: 0, output_tokens: 1, reasoning_output_tokens: 0 },
+      }], "fake investigation prompt");
+      const codex = ctx.config.runners.codex;
+      const modelConfig = `${codex.breadthModel}/${codex.breadthEffort}->${codex.investigationModel}/${codex.investigationEffort}`;
+      return {
+        ...result,
+        engine: "codex",
+        modelConfig,
+        durationMs: 2,
+        usage: combineUsage(breadthUsage, investigationUsage),
+        raw: {
+          manifest: (await manifestPreparer(ctx)).output,
+          breadth: {
+            output: { model: codex.breadthModel, candidates: [], clear: [], escalations: [], coverage: { coveredFiles: ["src/value.ts"], unavailable: [] } },
+            model: codex.breadthModel,
+            promptSha256: "a".repeat(64), usage: breadthUsage, durationMs: 1, malformedEventLines: 0,
+          },
+          investigation: {
+            output: { findings: result.findings }, model: codex.investigationModel,
+            promptSha256: "b".repeat(64), usage: investigationUsage, durationMs: 1, malformedEventLines: 0,
+          },
+        },
+      };
+    },
+  };
+  try {
+    const runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+      casesDir,
+      engineFor: () => engine,
+      runtimeMetadataFor: availableRuntimeMetadataFor,
+      manifestPreparer,
+      materializeCaseFor: (caseRoot, spec, policy, options) =>
+        materializeCase(caseRoot, spec, policy, {
+          ...options,
+          tempRoot: materializationRoot,
+          prepareProviderAssets: false,
+        }),
+      prepareContainment: async () => ({
+        runProvider: async () => ({ stdout: "", stderr: "", code: 0, timedOut: false }),
+        readProviderOutput: () => { throw new Error("fake engine must not read provider output"); },
+      }),
+    });
+    const rawAttempts = readdirSync(runsDir)
+      .filter((path) => /^attempt-[0-9]{6}\.json$/.test(path))
+      .map((path) => JSON.parse(readFileSync(join(runsDir, path), "utf8")) as RunRecord);
+    assert.equal(rawAttempts.length, 2);
+    assert.ok(rawAttempts.every((attempt) => attempt.outcome.status === "completed"));
+    let judgeCalls = 0;
+    const judged = await runSemanticJudge(runsDir, casesDir, { execute: async () => {
+      judgeCalls += 1;
+      return { verdict: true, durationMs: 7, providerCostUsd: null, usage: {
+        ...unavailableJudgeUsage(), inputTokens: 12, outputTokens: 2, reasoningTokens: 1, turns: 1, toolCalls: 0,
+      } };
+    } });
+    assert.equal(judged.terminal, "completed");
+    assert.equal(judgeCalls, 1, "identical comparisons across variants share one immutable decision");
+    await gradeRuns(runsDir, casesDir);
+    const stats = await buildReport(runsDir, { casesDir });
+    assert.equal(stats.length, 2);
+    for (const configName of ["control", "treatment"]) {
+      const config = stats.find((item) => item.config === configName);
+      assert.ok(config, `${configName} report row exists`);
+      assert.equal(config.expectedRuns, 1);
+      assert.equal(config.runs, 1);
+      assert.equal(config.completedRuns, 1);
+      assert.equal(config.failedRuns, 0);
+      assert.equal(config.missingRuns, 0);
+    }
+    assert.ok(existsSync(join(runsDir, EXPERIMENT_GRADING_SEAL_FILENAME)));
+    const gradingSeal = JSON.parse(readFileSync(join(runsDir, EXPERIMENT_GRADING_SEAL_FILENAME), "utf8"));
+    const gradingSealSchema = JSON.parse(readFileSync(join(process.cwd(), "schemas/experiment-grading-seal.schema.json"), "utf8"));
+    validateAgainstSchema(gradingSeal, gradingSealSchema);
+    const html = readFileSync(join(runsDir, "benchmark.html"), "utf8");
+    assert.match(html, /Semantic judge accounting/);
+    assert.match(html, /12 \/ n\/a \/ 2 \/ 1/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
 test("experiment grading and reporting validate immutable metadata and never replace grades", async () => {
@@ -701,7 +863,7 @@ test("a denied experiment cannot invoke its semantic judge", async () => {
     experiment: {
       ...cliSessionProtocol,
       providerCalls: "deny",
-      judge: { kind: "codex", model: "gpt-5.6-sol", version: "semantic-v1" },
+      judge: { kind: "codex", model: "gpt-5.6-luna", effort: "medium", version: "semantic-v1", limits: judgeLimits },
       limits: { ...cliSessionProtocol.limits, maxProviderAttempts: 0 },
     },
   }));
@@ -714,7 +876,7 @@ test("a denied experiment cannot invoke its semantic judge", async () => {
     });
     await assert.rejects(
       () => gradeRuns(runsDir, casesDir),
-      /semantic grading remains disabled until contained judge execution/,
+      /semantic judge execution is not authorized/,
     );
   } finally {
     rmSync(root, { recursive: true, force: true });
@@ -864,6 +1026,15 @@ async function runtimeMetadataFor(runners: readonly RunnerName[], observedAt: st
     providerAvailability: sorted.map((runner) => runner === "mock"
       ? { runner, status: "not-applicable" as const }
       : { runner, status: "denied" as const }),
+  };
+}
+
+async function availableRuntimeMetadataFor(runners: readonly RunnerName[], observedAt: string) {
+  const runtime = await runtimeMetadataFor(runners, observedAt);
+  return {
+    ...runtime,
+    providerAvailability: runtime.providerAvailability.map((item) =>
+      item.status === "not-applicable" ? item : { ...item, status: "configured" as const }),
   };
 }
 

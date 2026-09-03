@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Peregrine semantic judge terminal seal",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "terminal", "experimentId", "judgeManifestSha256", "sealedAt", "artifacts", "artifactsSha256", "sealSha256"],
+  "properties": {
+    "schemaVersion": { "const": 1 }, "terminal": { "enum": ["completed", "stopped"] }, "experimentId": { "type": "string", "minLength": 1 },
+    "judgeManifestSha256": { "$ref": "#/$defs/hash" }, "sealedAt": { "type": "string", "format": "date-time" },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": { "type": "string", "pattern": "^judge/" },
+          "sha256": { "$ref": "#/$defs/hash" }
+        }
+      }
+    },
+    "artifactsSha256": { "$ref": "#/$defs/hash" }, "sealSha256": { "$ref": "#/$defs/hash" }
+  },
+  "$defs": { "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+}

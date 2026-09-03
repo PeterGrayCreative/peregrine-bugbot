@@ -58,7 +58,7 @@ const screeningProtocol: ExperimentProtocol = {
   providerCalls: "deny",
   providerAccess: "api-key",
   costAccounting: "required",
-  judge: { kind: "claude", model: "claude-judge", version: "semantic-v1" },
+  judge: { kind: "codex", model: "gpt-5.6-luna", effort: "medium", version: "semantic-v1", limits },
   control: "control",
   treatment: "treatment",
   limits,
@@ -72,10 +72,7 @@ const providerEnabledProtocol: ExperimentProtocol = {
 test("experiment protocol is explicit and mode-sensitive", () => {
   assert.deepEqual(parseExperimentProtocol(smokeProtocol), smokeProtocol);
   assert.deepEqual(parseExperimentProtocol(screeningProtocol), screeningProtocol);
-  assert.throws(
-    () => parseExperimentProtocol(providerEnabledProtocol),
-    /providerCalls=allow remains disabled until contained review and judge execution/,
-  );
+  assert.deepEqual(parseExperimentProtocol(providerEnabledProtocol), providerEnabledProtocol);
   assert.throws(
     () => parseExperimentProtocol({ ...smokeProtocol, cacheCondition: "cold" }),
     /not-applicable/,
@@ -103,7 +100,7 @@ test("experiment protocol is explicit and mode-sensitive", () => {
   assert.throws(
     () => parseExperimentProtocol({
       ...smokeProtocol,
-      judge: { kind: "codex", model: "gpt-5.6-sol", version: "semantic-v1" },
+      judge: { kind: "codex", model: "gpt-5.6-luna", effort: "medium", version: "semantic-v1", limits },
     }),
     /structural-smoke must use the exact judge/,
   );
@@ -128,7 +125,7 @@ test("experiment protocol is explicit and mode-sensitive", () => {
   assert.throws(
     () => parseExperimentProtocol({
       ...screeningProtocol,
-      judge: { kind: "codex", model: "gpt-5.6-sol", version: "exact-v1" },
+      judge: { kind: "codex", model: "gpt-5.6-luna", effort: "medium", version: "exact-v1", limits },
     }),
     /codex\/exact-v1 is not supported; expected codex\/semantic-v1/,
   );
@@ -492,7 +489,7 @@ test("checked-in experiment schema tracks parser enums, required hashes, and emi
   const hashes = defs.hashes as Record<string, any>;
 
   assert.deepEqual(judge.properties.kind.enum, ["exact", "claude", "codex"]);
-  assert.equal(protocol.properties.providerCalls.const, "deny");
+  assert.deepEqual(protocol.properties.providerCalls.enum, ["allow", "deny"]);
   assert.deepEqual(protocol.properties.providerAccess.enum, ["api-key", "cli-session", "not-applicable"]);
   assert.deepEqual(protocol.properties.costAccounting.enum, ["required", "best-effort", "not-applicable"]);
   const liveProtocol = protocol.allOf[0].else as Record<string, any>;
@@ -745,8 +742,14 @@ function buildManifest(): ExperimentManifest {
       nodeVersion: "v22.22.1",
       platform: "darwin",
       arch: "arm64",
-      cliVersions: [{ runner: "claude", status: "observed", version: "2.0.0" }],
-      providerAvailability: [{ runner: "claude", status: "denied" }],
+      cliVersions: [
+        { runner: "claude", status: "observed", version: "2.0.0" },
+        { runner: "codex", status: "observed", version: "1.0.0" },
+      ],
+      providerAvailability: [
+        { runner: "claude", status: "denied" },
+        { runner: "codex", status: "denied" },
+      ],
     },
     schedule,
   });
