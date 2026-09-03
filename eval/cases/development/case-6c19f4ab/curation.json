@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "caseId": "case-6c19f4ab",
-  "status": "draft",
+  "status": "admitted",
   "source": {
     "kind": "seeded",
     "repositoryAlias": "operations-service",
@@ -25,6 +25,11 @@
     {
       "curatorIdentitySha256": "16cc773f8b36edb7951cbe25b689a81696e187d68bb78bac500be431b9b9274f",
       "confirmedAt": "2026-09-03T16:48:21Z",
+      "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
+    },
+    {
+      "curatorIdentitySha256": "47ecc656c1d06b3646efa3642f75cd99656909eefc8aeb3de662d309c300ca8a",
+      "confirmedAt": "2026-09-03T17:04:29Z",
       "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
     }
   ]
