@@ -303,10 +303,51 @@ export interface MatrixModelConfig {
   overrides?: Record<string, unknown>;
 }
 
+export const EXPERIMENT_MODES = ["structural-smoke", "screening", "checkpoint"] as const;
+export type ExperimentMode = (typeof EXPERIMENT_MODES)[number];
+export type ExperimentCacheCondition = "cold" | "warm" | "uncontrolled" | "not-applicable";
+export type ExperimentJudge = "exact" | "claude" | "codex";
+export type ExperimentProviderAccess = "api-key" | "cli-session" | "not-applicable";
+export type ExperimentCostAccounting = "required" | "best-effort" | "not-applicable";
+
+export interface ExperimentLimits {
+  /** Observed spend ceiling checked before every scheduled provider invocation. */
+  maxProviderCostUsd: number | null;
+  /** Hard cap for provider-started attempts, including interrupted attempts. */
+  maxProviderAttempts: number;
+  /** Sum of persisted attempt durations; idle time between resume invocations is excluded. */
+  maxWallTimeMs: number;
+  maxFailureRate: number;
+  /** Completed attempt count required before checking failure rate at a block boundary. */
+  minAttemptsForFailureRate: number;
+  maxConsecutiveFailures: number;
+}
+
+export interface ExperimentProtocol {
+  mode: ExperimentMode;
+  seed: number;
+  cacheCondition: ExperimentCacheCondition;
+  /** Explicit authorization gate; `deny` still permits the zero-cost mock runner. */
+  providerCalls: "allow" | "deny";
+  providerAccess: ExperimentProviderAccess;
+  costAccounting: ExperimentCostAccounting;
+  judge: {
+    kind: ExperimentJudge;
+    /** Required for provider-backed semantic judges; absent for exact grading. */
+    model?: string;
+    version: string;
+  };
+  /** Required together for screening and checkpoint comparisons. */
+  control?: string;
+  treatment?: string;
+  limits: ExperimentLimits;
+}
+
 export interface MatrixConfig {
   repeats: number;
   configs: MatrixModelConfig[];
   corpora?: CaseCorpus[];
+  experiment: ExperimentProtocol;
 }
 
 export interface RunAttempt {
@@ -399,6 +440,10 @@ export type RunOutcome =
 
 export interface RunRecord {
   schemaVersion: 1;
+  /** Required for immutable experiments; absent only on pre-experiment compatibility artifacts. */
+  experimentId?: string;
+  /** Raw SHA-256 of the exact immutable experiment-manifest.json bytes. */
+  experimentManifestSha256?: string;
   attemptId: string;
   caseName: string;
   caseCorpus: CaseCorpus | "unknown";

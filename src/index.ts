@@ -176,7 +176,23 @@ async function main(): Promise<void> {
     case "post":
       return cmdPost();
     case "matrix": {
-      await (await import("../eval/run-matrix.js")).runMatrix(arg("--config"));
+      const resumeDir = arg("--resume");
+      const retryRuns = arg("--retry-runs");
+      const retryAttempt = arg("--retry-attempt");
+      if ((retryRuns === undefined) !== (retryAttempt === undefined)) {
+        throw new Error("matrix retry requires both --retry-runs and --retry-attempt");
+      }
+      if (resumeDir && retryRuns) {
+        throw new Error("matrix --resume and --retry-runs are mutually exclusive");
+      }
+      await (await import("../eval/run-matrix.js")).runMatrix(
+        arg("--config"),
+        undefined,
+        {
+          ...(resumeDir ? { resumeDir } : {}),
+          ...(retryRuns && retryAttempt ? { retry: { runsDir: retryRuns, attemptId: retryAttempt } } : {}),
+        },
+      );
       return;
     }
     case "grade": {

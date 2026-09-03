@@ -21,7 +21,7 @@ After the core program:
 1. Every attempted benchmark run is persisted, including timeouts, provider failures, parse failures, and invalid configurations.
 2. Seeded and historical cases reproduce a real Git base/head range and exercise the production manifest and profile-trust path.
 3. Reports distinguish bug-instance recall from root-cause recall and distinguish routing, breadth, investigation, budget, and presentation misses.
-4. Cost comparisons emphasize provider cost, uncached input, turns, tool calls, median/P95 wall time, cost per reviewed PR, and cost per reliably found root cause. Total input remains diagnostic.
+4. Cost comparisons emphasize provider cost when observable, plus uncached input, turns, tool calls, median/P95 wall time, cost per reviewed PR, and cost per reliably found root cause. Subscription/session-backed CLI runs may leave monetary cost unavailable; they still record exact model identities and all observable efficiency data. Total input remains diagnostic.
 5. The runner consumes a typed review manifest rather than scraping human-readable console output.
 6. The investigator receives a cache-stable method core plus a variable lane/profile appendix instead of spending turns traversing skill files.
 7. Breadth receives compact activated-lane counterexamples and seam guidance without gaining final adjudication authority.
@@ -62,12 +62,15 @@ The only live measurement is the Shack PR 3449 acceptance run (`docs/validation/
 
 The latest validation record has no completed live Claude inference because authentication was expired. Until a successful Claude run is recorded, provider comparisons must be labeled **Codex-only**.
 
+Experiments support both explicit API-key access and contained CLI-session access, including Codex subscription-backed runs. Access mode is part of the immutable protocol. A CLI session must be mounted through the approved evaluation-containment boundary; the harness must never consume an ambient user home or silently fall back to an API key. When a session-backed runner does not expose monetary charges, cost is `n/a`, not zero. Exact model identifiers, provider-attempt count, observed tokens/cache/work, wall time, and failure rate remain mandatory, and a hard provider-attempt ceiling substitutes for an unenforceable dollar ceiling.
+
 ### Primary metrics
 
 | Metric | Why it matters |
 | --- | --- |
 | Provider-reported cost per review | Closest available measure of actual spend |
 | Estimated cost from provider-specific base/cache-write/cache-read/output rates | Supports providers that omit cost telemetry without flattening different billing semantics |
+| Provider access mode and provider-attempt count | Keeps API-key and subscription/session-backed experiments distinguishable and bounded when monetary cost is unavailable |
 | Base, uncached, cache-creation, and cache-read input as exposed by each provider | Distinguishes new context, cache population, and reuse without double-counting |
 | Output and reasoning-output tokens | Captures generation cost |
 | Turns and tool calls by stage | Identifies repeated traversal and search costs |
@@ -176,6 +179,7 @@ Holdout storage must prevent accidental model or implementer access during tunin
 - Compare a control and one treatment at a time.
 - Randomize and interleave control/treatment order within each case/repeat block using a recorded seed.
 - Run both variants during the same provider window with the same case snapshot, exact model ID, CLI version, permissions, and timeout policy.
+- Keep provider access mode fixed within a comparison. Record `api-key` or `cli-session`; never compare a session-backed treatment with an API-backed control as if access conditions were identical.
 - Record cold-cache and warm-cache results separately. Do not let the second variant systematically inherit a warmer cache.
 - Persist an immutable experiment manifest containing all code/config/corpus/profile/prompt/schema hashes, provider/CLI versions, judge version, run order, timestamps, and failed attempts.
 - Make runs resumable without silently replacing a failed attempt. A retry is a new linked attempt.
@@ -187,7 +191,7 @@ Holdout storage must prevent accidental model or implementer access during tunin
 - **Checkpoint evaluation:** full development and validation sets with three repeats and contemporaneous control/treatment runs.
 - **Final release/routing gate:** one sealed-holdout run after all choices are frozen.
 
-At the current 450-second reference duration, 30 cases × 3 repeats × 2 variants requires about 22.5 serial model-hours. Every checkpoint therefore needs an explicit maximum provider spend, maximum wall-clock budget, resume policy, and stopping rule before it starts. Report P95 only for a stratum with enough observations; otherwise report the paired duration distribution and median.
+At the current 450-second reference duration, 30 cases × 3 repeats × 2 variants requires about 22.5 serial model-hours. Every checkpoint therefore needs an explicit maximum wall-clock budget, provider-attempt limit, resume policy, and stopping rule before it starts. API-key runs with enforceable accounting also require a provider-spend ceiling. Session-backed CLI runs may use best-effort monetary accounting, but unavailable cost never counts as zero and cannot satisfy a dollar-improvement gate by itself. Report P95 only for a stratum with enough observations; otherwise report the paired duration distribution and median.
 
 ### Grading and adjudication
 
@@ -373,7 +377,7 @@ Report duration, prompt size, tool work, cached/uncached/cache-write input as ap
 
 ### 0.6 Make experiments reproducible and affordable
 
-Extend the matrix runner with control/treatment pairing, seeded randomization, interleaved execution, immutable attempt records, resume support, explicit retry linkage, and per-experiment spend/time ceilings. Produce a machine-readable experiment manifest with all hashes and versions required by the evaluation protocol.
+Extend the matrix runner with control/treatment pairing, seeded randomization, interleaved execution, immutable attempt records, resume support, explicit retry linkage, and per-experiment provider-attempt, spend, time, and failure ceilings. Produce a machine-readable experiment manifest with all hashes and versions required by the evaluation protocol. Support both API-key and contained CLI-session runners. For subscription/session-backed Codex or Claude runs, persist monetary cost as best-effort and rely on pre-registered provider-attempt, wall-time, and failure ceilings when exact dollars are unavailable.
 
 Keep three execution modes separate: structural smoke, stratified screening, and full checkpoint. A screening pass can reject a bad intervention but cannot establish release-level efficacy. Full checkpoint runs use the contemporaneous control, not an old benchmark directory.
 

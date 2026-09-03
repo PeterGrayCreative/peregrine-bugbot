@@ -1,11 +1,24 @@
-import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { basename, join, relative, resolve } from "node:path";
 import { loadConfig } from "../src/config.js";
 import { validateConfig } from "../src/config.js";
 import { RunFailureError, runFailureKind, runFailureTelemetry } from "../src/core/run-failure.js";
 import { getEngine } from "../src/engines/engine.js";
 import { assertNoSecrets, safeDiagnostic } from "../src/security/secrets.js";
+import { nonSensitiveEnvironment } from "../src/security/provider-env.js";
 import { formatUsageCost } from "../src/core/telemetry.js";
+import { packageRoot } from "../src/core/paths.js";
+import { exec } from "../src/util/exec.js";
 import {
   assertLiveProviderIsolationAvailable,
   assertLeakageFreeText,
@@ -28,7 +41,9 @@ import type {
   EngineResult,
   MatrixConfig,
   MatrixRunManifest,
+  PeregrineConfig,
   ReviewContext,
+  RunAttempt,
   RunFailureTelemetry,
   RunOutcome,
   RunRecord,
@@ -37,10 +52,60 @@ import type {
 } from "../src/types.js";
 import type { Engine } from "../src/engines/engine.js";
 import { parseGroundTruth } from "./case-truth.js";
+import {
+  absentInputSha256,
+  acquireExperimentLock,
+  attemptStartedFile,
+  buildExperimentManifest,
+  buildExperimentSchedule,
+  buildExperimentStopRecord,
+  buildRetrySchedule,
+  canonicalJson,
+  canonicalJsonSha256,
+  evaluateExperimentCeilings,
+  hashExperimentCorpus,
+  hashPathTree,
+  parseExperimentAttemptStartedRecord,
+  parseExperimentManifest,
+  parseExperimentProtocol,
+  parseExperimentStopRecord,
+  providerStartedFile,
+  readExperimentFile,
+  readExperimentJson,
+  writeExclusiveJson,
+  type ExperimentCase,
+  type ExperimentManifest,
+  type ExperimentModelIdentity,
+  type ExperimentRuntime,
+  type ExperimentScheduledAttempt,
+} from "./experiment.js";
+import { readExperimentRunEvidence } from "./experiment-evidence.js";
+import {
+  EXPERIMENT_TERMINAL_SEAL_FILENAME,
+  requireValidExperimentTerminalSeal,
+  retrySourceEvidenceSha256,
+  writeExperimentTerminalSeal,
+} from "./experiment-seals.js";
+import { parseMatrixRunManifest, parseRunRecord } from "./artifacts.js";
 
 interface RunMatrixOptions {
   casesDir?: string;
   engineFor?: (runner: RunnerName) => Engine;
+  /** Explicit compatibility seam for pre-PR5B tests; never used by the CLI or smoke runner. */
+  allowLegacyTestConfig?: boolean;
+  /** Continue one unsealed experiment after validating every immutable input. */
+  resumeDir?: string;
+  /** Create a child experiment for one failed or interrupted source attempt. */
+  retry?: { runsDir: string; attemptId: string };
+  /** Deterministic test clock. */
+  now?: () => number;
+  /** Test-only runtime fact provider; the default probe never contacts a provider. */
+  runtimeMetadataFor?: (
+    runners: readonly RunnerName[],
+    observedAt: string,
+  ) => Promise<ExperimentRuntime>;
+  /** Test seam for simulating interruption after durable terminal evidence. */
+  afterAttemptPersisted?: (attempt: RunAttempt) => void;
   /** Test seam; production and normal eval calls use prepareReviewManifest. */
   manifestPreparer?: EvaluationManifestPreparer;
   /** Test seam for verifying that attempt cleanup cannot erase incurred work. */
@@ -68,53 +133,176 @@ export async function runMatrix(
   runsRoot?: string,
   options: RunMatrixOptions = {},
 ): Promise<string> {
-  const matrix = JSON.parse(
-    readFileSync(resolve(configPath ?? "eval/matrix.config.json"), "utf8"),
-  ) as MatrixConfig;
+  if (options.resumeDir && options.retry) {
+    throw new Error("matrix resume and retry modes are mutually exclusive");
+  }
+  const resolvedConfigPath = resolve(configPath ?? "eval/matrix.config.json");
+  const matrixSource = readFileSync(resolvedConfigPath, "utf8");
+  const matrix = JSON.parse(matrixSource) as MatrixConfig;
   validateMatrixCaseSelection(matrix);
+  const protocol = matrix.experiment === undefined
+    ? undefined
+    : parseExperimentProtocol(matrix.experiment, `${resolvedConfigPath}.experiment`);
+  if (!protocol && !options.allowLegacyTestConfig) {
+    throw new Error("matrix config requires an experiment protocol");
+  }
+  if (!protocol && (options.resumeDir || options.retry)) {
+    throw new Error("resume and retry require an experiment protocol");
+  }
   const baseConfig = loadConfig();
 
   const casesDir = resolve(options.casesDir ?? "eval/cases");
   const cases = discoverCases(casesDir, matrix.corpora);
+  const effective = protocol ? effectiveMatrixConfigs(matrix, baseConfig) : new Map<string, EffectiveMatrixConfig>();
+  const now = options.now ?? Date.now;
+  const runsBase = resolve(runsRoot ?? process.env.PEREGRINE_EVAL_RUNS_DIR ?? "eval/runs");
+  let outDir: string;
+  let manifest: MatrixRunManifest;
+  let experimentManifest: ExperimentManifest | undefined;
+  let experimentSchedule: ExperimentScheduledAttempt[] | undefined;
+  let experimentManifestSha256: string | undefined;
+  let releaseLock: (() => void) | undefined;
 
-  const outDir = resolve(
-    runsRoot ?? process.env.PEREGRINE_EVAL_RUNS_DIR ?? "eval/runs",
-    new Date().toISOString().replace(/[:.]/g, "-"),
-  );
-  mkdirSync(outDir, { recursive: true });
-
-  let sequence = 0;
-  const expectedAttempts = matrix.configs.flatMap((modelConfig) =>
-    cases.flatMap(({ caseName, corpus, expectedBugCount }) =>
-      Array.from({ length: matrix.repeats }, (_, index) => {
-        const repeat = index + 1;
-        const id = `attempt-${String(++sequence).padStart(6, "0")}`;
-        return {
-          id,
-          caseName,
-          corpus,
-          expectedBugCount,
-          configName: modelConfig.name,
-          repeat,
-          file: `${id}.json`,
-          runner: modelConfig.runner,
+  if (!protocol) {
+    outDir = createUniqueRunDirectory(runsBase, now());
+    manifest = buildLegacyMatrixManifest(matrix, cases, isoTimestamp(now()));
+    assertNoSecrets(manifest, "matrix manifest");
+    writeExclusiveJson(outDir, join(outDir, "matrix-manifest.json"), manifest);
+  } else if (options.resumeDir) {
+    outDir = resolve(options.resumeDir);
+    releaseLock = acquireExperimentLock(outDir);
+    try {
+      const loaded = loadExperimentArtifacts(outDir);
+      experimentManifest = loaded.experiment;
+      manifest = loaded.matrix;
+      experimentManifestSha256 = rawSha256(readExperimentFile(join(outDir, "experiment-manifest.json")));
+      if (existsSync(join(outDir, EXPERIMENT_TERMINAL_SEAL_FILENAME))) {
+        requireValidExperimentTerminalSeal(outDir, manifest);
+        releaseLock?.();
+        releaseLock = undefined;
+        return outDir;
+      }
+      if (existsSync(join(outDir, "experiment-stop.json"))) {
+        const stopPath = join(outDir, "experiment-stop.json");
+        const stop = parseExperimentStopRecord(
+          readExperimentJson(stopPath),
+          stopPath,
+        );
+        if (stop.experimentId !== experimentManifest.experimentId) {
+          throw new Error("experiment stop record does not match the experiment manifest");
+        }
+        throw new Error(`experiment stopped at ${stop.beforeAttemptId} (${stop.reason}); create an explicit retry`);
+      }
+      experimentSchedule = [...experimentManifest.schedule];
+      const current = await prepareExperimentManifest({
+        matrix,
+        matrixSource,
+        cases,
+        casesDir,
+        protocol,
+        baseConfig,
+        effective,
+        createdAt: experimentManifest.createdAt,
+        runtimeObservedAt: experimentManifest.runtime.observedAt,
+        schedule: experimentSchedule,
+        lineage: experimentManifest.lineage,
+        runtimeMetadataFor: options.runtimeMetadataFor,
+      });
+      if (canonicalJson(current) !== canonicalJson(experimentManifest)) {
+        throw new Error("resume environment does not match the immutable experiment manifest");
+      }
+      assertExperimentMatchesMatrix(experimentManifest, manifest);
+    } catch (error) {
+      releaseLock?.();
+      releaseLock = undefined;
+      throw error;
+    }
+  } else {
+    let releaseRetrySourceLock: (() => void) | undefined;
+    try {
+      let schedule = buildExperimentSchedule({
+        protocol,
+        cases: cases.map(({ caseName, corpus, expectedBugCount }): ExperimentCase => {
+          if (corpus === "unknown") throw new Error(`experiment case ${caseName} has no corpus`);
+          return { caseName, corpus, expectedBugCount };
+        }),
+        repeats: matrix.repeats,
+        configs: matrix.configs,
+      });
+      let lineage: ExperimentManifest["lineage"];
+      if (options.retry) {
+        const sourceDir = resolve(options.retry.runsDir);
+        releaseRetrySourceLock = acquireExperimentLock(sourceDir);
+        const source = loadExperimentArtifacts(sourceDir);
+        assertExperimentMatchesMatrix(source.experiment, source.matrix);
+        if (existsSync(join(sourceDir, EXPERIMENT_TERMINAL_SEAL_FILENAME))) {
+          requireValidExperimentTerminalSeal(sourceDir, source.matrix);
+        } else {
+          readExperimentRunEvidence(sourceDir, source.matrix);
+        }
+        const sourceAttempt = source.experiment.schedule.find((attempt) => attempt.id === options.retry!.attemptId);
+        if (!sourceAttempt) throw new Error(`retry source attempt ${options.retry.attemptId} is not scheduled`);
+        assertRetryableAttempt(sourceDir, source.experiment, sourceAttempt);
+        const reference = {
+          experimentId: source.experiment.experimentId,
+          manifestSha256: rawSha256(readExperimentFile(join(sourceDir, "experiment-manifest.json"))),
+          attemptId: sourceAttempt.id,
+          evidenceSha256: retrySourceEvidenceSha256(sourceDir, source.experiment, sourceAttempt.id),
         };
-      }),
-    ),
-  );
-  const manifest: MatrixRunManifest = {
-    schemaVersion: 1,
-    createdAt: new Date().toISOString(),
-    expectedAttempts,
-    providerNetworkIsolation: Object.fromEntries(
-      [...new Set(matrix.configs.map((config) => config.runner))].map((runner) => [
-        runner,
-        networkIsolationCapability(runner),
-      ]),
-    ),
-  };
-  assertNoSecrets(manifest, "matrix manifest");
-  writeFileSync(join(outDir, "matrix-manifest.json"), JSON.stringify(manifest, null, 2));
+        const comparable = await prepareExperimentManifest({
+          matrix,
+          matrixSource,
+          cases,
+          casesDir,
+          protocol,
+          baseConfig,
+          effective,
+          createdAt: source.experiment.createdAt,
+          runtimeObservedAt: source.experiment.runtime.observedAt,
+          schedule: source.experiment.schedule,
+          ...(source.experiment.lineage ? { lineage: source.experiment.lineage } : {}),
+          runtimeMetadataFor: options.runtimeMetadataFor,
+        });
+        assertRetryEnvironmentMatches(source.experiment, comparable);
+        schedule = buildRetrySchedule(sourceAttempt, reference);
+        lineage = { kind: "retry", source: reference };
+      }
+      const createdAt = isoTimestamp(now());
+      experimentSchedule = schedule;
+      experimentManifest = await prepareExperimentManifest({
+        matrix,
+        matrixSource,
+        cases,
+        casesDir,
+        protocol,
+        baseConfig,
+        effective,
+        createdAt,
+        runtimeObservedAt: createdAt,
+        schedule,
+        ...(lineage ? { lineage } : {}),
+        runtimeMetadataFor: options.runtimeMetadataFor,
+      });
+      manifest = matrixManifestFromExperiment(experimentManifest);
+      outDir = createUniqueRunDirectory(runsBase, now());
+      releaseLock = acquireExperimentLock(outDir);
+      mkdirSync(join(outDir, "state"));
+      assertNoSecrets(manifest, "matrix manifest");
+      writeExclusiveJson(outDir, join(outDir, "matrix-manifest.json"), manifest);
+      writeExclusiveJson(outDir, join(outDir, "experiment-manifest.json"), experimentManifest);
+      experimentManifestSha256 = rawSha256(readExperimentFile(join(outDir, "experiment-manifest.json")));
+      // Freeze the source until the child has durably authenticated its lineage.
+      releaseRetrySourceLock?.();
+      releaseRetrySourceLock = undefined;
+    } catch (error) {
+      releaseRetrySourceLock?.();
+      releaseLock?.();
+      releaseLock = undefined;
+      throw error;
+    }
+  }
+
+  const expectedAttempts = manifest.expectedAttempts;
 
   const total = expectedAttempts.length;
   if (total === 0) {
@@ -122,12 +310,62 @@ export async function runMatrix(
       `No eval cases matched ${matrix.corpora?.join(", ") ?? "the configured corpus"}; no provider processes were started.`,
     );
     console.log(`Empty run manifest written to ${outDir}`);
+    if (experimentManifest) writeExperimentTerminalSeal(outDir, manifest, isoTimestamp(now()));
+    releaseLock?.();
     return outDir;
   }
-  let done = 0;
+  const caseByName = new Map(cases.map((item) => [item.caseName, item]));
+  const configByName = new Map(matrix.configs.map((item) => [item.name, item]));
+  let existingState: ReturnType<typeof readExperimentAttemptState>;
+  try {
+    existingState = experimentManifest
+      ? readExperimentAttemptState(outDir, experimentManifest, manifest)
+      : { records: [], providerStartedIds: [] };
+  } catch (error) {
+    releaseLock?.();
+    releaseLock = undefined;
+    throw error;
+  }
+  const records = existingState.records;
+  const providerStartedIds = existingState.providerStartedIds;
 
-  for (const modelConfig of matrix.configs) {
-    for (const { caseName, caseDir, corpus } of cases) {
+  try {
+    for (const [index, attempt] of expectedAttempts.entries()) {
+      const done = index + 1;
+      const modelConfig = configByName.get(attempt.configName);
+      const discovered = caseByName.get(attempt.caseName);
+      if (!modelConfig || !discovered) {
+        throw new Error(`immutable attempt ${attempt.id} references unavailable config or case`);
+      }
+      const { caseName, caseDir, corpus } = discovered;
+      if (experimentManifest && existsSync(join(outDir, attempt.file))) continue;
+
+      if (experimentManifest && experimentSchedule) {
+        const decision = evaluateExperimentCeilings({
+          protocol: experimentManifest.protocol,
+          schedule: experimentSchedule,
+          records,
+          providerStartedAttemptIds: providerStartedIds,
+        });
+        if (decision.stop) {
+          const stop = buildExperimentStopRecord({
+            experimentId: experimentManifest.experimentId,
+            recordedAt: isoTimestamp(now()),
+            decision,
+            limits: experimentManifest.protocol.limits,
+          });
+          writeExclusiveJson(outDir, join(outDir, "experiment-stop.json"), stop);
+          console.log(`STOPPED before ${stop.beforeAttemptId}: ${stop.reason}`);
+          break;
+        }
+        writeExclusiveJson(outDir, join(outDir, attemptStartedFile(attempt.id)), {
+          schemaVersion: 1,
+          experimentId: experimentManifest.experimentId,
+          attemptId: attempt.id,
+          startedAt: isoTimestamp(now()),
+        });
+      }
+
       let spec: CaseSpec | undefined;
       let policy: ReturnType<typeof leakagePolicyForCase> | undefined;
       let metadata: ReturnType<typeof readSanitizedMetadata> | undefined;
@@ -140,13 +378,11 @@ export async function runMatrix(
         preparationError = error;
       }
 
-      for (let repeat = 1; repeat <= matrix.repeats; repeat++) {
-        done++;
-        const attempt = expectedAttempts[done - 1];
-        if (!attempt) throw new Error(`internal error: missing matrix attempt ${done}`);
+      {
+        const repeat = attempt.repeat;
         const attemptId = attempt.id;
         const file = join(outDir, attempt.file);
-        const started = Date.now();
+        const started = now();
         const startedAt = new Date(started).toISOString();
         process.stdout.write(
           `[${done}/${total}] ${modelConfig.name} × ${caseName} (run ${repeat}) ... `,
@@ -180,25 +416,9 @@ export async function runMatrix(
           // uses, so eval runs exercise the exact production path. Inside the
           // try: a typo'd engine name should fail THIS run, not kill the
           // remaining matrix.
-          const config = structuredClone(baseConfig);
-          config.runner = modelConfig.runner;
-          const runnerConfig = config.runners[modelConfig.runner];
-          if (!runnerConfig || typeof runnerConfig !== "object") {
-            throw new RunFailureError(
-              "configuration",
-              `matrix config "${modelConfig.name}": unknown runner "${modelConfig.runner}"`,
-            );
-          }
-          Object.assign(runnerConfig as object, modelConfig.overrides ?? {});
-          try {
-            validateConfig(config, `matrix config "${modelConfig.name}"`);
-          } catch (error) {
-            throw new RunFailureError(
-              "configuration",
-              error instanceof Error ? error.message : "invalid effective matrix configuration",
-              { cause: error },
-            );
-          }
+          const preparedConfig = effective.get(modelConfig.name) ??
+            effectiveMatrixConfig(modelConfig, baseConfig);
+          const config = structuredClone(preparedConfig.config);
 
           const ctx: ReviewContext = {
             repoPath: materialized.repoPath,
@@ -243,9 +463,34 @@ export async function runMatrix(
             );
           }
 
+          if (experimentManifest && modelConfig.runner !== "mock") {
+            await assertExperimentSnapshotUnchanged({
+              expected: experimentManifest,
+              matrix,
+              matrixSource,
+              cases,
+              casesDir,
+              protocol: experimentManifest.protocol,
+              baseConfig,
+              effective,
+              runtimeMetadataFor: options.runtimeMetadataFor,
+            });
+            writeExclusiveJson(outDir, join(outDir, providerStartedFile(attemptId)), {
+              schemaVersion: 1,
+              experimentId: experimentManifest.experimentId,
+              attemptId,
+              providerStartedAt: isoTimestamp(now()),
+            });
+            providerStartedIds.push(attemptId);
+          }
+
           const result = await (options.engineFor ?? getEngine)(modelConfig.runner).review(ctx);
           record = {
             schemaVersion: 1,
+            ...(experimentManifest ? {
+              experimentId: experimentManifest.experimentId,
+              experimentManifestSha256: experimentManifestSha256!,
+            } : {}),
             attemptId,
             caseName,
             caseCorpus: spec.corpus,
@@ -266,6 +511,10 @@ export async function runMatrix(
           const outcome = failureOutcomeForArtifact(attempt.runner, err, 0);
           record = {
             schemaVersion: 1,
+            ...(experimentManifest ? {
+              experimentId: experimentManifest.experimentId,
+              experimentManifestSha256: experimentManifestSha256!,
+            } : {}),
             attemptId,
             caseName,
             caseCorpus: spec?.corpus ?? corpus,
@@ -290,7 +539,7 @@ export async function runMatrix(
             }
           }
           if (!record) throw new Error(`internal error: attempt ${attemptId} produced no record`);
-          const attemptDurationMs = Date.now() - started;
+          const attemptDurationMs = Math.max(0, now() - started);
           record = {
             ...record,
             finishedAt: new Date(started + attemptDurationMs).toISOString(),
@@ -320,14 +569,538 @@ export async function runMatrix(
             };
             console.log(`CLEANUP FAILED: ${detail}`);
           }
-          writeFileSync(file, JSON.stringify(record, null, 2));
+          if (experimentManifest) writeExclusiveJson(outDir, file, record);
+          else writeFileSync(file, JSON.stringify(record, null, 2));
+          records.push(record);
+          options.afterAttemptPersisted?.(attempt);
         }
       }
     }
+    if (experimentManifest) writeExperimentTerminalSeal(outDir, manifest, isoTimestamp(now()));
+  } finally {
+    releaseLock?.();
   }
   console.log(`\nRuns written to ${outDir}`);
   console.log(`Next: npm run eval:grade -- --runs ${outDir}`);
   return outDir;
+}
+
+interface EffectiveMatrixConfig {
+  config: PeregrineConfig;
+  identity: ExperimentModelIdentity;
+}
+
+interface PrepareExperimentManifestInput {
+  matrix: MatrixConfig;
+  matrixSource: string;
+  cases: DiscoveredCase[];
+  casesDir: string;
+  protocol: MatrixConfig["experiment"];
+  baseConfig: PeregrineConfig;
+  effective: Map<string, EffectiveMatrixConfig>;
+  createdAt: string;
+  runtimeObservedAt: string;
+  schedule: ExperimentScheduledAttempt[];
+  lineage?: ExperimentManifest["lineage"];
+  runtimeMetadataFor?: RunMatrixOptions["runtimeMetadataFor"];
+  /** Safe only after repository and corpus hashes are revalidated unchanged. */
+  reuseProfileSha256?: string;
+}
+
+function effectiveMatrixConfigs(
+  matrix: MatrixConfig,
+  baseConfig: PeregrineConfig,
+): Map<string, EffectiveMatrixConfig> {
+  const result = new Map<string, EffectiveMatrixConfig>();
+  for (const modelConfig of matrix.configs) {
+    result.set(modelConfig.name, effectiveMatrixConfig(modelConfig, baseConfig));
+  }
+  return result;
+}
+
+function effectiveMatrixConfig(
+  modelConfig: MatrixConfig["configs"][number],
+  baseConfig: PeregrineConfig,
+): EffectiveMatrixConfig {
+  const config = structuredClone(baseConfig);
+  config.runner = modelConfig.runner;
+  const runnerConfig = config.runners[modelConfig.runner];
+  if (!runnerConfig || typeof runnerConfig !== "object") {
+    throw new RunFailureError(
+      "configuration",
+      `matrix config "${modelConfig.name}": unknown runner "${modelConfig.runner}"`,
+    );
+  }
+  Object.assign(runnerConfig as object, modelConfig.overrides ?? {});
+  try {
+    validateConfig(config, `matrix config "${modelConfig.name}"`);
+  } catch (error) {
+    throw new RunFailureError(
+      "configuration",
+      error instanceof Error ? error.message : "invalid effective matrix configuration",
+      { cause: error },
+    );
+  }
+  const identity: ExperimentModelIdentity = {
+    configName: modelConfig.name,
+    runner: modelConfig.runner,
+    effectiveConfigSha256: canonicalJsonSha256(config),
+  };
+  if (modelConfig.runner !== "mock") {
+    const stageConfig = config.runners[modelConfig.runner];
+    identity.breadthModel = stageConfig.breadthModel;
+    identity.breadthEffort = stageConfig.breadthEffort;
+    identity.investigationModel = stageConfig.investigationModel;
+    identity.investigationEffort = stageConfig.investigationEffort;
+  }
+  return { config, identity };
+}
+
+function buildLegacyMatrixManifest(
+  matrix: MatrixConfig,
+  cases: DiscoveredCase[],
+  createdAt: string,
+): MatrixRunManifest {
+  let sequence = 0;
+  const expectedAttempts = matrix.configs.flatMap((modelConfig) =>
+    cases.flatMap(({ caseName, corpus, expectedBugCount }) =>
+      Array.from({ length: matrix.repeats }, (_, index) => {
+        const id = `attempt-${String(++sequence).padStart(6, "0")}`;
+        return {
+          id,
+          caseName,
+          corpus,
+          expectedBugCount,
+          configName: modelConfig.name,
+          repeat: index + 1,
+          file: `${id}.json`,
+          runner: modelConfig.runner,
+        };
+      }),
+    ),
+  );
+  return {
+    schemaVersion: 1,
+    createdAt,
+    expectedAttempts,
+    providerNetworkIsolation: Object.fromEntries(
+      [...new Set(matrix.configs.map((config) => config.runner))].map((runner) => [
+        runner,
+        networkIsolationCapability(runner),
+      ]),
+    ),
+  };
+}
+
+function matrixManifestFromExperiment(experiment: ExperimentManifest): MatrixRunManifest {
+  return matrixManifestFromSchedule(experiment.createdAt, experiment.schedule);
+}
+
+function matrixManifestFromSchedule(
+  createdAt: string,
+  schedule: readonly ExperimentScheduledAttempt[],
+): MatrixRunManifest {
+  return {
+    schemaVersion: 1,
+    createdAt,
+    expectedAttempts: schedule.map((attempt) => ({
+      id: attempt.id,
+      caseName: attempt.caseName,
+      corpus: attempt.corpus,
+      expectedBugCount: attempt.expectedBugCount,
+      configName: attempt.configName,
+      repeat: attempt.repeat,
+      file: attempt.file,
+      runner: attempt.runner,
+    })),
+    providerNetworkIsolation: Object.fromEntries(
+      [...new Set(schedule.map((attempt) => attempt.runner))].map((runner) => [
+        runner,
+        networkIsolationCapability(runner),
+      ]),
+    ),
+  };
+}
+
+async function prepareExperimentManifest(
+  input: PrepareExperimentManifestInput,
+): Promise<ExperimentManifest> {
+  const root = packageRoot();
+  const repositoryCommit = await gitObjectId(root, ["rev-parse", "HEAD"]);
+  if (
+    input.protocol.providerCalls === "allow" &&
+    input.schedule.some((attempt) => attempt.runner !== "mock")
+  ) {
+    const status = await exec("git", ["status", "--porcelain=v1", "--untracked-files=all"], {
+      cwd: root,
+      timeoutMs: 10_000,
+      env: nonSensitiveEnvironment(),
+      inheritEnv: false,
+    });
+    if (status.code !== 0 || status.timedOut) throw new Error("could not verify experiment worktree state");
+    if (status.stdout.trim()) throw new Error("provider experiments require a clean Peregrine worktree");
+  }
+
+  const models = [...input.effective.values()].map((item) => item.identity);
+  const runtimeRunners = new Set(models.map((model) => model.runner));
+  if (input.protocol.judge.kind !== "exact") runtimeRunners.add(input.protocol.judge.kind);
+  const runtime = input.runtimeMetadataFor
+    ? await input.runtimeMetadataFor(
+        [...runtimeRunners],
+        input.runtimeObservedAt,
+      )
+    : await observeExperimentRuntime(
+        [...runtimeRunners],
+        input.runtimeObservedAt,
+        input.protocol,
+      );
+  const matrixConfigSha256 = rawSha256(input.matrixSource);
+  const matrixManifestSha256 = canonicalJsonSha256(
+    matrixManifestFromSchedule(input.createdAt, input.schedule),
+  );
+  const peregrineConfigSha256 = canonicalJsonSha256(input.baseConfig);
+  const repositorySha256 = hashPathTree(root, {
+    excludeRelativePaths: [".git", "node_modules", "eval/cases", "eval/runs"],
+  });
+  const corpusSha256 = hashExperimentCorpus(
+    input.casesDir,
+    input.cases.map((item) => item.caseName),
+  );
+  const promptSha256 = canonicalJsonSha256({
+    prompt: hashPathTree(join(root, "src", "core", "prompt.ts")),
+    engines: [...new Set(models.map((model) => model.runner))].sort().map((runner) => ({
+      runner,
+      sha256: hashPathTree(join(root, "src", "engines", `${runner}.ts`)),
+    })),
+  });
+  const methodSha256 = canonicalJsonSha256(
+    [...new Set(input.matrix.configs.map((item) =>
+      productionManifestSkillName(input.effective.get(item.name)!.config, item.runner),
+    ))].sort().map((skillName) => ({
+      skillName,
+      sha256: hashPathTree(join(root, "skills", skillName)),
+    })),
+  );
+  const schemaSha256 = hashPathTree(join(root, "schemas"));
+  const profileSha256 = input.reuseProfileSha256 ??
+    await effectiveProfileSnapshotSha256(input.cases);
+  const judgeSha256 = canonicalJsonSha256({
+    implementation: hashPathTree(join(root, "eval", "grade.ts")),
+    schema: hashPathTree(join(root, "schemas", "judge-result.schema.json")),
+    judge: input.protocol.judge,
+  });
+  const configurationSha256 = canonicalJsonSha256({
+    matrixManifestSha256,
+    matrixConfigSha256,
+    peregrineConfigSha256,
+    effectiveConfigs: models.map((model) => ({
+      configName: model.configName,
+      sha256: model.effectiveConfigSha256,
+    })),
+  });
+  return buildExperimentManifest({
+    createdAt: input.createdAt,
+    repositoryCommit,
+    protocol: input.protocol,
+    hashes: {
+      repositorySha256,
+      corpusSha256,
+      promptSha256,
+      methodSha256,
+      schemaSha256,
+      profileSha256,
+      judgeSha256,
+      matrixManifestSha256,
+      matrixConfigSha256,
+      peregrineConfigSha256,
+      configurationSha256,
+    },
+    models,
+    runtime,
+    schedule: input.schedule,
+    ...(input.lineage ? { lineage: input.lineage } : {}),
+  });
+}
+
+async function assertExperimentSnapshotUnchanged(input: {
+  expected: ExperimentManifest;
+  matrix: MatrixConfig;
+  matrixSource: string;
+  cases: DiscoveredCase[];
+  casesDir: string;
+  protocol: MatrixConfig["experiment"];
+  baseConfig: PeregrineConfig;
+  effective: Map<string, EffectiveMatrixConfig>;
+  runtimeMetadataFor?: RunMatrixOptions["runtimeMetadataFor"];
+}): Promise<void> {
+  const current = await prepareExperimentManifest({
+    matrix: input.matrix,
+    matrixSource: input.matrixSource,
+    cases: input.cases,
+    casesDir: input.casesDir,
+    protocol: input.protocol,
+    baseConfig: input.baseConfig,
+    effective: input.effective,
+    createdAt: input.expected.createdAt,
+    runtimeObservedAt: input.expected.runtime.observedAt,
+    schedule: [...input.expected.schedule],
+    ...(input.expected.lineage ? { lineage: input.expected.lineage } : {}),
+    runtimeMetadataFor: input.runtimeMetadataFor,
+    reuseProfileSha256: input.expected.hashes.profileSha256,
+  });
+  if (canonicalJson(current) !== canonicalJson(input.expected)) {
+    throw new Error("experiment inputs changed after the immutable manifest was written");
+  }
+}
+
+async function effectiveProfileSnapshotSha256(cases: DiscoveredCase[]): Promise<string> {
+  if (cases.length === 0) return absentInputSha256("effective profile bundle");
+  const profiles: Array<{ caseName: string; files: Array<{ path: string; sha256: string }> }> = [];
+  for (const item of [...cases].sort((left, right) => compareBytes(left.caseName, right.caseName))) {
+    const spec = loadCaseSpec(item.caseDir);
+    const policy = leakagePolicyForCase(item.caseDir, spec);
+    readSanitizedMetadata(item.caseDir, spec, policy);
+    const materialized = await materializeCase(item.caseDir, spec, policy, { prepareProviderAssets: false });
+    try {
+      const listed = await exec(
+        "git",
+        ["ls-tree", "-r", "--name-only", materialized.baseRef, "--", ".peregrine/profile.md", ".peregrine/lanes"],
+        {
+          cwd: materialized.repoPath,
+          timeoutMs: 10_000,
+          env: nonSensitiveEnvironment(),
+          inheritEnv: false,
+        },
+      );
+      if (listed.code !== 0 || listed.timedOut) {
+        throw new Error(`could not inspect trusted profile snapshot for ${item.caseName}`);
+      }
+      const paths = listed.stdout.split("\n").filter(Boolean).sort(compareBytes);
+      const files: Array<{ path: string; sha256: string }> = [];
+      for (const path of paths) {
+        if (path !== ".peregrine/profile.md" && !/^\.peregrine\/lanes\/[^/]+\.md$/.test(path)) {
+          throw new Error(`trusted profile snapshot contains an unsafe path for ${item.caseName}`);
+        }
+        const shown = await exec("git", ["show", `${materialized.baseRef}:${path}`], {
+          cwd: materialized.repoPath,
+          timeoutMs: 10_000,
+          env: nonSensitiveEnvironment(),
+          inheritEnv: false,
+        });
+        if (shown.code !== 0 || shown.timedOut) {
+          throw new Error(`could not read trusted profile snapshot for ${item.caseName}`);
+        }
+        files.push({ path, sha256: rawSha256(shown.stdout) });
+      }
+      profiles.push({ caseName: item.caseName, files });
+    } finally {
+      materialized.cleanup();
+    }
+  }
+  return canonicalJsonSha256({ schemaVersion: 1, profiles });
+}
+
+async function observeExperimentRuntime(
+  runners: readonly RunnerName[],
+  observedAt: string,
+  protocol: MatrixConfig["experiment"],
+): Promise<ExperimentRuntime> {
+  const cliVersions: ExperimentRuntime["cliVersions"] = [];
+  const providerAvailability: ExperimentRuntime["providerAvailability"] = [];
+  const home = mkdtempSync(join(tmpdir(), "peregrine-version-probe-"));
+  try {
+    mkdirSync(join(home, "tmp"));
+    for (const runner of [...runners].sort()) {
+      if (runner === "mock") {
+        cliVersions.push({ runner, status: "not-applicable" });
+        providerAvailability.push({ runner, status: "not-applicable" });
+        continue;
+      }
+      const result = await exec(runner, ["--version"], {
+        timeoutMs: 10_000,
+        env: metadataProbeEnvironment(home),
+        inheritEnv: false,
+      });
+      const version = result.code === 0 && !result.timedOut
+        ? `${result.stdout}\n${result.stderr}`.match(/\b\d+\.\d+\.\d+(?:[-+][0-9A-Za-z.-]+)?\b/)?.[0]
+        : undefined;
+      cliVersions.push(version
+        ? { runner, status: "observed", version }
+        : { runner, status: "unavailable" });
+      const isolation = networkIsolationCapability(runner);
+      const credentialPresent = runner === "claude"
+        ? Boolean(process.env.ANTHROPIC_API_KEY)
+        : Boolean(process.env.OPENAI_API_KEY);
+      providerAvailability.push({
+        runner,
+        status: protocol.providerCalls === "deny"
+          ? "denied"
+          : isolation.status !== "enforced"
+            ? "blocked-isolation"
+            : !version
+              ? "missing-cli"
+              : !credentialPresent
+                ? "missing-credential"
+                : "configured",
+      });
+    }
+  } finally {
+    rmSync(home, { recursive: true, force: true });
+  }
+  return {
+    observedAt,
+    nodeVersion: process.version,
+    platform: process.platform,
+    arch: process.arch,
+    cliVersions,
+    providerAvailability,
+  };
+}
+
+function metadataProbeEnvironment(home: string): Record<string, string> {
+  return {
+    PATH: process.env.PATH ?? "",
+    HOME: home,
+    TMPDIR: join(home, "tmp"),
+    XDG_CONFIG_HOME: join(home, "xdg-config"),
+    XDG_CACHE_HOME: join(home, "xdg-cache"),
+    XDG_DATA_HOME: join(home, "xdg-data"),
+    GIT_CONFIG_NOSYSTEM: "1",
+    GIT_CONFIG_GLOBAL: "/dev/null",
+    GIT_TERMINAL_PROMPT: "0",
+    CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1",
+    CODEX_DISABLE_UPDATE_CHECK: "1",
+  };
+}
+
+function loadExperimentArtifacts(outDir: string): {
+  experiment: ExperimentManifest;
+  matrix: MatrixRunManifest;
+} {
+  const experimentPath = join(outDir, "experiment-manifest.json");
+  const matrixPath = join(outDir, "matrix-manifest.json");
+  return {
+    experiment: parseExperimentManifest(readJsonNoSymlink(experimentPath), experimentPath),
+    matrix: parseMatrixRunManifest(readJsonNoSymlink(matrixPath), matrixPath),
+  };
+}
+
+function assertExperimentMatchesMatrix(
+  experiment: ExperimentManifest,
+  matrix: MatrixRunManifest,
+): void {
+  const expected = matrixManifestFromExperiment(experiment);
+  if (canonicalJson(expected) !== canonicalJson(matrix)) {
+    throw new Error("matrix manifest does not match the immutable experiment schedule");
+  }
+  if (canonicalJsonSha256(matrix) !== experiment.hashes.matrixManifestSha256) {
+    throw new Error("matrix manifest does not match its authenticated experiment hash");
+  }
+}
+
+function readExperimentAttemptState(
+  outDir: string,
+  experiment: ExperimentManifest,
+  matrix: MatrixRunManifest,
+): { records: RunRecord[]; providerStartedIds: string[] } {
+  const evidence = readExperimentRunEvidence(outDir, matrix);
+  if (evidence.experiment.experimentId !== experiment.experimentId) {
+    throw new Error("experiment evidence does not match the loaded immutable manifest");
+  }
+  if (evidence.interruptedAttempt) {
+    throw new Error(
+      `${evidence.interruptedAttempt.id} was interrupted; use an explicit retry instead of resume`,
+    );
+  }
+  return {
+    records: [...evidence.records],
+    providerStartedIds: [...evidence.providerStartedAttemptIds],
+  };
+}
+
+function assertRetryableAttempt(
+  sourceDir: string,
+  experiment: ExperimentManifest,
+  attempt: ExperimentScheduledAttempt,
+): void {
+  const startedPath = join(sourceDir, attemptStartedFile(attempt.id));
+  const terminalPath = join(sourceDir, attempt.file);
+  if (existsSync(terminalPath)) {
+    const matrix = matrixManifestFromExperiment(experiment);
+    const expected = matrix.expectedAttempts[attempt.sequence - 1];
+    if (!expected) throw new Error("retry source matrix attempt is missing");
+    const record = parseRunRecord(readJsonNoSymlink(terminalPath), terminalPath, expected);
+    if (record.outcome.status !== "failed") throw new Error("only failed or interrupted attempts may be retried");
+    return;
+  }
+  if (!existsSync(startedPath)) throw new Error("retry source attempt was never started");
+  const started = parseExperimentAttemptStartedRecord(readJsonNoSymlink(startedPath), startedPath);
+  if (started.experimentId !== experiment.experimentId || started.attemptId !== attempt.id) {
+    throw new Error("retry source start marker does not match its experiment");
+  }
+}
+
+function assertRetryEnvironmentMatches(
+  source: ExperimentManifest,
+  current: ExperimentManifest,
+): void {
+  for (const [label, left, right] of [
+    ["repository commit", source.repositoryCommit, current.repositoryCommit],
+    ["protocol", source.protocol, current.protocol],
+    ["hashes", source.hashes, current.hashes],
+    ["models", source.models, current.models],
+    ["runtime", source.runtime, current.runtime],
+  ] as const) {
+    if (canonicalJson(left) !== canonicalJson(right)) {
+      throw new Error(`retry ${label} does not match the source experiment`);
+    }
+  }
+}
+
+function createUniqueRunDirectory(runsRoot: string, epochMs: number): string {
+  mkdirSync(runsRoot, { recursive: true });
+  const stem = isoTimestamp(epochMs).replace(/[:.]/g, "-");
+  for (let suffix = 0; suffix < 1_000; suffix++) {
+    const path = join(runsRoot, suffix === 0 ? stem : `${stem}-${String(suffix).padStart(3, "0")}`);
+    try {
+      mkdirSync(path);
+      return path;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+    }
+  }
+  throw new Error("could not allocate a unique experiment directory");
+}
+
+function readJsonNoSymlink(path: string): unknown {
+  return readExperimentJson(path);
+}
+
+function rawSha256(value: string | Buffer): string {
+  return createHash("sha256").update(value).digest("hex");
+}
+
+async function gitObjectId(cwd: string, args: string[]): Promise<string> {
+  const result = await exec("git", args, {
+    cwd,
+    timeoutMs: 10_000,
+    env: nonSensitiveEnvironment(),
+    inheritEnv: false,
+  });
+  const value = result.stdout.trim();
+  if (result.code !== 0 || result.timedOut || !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(value)) {
+    throw new Error(`could not record repository Git identity for ${args.join(" ")}`);
+  }
+  return value;
+}
+
+function isoTimestamp(epochMs: number): string {
+  if (!Number.isFinite(epochMs)) throw new Error("experiment clock returned a non-finite value");
+  return new Date(epochMs).toISOString();
+}
+
+function compareBytes(left: string, right: string): number {
+  return Buffer.compare(Buffer.from(left), Buffer.from(right));
 }
 
 export function failureOutcomeForArtifact(
@@ -573,7 +1346,36 @@ function readExpectedBugCount(caseDir: string): number | null {
 }
 
 function validateMatrixCaseSelection(matrix: MatrixConfig): void {
+  if (!matrix || typeof matrix !== "object" || Array.isArray(matrix)) {
+    throw new Error("matrix config must be an object");
+  }
+  if (!Number.isSafeInteger(matrix.repeats) || matrix.repeats < 1) {
+    throw new Error("matrix repeats must be a positive integer");
+  }
   if (!Array.isArray(matrix.configs)) throw new Error("matrix configs must be an array");
+  if (matrix.experiment !== undefined) {
+    const unexpected = Object.keys(matrix).filter(
+      (key) => !["repeats", "configs", "corpora", "experiment"].includes(key),
+    );
+    if (unexpected.length > 0) {
+      throw new Error(`matrix config contains unsupported field ${unexpected[0]}`);
+    }
+  }
+  for (const [index, config] of matrix.configs.entries()) {
+    if (!config || typeof config !== "object" || Array.isArray(config)) {
+      throw new Error(`matrix configs[${index}] must be an object`);
+    }
+    if (typeof config.name !== "string" || !config.name.trim()) {
+      throw new Error(`matrix configs[${index}].name must be a non-empty string`);
+    }
+    if (!(["claude", "codex", "mock"] as const).includes(config.runner)) {
+      throw new Error(`matrix configs[${index}].runner is invalid`);
+    }
+    if (config.overrides !== undefined &&
+      (!config.overrides || typeof config.overrides !== "object" || Array.isArray(config.overrides))) {
+      throw new Error(`matrix configs[${index}].overrides must be an object`);
+    }
+  }
   const configNames = matrix.configs.map((config) => config.name);
   if (new Set(configNames).size !== configNames.length) {
     throw new Error("matrix config names must not contain duplicates");

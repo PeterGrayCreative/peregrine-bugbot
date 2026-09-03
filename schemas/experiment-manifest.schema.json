@@ -1,0 +1,552 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Peregrine Experiment Manifest",
+  "$comment": "Structural schema only. parseExperimentManifest is authoritative for digest authentication, secrets, schedule topology, runtime relationships, retry equality, and the PR 5B live-provider gate.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "experimentId": { "$ref": "#/$defs/sha256" },
+    "createdAt": { "$ref": "#/$defs/canonicalTimestamp" },
+    "repositoryCommit": { "$ref": "#/$defs/gitObjectId" },
+    "protocol": { "$ref": "#/$defs/protocol" },
+    "hashes": { "$ref": "#/$defs/hashes" },
+    "models": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/modelIdentity" }
+    },
+    "runtime": { "$ref": "#/$defs/runtime" },
+    "schedule": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/scheduledAttempt" }
+    },
+    "lineage": { "$ref": "#/$defs/retryLineage" }
+  },
+  "required": [
+    "schemaVersion",
+    "experimentId",
+    "createdAt",
+    "repositoryCommit",
+    "protocol",
+    "hashes",
+    "models",
+    "runtime",
+    "schedule"
+  ],
+  "allOf": [
+    {
+      "if": { "required": ["lineage"] },
+      "then": {
+        "properties": {
+          "schedule": {
+            "minItems": 1,
+            "maxItems": 1,
+            "items": {
+              "allOf": [
+                { "$ref": "#/$defs/scheduledAttempt" },
+                { "required": ["retryOf"] }
+              ]
+            }
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "schedule": {
+            "items": {
+              "allOf": [
+                { "$ref": "#/$defs/scheduledAttempt" },
+                { "not": { "required": ["retryOf"] } }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": { "required": ["lineage"] },
+        "properties": {
+          "protocol": {
+            "properties": { "mode": { "const": "structural-smoke" } },
+            "required": ["mode"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "schedule": {
+            "items": {
+              "allOf": [
+                { "$ref": "#/$defs/scheduledAttempt" },
+                {
+                  "properties": {
+                    "runner": { "const": "mock" },
+                    "variant": { "const": "structural" },
+                    "position": { "const": 1 }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "not": { "required": ["lineage"] },
+        "properties": {
+          "protocol": {
+            "properties": { "mode": { "enum": ["screening", "checkpoint"] } },
+            "required": ["mode"]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "schedule": {
+            "items": {
+              "allOf": [
+                { "$ref": "#/$defs/scheduledAttempt" },
+                {
+                  "properties": {
+                    "variant": { "enum": ["control", "treatment"] }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "boundedString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[^\\r\\n\\u0000]+$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "gitObjectId": {
+      "type": "string",
+      "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+    },
+    "canonicalTimestamp": {
+      "type": "string",
+      "minLength": 24,
+      "maxLength": 27,
+      "pattern": "^(?:[0-9]{4}|[+-][0-9]{6})-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$"
+    },
+    "runner": {
+      "enum": ["claude", "codex", "mock"]
+    },
+    "attemptId": {
+      "type": "string",
+      "pattern": "^attempt-[0-9]{6}$"
+    },
+    "blockId": {
+      "type": "string",
+      "pattern": "^(?:block|retry)-[0-9]{6}$"
+    },
+    "attemptFile": {
+      "type": "string",
+      "pattern": "^attempt-[0-9]{6}\\.json$"
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "maxProviderCostUsd": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1.7976931348623157e308
+            }
+          ]
+        },
+        "maxProviderAttempts": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "maxWallTimeMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "maxFailureRate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "minAttemptsForFailureRate": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "maxConsecutiveFailures": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "maxProviderCostUsd",
+        "maxProviderAttempts",
+        "maxWallTimeMs",
+        "maxFailureRate",
+        "minAttemptsForFailureRate",
+        "maxConsecutiveFailures"
+      ]
+    },
+    "judge": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["exact", "claude", "codex"] },
+        "model": { "$ref": "#/$defs/boundedString" },
+        "version": { "$ref": "#/$defs/boundedString" }
+      },
+      "required": ["kind", "version"],
+      "allOf": [
+        {
+          "if": {
+            "properties": { "kind": { "const": "exact" } },
+            "required": ["kind"]
+          },
+          "then": {
+            "properties": { "version": { "const": "exact-v1" } },
+            "not": { "required": ["model"] }
+          },
+          "else": {
+            "properties": { "version": { "const": "semantic-v1" } },
+            "required": ["model"]
+          }
+        }
+      ]
+    },
+    "protocol": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["structural-smoke", "screening", "checkpoint"] },
+        "seed": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4294967295
+        },
+        "cacheCondition": { "enum": ["cold", "warm", "uncontrolled", "not-applicable"] },
+        "providerCalls": { "const": "deny" },
+        "providerAccess": { "enum": ["api-key", "cli-session", "not-applicable"] },
+        "costAccounting": { "enum": ["required", "best-effort", "not-applicable"] },
+        "judge": { "$ref": "#/$defs/judge" },
+        "control": { "$ref": "#/$defs/boundedString" },
+        "treatment": { "$ref": "#/$defs/boundedString" },
+        "limits": { "$ref": "#/$defs/limits" }
+      },
+      "required": [
+        "mode",
+        "seed",
+        "cacheCondition",
+        "providerCalls",
+        "providerAccess",
+        "costAccounting",
+        "judge",
+        "limits"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": { "mode": { "const": "structural-smoke" } },
+            "required": ["mode"]
+          },
+          "then": {
+            "properties": {
+              "cacheCondition": { "const": "not-applicable" },
+              "providerCalls": { "const": "deny" },
+              "providerAccess": { "const": "not-applicable" },
+              "costAccounting": { "const": "not-applicable" },
+              "judge": {
+                "properties": { "kind": { "const": "exact" } }
+              },
+              "limits": {
+                "properties": {
+                  "maxProviderCostUsd": { "type": "null" },
+                  "maxProviderAttempts": { "const": 0 }
+                }
+              }
+            },
+            "not": {
+              "anyOf": [
+                { "required": ["control"] },
+                { "required": ["treatment"] }
+              ]
+            }
+          },
+          "else": {
+            "properties": {
+              "cacheCondition": { "const": "uncontrolled" },
+              "providerAccess": { "enum": ["api-key", "cli-session"] },
+              "costAccounting": { "enum": ["required", "best-effort"] },
+              "judge": {
+                "properties": { "kind": { "enum": ["claude", "codex"] } }
+              }
+            },
+            "required": ["control", "treatment"],
+            "oneOf": [
+              {
+                "properties": {
+                  "providerAccess": { "const": "api-key" },
+                  "costAccounting": { "const": "required" }
+                },
+                "required": ["providerAccess", "costAccounting"]
+              },
+              {
+                "properties": {
+                  "providerAccess": { "const": "cli-session" },
+                  "costAccounting": { "const": "best-effort" }
+                },
+                "required": ["providerAccess", "costAccounting"]
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": { "costAccounting": { "const": "required" } },
+            "required": ["costAccounting"]
+          },
+          "then": {
+            "properties": {
+              "limits": {
+                "properties": {
+                  "maxProviderCostUsd": { "type": "number" }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "hashes": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repositorySha256": { "$ref": "#/$defs/sha256" },
+        "corpusSha256": { "$ref": "#/$defs/sha256" },
+        "promptSha256": { "$ref": "#/$defs/sha256" },
+        "methodSha256": { "$ref": "#/$defs/sha256" },
+        "schemaSha256": { "$ref": "#/$defs/sha256" },
+        "profileSha256": { "$ref": "#/$defs/sha256" },
+        "judgeSha256": { "$ref": "#/$defs/sha256" },
+        "matrixManifestSha256": { "$ref": "#/$defs/sha256" },
+        "matrixConfigSha256": { "$ref": "#/$defs/sha256" },
+        "peregrineConfigSha256": { "$ref": "#/$defs/sha256" },
+        "configurationSha256": { "$ref": "#/$defs/sha256" }
+      },
+      "required": [
+        "repositorySha256",
+        "corpusSha256",
+        "promptSha256",
+        "methodSha256",
+        "schemaSha256",
+        "profileSha256",
+        "judgeSha256",
+        "matrixManifestSha256",
+        "matrixConfigSha256",
+        "peregrineConfigSha256",
+        "configurationSha256"
+      ]
+    },
+    "modelIdentity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "configName": { "$ref": "#/$defs/boundedString" },
+        "runner": { "$ref": "#/$defs/runner" },
+        "effectiveConfigSha256": { "$ref": "#/$defs/sha256" },
+        "breadthModel": { "$ref": "#/$defs/boundedString" },
+        "breadthEffort": { "$ref": "#/$defs/boundedString" },
+        "investigationModel": { "$ref": "#/$defs/boundedString" },
+        "investigationEffort": { "$ref": "#/$defs/boundedString" }
+      },
+      "required": ["configName", "runner", "effectiveConfigSha256"],
+      "allOf": [
+        {
+          "if": {
+            "properties": { "runner": { "const": "mock" } },
+            "required": ["runner"]
+          },
+          "then": {
+            "not": {
+              "anyOf": [
+                { "required": ["breadthModel"] },
+                { "required": ["breadthEffort"] },
+                { "required": ["investigationModel"] },
+                { "required": ["investigationEffort"] }
+              ]
+            }
+          },
+          "else": {
+            "required": [
+              "breadthModel",
+              "breadthEffort",
+              "investigationModel",
+              "investigationEffort"
+            ]
+          }
+        }
+      ]
+    },
+    "cliVersion": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runner": { "$ref": "#/$defs/runner" },
+        "status": { "enum": ["observed", "unavailable", "not-applicable"] },
+        "version": { "$ref": "#/$defs/boundedString" }
+      },
+      "required": ["runner", "status"],
+      "allOf": [
+        {
+          "if": {
+            "properties": { "status": { "const": "observed" } },
+            "required": ["status"]
+          },
+          "then": { "required": ["version"] },
+          "else": { "not": { "required": ["version"] } }
+        }
+      ]
+    },
+    "providerAvailability": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runner": { "$ref": "#/$defs/runner" },
+        "status": {
+          "enum": [
+            "configured",
+            "denied",
+            "blocked-isolation",
+            "missing-cli",
+            "missing-credential",
+            "not-applicable"
+          ]
+        }
+      },
+      "required": ["runner", "status"]
+    },
+    "runtime": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "observedAt": { "$ref": "#/$defs/canonicalTimestamp" },
+        "nodeVersion": { "$ref": "#/$defs/boundedString" },
+        "platform": { "$ref": "#/$defs/boundedString" },
+        "arch": { "$ref": "#/$defs/boundedString" },
+        "cliVersions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/cliVersion" }
+        },
+        "providerAvailability": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/providerAvailability" }
+        }
+      },
+      "required": [
+        "observedAt",
+        "nodeVersion",
+        "platform",
+        "arch",
+        "cliVersions",
+        "providerAvailability"
+      ]
+    },
+    "attemptReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "experimentId": { "$ref": "#/$defs/sha256" },
+        "manifestSha256": { "$ref": "#/$defs/sha256" },
+        "attemptId": { "$ref": "#/$defs/attemptId" },
+        "evidenceSha256": { "$ref": "#/$defs/sha256" }
+      },
+      "required": ["experimentId", "manifestSha256", "attemptId", "evidenceSha256"]
+    },
+    "scheduledAttempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/attemptId" },
+        "blockId": { "$ref": "#/$defs/blockId" },
+        "sequence": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "caseName": {
+          "type": "string",
+          "pattern": "^(?:structural-smoke|development|validation)/case-[a-f0-9]{8,32}$"
+        },
+        "corpus": { "enum": ["structural-smoke", "development", "validation"] },
+        "expectedBugCount": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          ]
+        },
+        "configName": { "$ref": "#/$defs/boundedString" },
+        "repeat": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "runner": { "$ref": "#/$defs/runner" },
+        "variant": { "enum": ["structural", "control", "treatment"] },
+        "position": { "type": "integer", "minimum": 1, "maximum": 2 },
+        "file": { "$ref": "#/$defs/attemptFile" },
+        "retryOf": { "$ref": "#/$defs/attemptReference" }
+      },
+      "required": [
+        "id",
+        "blockId",
+        "sequence",
+        "caseName",
+        "corpus",
+        "expectedBugCount",
+        "configName",
+        "repeat",
+        "runner",
+        "variant",
+        "position",
+        "file"
+      ]
+    },
+    "retryLineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "const": "retry" },
+        "source": { "$ref": "#/$defs/attemptReference" }
+      },
+      "required": ["kind", "source"]
+    }
+  }
+}

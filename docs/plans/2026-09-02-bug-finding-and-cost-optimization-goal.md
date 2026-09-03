@@ -1,4 +1,4 @@
-# Goal: Complete the Peregrine Bug-Finding and Cost Optimization Program
+# Goal: Reach a Runnable Peregrine Benchmark Baseline
 
 **Status:** Active  
 **Created:** 2026-09-02  
@@ -8,20 +8,22 @@
 
 ## Objective
 
-Implement every remaining accepted slice of the Peregrine bug-finding and cost optimization plan. Use parallel subagents only where dependencies and file ownership make parallel work safe. Selectively reuse material from the GPT Pro handoff only after comparing it with the current repository and proving that it meets the plan's contracts.
+Implement the benchmark-foundation slices of the Peregrine bug-finding and cost optimization plan through Checkpoint 1. Use parallel subagents only where dependencies and file ownership make parallel work safe. Selectively reuse material from the GPT Pro handoff only after comparing it with the current repository and proving that it meets the plan's contracts.
 
-The work continues until the implementation is complete, focused and end-to-end verification has passed, tracking and validation evidence are current, and every accepted change has been committed and pushed to the remote repository.
+The work continues until curated benchmark scenarios exist and the contained experiment runner can execute, grade, and report an unmodified live-model baseline against them. Stop at that benchmark-ready boundary; do not begin the prompt, method, breadth, routing, profile, or large-diff interventions in Plan PRs 8 through 15 unless the user starts a subsequent goal.
 
 ## Completion contract
 
 This goal is complete only when all of the following are true:
 
-- Plan PR slices 2 through 15 and any safety prerequisite discovered while implementing them have been implemented or explicitly removed from scope by the user. P0 and Plan PR 1 are already complete and must not be reimplemented.
+- Safety PR 2A.2 and Plan PR slices 2 through 7 have been implemented, validated, merged, and linked. P0 and Plan PR 1 are already complete and must not be reimplemented.
 - Every slice remains independently reviewable and preserves the plan's stated scope boundary, acceptance gate, and rollback boundary.
 - Required unit, integration, schema, packaging, structural-smoke, screening, checkpoint, and end-to-end validation has passed at the appropriate stage.
 - Live-model results are not claimed where provider authentication, corpus quality, sample size, or adjudication is insufficient.
 - Failed, missing, skipped, or partially covered review attempts cannot improve reported performance or become `clean` or postable.
-- The sealed holdout remains unavailable during tuning and is opened only once after the design, thresholds, and routing policy are frozen.
+- At least 30 curated development and validation cases cover all twelve built-in lanes and include at least 25% clean controls; the sealed holdout remains inaccessible and unopened.
+- A contained Codex CLI-session experiment can run without an API key or ambient user home, with monetary cost recorded as best-effort and unavailable dollars represented as `n/a`, never zero.
+- The unmodified baseline experiment has actually run against the curated scenarios with the required repeats, grading, failure accounting, and report generation; structural mock output alone is not completion evidence.
 - The implementation checklist and validation records reflect the actual branch, PR, commit, CI, benchmark, and merge state.
 - Every accepted commit is pushed to a named remote branch and represented by a pull request or an explicitly approved direct push.
 - The final remote SHA and terminal CI state are verified before this goal is marked complete.
@@ -44,8 +46,6 @@ In scope:
 
 - Benchmark integrity, case isolation, reproducible histories, grading, adjudication, typed manifests, provider-correct telemetry, and reproducible experiments.
 - Gold-set curation and an unmodified baseline.
-- Stable investigator instructions, breadth compaction, activated-lane guidance, completeness semantics, and bounded candidate budgets.
-- The first trusted repository profile, hunk-safe large-diff review, corpus expansion, and repository-opt-in routing.
 - Tests, schemas, documentation, validation evidence, workflows, compatibility handling, and remote delivery required by those slices.
 
 Out of scope unless the user separately approves it:
@@ -55,6 +55,7 @@ Out of scope unless the user separately approves it:
 - Default publication of medium-confidence or follow-up findings.
 - Automatic docs-only downgrades to `clean`.
 - Caller precomputation before telemetry demonstrates that it is worthwhile.
+- Plan PRs 8 through 15: prompt/method changes, breadth compaction and guidance, completeness and candidate-budget changes, repository profiles, large-diff behavior, corpus expansion beyond gold set v1, and opt-in routing.
 - Any weakening of the two-worker topology, evidence bar, secret scanning, profile trust, fail-closed parsing, revalidation, or GitHub permission boundaries.
 
 ## Parallel execution model
@@ -79,10 +80,7 @@ The primary agent owns dependency ordering, integration, cross-slice compatibili
 | 2 | Plan PR 3 and the OCI live-evaluation containment prerequisite after PR 2; complete and integrate PR 5 | PR 3 must consume the accepted materialization contract rather than inventing a parallel one. Containment may proceed independently but must land before live benchmarking. |
 | 3 | Plan PR 6, then Plan PR 4 | PR 6 owns the canonical lane registry and typed per-file activation evidence. PR 4 follows so routing-versus-breadth miss attribution never scrapes human-readable manifest text. |
 | 4 | Plan PR 7: curated gold set v1 and unmodified baseline | Begins only after PRs 4, 5, and 6 satisfy Checkpoint 0 and OCI containment permits live evaluation. Human curation and holdout custody cannot be delegated away. |
-| 5 | Plan PRs 8 through 12 | Implement and benchmark one behavioral intervention at a time. Read-only evaluation and review agents may run in parallel, but intervention code remains sequential so effects stay attributable. |
-| 6 | Plan PR 13 and Plan PR 14 | May proceed in parallel after PR 12, subject to the profile and large-diff file boundaries remaining separate. |
-| 7 | Plan PR 15 and final sealed-holdout gate | Starts only after PRs 13 and 14 pass their gates and the user-supplied holdout, budget, and routing decisions are recorded. |
-| 8 | Repository-wide verification, independent final reviews, documentation reconciliation, and remote-state audit | No new feature work. Fix only verified in-scope defects and rerun affected gates. |
+| 5 | Benchmark-ready verification, documentation reconciliation, and remote-state audit | Stop after the unmodified contained baseline has run against the curated development/validation scenarios and Checkpoint 1 evidence is remote. Do not begin Plan PR 8. |
 
 ## GPT Pro handoff reuse gate
 
@@ -159,8 +157,8 @@ These decisions do not prevent earlier independent slices from progressing.
 
 ## Goal termination
 
-Mark this goal complete only after the completion contract is satisfied and the final remote-state audit confirms that no accepted local commit or required evidence remains unpublished. If an essential user decision or external dependency repeatedly prevents progress, document the exact blocker and request direction without weakening the success criteria.
+Mark this goal complete only after the benchmark-ready completion contract is satisfied and the final remote-state audit confirms that no accepted local commit or required baseline evidence remains unpublished. Stop before Plan PR 8. If an essential user decision or external dependency repeatedly prevents progress, document the exact blocker and request direction without weakening the success criteria.
 
 ## Current execution state
 
-Implementation resumed after the goal-creation turn. Plan PR 2 merged through [PR #5](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/5) as `4e99748ba57208c86976a632ad4efb85011f7e7a`. Plan PR 3 merged through [PR #7](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/7) as `8edcc9f573e4e8186d1ec504329e58a4818aeba9`. Its dependency audit established that Plan PR 6 must precede Plan PR 4's definitive routing-versus-breadth classification. Safety PR 2A.1 merged through [PR #9](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/9) as `cfe9282158c9663f7bd0f40bf85a92f83076af2a`; the private GHCR publication and digest-acceptance gate remains pending before Safety PR 2A.2. The implementation checklist and per-slice validation records remain the authoritative source for current branch, review, CI, and merge evidence.
+Implementation resumed after the goal-creation turn. Plan PR 2 merged through [PR #5](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/5) as `4e99748ba57208c86976a632ad4efb85011f7e7a`. Plan PR 3 merged through [PR #7](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/7) as `8edcc9f573e4e8186d1ec504329e58a4818aeba9`. Its dependency audit established that Plan PR 6 must precede Plan PR 4's definitive routing-versus-breadth classification. Safety PR 2A.1 merged through [PR #9](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/9) as `cfe9282158c9663f7bd0f40bf85a92f83076af2a`; the private GHCR publication and digest-acceptance gate remains pending before Safety PR 2A.2. On 2026-09-03 the user narrowed the execution goal to the benchmark-ready boundary: complete Safety PR 2A.2 and Plan PRs 4 through 7, run and record the unmodified baseline, then stop before Plan PR 8. The implementation checklist and per-slice validation records remain the authoritative source for current branch, review, CI, and merge evidence.

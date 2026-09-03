@@ -58,6 +58,115 @@ fixture transport, accounting, and expected marker detection; their marker
 counts are never presented as model recall, provider cost, or findings-per-dollar
 and are excluded from the behavioral cost-versus-recall plot.
 
+## Immutable experiments
+
+Every new matrix config must declare one of three experiment modes:
+
+- `structural-smoke` uses the mock runner, exact grading, and no provider
+  access. It proves only the deterministic harness path.
+- `screening` is a small development-corpus control/treatment comparison used
+  to reject an unsafe or clearly inferior intervention. It is not release-level
+  efficacy evidence.
+- `checkpoint` is the larger contemporaneous control/treatment comparison used
+  at a planned evaluation gate. Development and validation results remain
+  separate in the report.
+
+A fresh run writes a self-authenticating `experiment-manifest.json` before its
+first attempt. The manifest freezes the repository commit; repository, corpus,
+prompt, method, schema, effective merge-base profile, judge, matrix config,
+Peregrine config, and aggregate configuration hashes; effective model names and
+efforts; CLI versions and provider availability; the random seed and cache
+condition; access and cost-accounting modes; all ceilings; timestamps; and the
+complete run order. `matrix-manifest.json` is derived from that schedule.
+
+For screening and checkpoint experiments, the seeded scheduler shuffles
+case/repeat blocks, keeps each control/treatment pair adjacent, and alternates
+which variant runs first. Attempts execute sequentially so the two variants are
+contemporaneous without concurrent sessions obscuring rate limits or accounting.
+The seed reproduces the order; it does not make model output deterministic.
+
+The evidence directory is append-only:
+
+```text
+eval/runs/<timestamp>/
+├── experiment-manifest.json
+├── matrix-manifest.json
+├── state/
+│   ├── attempt-000001.started.json
+│   └── attempt-000001.provider-started.json  # live provider attempts only
+├── attempt-000001.json                       # terminal success or failure
+├── experiment-stop.json                      # present only after a ceiling stops the run
+├── experiment-terminal-seal.json             # complete/stopped manifests, state, attempts, stop
+├── attempt-000001.graded.json                 # completed attempts only
+└── experiment-grading-seal.json              # all applicable graded artifacts
+```
+
+Manifests, state markers, terminal attempts, and stop records use exclusive,
+atomic creation and are never replaced. Before releasing its writer lock, a
+complete or ceiling-stopped run writes a terminal seal over both manifests,
+every state marker and terminal attempt, and any stop record. The lock itself,
+grades, reports, and seals are excluded. A sealed run is terminal; resume only
+validates and returns it. A durable start marker without a terminal attempt is
+an interruption: it stays unsealed, is never resumed in place, and remains
+eligible for retry. Retrying a failed or interrupted attempt creates a new
+one-attempt experiment whose manifest links the source experiment, raw manifest
+hash, attempt ID, and exact source-attempt evidence digest; the source evidence
+is unchanged. Every experiment terminal record and derived grade also carries
+the experiment ID and raw manifest hash, preventing same-named attempts from
+another run from being substituted. Concurrent resumes are rejected by a
+run-directory lock. A stale lock requires deliberate operator inspection and
+recovery.
+
+Grading requires and validates the terminal seal. It preserves and validates
+valid grades when continuing a partial, unsealed grade set, then writes one
+grading seal only after every completed attempt has a grade. Failed attempts
+have no grade. Reporting requires both seals and validates the complete graded
+artifact set, so replacement or deletion cannot silently improve a benchmark.
+
+Ceilings are evaluated from durable evidence before the next scheduled attempt.
+They cover provider-started attempts, observed provider cost when available,
+the sum of persisted attempt durations, overall failure rate after its declared
+minimum sample and a complete paired block, and consecutive failures. Because a provider can exceed a
+dollar or wall-time threshold during an in-flight attempt, those observed
+ceilings stop work before the following attempt rather than promising an
+absolute upper bound. The provider-attempt limit is the hard reviewer-attempt
+boundary; one reviewer attempt may still contain both breadth and investigation
+provider calls. Failure ceilings likewise stop before the following attempt.
+The stop decision and the evidence used to reach it are written to
+`experiment-stop.json`; a stopped experiment is not silently resumed.
+
+`providerAccess` and `costAccounting` describe how a live experiment is funded
+and measured:
+
+- `api-key` with `required` accounting is for an explicit provider credential
+  and requires a dollar ceiling. Missing cost after provider work stops the
+  experiment before another call.
+- `cli-session` supports subscription/session-backed Claude Code or Codex CLI
+  runs without requiring API billing credentials. Use `best-effort` accounting:
+  provider-reported token, work, duration, and cost fields are preserved when
+  available, but missing dollar cost stays `n/a`. A positive
+  `maxProviderAttempts` is therefore mandatory when calls are enabled.
+
+The selected access mode is evidence, not a credential fallback. A
+`cli-session` experiment must receive only the selected provider's session
+material through the containment backend; it must not read the operator's
+ambient home or silently switch to an API key. Likewise, an `api-key`
+experiment must not borrow an ambient login.
+
+PR 5B records the future live-run contract but deliberately rejects every
+`providerCalls: "allow"` protocol before creating a run directory. Safety PR
+2A.2 must provide the contained credential/session mount, and PR 4 must provide
+an immutable, contained, separately budgeted semantic-judge ledger before that
+gate can open. The grader accepts frozen `claude/semantic-v1` and
+`codex/semantic-v1` metadata for fail-closed manifests, but it never launches a
+semantic judge in PR 5B.
+
+`schemas/experiment-manifest.schema.json` and the two experiment seal schemas
+provide the portable structural shapes. Their strict parsers remain authoritative
+for relationships JSON Schema cannot express here, including self-authentication,
+exact artifact sets and digests, paired block topology, balanced ordering,
+runtime/runner consistency, retry equality, and secret rejection.
+
 ## Case library
 
 Cases are separated by intended use before any provider run:
@@ -132,17 +241,17 @@ checkout, sanitized assets, required output, and provider endpoint.
 Admin-managed provider policy may still apply and is not claimed as disabled;
 the host sandbox must prevent it from reaching curator-only material.
 
-Once an external containment backend permits provider launch, the live process
-receives an attempt-specific `HOME`, XDG paths, temporary directory, and
-disabled global/system Git configuration. Ambient SSH agents, Git credential
-helpers, CLI home directories, proxy URLs, and unrelated credentials are not
-forwarded. File-backed user-login sessions are therefore not a supported eval
-authentication path: provide the selected provider's explicit environment
-credential (`ANTHROPIC_API_KEY` or `OPENAI_API_KEY`). Claude's eval-only
-`--bare` mode intentionally disables OAuth and keychain authentication. At
-that point, a missing credential is recorded as a provider failure; without
-external containment, the earlier isolation check remains a configuration
-failure and no provider process starts.
+Once the follow-up containment backend permits provider launch, the live
+process receives an attempt-specific `HOME`, XDG paths, temporary directory,
+and disabled global/system Git configuration. Ambient SSH agents, Git
+credential helpers, CLI home directories, proxy URLs, and unrelated credentials
+are not forwarded. API-key mode receives only the selected explicit credential
+(`ANTHROPIC_API_KEY` or `OPENAI_API_KEY`). CLI-session mode will instead require
+a provider-specific, read-only session mount accepted by the containment
+contract. Until that contract is implemented and tested, neither access mode
+may start a live attempt. Claude's eval-only `--bare` behavior and any session
+mount details must be reconciled by that safety slice rather than weakened in
+the matrix runner.
 
 Each accepted case now proves a reproducible two-commit range before an engine
 can run. Fixture commits use fixed identities and timestamps, including an
@@ -216,10 +325,52 @@ that gate.
 ## Running
 
 ```bash
-npm run eval:matrix                      # all configs × cases × repeats
+# Claude CLI-session checkpoint contract (currently disabled before provider work).
+npm run eval:matrix -- --config eval/matrix.config.json
+
+# Codex CLI-session checkpoint contract (also currently disabled).
+npm run eval:matrix -- --config eval/matrix.codex.config.json
+
+# Continue only untouched, unsealed evidence. A sealed run is already terminal.
+npm run eval:matrix -- --config eval/matrix.config.json \
+  --resume eval/runs/<dir>
+
+# Retry one failed or interrupted attempt in a new linked experiment directory.
+npm run eval:matrix -- --config eval/matrix.config.json \
+  --retry-runs eval/runs/<source-dir> \
+  --retry-attempt attempt-000001
+
 npm run eval:grade  -- --runs eval/runs/<dir>
 npm run eval:report -- --runs eval/runs/<dir>   # benchmark.json + benchmark.html
 ```
+
+`--resume` and `--retry-runs` are mutually exclusive. Retry requires both
+`--retry-runs` and `--retry-attempt`, and only failed or interrupted source
+attempts are eligible. Use the same config that authenticated the source
+experiment; changed code, corpus, prompts, methods, schemas, profiles, judge,
+configuration, CLI versions, or provider availability fail closed instead of
+quietly producing incomparable evidence.
+
+`eval/matrix.smoke.json` is the structural-smoke config.
+`eval/matrix.config.json` is the fail-closed Claude CLI-session checkpoint
+example; `eval/matrix.codex.config.json` is the corresponding Codex example.
+Both live examples use best-effort cost accounting but deliberately set
+`providerCalls: "deny"`, `maxProviderAttempts: 0`, and `maxWallTimeMs: 0`.
+They remain disabled until Safety PR 2A.2 accepts an attested runtime digest,
+implements the constrained API-key/session mounts and cleanup contract, and
+passes its containment tests.
+Before enabling any screening or checkpoint config, set explicit positive
+provider-attempt and wall-time limits plus deliberate failure thresholds; set a
+dollar ceiling only when cost accounting is required or sufficiently reliable.
+Changing `providerCalls` to `allow` by itself is not a supported enablement
+procedure. Live cache state remains `uncontrolled` until a separate cache
+protocol can enforce and attest cold or warm conditions.
+
+Screening and checkpoint use the same config shape. Set `experiment.mode` to
+`screening` for a curated development subset or `checkpoint` for the planned
+development/validation gate, and name exactly one `control` and one `treatment`
+from `configs`. There is no checked-in provider-enabled screening config while
+the containment gate is closed.
 
 Until genuine sanitized development and validation cases are admitted,
 `npm run eval:matrix` writes an empty manifest, prints that no provider process
@@ -229,11 +380,13 @@ validation attempts separately.
 
 - Repeats (default 3, `eval/matrix.config.json`) are not optional — runs are
   stochastic, and single-run model comparisons will mislead you.
-- `JUDGE=exact` is the default, free line-overlap judge for smoke tests and CI.
-  Use `JUDGE=claude` or `JUDGE=codex` for semantic root-cause grading; the
-  judge never sees which runner produced a finding. Override its model with
-  `PEREGRINE_JUDGE_MODEL` or the provider-specific
-  `PEREGRINE_CLAUDE_JUDGE_MODEL` / `PEREGRINE_CODEX_JUDGE_MODEL`.
+- The judge kind, model, and version are frozen in the experiment manifest.
+  Structural smoke uses the free exact line-overlap judge. Screening and
+  checkpoint configs may preregister Claude or Codex semantic root-cause
+  grading. PR 5B validates only `exact/exact-v1`, `claude/semantic-v1`, and
+  `codex/semantic-v1`; semantic execution remains blocked until PR 4 adds its
+  immutable contained and separately budgeted ledger. The future judge must
+  remain blind to which runner produced a finding.
 - Spot-check ~20% of judge decisions by hand early on to calibrate it.
 
 ## Zero-cost smoke test

@@ -2,7 +2,7 @@
 
 **Companion plan:** [2026-09-02-bug-finding-and-cost-optimization-plan.md](./2026-09-02-bug-finding-and-cost-optimization-plan.md)
 **Status:** Active
-**Last updated:** 2026-09-02
+**Last updated:** 2026-09-03
 
 This checklist tracks delivery of the plan without replacing its rationale, risk analysis, or acceptance criteria. Update the status table and the relevant PR section whenever a branch is opened, validation evidence changes, a decision is made, or a PR merges.
 
@@ -32,7 +32,7 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | Plan PR 3 | Reproduce base/head history and production manifest path | PR 2 | Merged | [#7](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/7) |
 | Plan PR 4 | Root-cause grading, adjudication, and miss stages | PRs 3, 6 | Not started | - |
 | Plan PR 5A | Provider-correct usage, cost, and observed work | PR 1 | Merged | [#11](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/11) |
-| Plan PR 5B | Immutable experiment scheduling, resume, and ceilings | PR 5A | Not started | - |
+| Plan PR 5B | Immutable experiment scheduling, resume, and ceilings | PR 5A | In progress; locally validated | - |
 | Plan PR 6 | Typed manifest shadow/parity mode | PR 3 | Not started | - |
 | Plan PR 7 | Curated gold set v1 and unmodified baseline | PRs 4-6 | Not started | - |
 | Plan PR 8 | Stable investigator core and variable appendix | PR 7 | Not started | - |
@@ -128,6 +128,7 @@ Evidence: [Safety PR 2A.1 validation record](../validation/2026-09-03-eval-runti
 - [ ] Use container-only tmpfs mounts for provider state and scratch data.
 - [ ] Exclude the host home, source corpus, host temporary directories, Docker socket, SSH agent, Git credentials, and unrelated environment variables.
 - [ ] Pass provider secrets by allowlisted environment-variable name without placing values in argv, logs, manifests, or diagnostics.
+- [ ] Mount only the explicitly selected provider-specific CLI session when `providerAccess` is `cli-session`; never expose an ambient user home or fall back to an API key.
 - [ ] Disable repository-controlled instructions, rules, hooks, MCP servers, plugins, skills, agents, and inherited shell environment inside both provider CLIs.
 - [ ] Probe checkout/assets/output permissions, sibling-host-file denial, provider CLI versions, daemon availability, image digest, mounts, and cleanup before live attempts.
 - [ ] Fail closed on unsupported platforms, missing or inaccessible runtimes, mutable image tags, digest mismatch, failed probes, or unknown provider flags.
@@ -195,14 +196,16 @@ Evidence: [Plan PR 5A validation record](../validation/2026-09-03-provider-usage
 
 ### Plan PR 5B - Immutable experiment scheduling, resume, and ceilings
 
-- [ ] Record repository, corpus, prompt, method, schema, profile, judge, and configuration hashes.
-- [ ] Record exact model identifiers, CLI versions, run order, random seed, timestamps, cache condition, and provider availability.
-- [ ] Randomize and interleave contemporaneous control/treatment attempts.
-- [ ] Represent retries as new attempts linked to the original attempt.
-- [ ] Add spend, wall-clock, failure-rate, and early-stop ceilings.
-- [ ] Add resume behavior that never overwrites failed evidence.
-- [ ] Add deterministic schedule, retry-lineage, resume, ceiling, and immutable-manifest tests.
-- [ ] Run `npm run validate` and a zero-cost experiment-metadata smoke test.
+- [x] Record repository, corpus, prompt, method, schema, profile, judge, and configuration hashes.
+- [x] Record exact model identifiers, CLI versions, run order, random seed, timestamps, cache condition, and provider availability.
+- [x] Define and persist explicit `api-key` and `cli-session` access modes, including Codex subscription-backed runs, without inferring an ambient login or silently changing access mode. Operational session mounting remains a Safety PR 2A.2 gate.
+- [x] Keep monetary cost best-effort for session-backed runs: record `n/a` rather than zero when unavailable, preserve observed token/work telemetry, and enforce a hard provider-attempt ceiling.
+- [x] Randomize and interleave contemporaneous control/treatment attempts.
+- [x] Represent retries as new attempts linked to the original attempt.
+- [x] Add spend, wall-clock, failure-rate, and early-stop ceilings.
+- [x] Add resume behavior that never overwrites failed evidence.
+- [x] Add deterministic schedule, retry-lineage, resume, ceiling, immutable-manifest, lock, evidence-binding, schema-parity, and symlink-safe-write tests.
+- [x] Run `npm run validate` under Node `22.22.1`: 138/138 Node tests, all skill/package checks, and 8/8 zero-cost structural smoke attempts passed with 5/5 expected markers.
 - [ ] Open, review, and merge the PR.
 
 Must stay untouched: model behavior and routing.
