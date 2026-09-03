@@ -1,0 +1,17 @@
+{
+  "bugs": [
+    {
+      "id": "bug-9e31a6d5",
+      "lane": "logic-correctness",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "medium",
+      "file": "delivery/retry.go",
+      "startLine": 7,
+      "endLine": 7,
+      "description": "The inclusive loop executes maxAttempts plus one sends, violating the caller's configured attempt ceiling.",
+      "reachablePreconditions": "Every send through the configured maximum fails.",
+      "observableImpact": "The delivery performs an unauthorized extra external call and can exceed retry, latency, or rate-limit budgets.",
+      "provenance": "Seeded loop-bound regression with an unchanged call-count test that passes at base and fails at head."
+    }
+  ]
+}

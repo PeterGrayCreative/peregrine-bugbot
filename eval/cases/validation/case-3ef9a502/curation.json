@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "caseId": "case-3ef9a502",
+  "status": "admitted",
+  "curatorPolicyId": "protected-git-review-v1",
+  "source": {
+    "kind": "clean",
+    "repositoryAlias": "repo-04",
+    "repositoryIdentitySha256": "a582697a81a413c27b26c4e75a3d00d06c64faaf4d776d220e02786855b296cc",
+    "changeIdentitySha256": "710ffce4bb94550113574e138b0c82fb4bce1bcfeb6a514939fd95be132b8558",
+    "access": "curator-local-private"
+  },
+  "strata": {
+    "languageFamily": "go",
+    "architectureFamily": "library",
+    "size": "large",
+    "changeShapes": ["direct", "large-diff"],
+    "surfaceLanes": ["test-quality"]
+  },
+  "proof": {
+    "kind": "clean-control-review",
+    "artifact": "proof.md",
+    "sha256": "a6f3c2c97c083134f433a20cbfc2b6ec3e3f46710b186ad1c27b9f23e047b935"
+  },
+  "confirmations": [
+    {
+      "curatorIdentitySha256": "47ecc656c1d06b3646efa3642f75cd99656909eefc8aeb3de662d309c300ca8a",
+      "confirmedAt": "2026-09-03T12:00:00Z",
+      "caseBundleSha256": "bb78c7d20a4f9bcfaa70620b22d0e974f681f6d9bab785ad4712aeb13ec774cb",
+      "checks": ["classification", "clean-control", "line-range", "provenance", "source-authenticity", "truth-completeness"]
+    },
+    {
+      "curatorIdentitySha256": "1dd4d415859719bfed2d06cda019c0f3745b742344ac0022aed40dbd46592f9e",
+      "confirmedAt": "2026-09-03T17:06:48Z",
+      "caseBundleSha256": "bb78c7d20a4f9bcfaa70620b22d0e974f681f6d9bab785ad4712aeb13ec774cb",
+      "checks": ["classification", "clean-control", "line-range", "provenance", "source-authenticity", "truth-completeness"]
+    }
+  ]
+}

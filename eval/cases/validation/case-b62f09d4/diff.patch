@@ -1,0 +1,13 @@
+diff --git a/batch/batch.go b/batch/batch.go
+index c5fbfc475b3a0c74dc5e16f4e14267e96cbee383..2afca4b82cece5aa268ce0cf5e4c3d1ac64832db 100644
+--- a/batch/batch.go
++++ b/batch/batch.go
+@@ -6,7 +6,7 @@ type Job struct{ Value int }
+ type Result struct{ Value int }
+ 
+ func Run(jobs []Job) []Result {
+-	results := make(chan Result, len(jobs))
++	results := make(chan Result, 1)
+ 	var workers sync.WaitGroup
+ 	for _, job := range jobs {
+ 		workers.Add(1)

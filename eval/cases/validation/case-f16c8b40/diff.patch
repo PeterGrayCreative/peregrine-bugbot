@@ -1,0 +1,18 @@
+diff --git a/delivery/retry.go b/delivery/retry.go
+index e4fb1f52cba673c4fabd898bbe090621681a7f5f..abcd4375f92c80cb649d4bcccd4463468397bb5b 100644
+--- a/delivery/retry.go
++++ b/delivery/retry.go
+@@ -4,11 +4,11 @@ type Sender func() error
+ 
+ func Deliver(maxAttempts int, send Sender) (int, error) {
+ 	var err error
+-	for attempt := 0; attempt < maxAttempts; attempt++ {
++	for attempt := 0; attempt <= maxAttempts; attempt++ {
+ 		err = send()
+ 		if err == nil {
+ 			return attempt + 1, nil
+ 		}
+ 	}
+-	return maxAttempts, err
++	return maxAttempts + 1, err
+ }
