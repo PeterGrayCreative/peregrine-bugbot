@@ -53,7 +53,14 @@ zero model cost.
 ## Accepted runtime image
 
 `ACCEPTED_EVAL_RUNTIME_IMAGE` pins
-`ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:0186100efde64b85913efee1746a0cffd4f19368ce9eae0fa81b3eea6fc7c65c`.
-Manual publication run `33765852688` verified that exact digest on both amd64
-and arm64 and completed its subject-digest attestation. The runner uses
-`--pull never`, and schema-2 artifacts accept only this exact image reference.
+`ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:0ad23c12cc2172a54b2b298ebde4096d3e4924efc3d3bf5c2c4f616c7d00e6b3`.
+Manual publication run `33786871726` built it from trusted `main` commit
+`511a687c2aecf484bd28f9f9e32420a3985a69ab`, verified the exact digest on
+amd64 and arm64, and completed its subject-digest attestation. Independent
+verification constrained the signer to this repository's
+`.github/workflows/eval-runtime-image.yml`, the same source commit,
+`refs/heads/main`, and a GitHub-hosted runner. Because the GHCR package is
+private, the benchmark host authenticated outside the experiment, pre-pulled
+the exact digest, and does not mount registry credentials into provider
+containers. Runtime launches use `--pull never`, and schema-2 artifacts accept
+only this exact image reference.

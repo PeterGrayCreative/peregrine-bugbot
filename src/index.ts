@@ -199,12 +199,18 @@ async function main(): Promise<void> {
       await (await import("../eval/grade.js")).gradeRuns(arg("--runs"));
       return;
     }
+    case "judge": {
+      const runs = arg("--runs");
+      if (!runs) throw new Error("judge requires --runs");
+      await (await import("../eval/run-semantic-judge.js")).runSemanticJudge(runs);
+      return;
+    }
     case "report": {
       await (await import("../eval/report.js")).buildReport(arg("--runs"));
       return;
     }
     default:
-      console.error("Usage: peregrine <review|post|doctor|matrix|grade|report> [options]");
+      console.error("Usage: peregrine <review|post|doctor|matrix|judge|grade|report> [options]");
       process.exitCode = 1;
   }
 }

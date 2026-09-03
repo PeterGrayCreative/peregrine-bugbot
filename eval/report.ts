@@ -35,7 +35,9 @@ import {
   EXPERIMENT_METADATA_FILENAMES,
   readExperimentRunEvidence,
 } from "./experiment-evidence.js";
-import { acquireExperimentLock, hashExperimentCorpus, readExperimentJson } from "./experiment.js";
+import { acquireExperimentLock, canonicalJsonSha256, hashExperimentCorpus, readExperimentJson } from "./experiment.js";
+import { CODEX_SEMANTIC_JUDGE } from "./judge-runtime.js";
+import { readJudgeAccounting, type JudgeAccounting } from "./judge-ledger.js";
 import {
   EXPERIMENT_GRADING_SEAL_FILENAME,
   EXPERIMENT_TERMINAL_SEAL_FILENAME,
@@ -157,6 +159,7 @@ function buildReportLocked(dir: string, casesDir: string): ConfigStats[] {
   const manifestPath = join(dir, "matrix-manifest.json");
   const hasExperimentMetadata = experimentMetadataPresent(dir);
   let stats: ConfigStats[] | undefined;
+  let judgeAccounting: JudgeAccounting | undefined;
   if (existsSync(manifestPath)) {
     const manifestValue: unknown = readExperimentJson(manifestPath);
     let currentManifest: MatrixRunManifest | undefined;
@@ -191,8 +194,9 @@ function buildReportLocked(dir: string, casesDir: string): ConfigStats[] {
           : {
               kind: declaredJudge.kind,
               version: "semantic-v1",
-              configSha256: gradingEvidence.experiment.hashes.judgeSha256,
+              configSha256: canonicalJsonSha256({ judge: CODEX_SEMANTIC_JUDGE, limits: declaredJudge.limits }),
             };
+        if (declaredJudge.kind !== "exact") judgeAccounting = readJudgeAccounting(dir);
       }
       stats = trackedStats(dir, casesDir, currentManifest, expectedJudge);
     }
@@ -210,7 +214,7 @@ function buildReportLocked(dir: string, casesDir: string): ConfigStats[] {
 
   stats.sort((a, b) => (b.recallMean ?? -1) - (a.recallMean ?? -1));
   writeFileSync(join(dir, "benchmark.json"), JSON.stringify(stats, null, 2));
-  writeFileSync(join(dir, "benchmark.html"), renderBenchmarkHtml(stats));
+  writeFileSync(join(dir, "benchmark.html"), renderBenchmarkHtml(stats, judgeAccounting));
   printStats(stats, dir);
   return stats;
 }
@@ -519,10 +523,13 @@ function assertOutcomeCapability(record: RunRecord, manifest: MatrixRunManifest)
   if (record.caseCorpus === "structural-smoke" && !preProviderFailure) {
     throw new Error(`${record.attemptId} cannot record live provider work for structural-smoke`);
   }
-  if (!preProviderFailure && manifest.providerNetworkIsolation[record.runner]?.status !== "enforced") {
+  if (!preProviderFailure && manifest.providerNetworkIsolation[record.runner]?.status !== "limited") {
     throw new Error(
-      `${record.attemptId} records live provider work without enforced providerNetworkIsolation`,
+      `${record.attemptId} records live provider work without the exact limited bridge-egress capability`,
     );
+  }
+  if (!preProviderFailure && manifest.providerFilesystemIsolation?.[record.runner]?.status !== "enforced") {
+    throw new Error(`${record.attemptId} records live provider work without enforced providerFilesystemIsolation`);
   }
 }
 
@@ -943,7 +950,7 @@ export const durationP95 = (values: number[]): number | null => {
 };
 const pct = (value: number) => `${(value * 100).toFixed(0)}%`;
 
-export function renderBenchmarkHtml(stats: ConfigStats[]): string {
+export function renderBenchmarkHtml(stats: ConfigStats[], judge?: JudgeAccounting): string {
   const knownCosts = stats.map((item) => item.costPerCaseMean).filter((cost): cost is number => cost !== null);
   const maxCost = Math.max(...knownCosts, 0.01);
   const points = stats
@@ -968,6 +975,9 @@ td,th{border:1px solid #ddd;padding:6px 10px;text-align:left;font-size:14px}th{b
 <body><h1>peregrine-bugbot · evaluation report</h1>
 <table><tr><th>config</th><th>class</th><th>completion</th><th>bug-instance recall</th><th>failure-inclusive recall</th><th>root-cause recall</th><th>precision</th><th>FDR</th><th>adjudication</th><th>blocking clean FP</th><th>miss stages</th><th>FP/case</th><th>cost/case</th><th>cost/reliably found root cause</th><th>time mean / median / p95</th><th>usage / work</th><th>telemetry observed</th><th>incurred cost lower bound</th><th>structural markers</th><th>breadth / investigation</th></tr>
 ${rows}</table>
+${judge ? `<h2>Semantic judge accounting</h2>
+<table><tr><th>provider attempts</th><th>failures</th><th>wall time</th><th>known cost</th><th>cost unavailable</th><th>input / cached / output / reasoning tokens</th><th>turns / tool calls</th></tr>
+<tr><td>${judge.providerAttempts}</td><td>${judge.failures}</td><td>${(judge.durationMs / 1000).toFixed(1)}s</td><td>${formatUsd(judge.providerCostUsd)}</td><td>${judge.costUnavailableAttempts}</td><td>${judge.inputTokens ?? "n/a"} / ${judge.cachedInputTokens ?? "n/a"} / ${judge.outputTokens ?? "n/a"} / ${judge.reasoningTokens ?? "n/a"}</td><td>${judge.turns ?? "n/a"} / ${judge.toolCalls ?? "n/a"}</td></tr></table>` : ""}
 <h2>Behavioral cost vs recall — pick the knee</h2>
 <svg viewBox="0 0 600 360" width="600" style="border:1px solid #eee">
 <line x1="60" y1="320" x2="560" y2="320" stroke="#999"/><line x1="60" y1="320" x2="60" y2="20" stroke="#999"/>
