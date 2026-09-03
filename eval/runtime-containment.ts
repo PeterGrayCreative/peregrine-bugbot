@@ -25,8 +25,9 @@ const SESSION_FILES: Record<Exclude<RunnerName, "mock">, readonly string[]> = {
 };
 const SESSION_TARGET: Record<Exclude<RunnerName, "mock">, string> = {
   claude: "/home/peregrine/.claude",
-  codex: "/home/peregrine/.codex",
+  codex: "/home/peregrine/.codex/auth.json",
 };
+const CODEX_HOME_TARGET = "/home/peregrine/.codex";
 
 export interface ContainedProviderOptions {
   runner: Exclude<RunnerName, "mock">;
@@ -86,7 +87,8 @@ export function buildContainedProviderArgs(
     if (!configured) throw new Error(`selected ${options.runner} CLI session is unavailable`);
     const sessionDir = safeDirectory(configured, `${options.runner} CLI session`);
     assertSanitizedSessionDirectory(sessionDir, options.runner);
-    access.push("--mount", bindMount(sessionDir, SESSION_TARGET[options.runner], true));
+    const source = options.runner === "codex" ? join(sessionDir, SESSION_FILES.codex[0]!) : sessionDir;
+    access.push("--mount", bindMount(source, SESSION_TARGET[options.runner], true));
   }
 
   const translated = commandArgs.map((value) => translateArgument(value, checkoutDir, assetsDir, outputDir));
@@ -101,6 +103,9 @@ export function buildContainedProviderArgs(
     "--mount", bindMount(outputDir, "/output", false),
     "--tmpfs", `/tmp:rw,noexec,nosuid,nodev,size=64m,uid=${identity.uid},gid=${identity.gid}`,
     "--tmpfs", `/home/peregrine:rw,noexec,nosuid,nodev,size=128m,uid=${identity.uid},gid=${identity.gid}`,
+    // Codex 0.152.0 opens state_5.sqlite under CODEX_HOME even for ephemeral
+    // runs. Keep that state writable but container-only; expose only auth.json.
+    ...(options.runner === "codex" ? ["--tmpfs", codexHomeTmpfs(identity, "128m")] : []),
     ...access,
     image, command, ...translated,
   ];
@@ -148,6 +153,9 @@ export function parseContainedProviderArgs(
   take("--mount"); const outputDir = parseBindMount(take(), "/output", false);
   take("--tmpfs"); take(`/tmp:rw,noexec,nosuid,nodev,size=64m,uid=${expectedIdentity.uid},gid=${expectedIdentity.gid}`);
   take("--tmpfs"); take(`/home/peregrine:rw,noexec,nosuid,nodev,size=128m,uid=${expectedIdentity.uid},gid=${expectedIdentity.gid}`);
+  if (runner === "codex") {
+    take("--tmpfs"); take(codexHomeTmpfs(expectedIdentity, "128m"));
+  }
   let secretName: string | undefined;
   let sessionDir: string | undefined;
   if (providerAccess === "api-key") {
@@ -155,7 +163,11 @@ export function parseContainedProviderArgs(
     if (secretName !== PROVIDER_SECRET[runner]) throw new Error("unexpected provider secret name");
   } else {
     take("--mount");
-    sessionDir = parseBindMount(take(), SESSION_TARGET[runner], true);
+    const source = runner === "codex"
+      ? parseBindFileMount(take(), SESSION_TARGET.codex, true)
+      : parseBindMount(take(), SESSION_TARGET.claude, true);
+    sessionDir = runner === "codex" ? realpathSync(resolve(source, "..")) : source;
+    assertSanitizedSessionDirectory(sessionDir, runner);
   }
   const image = take(); assertImmutableImage(image);
   const command = take();
@@ -368,6 +380,7 @@ async function probeCliSessionMount(
   assertConfiguredAccess(options);
   const identity = hostIdentity();
   const sessionDir = safeDirectory(process.env[SESSION_ENV[options.runner]]!, `${options.runner} CLI session`);
+  const sessionSource = options.runner === "codex" ? join(sessionDir, SESSION_FILES.codex[0]!) : sessionDir;
   const name = `peregrine-eval-${randomUUID()}`;
   let primary: unknown;
   try {
@@ -377,7 +390,8 @@ async function probeCliSessionMount(
       "--user", `${identity.uid}:${identity.gid}`,
       "--tmpfs", `/tmp:rw,noexec,nosuid,nodev,size=16m,uid=${identity.uid},gid=${identity.gid}`,
       "--tmpfs", `/home/peregrine:rw,noexec,nosuid,nodev,size=16m,uid=${identity.uid},gid=${identity.gid}`,
-      "--mount", bindMount(sessionDir, SESSION_TARGET[options.runner], true),
+      ...(options.runner === "codex" ? ["--tmpfs", codexHomeTmpfs(identity, "16m")] : []),
+      "--mount", bindMount(sessionSource, SESSION_TARGET[options.runner], true),
       image, options.runner, "--version",
     ], { timeoutMs: 15_000, env: dockerClientEnvironment(options), inheritEnv: false });
     if (result.code !== 0 || result.timedOut) throw new Error(`${options.runner} CLI-session nested mount probe failed`);
@@ -520,10 +534,26 @@ function bindMount(source: string, target: string, readOnly: boolean): string {
   return `type=bind,source=${source},target=${target}${readOnly ? ",readonly" : ""}`;
 }
 
+function codexHomeTmpfs(identity: { uid: number; gid: number }, size: "16m" | "128m"): string {
+  return `${CODEX_HOME_TARGET}:rw,noexec,nosuid,nodev,size=${size},uid=${identity.uid},gid=${identity.gid},mode=0700`;
+}
+
 function parseBindMount(value: string, target: string, readOnly: boolean): string {
   const fields = value.split(",");
   if (fields.length !== (readOnly ? 4 : 3) || fields[0] !== "type=bind" || !fields[1]?.startsWith("source=") || fields[2] !== `target=${target}` || (readOnly && fields[3] !== "readonly")) {
     throw new Error(`invalid ${target} bind mount`);
   }
   return safeDirectory(fields[1].slice("source=".length), `${target} source`);
+}
+
+function parseBindFileMount(value: string, target: string, readOnly: boolean): string {
+  const fields = value.split(",");
+  if (fields.length !== (readOnly ? 4 : 3) || fields[0] !== "type=bind" || !fields[1]?.startsWith("source=") || fields[2] !== `target=${target}` || (readOnly && fields[3] !== "readonly")) {
+    throw new Error(`invalid ${target} bind mount`);
+  }
+  const source = fields[1].slice("source=".length);
+  if (!isAbsolute(source) || /[,\r\n\0]/.test(source)) throw new Error(`${target} source must be an absolute mount-safe path`);
+  const sourceStat = lstatSync(source);
+  if (!sourceStat.isFile() || sourceStat.isSymbolicLink()) throw new Error(`${target} source must be a regular file`);
+  return realpathSync(source);
 }

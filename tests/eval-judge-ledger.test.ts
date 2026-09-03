@@ -250,6 +250,7 @@ test("semantic judge containment accepts only the exact Luna medium argv", () =>
       "--mount", `type=bind,source=${output},target=/output`,
       "--tmpfs", `/tmp:rw,noexec,nosuid,nodev,size=64m,uid=${uid},gid=${gid}`,
       "--tmpfs", `/home/peregrine:rw,noexec,nosuid,nodev,size=128m,uid=${uid},gid=${gid}`,
+      "--tmpfs", `/home/peregrine/.codex:rw,noexec,nosuid,nodev,size=128m,uid=${uid},gid=${gid},mode=0700`,
       "--env", "OPENAI_API_KEY", "image", "codex", ...semanticJudgeArguments(),
     ];
     // The parser enforces the accepted image before argv, so reuse a placeholder
