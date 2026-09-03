@@ -597,6 +597,39 @@ test("terminal and grading seals parse strictly and self-authenticate", () => {
   );
 });
 
+test("the Stage 2 baseline preregistration freezes a bounded repeated screening", () => {
+  const config = JSON.parse(
+    readFileSync(join(process.cwd(), "eval", "matrix.codex.stage2-baseline.json"), "utf8"),
+  ) as {
+    repeats: number;
+    corpora: string[];
+    caseIds: string[];
+    configs: Array<{ name: string; runner: string }>;
+    experiment: unknown;
+  };
+  const protocol = parseExperimentProtocol(config.experiment, "matrix.codex.stage2-baseline.json");
+
+  assert.equal(protocol.mode, "screening");
+  assert.equal(protocol.providerCalls, "allow");
+  assert.equal(protocol.providerAccess, "cli-session");
+  assert.equal(protocol.costAccounting, "best-effort");
+  assert.equal(protocol.limits.maxProviderAttempts, 72);
+  assert.equal(protocol.judge.limits?.maxProviderAttempts, 100);
+  assert.equal(config.repeats, 3);
+  assert.deepEqual(config.corpora, ["development"]);
+  assert.equal(config.caseIds.length, 12);
+  assert.equal(new Set(config.caseIds).size, config.caseIds.length);
+  assert.ok(config.caseIds.every((id) => /^case-[0-9a-f]{8}$/.test(id)));
+  assert.deepEqual(
+    config.configs.map(({ name, runner }) => ({ name, runner })),
+    [
+      { name: "production-luna-high-to-sol-high", runner: "codex" },
+      { name: "luna-medium-only", runner: "codex" },
+    ],
+  );
+  assert.equal(config.repeats * config.caseIds.length * config.configs.length, 72);
+});
+
 test("stop records and write-once marker records parse strictly", () => {
   const schedule = pairedSchedule();
   const decision = evaluateExperimentCeilings({
