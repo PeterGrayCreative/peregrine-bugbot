@@ -1,12 +1,16 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 import {
   buildProbeDockerArgs,
+  buildProbeImageAbsenceArgs,
+  buildProbeImageCleanupArgs,
   parseProbeDockerArgs,
+  runProbe,
   type ProbeLaunchOptions,
+  type ProbeRuntime,
 } from "../scripts/run-eval-runtime-probe.js";
 
 const imageRoot = resolve("container/eval-runtime");
@@ -121,6 +125,69 @@ test("the executable probe builder rejects containment-weakening argv mutations"
   assertMutationRejected(published, (mutated) => {
     mutated[mutated.length - 1] = "ghcr.io/petergraycreative/peregrine-eval-runtime:mutable";
   });
+
+  assert.deepEqual(buildProbeImageCleanupArgs(digest, "linux/arm64"), [
+    "image",
+    "rm",
+    "--force",
+    digest,
+  ]);
+  assert.deepEqual(buildProbeImageAbsenceArgs(digest), ["image", "inspect", digest]);
+  assert.throws(
+    () => buildProbeImageCleanupArgs("ghcr.io/petergraycreative/peregrine-eval-runtime:mutable", "linux/arm64"),
+    /immutable image digest/,
+  );
+});
+
+test("platform probe cleanup is ordered, mandatory, and verifies digest absence", () => {
+  const digest = `ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:${"b".repeat(64)}`;
+  const commands: string[][] = [];
+  const runtime = fakeProbeRuntime(commands);
+
+  runProbe(digest, "linux/amd64", runtime);
+
+  assert.equal(commands[0]?.[1], "run");
+  assert.deepEqual(commands.slice(1).map((command) => command.slice(1, 3)), [
+    ["rm", "--force"],
+    ["image", "rm"],
+    ["image", "inspect"],
+  ]);
+  assert.equal(commands[2]?.at(-1), digest);
+  assert.equal(commands[3]?.at(-1), digest);
+});
+
+test("platform probe cleans up after report failure and preserves it as the primary error", () => {
+  const digest = `ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:${"c".repeat(64)}`;
+  const commands: string[][] = [];
+  const runtime = fakeProbeRuntime(commands, { validReport: false, removalStatus: 2 });
+
+  assert.throws(
+    () => runProbe(digest, "linux/arm64", runtime),
+    (error) => {
+      assert.ok(error instanceof AggregateError);
+      assert.match(error.message, /passing version-1 report/);
+      assert.match(String(error.errors[0]), /passing version-1 report/);
+      assert.match(String(error.errors[1]), /cleanup exited with status 2/);
+      return true;
+    },
+  );
+  assert.deepEqual(commands.slice(-3).map((command) => command.slice(1, 3)), [
+    ["rm", "--force"],
+    ["image", "rm"],
+    ["image", "inspect"],
+  ]);
+});
+
+test("platform probe rejects cleanup spawn failures and a lingering exact digest", () => {
+  const digest = `ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:${"d".repeat(64)}`;
+  assert.throws(
+    () => runProbe(digest, "linux/amd64", fakeProbeRuntime([], { removalError: new Error("spawn failed") })),
+    /failed to launch probe image cleanup/,
+  );
+  assert.throws(
+    () => runProbe(digest, "linux/amd64", fakeProbeRuntime([], { digestLingers: true })),
+    /left the exact digest/,
+  );
 });
 
 test("every workflow action and helper image is immutable", () => {
@@ -166,6 +233,45 @@ function assertMutationRejected(args: readonly string[], mutate: (copy: string[]
   const copy = [...args];
   mutate(copy);
   assert.throws(() => parseProbeDockerArgs(copy));
+}
+
+function fakeProbeRuntime(
+  commands: string[][],
+  options: {
+    validReport?: boolean;
+    removalStatus?: number;
+    removalError?: Error;
+    digestLingers?: boolean;
+  } = {},
+): ProbeRuntime {
+  return {
+    spawn(command, args) {
+      const invocation = [command, ...args];
+      commands.push(invocation);
+      if (args[0] === "run") {
+        const outputMount = args.find((arg) => arg.includes("target=/output"));
+        assert.ok(outputMount);
+        const outputDir = outputMount.split(",").find((field) => field.startsWith("source="))?.slice(7);
+        assert.ok(outputDir);
+        writeFileSync(
+          resolve(outputDir, "containment-probe.json"),
+          JSON.stringify(options.validReport === false
+            ? { schemaVersion: 1, status: "failed" }
+            : { schemaVersion: 1, status: "passed" }),
+        );
+        return { status: 0 };
+      }
+      if (args[0] === "image" && args[1] === "rm") {
+        return { status: options.removalStatus ?? 0, ...(options.removalError ? { error: options.removalError } : {}) };
+      }
+      if (args[0] === "image" && args[1] === "inspect") {
+        return options.digestLingers
+          ? { status: 0 }
+          : { status: 1, stderr: "Error: No such image: exact digest" };
+      }
+      return { status: 0 };
+    },
+  };
 }
 
 test("live providers require the outer OCI adapter", () => {
