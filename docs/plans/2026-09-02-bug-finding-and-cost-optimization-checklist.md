@@ -24,7 +24,7 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | Slice | Deliverable | Depends on | Status | Pull request |
 | --- | --- | --- | --- | --- |
 | P0 | Publish the approved plan | - | Merged | [#1](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/1) |
-| P0 follow-up | Add this implementation checklist | P0 | In progress | This PR |
+| P0 follow-up | Add this implementation checklist | P0 | Open | [#3](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/3) |
 | P1 / Plan PR 1 | Persist and report every matrix attempt | - | Merged | [#2](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/2) |
 | Plan PR 2 | Blind and isolate case materialization | PR 1 | Not started | - |
 | Plan PR 3 | Reproduce base/head history and production manifest path | PR 2 | Not started | - |
