@@ -5,6 +5,8 @@ export interface ExecResult {
   stderr: string;
   code: number | null;
   timedOut: boolean;
+  /** Secondary outer-containment cleanup failures; the provider result remains primary. */
+  cleanupErrors?: readonly string[];
 }
 
 /** Run a subprocess, capture output, kill on timeout. Never throws on non-zero exit. */

@@ -62,7 +62,7 @@ async function runStage<T>(args: {
         "--no-chrome",
       ]
     : [];
-  const result = await args.run(
+  const result = await (args.ctx.evaluationIsolation?.runProvider ?? args.run)(
     "claude",
     [
       "--plugin-dir", args.ctx.evaluationIsolation?.providerAssetsRoot ?? packageRoot(),
@@ -97,13 +97,30 @@ async function runStage<T>(args: {
     completed: false,
   });
   if (result.timedOut) {
-    throw stageFailure("timeout", `claude ${args.model} stage timed out after ${args.timeoutMs}ms`, failureTelemetry());
+    throw stageFailure("timeout", withCleanupDetail(
+      `claude ${args.model} stage timed out after ${args.timeoutMs}ms`, result,
+    ), failureTelemetry());
   }
   if (result.code !== 0) {
     throw stageFailure(
       "provider",
-      `claude ${args.model} stage exited with code ${result.code}: ${claudeFailureDetail(result)}`,
+      withCleanupDetail(`claude ${args.model} stage exited with code ${result.code}: ${claudeFailureDetail(result)}`, result),
       failureTelemetry(),
+    );
+  }
+  // Cleanup is the containment verdict and must win over provider-output
+  // parsing. Only retain usage parsed from captured stdout; do not inspect the
+  // provider's structured payload after cleanup has failed.
+  if (result.cleanupErrors?.length) {
+    throw new RunFailureError(
+      "configuration",
+      `claude ${args.model} stage completed but containment cleanup failed: ${result.cleanupErrors.join("; ")}`,
+      {
+        telemetry: {
+          ...singleStageFailure("claude", args.model, failureTelemetry(observed)),
+          containmentCleanupFailed: true,
+        },
+      },
     );
   }
   let parsed: ReturnType<typeof parseClaudeEnvelope>;
@@ -129,6 +146,12 @@ async function runStage<T>(args: {
     model: args.model,
     promptSha256: sha256(args.prompt),
   };
+}
+
+function withCleanupDetail(message: string, result: ExecResult): string {
+  return result.cleanupErrors?.length
+    ? `${message}; containment cleanup failed: ${result.cleanupErrors.join("; ")}`
+    : message;
 }
 
 function parseClaudeEnvelope(
@@ -190,7 +213,8 @@ function completedStage<T>(stage: StageTelemetry["stage"], result: ClaudeStageRe
 }
 
 function wrapClaudeFailure(error: unknown, modelConfig: string, started: number, completed: StageTelemetry[]): RunFailureError {
-  const partial = runFailureTelemetry(error)?.stages ?? [];
+  const failureTelemetry = runFailureTelemetry(error);
+  const partial = failureTelemetry?.stages ?? [];
   const stages = [...completed, ...partial];
   const telemetry = stages.length === 0
     ? undefined
@@ -202,6 +226,9 @@ function wrapClaudeFailure(error: unknown, modelConfig: string, started: number,
           : combineUsage(...stages.map((stage) => stage.usage)),
         durationMs: Date.now() - started,
         stages,
+        ...(failureTelemetry?.containmentCleanupFailed
+          ? { containmentCleanupFailed: true as const }
+          : {}),
       };
   return new RunFailureError(
     runFailureKind(error),
@@ -223,7 +250,7 @@ export function createClaudeEngine(
       const cfg = ctx.config.runners.claude;
       const started = Date.now();
       const skillDir = ctx.evaluationIsolation
-        ? join(ctx.evaluationIsolation.providerAssetsRoot, "skills", cfg.skillName)
+        ? join(ctx.evaluationIsolation.runProvider ? "/opt/peregrine" : ctx.evaluationIsolation.providerAssetsRoot, "skills", cfg.skillName)
         : bundledSkillDir(cfg.skillName);
       const manifest = await prepareReviewManifest(ctx, cfg.skillName);
       const totalTurns = ctx.deep ? cfg.maxTurns * 2 : cfg.maxTurns;

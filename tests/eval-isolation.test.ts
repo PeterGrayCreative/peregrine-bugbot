@@ -69,6 +69,7 @@ test("fixture attempts use unique sanitized repositories with deterministic refs
       "empty-git-template",
       "provider-assets",
       "provider-home",
+      "provider-output",
       "review.patch",
     ]);
     assert.equal(dirname(first.diffPath), firstRoot);
@@ -687,7 +688,7 @@ test("leaking cases, structural smoke, and uncontained live runs never invoke an
       assert.equal(record.outcome.status, "failed");
       assert.equal(record.outcome.failureKind, "configuration");
       assert.match(record.outcome.message, /isolation failed/);
-      if (scenario === "live-uncontained") assert.match(record.outcome.message, /filesystem and network allowlist/);
+      if (scenario === "live-uncontained") assert.match(record.outcome.message, /OCI filesystem containment adapter/);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -763,12 +764,12 @@ test("isolated provider environments omit ambient Git, SSH, CLI homes, and unrel
   }
 });
 
-test("matrix manifest records live network isolation as unavailable", () => {
+test("schema-v1 matrix capability remains unavailable until the OCI adapter is attached", () => {
   assert.equal(networkIsolationCapability("mock").status, "not-applicable");
   assert.equal(networkIsolationCapability("claude").status, "unavailable");
   assert.equal(networkIsolationCapability("codex").status, "unavailable");
-  assert.throws(() => assertLiveProviderIsolationAvailable("claude"), /filesystem and network allowlist/);
-  assert.throws(() => assertLiveProviderIsolationAvailable("codex"), /filesystem and network allowlist/);
+  assert.throws(() => assertLiveProviderIsolationAvailable("claude"), /OCI filesystem containment adapter/);
+  assert.throws(() => assertLiveProviderIsolationAvailable("codex"), /OCI filesystem containment adapter/);
 });
 
 function createFixtureCase(
