@@ -11,7 +11,7 @@ import type { CodexEffort, EngineResult, ReviewContext, Usage } from "../types.j
 import { type ExecResult, exec } from "../util/exec.js";
 import type { Engine } from "./engine.js";
 import { assertNoSecrets, safeDiagnostic } from "../security/secrets.js";
-import { providerEnvironment } from "../security/provider-env.js";
+import { isolatedProviderEnvironment, providerEnvironment } from "../security/provider-env.js";
 
 type ExecFunction = typeof exec;
 
@@ -30,15 +30,39 @@ async function runStage(args: {
   schema: string;
   output: string;
   prompt: string;
+  stage: "breadth" | "investigation";
+  untrustedModelText?: string;
   timeoutMs: number;
 }): Promise<CodexStageResult> {
   const started = Date.now();
+  try {
+    args.ctx.evaluationIsolation?.validatePrompt({
+      prompt: args.prompt,
+      stage: args.stage,
+      untrustedModelText: args.untrustedModelText,
+    });
+  } catch (error) {
+    throw new RunFailureError(
+      "configuration",
+      `evaluation ${args.stage} prompt isolation failed: ${error instanceof Error ? error.message : String(error)}`,
+      { cause: error },
+    );
+  }
+  const isolationArgs = args.ctx.evaluationIsolation
+    ? [
+        "--ignore-rules",
+        "--config", "project_doc_max_bytes=0",
+        "--config", "project_doc_fallback_filenames=[]",
+        "--config", `projects.${JSON.stringify(args.ctx.repoPath)}.trust_level="untrusted"`,
+      ]
+    : [];
   const result = await args.run(
     "codex",
     [
       "exec",
       "--ephemeral",
       "--ignore-user-config",
+      ...isolationArgs,
       "--strict-config",
       "--sandbox",
       "read-only",
@@ -61,7 +85,9 @@ async function runStage(args: {
       cwd: args.ctx.repoPath,
       timeoutMs: args.timeoutMs,
       stdin: args.prompt,
-      env: providerEnvironment("codex"),
+      env: args.ctx.evaluationIsolation
+        ? isolatedProviderEnvironment("codex", args.ctx.evaluationIsolation.providerHome)
+        : providerEnvironment("codex"),
       inheritEnv: false,
     },
   );
@@ -129,7 +155,9 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
     async review(ctx: ReviewContext): Promise<EngineResult> {
       const cfg = ctx.config.runners.codex;
       const started = Date.now();
-      const skillDir = bundledSkillDir(cfg.skillName);
+      const skillDir = ctx.evaluationIsolation
+        ? join(ctx.evaluationIsolation.providerAssetsRoot, "skills", cfg.skillName)
+        : bundledSkillDir(cfg.skillName);
       const manifest = await prepareReviewManifest(ctx, cfg.skillName);
       const outDir = mkdtempSync(join(tmpdir(), "peregrine-codex-"));
       try {
@@ -140,9 +168,12 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
           ctx,
           model: cfg.breadthModel,
           effort: cfg.breadthEffort,
-          schema: schemaPath("breadth-result"),
+          schema: ctx.evaluationIsolation
+            ? join(ctx.evaluationIsolation.providerAssetsRoot, "schemas", "breadth-result.schema.json")
+            : schemaPath("breadth-result"),
           output: breadthOutput,
           prompt: buildBreadthPrompt(ctx, skillDir, manifest),
+          stage: "breadth",
           timeoutMs: breadthTimeout,
         });
         let breadthPayload;
@@ -159,20 +190,25 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
           throw new RunFailureError("timeout", `codex review exhausted its ${cfg.timeoutMs}ms timeout`);
         }
         const reviewOutput = join(outDir, "review.json");
+        const breadthText = JSON.stringify(breadthPayload);
         const investigation = await runStage({
           run,
           ctx,
           model: cfg.investigationModel,
           effort: cfg.investigationEffort,
-          schema: schemaPath("review-result"),
+          schema: ctx.evaluationIsolation
+            ? join(ctx.evaluationIsolation.providerAssetsRoot, "schemas", "review-result.schema.json")
+            : schemaPath("review-result"),
           output: reviewOutput,
           prompt: buildInvestigationPrompt(
             ctx,
             skillDir,
             `A separate ${cfg.breadthModel}/${cfg.breadthEffort} breadth pass produced the ledger below. Investigate and adjudicate on ${cfg.investigationModel}/${cfg.investigationEffort}.`,
-            JSON.stringify(breadthPayload),
+            breadthText,
             manifest,
           ),
+          stage: "investigation",
+          untrustedModelText: breadthText,
           timeoutMs: remaining,
         });
 

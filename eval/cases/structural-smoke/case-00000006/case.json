@@ -1,0 +1,7 @@
+{
+  "id": "case-00000006",
+  "corpus": "structural-smoke",
+  "kind": "seeded",
+  "fixtureDir": "fixture",
+  "diffFile": "diff.patch"
+}

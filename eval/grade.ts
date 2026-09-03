@@ -5,6 +5,7 @@ import { loadConfig } from "../src/config.js";
 import { claudeSchemaJson, packageRoot, schemaPath } from "../src/core/paths.js";
 import { exec, lastJsonBlock } from "../src/util/exec.js";
 import type { EngineResult, Finding, GradedRun, GroundTruth, RunRecord } from "../src/types.js";
+import { readCaseGroundTruth } from "./case-truth.js";
 
 type LegacyRunRecord = Omit<RunRecord, "schemaVersion" | "attemptId" | "finishedAt" | "outcome"> & {
   result: EngineResult;
@@ -52,9 +53,7 @@ export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Prom
     } else {
       result = run.result;
     }
-    const gt = JSON.parse(
-      readFileSync(resolve(casesDir, run.caseName, "ground_truth.json"), "utf8"),
-    ) as GroundTruth;
+    const gt = readCaseGroundTruth(casesDir, run.caseName) as GroundTruth;
 
     const matches: Record<string, number | null> = {};
     const matchedFindingIdx = new Set<number>();
@@ -83,6 +82,7 @@ export async function gradeRuns(runsDir?: string, casesDir = "eval/cases"): Prom
           ...run,
           schemaVersion: 1 as const,
           attemptId: `${run.configName}--${run.caseName}--${run.repeat}`,
+          caseCorpus: "unknown" as const,
           finishedAt: run.startedAt,
           outcome: { status: "completed" as const, result },
         };

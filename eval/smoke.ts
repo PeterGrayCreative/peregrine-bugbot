@@ -12,7 +12,15 @@ try {
   await gradeRuns(runsDir);
   const stats = await buildReport(runsDir);
   const mock = stats.find((item) => item.config === "mock");
-  if (!mock || mock.recallMean !== 1 || mock.fpPerCaseMean !== 0) {
+  if (
+    !mock ||
+    mock.completionRate !== 1 ||
+    mock.missingRuns !== 0 ||
+    mock.failedRuns !== 0 ||
+    mock.failureInclusiveRecallMean !== 1 ||
+    mock.recallMean !== 1 ||
+    mock.fpPerCaseMean !== 0
+  ) {
     throw new Error(`mock benchmark regression: ${JSON.stringify(mock)}`);
   }
   console.log("mock benchmark OK: recall 100%, 0 FP");

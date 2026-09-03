@@ -17,20 +17,41 @@ their completion and failure-inclusive metrics are intentionally unavailable.
 
 ## Case library
 
-Each directory under `eval/cases/` is one case:
+Cases are separated by intended use before any provider run:
 
 ```
-eval/cases/<name>/
-├── case.json          # kind: seeded | historical | clean; fixture or repo+commit
-├── diff.patch         # the diff under review (base...head)
-├── ground_truth.json  # known bugs ({"bugs": []} for clean cases)
-└── fixture/           # head-state code (or use repo+commit in case.json)
+eval/cases/
+├── structural-smoke/  # marker-driven fixtures; mock runner only
+├── development/       # live cases used while designing an intervention
+└── validation/        # live checkpoint cases, never used for prompt tuning
+
+<corpus>/case-<opaque-id>/
+├── case.json          # discriminated fixture or historical source contract
+├── diff.patch         # runner-owned input, never copied into the checkout
+├── ground_truth.json  # grader-owned input, never copied into the checkout
+├── metadata.json      # optional sanitized title/body only
+├── leakage_exceptions.json # optional content hashes + curator reasons
+└── fixture/           # complete head-state tree for seeded/clean cases
 ```
+
+Case IDs and directory names must match `case-[a-f0-9]{8,32}`. Descriptive
+names, curator notes, issue text, review threads, and later fixes stay outside
+all model-visible paths and metadata. Fixture cases use `fixtureDir`;
+historical cases use `repoSource`, `baseCommit`, and `headCommit`. Historical
+private sources should be supplied as local curator checkouts; `repoSource`
+may not embed credentials and the staging clone cannot use ambient credentials.
+`case-aliases.json` is a curator-only compatibility map so pre-isolation run
+artifacts with the former descriptive case names remain gradeable.
+When legitimate historical source contains a marker such as `BUG` or `FIXME`,
+`case.json` may name `leakageExceptionsFile`. Its version-1 entries contain
+only the exact artifact SHA-256 and a substantive curator reason. A stale,
+malformed, or non-matching hash does not bypass validation; exceptions never
+permit a ground-truth phrase or prompt marker.
 
 Build cases three ways:
 
-1. **historical** — mine your repos for bug-fix PRs; the case is the PR that
-   *introduced* the bug (repo+commit at its head, diff of that PR). Gold
+1. **historical** — mine your repos for bug-fix PRs; the case identifies the
+   introducing PR's source plus full base/head object IDs and checked-in diff. Gold
    standard: real bugs that escaped review.
 2. **seeded** — take a clean merged PR and inject a realistic mutation
    (inverted conditional, off-by-one, dropped guard). Cheap recall data.
@@ -39,11 +60,52 @@ Build cases three ways:
 
 Keep a handful of cases as a holdout you never tune prompts against.
 
-The checked-in seed suite covers nullability, ordinary zero/fallback logic,
-swallowed errors, stale frontend closures, and pagination overlap, with clean
-rename, nullish-default, and error-propagation controls. This is a regression
-floor, not a statistically meaningful production benchmark. Add historical
-cases and grow beyond 20 cases before making cost/recall routing decisions.
+The checked-in marker-driven suite covers nullability, ordinary zero/fallback
+logic, swallowed errors, stale frontend closures, and pagination overlap,
+with clean rename, nullish-default, and error-propagation controls. It is a
+structural regression floor, not a model corpus or evidence of recall. The
+runner refuses to send it to Claude or Codex.
+
+Every scheduled case/configuration/repeat receives a new temporary repository.
+The runner reconstructs deterministic base/head commits, supplies those refs
+to the normal review path, then destroys the checkout and isolated provider
+home whether the attempt succeeds or fails. Provider-visible repositories have
+no remotes, hooks, credentialed Git configuration, nested Git data, case
+artifacts, or commits newer than the reviewed head.
+
+Before provider inference, Peregrine scans the checkout path, repository tree,
+every reachable base/head Git blob (including binary and deleted files), diff,
+sanitized metadata, and both final stage prompts for answer leakage. Live
+cases fail closed on descriptive IDs, path traversal, symlinks, special files,
+answer artifacts, ground-truth IDs, and undocumented markers such as `BUG` and
+`FIXME`. The attempt manifest records whether provider-host network isolation
+is enforced, unavailable, or not applicable. Current Claude and Codex integrations
+record `unavailable`. CLI flags suppress local instructions, settings, hooks,
+rules, MCP configuration, and trust state where supported, but neither CLI
+attests a host filesystem allowlist or network namespace. Peregrine therefore
+fails all live matrix attempts closed before provider execution. Enabling live
+evaluation requires an externally enforced sandbox exposing only the sanitized
+checkout, sanitized assets, required output, and provider endpoint.
+Admin-managed provider policy may still apply and is not claimed as disabled;
+the host sandbox must prevent it from reaching curator-only material.
+
+Once an external containment backend permits provider launch, the live process
+receives an attempt-specific `HOME`, XDG paths, temporary directory, and
+disabled global/system Git configuration. Ambient SSH agents, Git credential
+helpers, CLI home directories, proxy URLs, and unrelated credentials are not
+forwarded. File-backed user-login sessions are therefore not a supported eval
+authentication path: provide the selected provider's explicit environment
+credential (`ANTHROPIC_API_KEY` or `OPENAI_API_KEY`). Claude's eval-only
+`--bare` mode intentionally disables OAuth and keychain authentication. At
+that point, a missing credential is recorded as a provider failure; without
+external containment, the earlier isolation check remains a configuration
+failure and no provider process starts.
+
+The isolation slice constructs the minimum fresh two-commit fixture needed by
+the existing review flow. Plan PR 3 remains responsible for exact textual diff
+equivalence, addition-only empty bases, original ancestry and merge-base proof,
+and fail-closed production-manifest provenance. Nothing in this slice is model
+quality evidence.
 
 ## Running
 
@@ -52,6 +114,12 @@ npm run eval:matrix                      # all configs × cases × repeats
 npm run eval:grade  -- --runs eval/runs/<dir>
 npm run eval:report -- --runs eval/runs/<dir>   # benchmark.json + benchmark.html
 ```
+
+Until genuine sanitized development and validation cases are admitted,
+`npm run eval:matrix` writes an empty manifest, prints that no provider process
+was started, and exits successfully. It never substitutes structural fixtures
+or presents synthetic results as model evidence. Reports group development and
+validation attempts separately.
 
 - Repeats (default 3, `eval/matrix.config.json`) are not optional — runs are
   stochastic, and single-run model comparisons will mislead you.
@@ -65,7 +133,7 @@ npm run eval:report -- --runs eval/runs/<dir>   # benchmark.json + benchmark.htm
 ## Zero-cost smoke test
 
 ```bash
-# mock engine "detects" lines marked `// BUG:` — verifies the whole pipeline
+# mock engine detects structural markers; no provider process is started
 npm run eval:smoke
 ```
 

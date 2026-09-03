@@ -8,11 +8,12 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, join } from "node:path";
+import { join, resolve } from "node:path";
 import test from "node:test";
 import { gradeRuns } from "../eval/grade.js";
 import { buildReport } from "../eval/report.js";
 import { runMatrix } from "../eval/run-matrix.js";
+import { readCaseGroundTruth } from "../eval/case-truth.js";
 import { RunFailureError } from "../src/core/run-failure.js";
 import type { Engine } from "../src/engines/engine.js";
 import type { MatrixModelConfig, MatrixRunManifest, RunRecord } from "../src/types.js";
@@ -20,9 +21,9 @@ import type { MatrixModelConfig, MatrixRunManifest, RunRecord } from "../src/typ
 test("matrix accounting preserves failures, missing attempts, recall, and unknown cost", async () => {
   const root = mkdtempSync(join(tmpdir(), "peregrine-accounting-test-"));
   const casesDir = join(root, "cases");
-  const caseDir = join(casesDir, "case");
+  const caseName = "case-a11ce001";
+  const caseDir = join(casesDir, "development", caseName);
   const fixtureDir = join(caseDir, "fixture", "src");
-  const caseName = `accounting-${basename(root)}`;
   mkdirSync(fixtureDir, { recursive: true });
   writeFileSync(join(fixtureDir, "value.ts"), "export const value = false;\n");
   writeFileSync(
@@ -31,7 +32,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
   );
   writeFileSync(
     join(caseDir, "case.json"),
-    JSON.stringify({ name: caseName, kind: "seeded", fixtureDir: "fixture", diffFile: "diff.patch" }),
+    JSON.stringify({ id: caseName, corpus: "development", kind: "seeded", fixtureDir: "fixture", diffFile: "diff.patch" }),
   );
   writeFileSync(
     join(caseDir, "ground_truth.json"),
@@ -92,6 +93,9 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     assert.equal(manifest.expectedAttempts.length, 18);
     assert.equal(new Set(manifest.expectedAttempts.map((attempt) => attempt.id)).size, 18);
     assert.equal(new Set(manifest.expectedAttempts.map((attempt) => attempt.file)).size, 18);
+    assert.equal(manifest.providerNetworkIsolation.mock?.status, "not-applicable");
+    assert.ok(manifest.expectedAttempts.every((attempt) => attempt.corpus === "development"));
+    assert.ok(manifest.expectedAttempts.every((attempt) => attempt.expectedBugCount === 1));
 
     const records = readdirSync(runsDir)
       .filter((file) => file.endsWith(".json") && file !== "matrix-manifest.json")
@@ -119,6 +123,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     const stats = await buildReport(runsDir, { casesDir });
     const completed = stats.find((item) => item.config === "completed");
     assert.equal(completed?.completionRate, 1);
+    assert.equal(completed?.corpus, "development");
     assert.equal(completed?.expectedRuns, 4);
     assert.equal(completed?.completedRuns, 4);
     assert.equal(completed?.recallMean, 1);
@@ -193,17 +198,141 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
     assert.equal(cleanStats[0]?.failureInclusiveRecallMean, null);
   } finally {
     rmSync(root, { recursive: true, force: true });
-    rmSync(join(tmpdir(), `peregrine-case-${caseName}`), { recursive: true, force: true });
+  }
+});
+
+test("malformed or missing truth remains failed and makes mixed denominators unavailable", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-unknown-denominator-"));
+  const casesDir = join(root, "cases");
+  for (const [id, truth] of [
+    ["case-600d0001", JSON.stringify({ bugs: [{ id: "known-1", file: "src/value.ts", startLine: 1, endLine: 1, description: "Known incorrect value." }] })],
+    ["case-600d0002", JSON.stringify({ bugs: [{ id: "missing-required-fields" }] })],
+    ["case-600d0003", undefined],
+  ] as const) {
+    const caseDir = join(casesDir, "development", id);
+    mkdirSync(join(caseDir, "fixture", "src"), { recursive: true });
+    writeFileSync(join(caseDir, "fixture", "src", "value.ts"), "export const value = false;\n");
+    writeFileSync(
+      join(caseDir, "diff.patch"),
+      "--- a/src/value.ts\n+++ b/src/value.ts\n@@ -1 +1 @@\n-export const value = true;\n+export const value = false;\n",
+    );
+    writeFileSync(
+      join(caseDir, "case.json"),
+      JSON.stringify({ id, corpus: "development", kind: "seeded", fixtureDir: "fixture", diffFile: "diff.patch" }),
+    );
+    if (truth !== undefined) writeFileSync(join(caseDir, "ground_truth.json"), truth);
+  }
+  const matrixPath = join(root, "matrix.json");
+  writeFileSync(
+    matrixPath,
+    JSON.stringify({ repeats: 1, configs: [{ name: "mock", runner: "mock" }] }),
+  );
+  const engine: Engine = { name: "mock", async review() { return completedClean(); } };
+  try {
+    const runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+      casesDir,
+      engineFor: () => engine,
+    });
+    await gradeRuns(runsDir, casesDir);
+    const stats = await buildReport(runsDir, { casesDir });
+    assert.equal(stats.length, 1);
+    assert.equal(stats[0]?.corpus, "development");
+    assert.equal(stats[0]?.expectedRuns, 3);
+    assert.equal(stats[0]?.completedRuns, 1);
+    assert.equal(stats[0]?.failedRuns, 2);
+    assert.equal(stats[0]?.failureInclusiveRecallMean, null);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("tracked reports keep development and validation rows separate", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-corpus-groups-"));
+  const runsDir = join(root, "runs");
+  mkdirSync(runsDir, { recursive: true });
+  const expectedAttempts = (["development", "validation"] as const).map((corpus, index) => ({
+    id: `attempt-00000${index + 1}`,
+    caseName: `${corpus}/case-700d000${index + 1}`,
+    corpus,
+    expectedBugCount: null,
+    configName: "same-config",
+    repeat: 1,
+    file: `attempt-00000${index + 1}.json`,
+  }));
+  writeFileSync(
+    join(runsDir, "matrix-manifest.json"),
+    JSON.stringify({ schemaVersion: 1, createdAt: new Date().toISOString(), expectedAttempts }),
+  );
+  for (const attempt of expectedAttempts) {
+    const record: RunRecord = {
+      schemaVersion: 1,
+      attemptId: attempt.id,
+      caseName: attempt.caseName,
+      caseCorpus: attempt.corpus,
+      caseKind: "clean",
+      configName: attempt.configName,
+      repeat: 1,
+      startedAt: new Date().toISOString(),
+      finishedAt: new Date().toISOString(),
+      outcome: { status: "failed", failureKind: "configuration", message: "fixture unavailable", durationMs: 1 },
+    };
+    writeFileSync(join(runsDir, attempt.file), JSON.stringify(record));
+  }
+  try {
+    const stats = await buildReport(runsDir, { casesDir: join(root, "missing-cases") });
+    assert.deepEqual(stats.map((item) => item.corpus).sort(), ["development", "validation"]);
+    assert.ok(stats.every((item) => item.expectedRuns === 1));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("legacy descriptive case names remain reportable through the explicit curator alias map", async () => {
+  const truth = readCaseGroundTruth(resolve("eval/cases"), "seeded-null-deref");
+  assert.equal(truth.bugs[0]?.id, "null-deref-1");
+  const root = mkdtempSync(join(tmpdir(), "peregrine-legacy-alias-"));
+  const attempt = {
+    id: "attempt-000001",
+    caseName: "seeded-null-deref",
+    configName: "old-config",
+    repeat: 1,
+    file: "attempt-000001.json",
+  };
+  mkdirSync(root, { recursive: true });
+  writeFileSync(
+    join(root, "matrix-manifest.json"),
+    JSON.stringify({ schemaVersion: 1, createdAt: new Date().toISOString(), expectedAttempts: [attempt] }),
+  );
+  writeFileSync(
+    join(root, attempt.file),
+    JSON.stringify({
+      schemaVersion: 1,
+      attemptId: attempt.id,
+      caseName: attempt.caseName,
+      caseKind: "seeded",
+      configName: attempt.configName,
+      repeat: 1,
+      startedAt: new Date().toISOString(),
+      finishedAt: new Date().toISOString(),
+      outcome: { status: "failed", failureKind: "provider", message: "legacy failure", durationMs: 1 },
+    }),
+  );
+  try {
+    const stats = await buildReport(root, { casesDir: resolve("eval/cases") });
+    assert.equal(stats[0]?.corpus, "unknown");
+    assert.equal(stats[0]?.failureInclusiveRecallMean, 0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
   }
 });
 
 test("invalid case definitions are persisted as configuration failures", async () => {
   const root = mkdtempSync(join(tmpdir(), "peregrine-invalid-case-test-"));
-  const caseDir = join(root, "cases", "invalid-case");
+  const caseDir = join(root, "cases", "development", "case-badbad00");
   mkdirSync(caseDir, { recursive: true });
   writeFileSync(
     join(caseDir, "case.json"),
-    JSON.stringify({ name: "invalid-case", kind: "seeded", diffFile: "diff.patch" }),
+    JSON.stringify({ id: "case-badbad00", corpus: "development", kind: "seeded", diffFile: "diff.patch" }),
   );
   const matrixPath = join(root, "matrix.json");
   writeFileSync(
@@ -228,3 +357,14 @@ test("invalid case definitions are persisted as configuration failures", async (
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+function completedClean(): Awaited<ReturnType<Engine["review"]>> {
+  return {
+    engine: "mock",
+    status: "clean",
+    modelConfig: "mock",
+    findings: [],
+    usage: {},
+    durationMs: 1,
+  };
+}

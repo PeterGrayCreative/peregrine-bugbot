@@ -1,6 +1,6 @@
 --- a/src/Profile.tsx
 +++ b/src/Profile.tsx
-@@ -5,7 +5,7 @@ export function Profile({ accountId }: Props) {
+@@ -6,4 +6,4 @@ export function Profile({ accountId }: Props) {
    const [name, setName] = useState("");
 -  const save = () => api.save(accountId, name);
 +  const save = useCallback(() => api.save(accountId, name), []); // BUG: captures initial account and name

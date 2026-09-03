@@ -1,7 +1,0 @@
-{
-  "name": "seeded-swallowed-error",
-  "kind": "seeded",
-  "fixtureDir": "fixture",
-  "diffFile": "diff.patch",
-  "notes": "A persistence failure is swallowed and the caller receives false success."
-}
