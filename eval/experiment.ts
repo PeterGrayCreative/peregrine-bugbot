@@ -319,13 +319,12 @@ export function parseExperimentProtocol(
   value: unknown,
   source = "experiment protocol",
 ): ExperimentProtocol {
-  return parseExperimentProtocolValue(value, source, false);
+  return parseExperimentProtocolValue(value, source);
 }
 
 function parseExperimentProtocolValue(
   value: unknown,
   source: string,
-  allowProviderCallsForCeilingEvaluation: boolean,
 ): ExperimentProtocol {
   const root = object(value, source);
   onlyKeys(root, new Set([
@@ -355,21 +354,28 @@ function parseExperimentProtocolValue(
     `${source}.costAccounting`,
   );
   const judgeRoot = object(root.judge, `${source}.judge`);
-  onlyKeys(judgeRoot, new Set(["kind", "model", "version"]), `${source}.judge`);
+  onlyKeys(judgeRoot, new Set(["kind", "model", "effort", "version", "limits"]), `${source}.judge`);
   const judgeKind = member(judgeRoot.kind, JUDGE_KINDS, `${source}.judge.kind`);
   const judgeVersion = boundedString(judgeRoot.version, `${source}.judge.version`);
   const judgeModel = optionalBoundedString(judgeRoot.model, `${source}.judge.model`);
-  if (judgeKind === "exact" && judgeModel !== undefined) {
-    throw new Error(`${source}.judge.model must be absent for the exact judge`);
+  const judgeEffort = optionalBoundedString(judgeRoot.effort, `${source}.judge.effort`);
+  const judgeLimits = judgeRoot.limits === undefined ? undefined : parseExperimentLimits(judgeRoot.limits, `${source}.judge.limits`);
+  if (judgeKind === "exact" && (judgeModel !== undefined || judgeEffort !== undefined || judgeLimits !== undefined)) {
+    throw new Error(`${source}.judge model, effort, and limits must be absent for the exact judge`);
   }
-  if (judgeKind !== "exact" && judgeModel === undefined) {
-    throw new Error(`${source}.judge.model is required for a provider judge`);
+  if (judgeKind !== "exact" && (judgeModel === undefined || judgeEffort === undefined || judgeLimits === undefined)) {
+    throw new Error(`${source}.judge model, effort, and limits are required for a provider judge`);
   }
   const supportedJudgeVersion = judgeKind === "exact" ? "exact-v1" : "semantic-v1";
   if (judgeVersion !== supportedJudgeVersion) {
     throw new Error(
       `${source}.judge ${judgeKind}/${judgeVersion} is not supported; expected ${judgeKind}/${supportedJudgeVersion}`,
     );
+  }
+  if (judgeKind !== "exact" && (
+    judgeKind !== "codex" || judgeModel !== "gpt-5.6-luna" || judgeEffort !== "medium"
+  )) {
+    throw new Error(`${source}.judge must use the contained gpt-5.6-luna medium semantic judge`);
   }
 
   const limits = parseExperimentLimits(root.limits, `${source}.limits`);
@@ -424,11 +430,9 @@ function parseExperimentProtocolValue(
     if (providerCalls === "allow" && limits.maxProviderAttempts < 1) {
       throw new Error(`${source}: provider calls require a positive maxProviderAttempts`);
     }
-  }
-  if (providerCalls === "allow" && !allowProviderCallsForCeilingEvaluation) {
-    throw new Error(
-      `${source}: providerCalls=allow remains disabled until contained review and judge execution with separate budgets are integrated`,
-    );
+    if (judgeLimits!.maxProviderAttempts < 1 || judgeLimits!.maxWallTimeMs < 1) {
+      throw new Error(`${source}: semantic judge requires positive, separately declared attempt and wall-time ceilings`);
+    }
   }
 
   return {
@@ -441,7 +445,9 @@ function parseExperimentProtocolValue(
     judge: {
       kind: judgeKind,
       ...(judgeModel === undefined ? {} : { model: judgeModel }),
+      ...(judgeEffort === undefined ? {} : { effort: judgeEffort }),
       version: judgeVersion,
+      ...(judgeLimits === undefined ? {} : { limits: judgeLimits }),
     },
     ...(control === undefined ? {} : { control }),
     ...(treatment === undefined ? {} : { treatment }),
@@ -692,10 +698,9 @@ export function evaluateExperimentCeilings(input: {
   /** Attempt IDs with a durable provider-started marker. */
   providerStartedAttemptIds: readonly string[];
 }): ExperimentCeilingDecision {
-  // Provider-enabled execution remains fail-closed in PR 5B. Keeping this pure
-  // evaluator able to exercise the preregistered ceilings prevents those rules
-  // from becoming untested while the PR 4 live-run gate is closed.
-  const protocol = parseExperimentProtocolValue(input.protocol, "experiment protocol", true);
+  // Keep this evaluator pure so preregistered limits can be checked before each
+  // contained provider attempt and tested without contacting a provider.
+  const protocol = parseExperimentProtocolValue(input.protocol, "experiment protocol");
   const limits = protocol.limits;
   const schedule = input.schedule.map((item, index) => parseScheduledAttempt(item, `schedule[${index}]`));
   const scheduleById = new Map(schedule.map((attempt) => [attempt.id, attempt]));

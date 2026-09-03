@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Peregrine semantic judge attempt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "experimentId", "judgeManifestSha256", "decisionId", "startedAt", "finishedAt", "durationMs", "providerCostUsd", "usage", "outcome"],
+  "properties": {
+    "schemaVersion": { "const": 1 }, "experimentId": { "type": "string", "minLength": 1 },
+    "judgeManifestSha256": { "$ref": "#/$defs/hash" }, "decisionId": { "$ref": "#/$defs/hash" },
+    "startedAt": { "type": "string", "format": "date-time" }, "finishedAt": { "type": "string", "format": "date-time" },
+    "durationMs": { "type": "integer", "minimum": 0 }, "providerCostUsd": { "type": ["number", "null"], "minimum": 0 },
+    "usage": { "$ref": "#/$defs/usage" },
+    "outcome": {
+      "oneOf": [
+        { "type": "object", "additionalProperties": false, "required": ["status", "verdict"], "properties": { "status": { "const": "completed" }, "verdict": { "enum": ["same-root-cause", "different-root-cause"] } } },
+        { "type": "object", "additionalProperties": false, "required": ["status", "failureKind"], "properties": { "status": { "const": "failed" }, "failureKind": { "enum": ["timeout", "provider", "parse", "configuration", "unknown"] } } }
+      ]
+    }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "nullableCount": { "type": ["integer", "null"], "minimum": 0 },
+    "usage": { "type": "object", "additionalProperties": false, "required": ["inputTokens", "cachedInputTokens", "outputTokens", "reasoningTokens", "turns", "toolCalls"], "properties": { "inputTokens": { "$ref": "#/$defs/nullableCount" }, "cachedInputTokens": { "$ref": "#/$defs/nullableCount" }, "outputTokens": { "$ref": "#/$defs/nullableCount" }, "reasoningTokens": { "$ref": "#/$defs/nullableCount" }, "turns": { "$ref": "#/$defs/nullableCount" }, "toolCalls": { "$ref": "#/$defs/nullableCount" } } }
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Peregrine semantic judge stop record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "experimentId", "judgeManifestSha256", "reason", "beforeDecisionId", "observed", "recordedAt"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "experimentId": { "type": "string", "minLength": 1 },
+    "judgeManifestSha256": { "$ref": "#/$defs/hash" },
+    "reason": {
+      "enum": [
+        "provider-attempt-ceiling",
+        "provider-cost-unavailable",
+        "provider-cost-ceiling",
+        "wall-time-ceiling",
+        "failure-rate-ceiling",
+        "consecutive-failure-ceiling",
+        "required-comparison-failed",
+        "interrupted-before-provider-start",
+        "interrupted-provider-attempt"
+      ]
+    },
+    "beforeDecisionId": { "type": "string", "minLength": 1 },
+    "observed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["providerAttempts", "failures", "failureRate", "wallTimeMs", "providerCostUsd", "costUnavailableDecisionIds"],
+      "properties": {
+        "providerAttempts": { "type": "integer", "minimum": 0 },
+        "failures": { "type": "integer", "minimum": 0 },
+        "failureRate": { "type": "number", "minimum": 0, "maximum": 1 },
+        "wallTimeMs": { "type": "integer", "minimum": 0 },
+        "providerCostUsd": { "type": "number", "minimum": 0 },
+        "costUnavailableDecisionIds": { "type": "array", "items": { "$ref": "#/$defs/hash" }, "uniqueItems": true }
+      }
+    },
+    "recordedAt": { "type": "string", "format": "date-time" }
+  },
+  "$defs": { "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" } }
+}
