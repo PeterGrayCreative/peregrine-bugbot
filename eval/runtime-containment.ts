@@ -8,7 +8,7 @@ import type { ExperimentProviderAccess, ProviderExec, RunnerName } from "../src/
 
 /** Independently accepted multi-arch runtime image; evaluation must use this exact digest. */
 export const ACCEPTED_EVAL_RUNTIME_IMAGE =
-  "ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:0186100efde64b85913efee1746a0cffd4f19368ce9eae0fa81b3eea6fc7c65c";
+  "ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:0ad23c12cc2172a54b2b298ebde4096d3e4924efc3d3bf5c2c4f616c7d00e6b3";
 
 const CONTAINER_NAME = /^peregrine-eval-[a-f0-9-]{36}$/;
 const PROVIDER_SECRET: Record<Exclude<RunnerName, "mock">, string> = {

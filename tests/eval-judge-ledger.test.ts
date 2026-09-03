@@ -254,7 +254,7 @@ test("semantic judge containment accepts only the exact Luna medium argv", () =>
     ];
     // The parser enforces the accepted image before argv, so reuse a placeholder
     // by replacing it from the module's exported runtime constant indirectly.
-    args[args.indexOf("image")] = "ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:0186100efde64b85913efee1746a0cffd4f19368ce9eae0fa81b3eea6fc7c65c";
+    args[args.indexOf("image")] = "ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:0ad23c12cc2172a54b2b298ebde4096d3e4924efc3d3bf5c2c4f616c7d00e6b3";
     assert.equal(parseContainedProviderArgs(args, "codex", "api-key", { uid, gid }, "semantic-judge").profile, "semantic-judge");
     const changed = [...args]; changed[changed.indexOf("gpt-5.6-luna")] = "gpt-5.6-sol";
     assert.throws(() => parseContainedProviderArgs(changed, "codex", "api-key", { uid, gid }, "semantic-judge"), /exact Luna medium/);
