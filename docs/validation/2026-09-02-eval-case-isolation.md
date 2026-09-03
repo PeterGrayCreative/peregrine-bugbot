@@ -12,6 +12,8 @@
 
 **Provider calls:** none
 
+**Merged as:** `4e99748ba57208c86976a632ad4efb85011f7e7a`
+
 ## Scope proved
 
 - Every configuration, case, and repeat receives a fresh opaque checkout, provider home, provider-assets copy, and attempt-owned diff.
@@ -57,6 +59,12 @@ Three independent read-only review lanes exercised the branch before publication
 - Scope and regression: production-path compatibility, documentation truthfulness, PR 2/PR 3 boundary, and the must-stay-untouched behavior.
 
 All confirmed findings were converted to regression tests or fail-closed behavior. The final targeted reviews found no remaining code blocker before the branch was rebased; the complete repository gate was then rerun on the rebased head.
+
+## Remote proof
+
+PR #5 was ready and mergeable at head `7cd70de204f0aeb32486415827fcb99960b157b1`. On that final ready head, `check`, `analyze`, and `post` completed successfully; the review had no conversation comments, submitted reviews, or unresolved review threads. Earlier draft-triggered `analyze` and `post` jobs were skipped and were not reported as successful runs.
+
+The PR merged on 2026-09-02 as `4e99748ba57208c86976a632ad4efb85011f7e7a`.
 
 ## Handoff reuse decision
 

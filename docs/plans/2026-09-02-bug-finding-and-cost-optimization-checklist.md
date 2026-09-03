@@ -26,7 +26,7 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | P0 | Publish the approved plan | - | Merged | [#1](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/1) |
 | P0 follow-up | Add this implementation checklist | P0 | Merged | [#3](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/3) |
 | P1 / Plan PR 1 | Persist and report every matrix attempt | - | Merged | [#2](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/2) |
-| Plan PR 2 | Blind and isolate case materialization | PR 1 | In review | [#5](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/5) |
+| Plan PR 2 | Blind and isolate case materialization | PR 1 | Merged | [#5](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/5) |
 | Safety PR 2A | OCI filesystem containment for live evaluation | PR 2 | Not started | - |
 | Plan PR 3 | Reproduce base/head history and production manifest path | PR 2 | Not started | - |
 | Plan PR 4 | Root-cause grading, adjudication, and miss stages | PR 3 | Not started | - |
@@ -92,9 +92,9 @@ Rollback boundary: revert PR #2; model prompts, routing, topology, posting behav
 - [x] Add negative tests demonstrating that descriptive paths and accessible answer material fail validation.
 - [x] Run `npm run validate` under Node `22.22.1` on final rebased head `64ad038edddffd343631325030c7f4fcf783c0be`.
 - [x] Record a zero-provider-cost structural screening result: 8/8 attempts completed, all 5 expected seeded markers transported and graded, and 0 findings on 3 clean controls. This is structural evidence only, not model-recall or provider-cost evidence.
-- [ ] Open, review, and merge the PR before starting PR 3.
+- [x] Open, independently review, and merge [PR #5](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/5) as `4e99748ba57208c86976a632ad4efb85011f7e7a` before starting PR 3.
 
-Evidence: [Plan PR 2 validation record](../validation/2026-09-02-eval-case-isolation.md) and [PR #5](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/5). Three independent adversarial reviews found no remaining code blocker before the branch was rebased and revalidated. Leave the final box open until the PR is merged and its terminal checks and merge SHA are recorded.
+Evidence: [Plan PR 2 validation record](../validation/2026-09-02-eval-case-isolation.md) and [PR #5](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/5). Three independent adversarial reviews found no remaining code blocker before the branch was rebased and revalidated. On the final ready head, `check`, `analyze`, and `post` passed; earlier draft-triggered review jobs were skipped.
 
 Must stay untouched: production prompts, routing, posting, and model selection.
 
