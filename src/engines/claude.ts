@@ -158,7 +158,11 @@ function claudeUsageFromResult(result: ExecResult, prompt: string): Usage {
   try {
     const envelope = JSON.parse(result.stdout) as unknown;
     return envelope && typeof envelope === "object" && !Array.isArray(envelope)
-      ? claudeUsageFromEnvelope(envelope as Record<string, unknown>, prompt)
+      ? claudeUsageFromEnvelope(envelope as Record<string, unknown>, prompt, {
+          completeEventStream: !result.timedOut && result.code === 0 &&
+            (Array.isArray((envelope as Record<string, unknown>).messages) ||
+              Array.isArray((envelope as Record<string, unknown>).events)),
+        })
       : unknownClaudeUsage(prompt);
   } catch {
     return unknownClaudeUsage(prompt);

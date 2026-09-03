@@ -272,6 +272,42 @@ test("Codex runner performs isolated breadth and investigation stages", async ()
   assert.deepEqual(validatedStages, ["breadth", "investigation"]);
 });
 
+test("Codex temporary-output cleanup failures retain completed provider telemetry", async () => {
+  const fake: typeof exec = async (_cmd, args) => {
+    const output = args[args.indexOf("--output-last-message") + 1]!;
+    const schema = args[args.indexOf("--output-schema") + 1]!;
+    writeFileSync(
+      output,
+      schema.endsWith("breadth-result.schema.json")
+        ? JSON.stringify({ ...breadth, model: "gpt-5.6-luna" })
+        : JSON.stringify({ findings: [finding] }),
+    );
+    return {
+      stdout: `${JSON.stringify({
+        type: "turn.completed",
+        usage: { input_tokens: 11, cached_input_tokens: 2, output_tokens: 3 },
+      })}\n`,
+      stderr: "",
+      code: 0,
+      timedOut: false,
+    };
+  };
+  await assert.rejects(
+    () => createCodexEngine(fake, () => {
+      throw new Error("forced temp cleanup failure");
+    }).review(context()),
+    (error: unknown) => {
+      assert.ok(error instanceof RunFailureError);
+      assert.equal(error.kind, "configuration");
+      assert.match(error.message, /temporary-output cleanup also failed/);
+      assert.equal(error.telemetry?.stages.length, 2);
+      assert.ok(error.telemetry?.stages.every((stage) => stage.completed));
+      assert.equal(error.telemetry?.usage.inputTokens, 22);
+      return true;
+    },
+  );
+});
+
 test("evaluation prompt validation failures use stable configuration outcomes at both stages", async () => {
   for (const runner of ["claude", "codex"] as const) {
     for (const rejectedStage of ["breadth", "investigation"] as const) {
@@ -382,6 +418,68 @@ test("provider process failures are surfaced instead of becoming clean reviews",
         /authentication failed/.test(error.message),
     );
   }
+});
+
+test("Claude provider failures retain tokens without inventing complete work metrics", async () => {
+  const fake: typeof exec = async () => ({
+    stdout: JSON.stringify({
+      usage: {
+        input_tokens: 10,
+        cache_creation_input_tokens: 0,
+        cache_read_input_tokens: 0,
+        output_tokens: 2,
+      },
+      messages: [],
+    }),
+    stderr: "provider failed",
+    code: 1,
+    timedOut: false,
+  });
+  await assert.rejects(
+    () => createClaudeEngine(fake).review(context()),
+    (error: unknown) => {
+      assert.ok(error instanceof RunFailureError);
+      assert.equal(error.kind, "provider");
+      assert.equal(error.telemetry?.usage.inputTokens, 10);
+      assert.equal(error.telemetry?.usage.outputTokens, 2);
+      assert.equal(error.telemetry?.usage.toolCalls, undefined);
+      assert.equal(error.telemetry?.usage.toolCallsByType, undefined);
+      assert.equal(error.telemetry?.usage.toolOutputBytes, undefined);
+      assertStrictFailureArtifact("claude", error);
+      return true;
+    },
+  );
+});
+
+test("Claude code-zero parse failures without lifecycle arrays do not invent zero work", async () => {
+  const fake: typeof exec = async () => ({
+    stdout: JSON.stringify({
+      usage: {
+        input_tokens: 10,
+        cache_creation_input_tokens: 0,
+        cache_read_input_tokens: 0,
+        output_tokens: 2,
+      },
+      structured_output: { invalid: true },
+    }),
+    stderr: "",
+    code: 0,
+    timedOut: false,
+  });
+  await assert.rejects(
+    () => createClaudeEngine(fake).review(context()),
+    (error: unknown) => {
+      assert.ok(error instanceof RunFailureError);
+      assert.equal(error.kind, "parse");
+      assert.equal(error.telemetry?.usage.inputTokens, 10);
+      assert.equal(error.telemetry?.usage.outputTokens, 2);
+      assert.equal(error.telemetry?.usage.toolCalls, undefined);
+      assert.equal(error.telemetry?.usage.toolCallsByType, undefined);
+      assert.equal(error.telemetry?.usage.toolOutputBytes, undefined);
+      assertStrictFailureArtifact("claude", error);
+      return true;
+    },
+  );
 });
 
 test("provider adapters expose stable timeout failure codes", async () => {

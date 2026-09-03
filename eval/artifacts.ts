@@ -79,7 +79,9 @@ export function parseMatrixRunManifest(value: unknown, source = "matrix manifest
     `${source}.providerNetworkIsolation`,
   );
   validateCurrentNetworkIsolation(expectedAttempts, providerNetworkIsolation, source);
-  return { schemaVersion: 1, createdAt, expectedAttempts, providerNetworkIsolation };
+  const parsed = { schemaVersion: 1 as const, createdAt, expectedAttempts, providerNetworkIsolation };
+  assertNoSecrets(parsed, `${source} artifact`);
+  return parsed;
 }
 
 /**
@@ -281,7 +283,7 @@ export function parseLegacyCompletedRun(value: unknown, source: string): {
   ]), source);
   const result = parseEngineResult(root.result, `${source}.result`);
   const base = {
-    caseName: strictString(root.caseName, `${source}.caseName`, 500),
+    caseName: safeRelativeCaseName(root.caseName, `${source}.caseName`),
     caseKind: caseKind(root.caseKind, `${source}.caseKind`),
     configName: strictString(root.configName, `${source}.configName`, 500),
     repeat: positiveSafeInteger(root.repeat, `${source}.repeat`),
@@ -333,16 +335,19 @@ function parsePreTelemetryAttempt(value: unknown, source: string): PreTelemetryR
     source,
   );
   const id = strictString(root.id, `${source}.id`, 200);
-  if (!/^attempt-[a-z0-9-]+$/i.test(id)) throw new Error(`${source}.id is not a safe attempt id`);
+  if (!/^attempt-\d{6}$/.test(id)) throw new Error(`${source}.id must match the PR3 writer format`);
   const file = strictString(root.file, `${source}.file`, 240);
   if (file !== `${id}.json`) throw new Error(`${source}.file must equal ${id}.json`);
+  const parsedCorpus = corpus(root.corpus, `${source}.corpus`);
+  if (parsedCorpus === "unknown") throw new Error(`${source}.corpus must identify a pre-telemetry corpus`);
+  const parsedCaseName = safeRelativeCaseName(root.caseName, `${source}.caseName`);
   return {
     id,
-    caseName: strictString(root.caseName, `${source}.caseName`, 500),
+    caseName: parsedCaseName,
     configName: strictString(root.configName, `${source}.configName`, 500),
     repeat: positiveSafeInteger(root.repeat, `${source}.repeat`),
     file,
-    corpus: corpus(root.corpus, `${source}.corpus`),
+    corpus: parsedCorpus,
     expectedBugCount: root.expectedBugCount === null
       ? null
       : nonNegativeSafeInteger(root.expectedBugCount, `${source}.expectedBugCount`),
@@ -358,7 +363,7 @@ function parseLegacyAttempt(value: unknown, source: string): LegacyRunAttempt {
   if (file !== `${id}.json`) throw new Error(`${source}.file must equal ${id}.json`);
   return {
     id,
-    caseName: strictString(root.caseName, `${source}.caseName`, 500),
+    caseName: safeRelativeCaseName(root.caseName, `${source}.caseName`),
     configName: strictString(root.configName, `${source}.configName`, 500),
     repeat: positiveSafeInteger(root.repeat, `${source}.repeat`),
     file,
@@ -400,6 +405,12 @@ function assertUniqueLogicalAttempts(attempts: RunAttempt[], source: string): vo
 function parseRecordFields(root: Record<string, unknown>, source: string): RunRecord {
   if (root.schemaVersion !== 1) throw new Error(`${source}.schemaVersion must be 1`);
   const outcome = parseOutcome(root.outcome, `${source}.outcome`, true);
+  if (outcome.status === "failed" &&
+    root.runner !== "mock" &&
+    (outcome.failureKind === "provider" || outcome.failureKind === "timeout" || outcome.failureKind === "parse") &&
+    outcome.telemetry === undefined) {
+    throw new Error(`${source}.outcome.telemetry is required for ${outcome.failureKind} failures`);
+  }
   if (outcome.status === "completed") {
     if (outcome.result.status === "skipped") {
       throw new Error(`${source}.outcome.result.status cannot be skipped for a completed attempt`);
@@ -431,7 +442,12 @@ function parseRecordFields(root: Record<string, unknown>, source: string): RunRe
         stages,
         `${source}.outcome.result.usage`,
       );
-      validateStageModelConfig(outcome.result.modelConfig, stages, `${source}.outcome.result`);
+      validateStageModelConfig(
+        outcome.result.modelConfig,
+        stages,
+        `${source}.outcome.result`,
+        outcome.result.engine,
+      );
       if (outcome.result.durationMs < stageDurationSum(stages, `${source}.outcome.result.raw`)) {
         throw new Error(`${source}.outcome.result.durationMs must cover both stage durations`);
       }
@@ -476,6 +492,8 @@ function parseRecordFields(root: Record<string, unknown>, source: string): RunRe
   if (parsedCaseCorpus === "unknown") {
     throw new Error(`${source}.caseCorpus must identify a current corpus`);
   }
+  const parsedCaseName = safeRelativeCaseName(root.caseName, `${source}.caseName`);
+  assertCorpusCaseName(parsedCaseName, parsedCaseCorpus, `${source}.caseName`);
   validateOutcomeProvenance(outcome, evaluationProvenance, parsedCaseKind, source, true);
   if (outcome.status === "completed" && outcome.result.engine !== "mock") {
     const raw = object(outcome.result.raw, `${source}.outcome.result.raw`);
@@ -483,10 +501,10 @@ function parseRecordFields(root: Record<string, unknown>, source: string): RunRe
       throw new Error(`${source}.outcome.result.raw.manifest does not match manifest provenance output`);
     }
   }
-  return {
+  const record: RunRecord = {
     schemaVersion: 1,
     attemptId: strictString(root.attemptId, `${source}.attemptId`, 200),
-    caseName: strictString(root.caseName, `${source}.caseName`, 500),
+    caseName: parsedCaseName,
     caseKind: parsedCaseKind,
     configName: strictString(root.configName, `${source}.configName`, 500),
     repeat: positiveSafeInteger(root.repeat, `${source}.repeat`),
@@ -498,6 +516,8 @@ function parseRecordFields(root: Record<string, unknown>, source: string): RunRe
     ...(evaluationProvenance ? { evaluationProvenance } : {}),
     outcome,
   };
+  assertNoSecrets(record, `${source} artifact`);
+  return record;
 }
 
 function parseLegacySchemaV1RecordFields(
@@ -525,7 +545,7 @@ function parseLegacySchemaV1RecordFields(
   return {
     schemaVersion: 1,
     attemptId: strictString(root.attemptId, `${source}.attemptId`, 200),
-    caseName: strictString(root.caseName, `${source}.caseName`, 500),
+    caseName: safeRelativeCaseName(root.caseName, `${source}.caseName`),
     caseKind: parsedCaseKind,
     configName: strictString(root.configName, `${source}.configName`, 500),
     repeat: positiveSafeInteger(root.repeat, `${source}.repeat`),
@@ -648,15 +668,20 @@ function parsePreTelemetryRecordFields(
     ? undefined
     : parseEvaluationProvenance(root.evaluationProvenance, `${source}.evaluationProvenance`);
   const parsedCaseKind = caseKind(root.caseKind, `${source}.caseKind`);
+  const parsedCaseCorpus = corpus(root.caseCorpus, `${source}.caseCorpus`);
+  if (parsedCaseCorpus === "unknown") {
+    throw new Error(`${source}.caseCorpus must identify a pre-telemetry corpus`);
+  }
+  const parsedCaseName = safeRelativeCaseName(root.caseName, `${source}.caseName`);
   validateOutcomeProvenance(outcome, evaluationProvenance, parsedCaseKind, source, true);
   return {
     schemaVersion: 1,
     attemptId: strictString(root.attemptId, `${source}.attemptId`, 200),
-    caseName: strictString(root.caseName, `${source}.caseName`, 500),
+    caseName: parsedCaseName,
     caseKind: parsedCaseKind,
     configName: strictString(root.configName, `${source}.configName`, 500),
     repeat: positiveSafeInteger(root.repeat, `${source}.repeat`),
-    caseCorpus: corpus(root.caseCorpus, `${source}.caseCorpus`),
+    caseCorpus: parsedCaseCorpus,
     startedAt,
     finishedAt,
     ...(evaluationProvenance ? { evaluationProvenance } : {}),
@@ -709,9 +734,12 @@ function validatePreTelemetryEngineResult(
     }
     return;
   }
+  validateLegacyProviderModelConfig(result.modelConfig, result.engine, `${source}.modelConfig`);
   const raw = object(root.raw, `${source}.raw`);
   onlyKeys(raw, new Set(["manifest", "breadth", "investigation"]), `${source}.raw`);
-  boundedText(raw.manifest, `${source}.raw.manifest`, MAX_MANIFEST_CHARS);
+  if (raw.manifest !== "runner-generated") {
+    throw new Error(`${source}.raw.manifest does not match the pre-telemetry writer`);
+  }
   const breadth = parsePreTelemetryStage(
     raw.breadth,
     result.engine,
@@ -740,6 +768,24 @@ function validatePreTelemetryEngineResult(
   const stageDuration = stageDurationFromRaw(raw, `${source}.raw`);
   if (result.durationMs < stageDuration) {
     throw new Error(`${source}.durationMs must cover both stage durations`);
+  }
+}
+
+function validateLegacyProviderModelConfig(
+  modelConfig: string,
+  engine: "claude" | "codex",
+  source: string,
+): void {
+  const efforts = engine === "codex"
+    ? new Set(["low", "medium", "high", "xhigh", "max", "ultra"])
+    : new Set(["low", "medium", "high", "xhigh", "max"]);
+  const stages = modelConfig.split("->");
+  if (stages.length !== 2 || stages.some((stage) => {
+    const separator = stage.lastIndexOf("/");
+    return separator <= 0 || separator === stage.length - 1 ||
+      !efforts.has(stage.slice(separator + 1));
+  })) {
+    throw new Error(`${source} does not match the ${engine} pre-telemetry writer`);
   }
 }
 
@@ -1080,7 +1126,7 @@ function validateEngineStageTelemetry(
     const model = strictString(stage.model, `${source}.${stageName}.model`, 500);
     const usage = parseUsage(stage.usage, `${source}.${stageName}.usage`);
     validateCurrentUsage(engine, usage, `${source}.${stageName}.usage`);
-    validateStageUsageShape(engine, usage, `${source}.${stageName}.usage`);
+    validateStageUsageShape(engine, usage, `${source}.${stageName}.usage`, false);
     validateCurrentStagePricingModel(usage, model, `${source}.${stageName}.usage`);
     const promptSha256 = strictString(stage.promptSha256, `${source}.${stageName}.promptSha256`, 64);
     if (!/^[a-f0-9]{64}$/.test(promptSha256)) {
@@ -1098,10 +1144,26 @@ function validateEngineStageTelemetry(
       }
     }
     if (engine === "codex") {
-      nonNegativeSafeInteger(
+      const malformedEventLines = nonNegativeSafeInteger(
         stage.malformedEventLines,
         `${source}.${stageName}.malformedEventLines`,
       );
+      if (usage.aggregation === "single-snapshot" && malformedEventLines !== 0) {
+        throw new Error(
+          `${source}.${stageName}.malformedEventLines must be zero for single-snapshot usage`,
+        );
+      }
+      if (malformedEventLines > 0) {
+        const observedBeyondPrompt = USAGE_METRICS.some((metric) =>
+          metric !== "promptBytes" && usage[metric] !== undefined);
+        if (usage.aggregation !== "ambiguous" || observedBeyondPrompt ||
+          usage.serviceTier !== undefined || usage.costSource !== undefined ||
+          usage.pricing !== undefined) {
+          throw new Error(
+            `${source}.${stageName}.usage must remain ambiguous and unavailable after malformed events`,
+          );
+        }
+      }
     }
     stages[stageName] = {
       stage: stageName,
@@ -1175,7 +1237,12 @@ function parseOutcome(value: unknown, source: string, strictCurrentUsage: boolea
     durationMs: nonNegativeSafeInteger(root.durationMs, `${source}.durationMs`),
     telemetry: root.telemetry === undefined
       ? undefined
-      : parseFailureTelemetry(root.telemetry, `${source}.telemetry`, strictCurrentUsage),
+      : parseFailureTelemetry(
+          root.telemetry,
+          `${source}.telemetry`,
+          strictCurrentUsage,
+          root.failureKind as (typeof RUN_FAILURE_KINDS)[number],
+        ),
   };
 }
 
@@ -1183,11 +1250,15 @@ function parseFailureTelemetry(
   value: unknown,
   source: string,
   strictCurrentUsage: boolean,
+  failureKind: (typeof RUN_FAILURE_KINDS)[number],
 ): RunFailureTelemetry {
   const root = object(value, source);
   onlyKeys(root, new Set(["engine", "modelConfig", "usage", "durationMs", "stages"]), source);
   if (!(root.engine === "claude" || root.engine === "codex" || root.engine === "mock")) {
     throw new Error(`${source}.engine is invalid`);
+  }
+  if (strictCurrentUsage && root.engine === "mock") {
+    throw new Error(`${source} must be absent for the current mock writer`);
   }
   if (!Array.isArray(root.stages) || root.stages.length === 0 || root.stages.length > 2) {
     throw new Error(`${source}.stages must contain one or two stages`);
@@ -1204,7 +1275,12 @@ function parseFailureTelemetry(
   for (const [index, stage] of stages.entries()) {
     validateUsage(engine, stage.usage, `${source}.stages[${index}].usage`);
     if (strictCurrentUsage) {
-      validateStageUsageShape(engine, stage.usage, `${source}.stages[${index}].usage`);
+      validateStageUsageShape(
+        engine,
+        stage.usage,
+        `${source}.stages[${index}].usage`,
+        !stage.completed,
+      );
       validateCurrentStagePricingModel(
         stage.usage,
         stage.model,
@@ -1219,7 +1295,8 @@ function parseFailureTelemetry(
     if (stages.length === 2 && !stages[0]!.completed) {
       throw new Error(`${source}.stages require completed breadth before investigation`);
     }
-    validateStageModelConfig(modelConfig, stages, source);
+    validateFailureStageState(failureKind, stages, source);
+    validateStageModelConfig(modelConfig, stages, source, engine);
     validateAggregateUsageShape(usage, stages, `${source}.usage`);
   }
   const expectedUsage = stages.length === 1
@@ -1232,13 +1309,36 @@ function parseFailureTelemetry(
   if (strictCurrentUsage && durationMs < stageDurationSum(stages, source)) {
     throw new Error(`${source}.durationMs must cover all stage durations`);
   }
-  return {
+  const parsed: RunFailureTelemetry = {
     engine,
     modelConfig,
     usage,
     durationMs,
     stages,
   };
+  if (strictCurrentUsage) assertNoSecrets(parsed, `${source} artifact`);
+  return parsed;
+}
+
+function validateFailureStageState(
+  failureKind: (typeof RUN_FAILURE_KINDS)[number],
+  stages: StageTelemetry[],
+  source: string,
+): void {
+  const final = stages[stages.length - 1]!;
+  if ((failureKind === "configuration" || failureKind === "unknown") &&
+    stages.some((stage) => !stage.completed)) {
+    throw new Error(`${source} ${failureKind} telemetry may contain only completed stages`);
+  }
+  if (failureKind === "provider" && final.completed) {
+    throw new Error(`${source} provider failure requires an incomplete final stage`);
+  }
+  if (failureKind === "timeout" && stages.length === 2 && final.completed) {
+    throw new Error(`${source} two-stage timeout requires an incomplete investigation stage`);
+  }
+  if (failureKind === "parse" && stages.length === 1 && final.completed) {
+    throw new Error(`${source} one-stage parse failure requires an incomplete breadth stage`);
+  }
 }
 
 function validateUsageProvider(
@@ -1270,6 +1370,19 @@ function validateCurrentUsage(
   if (usage.promptBytes === undefined) {
     throw new Error(`${source}.promptBytes is required in current telemetry`);
   }
+  if (engine === "codex" && usage.costSource === "provider") {
+    throw new Error(`${source}.costSource provider was not emitted by the current Codex writer`);
+  }
+  if (usage.aggregation === "ambiguous") {
+    if (usage.serviceTier !== undefined || usage.costUsd !== undefined ||
+      usage.costSource !== undefined || usage.pricing !== undefined || usage.malformed !== undefined) {
+      throw new Error(`${source} ambiguous provider usage contains fields the current writer cannot emit`);
+    }
+    if (engine === "claude" && USAGE_METRICS.some((metric) =>
+      metric !== "promptBytes" && usage[metric] !== undefined)) {
+      throw new Error(`${source} ambiguous Claude usage must contain only prompt byte telemetry`);
+    }
+  }
   const expectedUnavailable = USAGE_METRICS.filter((metric) => usage[metric] === undefined);
   if (!isDeepStrictEqual(usage.unavailable, expectedUnavailable)) {
     throw new Error(`${source}.unavailable must be the exact complement of observed metrics`);
@@ -1296,22 +1409,31 @@ function validateStageModelConfig(
   modelConfig: string,
   stages: StageTelemetry[],
   source: string,
+  engine: RunRecord["runner"],
 ): void {
   const configured = modelConfig.split("->");
   if (configured.length !== 2) {
     throw new Error(`${source}.modelConfig must identify breadth and investigation models`);
   }
-  const configuredModel = (segment: string): string | undefined => {
+  const configuredModel = (segment: string): { model: string; effort: string } | undefined => {
     const separator = segment.lastIndexOf("/");
-    return separator > 0 && separator < segment.length - 1 ? segment.slice(0, separator) : undefined;
+    return separator > 0 && separator < segment.length - 1
+      ? { model: segment.slice(0, separator), effort: segment.slice(separator + 1) }
+      : undefined;
   };
-  const breadthModel = configuredModel(configured[0]!);
-  const investigationModel = configuredModel(configured[1]!);
-  if (!breadthModel || !investigationModel) {
+  const breadth = configuredModel(configured[0]!);
+  const investigation = configuredModel(configured[1]!);
+  if (!breadth || !investigation) {
     throw new Error(`${source}.modelConfig must identify breadth and investigation models`);
   }
+  const efforts = engine === "codex"
+    ? new Set(["low", "medium", "high", "xhigh", "max", "ultra"])
+    : new Set(["low", "medium", "high", "xhigh", "max"]);
+  if (!efforts.has(breadth.effort) || !efforts.has(investigation.effort)) {
+    throw new Error(`${source}.modelConfig contains an invalid ${engine} reasoning effort`);
+  }
   for (const stage of stages) {
-    const expected = stage.stage === "breadth" ? breadthModel : investigationModel;
+    const expected = stage.stage === "breadth" ? breadth.model : investigation.model;
     if (stage.model !== expected) {
       throw new Error(`${source}.modelConfig does not match the ${stage.stage} stage model`);
     }
@@ -1361,20 +1483,30 @@ function validateCurrentTokenDecomposition(
     if (usage.baseInputTokens !== undefined || usage.cacheWriteInputTokens !== undefined) {
       throw new Error(`${source} cannot report Anthropic-only token classes for OpenAI`);
     }
-    const snapshotFields = [
-      usage.inputTokens,
-      usage.uncachedInputTokens,
-      usage.cachedInputTokens,
-      usage.cacheReadInputTokens,
-      usage.outputTokens,
-    ];
-    const observedSnapshotFields = snapshotFields.filter((value) => value !== undefined).length;
     if (usage.aggregation === "ambiguous") {
-      if (observedSnapshotFields !== 0 || usage.reasoningOutputTokens !== undefined) {
+      if ([
+        usage.inputTokens,
+        usage.uncachedInputTokens,
+        usage.cachedInputTokens,
+        usage.cacheReadInputTokens,
+        usage.outputTokens,
+        usage.reasoningOutputTokens,
+      ].some((value) => value !== undefined)) {
         throw new Error(`${source} ambiguous OpenAI usage cannot expose token totals`);
       }
-    } else if (observedSnapshotFields !== 0 && observedSnapshotFields !== snapshotFields.length) {
-      throw new Error(`${source} OpenAI snapshot token fields must be observed together`);
+    } else {
+      requireMatchingPresence(
+        usage.cachedInputTokens,
+        usage.cacheReadInputTokens,
+        `${source}.cachedInputTokens and cacheReadInputTokens must be observed together`,
+      );
+      const canDeriveUncached = usage.inputTokens !== undefined &&
+        usage.cacheReadInputTokens !== undefined;
+      if ((usage.uncachedInputTokens !== undefined) !== canDeriveUncached) {
+        throw new Error(
+          `${source}.uncachedInputTokens must be present exactly when input and cache-read tokens are known`,
+        );
+      }
     }
     requireUsageSum(
       usage.inputTokens,
@@ -1434,9 +1566,11 @@ function validateStageUsageShape(
   engine: RunRecord["runner"],
   usage: ReturnType<typeof parseUsage>,
   source: string,
+  failureStage: boolean,
 ): void {
   const valid = engine === "claude"
-    ? usage.aggregation === "single-envelope"
+    ? usage.aggregation === "single-envelope" ||
+      (failureStage && usage.aggregation === "ambiguous")
     : engine === "codex"
       ? usage.aggregation === "single-snapshot" || usage.aggregation === "ambiguous"
       : usage.aggregation === "single-envelope";
@@ -1553,6 +1687,25 @@ function strictString(value: unknown, source: string, max: number): string {
   return value;
 }
 
+function safeRelativeCaseName(value: unknown, source: string): string {
+  const name = strictString(value, source, 500);
+  const segments = name.split("/");
+  if (name.startsWith("/") || name.includes("\\") || name.includes("\0") || /^[a-z]:/i.test(name) ||
+    segments.some((segment) =>
+      segment.length === 0 || segment === "." || segment === ".." || segment.toLowerCase() === ".git")) {
+    throw new Error(`${source} must be a safe cases-relative path`);
+  }
+  return name;
+}
+
+function assertCorpusCaseName(name: string, expectedCorpus: CaseCorpus, source: string): void {
+  const prefix = `${expectedCorpus}/`;
+  if (!name.startsWith(prefix) || name.slice(prefix.length).includes("/")) {
+    throw new Error(`${source} must be nested directly under its corpus`);
+  }
+  assertOpaqueCaseId(name.slice(prefix.length), `${source} basename`);
+}
+
 function boundedNonEmptyString(value: unknown, source: string, max: number): string {
   if (typeof value !== "string" || value.trim().length === 0 || value.length > max || value.includes("\0")) {
     throw new Error(`${source} must be non-empty text of at most ${max} characters without NUL bytes`);
@@ -1661,11 +1814,10 @@ function validateCurrentNetworkIsolation(
   for (const [runnerName, capability] of Object.entries(capabilities) as Array<
     [RunRecord["runner"], NetworkIsolationCapability]
   >) {
-    if (runnerName === "mock" && !isDeepStrictEqual(capability, networkIsolationCapability("mock"))) {
-      throw new Error(`${source}.providerNetworkIsolation.mock does not match the runner capability`);
-    }
-    if (runnerName !== "mock" && capability.status === "not-applicable") {
-      throw new Error(`${source}.providerNetworkIsolation.${runnerName} cannot be not-applicable`);
+    if (!isDeepStrictEqual(capability, networkIsolationCapability(runnerName))) {
+      throw new Error(
+        `${source}.providerNetworkIsolation.${runnerName} does not match the runner capability`,
+      );
     }
   }
 }

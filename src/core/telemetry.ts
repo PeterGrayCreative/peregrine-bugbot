@@ -41,6 +41,7 @@ export function promptBytes(prompt: string): number {
 export function claudeUsageFromEnvelope(
   envelope: Record<string, unknown>,
   prompt: string,
+  options: { completeEventStream?: boolean } = {},
 ): Usage {
   const raw = record(envelope.usage);
   const base = numberFrom(raw, "input_tokens");
@@ -54,7 +55,8 @@ export function claudeUsageFromEnvelope(
   const turns = integerFrom(envelope, "num_turns");
   const work = observedWork(
     envelope,
-    Array.isArray(envelope.messages) || Array.isArray(envelope.events),
+    options.completeEventStream ??
+      (Array.isArray(envelope.messages) || Array.isArray(envelope.events)),
   );
   const totalInput = sumIfComplete(base, cacheWrite, cacheRead);
   const cachedInput = sumIfComplete(cacheWrite, cacheRead);
@@ -132,16 +134,20 @@ export function codexUsageFromEvents(
   }
   const raw = usageSnapshots.length === 1 ? usageSnapshots[0]! : {};
   const input = numberFrom(raw, "input_tokens");
-  const cacheRead = numberFrom(raw, "cached_input_tokens");
-  const uncached = input !== undefined && cacheRead !== undefined && input >= cacheRead
+  const reportedCacheRead = numberFrom(raw, "cached_input_tokens");
+  const cacheRead = input !== undefined && reportedCacheRead !== undefined && reportedCacheRead > input
+    ? undefined
+    : reportedCacheRead;
+  const uncached = input !== undefined && cacheRead !== undefined
     ? input - cacheRead
     : undefined;
   const output = numberFrom(raw, "output_tokens");
-  const reasoning = numberFrom(raw, "reasoning_output_tokens");
+  const rawReasoning = numberFrom(raw, "reasoning_output_tokens");
+  const reasoning = rawReasoning !== undefined && output !== undefined && rawReasoning > output
+    ? undefined
+    : rawReasoning;
   const lastEvent = record(events[events.length - 1]);
-  if (lastEvent.type !== "turn.completed" || input === undefined || cacheRead === undefined ||
-    output === undefined || cacheRead > input ||
-    (raw.reasoning_output_tokens !== undefined && (reasoning === undefined || reasoning > output))) {
+  if (lastEvent.type !== "turn.completed") {
     return withUnavailable({ provider: "openai", aggregation: "ambiguous", promptBytes: promptBytes(prompt) });
   }
   const serviceTier = firstString(raw.service_tier);
@@ -409,6 +415,10 @@ function observedWork(value: unknown, completeStream: boolean): {
         else outputBytes = next;
         if (id) outputCallIds.add(id);
       }
+      // Provider tool output is untrusted repository/model content. Once this
+      // object is recognized as a lifecycle event, do not interpret nested
+      // payload text or objects as additional events.
+      return;
     }
     for (const [key, child] of Object.entries(object)) {
       if (key !== "item") visit(child, `${path}.${key}`);

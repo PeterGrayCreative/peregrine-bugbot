@@ -112,6 +112,7 @@ export async function runMatrix(
       ]),
     ),
   };
+  assertNoSecrets(manifest, "matrix manifest");
   writeFileSync(join(outDir, "matrix-manifest.json"), JSON.stringify(manifest, null, 2));
 
   const total = expectedAttempts.length;
@@ -264,7 +265,7 @@ export async function runMatrix(
           const message = safeDiagnostic(err instanceof Error ? err.message : String(err));
           const failureKind = runFailureKind(err);
           const candidateTelemetry = runFailureTelemetry(err);
-          let telemetry = candidateTelemetry;
+          let telemetry = attempt.runner === "mock" ? undefined : candidateTelemetry;
           try {
             if (telemetry !== undefined) assertNoSecrets(telemetry, "failure telemetry");
           } catch {
@@ -361,6 +362,7 @@ function productionManifestSkillName(config: ReviewContext["config"], runner: Ru
  * accounting retains known spend without persisting model output.
  */
 function completedResultFailureTelemetry(result: EngineResult): RunFailureTelemetry | undefined {
+  if (result.engine === "mock") return undefined;
   const stages = completedStages(result.raw);
   // An aggregate without its contributing requests cannot be reconciled during
   // strict artifact ingestion. Omit telemetry instead of inventing provenance.

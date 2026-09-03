@@ -189,7 +189,10 @@ function wrapCodexFailure(error: unknown, modelConfig: string, started: number, 
   });
 }
 
-export function createCodexEngine(run: ExecFunction = exec): Engine {
+export function createCodexEngine(
+  run: ExecFunction = exec,
+  removeTemp: typeof rmSync = rmSync,
+): Engine {
   return {
     name: "codex",
     async review(ctx: ReviewContext): Promise<EngineResult> {
@@ -201,6 +204,9 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
       const manifest = await prepareReviewManifest(ctx, cfg.skillName);
       const modelConfig = `${cfg.breadthModel}/${cfg.breadthEffort}->${cfg.investigationModel}/${cfg.investigationEffort}`;
       const outDir = mkdtempSync(join(tmpdir(), "peregrine-codex-"));
+      let outcome: EngineResult | undefined;
+      let failure: unknown;
+      let observedStages: StageTelemetry[] = [];
       try {
         const breadthOutput = join(outDir, "breadth.json");
         const breadthTimeout = Math.min(300_000, Math.floor(cfg.timeoutMs * 0.35));
@@ -226,6 +232,7 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
         try {
           breadthPayload = parseBreadthResult(JSON.parse(breadth.output), "codex breadth output");
           assertNoSecrets(breadthPayload, "codex breadth output");
+          observedStages = [codexStage("breadth", breadth, true)];
         } catch (error) {
           throw wrapCodexFailure(
             new RunFailureError("parse", "codex breadth stage returned invalid structured JSON", { cause: error }),
@@ -286,6 +293,10 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
         let payload;
         try {
           payload = parseReviewPayload(rawPayload, "codex review output");
+          observedStages = [
+            codexStage("breadth", breadth, true),
+            codexStage("investigation", investigation, true),
+          ];
         } catch (error) {
           throw wrapCodexFailure(
             new RunFailureError(
@@ -299,7 +310,7 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
           );
         }
         try {
-          return buildEngineResult({
+          outcome = buildEngineResult({
             engine: "codex",
             modelConfig,
             ctx,
@@ -338,9 +349,33 @@ export function createCodexEngine(run: ExecFunction = exec): Engine {
             [codexStage("breadth", breadth, true), codexStage("investigation", investigation, true)],
           );
         }
-      } finally {
-        rmSync(outDir, { recursive: true, force: true });
+      } catch (error) {
+        failure = error;
       }
+      try {
+        removeTemp(outDir, { recursive: true, force: true });
+      } catch (cleanupError) {
+        const stages = runFailureTelemetry(failure)?.stages ?? observedStages;
+        const prior = failure instanceof Error ? failure.message : "provider stages completed";
+        throw wrapCodexFailure(
+          new RunFailureError(
+            failure === undefined ? "configuration" : runFailureKind(failure),
+            safeDiagnostic(
+              `${prior}; codex temporary-output cleanup also failed: ${
+                cleanupError instanceof Error ? cleanupError.message : String(cleanupError)
+              }`,
+              1000,
+            ),
+            { cause: cleanupError },
+          ),
+          modelConfig,
+          started,
+          stages,
+        );
+      }
+      if (failure !== undefined) throw failure;
+      if (!outcome) throw new Error("codex review produced no result");
+      return outcome;
     },
   };
 }

@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import test from "node:test";
 import { gradeRuns } from "../eval/grade.js";
-import { buildReport } from "../eval/report.js";
+import { buildReport, calculateStats } from "../eval/report.js";
 import { runMatrix } from "../eval/run-matrix.js";
 import { materializeCase, networkIsolationCapability } from "../eval/case-isolation.js";
 import { readCaseGroundTruth } from "../eval/case-truth.js";
@@ -238,7 +238,7 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
     createdAt: "2026-09-02T00:00:00.000Z",
     expectedAttempts: [attempt],
     providerNetworkIsolation: {
-      claude: { status: "enforced", mechanism: "test-enforced provider sandbox" },
+      claude: networkIsolationCapability("claude"),
     },
   };
   assert.doesNotThrow(() => parseMatrixRunManifest(manifest));
@@ -246,13 +246,23 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
     () => parseMatrixRunManifest({ ...manifest, providerNetworkIsolation: {} }),
     /providerNetworkIsolation is missing claude/,
   );
-  assert.doesNotThrow(
+  assert.throws(
     () => parseMatrixRunManifest({
       ...manifest,
       providerNetworkIsolation: {
         claude: { status: "limited", mechanism: "provider-specific sandbox" },
       },
     }),
+    /does not match the runner capability/,
+  );
+  assert.throws(
+    () => parseMatrixRunManifest({
+      ...manifest,
+      providerNetworkIsolation: {
+        claude: { status: "enforced", mechanism: "self-asserted sandbox" },
+      },
+    }),
+    /does not match the runner capability/,
   );
   assert.throws(
     () => parseMatrixRunManifest({
@@ -261,7 +271,7 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
         claude: { status: "not-applicable", mechanism: "no provider process" },
       },
     }),
-    /providerNetworkIsolation\.claude cannot be not-applicable/,
+    /providerNetworkIsolation\.claude does not match the runner capability/,
   );
   assert.throws(
     () => parseMatrixRunManifest({
@@ -272,6 +282,12 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
       },
     }),
     /providerNetworkIsolation has undeclared codex/,
+  );
+  const secretConfigManifest = structuredClone(manifest);
+  secretConfigManifest.expectedAttempts[0]!.configName = "token=abc123456789SECRET";
+  assert.throws(
+    () => parseMatrixRunManifest(secretConfigManifest),
+    /secret pattern|credential-like assignment/,
   );
   const relabeledCorpus = structuredClone(manifest);
   relabeledCorpus.expectedAttempts[0]!.corpus = "validation";
@@ -311,7 +327,26 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
   assert.doesNotThrow(
     () => parseRunRecord(currentWithoutProvenance, "pre-materialization failure", attempt),
   );
+  const failedStageUsage = withUnavailable({
+    provider: "anthropic",
+    aggregation: "single-envelope",
+    promptBytes: 1,
+  });
   currentWithoutProvenance.outcome.failureKind = "provider";
+  currentWithoutProvenance.outcome.telemetry = {
+    engine: "claude",
+    modelConfig: "fast/low->strong/high",
+    usage: failedStageUsage,
+    durationMs: 1,
+    stages: [{
+      stage: "breadth",
+      model: "fast",
+      promptSha256: "a".repeat(64),
+      usage: failedStageUsage,
+      durationMs: 1,
+      completed: false,
+    }],
+  };
   assert.throws(
     () => parseRunRecord(currentWithoutProvenance, "provider failure without provenance", attempt),
     /evaluationProvenance is required for a post-materialization failure/,
@@ -327,7 +362,10 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
   ] as const) {
     const tampered = structuredClone(validRecord()) as unknown as Record<string, unknown>;
     tampered[field] = value;
-    assert.throws(() => parseRunRecord(tampered, "record", attempt), /does not match matrix manifest|does not match runner/);
+    assert.throws(
+      () => parseRunRecord(tampered, "record", attempt),
+      /does not match matrix manifest|does not match runner|nested directly under its corpus/,
+    );
   }
 
   const fractionalUsage = structuredClone(validRecord());
@@ -449,6 +487,94 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
     /pricing\.contractModel must match the stage model/,
   );
 
+  const mismatchedPricingTier = structuredClone(validRecord());
+  if (mismatchedPricingTier.outcome.status !== "completed") throw new Error("expected completed fixture");
+  const tierRaw = mismatchedPricingTier.outcome.result.raw as {
+    breadth: { usage: ReturnType<typeof withUnavailable> };
+    investigation: { usage: ReturnType<typeof withUnavailable> };
+  };
+  tierRaw.breadth.usage = withUnavailable({
+    provider: "anthropic",
+    serviceTier: "priority",
+    aggregation: "single-envelope",
+    promptBytes: 40,
+    costUsd: 0.4,
+    costSource: "estimated",
+    pricing: {
+      catalogVersion: "v1",
+      pricingAsOf: "2026-09-03",
+      contractModel: "fast",
+      tier: "default",
+      assumptions: [],
+    },
+  });
+  mismatchedPricingTier.outcome.result.usage = combineUsage(
+    tierRaw.breadth.usage,
+    tierRaw.investigation.usage,
+  );
+  assert.throws(
+    () => parseRunRecord(mismatchedPricingTier, "current stage with mismatched pricing tier", attempt),
+    /serviceTier must match stage pricing provenance/,
+  );
+
+  const ambiguousCompletedClaude = structuredClone(validRecord());
+  if (ambiguousCompletedClaude.outcome.status !== "completed") throw new Error("expected completed fixture");
+  const ambiguousRaw = ambiguousCompletedClaude.outcome.result.raw as {
+    breadth: { usage: ReturnType<typeof withUnavailable> };
+    investigation: { usage: ReturnType<typeof withUnavailable> };
+  };
+  ambiguousRaw.breadth.usage = withUnavailable({
+    provider: "anthropic",
+    aggregation: "ambiguous",
+    promptBytes: 40,
+  });
+  ambiguousCompletedClaude.outcome.result.usage = combineUsage(
+    ambiguousRaw.breadth.usage,
+    ambiguousRaw.investigation.usage,
+  );
+  assert.throws(
+    () => parseRunRecord(ambiguousCompletedClaude, "ambiguous completed Claude stage", attempt),
+    /aggregation does not match a provider stage/,
+  );
+
+  const malformedSnapshot = validCodexRecord();
+  if (malformedSnapshot.outcome.status !== "completed") throw new Error("expected completed fixture");
+  (malformedSnapshot.outcome.result.raw as {
+    breadth: { malformedEventLines: number };
+  }).breadth.malformedEventLines = 1;
+  assert.throws(
+    () => parseRunRecord(
+      malformedSnapshot,
+      "Codex malformed lines with snapshot usage",
+      { ...attempt, runner: "codex" },
+    ),
+    /malformedEventLines must be zero for single-snapshot usage/,
+  );
+
+  const providerCostCodex = validCodexRecord();
+  if (providerCostCodex.outcome.status !== "completed") throw new Error("expected completed fixture");
+  const providerCostRaw = providerCostCodex.outcome.result.raw as {
+    breadth: { usage: ReturnType<typeof withUnavailable> };
+    investigation: { usage: ReturnType<typeof withUnavailable> };
+  };
+  providerCostRaw.breadth.usage.costUsd = 0.01;
+  providerCostRaw.breadth.usage.costSource = "provider";
+  providerCostRaw.breadth.usage.unavailable = providerCostRaw.breadth.usage.unavailable?.filter(
+    (metric) => metric !== "costUsd",
+  );
+  providerCostCodex.outcome.result.usage = combineUsage(
+    providerCostRaw.breadth.usage,
+    providerCostRaw.investigation.usage,
+  );
+  assert.throws(
+    () => parseRunRecord(
+      providerCostCodex,
+      "Codex provider-reported cost",
+      { ...attempt, runner: "codex" },
+    ),
+    /provider was not emitted by the current Codex writer/,
+  );
+
   const malformedBreadth = structuredClone(validRecord());
   if (malformedBreadth.outcome.status !== "completed") throw new Error("expected completed fixture");
   (malformedBreadth.outcome.result.raw as { breadth: { output: unknown } }).breadth.output = {};
@@ -473,6 +599,14 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
   assert.throws(
     () => parseRunRecord(mismatchedRawManifest, "current mismatched raw manifest", attempt),
     /raw\.manifest does not match manifest provenance output/,
+  );
+
+  const nonsenseEffort = structuredClone(validRecord());
+  if (nonsenseEffort.outcome.status !== "completed") throw new Error("expected completed fixture");
+  nonsenseEffort.outcome.result.modelConfig = "fast/warp->strong/high";
+  assert.throws(
+    () => parseRunRecord(nonsenseEffort, "current nonsense effort", attempt),
+    /invalid claude reasoning effort/,
   );
 
   const forgedMock = structuredClone(validRecord());
@@ -501,6 +635,21 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
     status: "failed", failureKind: "cancelled", message: "stopped", durationMs: 1,
   } };
   assert.throws(() => parseRunRecord(badFailure, "record", attempt), /failureKind is invalid/);
+
+  const secretFailure = structuredClone(validRecord());
+  secretFailure.outcome = {
+    status: "failed",
+    failureKind: "configuration",
+    message: "token=abc123456789SECRET",
+    durationMs: 1,
+  };
+  delete secretFailure.evaluationProvenance;
+  secretFailure.finishedAt = "2026-09-02T00:00:00.001Z";
+  secretFailure.attemptDurationMs = 1;
+  assert.throws(
+    () => parseRunRecord(secretFailure, "secret failure record", attempt),
+    /secret pattern|credential-like assignment/,
+  );
 
   const badTimestamp = { ...structuredClone(validRecord()), startedAt: "2026-09-02" };
   assert.throws(() => parseRunRecord(badTimestamp, "record", attempt), /canonical ISO/);
@@ -568,12 +717,27 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
     failureKind: "provider",
     message: "provider failed after preflight",
     durationMs: 1,
+    telemetry: {
+      engine: "claude",
+      modelConfig: "fast/low->strong/high",
+      usage: failedStageUsage,
+      durationMs: 1,
+      stages: [{
+        stage: "breadth",
+        model: "fast",
+        promptSha256: "a".repeat(64),
+        usage: failedStageUsage,
+        durationMs: 1,
+        completed: false,
+      }],
+    },
   };
   assert.throws(
     () => parseRunRecord(failedWithoutManifest, "failure without manifest", attempt),
     /manifest is required for a post-preflight failure/,
   );
   failedWithoutManifest.outcome.failureKind = "configuration";
+  delete failedWithoutManifest.outcome.telemetry;
   assert.doesNotThrow(
     () => parseRunRecord(failedWithoutManifest, "preflight configuration failure", attempt),
   );
@@ -866,6 +1030,17 @@ test("strict current failure telemetry requires provider identity and cost prove
     /stages\[0\]\.usage\.provider does not match claude runner/,
   );
 
+  for (const failureKind of ["provider", "timeout", "parse"] as const) {
+    const missingTelemetry = structuredClone(failed);
+    if (missingTelemetry.outcome.status !== "failed") throw new Error("expected failure fixture");
+    missingTelemetry.outcome.failureKind = failureKind;
+    delete missingTelemetry.outcome.telemetry;
+    assert.throws(
+      () => parseRunRecord(missingTelemetry, `${failureKind} failure without telemetry`, validAttempt()),
+      new RegExp(`telemetry is required for ${failureKind} failures`),
+    );
+  }
+
   const unattributedCost = structuredClone(failed);
   if (unattributedCost.outcome.status !== "failed" || !unattributedCost.outcome.telemetry) {
     throw new Error("expected failure telemetry fixture");
@@ -887,6 +1062,61 @@ test("strict current failure telemetry requires provider identity and cost prove
   assert.throws(
     () => parseRunRecord(unattributedCost, "current failure cost without source", validAttempt()),
     /costSource is required when costUsd is present in current telemetry/,
+  );
+
+  const mockFailure = structuredClone(failed);
+  mockFailure.runner = "mock";
+  if (mockFailure.outcome.status !== "failed" || !mockFailure.outcome.telemetry) {
+    throw new Error("expected failure telemetry fixture");
+  }
+  mockFailure.outcome.telemetry.engine = "mock";
+  mockFailure.outcome.telemetry.usage = mockUsage();
+  mockFailure.outcome.telemetry.stages[0]!.usage = mockUsage();
+  assert.throws(
+    () => parseRunRecord(
+      mockFailure,
+      "current mock failure telemetry",
+      { ...validAttempt(), runner: "mock" },
+    ),
+    /telemetry must be absent for the current mock writer/,
+  );
+
+  const ambiguousClaudeFailure = structuredClone(failed);
+  if (ambiguousClaudeFailure.outcome.status !== "failed" || !ambiguousClaudeFailure.outcome.telemetry) {
+    throw new Error("expected failure telemetry fixture");
+  }
+  const ambiguousUsage = withUnavailable({
+    provider: "anthropic",
+    aggregation: "ambiguous",
+    promptBytes: 0,
+  });
+  ambiguousClaudeFailure.outcome.telemetry.usage = ambiguousUsage;
+  ambiguousClaudeFailure.outcome.telemetry.stages[0]!.usage = ambiguousUsage;
+  assert.doesNotThrow(
+    () => parseRunRecord(ambiguousClaudeFailure, "ambiguous Claude failure", validAttempt()),
+  );
+  ambiguousClaudeFailure.outcome.telemetry.stages[0]!.completed = true;
+  assert.throws(
+    () => parseRunRecord(ambiguousClaudeFailure, "ambiguous completed Claude failure stage", validAttempt()),
+    /aggregation does not match a provider stage/,
+  );
+
+  const allCompletedProvider = structuredClone(failed);
+  if (allCompletedProvider.outcome.status !== "failed" || !allCompletedProvider.outcome.telemetry) {
+    throw new Error("expected failure telemetry fixture");
+  }
+  allCompletedProvider.outcome.telemetry.stages[0]!.completed = true;
+  assert.throws(
+    () => parseRunRecord(allCompletedProvider, "provider failure with completed stage", validAttempt()),
+    /provider failure requires an incomplete final stage/,
+  );
+
+  const incompleteConfiguration = structuredClone(failed);
+  if (incompleteConfiguration.outcome.status !== "failed") throw new Error("expected failure fixture");
+  incompleteConfiguration.outcome.failureKind = "configuration";
+  assert.throws(
+    () => parseRunRecord(incompleteConfiguration, "configuration failure with incomplete stage", validAttempt()),
+    /configuration telemetry may contain only completed stages/,
   );
 });
 
@@ -1115,7 +1345,7 @@ test("behavioral reports count failed and missing attempts and retain incurred f
     createdAt: "2026-09-02T00:00:00.000Z",
     expectedAttempts: attempts,
     providerNetworkIsolation: {
-      claude: { status: "enforced", mechanism: "test-enforced provider sandbox" },
+      claude: networkIsolationCapability("claude"),
     },
   };
   writeFileSync(join(runsDir, "matrix-manifest.json"), JSON.stringify(runManifest));
@@ -1222,17 +1452,36 @@ test("behavioral reports count failed and missing attempts and retain incurred f
       /expectedBugCount.*does not match readable ground truth/,
     );
 
-    writeFileSync(join(runsDir, "matrix-manifest.json"), JSON.stringify(runManifest));
-    const [stats] = await buildReport(runsDir, { casesDir });
-    assert.equal(stats?.benchmarkKind, "behavioral");
-    assert.equal(stats?.completionRate, 1 / 3);
-    assert.equal(stats?.failureInclusiveRecallMean, 1 / 3);
-    assert.equal(stats?.failedRuns, 1);
-    assert.equal(stats?.missingRuns, 1);
-    assert.equal(stats?.durationSecMean, null);
-    assert.equal(stats?.incurredCostUsdTotal, 0.03);
-    assert.equal(stats?.incurredCostObservedAttempts, 2);
-    assert.equal(stats?.incurredCostSource, "provider");
+    const stats = calculateStats({
+      config: "route",
+      runner: "claude",
+      corpus: "development",
+      benchmarkKind: "behavioral",
+      completeness: "tracked",
+      expectedRuns: 3,
+      completed: [{
+        attemptDurationMs: completed.attemptDurationMs,
+        outcome: completed.outcome,
+        matches: { "bug-1": 0 },
+        falsePositiveIndexes: [],
+      }],
+      failed: [{
+        outcome: failed.outcome as Extract<RunRecord["outcome"], { status: "failed" }>,
+        attemptDurationMs: failed.attemptDurationMs,
+      }],
+      missing: 1,
+      failureInclusiveRecalls: [1, 0, 0],
+      structuralExpectedMarkers: null,
+    });
+    assert.equal(stats.benchmarkKind, "behavioral");
+    assert.equal(stats.completionRate, 1 / 3);
+    assert.equal(stats.failureInclusiveRecallMean, 1 / 3);
+    assert.equal(stats.failedRuns, 1);
+    assert.equal(stats.missingRuns, 1);
+    assert.equal(stats.durationSecMean, null);
+    assert.equal(stats.incurredCostUsdTotal, 0.03);
+    assert.equal(stats.incurredCostObservedAttempts, 2);
+    assert.equal(stats.incurredCostSource, "provider");
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -1258,6 +1507,14 @@ test("pre-corpus P1 schema-v1 artifacts remain readable only as legacy incomplet
       readFileSync(join(fixtureDir, "attempt-000001.graded.json"), "utf8"),
     );
     assert.doesNotThrow(() => parseLegacySchemaV1GradedRun(fixtureGraded, "P1 fixture"));
+    const p1ManifestValue = JSON.parse(
+      readFileSync(join(fixtureDir, "matrix-manifest.json"), "utf8"),
+    ) as { expectedAttempts: Array<{ caseName: string }> };
+    p1ManifestValue.expectedAttempts[0]!.caseName = "../../outside";
+    assert.throws(
+      () => parseLegacyMatrixRunManifest(p1ManifestValue, "P1 traversal manifest"),
+      /safe cases-relative path/,
+    );
     const p1Record = JSON.parse(
       readFileSync(join(fixtureDir, "attempt-000001.json"), "utf8"),
     ) as Record<string, unknown>;
@@ -1267,11 +1524,28 @@ test("pre-corpus P1 schema-v1 artifacts remain readable only as legacy incomplet
         JSON.parse(readFileSync(join(variantDir, "matrix-manifest.json"), "utf8")),
         `${variant} manifest`,
       );
+      const variantRecord = JSON.parse(
+        readFileSync(join(variantDir, "attempt-000001.json"), "utf8"),
+      );
       assert.doesNotThrow(() => parseLegacySchemaV1RunRecord(
-        JSON.parse(readFileSync(join(variantDir, "attempt-000001.json"), "utf8")),
+        variantRecord,
         `${variant} record`,
         variantManifest.expectedAttempts[0],
       ));
+      if (variant === "p1-schema-v1-codex") {
+        const splitBrain = structuredClone(variantRecord) as {
+          outcome: { result: { raw: { investigation: { output: { findings: unknown[] } } } } };
+        };
+        const current = validRecord();
+        if (current.outcome.status !== "completed") throw new Error("expected completed fixture");
+        splitBrain.outcome.result.raw.investigation.output.findings = structuredClone(
+          current.outcome.result.findings,
+        );
+        assert.throws(
+          () => parseLegacySchemaV1RunRecord(splitBrain, "P1 Codex split-brain"),
+          /output findings do not match the result findings/,
+        );
+      }
     }
     const currentUsageInP1 = structuredClone(p1Record) as {
       outcome: { result: { usage: Record<string, unknown> } };
@@ -1338,6 +1612,20 @@ test("PR3 pre-telemetry schema-v1 artifacts grade and report only as legacy inco
     );
     assert.equal(isPreTelemetryMatrixRunManifest(manifestValue), true);
     const manifest = parsePreTelemetryMatrixRunManifest(manifestValue, "PR3 manifest fixture");
+    const traversalManifest = structuredClone(manifestValue) as {
+      expectedAttempts: Array<{ caseName: string; corpus: string }>;
+    };
+    traversalManifest.expectedAttempts[0]!.caseName = "../../outside";
+    assert.throws(
+      () => parsePreTelemetryMatrixRunManifest(traversalManifest, "PR3 traversal manifest"),
+      /safe cases-relative path|nested directly under its corpus/,
+    );
+    traversalManifest.expectedAttempts[0]!.caseName = "development/case-00000001";
+    traversalManifest.expectedAttempts[0]!.corpus = "unknown";
+    assert.throws(
+      () => parsePreTelemetryMatrixRunManifest(traversalManifest, "PR3 unknown corpus"),
+      /must identify a pre-telemetry corpus/,
+    );
     assert.throws(
       () => parseMatrixRunManifest(manifestValue, "strict telemetry manifest"),
       /caseName must be nested directly under its corpus/,
@@ -1351,6 +1639,30 @@ test("PR3 pre-telemetry schema-v1 artifacts grade and report only as legacy inco
       "PR3 record fixture",
       manifest.expectedAttempts[0],
     ));
+    const shortDuration = structuredClone(recordValue) as {
+      outcome: { result: { durationMs: number } };
+    };
+    shortDuration.outcome.result.durationMs = 1;
+    assert.throws(
+      () => parsePreTelemetryRunRecord(shortDuration, "PR3 short result duration"),
+      /durationMs must cover both stage durations/,
+    );
+    const invalidRoute = structuredClone(recordValue) as {
+      outcome: { result: { modelConfig: string } };
+    };
+    invalidRoute.outcome.result.modelConfig = "claude-haiku/warp->claude-sonnet/high";
+    assert.throws(
+      () => parsePreTelemetryRunRecord(invalidRoute, "PR3 invalid route"),
+      /does not match the claude pre-telemetry writer/,
+    );
+    const invalidManifestSentinel = structuredClone(recordValue) as {
+      outcome: { result: { raw: { manifest: string } } };
+    };
+    invalidManifestSentinel.outcome.result.raw.manifest = "not-the-writer-sentinel";
+    assert.throws(
+      () => parsePreTelemetryRunRecord(invalidManifestSentinel, "PR3 invalid manifest sentinel"),
+      /raw\.manifest does not match the pre-telemetry writer/,
+    );
     const missingBreadthOutput = structuredClone(recordValue) as {
       outcome: { result: { raw: { breadth: { output?: unknown } } } };
     };
@@ -1914,7 +2226,7 @@ test("malformed or missing truth remains failed and makes mixed denominators una
   }
 });
 
-test("cleanup failures preserve partial and completed provider telemetry", async () => {
+test("cleanup failures use terminal wall time and omit impossible mock telemetry", async () => {
   const root = mkdtempSync(join(tmpdir(), "peregrine-cleanup-accounting-"));
   const casesDir = join(root, "cases");
   const caseName = "case-c1ea0001";
@@ -1940,81 +2252,14 @@ test("cleanup failures preserve partial and completed provider telemetry", async
     ],
   }));
 
-  const partialUsage = withUnavailable({
-    provider: "mock" as const,
-    aggregation: "single-envelope" as const,
-    promptBytes: 0,
-    costUsd: 0.75,
-    costSource: "provider" as const,
-  });
-  const breadthUsage = withUnavailable({
-    provider: "mock" as const,
-    aggregation: "single-envelope" as const,
-    promptBytes: 0,
-    costUsd: 1,
-    costSource: "provider" as const,
-  });
-  const investigationUsage = withUnavailable({
-    provider: "mock" as const,
-    aggregation: "single-envelope" as const,
-    promptBytes: 0,
-    costUsd: 2,
-    costSource: "provider" as const,
-  });
   const engine: Engine = {
     name: "mock",
     async review(ctx) {
       const scenario = (ctx.config.runners.mock as Record<string, unknown>).scenario;
       if (scenario === "partial") {
-        throw new RunFailureError("timeout", "investigation timed out", {
-          telemetry: {
-            engine: "mock",
-            modelConfig: "mock-breadth/none->mock-investigation/none",
-            usage: partialUsage,
-            durationMs: 12,
-            stages: [{
-              stage: "breadth",
-              model: "mock-breadth",
-              promptSha256: "a".repeat(64),
-              usage: partialUsage,
-              durationMs: 12,
-              completed: true,
-            }],
-          },
-        });
+        throw new RunFailureError("timeout", "investigation timed out");
       }
-      if (scenario === "no-stages") {
-        return {
-          ...completedClean(),
-          usage: withUnavailable({
-            provider: "mock",
-            aggregation: "single-envelope",
-            promptBytes: 0,
-            costUsd: 5,
-            costSource: "provider",
-          }),
-        };
-      }
-      return {
-        ...completedClean(),
-        modelConfig: "mock-breadth/none->mock-investigation/none",
-        usage: combineUsage(breadthUsage, investigationUsage),
-        durationMs: 30,
-        raw: {
-          breadth: {
-            model: "mock-breadth",
-            promptSha256: "b".repeat(64),
-            usage: breadthUsage,
-            durationMs: 10,
-          },
-          investigation: {
-            model: "mock-investigation",
-            promptSha256: "c".repeat(64),
-            usage: investigationUsage,
-            durationMs: 20,
-          },
-        },
-      };
+      return completedClean();
     },
   };
 
@@ -2045,19 +2290,15 @@ test("cleanup failures preserve partial and completed provider telemetry", async
     assert.ok(partial && partial.outcome.status === "failed");
     assert.equal(partial.outcome.failureKind, "timeout");
     assert.match(partial.outcome.message, /cleanup also failed/);
-    assert.equal(partial.outcome.telemetry?.usage.costUsd, 0.75);
-    assert.equal(partial.outcome.telemetry?.stages.length, 1);
+    assert.equal(partial.outcome.telemetry, undefined);
 
     const completed = records.find((record) => record.configName === "completed");
     assert.ok(completed && completed.outcome.status === "failed");
     assert.equal(completed.outcome.failureKind, "configuration");
     assert.match(completed.outcome.message, /cleanup failed after provider completion/);
-    assert.equal(completed.outcome.telemetry?.usage.costUsd, 3);
-    assert.equal(completed.outcome.telemetry?.stages.length, 2);
-    assert.deepEqual(
-      completed.outcome.telemetry?.stages.map((stage) => stage.stage),
-      ["breadth", "investigation"],
-    );
+    assert.equal(completed.outcome.telemetry, undefined);
+    assert.equal(completed.finishedAt,
+      new Date(Date.parse(completed.startedAt) + completed.attemptDurationMs).toISOString());
 
     const noStages = records.find((record) => record.configName === "no-stages");
     assert.ok(noStages && noStages.outcome.status === "failed");

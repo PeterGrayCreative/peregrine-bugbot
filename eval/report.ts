@@ -153,7 +153,7 @@ export async function buildReport(
 
   stats.sort((a, b) => (b.recallMean ?? -1) - (a.recallMean ?? -1));
   writeFileSync(join(dir, "benchmark.json"), JSON.stringify(stats, null, 2));
-  writeFileSync(join(dir, "benchmark.html"), renderHtml(stats));
+  writeFileSync(join(dir, "benchmark.html"), renderBenchmarkHtml(stats));
   printStats(stats, dir);
   return stats;
 }
@@ -555,7 +555,7 @@ function validateLegacyManifestArtifacts(dir: string, manifest: LegacyMatrixRunM
   }
 }
 
-function calculateStats(args: {
+export function calculateStats(args: {
   config: string;
   runner: RunnerName | null;
   corpus: ConfigStats["corpus"];
@@ -786,7 +786,7 @@ export const durationP95 = (values: number[]): number | null => {
 };
 const pct = (value: number) => `${(value * 100).toFixed(0)}%`;
 
-function renderHtml(stats: ConfigStats[]): string {
+export function renderBenchmarkHtml(stats: ConfigStats[]): string {
   const knownCosts = stats.map((item) => item.costPerCaseMean).filter((cost): cost is number => cost !== null);
   const maxCost = Math.max(...knownCosts, 0.01);
   const points = stats

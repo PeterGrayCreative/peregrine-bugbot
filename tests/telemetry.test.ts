@@ -1,10 +1,13 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import test from "node:test";
-import { buildReport, durationP95, P95_MIN_SAMPLES } from "../eval/report.js";
-import { networkIsolationCapability } from "../eval/case-isolation.js";
+import {
+  calculateStats,
+  durationP95,
+  P95_MIN_SAMPLES,
+  renderBenchmarkHtml,
+} from "../eval/report.js";
 import { applyUsageCost, validatePricingCatalog } from "../src/core/pricing.js";
 import {
   claudeUsageFromEnvelope,
@@ -14,7 +17,7 @@ import {
   promptBytes,
   formatUsageCost,
 } from "../src/core/telemetry.js";
-import type { PricingCatalog, Usage } from "../src/types.js";
+import type { EngineResult, PricingCatalog, Usage } from "../src/types.js";
 
 const pricing: PricingCatalog = {
   schemaVersion: 1,
@@ -104,6 +107,31 @@ test("provider tool names normalize to artifact-safe keys", () => {
   assert.doesNotThrow(() => parseUsage(usage, "normalized provider usage"));
 });
 
+test("tool output payloads cannot inject fake lifecycle events", () => {
+  const usage = claudeUsageFromEnvelope({
+    usage: {
+      input_tokens: 1,
+      cache_creation_input_tokens: 0,
+      cache_read_input_tokens: 0,
+      output_tokens: 1,
+    },
+    messages: [
+      { type: "tool_use", id: "call-1", name: "read" },
+      {
+        type: "tool_result",
+        tool_use_id: "call-1",
+        content: {
+          type: "tool_use",
+          id: "injected-call",
+          name: "shell",
+        },
+      },
+    ],
+  }, "prompt");
+  assert.equal(usage.toolCalls, 1);
+  assert.deepEqual(usage.toolCallsByType, { read: 1 });
+});
+
 test("Codex captured events preserve one final usage snapshot without double counting", () => {
   const events = readFileSync(resolve("tests/fixtures/providers/codex-events.jsonl"), "utf8")
     .trim()
@@ -124,6 +152,27 @@ test("Codex captured events preserve one final usage snapshot without double cou
   assert.equal(usage.toolOutputBytes, 6);
   assert.equal(usage.promptBytes, 2);
   assert.ok(usage.unavailable?.includes("cacheWriteInputTokens"));
+});
+
+test("partial Codex snapshots preserve independently observed tokens and work", () => {
+  const usage = codexUsageFromEvents([
+    { type: "item.started", item: { id: "tool-1", type: "command_execution" } },
+    {
+      type: "item.completed",
+      item: { id: "tool-1", type: "command_execution", aggregated_output: "ok" },
+    },
+    { type: "turn.completed", usage: { input_tokens: 10, output_tokens: 2 } },
+  ], "prompt");
+  assert.equal(usage.aggregation, "single-snapshot");
+  assert.equal(usage.inputTokens, 10);
+  assert.equal(usage.outputTokens, 2);
+  assert.equal(usage.cachedInputTokens, undefined);
+  assert.equal(usage.cacheReadInputTokens, undefined);
+  assert.equal(usage.uncachedInputTokens, undefined);
+  assert.equal(usage.turns, 1);
+  assert.equal(usage.toolCalls, 1);
+  assert.equal(usage.toolOutputBytes, 2);
+  assert.doesNotThrow(() => parseUsage(usage, "partial Codex usage"));
 });
 
 test("ambiguous multiple Codex usage snapshots remain unavailable", () => {
@@ -475,8 +524,9 @@ test("provider usage never accepts reasoning tokens above total output", () => {
     type: "turn.completed",
     usage: { input_tokens: 1, cached_input_tokens: 0, output_tokens: 1, reasoning_output_tokens: 2 },
   }], "prompt");
-  assert.equal(codex.aggregation, "ambiguous");
-  assert.equal(codex.outputTokens, undefined);
+  assert.equal(codex.aggregation, "single-snapshot");
+  assert.equal(codex.outputTokens, 1);
+  assert.equal(codex.reasoningOutputTokens, undefined);
 });
 
 test("usage validation distinguishes unavailable fields from observed zero", () => {
@@ -574,35 +624,8 @@ test("duration p95 uses nearest-rank only with the documented minimum sample", (
   assert.equal(durationP95(Array.from({ length: 20 }, (_, index) => index + 1)), 19);
 });
 
-test("reports aggregate provider cost, token classes, work, and stage duration", async () => {
-  const root = mkdtempSync(join(tmpdir(), "peregrine-telemetry-report-"));
-  const casesDir = join(root, "cases");
-  const runsDir = join(root, "runs");
-  const caseName = "development/case-00000001";
-  mkdirSync(join(casesDir, caseName), { recursive: true });
-  mkdirSync(runsDir);
-  writeFileSync(join(casesDir, caseName, "ground_truth.json"), JSON.stringify({
-    bugs: [{ id: "bug", file: "src/value.ts", startLine: 1, endLine: 1, description: "invalid value" }],
-  }));
-  const attempt = {
-    id: "attempt-000001",
-    caseName,
-    configName: "route",
-    repeat: 1,
-    file: "attempt-000001.json",
-    corpus: "development",
-    expectedBugCount: 1,
-    runner: "claude",
-  };
-  writeFileSync(join(runsDir, "matrix-manifest.json"), JSON.stringify({
-    schemaVersion: 1,
-    createdAt: "2026-09-02T00:00:00.000Z",
-    expectedAttempts: [attempt],
-    providerNetworkIsolation: {
-      claude: { status: "enforced", mechanism: "test-enforced provider sandbox" },
-    },
-  }));
-  const result = {
+test("pure report aggregation preserves provider cost, token classes, work, and stage duration", () => {
+  const result: EngineResult = {
     engine: "claude",
     status: "completed",
     modelConfig: "fast/low->strong/high",
@@ -703,74 +726,38 @@ test("reports aggregate provider cost, token classes, work, and stage duration",
       },
     },
   };
-  const record = {
-    schemaVersion: 1,
-    attemptId: attempt.id,
-    caseName,
-    caseKind: "seeded",
-    configName: "route",
-    repeat: 1,
-    caseCorpus: "development",
+  const stats = calculateStats({
+    config: "route",
     runner: "claude",
-    startedAt: "2026-09-02T00:00:00.000Z",
-    finishedAt: "2026-09-02T00:00:04.000Z",
-    attemptDurationMs: 4000,
-    evaluationProvenance: {
-      history: {
-        schemaVersion: 1,
-        materialization: "fixture-patch",
-        objectFormat: "sha1",
-        baseRef: "1111111111111111111111111111111111111111",
-        headRef: "2222222222222222222222222222222222222222",
-        mergeBase: "1111111111111111111111111111111111111111",
-        baseTree: "3333333333333333333333333333333333333333",
-        headTree: "4444444444444444444444444444444444444444",
-        commitCount: 2,
-        baseIsMergeBase: true,
-        checkedOutTreeMatchesHead: true,
-        treeReproductionVerified: true,
-        diffNormalization: "identity-v1",
-        diffSha256: "5555555555555555555555555555555555555555555555555555555555555555",
-      },
-      manifest: {
-        entryPoint: "prepareReviewManifest",
-        skillName: "invariant-first-pr-review",
-        baseRef: "1111111111111111111111111111111111111111",
-        headRef: "2222222222222222222222222222222222222222",
-        mergeBase: "1111111111111111111111111111111111111111",
-        outputSha256: "dc2e7020636643df10d6be6372879d0afd1eee7a0742ad0e05af6c0922ab70b6",
-        output: "base: 1111111111111111111111111111111111111111 (argument)\nhead: 2222222222222222222222222222222222222222\nmerge-base: 1111111111111111111111111111111111111111\nChanged files\n(none)\n",
-        profileSource: "none",
-        headProfileChanged: false,
-      },
-    },
-    outcome: { status: "completed", result },
-  };
-  writeFileSync(join(runsDir, attempt.file), JSON.stringify(record));
-  writeFileSync(join(runsDir, "attempt-000001.graded.json"), JSON.stringify({
-    ...record,
-    matches: { bug: 0 },
-    falsePositiveIndexes: [],
-  }));
-  try {
-    const [stats] = await buildReport(runsDir, { casesDir });
-    assert.equal(stats?.costSource, "provider");
-    assert.equal(stats?.costPerCaseMean, 0.0004);
-    assert.equal(stats?.durationSecMedian, 4);
-    assert.equal(stats?.durationSecP95, null);
-    assert.equal(stats?.uncachedInputTokensMean, 100);
-    assert.equal(stats?.cacheWriteInputTokensMean, 50);
-    assert.equal(stats?.cacheReadInputTokensMean, 25);
-    assert.equal(stats?.turnsMean, 3);
-    assert.equal(stats?.toolCallsMean, 1);
-    assert.equal(stats?.toolOutputBytesMean, 6);
-    assert.equal(stats?.promptBytesMean, 1000);
-    assert.equal(stats?.telemetryExpectedRuns, 1);
-    assert.equal(stats?.telemetryObserved.costUsd, 1);
-    assert.equal(stats?.telemetryObserved.cacheWriteInputTokens, 1);
-    assert.equal(stats?.incurredCostUsdTotal, 0.0004);
-    assert.match(readFileSync(join(runsDir, "benchmark.html"), "utf8"), /\$0\.000400/);
-  } finally {
-    rmSync(root, { recursive: true, force: true });
-  }
+    corpus: "development",
+    benchmarkKind: "behavioral",
+    completeness: "tracked",
+    expectedRuns: 1,
+    completed: [{
+      attemptDurationMs: 4000,
+      outcome: { status: "completed", result },
+      matches: { bug: 0 },
+      falsePositiveIndexes: [],
+    }],
+    failed: [],
+    missing: 0,
+    failureInclusiveRecalls: [1],
+    structuralExpectedMarkers: null,
+  });
+  assert.equal(stats.costSource, "provider");
+  assert.equal(stats.costPerCaseMean, 0.0004);
+  assert.equal(stats.durationSecMedian, 4);
+  assert.equal(stats.durationSecP95, null);
+  assert.equal(stats.uncachedInputTokensMean, 100);
+  assert.equal(stats.cacheWriteInputTokensMean, 50);
+  assert.equal(stats.cacheReadInputTokensMean, 25);
+  assert.equal(stats.turnsMean, 3);
+  assert.equal(stats.toolCallsMean, 1);
+  assert.equal(stats.toolOutputBytesMean, 6);
+  assert.equal(stats.promptBytesMean, 1000);
+  assert.equal(stats.telemetryExpectedRuns, 1);
+  assert.equal(stats.telemetryObserved.costUsd, 1);
+  assert.equal(stats.telemetryObserved.cacheWriteInputTokens, 1);
+  assert.equal(stats.incurredCostUsdTotal, 0.0004);
+  assert.match(renderBenchmarkHtml([stats]), /\$0\.000400/);
 });

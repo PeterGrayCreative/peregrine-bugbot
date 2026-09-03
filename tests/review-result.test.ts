@@ -64,7 +64,7 @@ test("strict review parsing rejects extra fields, unsafe paths, and invalid rang
   delete withoutFailure.failurePath;
   assert.throws(
     () => parseReviewPayload({ findings: [withoutFailure] }),
-    /failurePath must be a trimmed non-empty string/,
+    /failurePath must be a non-empty string/,
   );
   const withoutDisposition = { ...validFinding() } as Record<string, unknown>;
   delete withoutDisposition.disposition;
