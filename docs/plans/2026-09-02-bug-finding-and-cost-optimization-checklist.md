@@ -23,8 +23,9 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 
 | Slice | Deliverable | Depends on | Status | Pull request |
 | --- | --- | --- | --- | --- |
-| P0 | Publish the approved plan and this checklist | - | Open | [#1](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/1) |
-| P1 / Plan PR 1 | Persist and report every matrix attempt | - | Open | [#2](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/2) |
+| P0 | Publish the approved plan | - | Merged | [#1](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/1) |
+| P0 follow-up | Add this implementation checklist | P0 | In progress | This PR |
+| P1 / Plan PR 1 | Persist and report every matrix attempt | - | Merged | [#2](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/2) |
 | Plan PR 2 | Blind and isolate case materialization | PR 1 | Not started | - |
 | Plan PR 3 | Reproduce base/head history and production manifest path | PR 2 | Not started | - |
 | Plan PR 4 | Root-cause grading, adjudication, and miss stages | PR 3 | Not started | - |
@@ -46,10 +47,10 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 - [x] Push `docs/bug-finding-cost-plan`.
 - [x] Open [PR #1](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/1) against `main`.
 - [x] Confirm the original plan-only diff passes `git diff --check`.
-- [x] Add this implementation checklist to the same branch.
-- [x] Confirm the updated docs-only diff passes `git diff --check`.
-- [ ] Record a terminal CI assessment. The initial `check` passed; `analyze` failed because Anthropic authentication was unavailable.
-- [ ] Merge PR #1.
+- [x] Record the terminal PR #1 checks: `check` passed, `analyze` failed because Anthropic authentication was unavailable, and `post` was skipped.
+- [x] Merge PR #1 as `74a0f6872359e388b1083a190d847c27435550f9`.
+- [x] Add this implementation checklist in a docs-only follow-up branch based on the latest `origin/main`.
+- [x] Confirm the follow-up docs-only diff passes `git diff --check`.
 
 Rollback boundary: revert the documentation commit; no runtime behavior changes.
 
@@ -71,8 +72,8 @@ Rollback boundary: revert the documentation commit; no runtime behavior changes.
 - [x] Run `npm run validate` successfully.
 - [x] Complete an independent diff review.
 - [x] Push `feat/eval-run-outcome-accounting` and open [PR #2](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/2).
-- [ ] Record terminal required-check results for the final head.
-- [ ] Merge PR #2.
+- [x] Record the terminal PR #2 checks for `d685b3a`: `check` passed, `analyze` failed because Anthropic authentication was unavailable, and `post` was skipped.
+- [x] Merge PR #2 as `e1e747a9ad54c4f99a14bbad0bf952cd229dd10d`.
 
 Rollback boundary: revert PR #2; model prompts, routing, topology, posting behavior, and fixture materialization remain unchanged.
 
@@ -402,5 +403,5 @@ Rollback boundary: route every class through the strong path and retire the open
 
 | Date | Slice | Commit / PR | Validation | Result / notes |
 | --- | --- | --- | --- | --- |
-| 2026-09-02 | P0 | `a9f76aa` / [#1](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/1) | `git diff --check origin/main...HEAD` | Passed for the original plan-only commit; `check` passed and `analyze` lacked Anthropic authentication. |
-| 2026-09-02 | P1 / Plan PR 1 | `d685b3a` / [#2](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/2) | Node 22 focused gate; `npm run validate`; independent diff review | Passed locally: 31 Node tests, 25 skill checks, 9 packaging/install checks, 4 plugin-manager checks, and eight-case smoke benchmark. Initial remote checks were pending. |
+| 2026-09-02 | P0 | `a9f76aa` / [#1](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/1) / merge `74a0f68` | `git diff --check origin/main...HEAD`; final GitHub checks | Docs diff passed; `check` passed, `analyze` failed because Anthropic authentication was unavailable, and `post` was skipped. PR merged. |
+| 2026-09-02 | P1 / Plan PR 1 | `d685b3a` / [#2](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/2) / merge `e1e747a` | Node 22 focused gate; `npm run validate`; independent diff review; final GitHub checks | Passed locally: 31 Node tests, 25 skill checks, 9 packaging/install checks, 4 plugin-manager checks, and eight-case smoke benchmark. Remotely, `check` passed, `analyze` failed because Anthropic authentication was unavailable, and `post` was skipped. PR merged. |
