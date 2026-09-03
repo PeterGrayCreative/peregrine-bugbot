@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "profile": "delivery-canary",
+  "service": "delivery",
+  "deployment": {
+    "environment": "canary",
+    "region": "ap-southeast",
+    "ownerGroup": "platform-observability",
+    "tier": "experimental"
+  },
+  "environment": {
+    "LOG_LEVEL": "debug",
+    "LOG_FORMAT": "json",
+    "LOG_PROPAGATE": "false",
+    "LOG_HANDLERS": "console"
+  },
+  "retention": {
+    "days": 7,
+    "maxFiles": 5,
+    "compress": false,
+    "legalHold": false
+  },
+  "sampling": {
+    "requestRate": 1.00,
+    "errorRate": 1.00,
+    "healthRate": 0.10,
+    "metricsRate": 0.10
+  },
+  "redaction": {
+    "fields": [
+      "authorization",
+      "cookie",
+      "email",
+      "session_id",
+      "user_token"
+    ],
+    "replacement": "[redacted]"
+  },
+  "routing": {
+    "primary": "central-ap-southeast",
+    "secondary": "archive-ap-southeast",
+    "deadLetter": "logging-failures-ap-southeast"
+  },
+  "labels": {
+    "team": "delivery",
+    "costCenter": "cc-4119",
+    "dataClass": "internal"
+  }
+}

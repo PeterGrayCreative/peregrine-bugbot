@@ -1,0 +1,18 @@
+{
+  "bugs": [
+    {
+      "id": "bug-278a493e",
+      "rootCauseGroup": "root-2cc84eb1",
+      "lane": "contracts",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "medium",
+      "file": "client.py",
+      "startLine": 19,
+      "endLine": 19,
+      "description": "delete_widget attempts JSON decoding for the endpoint's successful 204 No Content response even though its contract has no response body.",
+      "reachablePreconditions": "The server successfully deletes a widget and returns the documented 204 status with an empty body.",
+      "observableImpact": "The client raises a decoding exception after a successful deletion, so callers treat the completed operation as failed.",
+      "provenance": "Seeded removal of the explicit 204 return path. test_client.py uses a response object that enforces the no-body contract."
+    }
+  ]
+}

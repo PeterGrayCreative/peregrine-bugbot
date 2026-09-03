@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "caseId": "case-a1c4e90d",
+  "status": "draft",
+  "source": {
+    "kind": "seeded",
+    "repositoryAlias": "ledger-service",
+    "repositoryIdentitySha256": "0d0ea8006c64f2f35023186e3099ba20efa057368fbb6703be381e752fed30f3",
+    "changeIdentitySha256": "2aa26cb9fd1135d64e0fa751a7682a3be536a8491193ea92586c75af9f8fbfa7",
+    "access": "curator-local-private"
+  },
+  "strata": {
+    "languageFamily": "python",
+    "architectureFamily": "transactional-service",
+    "size": "small",
+    "changeShapes": ["seam", "multi-observation"],
+    "surfaceLanes": ["persistence"]
+  },
+  "proof": {
+    "kind": "regression-test",
+    "artifact": "proof.json",
+    "sha256": "848435a04f173f39a69d884371b92a558a1d7a325e13429908c9c9897d6a42fa"
+  },
+  "confirmations": [
+    {
+      "curatorIdentitySha256": "617ac849db736678cc50ccdba46a2eab92738cafb44bda4ccd1eee1c585a4bc1",
+      "confirmedAt": "2026-09-03T16:00:00Z",
+      "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
+    }
+  ]
+}

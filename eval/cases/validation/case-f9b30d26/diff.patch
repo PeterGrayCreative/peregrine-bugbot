@@ -1,0 +1,2649 @@
+diff --git a/__pycache__/logging_config.cpython-314.pyc b/__pycache__/logging_config.cpython-314.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..86b9d67ae35dab4be464c94aeaaf0b24d22fe6d6
+GIT binary patch
+literal 868
+zcmZ8f&ubGw6rS15k2X!4h8o-0BGHmc(6}Wn(ukx8_MntfSIDWlY_qfJ%4T<&owQmn
+zi}(+S2Nmkcli;C$O0<IM;6d=@t<poUzPD{E_`$yY=KY$t-`neBqZtDD`SJbJB}&LI
+zJPeRHBgb<<BJ!AAA@f8}bm$^vA_UdxB+->g;*JYNS7%8jDU%l4?6zB&a+XH0kqXao
+z158Ak<cYHMiVzEYGvp!Nf;JlvIfbs=NDnw6y817oDR4pJw*pbAa&u=*rZ^K_?p3H%
+zL&4#dvVGn$MTj?Fm9`deXWJA^6P-W{7-wznc&yqoLl#!y96F(3UW;jL+jO<qtpRf^
+zQ#igCJF0elb79`9-O_C58C=FR*KfBSuWht^&vx23gXc197^dg>0&X%4j)LMBhnK-b
+z<b<T?#Xo5FCf<n;myVErR%6dGWRO@YBnT{wrHX){RCX+qPG^Cy4+MqS0E=g29jpGs
+zAQsRj-N4Q<>d?i?q4XQ)LhDMCWJygKY<3GOKx}nQCLGW9cPG1E*bM@o3ucu-fRf9$
+znR~lbNysE9?*wuP)w6xqlG*0n)%*91)s^PT>LZzHnr@e^aPISp!jmw8%y_sY*V$!O
+zh|8QS@nQ7m&izK*o=<=m#}1dlM5Le2ynJz(EA;ah-WFdM-%Nkcm%rr82l;E!gMK={
+zH}frB{xLSyo38CI?3a7RrGv40Z>ZiMDfAKrJ_0?~8rY7HqKSW_B*VdEddK7*?6jiF
+zVVnEA%nO;|<Cumsd?Io6>6AlvI=<C)S%XhO2saWIz#OTR(!<=;*J9%!w;W|pQn2Q@
+F>@O$;z@PvC
+
+literal 0
+HcmV?d00001
+
+diff --git a/__pycache__/test_logging_config.cpython-314.pyc b/__pycache__/test_logging_config.cpython-314.pyc
+new file mode 100644
+index 0000000000000000000000000000000000000000..d10334ee7831d70b0741b4029f7e5224153c3ac0
+GIT binary patch
+literal 1604
+zcmcIk&2JM&6o30=ufsYK2pXF}9E3z<M~U0iP%2Q>6rna!anTB;JrG8l_1Idv-Ze9`
+zDdZIOP<rf<N~o7!nj44yBPo=iX%9%ifm=$DsCw#~T^n2?A3JNmc{?-jbAP{?8!wIl
+zj>kX$c>Spc@I<`~hSgX0ZlbaY*TB`5L8w_@);`mPUV$TU0$gJfTyqsJ=LUvv=7y2!
+z!d$gn>+Dwmt-}Dv08cw_P7SmZ(CDibjCC^oS98zRTC=Lji6~}WFAO#)3F$fw{ehjD
+zG5K`tE#l;1x~m{G7leK-CyaL>MrV^COjk!~sgy;|HAQ{}gzZ`<p_-G2K94({AnII*
+zqju1_Lb>4nz^iht+JWWRd*@NvgcZ0vysJ*&xY{omz=cMC-_;s=wu@x}#?qV845D_t
+zrON{z=ah+yHxe&o%63bWCZ}PWE8|o0>w1p`>z<%>(e2fHl+g|gB0BGTobq{m=K&Wq
+z@@bu}dtp6YuA>&TJQ2iEx-j4VaP9qfTZ?Dv?ck<J82ZBENSKvN{IuSM-Yw~*>n+;$
+zl2FLX{(dYBAIM{Zd=kYbJhGh~yR>bW?pA&|e80SKFZa;?U=O$8f9Rl&9W*uyGhZ&b
+z&E@8&Gcx~;$0Gc2O=e?6rU0FFk134FN}BX*>~O-9UN2^XwlWyW#ZiThwn<~`uYKx%
+z`SiV85A7v3@pkR1TPb>eKxHI)`Z$5t*g2;WEzuK$3{m6ifS5xVQ-o2^fN&XsW?&9x
+zF`gP7^nDBhB<*piq>rN5Ipa74T2+_%b;{OaPMcLjIvFTkFF=sVu@x^&=tah2mLhat
+zgQwF5GkTr+f|DeAyT9*^>hDOCBIe6$C=go3gFD6P?c(&^jh$lc_hRi&XX?)K1LxE$
+z1IFiY34gy8Yya>99{<T{Sic@vvI<*xVHBiINaS@XA##k6Zrn;jr8|Tuw)J-=2x$k5
+zix62A#e^^wn;lZ3ghC!6gbU=7Pdp)5u$Ex4=;R<Feu!;q1-|fU7!raPRB>n#%@l(_
+zPBF;T7fXe@Bl%Gjf8WO9Ug(;2_C-#!KG9y~bZd4OP^8#N532&YUJ#-4ytI=j5USI1
+z{J+diKZ>-k;MN7a6|z`U7($xLn5k%)&y)`K`K%KkF@+43BR`E|*U&WW514ocwU@bq
+qHhZVEQ?6~7YcBy`c1vJ7-)}rH%8yLv_N8wxefPy*2AD@vxBmi%yLmzY
+
+literal 0
+HcmV?d00001
+
+diff --git a/logging_config.py b/logging_config.py
+index 212176d28fcf4d32fb0027f3bf078b0331b8d696..f4bc4f7b711b84d9deb00c7718f871d5992e426d 100644
+--- a/logging_config.py
++++ b/logging_config.py
+@@ -1,116 +1,17 @@
+-from collections.abc import Mapping
+-from dataclasses import dataclass
+-from typing import Any, Literal
+-
+-VALID_LEVELS = frozenset({"debug", "info", "warning", "error"})
+-VALID_FORMATS = frozenset({"plain", "json"})
+-
+-
+-@dataclass(frozen=True)
+-class HandlerSpec:
+-    name: str
+-    kind: Literal["console", "file"]
+-    level: str
+-    destination: str | None = None
+-
+-
+-@dataclass(frozen=True)
+-class LoggingSettings:
+-    level: str
+-    format_name: Literal["plain", "json"]
+-    propagate: bool
+-    handlers: tuple[HandlerSpec, ...]
+-
+-
+-def normalize_level(raw: str | None) -> str:
+-    if raw is None:
+-        return "info"
+-    normalized = raw.strip().casefold()
+-    if normalized not in VALID_LEVELS:
+-        raise ValueError(f"unsupported log level: {raw}")
+-    return normalized
+-
+-
+-def parse_boolean(raw: str | None, default: bool) -> bool:
+-    if raw is None:
+-        return default
+-    normalized = raw.strip().casefold()
+-    if normalized in {"1", "true", "yes"}:
+-        return True
+-    if normalized in {"0", "false", "no"}:
+-        return False
+-    raise ValueError(f"unsupported boolean value: {raw}")
+-
+-
+-def parse_format(raw: str | None) -> str:
+-    normalized = "plain" if raw is None else raw.strip().casefold()
+-    if normalized not in VALID_FORMATS:
+-        raise ValueError(f"unsupported log format: {raw}")
+-    return normalized
+-
+-
+-def parse_handlers(raw: str | None, default_level: str) -> tuple[HandlerSpec, ...]:
+-    if raw is None or not raw.strip():
+-        return (HandlerSpec(name="console", kind="console", level=default_level),)
+-    handlers: list[HandlerSpec] = []
+-    for index, encoded in enumerate(raw.split(","), start=1):
+-        parts = [part.strip() for part in encoded.split(":")]
+-        kind = parts[0]
+-        if kind == "console" and len(parts) in {1, 2}:
+-            destination = None
+-            level = normalize_level(parts[1] if len(parts) == 2 else default_level)
+-        elif kind == "file" and len(parts) in {2, 3} and parts[1]:
+-            destination = parts[1]
+-            level = normalize_level(parts[2] if len(parts) == 3 else default_level)
+-        else:
+-            raise ValueError(f"unsupported handler definition: {encoded}")
+-        handlers.append(HandlerSpec(name=f"{kind}-{index}", kind=kind, level=level, destination=destination))
+-    return tuple(handlers)
+-
+-
+-def load_settings(environment: Mapping[str, str]) -> LoggingSettings:
+-    level = normalize_level(environment.get("LOG_LEVEL"))
+-    return LoggingSettings(
+-        level=level,
+-        format_name=parse_format(environment.get("LOG_FORMAT")),
+-        propagate=parse_boolean(environment.get("LOG_PROPAGATE"), False),
+-        handlers=parse_handlers(environment.get("LOG_HANDLERS"), level),
+-    )
+-
+-
+-def build_dict_config(settings: LoggingSettings) -> dict[str, Any]:
+-    formatters: dict[str, dict[str, str]] = {
+-        "plain": {"format": "%(levelname)s %(name)s %(message)s"},
+-        "json": {"format": '{"level":"%(levelname)s","logger":"%(name)s","message":"%(message)s"}'},
+-    }
+-    handlers: dict[str, dict[str, Any]] = {}
+-    for spec in settings.handlers:
+-        if spec.kind == "console":
+-            handlers[spec.name] = {
+-                "class": "logging.StreamHandler",
+-                "level": spec.level.upper(),
+-                "formatter": settings.format_name,
+-                "stream": "ext://sys.stderr",
+-            }
+-        else:
+-            handlers[spec.name] = {
+-                "class": "logging.FileHandler",
+-                "level": spec.level.upper(),
+-                "formatter": settings.format_name,
+-                "filename": spec.destination,
+-                "encoding": "utf-8",
+-            }
+-    return {
+-        "version": 1,
+-        "disable_existing_loggers": False,
+-        "formatters": formatters,
+-        "handlers": handlers,
+-        "root": {"level": settings.level.upper(), "handlers": [item.name for item in settings.handlers]},
+-        "loggers": {
+-            "service": {
+-                "level": settings.level.upper(),
+-                "handlers": [item.name for item in settings.handlers],
+-                "propagate": settings.propagate,
+-            }
+-        },
+-    }
++from logsettings import (
++    HandlerSpec,
++    LoggingSettings,
++    build_dict_config,
++    load_profile,
++    load_settings,
++    normalize_level,
++)
++
++__all__ = [
++    "HandlerSpec",
++    "LoggingSettings",
++    "build_dict_config",
++    "load_profile",
++    "load_settings",
++    "normalize_level",
++]
+diff --git a/logsettings/__init__.py b/logsettings/__init__.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..c19e0afa61512fffb15e7999814c1eaeb18c7e59
+--- /dev/null
++++ b/logsettings/__init__.py
+@@ -0,0 +1,6 @@
++from .model import HandlerSpec, LoggingSettings
++from .parsing import load_settings, normalize_level
++from .profiles import load_profile
++from .rendering import build_dict_config
++
++__all__ = ["HandlerSpec", "LoggingSettings", "build_dict_config", "load_profile", "load_settings", "normalize_level"]
+diff --git a/logsettings/environments/accounts-canary.json b/logsettings/environments/accounts-canary.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..18c7e68a3705068ebc3617256c3d402602cff597
+--- /dev/null
++++ b/logsettings/environments/accounts-canary.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "accounts-canary",
++  "service": "accounts",
++  "deployment": {
++    "environment": "canary",
++    "region": "ap-southeast",
++    "ownerGroup": "platform-observability",
++    "tier": "experimental"
++  },
++  "environment": {
++    "LOG_LEVEL": "debug",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 1.00,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-ap-southeast",
++    "secondary": "archive-ap-southeast",
++    "deadLetter": "logging-failures-ap-southeast"
++  },
++  "labels": {
++    "team": "accounts",
++    "costCenter": "cc-4103",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/accounts-development.json b/logsettings/environments/accounts-development.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..b27ccd3851c12f25e4e7931b478aedb0a9801f27
+--- /dev/null
++++ b/logsettings/environments/accounts-development.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "accounts-development",
++  "service": "accounts",
++  "deployment": {
++    "environment": "development",
++    "region": "us-east",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "plain",
++    "LOG_PROPAGATE": "true",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-east",
++    "secondary": "archive-us-east",
++    "deadLetter": "logging-failures-us-east"
++  },
++  "labels": {
++    "team": "accounts",
++    "costCenter": "cc-4100",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/accounts-production.json b/logsettings/environments/accounts-production.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..983c9249b9efc897ad9dc3c69c18eaef637114ca
+--- /dev/null
++++ b/logsettings/environments/accounts-production.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "accounts-production",
++  "service": "accounts",
++  "deployment": {
++    "environment": "production",
++    "region": "eu-central",
++    "ownerGroup": "platform-observability",
++    "tier": "critical"
++  },
++  "environment": {
++    "LOG_LEVEL": "warning",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console:warning,file:/var/log/accounts.log:info"
++  },
++  "retention": {
++    "days": 30,
++    "maxFiles": 20,
++    "compress": true,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.25,
++    "errorRate": 1.00,
++    "healthRate": 0.01,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-eu-central",
++    "secondary": "archive-eu-central",
++    "deadLetter": "logging-failures-eu-central"
++  },
++  "labels": {
++    "team": "accounts",
++    "costCenter": "cc-4102",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/accounts-staging.json b/logsettings/environments/accounts-staging.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..8767a66d8c11cb6a6d96966c80c2cc25fc3f470b
+--- /dev/null
++++ b/logsettings/environments/accounts-staging.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "accounts-staging",
++  "service": "accounts",
++  "deployment": {
++    "environment": "staging",
++    "region": "us-west",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 14,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-west",
++    "secondary": "archive-us-west",
++    "deadLetter": "logging-failures-us-west"
++  },
++  "labels": {
++    "team": "accounts",
++    "costCenter": "cc-4101",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/billing-canary.json b/logsettings/environments/billing-canary.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..7beb0c30876f207cdf610bf843a34756595a41ad
+--- /dev/null
++++ b/logsettings/environments/billing-canary.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "billing-canary",
++  "service": "billing",
++  "deployment": {
++    "environment": "canary",
++    "region": "ap-southeast",
++    "ownerGroup": "platform-observability",
++    "tier": "experimental"
++  },
++  "environment": {
++    "LOG_LEVEL": "debug",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 1.00,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-ap-southeast",
++    "secondary": "archive-ap-southeast",
++    "deadLetter": "logging-failures-ap-southeast"
++  },
++  "labels": {
++    "team": "billing",
++    "costCenter": "cc-4107",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/billing-development.json b/logsettings/environments/billing-development.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..55eb8fd0c633cb00d075fdd1465e84532aa7200c
+--- /dev/null
++++ b/logsettings/environments/billing-development.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "billing-development",
++  "service": "billing",
++  "deployment": {
++    "environment": "development",
++    "region": "us-east",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "plain",
++    "LOG_PROPAGATE": "true",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-east",
++    "secondary": "archive-us-east",
++    "deadLetter": "logging-failures-us-east"
++  },
++  "labels": {
++    "team": "billing",
++    "costCenter": "cc-4104",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/billing-production.json b/logsettings/environments/billing-production.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..d6f92dfedd5fb13c0026b21cb8520f5e1c7e8a48
+--- /dev/null
++++ b/logsettings/environments/billing-production.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "billing-production",
++  "service": "billing",
++  "deployment": {
++    "environment": "production",
++    "region": "eu-central",
++    "ownerGroup": "platform-observability",
++    "tier": "critical"
++  },
++  "environment": {
++    "LOG_LEVEL": "warning",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console:warning,file:/var/log/billing.log:info"
++  },
++  "retention": {
++    "days": 30,
++    "maxFiles": 20,
++    "compress": true,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.25,
++    "errorRate": 1.00,
++    "healthRate": 0.01,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-eu-central",
++    "secondary": "archive-eu-central",
++    "deadLetter": "logging-failures-eu-central"
++  },
++  "labels": {
++    "team": "billing",
++    "costCenter": "cc-4106",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/billing-staging.json b/logsettings/environments/billing-staging.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..db62f9945755bd21999c07c49bed3b5588c5d7af
+--- /dev/null
++++ b/logsettings/environments/billing-staging.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "billing-staging",
++  "service": "billing",
++  "deployment": {
++    "environment": "staging",
++    "region": "us-west",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 14,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-west",
++    "secondary": "archive-us-west",
++    "deadLetter": "logging-failures-us-west"
++  },
++  "labels": {
++    "team": "billing",
++    "costCenter": "cc-4105",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/catalog-canary.json b/logsettings/environments/catalog-canary.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..92847f550207ddd3cc847a23e4ec7b3898a9a86b
+--- /dev/null
++++ b/logsettings/environments/catalog-canary.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "catalog-canary",
++  "service": "catalog",
++  "deployment": {
++    "environment": "canary",
++    "region": "ap-southeast",
++    "ownerGroup": "platform-observability",
++    "tier": "experimental"
++  },
++  "environment": {
++    "LOG_LEVEL": "debug",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 1.00,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-ap-southeast",
++    "secondary": "archive-ap-southeast",
++    "deadLetter": "logging-failures-ap-southeast"
++  },
++  "labels": {
++    "team": "catalog",
++    "costCenter": "cc-4111",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/catalog-development.json b/logsettings/environments/catalog-development.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..b1a05d9adfafe5518de12f72f0da661b8d0bf4ce
+--- /dev/null
++++ b/logsettings/environments/catalog-development.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "catalog-development",
++  "service": "catalog",
++  "deployment": {
++    "environment": "development",
++    "region": "us-east",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "plain",
++    "LOG_PROPAGATE": "true",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-east",
++    "secondary": "archive-us-east",
++    "deadLetter": "logging-failures-us-east"
++  },
++  "labels": {
++    "team": "catalog",
++    "costCenter": "cc-4108",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/catalog-production.json b/logsettings/environments/catalog-production.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..21033e5189679aa36f7a3558b70690fc11128f38
+--- /dev/null
++++ b/logsettings/environments/catalog-production.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "catalog-production",
++  "service": "catalog",
++  "deployment": {
++    "environment": "production",
++    "region": "eu-central",
++    "ownerGroup": "platform-observability",
++    "tier": "critical"
++  },
++  "environment": {
++    "LOG_LEVEL": "warning",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console:warning,file:/var/log/catalog.log:info"
++  },
++  "retention": {
++    "days": 30,
++    "maxFiles": 20,
++    "compress": true,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.25,
++    "errorRate": 1.00,
++    "healthRate": 0.01,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-eu-central",
++    "secondary": "archive-eu-central",
++    "deadLetter": "logging-failures-eu-central"
++  },
++  "labels": {
++    "team": "catalog",
++    "costCenter": "cc-4110",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/catalog-staging.json b/logsettings/environments/catalog-staging.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..009bc8263b41dd5f4fecd745fee7efc089259078
+--- /dev/null
++++ b/logsettings/environments/catalog-staging.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "catalog-staging",
++  "service": "catalog",
++  "deployment": {
++    "environment": "staging",
++    "region": "us-west",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 14,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-west",
++    "secondary": "archive-us-west",
++    "deadLetter": "logging-failures-us-west"
++  },
++  "labels": {
++    "team": "catalog",
++    "costCenter": "cc-4109",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/checkout-canary.json b/logsettings/environments/checkout-canary.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..30bea790a7c6034fd18a967b4f1a12f4ef6bfa1d
+--- /dev/null
++++ b/logsettings/environments/checkout-canary.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "checkout-canary",
++  "service": "checkout",
++  "deployment": {
++    "environment": "canary",
++    "region": "ap-southeast",
++    "ownerGroup": "platform-observability",
++    "tier": "experimental"
++  },
++  "environment": {
++    "LOG_LEVEL": "debug",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 1.00,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-ap-southeast",
++    "secondary": "archive-ap-southeast",
++    "deadLetter": "logging-failures-ap-southeast"
++  },
++  "labels": {
++    "team": "checkout",
++    "costCenter": "cc-4115",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/checkout-development.json b/logsettings/environments/checkout-development.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..09fb4868cacb6a1412aed392597639dbeb1230ea
+--- /dev/null
++++ b/logsettings/environments/checkout-development.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "checkout-development",
++  "service": "checkout",
++  "deployment": {
++    "environment": "development",
++    "region": "us-east",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "plain",
++    "LOG_PROPAGATE": "true",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-east",
++    "secondary": "archive-us-east",
++    "deadLetter": "logging-failures-us-east"
++  },
++  "labels": {
++    "team": "checkout",
++    "costCenter": "cc-4112",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/checkout-production.json b/logsettings/environments/checkout-production.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..14e968656defe344b7c9605cf1e4afaa89a422bb
+--- /dev/null
++++ b/logsettings/environments/checkout-production.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "checkout-production",
++  "service": "checkout",
++  "deployment": {
++    "environment": "production",
++    "region": "eu-central",
++    "ownerGroup": "platform-observability",
++    "tier": "critical"
++  },
++  "environment": {
++    "LOG_LEVEL": "warning",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console:warning,file:/var/log/checkout.log:info"
++  },
++  "retention": {
++    "days": 30,
++    "maxFiles": 20,
++    "compress": true,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.25,
++    "errorRate": 1.00,
++    "healthRate": 0.01,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-eu-central",
++    "secondary": "archive-eu-central",
++    "deadLetter": "logging-failures-eu-central"
++  },
++  "labels": {
++    "team": "checkout",
++    "costCenter": "cc-4114",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/checkout-staging.json b/logsettings/environments/checkout-staging.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..049771197cfab896015b612e9c160738dbf851e1
+--- /dev/null
++++ b/logsettings/environments/checkout-staging.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "checkout-staging",
++  "service": "checkout",
++  "deployment": {
++    "environment": "staging",
++    "region": "us-west",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 14,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-west",
++    "secondary": "archive-us-west",
++    "deadLetter": "logging-failures-us-west"
++  },
++  "labels": {
++    "team": "checkout",
++    "costCenter": "cc-4113",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/delivery-canary.json b/logsettings/environments/delivery-canary.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..b0808fb02ffc5ee631ed90fdd2d2d72f23279f34
+--- /dev/null
++++ b/logsettings/environments/delivery-canary.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "delivery-canary",
++  "service": "delivery",
++  "deployment": {
++    "environment": "canary",
++    "region": "ap-southeast",
++    "ownerGroup": "platform-observability",
++    "tier": "experimental"
++  },
++  "environment": {
++    "LOG_LEVEL": "debug",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 1.00,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-ap-southeast",
++    "secondary": "archive-ap-southeast",
++    "deadLetter": "logging-failures-ap-southeast"
++  },
++  "labels": {
++    "team": "delivery",
++    "costCenter": "cc-4119",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/delivery-development.json b/logsettings/environments/delivery-development.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..257c67a4d15abcf3657353ac16c949e46cec224b
+--- /dev/null
++++ b/logsettings/environments/delivery-development.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "delivery-development",
++  "service": "delivery",
++  "deployment": {
++    "environment": "development",
++    "region": "us-east",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "plain",
++    "LOG_PROPAGATE": "true",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-east",
++    "secondary": "archive-us-east",
++    "deadLetter": "logging-failures-us-east"
++  },
++  "labels": {
++    "team": "delivery",
++    "costCenter": "cc-4116",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/delivery-production.json b/logsettings/environments/delivery-production.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..99ca9de29d3a56017b8ab7b311ba2a1f996c56d3
+--- /dev/null
++++ b/logsettings/environments/delivery-production.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "delivery-production",
++  "service": "delivery",
++  "deployment": {
++    "environment": "production",
++    "region": "eu-central",
++    "ownerGroup": "platform-observability",
++    "tier": "critical"
++  },
++  "environment": {
++    "LOG_LEVEL": "warning",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console:warning,file:/var/log/delivery.log:info"
++  },
++  "retention": {
++    "days": 30,
++    "maxFiles": 20,
++    "compress": true,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.25,
++    "errorRate": 1.00,
++    "healthRate": 0.01,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-eu-central",
++    "secondary": "archive-eu-central",
++    "deadLetter": "logging-failures-eu-central"
++  },
++  "labels": {
++    "team": "delivery",
++    "costCenter": "cc-4118",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/delivery-staging.json b/logsettings/environments/delivery-staging.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2e83eb3fc236631c29ab72854d148a387c036df6
+--- /dev/null
++++ b/logsettings/environments/delivery-staging.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "delivery-staging",
++  "service": "delivery",
++  "deployment": {
++    "environment": "staging",
++    "region": "us-west",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 14,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-west",
++    "secondary": "archive-us-west",
++    "deadLetter": "logging-failures-us-west"
++  },
++  "labels": {
++    "team": "delivery",
++    "costCenter": "cc-4117",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/events-canary.json b/logsettings/environments/events-canary.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..6fb9051e0267766bbb7a9449ac48bde2c0879853
+--- /dev/null
++++ b/logsettings/environments/events-canary.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "events-canary",
++  "service": "events",
++  "deployment": {
++    "environment": "canary",
++    "region": "ap-southeast",
++    "ownerGroup": "platform-observability",
++    "tier": "experimental"
++  },
++  "environment": {
++    "LOG_LEVEL": "debug",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 1.00,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-ap-southeast",
++    "secondary": "archive-ap-southeast",
++    "deadLetter": "logging-failures-ap-southeast"
++  },
++  "labels": {
++    "team": "events",
++    "costCenter": "cc-4123",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/events-development.json b/logsettings/environments/events-development.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..572d18b13a838b1f715834719ed8cbee040737d8
+--- /dev/null
++++ b/logsettings/environments/events-development.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "events-development",
++  "service": "events",
++  "deployment": {
++    "environment": "development",
++    "region": "us-east",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "plain",
++    "LOG_PROPAGATE": "true",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-east",
++    "secondary": "archive-us-east",
++    "deadLetter": "logging-failures-us-east"
++  },
++  "labels": {
++    "team": "events",
++    "costCenter": "cc-4120",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/events-production.json b/logsettings/environments/events-production.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..8d7dc03bfde3bc47eee11fdcfe75ecb7b4c83436
+--- /dev/null
++++ b/logsettings/environments/events-production.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "events-production",
++  "service": "events",
++  "deployment": {
++    "environment": "production",
++    "region": "eu-central",
++    "ownerGroup": "platform-observability",
++    "tier": "critical"
++  },
++  "environment": {
++    "LOG_LEVEL": "warning",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console:warning,file:/var/log/events.log:info"
++  },
++  "retention": {
++    "days": 30,
++    "maxFiles": 20,
++    "compress": true,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.25,
++    "errorRate": 1.00,
++    "healthRate": 0.01,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-eu-central",
++    "secondary": "archive-eu-central",
++    "deadLetter": "logging-failures-eu-central"
++  },
++  "labels": {
++    "team": "events",
++    "costCenter": "cc-4122",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/events-staging.json b/logsettings/environments/events-staging.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..f3f1115fd04c8bae4ace3f8e761a2927c1f0ae6d
+--- /dev/null
++++ b/logsettings/environments/events-staging.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "events-staging",
++  "service": "events",
++  "deployment": {
++    "environment": "staging",
++    "region": "us-west",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 14,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-west",
++    "secondary": "archive-us-west",
++    "deadLetter": "logging-failures-us-west"
++  },
++  "labels": {
++    "team": "events",
++    "costCenter": "cc-4121",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/identity-canary.json b/logsettings/environments/identity-canary.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2ffd2fef6536404077e7df1e0c4b3ff5d975e60a
+--- /dev/null
++++ b/logsettings/environments/identity-canary.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "identity-canary",
++  "service": "identity",
++  "deployment": {
++    "environment": "canary",
++    "region": "ap-southeast",
++    "ownerGroup": "platform-observability",
++    "tier": "experimental"
++  },
++  "environment": {
++    "LOG_LEVEL": "debug",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 1.00,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-ap-southeast",
++    "secondary": "archive-ap-southeast",
++    "deadLetter": "logging-failures-ap-southeast"
++  },
++  "labels": {
++    "team": "identity",
++    "costCenter": "cc-4127",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/identity-development.json b/logsettings/environments/identity-development.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..e7921fc747d5a43f9439c438f82f68d72ef99432
+--- /dev/null
++++ b/logsettings/environments/identity-development.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "identity-development",
++  "service": "identity",
++  "deployment": {
++    "environment": "development",
++    "region": "us-east",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "plain",
++    "LOG_PROPAGATE": "true",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-east",
++    "secondary": "archive-us-east",
++    "deadLetter": "logging-failures-us-east"
++  },
++  "labels": {
++    "team": "identity",
++    "costCenter": "cc-4124",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/identity-production.json b/logsettings/environments/identity-production.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..9a32fd1e2dec00f4e7101ba16adbd0486aa3b2fc
+--- /dev/null
++++ b/logsettings/environments/identity-production.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "identity-production",
++  "service": "identity",
++  "deployment": {
++    "environment": "production",
++    "region": "eu-central",
++    "ownerGroup": "platform-observability",
++    "tier": "critical"
++  },
++  "environment": {
++    "LOG_LEVEL": "warning",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console:warning,file:/var/log/identity.log:info"
++  },
++  "retention": {
++    "days": 30,
++    "maxFiles": 20,
++    "compress": true,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.25,
++    "errorRate": 1.00,
++    "healthRate": 0.01,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-eu-central",
++    "secondary": "archive-eu-central",
++    "deadLetter": "logging-failures-eu-central"
++  },
++  "labels": {
++    "team": "identity",
++    "costCenter": "cc-4126",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/identity-staging.json b/logsettings/environments/identity-staging.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..fdd4719f237824c308da7539e91cfacdc01a075f
+--- /dev/null
++++ b/logsettings/environments/identity-staging.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "identity-staging",
++  "service": "identity",
++  "deployment": {
++    "environment": "staging",
++    "region": "us-west",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 14,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-west",
++    "secondary": "archive-us-west",
++    "deadLetter": "logging-failures-us-west"
++  },
++  "labels": {
++    "team": "identity",
++    "costCenter": "cc-4125",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/inventory-canary.json b/logsettings/environments/inventory-canary.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..21a550607fc403dad3cb26bafc8d1bd447faec9b
+--- /dev/null
++++ b/logsettings/environments/inventory-canary.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "inventory-canary",
++  "service": "inventory",
++  "deployment": {
++    "environment": "canary",
++    "region": "ap-southeast",
++    "ownerGroup": "platform-observability",
++    "tier": "experimental"
++  },
++  "environment": {
++    "LOG_LEVEL": "debug",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 1.00,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-ap-southeast",
++    "secondary": "archive-ap-southeast",
++    "deadLetter": "logging-failures-ap-southeast"
++  },
++  "labels": {
++    "team": "inventory",
++    "costCenter": "cc-4131",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/inventory-development.json b/logsettings/environments/inventory-development.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..111f10c36261ed72e3d956aedefa7974363be5dd
+--- /dev/null
++++ b/logsettings/environments/inventory-development.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "inventory-development",
++  "service": "inventory",
++  "deployment": {
++    "environment": "development",
++    "region": "us-east",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "plain",
++    "LOG_PROPAGATE": "true",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-east",
++    "secondary": "archive-us-east",
++    "deadLetter": "logging-failures-us-east"
++  },
++  "labels": {
++    "team": "inventory",
++    "costCenter": "cc-4128",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/inventory-production.json b/logsettings/environments/inventory-production.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2dde6888099ac9f9751025f8b2f31a70e2205e29
+--- /dev/null
++++ b/logsettings/environments/inventory-production.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "inventory-production",
++  "service": "inventory",
++  "deployment": {
++    "environment": "production",
++    "region": "eu-central",
++    "ownerGroup": "platform-observability",
++    "tier": "critical"
++  },
++  "environment": {
++    "LOG_LEVEL": "warning",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console:warning,file:/var/log/inventory.log:info"
++  },
++  "retention": {
++    "days": 30,
++    "maxFiles": 20,
++    "compress": true,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.25,
++    "errorRate": 1.00,
++    "healthRate": 0.01,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-eu-central",
++    "secondary": "archive-eu-central",
++    "deadLetter": "logging-failures-eu-central"
++  },
++  "labels": {
++    "team": "inventory",
++    "costCenter": "cc-4130",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/inventory-staging.json b/logsettings/environments/inventory-staging.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..24c5ab069d89b04b86f839aac8e18f756e0ee538
+--- /dev/null
++++ b/logsettings/environments/inventory-staging.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "inventory-staging",
++  "service": "inventory",
++  "deployment": {
++    "environment": "staging",
++    "region": "us-west",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 14,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-west",
++    "secondary": "archive-us-west",
++    "deadLetter": "logging-failures-us-west"
++  },
++  "labels": {
++    "team": "inventory",
++    "costCenter": "cc-4129",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/notifications-canary.json b/logsettings/environments/notifications-canary.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..2902c23301c6db53a657ba813663395f34d646dd
+--- /dev/null
++++ b/logsettings/environments/notifications-canary.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "notifications-canary",
++  "service": "notifications",
++  "deployment": {
++    "environment": "canary",
++    "region": "ap-southeast",
++    "ownerGroup": "platform-observability",
++    "tier": "experimental"
++  },
++  "environment": {
++    "LOG_LEVEL": "debug",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 1.00,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-ap-southeast",
++    "secondary": "archive-ap-southeast",
++    "deadLetter": "logging-failures-ap-southeast"
++  },
++  "labels": {
++    "team": "notifications",
++    "costCenter": "cc-4135",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/notifications-development.json b/logsettings/environments/notifications-development.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..eef77964d296fab90c475a357d73c0a35025e4dc
+--- /dev/null
++++ b/logsettings/environments/notifications-development.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "notifications-development",
++  "service": "notifications",
++  "deployment": {
++    "environment": "development",
++    "region": "us-east",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "plain",
++    "LOG_PROPAGATE": "true",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-east",
++    "secondary": "archive-us-east",
++    "deadLetter": "logging-failures-us-east"
++  },
++  "labels": {
++    "team": "notifications",
++    "costCenter": "cc-4132",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/notifications-production.json b/logsettings/environments/notifications-production.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..8f77627cf9bac94d12e38aa70b4264fb5741190f
+--- /dev/null
++++ b/logsettings/environments/notifications-production.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "notifications-production",
++  "service": "notifications",
++  "deployment": {
++    "environment": "production",
++    "region": "eu-central",
++    "ownerGroup": "platform-observability",
++    "tier": "critical"
++  },
++  "environment": {
++    "LOG_LEVEL": "warning",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console:warning,file:/var/log/notifications.log:info"
++  },
++  "retention": {
++    "days": 30,
++    "maxFiles": 20,
++    "compress": true,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.25,
++    "errorRate": 1.00,
++    "healthRate": 0.01,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-eu-central",
++    "secondary": "archive-eu-central",
++    "deadLetter": "logging-failures-eu-central"
++  },
++  "labels": {
++    "team": "notifications",
++    "costCenter": "cc-4134",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/notifications-staging.json b/logsettings/environments/notifications-staging.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..e44f846eb69ca8bb860191477c1ddd85502e291c
+--- /dev/null
++++ b/logsettings/environments/notifications-staging.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "notifications-staging",
++  "service": "notifications",
++  "deployment": {
++    "environment": "staging",
++    "region": "us-west",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 14,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-west",
++    "secondary": "archive-us-west",
++    "deadLetter": "logging-failures-us-west"
++  },
++  "labels": {
++    "team": "notifications",
++    "costCenter": "cc-4133",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/search-canary.json b/logsettings/environments/search-canary.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..524312e9e1577a2280ddbc3341851e251c1209fd
+--- /dev/null
++++ b/logsettings/environments/search-canary.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "search-canary",
++  "service": "search",
++  "deployment": {
++    "environment": "canary",
++    "region": "ap-southeast",
++    "ownerGroup": "platform-observability",
++    "tier": "experimental"
++  },
++  "environment": {
++    "LOG_LEVEL": "debug",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 1.00,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-ap-southeast",
++    "secondary": "archive-ap-southeast",
++    "deadLetter": "logging-failures-ap-southeast"
++  },
++  "labels": {
++    "team": "search",
++    "costCenter": "cc-4139",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/search-development.json b/logsettings/environments/search-development.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..9c8642c3e2455b38fe5ee380bcf971554c18f863
+--- /dev/null
++++ b/logsettings/environments/search-development.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "search-development",
++  "service": "search",
++  "deployment": {
++    "environment": "development",
++    "region": "us-east",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "plain",
++    "LOG_PROPAGATE": "true",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 7,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-east",
++    "secondary": "archive-us-east",
++    "deadLetter": "logging-failures-us-east"
++  },
++  "labels": {
++    "team": "search",
++    "costCenter": "cc-4136",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/search-production.json b/logsettings/environments/search-production.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..c0e8b754ad6902e6de766afcdbd7ac16e3460a0a
+--- /dev/null
++++ b/logsettings/environments/search-production.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "search-production",
++  "service": "search",
++  "deployment": {
++    "environment": "production",
++    "region": "eu-central",
++    "ownerGroup": "platform-observability",
++    "tier": "critical"
++  },
++  "environment": {
++    "LOG_LEVEL": "warning",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console:warning,file:/var/log/search.log:info"
++  },
++  "retention": {
++    "days": 30,
++    "maxFiles": 20,
++    "compress": true,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.25,
++    "errorRate": 1.00,
++    "healthRate": 0.01,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-eu-central",
++    "secondary": "archive-eu-central",
++    "deadLetter": "logging-failures-eu-central"
++  },
++  "labels": {
++    "team": "search",
++    "costCenter": "cc-4138",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/environments/search-staging.json b/logsettings/environments/search-staging.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..8bead2eac485f7edb14d0348fa386625010d28c3
+--- /dev/null
++++ b/logsettings/environments/search-staging.json
+@@ -0,0 +1,49 @@
++{
++  "schemaVersion": 1,
++  "profile": "search-staging",
++  "service": "search",
++  "deployment": {
++    "environment": "staging",
++    "region": "us-west",
++    "ownerGroup": "platform-observability",
++    "tier": "standard"
++  },
++  "environment": {
++    "LOG_LEVEL": "info",
++    "LOG_FORMAT": "json",
++    "LOG_PROPAGATE": "false",
++    "LOG_HANDLERS": "console"
++  },
++  "retention": {
++    "days": 14,
++    "maxFiles": 5,
++    "compress": false,
++    "legalHold": false
++  },
++  "sampling": {
++    "requestRate": 0.50,
++    "errorRate": 1.00,
++    "healthRate": 0.10,
++    "metricsRate": 0.10
++  },
++  "redaction": {
++    "fields": [
++      "authorization",
++      "cookie",
++      "email",
++      "session_id",
++      "user_token"
++    ],
++    "replacement": "[redacted]"
++  },
++  "routing": {
++    "primary": "central-us-west",
++    "secondary": "archive-us-west",
++    "deadLetter": "logging-failures-us-west"
++  },
++  "labels": {
++    "team": "search",
++    "costCenter": "cc-4137",
++    "dataClass": "internal"
++  }
++}
+diff --git a/logsettings/model.py b/logsettings/model.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..b717faaf40ed6ef3829e7ccefa0953cd347b5c8b
+--- /dev/null
++++ b/logsettings/model.py
+@@ -0,0 +1,18 @@
++from dataclasses import dataclass
++from typing import Literal
++
++
++@dataclass(frozen=True)
++class HandlerSpec:
++    name: str
++    kind: Literal["console", "file"]
++    level: str
++    destination: str | None = None
++
++
++@dataclass(frozen=True)
++class LoggingSettings:
++    level: str
++    format_name: Literal["plain", "json"]
++    propagate: bool
++    handlers: tuple[HandlerSpec, ...]
+diff --git a/logsettings/parsing.py b/logsettings/parsing.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..b17c3316b111f4a9eec1f3a51613c96af8b602ba
+--- /dev/null
++++ b/logsettings/parsing.py
+@@ -0,0 +1,62 @@
++from collections.abc import Mapping
++
++from .model import HandlerSpec, LoggingSettings
++
++VALID_LEVELS = frozenset({"debug", "info", "warning", "error"})
++VALID_FORMATS = frozenset({"plain", "json"})
++
++
++def normalize_level(raw: str | None) -> str:
++    if raw is None:
++        return "info"
++    normalized = raw.strip().casefold()
++    if normalized not in VALID_LEVELS:
++        raise ValueError(f"unsupported log level: {raw}")
++    return normalized
++
++
++def parse_boolean(raw: str | None, default: bool) -> bool:
++    if raw is None:
++        return default
++    normalized = raw.strip().casefold()
++    if normalized in {"1", "true", "yes"}:
++        return True
++    if normalized in {"0", "false", "no"}:
++        return False
++    raise ValueError(f"unsupported boolean value: {raw}")
++
++
++def parse_format(raw: str | None) -> str:
++    normalized = "plain" if raw is None else raw.strip().casefold()
++    if normalized not in VALID_FORMATS:
++        raise ValueError(f"unsupported log format: {raw}")
++    return normalized
++
++
++def parse_handlers(raw: str | None, default_level: str) -> tuple[HandlerSpec, ...]:
++    if raw is None or not raw.strip():
++        return (HandlerSpec(name="console", kind="console", level=default_level),)
++    handlers: list[HandlerSpec] = []
++    for index, encoded in enumerate(raw.split(","), start=1):
++        parts = [part.strip() for part in encoded.split(":")]
++        kind = parts[0]
++        if kind == "console" and len(parts) in {1, 2}:
++            destination = None
++            level = normalize_level(parts[1] if len(parts) == 2 else default_level)
++        elif kind == "file" and len(parts) in {2, 3} and parts[1]:
++            destination = parts[1]
++            level = normalize_level(parts[2] if len(parts) == 3 else default_level)
++        else:
++            raise ValueError(f"unsupported handler definition: {encoded}")
++        handlers.append(HandlerSpec(name=f"{kind}-{index}", kind=kind, level=level, destination=destination))
++    return tuple(handlers)
++
++
++def load_settings(environment: Mapping[str, str]) -> LoggingSettings:
++    level = normalize_level(environment.get("LOG_LEVEL"))
++    return LoggingSettings(
++        level=level,
++        format_name=parse_format(environment.get("LOG_FORMAT")),
++        propagate=parse_boolean(environment.get("LOG_PROPAGATE"), False),
++        handlers=parse_handlers(environment.get("LOG_HANDLERS"), level),
++    )
+diff --git a/logsettings/profiles.py b/logsettings/profiles.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..e245cb9e7472e068150f7e3349653353573a24a6
+--- /dev/null
++++ b/logsettings/profiles.py
+@@ -0,0 +1,25 @@
++import json
++from pathlib import Path
++
++from .model import LoggingSettings
++from .parsing import load_settings
++
++PROFILE_ROOT = Path(__file__).with_name("environments")
++
++
++def load_profile(name: str) -> LoggingSettings:
++    if not name or any(character not in "abcdefghijklmnopqrstuvwxyz0123456789-" for character in name):
++        raise ValueError("profile name must be a lowercase slug")
++    path = PROFILE_ROOT / f"{name}.json"
++    try:
++        document = json.loads(path.read_text(encoding="utf-8"))
++    except FileNotFoundError as error:
++        raise ValueError(f"unknown logging profile: {name}") from error
++    if not isinstance(document, dict) or document.get("profile") != name:
++        raise ValueError(f"invalid logging profile: {name}")
++    environment = document.get("environment")
++    if not isinstance(environment, dict) or not all(
++        isinstance(key, str) and isinstance(value, str) for key, value in environment.items()
++    ):
++        raise ValueError(f"invalid logging environment: {name}")
++    return load_settings(environment)
+diff --git a/logsettings/rendering.py b/logsettings/rendering.py
+new file mode 100644
+index 0000000000000000000000000000000000000000..551b3b09e4f6323caa7c54d4775b936f19d168c7
+--- /dev/null
++++ b/logsettings/rendering.py
+@@ -0,0 +1,41 @@
++from typing import Any
++
++from .model import LoggingSettings
++
++
++def build_dict_config(settings: LoggingSettings) -> dict[str, Any]:
++    formatters: dict[str, dict[str, str]] = {
++        "plain": {"format": "%(levelname)s %(name)s %(message)s"},
++        "json": {"format": '{"level":"%(levelname)s","logger":"%(name)s","message":"%(message)s"}'},
++    }
++    handlers: dict[str, dict[str, Any]] = {}
++    for spec in settings.handlers:
++        if spec.kind == "console":
++            handlers[spec.name] = {
++                "class": "logging.StreamHandler",
++                "level": spec.level.upper(),
++                "formatter": settings.format_name,
++                "stream": "ext://sys.stderr",
++            }
++        else:
++            handlers[spec.name] = {
++                "class": "logging.FileHandler",
++                "level": spec.level.upper(),
++                "formatter": settings.format_name,
++                "filename": spec.destination,
++                "encoding": "utf-8",
++            }
++    return {
++        "version": 1,
++        "disable_existing_loggers": False,
++        "formatters": formatters,
++        "handlers": handlers,
++        "root": {"level": settings.level.upper(), "handlers": [item.name for item in settings.handlers]},
++        "loggers": {
++            "service": {
++                "level": settings.level.upper(),
++                "handlers": [item.name for item in settings.handlers],
++                "propagate": settings.propagate,
++            }
++        },
++    }
+diff --git a/test_logging_config.py b/test_logging_config.py
+index 9a3d690c1f69005d5c0bb4121e631e01eea73db8..3a86c77ae20473e456772b2a62ba43c55d053bac 100644
+--- a/test_logging_config.py
++++ b/test_logging_config.py
+@@ -1,11 +1,17 @@
++import json
+ import unittest
++from pathlib import Path
+ 
+-from logging_config import normalize_level
++from logging_config import build_dict_config, load_profile, load_settings, normalize_level
+ 
+ 
+ class LoggingConfigTests(unittest.TestCase):
+-    def test_default(self):
+-        self.assertEqual(normalize_level(None), "info")
++    def test_defaults(self):
++        settings = load_settings({})
++        self.assertEqual(settings.level, "info")
++        self.assertEqual(settings.format_name, "plain")
++        self.assertFalse(settings.propagate)
++        self.assertEqual(settings.handlers[0].kind, "console")
+ 
+     def test_normalizes_supported_level(self):
+         self.assertEqual(normalize_level(" WARNING "), "warning")
+@@ -14,6 +20,54 @@ class LoggingConfigTests(unittest.TestCase):
+         with self.assertRaises(ValueError):
+             normalize_level("verbose")
+ 
++    def test_loads_console_and_file_handlers(self):
++        settings = load_settings(
++            {
++                "LOG_LEVEL": "warning",
++                "LOG_FORMAT": "json",
++                "LOG_PROPAGATE": "yes",
++                "LOG_HANDLERS": "console:error,file:/var/log/service.log:info",
++            }
++        )
++        self.assertTrue(settings.propagate)
++        self.assertEqual([handler.kind for handler in settings.handlers], ["console", "file"])
++        self.assertEqual(settings.handlers[1].destination, "/var/log/service.log")
++
++    def test_rejects_invalid_handler(self):
++        with self.assertRaises(ValueError):
++            load_settings({"LOG_HANDLERS": "udp:localhost"})
++
++    def test_renders_logging_dictionary(self):
++        rendered = build_dict_config(
++            load_settings(
++                {
++                    "LOG_LEVEL": "debug",
++                    "LOG_FORMAT": "json",
++                    "LOG_HANDLERS": "console,file:service.log:warning",
++                }
++            )
++        )
++        self.assertEqual(rendered["root"], {"level": "DEBUG", "handlers": ["console-1", "file-2"]})
++        self.assertEqual(rendered["handlers"]["file-2"]["filename"], "service.log")
++        self.assertEqual(rendered["handlers"]["file-2"]["level"], "WARNING")
++        self.assertEqual(rendered["handlers"]["console-1"]["formatter"], "json")
++
++    def test_all_checked_in_profiles_are_loadable_and_self_identifying(self):
++        profile_root = Path(__file__).parent / "logsettings" / "environments"
++        profiles = sorted(profile_root.glob("*.json"))
++        self.assertGreaterEqual(len(profiles), 36)
++        for path in profiles:
++            document = json.loads(path.read_text(encoding="utf-8"))
++            self.assertEqual(document["profile"], path.stem)
++            settings = load_profile(path.stem)
++            self.assertGreaterEqual(len(settings.handlers), 1)
++
++    def test_profile_loader_rejects_paths_and_unknown_names(self):
++        with self.assertRaises(ValueError):
++            load_profile("../production")
++        with self.assertRaises(ValueError):
++            load_profile("missing-profile")
++
+ 
+ if __name__ == "__main__":
+     unittest.main()

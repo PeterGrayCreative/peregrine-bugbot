@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "caseId": "case-17ac84e2",
+  "status": "draft",
+  "source": {
+    "kind": "seeded",
+    "repositoryAlias": "catalog-api",
+    "repositoryIdentitySha256": "1463700c5e276214fe683a20e43ecd7b29b1d50041e1b06c46f6a88e9dcd41ba",
+    "changeIdentitySha256": "baa7a67da1b27496f95828da5a0d2706b5f4a53293724234a5f7c3286ef66634",
+    "access": "curator-local-private"
+  },
+  "strata": {
+    "languageFamily": "python",
+    "architectureFamily": "http-api",
+    "size": "small",
+    "changeShapes": ["seam"],
+    "surfaceLanes": ["contracts"]
+  },
+  "proof": {
+    "kind": "regression-test",
+    "artifact": "proof.json",
+    "sha256": "390a074087959e4f615070e719b41f1fa451868369d67dd735fc1df14e210194"
+  },
+  "confirmations": [
+    {
+      "curatorIdentitySha256": "617ac849db736678cc50ccdba46a2eab92738cafb44bda4ccd1eee1c585a4bc1",
+      "confirmedAt": "2026-09-03T16:00:00Z",
+      "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
+    }
+  ]
+}

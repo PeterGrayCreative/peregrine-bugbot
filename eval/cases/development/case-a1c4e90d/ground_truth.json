@@ -1,0 +1,32 @@
+{
+  "bugs": [
+    {
+      "id": "bug-a11e04c1",
+      "rootCauseGroup": "root-117cf208",
+      "lane": "persistence",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
+      "file": "order_store.py",
+      "startLine": 18,
+      "endLine": 18,
+      "description": "apply_order commits the order row before updating inventory, so the two persistence operations are no longer atomic.",
+      "reachablePreconditions": "A caller submits an order for a SKU with available inventory.",
+      "observableImpact": "After the connection closes, the order remains stored while the inventory decrement is rolled back.",
+      "provenance": "Seeded mutation of a transaction that previously committed after both writes. Base and head behavior are covered by test_order_store.py."
+    },
+    {
+      "id": "bug-72bca830",
+      "rootCauseGroup": "root-117cf208",
+      "lane": "persistence",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "high",
+      "file": "order_store.py",
+      "startLine": 18,
+      "endLine": 18,
+      "description": "The early commit also leaves an order row behind when the inventory update rejects an out-of-stock order.",
+      "reachablePreconditions": "A caller submits an order for a SKU whose available count is zero.",
+      "observableImpact": "The operation raises an out-of-stock error but a corresponding order is still persisted.",
+      "provenance": "Second independently asserted symptom of the same seeded transaction-boundary mutation."
+    }
+  ]
+}

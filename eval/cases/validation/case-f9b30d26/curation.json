@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "caseId": "case-f9b30d26",
+  "status": "draft",
+  "source": {
+    "kind": "clean",
+    "repositoryAlias": "service-launcher",
+    "repositoryIdentitySha256": "52a96508df3f14aafe14d829948bf337ba4ac257eac1046ce74a9cbe319a94b4",
+    "changeIdentitySha256": "c54b72b037ac9be038e21f76b0b6308147028d8f989541ed8d298c5bfcd40a5e",
+    "access": "curator-local-private"
+  },
+  "strata": {
+    "languageFamily": "python",
+    "architectureFamily": "service-config",
+    "size": "large",
+    "changeShapes": ["large-diff", "seam"],
+    "surfaceLanes": ["runtime-config"]
+  },
+  "proof": {
+    "kind": "clean-control-review",
+    "artifact": "proof.json",
+    "sha256": "746ef477d1104a861e0181e7009df6144cd2ca709a3162298e9fbc9a5b420f62"
+  },
+  "confirmations": [
+    {
+      "curatorIdentitySha256": "617ac849db736678cc50ccdba46a2eab92738cafb44bda4ccd1eee1c585a4bc1",
+      "confirmedAt": "2026-09-03T16:00:00Z",
+      "checks": ["classification", "clean-control", "line-range", "provenance", "source-authenticity", "truth-completeness"]
+    }
+  ]
+}

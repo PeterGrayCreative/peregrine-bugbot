@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "caseId": "case-39e6a1c4",
+  "status": "draft",
+  "source": {
+    "kind": "clean",
+    "repositoryAlias": "catalog-api",
+    "repositoryIdentitySha256": "1463700c5e276214fe683a20e43ecd7b29b1d50041e1b06c46f6a88e9dcd41ba",
+    "changeIdentitySha256": "906c9718ae95e6e4a207e48356f274d933370bab9d22eafc83e946b4427d1b25",
+    "access": "curator-local-private"
+  },
+  "strata": {
+    "languageFamily": "python",
+    "architectureFamily": "http-api",
+    "size": "small",
+    "changeShapes": ["direct"],
+    "surfaceLanes": ["contracts"]
+  },
+  "proof": {
+    "kind": "clean-control-review",
+    "artifact": "proof.json",
+    "sha256": "b9960209017e27e58ab89055eb3a7c5a8db2413bef5fae5b0fcf60d35121e6a2"
+  },
+  "confirmations": [
+    {
+      "curatorIdentitySha256": "617ac849db736678cc50ccdba46a2eab92738cafb44bda4ccd1eee1c585a4bc1",
+      "confirmedAt": "2026-09-03T16:00:00Z",
+      "checks": ["classification", "clean-control", "line-range", "provenance", "source-authenticity", "truth-completeness"]
+    }
+  ]
+}

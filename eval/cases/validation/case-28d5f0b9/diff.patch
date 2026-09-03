@@ -1,0 +1,11 @@
+diff --git a/client.py b/client.py
+index 8962f88553f905722e80629998c6db8c03c7909f..cdf46a99064f9e97641441af158f30dbd733bacd 100644
+--- a/client.py
++++ b/client.py
+@@ -16,6 +16,4 @@ class ApiClient:
+         response: Response = self.transport.delete(f"/widgets/{widget_id}")
+         if not 200 <= response.status_code < 300:
+             raise RuntimeError(f"delete failed with {response.status_code}")
+-        if response.status_code == 204:
+-            return None
+         response.json()

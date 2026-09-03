@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "caseId": "case-b7f203ac",
+  "status": "draft",
+  "source": {
+    "kind": "seeded",
+    "repositoryAlias": "checkpoint-worker",
+    "repositoryIdentitySha256": "0afcc625bcd338ad81b8f2dfcec46137156f1f29cf486bfc0f37950c6fc4aaa5",
+    "changeIdentitySha256": "e32ba0628801f8c5838973d83688eeea35670306f328cad45f55e3ef01bf8f6c",
+    "access": "curator-local-private"
+  },
+  "strata": {
+    "languageFamily": "python",
+    "architectureFamily": "checkpoint-worker",
+    "size": "small",
+    "changeShapes": ["seam"],
+    "surfaceLanes": ["persistence"]
+  },
+  "proof": {
+    "kind": "regression-test",
+    "artifact": "proof.json",
+    "sha256": "ac28276881ac176211640517e46ad3fa497e2248cb06e60ddbcaf2b26c9df488"
+  },
+  "confirmations": [
+    {
+      "curatorIdentitySha256": "617ac849db736678cc50ccdba46a2eab92738cafb44bda4ccd1eee1c585a4bc1",
+      "confirmedAt": "2026-09-03T16:00:00Z",
+      "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
+    }
+  ]
+}

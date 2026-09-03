@@ -1,0 +1,18 @@
+diff --git a/checkpoint.py b/checkpoint.py
+index a396f41eccd2e07506cec1536e54baf2ecb91b6b..f0b3fd03c66f27aaf662041c4f86c289e7a6ec7a 100644
+--- a/checkpoint.py
++++ b/checkpoint.py
+@@ -12,11 +12,5 @@ def write_json(stream: TextIO, value: dict[str, int]) -> None:
+ 
+ 
+ def save_checkpoint(path: Path, value: dict[str, int], writer: Writer = write_json) -> None:
+-    temporary = path.with_suffix(path.suffix + ".tmp")
+-    try:
+-        with temporary.open("w") as stream:
+-            writer(stream, value)
+-        os.replace(temporary, path)
+-    except Exception:
+-        temporary.unlink(missing_ok=True)
+-        raise
++    with path.open("w") as stream:
++        writer(stream, value)

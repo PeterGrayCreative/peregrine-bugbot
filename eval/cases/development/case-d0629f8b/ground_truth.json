@@ -1,0 +1,18 @@
+{
+  "bugs": [
+    {
+      "id": "bug-d381be42",
+      "rootCauseGroup": "root-dd10e679",
+      "lane": "runtime-config",
+      "expectedDisposition": "fix-in-pr",
+      "expectedSeverity": "medium",
+      "file": "settings.py",
+      "startLine": 7,
+      "endLine": 8,
+      "description": "load_port treats an explicitly empty SERVICE_PORT as if the variable were absent, bypassing validation and silently selecting the default.",
+      "reachablePreconditions": "A deployment defines SERVICE_PORT with an empty value, which can occur through an unset template substitution.",
+      "observableImpact": "The process binds to port 8080 instead of rejecting malformed deployment configuration during startup.",
+      "provenance": "Seeded mutation changing an absence-only check into a truthiness check; test_settings.py covers missing, empty, and valid values."
+    }
+  ]
+}

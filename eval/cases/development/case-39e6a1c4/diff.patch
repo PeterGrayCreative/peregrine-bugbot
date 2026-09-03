@@ -1,0 +1,14 @@
+diff --git a/widget_payload.py b/widget_payload.py
+index e7a2601e52949cf050272c985f34dda3c4bb5343..62e0a7b110445d706668be498d7a9216f3db8df1 100644
+--- a/widget_payload.py
++++ b/widget_payload.py
+@@ -1,5 +1,5 @@
+ def widget_payload(widget_id: str, label: str | None = None) -> dict[str, str]:
+-    payload = {"id": widget_id}
+-    if label is not None:
+-        payload["label"] = label
+-    return payload
++    return {
++        "id": widget_id,
++        **({"label": label} if label is not None else {}),
++    }
