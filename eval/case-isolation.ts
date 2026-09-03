@@ -10,6 +10,7 @@ import {
   readdirSync,
   realpathSync,
   rmSync,
+  writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
@@ -17,6 +18,8 @@ import { packageRoot } from "../src/core/paths.js";
 import type {
   CaseCorpus,
   CaseSpec,
+  EvaluationDiffNormalization,
+  EvaluationHistoryProvenance,
   EvaluationIsolation,
   HistoricalCaseSpec,
   NetworkIsolationCapability,
@@ -26,7 +29,9 @@ import { exec } from "../src/util/exec.js";
 import { parseGroundTruth } from "./case-truth.js";
 
 const OPAQUE_CASE_ID = /^case-[a-f0-9]{8,32}$/;
-const COMMIT_OID = /^[a-f0-9]{40,64}$/;
+const COMMIT_OID = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
+export const EVALUATION_DIFF_NORMALIZATION: EvaluationDiffNormalization =
+  "identity-v1";
 const ANSWER_ARTIFACT = /^(?:ground[_-]?truth|later[_-]?fix|review[_-]?(?:thread|comment)s?|issue[_-]?(?:description|text)|curator[_-]?notes?)(?:\.|$)/i;
 const ANSWER_MARKERS = [
   /(?:\/\/|#|\/\*|\*)\s*(?:BUG|FIXME)\b/i,
@@ -50,6 +55,7 @@ const SAFE_LEAKAGE_LABELS = [
   "breadth model output",
   "final breadth provider prompt",
   "final investigation provider prompt",
+  "production review manifest",
   "reachable Git commit",
   "reachable Git path",
   "reachable Git blob",
@@ -71,6 +77,7 @@ export interface MaterializedCase {
   headRef: string;
   diffText: string;
   materializedDiffSha256: string;
+  historyProvenance: EvaluationHistoryProvenance;
   evaluationIsolation: EvaluationIsolation;
   cleanup(): void;
 }
@@ -243,7 +250,7 @@ export async function materializeCase(
   assertOpaqueCaseId(spec.id);
   const caseRoot = realpathSync(caseDir);
   const diffPath = confinedFile(caseRoot, spec.diffFile, "diffFile");
-  const expectedDiff = readFileSync(diffPath, "utf8");
+  const expectedDiff = normalizeEvaluationDiff(readFileSync(diffPath, "utf8"));
   assertSafeDiffPaths(expectedDiff);
   assertLeakageFreeText("review diff", expectedDiff, policy, { allowDocumentedMarkers: true });
 
@@ -281,12 +288,19 @@ export async function materializeCase(
     mkdirSync(join(providerHome, "xdg-cache"));
     mkdirSync(join(providerHome, "xdg-data"));
     mkdirSync(templateDir);
-    cpSync(diffPath, materializedDiffPath, { force: false, errorOnExist: true });
+    writeFileSync(materializedDiffPath, expectedDiff, { flag: "wx" });
     if (options.prepareProviderAssets === false) mkdirSync(providerAssetsRoot);
     else (options.assetPreparer ?? prepareProviderAssets)(providerAssetsRoot, policy);
 
+    let historicalSource: Awaited<ReturnType<typeof materializeHistorical>> | undefined;
     if (spec.kind === "historical") {
-      await materializeHistorical(spec, repoPath, attemptRoot, providerHome, templateDir);
+      historicalSource = await materializeHistorical(
+        spec,
+        repoPath,
+        attemptRoot,
+        providerHome,
+        templateDir,
+      );
     } else {
       await materializeFixture(caseRoot, spec.fixtureDir, materializedDiffPath, repoPath, providerHome, templateDir);
     }
@@ -298,8 +312,24 @@ export async function materializeCase(
 
     const baseRef = await git(repoPath, ["rev-parse", "HEAD^"], providerHome);
     const headRef = await git(repoPath, ["rev-parse", "HEAD"], providerHome);
+    const mergeBase = await git(repoPath, ["merge-base", baseRef, headRef], providerHome);
+    if (mergeBase !== baseRef) {
+      throw new Error("materialized base is not the merge base of the review range");
+    }
     await assertPatchReproducesRange(repoPath, materializedDiffPath, baseRef, headRef, providerHome);
-    const actualDiff = await git(repoPath, ["diff", "--no-ext-diff", `${baseRef}...${headRef}`], providerHome);
+    const actualDiff = await canonicalRangeDiff(repoPath, baseRef, headRef, providerHome);
+    if (actualDiff !== expectedDiff) {
+      throw new Error(
+        `checked-in diff does not exactly match the materialized merge-base...head diff after ${EVALUATION_DIFF_NORMALIZATION}`,
+      );
+    }
+    const { baseTree, headTree, objectFormat } = await assertCheckedOutHead(
+      repoPath,
+      baseRef,
+      headRef,
+      providerHome,
+    );
+    const diffSha256 = createHash("sha256").update(actualDiff).digest("hex");
 
     const evaluationIsolation: EvaluationIsolation = {
       providerHome,
@@ -312,7 +342,26 @@ export async function materializeCase(
       baseRef,
       headRef,
       diffText: actualDiff,
-      materializedDiffSha256: createHash("sha256").update(actualDiff).digest("hex"),
+      materializedDiffSha256: diffSha256,
+      historyProvenance: {
+        schemaVersion: 1,
+        materialization: spec.kind === "historical"
+          ? "historical-sanitized-export"
+          : "fixture-patch",
+        objectFormat,
+        baseRef,
+        headRef,
+        mergeBase,
+        baseTree,
+        headTree,
+        commitCount: 2,
+        baseIsMergeBase: true,
+        checkedOutTreeMatchesHead: true,
+        treeReproductionVerified: true,
+        ...(historicalSource ? { historicalSource } : {}),
+        diffNormalization: EVALUATION_DIFF_NORMALIZATION,
+        diffSha256,
+      },
       evaluationIsolation,
       cleanup,
     };
@@ -337,8 +386,16 @@ async function assertPatchReproducesRange(
   providerHome: string,
 ): Promise<void> {
   try {
-    await git(repoPath, ["apply", "--check", "--index", "--reverse", diffPath], providerHome);
-    await git(repoPath, ["apply", "--index", "--reverse", diffPath], providerHome);
+    await git(
+      repoPath,
+      ["apply", "--unidiff-zero", "--check", "--index", "--reverse", diffPath],
+      providerHome,
+    );
+    await git(
+      repoPath,
+      ["apply", "--unidiff-zero", "--index", "--reverse", diffPath],
+      providerHome,
+    );
     const reversedTree = await git(repoPath, ["write-tree"], providerHome);
     const baseTree = await git(repoPath, ["rev-parse", `${baseRef}^{tree}`], providerHome);
     if (reversedTree !== baseTree) {
@@ -347,6 +404,59 @@ async function assertPatchReproducesRange(
   } finally {
     await git(repoPath, ["reset", "--quiet", "--hard", headRef], providerHome);
   }
+}
+
+export function normalizeEvaluationDiff(value: string): string {
+  // Identity is intentional: CR bytes in a patch can belong to tracked CRLF
+  // content, so even line-ending normalization could change repository state.
+  return value;
+}
+
+async function canonicalRangeDiff(
+  repoPath: string,
+  baseRef: string,
+  headRef: string,
+  providerHome: string,
+): Promise<string> {
+  const raw = await gitRaw(
+    repoPath,
+    [
+      "diff",
+      "--binary",
+      "--full-index",
+      "--no-ext-diff",
+      "--no-color",
+      "--find-renames",
+      `${baseRef}...${headRef}`,
+    ],
+    providerHome,
+  );
+  return normalizeEvaluationDiff(raw);
+}
+
+async function assertCheckedOutHead(
+  repoPath: string,
+  baseRef: string,
+  headRef: string,
+  providerHome: string,
+): Promise<{ baseTree: string; headTree: string; objectFormat: "sha1" | "sha256" }> {
+  const currentHead = await git(repoPath, ["rev-parse", "HEAD"], providerHome);
+  if (currentHead !== headRef) throw new Error("materialized checkout is not at the review head");
+  const baseTree = await git(repoPath, ["rev-parse", `${baseRef}^{tree}`], providerHome);
+  const headTree = await git(repoPath, ["rev-parse", `${headRef}^{tree}`], providerHome);
+  const indexTree = await git(repoPath, ["write-tree"], providerHome);
+  if (indexTree !== headTree) throw new Error("materialized index does not match the head tree");
+  const worktreeDiff = await gitRaw(
+    repoPath,
+    ["diff", "--no-ext-diff", "--no-color", "--exit-code", headRef, "--"],
+    providerHome,
+  );
+  if (worktreeDiff.length > 0) throw new Error("materialized working tree does not match the head tree");
+  const objectFormat = await git(repoPath, ["rev-parse", "--show-object-format"], providerHome);
+  if (objectFormat !== "sha1" && objectFormat !== "sha256") {
+    throw new Error("materialized repository uses an unsupported Git object format");
+  }
+  return { baseTree, headTree, objectFormat };
 }
 
 function prepareProviderAssets(target: string, policy: LeakagePolicy): void {
@@ -520,13 +630,13 @@ async function materializeFixture(
   const fixture = confinedDirectory(caseRoot, fixtureDir, "fixtureDir");
   assertTreeSafe(fixture, undefined, { allowRootGit: false });
   copyTree(fixture, repoPath);
-  await initSanitizedRepository(repoPath, providerHome, templateDir);
+  await initSanitizedRepository(repoPath, providerHome, templateDir, "sha1");
 
-  await git(repoPath, ["apply", "--check", "--reverse", diffPath], providerHome);
-  await git(repoPath, ["apply", "--reverse", diffPath], providerHome);
+  await git(repoPath, ["apply", "--unidiff-zero", "--check", "--reverse", diffPath], providerHome);
+  await git(repoPath, ["apply", "--unidiff-zero", "--reverse", diffPath], providerHome);
   await commitTree(repoPath, providerHome, "base", "2000-01-01T00:00:00Z");
-  await git(repoPath, ["apply", "--check", diffPath], providerHome);
-  await git(repoPath, ["apply", diffPath], providerHome);
+  await git(repoPath, ["apply", "--unidiff-zero", "--check", diffPath], providerHome);
+  await git(repoPath, ["apply", "--unidiff-zero", diffPath], providerHome);
   await commitTree(repoPath, providerHome, "head", "2000-01-02T00:00:00Z");
 }
 
@@ -536,7 +646,7 @@ async function materializeHistorical(
   attemptRoot: string,
   providerHome: string,
   templateDir: string,
-): Promise<void> {
+): Promise<NonNullable<EvaluationHistoryProvenance["historicalSource"]>> {
   if (!COMMIT_OID.test(spec.baseCommit) || !COMMIT_OID.test(spec.headCommit)) {
     throw new Error("historical baseCommit and headCommit must be full hexadecimal object IDs");
   }
@@ -563,18 +673,48 @@ async function materializeHistorical(
   );
   if (clone.code !== 0) throw new Error(`historical source clone failed with exit ${clone.code}`);
 
+  let sourceBaseTree = "";
+  let sourceHeadTree = "";
   try {
+    const sourceMergeBase = await git(
+      staging,
+      ["merge-base", spec.baseCommit, spec.headCommit],
+      curatorHome,
+    );
+    if (sourceMergeBase !== spec.baseCommit) {
+      throw new Error("historical baseCommit must be the merge base and an ancestor of headCommit");
+    }
+    sourceBaseTree = await git(
+      staging,
+      ["rev-parse", `${spec.baseCommit}^{tree}`],
+      curatorHome,
+    );
+    sourceHeadTree = await git(
+      staging,
+      ["rev-parse", `${spec.headCommit}^{tree}`],
+      curatorHome,
+    );
+    const sourceObjectFormat = await git(
+      staging,
+      ["rev-parse", "--show-object-format"],
+      curatorHome,
+    );
+    if (sourceObjectFormat !== "sha1" && sourceObjectFormat !== "sha256") {
+      throw new Error("historical source uses an unsupported Git object format");
+    }
     await git(staging, ["checkout", "--quiet", "--detach", spec.baseCommit], curatorHome);
     assertTreeSafe(staging, undefined, { allowRootGit: true });
     copyTree(staging, repoPath, new Set([".git"]));
-    await initSanitizedRepository(repoPath, providerHome, templateDir);
+    await initSanitizedRepository(repoPath, providerHome, templateDir, sourceObjectFormat);
     await commitTree(repoPath, providerHome, "base", "2000-01-01T00:00:00Z");
+    await assertExportedSourceTree(repoPath, sourceBaseTree, "base", providerHome);
 
     clearWorkingTree(repoPath);
     await git(staging, ["checkout", "--quiet", "--detach", spec.headCommit], curatorHome);
     assertTreeSafe(staging, undefined, { allowRootGit: true });
     copyTree(staging, repoPath, new Set([".git"]));
     await commitTree(repoPath, providerHome, "head", "2000-01-02T00:00:00Z");
+    await assertExportedSourceTree(repoPath, sourceHeadTree, "head", providerHome);
   } finally {
     rmSync(staging, { recursive: true, force: true });
     rmSync(curatorHome, { recursive: true, force: true });
@@ -584,14 +724,50 @@ async function materializeHistorical(
   if (existsSync(staging) || existsSync(curatorHome)) {
     throw new Error("historical curator source was not removed");
   }
+  return {
+    sourceIdentitySha256: createHash("sha256").update(sourcePath).digest("hex"),
+    sourceBaseRef: spec.baseCommit,
+    sourceHeadRef: spec.headCommit,
+    sourceMergeBase: spec.baseCommit,
+    sourceBaseTree,
+    sourceHeadTree,
+    baseCommitIsMergeBase: true,
+    baseTreeMatches: true,
+    headTreeMatches: true,
+  };
+}
+
+async function assertExportedSourceTree(
+  repoPath: string,
+  expectedTree: string,
+  label: "base" | "head",
+  providerHome: string,
+): Promise<void> {
+  const actualTree = await git(repoPath, ["rev-parse", "HEAD^{tree}"], providerHome);
+  if (actualTree !== expectedTree) {
+    throw new Error(
+      `historical ${label} tree could not be reproduced exactly; unsupported or omitted Git entries are forbidden`,
+    );
+  }
 }
 
 async function initSanitizedRepository(
   repoPath: string,
   providerHome: string,
   templateDir: string,
+  objectFormat: "sha1" | "sha256",
 ): Promise<void> {
-  await git(repoPath, ["init", "--quiet", "--initial-branch=review", `--template=${templateDir}`], providerHome);
+  await git(
+    repoPath,
+    [
+      "init",
+      "--quiet",
+      "--initial-branch=review",
+      `--object-format=${objectFormat}`,
+      `--template=${templateDir}`,
+    ],
+    providerHome,
+  );
 }
 
 async function commitTree(
@@ -600,8 +776,15 @@ async function commitTree(
   message: string,
   date: string,
 ): Promise<void> {
-  await git(repoPath, ["add", "--all"], providerHome);
-  await git(repoPath, ["-c", "commit.gpgsign=false", "commit", "--quiet", "-m", message], providerHome, date);
+  // Historical sources may intentionally track paths covered by their own
+  // .gitignore. Force-add the exported tree so Git cannot silently omit them.
+  await git(repoPath, ["add", "--force", "--all"], providerHome);
+  await git(
+    repoPath,
+    ["-c", "commit.gpgsign=false", "commit", "--quiet", "--allow-empty", "-m", message],
+    providerHome,
+    date,
+  );
 }
 
 async function assertSanitizedRepository(repoPath: string, providerHome: string): Promise<void> {
@@ -618,6 +801,44 @@ async function assertSanitizedRepository(repoPath: string, providerHome: string)
   const config = readFileSync(join(repoPath, ".git", "config"), "utf8");
   if (/\[(?:remote|credential|http|url)\b/i.test(config)) {
     throw new Error("materialized repository contains remote or credentialed Git configuration");
+  }
+  for (const forbidden of [
+    join(repoPath, ".git", "objects", "info", "alternates"),
+    join(repoPath, ".git", "objects", "info", "http-alternates"),
+    join(repoPath, ".git", "shallow"),
+    join(repoPath, ".git", "info", "grafts"),
+  ]) {
+    if (existsSync(forbidden)) {
+      throw new Error("materialized repository retains an alternate or rewritten history source");
+    }
+  }
+  const refs = (await git(
+    repoPath,
+    ["for-each-ref", "--format=%(refname)"],
+    providerHome,
+  )).split("\n").filter(Boolean);
+  if (refs.length !== 1 || refs[0] !== "refs/heads/review") {
+    throw new Error("materialized repository contains an unexpected Git ref");
+  }
+  const allowedReflogOids = new Set([
+    await git(repoPath, ["rev-parse", "HEAD"], providerHome),
+    await git(repoPath, ["rev-parse", "HEAD^"], providerHome),
+  ]);
+  const reflogOids = (await git(
+    repoPath,
+    ["reflog", "--all", "--format=%H"],
+    providerHome,
+  )).split("\n").filter(Boolean);
+  if (reflogOids.some((oid) => !allowedReflogOids.has(oid))) {
+    throw new Error("materialized repository reflog exposes an unexpected commit");
+  }
+  const unreachable = await gitRaw(
+    repoPath,
+    ["fsck", "--unreachable", "--no-reflogs", "--no-progress"],
+    providerHome,
+  );
+  if (unreachable.trim()) {
+    throw new Error("materialized repository contains unreachable Git objects");
   }
 }
 

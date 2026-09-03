@@ -1,6 +1,10 @@
+diff --git a/src/load.ts b/src/load.ts
+index 15c44117444a40ea22c813703a2c13e6b5eab72d..3ed40f76e86a3ebe150245d57f4cbde3169d9e2e 100644
 --- a/src/load.ts
 +++ b/src/load.ts
-@@ -4,3 +4,7 @@
+@@ -2,5 +2,9 @@ interface Data { value: string }
+ interface Store { read(): Promise<Data> }
+ 
  export async function load(store: Store): Promise<Data> {
 -  return store.read();
 +  try {

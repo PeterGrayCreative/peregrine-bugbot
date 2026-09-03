@@ -101,11 +101,36 @@ that point, a missing credential is recorded as a provider failure; without
 external containment, the earlier isolation check remains a configuration
 failure and no provider process starts.
 
-The isolation slice constructs the minimum fresh two-commit fixture needed by
-the existing review flow. Plan PR 3 remains responsible for exact textual diff
-equivalence, addition-only empty bases, original ancestry and merge-base proof,
-and fail-closed production-manifest provenance. Nothing in this slice is model
-quality evidence.
+Each accepted case now proves a reproducible two-commit range before an engine
+can run. Fixture commits use fixed identities and timestamps, including an
+empty base for addition-only cases. Historical cases export the complete base
+and head trees into the sanitized repository, preserve the source object
+format, and require both recreated tree IDs to match the source tree IDs. That
+last check fails closed on omitted unchanged content, Git links, checkout
+filters, and normalization drift. The sanitized repository must have exactly
+one local review ref, no remotes, alternates, shallow boundary, grafts, replace
+refs, future objects, or unexpected reflog objects.
+
+The canonical checked-in patch is the exact byte output of
+`git diff --binary --full-index --no-ext-diff --no-color --find-renames
+<base>...<head>` with Git's production-default context. Its documented
+normalization is `identity-v1`: no newline, encoding, or whitespace rewriting
+is allowed. The binary/full-index flags make binary changes reconstructable;
+the default context keeps evaluation faithful to production review prompts.
+Patch artifacts are marked `-text -whitespace` in `.gitattributes` so checkout
+EOL conversion and the outer repository's trailing-whitespace checker cannot
+reinterpret valid nested unified-diff context.
+
+After history verification and before any provider or mock engine invocation,
+every attempt calls the exported production `prepareReviewManifest` entry
+point. Unavailable, empty, oversized, secret-bearing, or ref-mismatched output
+is a configuration failure. Attempt records retain the verified history even
+when manifest preflight fails; successful preflight additionally retains the
+exact bounded manifest text, its UTF-8 SHA-256, refs, and profile provenance.
+Typed manifest parsing remains a later shadow/parity slice, so this work does
+not alter prompts, grading, routing, budgets, posting, or model choice. These
+history and manifest checks are evaluation-integrity evidence, not model-quality
+evidence.
 
 ## Running
 

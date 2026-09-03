@@ -69,6 +69,8 @@ if [[ -z "$repo_root" ]]; then
   echo "error: run the manifest from inside the repository under review" >&2
   exit 1
 fi
+repo_cdup="$(git rev-parse --show-cdup 2>/dev/null || true)"
+repo_root_logical="$(cd "./${repo_cdup}" && pwd -L)"
 repo_root="$(cd "$repo_root" && pwd -P)"
 
 if [[ ! -d "$lanes_dir" ]]; then
@@ -80,23 +82,74 @@ profile_abs=""
 profile_repo_rel=""
 profile_is_repo_local=0
 profile_lanes_rel=""
+
+normalize_lexical_absolute_path() {
+  local input="$1" component normalized="" old_ifs
+  local -a components=()
+  if [[ "$input" != /* ]]; then
+    input="$(pwd -L)/${input}"
+  fi
+  old_ifs="$IFS"
+  IFS='/' read -r -a components <<< "$input"
+  IFS="$old_ifs"
+  for component in "${components[@]}"; do
+    case "$component" in
+      ''|.)
+        ;;
+      ..)
+        normalized="${normalized%/*}"
+        ;;
+      *)
+        normalized="${normalized%/}/${component}"
+        ;;
+    esac
+  done
+  printf '%s\n' "${normalized:-/}"
+}
+
 if [[ -n "$requested_profile" ]]; then
-  if [[ -e "$requested_profile" || -L "$requested_profile" ]]; then
+  profile_lexical="$(normalize_lexical_absolute_path "$requested_profile")"
+  case "$profile_lexical" in
+    "$repo_root")
+      profile_abs="$repo_root"
+      profile_is_repo_local=1
+      profile_repo_rel=""
+      ;;
+    "$repo_root"/*)
+      profile_repo_rel="${profile_lexical#"$repo_root"/}"
+      profile_abs="${repo_root}/${profile_repo_rel}"
+      profile_is_repo_local=1
+      ;;
+    "$repo_root_logical")
+      profile_abs="$repo_root"
+      profile_is_repo_local=1
+      profile_repo_rel=""
+      ;;
+    "$repo_root_logical"/*)
+      profile_repo_rel="${profile_lexical#"$repo_root_logical"/}"
+      profile_abs="${repo_root}/${profile_repo_rel}"
+      profile_is_repo_local=1
+      ;;
+  esac
+
+  if [[ "$profile_is_repo_local" -eq 1 ]]; then
+    :
+  elif [[ -e "$requested_profile" || -L "$requested_profile" ]]; then
     profile_parent="$(cd "$(dirname "$requested_profile")" && pwd -P)"
     profile_abs="${profile_parent}/$(basename "$requested_profile")"
-  elif [[ "$requested_profile" == ".peregrine/profile.md" || "$requested_profile" == "${repo_root}/.peregrine/profile.md" ]]; then
-    profile_abs="${repo_root}/.peregrine/profile.md"
   else
     echo "error: profile not found: ${requested_profile}" >&2
     exit 1
   fi
 
-  case "$profile_abs" in
-    "${repo_root}"/*)
-      profile_is_repo_local=1
-      profile_repo_rel="${profile_abs#"${repo_root}"/}"
-      ;;
-  esac
+  if [[ "$profile_is_repo_local" -eq 0 ]]; then
+    case "$profile_abs" in
+      "${repo_root}"/*)
+        profile_is_repo_local=1
+        profile_repo_rel="${profile_abs#"${repo_root}"/}"
+        ;;
+    esac
+  fi
 fi
 
 extract_review_base() {

@@ -18,6 +18,17 @@ import { RunFailureError } from "../src/core/run-failure.js";
 import type { Engine } from "../src/engines/engine.js";
 import type { MatrixModelConfig, MatrixRunManifest, RunRecord } from "../src/types.js";
 
+const CANONICAL_VALUE_PATCH = [
+  "diff --git a/src/value.ts b/src/value.ts",
+  "index 62ab7ee3c77e9b3c27cca16715e3ffe459799136..db3515920daa6bb3ec433cff58bef3856f63fe39 100644",
+  "--- a/src/value.ts",
+  "+++ b/src/value.ts",
+  "@@ -1 +1 @@",
+  "-export const value = true;",
+  "+export const value = false;",
+  "",
+].join("\n");
+
 test("matrix accounting preserves failures, missing attempts, recall, and unknown cost", async () => {
   const root = mkdtempSync(join(tmpdir(), "peregrine-accounting-test-"));
   const casesDir = join(root, "cases");
@@ -28,7 +39,7 @@ test("matrix accounting preserves failures, missing attempts, recall, and unknow
   writeFileSync(join(fixtureDir, "value.ts"), "export const value = false;\n");
   writeFileSync(
     join(caseDir, "diff.patch"),
-    "diff --git a/src/value.ts b/src/value.ts\n--- a/src/value.ts\n+++ b/src/value.ts\n@@ -1 +1 @@\n-export const value = true;\n+export const value = false;\n",
+    CANONICAL_VALUE_PATCH,
   );
   writeFileSync(
     join(caseDir, "case.json"),
@@ -214,7 +225,7 @@ test("malformed or missing truth remains failed and makes mixed denominators una
     writeFileSync(join(caseDir, "fixture", "src", "value.ts"), "export const value = false;\n");
     writeFileSync(
       join(caseDir, "diff.patch"),
-      "--- a/src/value.ts\n+++ b/src/value.ts\n@@ -1 +1 @@\n-export const value = true;\n+export const value = false;\n",
+      CANONICAL_VALUE_PATCH,
     );
     writeFileSync(
       join(caseDir, "case.json"),

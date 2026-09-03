@@ -7,6 +7,7 @@ import { getEngine } from "../src/engines/engine.js";
 import { safeDiagnostic } from "../src/security/secrets.js";
 import {
   assertLiveProviderIsolationAvailable,
+  assertLeakageFreeText,
   assertOpaqueCaseId,
   assertRunnerMayUseCorpus,
   caseIdFromDirectory,
@@ -16,10 +17,13 @@ import {
   networkIsolationCapability,
   readSanitizedMetadata,
 } from "./case-isolation.js";
+import { prepareEvaluationManifest } from "./case-manifest.js";
+import type { EvaluationManifestPreparer } from "./case-manifest.js";
 import { CASE_CORPORA } from "../src/types.js";
 import type {
   CaseCorpus,
   CaseSpec,
+  EvaluationAttemptProvenance,
   MatrixConfig,
   MatrixRunManifest,
   ReviewContext,
@@ -32,6 +36,8 @@ import { parseGroundTruth } from "./case-truth.js";
 interface RunMatrixOptions {
   casesDir?: string;
   engineFor?: (runner: RunnerName) => Engine;
+  /** Test seam; production and normal eval calls use prepareReviewManifest. */
+  manifestPreparer?: EvaluationManifestPreparer;
 }
 
 interface DiscoveredCase {
@@ -138,6 +144,7 @@ export async function runMatrix(
         );
 
         let materialized: Awaited<ReturnType<typeof materializeCase>> | undefined;
+        let evaluationProvenance: EvaluationAttemptProvenance | undefined;
         try {
           if (!spec || !policy || !metadata) {
             throw new RunFailureError(
@@ -151,7 +158,7 @@ export async function runMatrix(
             materialized = await materializeCase(caseDir, spec, policy, {
               prepareProviderAssets: modelConfig.runner !== "mock",
             });
-            assertLiveProviderIsolationAvailable(modelConfig.runner);
+            evaluationProvenance = { history: materialized.historyProvenance };
           } catch (error) {
             throw new RunFailureError(
               "configuration",
@@ -195,6 +202,37 @@ export async function runMatrix(
             config,
           };
 
+          try {
+            const prepared = await prepareEvaluationManifest(
+              ctx,
+              productionManifestSkillName(config, modelConfig.runner),
+              materialized.historyProvenance,
+              options.manifestPreparer,
+              (output) => assertLeakageFreeText(
+                "production review manifest",
+                output,
+                policy,
+                { allowDocumentedMarkers: true },
+              ),
+            );
+            evaluationProvenance.manifest = prepared.provenance;
+          } catch (error) {
+            throw new RunFailureError(
+              "configuration",
+              `case ${spec.id} manifest preflight failed: ${error instanceof Error ? error.message : String(error)}`,
+              { cause: error },
+            );
+          }
+          try {
+            assertLiveProviderIsolationAvailable(modelConfig.runner);
+          } catch (error) {
+            throw new RunFailureError(
+              "configuration",
+              `case ${spec.id} isolation failed: ${error instanceof Error ? error.message : String(error)}`,
+              { cause: error },
+            );
+          }
+
           const result = await (options.engineFor ?? getEngine)(modelConfig.runner).review(ctx);
           const record: RunRecord = {
             schemaVersion: 1,
@@ -206,6 +244,7 @@ export async function runMatrix(
             repeat,
             startedAt,
             finishedAt: new Date().toISOString(),
+            evaluationProvenance,
             outcome: { status: "completed", result },
           };
           writeFileSync(file, JSON.stringify(record, null, 2));
@@ -225,6 +264,7 @@ export async function runMatrix(
             repeat,
             startedAt,
             finishedAt: new Date().toISOString(),
+            ...(evaluationProvenance ? { evaluationProvenance } : {}),
             outcome: {
               status: "failed",
               failureKind,
@@ -269,6 +309,17 @@ export async function runMatrix(
   console.log(`\nRuns written to ${outDir}`);
   console.log(`Next: npm run eval:grade -- --runs ${outDir}`);
   return outDir;
+}
+
+function productionManifestSkillName(config: ReviewContext["config"], runner: RunnerName): string {
+  if (runner === "claude") return config.runners.claude.skillName;
+  if (runner === "codex") return config.runners.codex.skillName;
+  if (config.runners.claude.skillName !== config.runners.codex.skillName) {
+    throw new Error(
+      "mock evaluation requires Claude and Codex to share one production manifest skill",
+    );
+  }
+  return config.runners.claude.skillName;
 }
 
 export function loadCaseSpec(caseDir: string): CaseSpec {

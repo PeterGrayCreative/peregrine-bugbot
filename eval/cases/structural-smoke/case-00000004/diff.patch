@@ -1,8 +1,10 @@
+diff --git a/src/user-service.ts b/src/user-service.ts
+index 789fc80f5e22bad377039791b29e8709ad431a15..e2461004bb9003bd151c5dbdeae7a3c8a241fa71 100644
 --- a/src/user-service.ts
 +++ b/src/user-service.ts
 @@ -11,7 +11,6 @@ export function getUser(id: string): User | undefined {
  }
-
+ 
  export function getUserLocale(id: string): string {
 -  const user = getUser(id);
 -  if (!user?.preferences) return "en-US";

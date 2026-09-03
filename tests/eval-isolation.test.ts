@@ -32,6 +32,8 @@ import type { Engine } from "../src/engines/engine.js";
 
 const HEAD = "export const enabled = false;\n";
 const PATCH = [
+  "diff --git a/src/value.ts b/src/value.ts",
+  "index 50ab75ce5404471a2dd5f5c25b6d04e9a1162938..8432b2819c789e32f686d96d82fd1f57fad94ea5 100644",
   "--- a/src/value.ts",
   "+++ b/src/value.ts",
   "@@ -1 +1 @@",
@@ -100,11 +102,13 @@ test("historical attempts export only sanitized base and head trees", async () =
   git(source, "add", ".");
   git(source, "commit", "-q", "-m", "source head");
   const head = git(source, "rev-parse", "HEAD");
-  const diff = git(source, "diff", `${base}...${head}`) + "\n";
+  const diff = canonicalDiff(source, base, head);
   writeFileSync(join(source, "src/value.ts"), "export const count = 3;\n");
   git(source, "add", ".");
   git(source, "commit", "-q", "-m", "future repair");
   const later = git(source, "rev-parse", "HEAD");
+  const laterTree = git(source, "rev-parse", `${later}^{tree}`);
+  const laterBlob = git(source, "rev-parse", `${later}:src/value.ts`);
   git(source, "remote", "add", "origin", "https://example.invalid/answer-source.git");
   mkdirSync(join(source, ".git", "hooks"), { recursive: true });
   writeFileSync(join(source, ".git", "hooks", "pre-commit"), "#!/bin/sh\n");
@@ -142,8 +146,47 @@ test("historical attempts export only sanitized base and head trees", async () =
     assert.equal(readFileSync(join(materialized.repoPath, "src/value.ts"), "utf8"), "export const count = 2;\n");
     assert.notEqual(materialized.baseRef, base);
     assert.notEqual(materialized.headRef, head);
-    const future = spawnSync("git", ["cat-file", "-e", later], { cwd: materialized.repoPath });
-    assert.notEqual(future.status, 0);
+    assert.equal(
+      materialized.historyProvenance.baseTree,
+      git(source, "rev-parse", `${base}^{tree}`),
+    );
+    assert.equal(
+      materialized.historyProvenance.headTree,
+      git(source, "rev-parse", `${head}^{tree}`),
+    );
+    assert.equal(materialized.historyProvenance.historicalSource?.sourceBaseRef, base);
+    assert.equal(materialized.historyProvenance.historicalSource?.sourceHeadRef, head);
+    assert.equal(materialized.historyProvenance.historicalSource?.sourceMergeBase, base);
+    assert.equal(
+      materialized.historyProvenance.historicalSource?.sourceBaseTree,
+      materialized.historyProvenance.baseTree,
+    );
+    assert.equal(
+      materialized.historyProvenance.historicalSource?.sourceHeadTree,
+      materialized.historyProvenance.headTree,
+    );
+    assert.match(
+      materialized.historyProvenance.historicalSource?.sourceIdentitySha256 ?? "",
+      /^[a-f0-9]{64}$/,
+    );
+    assert.equal(materialized.historyProvenance.historicalSource?.baseCommitIsMergeBase, true);
+    assert.equal(materialized.historyProvenance.historicalSource?.baseTreeMatches, true);
+    assert.equal(materialized.historyProvenance.historicalSource?.headTreeMatches, true);
+    for (const futureOid of [later, laterTree, laterBlob]) {
+      const future = spawnSync("git", ["cat-file", "-e", futureOid], {
+        cwd: materialized.repoPath,
+      });
+      assert.notEqual(future.status, 0);
+    }
+    assert.equal(existsSync(join(materialized.repoPath, ".git", "objects", "info", "alternates")), false);
+    assert.equal(existsSync(join(materialized.repoPath, ".git", "shallow")), false);
+    assert.equal(git(materialized.repoPath, "for-each-ref", "--format=%(refname)"), "refs/heads/review");
+    const allowedReflogOids = new Set([materialized.baseRef, materialized.headRef]);
+    assert.ok(
+      git(materialized.repoPath, "reflog", "--all", "--format=%H")
+        .split("\n")
+        .every((oid) => allowedReflogOids.has(oid)),
+    );
     assert.equal(existsSync(join(dirname(materialized.repoPath), "curator-source")), false);
   } finally {
     materialized.cleanup();
@@ -185,7 +228,7 @@ test("reachable deleted UTF-16 binary blobs are scanned before provider invocati
       const head = git(source, "rev-parse", "HEAD");
 
       mkdirSync(caseDir, { recursive: true });
-      writeFileSync(join(caseDir, "diff.patch"), `${git(source, "diff", "--binary", `${base}...${head}`)}\n`);
+      writeFileSync(join(caseDir, "diff.patch"), canonicalDiff(source, base, head));
       writeFileSync(
         join(caseDir, "ground_truth.json"),
         JSON.stringify({ bugs: [{
@@ -796,7 +839,7 @@ function createBaseOnlyDeletionCase(
   const caseDir = join(casesDir, "development", id);
   mkdirSync(join(caseDir, "fixture", "src"), { recursive: true });
   writeFileSync(join(caseDir, "fixture", "src", "keep.ts"), "export const keep = true;\n");
-  writeFileSync(join(caseDir, "diff.patch"), `${git(source, "diff", "--binary", `${base}...${head}`)}\n`);
+  writeFileSync(join(caseDir, "diff.patch"), canonicalDiff(source, base, head));
   writeFileSync(
     join(caseDir, "ground_truth.json"),
     JSON.stringify({ bugs: [{
@@ -831,4 +874,20 @@ function encodeUtf16Be(utf16Le: Buffer): Buffer {
 
 function git(repo: string, ...args: string[]): string {
   return execFileSync("git", args, { cwd: repo, encoding: "utf8" }).trim();
+}
+
+function canonicalDiff(repo: string, base: string, head: string): string {
+  return execFileSync(
+    "git",
+    [
+      "diff",
+      "--binary",
+      "--full-index",
+      "--no-ext-diff",
+      "--no-color",
+      "--find-renames",
+      `${base}...${head}`,
+    ],
+    { cwd: repo, encoding: "utf8" },
+  );
 }

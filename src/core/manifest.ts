@@ -1,12 +1,13 @@
-import { existsSync } from "node:fs";
+import { existsSync, lstatSync, realpathSync } from "node:fs";
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { bundledSkillDir } from "./paths.js";
 import type { ReviewContext } from "../types.js";
 import { exec } from "../util/exec.js";
 import { nonSensitiveEnvironment } from "../security/provider-env.js";
 
-const MAX_MANIFEST_CHARS = 64_000;
+export const MAX_MANIFEST_CHARS = 64_000;
+const GIT_OBJECT_ID = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
 
 export interface ReviewManifest {
   available: boolean;
@@ -44,10 +45,36 @@ export async function prepareReviewManifest(ctx: ReviewContext, skillName: strin
 }
 
 async function resolveProfilePath(ctx: ReviewContext): Promise<string | undefined> {
-  if (ctx.profilePath) return resolve(ctx.repoPath, ctx.profilePath);
+  const lexicalRepoRoot = resolve(ctx.repoPath);
+  const physicalRepoRoot = realpathSync(ctx.repoPath);
+  if (ctx.profilePath) {
+    const requested = resolve(ctx.repoPath, ctx.profilePath);
+    const lexicalRelative = relative(lexicalRepoRoot, requested);
+    const physicalRelative = relative(physicalRepoRoot, requested);
+    const repoRelative = isRepoRelativePath(lexicalRelative)
+      ? lexicalRelative
+      : isRepoRelativePath(physicalRelative)
+        ? physicalRelative
+        : undefined;
+    if (repoRelative !== undefined) {
+      assertRepoProfilePathHasNoSymlinks(physicalRepoRoot, repoRelative);
+      return join(physicalRepoRoot, repoRelative);
+    }
+    // Canonicalize the containing directory, but never follow the final
+    // external profile symlink. Explicit external paths are trusted by caller
+    // choice, but repository-local paths above never gain that classification.
+    return existsSync(dirname(requested))
+      ? join(realpathSync(dirname(requested)), basename(requested))
+      : requested;
+  }
 
   const environment = nonSensitiveEnvironment();
-  const repositoryProfile = join(ctx.repoPath, ".peregrine", "profile.md");
+  // Use the physical checkout root even when TMPDIR or the caller used a
+  // symlinked path. A deleted head profile has no file to realpath directly,
+  // but the manifest script still needs this exact repo-local identity to load
+  // the trusted merge-base snapshot.
+  assertRepoProfilePathHasNoSymlinks(physicalRepoRoot, ".peregrine/profile.md");
+  const repositoryProfile = join(physicalRepoRoot, ".peregrine", "profile.md");
   if (existsSync(repositoryProfile)) return repositoryProfile;
 
   const mergeBase = await exec("git", ["merge-base", ctx.baseRef!, ctx.headRef!], {
@@ -56,7 +83,7 @@ async function resolveProfilePath(ctx: ReviewContext): Promise<string | undefine
     env: environment,
     inheritEnv: false,
   });
-  if (/^[a-f0-9]{40,64}$/.test(mergeBase.stdout.trim())) {
+  if (GIT_OBJECT_ID.test(mergeBase.stdout.trim())) {
     const baseProfile = await exec(
       "git",
       ["cat-file", "-e", `${mergeBase.stdout.trim()}:.peregrine/profile.md`],
@@ -81,10 +108,31 @@ async function resolveProfilePath(ctx: ReviewContext): Promise<string | undefine
     env: environment,
     inheritEnv: false,
   });
-  if (hash.code !== 0 || !/^[a-f0-9]{40,64}$/.test(hash.stdout.trim())) return undefined;
+  if (hash.code !== 0 || !GIT_OBJECT_ID.test(hash.stdout.trim())) return undefined;
   const profilesRoot = process.env.PEREGRINE_HOME
     ? resolve(process.env.PEREGRINE_HOME, "profiles")
     : join(homedir(), ".peregrine", "profiles");
   const externalProfile = join(profilesRoot, hash.stdout.trim(), "profile.md");
   return existsSync(externalProfile) ? externalProfile : undefined;
+}
+
+function isRepoRelativePath(path: string): boolean {
+  return path === "" || (path !== ".." && !path.startsWith(`..${sep}`) && !isAbsolute(path));
+}
+
+function assertRepoProfilePathHasNoSymlinks(repoRoot: string, repoRelative: string): void {
+  let current = repoRoot;
+  for (const component of repoRelative.split(/[\\/]/).filter(Boolean)) {
+    current = join(current, component);
+    try {
+      if (lstatSync(current).isSymbolicLink()) {
+        throw new Error("repository-local review profile path must not contain symbolic links");
+      }
+    } catch (error) {
+      if (error instanceof Error && /must not contain symbolic links/.test(error.message)) throw error;
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === "ENOENT" || code === "ENOTDIR") return;
+      throw error;
+    }
+  }
 }

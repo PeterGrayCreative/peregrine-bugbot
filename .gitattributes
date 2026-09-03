@@ -1,0 +1,3 @@
+# Canonical review patches encode unchanged blank context as a single space.
+# That is unified-diff syntax, not accidental trailing whitespace in source.
+eval/cases/**/diff.patch -text -whitespace
