@@ -27,7 +27,7 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | P0 follow-up | Add this implementation checklist | P0 | Merged | [#3](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/3) |
 | P1 / Plan PR 1 | Persist and report every matrix attempt | - | Merged | [#2](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/2) |
 | Plan PR 2 | Blind and isolate case materialization | PR 1 | Merged | [#5](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/5) |
-| Safety PR 2A.1 | Bootstrap and attest the provider runtime image | PR 2 | In review | [#9](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/9) |
+| Safety PR 2A.1 | Bootstrap and attest the provider runtime image | PR 2 | Merged; publication pending | [#9](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/9) |
 | Safety PR 2A.2 | Pin the accepted digest and enforce live filesystem containment | PR 2A.1 | Not started | - |
 | Plan PR 3 | Reproduce base/head history and production manifest path | PR 2 | Merged | [#7](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/7) |
 | Plan PR 4 | Root-cause grading, adjudication, and miss stages | PRs 3, 6 | Not started | - |
@@ -115,10 +115,10 @@ Plan PR 2 proves that isolated homes, opaque paths, CLI flags, and read-only too
 - [x] Restrict GHCR publication to manual dispatch from `main` with job-scoped permissions.
 - [x] Probe the exact pushed digest on both amd64 and arm64 before attesting that digest.
 - [x] Run `npm run validate`, independent security/supply-chain reviews, and open [PR #9](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/9).
-- [ ] Require the pull-request image build and zero-credential container smoke to pass before merge.
+- [x] Require the pull-request image build and zero-credential container smoke to pass before merge.
 - [ ] After merge, manually publish and verify an attested candidate before accepting its digest for Safety PR 2A.2.
 
-Evidence: [Safety PR 2A.1 validation record](../validation/2026-09-03-eval-runtime-image-bootstrap.md) and [PR #9](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/9). This bootstrap creates a quarantined candidate only; it does not open live evaluation.
+Evidence: [Safety PR 2A.1 validation record](../validation/2026-09-03-eval-runtime-image-bootstrap.md) and [PR #9](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/9), merged as `cfe9282158c9663f7bd0f40bf85a92f83076af2a`. Repository CI and the actual zero-credential image build/containment smoke passed. The manual publish job correctly skipped on the PR. The optional self-review could not authenticate because `ANTHROPIC_API_KEY` was empty, so `post` skipped. This bootstrap creates a quarantined candidate only; it does not open live evaluation.
 
 ### Safety PR 2A.2 - Runtime containment
 
