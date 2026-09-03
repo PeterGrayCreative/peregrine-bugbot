@@ -28,7 +28,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "path": { "type": "string", "pattern": "^attempt-[0-9]{6}\\.graded\\.json$" },
+        "path": { "type": "string", "pattern": "^(?:attempt-[0-9]{6}\\.graded\\.json|judge\\/(?:manifest|terminal-seal)\\.json)$" },
         "sha256": { "$ref": "#/$defs/sha256" }
       },
       "required": ["path", "sha256"]

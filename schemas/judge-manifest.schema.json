@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Peregrine semantic judge manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "experimentId", "experimentManifestSha256", "experimentTerminalSealSha256", "corpusSha256", "judgeImplementationSha256", "judgeConfigSha256", "judge", "providerAccess", "limits", "schedule", "manifestSha256"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "experimentId": { "type": "string", "minLength": 1 },
+    "experimentManifestSha256": { "$ref": "#/$defs/hash" },
+    "experimentTerminalSealSha256": { "$ref": "#/$defs/hash" },
+    "corpusSha256": { "$ref": "#/$defs/hash" },
+    "judgeImplementationSha256": { "$ref": "#/$defs/hash" },
+    "judgeConfigSha256": { "$ref": "#/$defs/hash" },
+    "manifestSha256": { "$ref": "#/$defs/hash" },
+    "judge": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "model", "effort", "version"],
+      "properties": { "kind": { "const": "codex" }, "model": { "const": "gpt-5.6-luna" }, "effort": { "const": "medium" }, "version": { "const": "semantic-v1" } }
+    },
+    "providerAccess": { "enum": ["api-key", "cli-session"] },
+    "limits": { "$ref": "experiment-manifest.schema.json#/$defs/limits" },
+    "schedule": { "type": "array", "items": { "$ref": "#/$defs/scheduled" } }
+  },
+  "$defs": {
+    "hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "scheduled": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "sequence", "groundTruthSha256", "findingEvidenceSha256", "promptSha256", "file"],
+      "properties": {
+        "id": { "$ref": "#/$defs/hash" }, "sequence": { "type": "integer", "minimum": 1 },
+        "groundTruthSha256": { "$ref": "#/$defs/hash" },
+        "findingEvidenceSha256": { "$ref": "#/$defs/hash" },
+        "promptSha256": { "$ref": "#/$defs/hash" }, "file": { "type": "string", "pattern": "^judge/attempt-[a-f0-9]{64}\\.json$" }
+      }
+    }
+  }
+}

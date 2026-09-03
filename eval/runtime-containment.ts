@@ -36,6 +36,8 @@ export interface ContainedProviderOptions {
   outputDir: string;
   image?: string;
   run?: typeof exec;
+  /** Review launches retain the broad evaluator allowlist; judge launches use an exact command profile. */
+  profile?: "review" | "semantic-judge";
 }
 
 export interface ParsedContainedLaunch {
@@ -51,6 +53,7 @@ export interface ParsedContainedLaunch {
   sessionDir?: string;
   command: string;
   commandArgs: string[];
+  profile: "review" | "semantic-judge";
 }
 
 export function buildContainedProviderArgs(
@@ -100,11 +103,11 @@ export function buildContainedProviderArgs(
     ...access,
     image, command, ...translated,
   ];
-  parseContainedProviderArgs(args, options.runner, options.providerAccess, identity);
+  parseContainedProviderArgs(args, options.runner, options.providerAccess, identity, options.profile ?? "review");
   return args;
 }
 
-function assertConfiguredAccess(options: ContainedProviderOptions): void {
+function assertConfiguredAccess(options: Pick<ContainedProviderOptions, "runner" | "providerAccess">): void {
   if (options.providerAccess === "api-key") {
     if (!process.env[PROVIDER_SECRET[options.runner]]) throw new Error(`selected ${options.runner} API credential is unavailable`);
     return;
@@ -120,6 +123,7 @@ export function parseContainedProviderArgs(
   runner: Exclude<RunnerName, "mock">,
   providerAccess: Exclude<ExperimentProviderAccess, "not-applicable">,
   expectedIdentity = hostIdentity(),
+  profile: "review" | "semantic-judge" = "review",
 ): ParsedContainedLaunch {
   let cursor = 0;
   const take = (expected?: string): string => {
@@ -154,13 +158,35 @@ export function parseContainedProviderArgs(
   const command = take();
   if (command !== runner) throw new Error("provider command does not match selected runner");
   const commandArgs = args.slice(cursor);
-  validateProviderCommand(runner, commandArgs);
+  validateProviderCommand(runner, commandArgs, profile);
   return { image, containerName, network: "bridge", checkoutDir, assetsDir, outputDir,
     uid: expectedIdentity.uid, gid: expectedIdentity.gid,
-    ...(secretName ? { secretName } : {}), ...(sessionDir ? { sessionDir } : {}), command, commandArgs };
+    ...(secretName ? { secretName } : {}), ...(sessionDir ? { sessionDir } : {}), command, commandArgs, profile };
 }
 
-function validateProviderCommand(runner: Exclude<RunnerName, "mock">, args: readonly string[]): void {
+function validateProviderCommand(
+  runner: Exclude<RunnerName, "mock">,
+  args: readonly string[],
+  profile: "review" | "semantic-judge",
+): void {
+  if (profile === "semantic-judge") {
+    if (runner !== "codex") throw new Error("semantic judge containment currently supports only Codex");
+    const expected = [
+      "exec", "--ephemeral", "--ignore-user-config", "--ignore-rules", "--strict-config",
+      "--disable", "shell_tool", "--disable", "unified_exec",
+      "--sandbox", "read-only", "--model", "gpt-5.6-luna",
+      "--config", 'model_reasoning_effort="medium"',
+      "--config", "project_doc_max_bytes=0",
+      "--config", "project_doc_fallback_filenames=[]",
+      "--config", 'projects."/workspace".trust_level="untrusted"',
+      "--cd", "/workspace", "--output-schema", "/opt/peregrine/judge-result.schema.json",
+      "--output-last-message", "/output/verdict.json", "--json", "--color", "never", "-",
+    ];
+    if (JSON.stringify(args) !== JSON.stringify(expected)) {
+      throw new Error("semantic judge command does not match the exact Luna medium profile");
+    }
+    return;
+  }
   const valueFlags = runner === "codex"
     ? new Set(["--config", "--model", "--cd", "--output-schema", "--output-last-message", "--sandbox", "--color"])
     : new Set(["--plugin-dir", "-p", "--output-format", "--json-schema", "--model", "--effort", "--max-turns", "--max-budget-usd", "--permission-mode", "--allowedTools", "--setting-sources"]);
@@ -280,7 +306,9 @@ export function createContainedOutputReader(
   };
 }
 
-export async function probeContainedRuntime(options: ContainedProviderOptions): Promise<void> {
+export async function probeContainedRuntime(
+  options: Pick<ContainedProviderOptions, "runner" | "providerAccess" | "image" | "run">,
+): Promise<void> {
   const run = options.run ?? exec;
   const image = options.image ?? ACCEPTED_EVAL_RUNTIME_IMAGE;
   assertImmutableImage(image);
@@ -330,7 +358,7 @@ export async function probeContainedRuntime(options: ContainedProviderOptions): 
 }
 
 async function probeCliSessionMount(
-  options: ContainedProviderOptions,
+  options: Pick<ContainedProviderOptions, "runner" | "providerAccess">,
   run: typeof exec,
   image: string,
 ): Promise<void> {
@@ -422,7 +450,7 @@ function throwWithCleanup(primary: unknown, cleanup: Error[]): never {
   throw new AggregateError([primary, ...cleanup], "evaluation operation and cleanup both failed");
 }
 
-function dockerClientEnvironment(options: ContainedProviderOptions, includeProviderSecret = false): Record<string, string> {
+function dockerClientEnvironment(options: Pick<ContainedProviderOptions, "runner" | "providerAccess">, includeProviderSecret = false): Record<string, string> {
   const environment: Record<string, string> = { PATH: process.env.PATH ?? "" };
   if (includeProviderSecret && options.providerAccess === "api-key") {
     environment[PROVIDER_SECRET[options.runner]] = process.env[PROVIDER_SECRET[options.runner]]!;

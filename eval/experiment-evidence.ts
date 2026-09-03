@@ -345,6 +345,7 @@ function rejectUndeclaredTopLevelEntries(
     "benchmark.html",
     EXPERIMENT_TERMINAL_SEAL_FILENAME,
     EXPERIMENT_GRADING_SEAL_FILENAME,
+    ...(experiment.protocol.judge.kind === "exact" ? [] : ["judge"]),
     ...experiment.schedule.flatMap((attempt) => [
       attempt.file,
       attempt.file.replace(/\.json$/, ".graded.json"),
