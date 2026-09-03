@@ -242,7 +242,7 @@ test("semantic judge containment accepts only the exact Luna medium argv", () =>
   try {
     const uid = process.getuid!(); const gid = process.getgid!();
     const args = [
-      "run", "--name", "peregrine-eval-00000000-0000-4000-8000-000000000000", "--pull", "never",
+      "run", "--name", "peregrine-eval-00000000-0000-4000-8000-000000000000", "--pull", "never", "--interactive",
       "--network", "bridge", "--read-only", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
       "--pids-limit", "256", "--user", `${uid}:${gid}`, "--workdir", "/workspace",
       "--mount", `type=bind,source=${checkout},target=/workspace,readonly`,
