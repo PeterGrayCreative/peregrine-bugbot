@@ -4,6 +4,7 @@
 **Date:** 2026-09-02
 **Scope:** `skills/invariant-first-pr-review`, `src/core`, `src/engines`, `src/github`, `schemas/`, `eval/`, `peregrine.config.json`, `.github/workflows`, and target-repository profiles
 **Goal:** Raise recall on consequential defects while reducing effective cost and wall time, without weakening the evidence bar, schema validation, secret scanning, profile trust, two-stage isolation, revalidation before posting, or GitHub permission boundaries.
+**Implementation checklist:** [2026-09-02-bug-finding-and-cost-optimization-checklist.md](./2026-09-02-bug-finding-and-cost-optimization-checklist.md)
 
 ## Executive decision
 
