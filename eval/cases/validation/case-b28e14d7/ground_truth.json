@@ -24,8 +24,8 @@
       "expectedDisposition": "fix-in-pr",
       "expectedSeverity": "high",
       "file": "src/repository-import.ts",
-      "startLine": 8,
-      "endLine": 8,
+      "startLine": 19,
+      "endLine": 19,
       "provenance": "Seeded mutation with a paired deterministic base and head proof."
     }
   ]
