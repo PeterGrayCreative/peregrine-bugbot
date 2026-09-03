@@ -43,7 +43,7 @@ const ANSWER_MARKERS = [
 ];
 const NON_ANSWER_GROUND_TRUTH_KEYS = new Set([
   "file", "lane", "invariantlane", "severity", "curatedseverity",
-  "disposition", "expecteddisposition", "riskclass", "expectedriskclass",
+  "expectedseverity", "disposition", "expecteddisposition", "riskclass", "expectedriskclass",
   "status", "corpus", "language", "repository",
 ]);
 const ANSWER_GROUND_TRUTH_KEY =
