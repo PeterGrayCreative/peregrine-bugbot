@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "caseId": "case-a1c4e90d",
-  "status": "draft",
+  "status": "admitted",
   "source": {
     "kind": "seeded",
     "repositoryAlias": "ledger-service",
@@ -25,6 +25,11 @@
     {
       "curatorIdentitySha256": "617ac849db736678cc50ccdba46a2eab92738cafb44bda4ccd1eee1c585a4bc1",
       "confirmedAt": "2026-09-03T16:00:00Z",
+      "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
+    },
+    {
+      "curatorIdentitySha256": "99f87bbb05ab81b66dac4ea9c949e2823ed3f07886fe47b410bf4c0c8b4351e1",
+      "confirmedAt": "2026-09-03T17:08:04Z",
       "checks": ["classification", "consequentiality", "disposition", "line-range", "provenance", "reachability", "root-cause", "severity", "source-authenticity", "truth-completeness"]
     }
   ]
