@@ -748,6 +748,90 @@ test("the Stage 2 PR 8 preregistration isolates the method-packet intervention",
   assert.equal(config.repeats * config.caseIds.length * config.configs.length, 48);
 });
 
+test("the Stage 2 Checkpoint 2 preregistration covers the full visible corpus", () => {
+  const config = JSON.parse(
+    readFileSync(
+      join(process.cwd(), "eval", "matrix.codex.stage2-checkpoint2-visible.json"),
+      "utf8",
+    ),
+  ) as {
+    repeats: number;
+    corpora: string[];
+    caseIds?: string[];
+    configs: Array<{
+      name: string;
+      runner: string;
+      overrides: Record<string, unknown>;
+    }>;
+    experiment: unknown;
+  };
+  const protocol = parseExperimentProtocol(
+    config.experiment,
+    "matrix.codex.stage2-checkpoint2-visible.json",
+  );
+
+  assert.equal(protocol.mode, "visible-checkpoint");
+  assert.equal(protocol.seed, 202609043);
+  assert.equal(protocol.control, "checkpoint-legacy-investigator");
+  assert.equal(protocol.treatment, "checkpoint-method-packet");
+  assert.equal(protocol.providerCalls, "allow");
+  assert.equal(protocol.providerAccess, "cli-session");
+  assert.equal(protocol.cacheCondition, "uncontrolled");
+  assert.equal(protocol.costAccounting, "best-effort");
+  assert.deepEqual(protocol.limits, {
+    maxProviderCostUsd: null,
+    maxProviderAttempts: 216,
+    maxWallTimeMs: 129_600_000,
+    maxFailureRate: 0.2,
+    minAttemptsForFailureRate: 12,
+    maxConsecutiveFailures: 3,
+  });
+  assert.deepEqual(protocol.judge, {
+    kind: "codex",
+    model: "gpt-5.6-luna",
+    effort: "medium",
+    version: "semantic-v1",
+    limits: {
+      maxProviderCostUsd: null,
+      maxProviderAttempts: 216,
+      maxWallTimeMs: 43_200_000,
+      maxFailureRate: 0.2,
+      minAttemptsForFailureRate: 12,
+      maxConsecutiveFailures: 3,
+    },
+  });
+  assert.equal(config.repeats, 3);
+  assert.deepEqual(config.corpora, ["development", "validation"]);
+  assert.equal(config.caseIds, undefined);
+  assert.deepEqual(
+    config.configs,
+    [
+      {
+        name: "checkpoint-legacy-investigator",
+        runner: "codex",
+        overrides: {
+          breadthModel: "gpt-5.6-luna",
+          breadthEffort: "high",
+          investigationModel: "gpt-5.6-sol",
+          investigationEffort: "high",
+          investigationPromptMode: "legacy",
+        },
+      },
+      {
+        name: "checkpoint-method-packet",
+        runner: "codex",
+        overrides: {
+          breadthModel: "gpt-5.6-luna",
+          breadthEffort: "high",
+          investigationModel: "gpt-5.6-sol",
+          investigationEffort: "high",
+          investigationPromptMode: "method-packet",
+        },
+      },
+    ],
+  );
+});
+
 test("stop records and write-once marker records parse strictly", () => {
   const schedule = pairedSchedule();
   const decision = evaluateExperimentCeilings({
