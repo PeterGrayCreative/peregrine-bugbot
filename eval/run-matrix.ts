@@ -76,6 +76,7 @@ import {
   readExperimentFile,
   readExperimentJson,
   writeExclusiveJson,
+  visibleCheckpointEvidenceClass,
   type ExperimentCase,
   type ExperimentManifest,
   type ExperimentModelIdentity,
@@ -178,16 +179,16 @@ export async function runMatrix(
   const casesDir = resolve(options.casesDir ?? "eval/cases");
   const requireBehavioralAdmission = protocol?.mode === "screening" || protocol?.mode === "checkpoint";
   const discoveredCases = discoverCases(casesDir);
-  let cases = selectMatrixCases(discoveredCases, matrix.corpora, matrix.caseIds);
+  let cases = selectMatrixCases(discoveredCases, matrix.corpora, matrix.caseIds, protocol?.mode);
   const behavioralCases = cases.filter((item) => item.corpus !== "structural-smoke");
   if (protocol?.mode === "screening" && behavioralCases.length === 0) {
     throw new Error("screening requires at least one selected behavioral case");
   }
-  if (protocol?.mode === "checkpoint") {
+  if (protocol?.mode === "visible-checkpoint" || protocol?.mode === "checkpoint") {
     const selectedCorpora = new Set(cases.map((item) => item.corpus));
     if (selectedCorpora.has("structural-smoke") ||
       !selectedCorpora.has("development") || !selectedCorpora.has("validation")) {
-      throw new Error("checkpoint schedule must contain development and validation cases and no structural-smoke cases");
+      throw new Error(`${protocol.mode} schedule must contain development and validation cases and no structural-smoke cases`);
     }
   }
   if (requireBehavioralAdmission) {
@@ -205,6 +206,18 @@ export async function runMatrix(
     if (!readiness.goldSetReady) {
       throw new Error(`checkpoint requires a ready historical gold set: ${readiness.goldSetRequirements.join("; ")}`);
     }
+  }
+  if (protocol?.mode === "visible-checkpoint") {
+    const readiness = await (await import("./validate-corpus.js")).validateBehavioralCorpus(casesDir);
+    if (!readiness.visibleSeededBenchmarkReady) {
+      throw new Error(
+        `visible-checkpoint requires a ready admitted visible seeded benchmark: ${readiness.seededBenchmarkRequirements.join("; ")}`,
+      );
+    }
+    cases = cases.map((item) => ({
+      ...item,
+      expectedBugCount: readBehavioralCaseAdmission(item.caseDir, loadCaseSpec(item.caseDir)).truth.bugs.length,
+    }));
   }
   const effective = protocol ? effectiveMatrixConfigs(matrix, baseConfig) : new Map<string, EffectiveMatrixConfig>();
   const now = options.now ?? Date.now;
@@ -918,6 +931,9 @@ async function prepareExperimentManifest(
     createdAt: input.createdAt,
     repositoryCommit,
     protocol: input.protocol,
+    ...(input.protocol.mode === "visible-checkpoint" ? {
+      evidenceClass: visibleCheckpointEvidenceClass(input.matrix.caseIds),
+    } : {}),
     hashes: {
       repositorySha256,
       corpusSha256,
@@ -1471,6 +1487,7 @@ function selectMatrixCases(
   discovered: readonly DiscoveredCase[],
   corpora?: readonly CaseCorpus[],
   caseIds?: readonly string[],
+  mode?: MatrixConfig["experiment"]["mode"],
 ): DiscoveredCase[] {
   const selectedCorpora = corpora === undefined ? undefined : new Set(corpora);
   const corpusCases = selectedCorpora === undefined
@@ -1481,11 +1498,11 @@ function selectMatrixCases(
   const byId = new Map(discovered.map((item) => [caseIdFromDirectory(item.caseDir), item]));
   for (const caseId of caseIds) {
     const item = byId.get(caseId);
-    if (!item) throw new Error(`screening caseIds references unknown case ${caseId}`);
+    if (!item) throw new Error(`${mode ?? "matrix"} caseIds references unknown case ${caseId}`);
     if (selectedCorpora !== undefined && !selectedCorpora.has(item.corpus as CaseCorpus)) {
-      throw new Error(`screening case ${caseId} is not in the selected corpora`);
+      throw new Error(`${mode ?? "matrix"} case ${caseId} is not in the selected corpora`);
     }
-    if (item.corpus !== "development") {
+    if (mode === "screening" && item.corpus !== "development") {
       throw new Error(`screening caseIds may select only development cases; ${caseId} is in ${item.corpus}`);
     }
   }
@@ -1567,8 +1584,8 @@ function validateMatrixCaseIdsForMode(
   matrix: MatrixConfig,
   mode: MatrixConfig["experiment"]["mode"] | undefined,
 ): void {
-  if (matrix.caseIds !== undefined && mode !== "screening") {
-    throw new Error("matrix caseIds are supported only for screening experiments");
+  if (matrix.caseIds !== undefined && mode !== "screening" && mode !== "visible-checkpoint") {
+    throw new Error("matrix caseIds are supported only for screening and visible-checkpoint experiments");
   }
 }
 
