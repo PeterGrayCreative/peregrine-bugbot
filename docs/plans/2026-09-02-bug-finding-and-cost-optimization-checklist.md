@@ -37,7 +37,7 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | Plan PR 7 | Seeded visible corpus and diagnostic baseline | PRs 4-6 | Seeded corpus merged; historical gold and holdout remain pending | [#21](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/21) |
 | Benchmark capability checkpoint | Reproducible Codex screening, contained judge, grading, and report | PRs 1-7 | Merged | [#21](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/21) |
 | Stage 2 variance baseline | Three-repeat strong-control versus Luna-medium screening | Benchmark checkpoint | Complete; Luna-medium replacement rejected | Pending |
-| Plan PR 8 | Stable investigator core and variable appendix | PR 7 | Not started | - |
+| Plan PR 8 | Stable investigator core and variable appendix | PR 7 | Implementation and screening complete; pending PR, CI, and merge | [results](../validation/2026-09-04-stage2-pr8-results.md) |
 | Plan PR 9 | Structural breadth compaction and schema bounds | PR 8 | Not started | - |
 | Plan PR 10 | Activated-lane counterexamples and seam checklist | PR 9 | Not started | - |
 | Plan PR 11 | Investigation coverage and runner-owned completeness | PR 10 | Not started | - |
@@ -262,17 +262,17 @@ Checkpoint 1: the baseline is reviewable and the holdout remains unopened.
 
 ## Plan PR 8 - Stable investigator core and variable appendix
 
-- [ ] Build a stable prefix containing role/trust rules, investigator workflow, finding contract, all built-in lane summaries, and output rules.
-- [ ] Build a variable appendix containing activated lane details, trusted profile/custom lanes, PR metadata, typed manifest, frozen breadth ledger, optional bounded context, and diff.
-- [ ] Add required-heading checks and fail closed when canonical source sections move.
-- [ ] Snapshot and hash the compiled method packet.
-- [ ] Keep repository-controlled profile/custom-lane content outside trusted method tags.
-- [ ] Tell the investigator not to reread coordinator-only orchestration files.
-- [ ] Preserve interactive skill behavior and lane text.
-- [ ] Measure actual cold/warm cache reads and writes rather than assuming provider reuse.
-- [ ] Run `npm run validate`.
-- [ ] Run a randomized paired 8-12 case screening comparison.
-- [ ] Pass the cost-change non-inferiority gate before merging.
+- [x] Build a stable prefix containing role/trust rules, investigator workflow, finding contract, all built-in lane summaries, and output rules.
+- [x] Build a variable appendix containing activated lane details, trusted profile/custom lanes, PR metadata, typed manifest, frozen breadth ledger, optional bounded context, and diff.
+- [x] Add required-heading checks and fail closed when canonical source sections move.
+- [x] Snapshot and hash the compiled method packet.
+- [x] Keep repository-controlled profile/custom-lane content outside trusted method tags.
+- [x] Tell the investigator not to reread coordinator-only orchestration files.
+- [x] Preserve interactive skill behavior and lane text.
+- [x] Record actual cache reads by arm and repeat. The Codex CLI exposed no cache writes or supported reset, so the preregistered cache condition is uncontrolled and the report makes no causal cold/warm claim.
+- [x] Run `npm run validate` on the implementation commit.
+- [x] Run a randomized paired eight-case, three-repeat screening comparison.
+- [x] Pass the preregistered cost-change non-inferiority gate before opening the PR.
 
 Rollback boundary: revert PR 8; no other intervention depends on its measured benefit yet.
 

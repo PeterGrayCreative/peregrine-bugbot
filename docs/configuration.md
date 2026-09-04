@@ -16,6 +16,7 @@ The default route is deliberately strong rather than cost-minimal:
 | breadth model | `runners.claude.breadthModel` | `runners.codex.breadthModel` |
 | investigation model | `runners.claude.investigationModel` | `runners.codex.investigationModel` |
 | effort | `breadthEffort`, `investigationEffort` | `breadthEffort`, `investigationEffort` |
+| investigator prompt | `investigationPromptMode` | `investigationPromptMode` |
 | budget | `maxTurns`, `maxBudgetUsd` | account-side limits and timeout |
 | timeout | `timeoutMs` | `timeoutMs` shared across both stages |
 | canonical skill | `skillName` | `skillName` |
@@ -38,6 +39,18 @@ Provider-scoped overrides:
 - `PEREGRINE_CODEX_TIMEOUT_MS`
 
 An override for one provider never mutates the other provider's block. Unknown runners, placeholder model names, invalid effort, non-positive limits, and invalid confidence thresholds fail before a model starts.
+
+`investigationPromptMode` accepts `legacy` or `method-packet`. `legacy` keeps the
+investigator's runtime skill traversal. `method-packet` compiles the trusted,
+canonical investigator method into a hash-addressed stable prefix and appends
+the review-specific manifest, frozen breadth ledger, repository profile, and
+diff as a separately delimited variable section. Compilation fails closed if a
+required canonical heading is missing. Repository-controlled profile and
+custom-lane text never enters the trusted method tags.
+
+The checked-in default remains `legacy` for both runners. The Stage 2 Codex
+screening validated the opt-in mode as an isolated experiment; it did not test
+Claude behavior or authorize a production-routing change.
 
 ## Pricing contracts
 
