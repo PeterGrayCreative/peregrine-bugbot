@@ -2,8 +2,14 @@
 
 The Codex runner performs two independent `codex exec` stages:
 
-1. an ephemeral configured-effort breadth pass with `breadth-result.schema.json`;
+1. an ephemeral configured-effort breadth pass with the configured strict breadth schema;
 2. an ephemeral investigation pass with the validated breadth ledger, runner-generated manifest, embedded diff, and `review-result.schema.json`.
+
+With `breadthLedgerMode: "structural-compact"`, the breadth schema bounds
+low-value clear prose and the runner structurally compacts the validated result
+before investigation. Required candidates, escalations, and coverage are never
+sampled or silently truncated. The default `full` mode retains the legacy
+schema and transfer behavior.
 
 Both use a read-only sandbox, strict config, ignored user config, explicit models/effort, stdin prompts, and an output file outside the target checkout. Missing, failed, timed-out, or malformed stages fail the review.
 

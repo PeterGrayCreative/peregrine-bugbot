@@ -28,7 +28,11 @@ export function bundledSkillDir(skillName: string): string {
   return path;
 }
 
-export type SchemaName = "review-result" | "breadth-result" | "judge-result";
+export type SchemaName =
+  | "review-result"
+  | "breadth-result"
+  | "breadth-result-compact"
+  | "judge-result";
 
 export function schemaPath(name: SchemaName): string {
   const path = join(packageRoot(), "schemas", `${name}.schema.json`);

@@ -9,7 +9,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/config.test.ts tests/review-result.test.ts tests/github.test.ts tests/engines.test.ts tests/manifest.test.ts tests/method-packet.test.ts tests/eval-accounting.test.ts tests/eval-isolation.test.ts tests/eval-history.test.ts tests/eval-experiment-core.test.ts tests/eval-experiment.test.ts tests/eval-runtime-image.test.ts tests/eval-runtime-containment.test.ts tests/eval-grading.test.ts tests/eval-corpus.test.ts tests/eval-judge-ledger.test.ts tests/telemetry.test.ts",
+    "test": "node --import tsx --test tests/config.test.ts tests/review-result.test.ts tests/breadth-compaction.test.ts tests/github.test.ts tests/engines.test.ts tests/manifest.test.ts tests/method-packet.test.ts tests/eval-accounting.test.ts tests/eval-isolation.test.ts tests/eval-history.test.ts tests/eval-experiment-core.test.ts tests/eval-experiment.test.ts tests/eval-runtime-image.test.ts tests/eval-runtime-containment.test.ts tests/eval-grading.test.ts tests/eval-corpus.test.ts tests/eval-judge-ledger.test.ts tests/telemetry.test.ts",
     "test:skills": "bash scripts/validate.sh",
     "validate": "npm run typecheck && npm test && npm run eval:validate-corpus && npm run test:skills && npm run eval:smoke",
     "review": "node --import tsx src/index.ts review",

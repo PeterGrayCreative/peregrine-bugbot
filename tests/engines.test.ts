@@ -284,6 +284,141 @@ test("Codex runner performs isolated breadth and investigation stages", async ()
   assert.deepEqual(validatedStages, ["breadth", "investigation"]);
 });
 
+test("both runners transmit the exact runner-compacted breadth ledger", async () => {
+  for (const runner of ["claude", "codex"] as const) {
+    const calls: Array<{ args: string[]; stdin?: string }> = [];
+    let investigationValidation: { prompt: string; untrustedModelText?: string } | undefined;
+    const clearHeavy = {
+      ...breadth,
+      clear: Array.from({ length: 12 }, (_, index) => ({
+        lane: index % 2 === 0 ? "contracts" : "authorization",
+        file: "src/app.ts",
+        reason: `clear explanation ${index}`,
+      })),
+    };
+    const fake: typeof exec = async (_cmd, args, options) => {
+      calls.push({ args, stdin: options?.stdin });
+      if (runner === "claude") {
+        const schema = JSON.parse(args[args.indexOf("--json-schema") + 1]!) as { title?: string };
+        return {
+          stdout: JSON.stringify({
+            structured_output: schema.title?.includes("Breadth") ? clearHeavy : { findings: [finding] },
+            total_cost_usd: 0.01,
+            usage: { input_tokens: 10, cache_creation_input_tokens: 0, cache_read_input_tokens: 0, output_tokens: 20 },
+          }),
+          stderr: "",
+          code: 0,
+          timedOut: false,
+        };
+      }
+      const output = args[args.indexOf("--output-last-message") + 1]!;
+      const schema = args[args.indexOf("--output-schema") + 1]!;
+      writeFileSync(output, schema.endsWith("breadth-result-compact.schema.json")
+        ? JSON.stringify(clearHeavy)
+        : JSON.stringify({ findings: [finding] }));
+      return {
+        stdout: `${JSON.stringify({ type: "turn.completed", usage: { input_tokens: 11, cached_input_tokens: 2, output_tokens: 3 } })}\n`,
+        stderr: "",
+        code: 0,
+        timedOut: false,
+      };
+    };
+    const ctx = context();
+    ctx.config.runners[runner].investigationPromptMode = "method-packet";
+    ctx.config.runners[runner].breadthLedgerMode = "structural-compact";
+    ctx.evaluationIsolation = {
+      providerHome: "/tmp/peregrine-test-provider-home",
+      providerAssetsRoot: resolve("."),
+      validatePrompt(input) {
+        if (input.stage === "investigation") investigationValidation = input;
+      },
+    };
+    const engine = runner === "claude" ? createClaudeEngine(fake) : createCodexEngine(fake);
+    const reviewed = await engine.review(ctx);
+    const raw = reviewed.raw as {
+      breadth: {
+        output: typeof clearHeavy;
+        transmittedLedger: Record<string, unknown>;
+        breadthLedger: { mode: string; omittedCounts: { clearExplanations: number } };
+      };
+    };
+    const ledger = JSON.stringify(raw.breadth.transmittedLedger);
+    assert.deepEqual(raw.breadth.output, clearHeavy);
+    assert.equal(raw.breadth.transmittedLedger.kind, "structural-compact");
+    assert.equal(
+      (raw.breadth.transmittedLedger.compaction as { omittedCounts: { clearExplanations: number } })
+        .omittedCounts.clearExplanations,
+      4,
+    );
+    assert.equal(raw.breadth.breadthLedger.mode, "structural-compact");
+    assert.equal(raw.breadth.breadthLedger.omittedCounts.clearExplanations, 4);
+    assert.equal(investigationValidation?.untrustedModelText, ledger);
+    assert.ok((investigationValidation?.prompt ?? "").includes(ledger));
+    if (runner === "claude") {
+      const schema = JSON.parse(calls[0]!.args[calls[0]!.args.indexOf("--json-schema") + 1]!) as { title: string };
+      assert.equal(schema.title, "Peregrine Bounded Breadth Sweep");
+    } else {
+      const schema = calls[0]!.args[calls[0]!.args.indexOf("--output-schema") + 1]!;
+      assert.match(schema, /breadth-result-compact\.schema\.json$/);
+    }
+  }
+});
+
+test("high-value compact-ledger overflow stops before investigation and retains breadth usage", async () => {
+  const hugeBreadth = {
+    ...breadth,
+    candidates: Array.from({ length: 5 }, (_, index) => ({
+      ...breadth.candidates[0],
+      id: `candidate-${index}`,
+      invariant: "i".repeat(2000),
+      counterexample: "c".repeat(2000),
+      evidenceNeeded: "e".repeat(2000),
+    })),
+  };
+  for (const runner of ["claude", "codex"] as const) {
+    let calls = 0;
+    const fake: typeof exec = async (_cmd, args) => {
+      calls += 1;
+      if (runner === "claude") {
+        return {
+          stdout: JSON.stringify({
+            structured_output: hugeBreadth,
+            total_cost_usd: 0.01,
+            usage: { input_tokens: 10, cache_creation_input_tokens: 0, cache_read_input_tokens: 0, output_tokens: 20 },
+          }),
+          stderr: "",
+          code: 0,
+          timedOut: false,
+        };
+      }
+      writeFileSync(args[args.indexOf("--output-last-message") + 1]!, JSON.stringify(hugeBreadth));
+      return {
+        stdout: `${JSON.stringify({ type: "turn.completed", usage: { input_tokens: 11, cached_input_tokens: 2, output_tokens: 3 } })}\n`,
+        stderr: "",
+        code: 0,
+        timedOut: false,
+      };
+    };
+    const ctx = context();
+    ctx.config.runners[runner].breadthLedgerMode = "structural-compact";
+    const engine = runner === "claude" ? createClaudeEngine(fake) : createCodexEngine(fake);
+    await assert.rejects(
+      () => engine.review(ctx),
+      (error: unknown) => {
+        assert.ok(error instanceof RunFailureError);
+        assert.equal(error.kind, "parse");
+        assert.equal(error.telemetry?.stages.length, 1);
+        assert.equal(error.telemetry?.stages[0]?.stage, "breadth");
+        assert.equal(error.telemetry?.stages[0]?.completed, false);
+        assert.ok((error.telemetry?.usage.inputTokens ?? 0) > 0);
+        assertStrictFailureArtifact(runner, error);
+        return true;
+      },
+    );
+    assert.equal(calls, 1);
+  }
+});
+
 test("method-packet compilation fails as a typed configuration outcome before provider work", async () => {
   const assets = mkdtempSync(join(tmpdir(), "peregrine-missing-method-assets-"));
   try {
@@ -695,9 +830,15 @@ test("second-stage failures retain already incurred stage usage and cost", async
       assert.equal(error.kind, "parse");
       assert.equal(error.telemetry?.stages.length, 2);
       assert.equal(error.telemetry?.stages[0]?.completed, true);
+      assert.equal(error.telemetry?.stages[0]?.breadthLedgerEvidence?.telemetry.mode, "full");
+      assert.equal(
+        error.telemetry?.stages[0]?.breadthLedgerEvidence?.telemetry.originalCharacters,
+        JSON.stringify(breadth).length,
+      );
       assert.equal(error.telemetry?.stages[1]?.completed, false);
       assert.equal(error.telemetry?.usage.costUsd, 0.02);
       assert.equal(error.telemetry?.usage.costSource, "provider");
+      assertStrictFailureArtifact("claude", error);
       return true;
     },
   );

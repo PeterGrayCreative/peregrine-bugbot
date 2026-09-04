@@ -1,5 +1,11 @@
 import { isDeepStrictEqual } from "node:util";
-import { parseBreadthResult } from "../src/core/breadth-result.js";
+import {
+  parseBreadthArtifactOutput,
+  parseBreadthLedgerEvidence,
+  parseBreadthLedgerTelemetry,
+  parseBreadthResult,
+  serializeBreadthLedger,
+} from "../src/core/breadth-result.js";
 import { MAX_MANIFEST_CHARS } from "../src/core/manifest.js";
 import { parseEngineResult, parseReviewPayload } from "../src/core/review-result.js";
 import { RUN_FAILURE_KINDS } from "../src/core/run-failure.js";
@@ -1229,10 +1235,13 @@ function validateEngineStageTelemetry(
     const methodHashes = stageName === "investigation"
       ? ["methodCoreSha256", "methodSourceSha256"]
       : [];
+    const breadthEvidence = stageName === "breadth"
+      ? ["transmittedLedger", "breadthLedger"]
+      : [];
     const keys = engine === "codex"
-      ? new Set(["output", "model", "promptSha256", "usage", "durationMs", "malformedEventLines", ...methodHashes])
+      ? new Set(["output", "model", "promptSha256", "usage", "durationMs", "malformedEventLines", ...breadthEvidence, ...methodHashes])
       : stageName === "breadth"
-        ? new Set(["output", "model", "promptSha256", "usage", "durationMs"])
+        ? new Set(["output", "model", "promptSha256", "usage", "durationMs", ...breadthEvidence])
         : new Set(["model", "promptSha256", "usage", "durationMs", ...methodHashes]);
     onlyKeys(stage, keys, `${source}.${stageName}`);
     if (stage.durationMs === undefined || stage.usage === undefined ||
@@ -1263,10 +1272,41 @@ function validateEngineStageTelemetry(
         }
       }
     }
+    let breadthLedgerTelemetry: StageTelemetry["breadthLedger"];
     if (stageName === "breadth" || engine === "codex") {
       const output = object(stage.output, `${source}.${stageName}.output`);
       if (stageName === "breadth") {
-        parseBreadthResult(output, `${source}.${stageName}.output`);
+        const hasTransmittedLedger = stage.transmittedLedger !== undefined;
+        const hasBreadthLedger = stage.breadthLedger !== undefined;
+        if (hasTransmittedLedger !== hasBreadthLedger) {
+          throw new Error(
+            `${source}.${stageName} transmittedLedger and breadthLedger must be present together`,
+          );
+        }
+        if (hasTransmittedLedger) {
+          breadthLedgerTelemetry = parseBreadthLedgerTelemetry(
+            stage.breadthLedger,
+            `${source}.${stageName}.breadthLedger`,
+          );
+          const providerOutput = parseBreadthResult(
+            output,
+            `${source}.${stageName}.output`,
+            breadthLedgerTelemetry.mode,
+          );
+          const expected = serializeBreadthLedger(providerOutput, breadthLedgerTelemetry.mode);
+          const transmitted = parseBreadthArtifactOutput(
+            stage.transmittedLedger,
+            `${source}.${stageName}.transmittedLedger`,
+          );
+          if (!isDeepStrictEqual(transmitted, expected.output)) {
+            throw new Error(`${source}.${stageName}.transmittedLedger does not match provider output`);
+          }
+          if (!isDeepStrictEqual(breadthLedgerTelemetry, expected.telemetry)) {
+            throw new Error(`${source}.${stageName}.breadthLedger does not match provider output`);
+          }
+        } else {
+          parseBreadthResult(output, `${source}.${stageName}.output`);
+        }
       } else {
         const payload = parseReviewPayload(output, `${source}.${stageName}.output`);
         if (!isDeepStrictEqual(payload.findings, resultFindings)) {
@@ -1303,6 +1343,7 @@ function validateEngineStageTelemetry(
       usage,
       durationMs: nonNegativeSafeInteger(stage.durationMs, `${source}.${stageName}.durationMs`),
       completed: true,
+      ...(breadthLedgerTelemetry ? { breadthLedger: breadthLedgerTelemetry } : {}),
     };
   }
   if (stages.breadth === undefined && stages.investigation === undefined) return undefined;
@@ -1838,11 +1879,25 @@ function validateAggregateUsageShape(
 
 function parseStage(value: unknown, source: string): StageTelemetry {
   const root = object(value, source);
-  onlyKeys(root, new Set(["stage", "model", "promptSha256", "usage", "durationMs", "completed"]), source);
+  onlyKeys(root, new Set([
+    "stage",
+    "model",
+    "promptSha256",
+    "usage",
+    "durationMs",
+    "completed",
+    "breadthLedgerEvidence",
+  ]), source);
   if (!(root.stage === "breadth" || root.stage === "investigation")) throw new Error(`${source}.stage is invalid`);
+  if (root.stage === "investigation" && root.breadthLedgerEvidence !== undefined) {
+    throw new Error(`${source}.breadthLedgerEvidence is valid only for the breadth stage`);
+  }
   const promptSha256 = strictString(root.promptSha256, `${source}.promptSha256`, 64);
   if (!/^[a-f0-9]{64}$/.test(promptSha256)) throw new Error(`${source}.promptSha256 must be lowercase SHA-256 hex`);
   if (typeof root.completed !== "boolean") throw new Error(`${source}.completed must be boolean`);
+  const breadthLedgerEvidence = root.breadthLedgerEvidence === undefined
+    ? undefined
+    : parseBreadthLedgerEvidence(root.breadthLedgerEvidence, `${source}.breadthLedgerEvidence`);
   return {
     stage: root.stage,
     model: strictString(root.model, `${source}.model`, 500),
@@ -1850,6 +1905,12 @@ function parseStage(value: unknown, source: string): StageTelemetry {
     usage: parseUsage(root.usage, `${source}.usage`),
     durationMs: nonNegativeSafeInteger(root.durationMs, `${source}.durationMs`),
     completed: root.completed,
+    ...(breadthLedgerEvidence === undefined
+      ? {}
+      : {
+          breadthLedger: breadthLedgerEvidence.telemetry,
+          breadthLedgerEvidence,
+        }),
   };
 }
 

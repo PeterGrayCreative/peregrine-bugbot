@@ -28,6 +28,7 @@ import {
   parsePreTelemetryRunRecord,
   parseRunRecord,
 } from "../eval/artifacts.js";
+import { serializeBreadthLedger } from "../src/core/breadth-result.js";
 import { RunFailureError } from "../src/core/run-failure.js";
 import { combineUsage, mockUsage, sha256, withUnavailable } from "../src/core/telemetry.js";
 import type { Engine } from "../src/engines/engine.js";
@@ -591,6 +592,50 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
   assert.throws(
     () => parseRunRecord(malformedBreadth, "current malformed breadth", attempt),
     /candidates.*array/,
+  );
+
+  const legacyCurrentBreadth = validRecord();
+  assert.doesNotThrow(
+    () => parseRunRecord(legacyCurrentBreadth, "current legacy breadth", attempt),
+  );
+
+  const compactCurrentBreadth = structuredClone(validRecord());
+  if (compactCurrentBreadth.outcome.status !== "completed") {
+    throw new Error("expected completed fixture");
+  }
+  const compactOutput = serializeBreadthLedger(
+    emptyBreadthOutput(),
+    "structural-compact",
+  );
+  (compactCurrentBreadth.outcome.result.raw as {
+    breadth: {
+      output: unknown;
+      transmittedLedger?: unknown;
+      breadthLedger?: unknown;
+    };
+  }).breadth = {
+    ...(compactCurrentBreadth.outcome.result.raw as { breadth: object }).breadth,
+    output: emptyBreadthOutput(),
+    transmittedLedger: compactOutput.output,
+    breadthLedger: compactOutput.telemetry,
+  };
+  assert.doesNotThrow(
+    () => parseRunRecord(compactCurrentBreadth, "current compact breadth", attempt),
+  );
+
+  const tamperedCompactBreadth = structuredClone(compactCurrentBreadth);
+  if (tamperedCompactBreadth.outcome.status !== "completed") {
+    throw new Error("expected completed fixture");
+  }
+  const tamperedCompactOutput = (tamperedCompactBreadth.outcome.result.raw as {
+    breadth: {
+      breadthLedger: { transmittedCounts: { candidates: number } };
+    };
+  }).breadth;
+  tamperedCompactOutput.breadthLedger.transmittedCounts.candidates += 1;
+  assert.throws(
+    () => parseRunRecord(tamperedCompactBreadth, "current tampered compact breadth", attempt),
+    /breadthLedger.*count candidates does not reconcile/,
   );
 
   const splitBrainCodex = validCodexRecord();

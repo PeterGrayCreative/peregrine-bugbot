@@ -382,7 +382,8 @@
         "breadthEffort": { "$ref": "#/$defs/boundedString" },
         "investigationModel": { "$ref": "#/$defs/boundedString" },
         "investigationEffort": { "$ref": "#/$defs/boundedString" },
-        "investigationPromptMode": { "enum": ["legacy", "method-packet"] }
+        "investigationPromptMode": { "enum": ["legacy", "method-packet"] },
+        "breadthLedgerMode": { "enum": ["full", "structural-compact"] }
       },
       "required": ["configName", "runner", "effectiveConfigSha256"],
       "allOf": [
@@ -398,7 +399,8 @@
                 { "required": ["breadthEffort"] },
                 { "required": ["investigationModel"] },
                 { "required": ["investigationEffort"] },
-                { "required": ["investigationPromptMode"] }
+                { "required": ["investigationPromptMode"] },
+                { "required": ["breadthLedgerMode"] }
               ]
             }
           },

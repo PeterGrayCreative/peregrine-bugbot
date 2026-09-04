@@ -117,6 +117,10 @@ export interface ConfigStats {
   investigationToolOutputBytesMean: number | null;
   breadthPromptBytesMean: number | null;
   investigationPromptBytesMean: number | null;
+  breadthLedgerOriginalCharactersMean: number | null;
+  breadthLedgerTransmittedCharactersMean: number | null;
+  breadthLedgerOmittedClearExplanationsMean: number | null;
+  breadthLedgerCompactionAppliedRuns: number | null;
   inputTokensMean: number | null;
   baseInputTokensMean: number | null;
   uncachedInputTokensMean: number | null;
@@ -762,6 +766,10 @@ export function calculateStats(args: {
   const investigationDurations = stageValues("investigation", "durationMs").map((value) => value / 1000);
   const breadthInputs = stageValues("breadth", "inputTokens");
   const investigationInputs = stageValues("investigation", "inputTokens");
+  const breadthLedgers = stages
+    .filter((stage) => stage.stage === "breadth")
+    .map((stage) => stage.breadthLedger)
+    .filter((ledger): ledger is NonNullable<StageTelemetry["breadthLedger"]> => ledger !== undefined);
   const usageValues = {
     inputTokens: usage("inputTokens"),
     baseInputTokens: usage("baseInputTokens"),
@@ -882,6 +890,21 @@ export function calculateStats(args: {
     investigationToolOutputBytesMean: completeMean(stageValues("investigation", "toolOutputBytes"), comparisonExpected),
     breadthPromptBytesMean: completeMean(stageValues("breadth", "promptBytes"), comparisonExpected),
     investigationPromptBytesMean: completeMean(stageValues("investigation", "promptBytes"), comparisonExpected),
+    breadthLedgerOriginalCharactersMean: completeMean(
+      breadthLedgers.map((ledger) => ledger.originalCharacters),
+      comparisonExpected,
+    ),
+    breadthLedgerTransmittedCharactersMean: completeMean(
+      breadthLedgers.map((ledger) => ledger.transmittedCharacters),
+      comparisonExpected,
+    ),
+    breadthLedgerOmittedClearExplanationsMean: completeMean(
+      breadthLedgers.map((ledger) => ledger.omittedCounts.clearExplanations),
+      comparisonExpected,
+    ),
+    breadthLedgerCompactionAppliedRuns: comparisonExpected > 0 && breadthLedgers.length === comparisonExpected
+      ? breadthLedgers.filter((ledger) => ledger.applied).length
+      : null,
     inputTokensMean: completeMean(usageValues.inputTokens, comparisonExpected),
     baseInputTokensMean: completeMean(usageValues.baseInputTokens, comparisonExpected),
     uncachedInputTokensMean: completeMean(usageValues.uncachedInputTokens, comparisonExpected),
@@ -906,6 +929,7 @@ export function calculateStats(args: {
       investigationDurationMs: investigationDurations.length,
       breadthInputTokens: breadthInputs.length,
       investigationInputTokens: investigationInputs.length,
+      breadthLedger: breadthLedgers.length,
       toolCallsByType: allUsages.filter((usage) => usage.toolCallsByType !== undefined).length,
       ...stageTelemetryObserved(stages),
       ...Object.fromEntries(Object.entries(usageValues).map(([key, values]) => [
@@ -1093,6 +1117,10 @@ function completedStageRecords(run: ScoredRun): StageTelemetry[] {
     if (!stage || typeof stage.model !== "string" || typeof stage.promptSha256 !== "string" ||
       typeof stage.durationMs !== "number" || !stage.usage || typeof stage.usage !== "object" ||
       Array.isArray(stage.usage)) return [];
+    const breadthLedger = stageName === "breadth" && stage.breadthLedger &&
+      typeof stage.breadthLedger === "object" && !Array.isArray(stage.breadthLedger)
+      ? stage.breadthLedger as StageTelemetry["breadthLedger"]
+      : undefined;
     return [{
       stage: stageName,
       model: stage.model,
@@ -1100,6 +1128,7 @@ function completedStageRecords(run: ScoredRun): StageTelemetry[] {
       usage: stage.usage as StageTelemetry["usage"],
       durationMs: stage.durationMs,
       completed: true,
+      ...(breadthLedger ? { breadthLedger } : {}),
     }];
   });
 }
@@ -1139,7 +1168,16 @@ function formatStages(stats: ConfigStats): string {
       ` tools ${number("ToolCallsMean")} ${toolTypes && typeof toolTypes === "object" ? JSON.stringify(toolTypes) : "n/a"};` +
       ` tool B ${number("ToolOutputBytesMean")}; prompt B ${number("PromptBytesMean")}`;
   };
-  return `${stage("breadth")}<br>${stage("investigation")}`;
+  const ledger = stats.breadthLedgerOriginalCharactersMean === null ||
+    stats.breadthLedgerTransmittedCharactersMean === null ||
+    stats.breadthLedgerOmittedClearExplanationsMean === null ||
+    stats.breadthLedgerCompactionAppliedRuns === null
+    ? "ledger n/a"
+    : `ledger chars ${stats.breadthLedgerOriginalCharactersMean.toFixed(0)} -> ` +
+      `${stats.breadthLedgerTransmittedCharactersMean.toFixed(0)}; omitted clear ` +
+      `${stats.breadthLedgerOmittedClearExplanationsMean.toFixed(1)}; compacted runs ` +
+      `${stats.breadthLedgerCompactionAppliedRuns}`;
+  return `${stage("breadth")}<br>${stage("investigation")}<br>${ledger}`;
 }
 
 function formatDuration(stats: ConfigStats): string {

@@ -1,15 +1,16 @@
 import { readFileSync } from "node:fs";
-import type { ReviewContext } from "../types.js";
+import type { BreadthLedgerMode, ReviewContext } from "../types.js";
+import { MAX_BREADTH_LEDGER_CHARS } from "./breadth-result.js";
 import type { ReviewManifest } from "./manifest.js";
 import type { InvestigatorMethodPacket } from "./method-packet.js";
 
 const MAX_PR_BODY_CHARS = 4000;
-const MAX_BREADTH_CHARS = 24_000;
 
 export function buildBreadthPrompt(
   ctx: ReviewContext,
   skillDir: string,
   manifest?: ReviewManifest,
+  ledgerMode: BreadthLedgerMode = "full",
 ): string {
   return [
     `PEREGRINE_ROLE: breadth-worker`,
@@ -26,6 +27,9 @@ export function buildBreadthPrompt(
     embeddedDiff(ctx),
     `Use read-only repository searches only when a changed hunk needs one immediate`,
     `caller, sibling surface, schema, or helper to nominate a candidate.`,
+    ledgerMode === "structural-compact"
+      ? `Keep clear reasons specific and at most 400 characters. The runner will preserve every candidate, escalation, covered file, unavailable item, and per-file/per-lane clear count while retaining only a bounded sample of clear explanations.`
+      : "",
     `Return only the breadth JSON required by the provided schema.`,
   ].filter(Boolean).join("\n\n");
 }
@@ -109,9 +113,9 @@ function buildMethodPacketInvestigationPrompt(
 }
 
 function boundedLedger(ledger: string): string {
-  if (ledger.length > MAX_BREADTH_CHARS) {
+  if (ledger.length > MAX_BREADTH_LEDGER_CHARS) {
     throw new Error(
-      `breadth ledger exceeds ${MAX_BREADTH_CHARS} characters; refusing silent truncation`,
+      `breadth ledger exceeds ${MAX_BREADTH_LEDGER_CHARS} characters; refusing silent truncation`,
     );
   }
   return ledger;

@@ -259,6 +259,39 @@ export function assertExperimentRecordModelIdentity(
       `${record.attemptId} modelConfig does not match its immutable experiment model identity`,
     );
   }
+  if (identity.runner !== "mock" && identity.breadthLedgerMode !== undefined) {
+    const failedBreadthStage = record.outcome.status === "failed"
+      ? record.outcome.telemetry?.stages.find((stage) => stage.stage === "breadth")
+      : undefined;
+    const observedLedgerMode = record.outcome.status === "completed"
+      ? completedBreadthLedgerMode(record)
+      : failedBreadthStage?.breadthLedger?.mode;
+    if (
+      (record.outcome.status === "completed" || failedBreadthStage?.completed === true) &&
+      observedLedgerMode === undefined
+    ) {
+      throw new Error(
+        `${record.attemptId} completed breadth stage does not bind its breadth ledger mode`,
+      );
+    }
+    if (observedLedgerMode !== undefined && observedLedgerMode !== identity.breadthLedgerMode) {
+      throw new Error(
+        `${record.attemptId} breadth ledger mode does not match its immutable experiment model identity`,
+      );
+    }
+  }
+}
+
+function completedBreadthLedgerMode(record: RunRecord): "full" | "structural-compact" | undefined {
+  if (record.outcome.status !== "completed") return undefined;
+  const raw = record.outcome.result.raw;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const breadth = (raw as Record<string, unknown>).breadth;
+  if (!breadth || typeof breadth !== "object" || Array.isArray(breadth)) return undefined;
+  const telemetry = (breadth as Record<string, unknown>).breadthLedger;
+  if (!telemetry || typeof telemetry !== "object" || Array.isArray(telemetry)) return undefined;
+  const mode = (telemetry as Record<string, unknown>).mode;
+  return mode === "full" || mode === "structural-compact" ? mode : undefined;
 }
 
 function assertScheduleMatchesMatrix(

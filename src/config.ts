@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
   RUNNER_NAMES,
+  type BreadthLedgerMode,
   type ClaudeEffort,
   type CodexEffort,
   type InvestigationPromptMode,
@@ -13,6 +14,7 @@ import { validatePricingCatalog } from "./core/pricing.js";
 const CODEX_EFFORTS: CodexEffort[] = ["low", "medium", "high", "xhigh", "max", "ultra"];
 const CLAUDE_EFFORTS: ClaudeEffort[] = ["low", "medium", "high", "xhigh", "max"];
 const INVESTIGATION_PROMPT_MODES: InvestigationPromptMode[] = ["legacy", "method-packet"];
+const BREADTH_LEDGER_MODES: BreadthLedgerMode[] = ["full", "structural-compact"];
 
 export function loadConfig(path = "peregrine.config.json"): PeregrineConfig {
   let parsed: unknown;
@@ -33,8 +35,10 @@ function normalizeConfig(cfg: PeregrineConfig): void {
   const claude = cfg?.runners?.claude as Partial<PeregrineConfig["runners"]["claude"]> | undefined;
   if (claude && claude.breadthEffort === undefined) claude.breadthEffort = "high";
   if (claude && claude.investigationPromptMode === undefined) claude.investigationPromptMode = "legacy";
+  if (claude && claude.breadthLedgerMode === undefined) claude.breadthLedgerMode = "full";
   const codex = cfg?.runners?.codex as Partial<PeregrineConfig["runners"]["codex"]> | undefined;
   if (codex && codex.investigationPromptMode === undefined) codex.investigationPromptMode = "legacy";
+  if (codex && codex.breadthLedgerMode === undefined) codex.breadthLedgerMode = "full";
 }
 
 function applyEnvOverrides(cfg: PeregrineConfig): void {
@@ -127,6 +131,10 @@ export function validateConfig(cfg: PeregrineConfig, path = "config"): void {
       !INVESTIGATION_PROMPT_MODES.includes(claude.investigationPromptMode as InvestigationPromptMode)) {
     fail(`"runners.claude.investigationPromptMode" must be one of: ${INVESTIGATION_PROMPT_MODES.join(", ")}`);
   }
+  if (claude.breadthLedgerMode !== undefined &&
+      !BREADTH_LEDGER_MODES.includes(claude.breadthLedgerMode as BreadthLedgerMode)) {
+    fail(`"runners.claude.breadthLedgerMode" must be one of: ${BREADTH_LEDGER_MODES.join(", ")}`);
+  }
   for (const key of ["maxTurns", "maxBudgetUsd", "timeoutMs"] as const) {
     positive(claude[key], `runners.claude.${key}`);
   }
@@ -144,6 +152,10 @@ export function validateConfig(cfg: PeregrineConfig, path = "config"): void {
   if (codex.investigationPromptMode !== undefined &&
       !INVESTIGATION_PROMPT_MODES.includes(codex.investigationPromptMode as InvestigationPromptMode)) {
     fail(`"runners.codex.investigationPromptMode" must be one of: ${INVESTIGATION_PROMPT_MODES.join(", ")}`);
+  }
+  if (codex.breadthLedgerMode !== undefined &&
+      !BREADTH_LEDGER_MODES.includes(codex.breadthLedgerMode as BreadthLedgerMode)) {
+    fail(`"runners.codex.breadthLedgerMode" must be one of: ${BREADTH_LEDGER_MODES.join(", ")}`);
   }
   positive(codex.timeoutMs, "runners.codex.timeoutMs");
   object(cfg.runners.mock, "runners.mock");

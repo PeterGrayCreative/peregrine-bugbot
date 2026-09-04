@@ -165,6 +165,10 @@ test("config validation rejects unknown runners, placeholders, and invalid effor
   promptMode.runners.codex.investigationPromptMode = "unsafe" as never;
   assert.throws(() => validateConfig(promptMode), /investigationPromptMode.*legacy, method-packet/);
 
+  const ledgerMode = config();
+  ledgerMode.runners.codex.breadthLedgerMode = "lossy" as never;
+  assert.throws(() => validateConfig(ledgerMode), /breadthLedgerMode.*full, structural-compact/);
+
   const turns = config();
   turns.runners.claude.maxTurns = 2.5;
   assert.throws(() => validateConfig(turns), /maxTurns.*integer/);
@@ -218,13 +222,17 @@ test("schema version 1 configs acquire stable legacy defaults", () => {
   };
   delete legacy.runners.claude.breadthEffort;
   delete legacy.runners.claude.investigationPromptMode;
+  delete legacy.runners.claude.breadthLedgerMode;
   delete legacy.runners.codex.investigationPromptMode;
+  delete legacy.runners.codex.breadthLedgerMode;
   try {
     writeFileSync(path, JSON.stringify(legacy));
     const loaded = loadConfig(path);
     assert.equal(loaded.runners.claude.breadthEffort, "high");
     assert.equal(loaded.runners.claude.investigationPromptMode, "legacy");
+    assert.equal(loaded.runners.claude.breadthLedgerMode, "full");
     assert.equal(loaded.runners.codex.investigationPromptMode, "legacy");
+    assert.equal(loaded.runners.codex.breadthLedgerMode, "full");
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

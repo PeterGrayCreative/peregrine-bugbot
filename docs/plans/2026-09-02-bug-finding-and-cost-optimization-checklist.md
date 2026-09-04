@@ -2,7 +2,7 @@
 
 **Companion plan:** [2026-09-02-bug-finding-and-cost-optimization-plan.md](./2026-09-02-bug-finding-and-cost-optimization-plan.md)
 **Status:** Active
-**Last updated:** 2026-09-03
+**Last updated:** 2026-09-04
 
 This checklist tracks delivery of the plan without replacing its rationale, risk analysis, or acceptance criteria. Update the status table and the relevant PR section whenever a branch is opened, validation evidence changes, a decision is made, or a PR merges.
 
@@ -37,8 +37,8 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | Plan PR 7 | Seeded visible corpus and diagnostic baseline | PRs 4-6 | Seeded corpus merged; historical gold and holdout remain pending | [#21](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/21) |
 | Benchmark capability checkpoint | Reproducible Codex screening, contained judge, grading, and report | PRs 1-7 | Merged | [#21](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/21) |
 | Stage 2 variance baseline | Three-repeat strong-control versus Luna-medium screening | Benchmark checkpoint | Complete; Luna-medium replacement rejected | Pending |
-| Plan PR 8 | Stable investigator core and variable appendix | PR 7 | Implementation and screening complete; pending PR, CI, and merge | [results](../validation/2026-09-04-stage2-pr8-results.md) |
-| Plan PR 9 | Structural breadth compaction and schema bounds | PR 8 | Not started | - |
+| Plan PR 8 | Stable investigator core and variable appendix | PR 7 | Merged; screening accepted | [#24](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/24), [results](../validation/2026-09-04-stage2-pr8-results.md) |
+| Plan PR 9 | Structural breadth compaction and schema bounds | PR 8 | Implementation and preregistration complete; validation and screening pending | [preregistration](../validation/2026-09-04-stage2-pr9-preregistration.md) |
 | Plan PR 10 | Activated-lane counterexamples and seam checklist | PR 9 | Not started | - |
 | Plan PR 11 | Investigation coverage and runner-owned completeness | PR 10 | Not started | - |
 | Plan PR 12 | Bounded risk-sensitive candidate budgets | PR 11 | Not started | - |
@@ -278,13 +278,13 @@ Rollback boundary: revert PR 8; no other intervention depends on its measured be
 
 ## Plan PR 9 - Structural breadth compaction and schema bounds
 
-- [ ] Add output-schema item and string-length bounds.
-- [ ] Preserve every candidate, escalation, unavailable file, covered file, and per-file/per-lane clear count.
-- [ ] Preserve a bounded sample of clear explanations.
-- [ ] Record original, compacted, and omitted counts.
-- [ ] Fail closed only when preserved high-value content exceeds the hard limit.
-- [ ] Keep binary changes visible as structured metadata.
-- [ ] Add clear-heavy compaction, high-value overflow, and no-loss tests.
+- [x] Add output-schema item and string-length bounds.
+- [x] Preserve every candidate, escalation, unavailable file, covered file, and per-file/per-lane clear count.
+- [x] Preserve a bounded sample of clear explanations, allowing zero only when required to fit all high-value content.
+- [x] Record original, compacted, and omitted counts with recomputable provider/transmitted evidence.
+- [x] Fail closed only when preserved high-value content exceeds the hard limit.
+- [x] Keep binary changes visible as structured metadata.
+- [x] Add clear-heavy compaction, high-value overflow, no-loss, artifact-tamper, and failure-accounting tests.
 - [ ] Run `npm run validate`.
 - [ ] Run a randomized paired 8-12 case screening comparison.
 - [ ] Pass the cost-change non-inferiority gate before merging.

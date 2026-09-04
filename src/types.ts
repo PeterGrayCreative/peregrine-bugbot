@@ -27,6 +27,7 @@ export type ReviewStatus = "completed" | "clean" | "skipped";
 export type CodexEffort = "low" | "medium" | "high" | "xhigh" | "max" | "ultra";
 export type ClaudeEffort = "low" | "medium" | "high" | "xhigh" | "max";
 export type InvestigationPromptMode = "legacy" | "method-packet";
+export type BreadthLedgerMode = "full" | "structural-compact";
 
 export interface TypedReviewManifest {
   schemaVersion: 1;
@@ -81,6 +82,52 @@ export interface BreadthResult {
   clear: Array<{ lane: string; file: string; reason: string }>;
   escalations: Array<{ target: string; reason: string }>;
   coverage: { coveredFiles: string[]; unavailable: string[] };
+}
+
+export interface BreadthLedgerCounts {
+  candidates: number;
+  clearExplanations: number;
+  clearGroups: number;
+  escalations: number;
+  coveredFiles: number;
+  unavailable: number;
+}
+
+export interface BreadthLedgerTelemetry {
+  mode: BreadthLedgerMode;
+  applied: boolean;
+  originalCounts: BreadthLedgerCounts;
+  transmittedCounts: BreadthLedgerCounts;
+  omittedCounts: BreadthLedgerCounts;
+  originalCharacters: number;
+  transmittedCharacters: number;
+  originalSha256: string;
+}
+
+export interface CompactedBreadthLedger {
+  schemaVersion: 1;
+  kind: "structural-compact";
+  model: string;
+  candidates: BreadthCandidate[];
+  clearExamples: Array<{ lane: string; file: string; reason: string }>;
+  clearCounts: Array<{ lane: string; file: string; count: number }>;
+  escalations: Array<{ target: string; reason: string }>;
+  coverage: { coveredFiles: string[]; unavailable: string[] };
+  compaction: {
+    applied: boolean;
+    originalCounts: BreadthLedgerCounts;
+    transmittedCounts: BreadthLedgerCounts;
+    omittedCounts: BreadthLedgerCounts;
+    originalCharacters: number;
+    transmittedCharacters: number;
+    originalSha256: string;
+  };
+}
+
+export interface BreadthLedgerEvidence {
+  providerOutput: BreadthResult;
+  transmittedLedger: BreadthResult | CompactedBreadthLedger;
+  telemetry: BreadthLedgerTelemetry;
 }
 
 export interface ReviewPayload {
@@ -200,6 +247,8 @@ export interface StageTelemetry {
   usage: Usage;
   durationMs: number;
   completed: boolean;
+  breadthLedger?: BreadthLedgerTelemetry;
+  breadthLedgerEvidence?: BreadthLedgerEvidence;
 }
 
 export interface RunFailureTelemetry {
@@ -270,6 +319,7 @@ export interface ClaudeRunnerConfig {
   investigationModel: string;
   investigationEffort: ClaudeEffort;
   investigationPromptMode?: InvestigationPromptMode;
+  breadthLedgerMode?: BreadthLedgerMode;
   skillName: string;
   maxTurns: number;
   maxBudgetUsd: number;
@@ -282,6 +332,7 @@ export interface CodexRunnerConfig {
   breadthEffort: CodexEffort;
   investigationEffort: CodexEffort;
   investigationPromptMode?: InvestigationPromptMode;
+  breadthLedgerMode?: BreadthLedgerMode;
   skillName: string;
   timeoutMs: number;
 }

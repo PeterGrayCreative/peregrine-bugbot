@@ -35,6 +35,7 @@ const EXPERIMENT_MODES = ["structural-smoke", "screening", "checkpoint"] as cons
 const CACHE_CONDITIONS = ["cold", "warm", "uncontrolled", "not-applicable"] as const;
 const JUDGE_KINDS = ["exact", "claude", "codex"] as const;
 const INVESTIGATION_PROMPT_MODES = ["legacy", "method-packet"] as const;
+const BREADTH_LEDGER_MODES = ["full", "structural-compact"] as const;
 const PROVIDER_AVAILABILITY_STATUSES = [
   "configured",
   "denied",
@@ -109,6 +110,7 @@ export interface ExperimentModelIdentity {
   investigationModel?: string;
   investigationEffort?: string;
   investigationPromptMode?: (typeof INVESTIGATION_PROMPT_MODES)[number];
+  breadthLedgerMode?: (typeof BREADTH_LEDGER_MODES)[number];
 }
 
 export interface ExperimentCliVersion {
@@ -1214,7 +1216,7 @@ function parseModelIdentity(value: unknown, source: string): ExperimentModelIden
   const root = object(value, source);
   onlyKeys(root, new Set([
     "configName", "runner", "effectiveConfigSha256", "breadthModel", "breadthEffort",
-    "investigationModel", "investigationEffort", "investigationPromptMode",
+    "investigationModel", "investigationEffort", "investigationPromptMode", "breadthLedgerMode",
   ]), source);
   const runner = member(root.runner, RUNNER_NAMES, `${source}.runner`);
   const parsed: ExperimentModelIdentity = {
@@ -1231,6 +1233,13 @@ function parseModelIdentity(value: unknown, source: string): ExperimentModelIden
       root.investigationPromptMode,
       INVESTIGATION_PROMPT_MODES,
       `${source}.investigationPromptMode`,
+    );
+  }
+  if (root.breadthLedgerMode !== undefined) {
+    parsed.breadthLedgerMode = member(
+      root.breadthLedgerMode,
+      BREADTH_LEDGER_MODES,
+      `${source}.breadthLedgerMode`,
     );
   }
   const stagesPresent = parsed.breadthModel !== undefined && parsed.breadthEffort !== undefined &&

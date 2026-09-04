@@ -736,6 +736,7 @@ function effectiveMatrixConfig(
     identity.investigationModel = stageConfig.investigationModel;
     identity.investigationEffort = stageConfig.investigationEffort;
     identity.investigationPromptMode = stageConfig.investigationPromptMode ?? "legacy";
+    identity.breadthLedgerMode = stageConfig.breadthLedgerMode ?? "full";
   }
   return { config, identity };
 }

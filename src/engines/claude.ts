@@ -1,4 +1,8 @@
-import { breadthSchemaJson, parseBreadthResult } from "../core/breadth-result.js";
+import {
+  breadthSchemaJson,
+  parseBreadthResult,
+  serializeBreadthLedger,
+} from "../core/breadth-result.js";
 import { prepareReviewManifest } from "../core/manifest.js";
 import { buildBreadthPrompt, buildInvestigationPrompt } from "../core/prompt.js";
 import { compileInvestigatorMethodPacket } from "../core/method-packet.js";
@@ -10,7 +14,14 @@ import { RunFailureError, runFailureKind, runFailureTelemetry } from "../core/ru
 import { claudeUsageFromEnvelope, combineUsage, promptBytes, sha256, withUnavailable } from "../core/telemetry.js";
 import { assertNoSecrets, safeDiagnostic } from "../security/secrets.js";
 import { isolatedProviderEnvironment, providerEnvironment } from "../security/provider-env.js";
-import type { ClaudeEffort, EngineResult, ReviewContext, StageTelemetry, Usage } from "../types.js";
+import type {
+  BreadthLedgerEvidence,
+  ClaudeEffort,
+  EngineResult,
+  ReviewContext,
+  StageTelemetry,
+  Usage,
+} from "../types.js";
 import { type ExecResult, exec, lastJsonBlock } from "../util/exec.js";
 import type { Engine } from "./engine.js";
 
@@ -209,8 +220,20 @@ function stageFailure(kind: "timeout" | "provider", message: string, stage: Stag
   return new RunFailureError(kind, message, { telemetry: singleStageFailure("claude", stage.model, stage) });
 }
 
-function completedStage<T>(stage: StageTelemetry["stage"], result: ClaudeStageResult<T>): StageTelemetry {
-  return { stage, model: result.model, promptSha256: result.promptSha256, usage: result.usage, durationMs: result.durationMs, completed: true };
+function completedStage<T>(
+  stage: StageTelemetry["stage"],
+  result: ClaudeStageResult<T>,
+  breadthLedgerEvidence?: BreadthLedgerEvidence,
+): StageTelemetry {
+  return {
+    stage,
+    model: result.model,
+    promptSha256: result.promptSha256,
+    usage: result.usage,
+    durationMs: result.durationMs,
+    completed: true,
+    ...(breadthLedgerEvidence ? { breadthLedgerEvidence } : {}),
+  };
 }
 
 function wrapClaudeFailure(error: unknown, modelConfig: string, started: number, completed: StageTelemetry[]): RunFailureError {
@@ -288,18 +311,39 @@ export function createClaudeEngine(
           ctx,
           model: cfg.breadthModel,
           effort: cfg.breadthEffort,
-          prompt: buildBreadthPrompt(ctx, skillDir, manifest),
-          schema: breadthSchemaJson(),
+          prompt: buildBreadthPrompt(ctx, skillDir, manifest, cfg.breadthLedgerMode),
+          schema: breadthSchemaJson(cfg.breadthLedgerMode),
           maxTurns: breadthTurns,
           maxBudgetUsd: breadthBudget,
           timeoutMs: breadthTimeout,
           allowedTools: ["Read", "Grep", "Glob"].join(","),
           stage: "breadth",
-          parse: (value) => parseBreadthResult(value, "claude breadth output"),
+          parse: (value) => parseBreadthResult(
+            value,
+            "claude breadth output",
+            cfg.breadthLedgerMode ?? "full",
+          ),
         });
       } catch (error) {
         throw wrapClaudeFailure(error, modelConfig, started, []);
       }
+
+      let breadthLedger;
+      try {
+        breadthLedger = serializeBreadthLedger(breadth.output, cfg.breadthLedgerMode ?? "full");
+      } catch (error) {
+        throw wrapClaudeFailure(
+          new RunFailureError("parse", "claude breadth ledger could not be compacted safely", { cause: error }),
+          modelConfig,
+          started,
+          [{ ...completedStage("breadth", breadth), completed: false }],
+        );
+      }
+      const breadthLedgerEvidence: BreadthLedgerEvidence = {
+        providerOutput: breadth.output,
+        transmittedLedger: breadthLedger.output,
+        telemetry: breadthLedger.telemetry,
+      };
 
       const elapsed = Date.now() - started;
       const remaining = cfg.timeoutMs - elapsed;
@@ -308,10 +352,10 @@ export function createClaudeEngine(
           new RunFailureError("timeout", `claude review exhausted its ${cfg.timeoutMs}ms timeout`),
           modelConfig,
           started,
-          [completedStage("breadth", breadth)],
+          [completedStage("breadth", breadth, breadthLedgerEvidence)],
         );
       }
-      const breadthText = JSON.stringify(breadth.output);
+      const breadthText = breadthLedger.text;
       let investigation: ClaudeStageResult<ReturnType<typeof parseReviewPayload>>;
       try {
         investigation = await runStage({
@@ -337,7 +381,12 @@ export function createClaudeEngine(
           parse: (value) => parseReviewPayload(value, "claude review output"),
         });
       } catch (error) {
-        throw wrapClaudeFailure(error, modelConfig, started, [completedStage("breadth", breadth)]);
+        throw wrapClaudeFailure(
+          error,
+          modelConfig,
+          started,
+          [completedStage("breadth", breadth, breadthLedgerEvidence)],
+        );
       }
 
       try {
@@ -352,6 +401,8 @@ export function createClaudeEngine(
             manifest: manifest.available ? manifest.output : manifest.reason,
             breadth: {
               output: breadth.output,
+              transmittedLedger: breadthLedger.output,
+              breadthLedger: breadthLedger.telemetry,
               model: breadth.model,
               promptSha256: breadth.promptSha256,
               usage: breadth.usage,
@@ -378,7 +429,10 @@ export function createClaudeEngine(
           ),
           modelConfig,
           started,
-          [completedStage("breadth", breadth), completedStage("investigation", investigation)],
+          [
+            completedStage("breadth", breadth, breadthLedgerEvidence),
+            completedStage("investigation", investigation),
+          ],
         );
       }
     },

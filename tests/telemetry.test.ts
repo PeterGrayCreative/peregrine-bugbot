@@ -17,7 +17,7 @@ import {
   promptBytes,
   formatUsageCost,
 } from "../src/core/telemetry.js";
-import type { EngineResult, PricingCatalog, Usage } from "../src/types.js";
+import type { EngineResult, PricingCatalog, StageTelemetry, Usage } from "../src/types.js";
 
 const pricing: PricingCatalog = {
   schemaVersion: 1,
@@ -676,6 +676,25 @@ test("pure report aggregation preserves provider cost, token classes, work, and 
           coverage: { coveredFiles: ["src/value.ts"], unavailable: [] },
         },
         model: "fast",
+        breadthLedger: {
+          mode: "structural-compact",
+          applied: true,
+          originalCounts: {
+            candidates: 0, clearExplanations: 4, clearGroups: 1,
+            escalations: 0, coveredFiles: 1, unavailable: 0,
+          },
+          transmittedCounts: {
+            candidates: 0, clearExplanations: 1, clearGroups: 1,
+            escalations: 0, coveredFiles: 1, unavailable: 0,
+          },
+          omittedCounts: {
+            candidates: 0, clearExplanations: 3, clearGroups: 0,
+            escalations: 0, coveredFiles: 0, unavailable: 0,
+          },
+          originalCharacters: 1200,
+          transmittedCharacters: 450,
+          originalSha256: "c".repeat(64),
+        },
         promptSha256: "a".repeat(64),
         durationMs: 1000,
         usage: {
@@ -759,6 +778,63 @@ test("pure report aggregation preserves provider cost, token classes, work, and 
   assert.equal(stats.telemetryExpectedRuns, 1);
   assert.equal(stats.telemetryObserved.costUsd, 1);
   assert.equal(stats.telemetryObserved.cacheWriteInputTokens, 1);
+  assert.equal(stats.telemetryObserved.breadthLedger, 1);
+  assert.equal(stats.breadthLedgerOriginalCharactersMean, 1200);
+  assert.equal(stats.breadthLedgerTransmittedCharactersMean, 450);
+  assert.equal(stats.breadthLedgerOmittedClearExplanationsMean, 3);
+  assert.equal(stats.breadthLedgerCompactionAppliedRuns, 1);
   assert.equal(stats.incurredCostUsdTotal, 0.0004);
   assert.match(renderBenchmarkHtml([stats]), /\$0\.000400/);
+  assert.match(renderBenchmarkHtml([stats]), /ledger chars 1200 -&gt; 450|ledger chars 1200 -> 450/);
+
+  const breadthRaw = (result.raw as {
+    breadth: {
+      model: string;
+      promptSha256: string;
+      durationMs: number;
+      usage: EngineResult["usage"];
+      breadthLedger: NonNullable<StageTelemetry["breadthLedger"]>;
+    };
+  }).breadth;
+  const failedStats = calculateStats({
+    config: "route",
+    runner: "claude",
+    corpus: "development",
+    benchmarkKind: "behavioral",
+    completeness: "tracked",
+    expectedRuns: 1,
+    completed: [],
+    failed: [{
+      attemptDurationMs: 4000,
+      outcome: {
+        status: "failed",
+        failureKind: "timeout",
+        message: "investigation timed out",
+        durationMs: 4000,
+        telemetry: {
+          engine: "claude",
+          modelConfig: "fast/high->strong/high",
+          usage: breadthRaw.usage,
+          durationMs: breadthRaw.durationMs,
+          stages: [{
+            stage: "breadth",
+            model: breadthRaw.model,
+            promptSha256: breadthRaw.promptSha256,
+            usage: breadthRaw.usage,
+            durationMs: breadthRaw.durationMs,
+            completed: true,
+            breadthLedger: breadthRaw.breadthLedger,
+          }],
+        },
+      },
+    }],
+    missing: 0,
+    failureInclusiveRecalls: [0],
+    expectedRootCauseRuns: 1,
+    structuralExpectedMarkers: null,
+  });
+  assert.equal(failedStats.breadthLedgerOriginalCharactersMean, 1200);
+  assert.equal(failedStats.breadthLedgerTransmittedCharactersMean, 450);
+  assert.equal(failedStats.breadthLedgerOmittedClearExplanationsMean, 3);
+  assert.equal(failedStats.telemetryObserved.breadthLedger, 1);
 });

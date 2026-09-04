@@ -17,6 +17,7 @@ The default route is deliberately strong rather than cost-minimal:
 | investigation model | `runners.claude.investigationModel` | `runners.codex.investigationModel` |
 | effort | `breadthEffort`, `investigationEffort` | `breadthEffort`, `investigationEffort` |
 | investigator prompt | `investigationPromptMode` | `investigationPromptMode` |
+| breadth ledger | `breadthLedgerMode` | `breadthLedgerMode` |
 | budget | `maxTurns`, `maxBudgetUsd` | account-side limits and timeout |
 | timeout | `timeoutMs` | `timeoutMs` shared across both stages |
 | canonical skill | `skillName` | `skillName` |
@@ -51,6 +52,20 @@ custom-lane text never enters the trusted method tags.
 The checked-in default remains `legacy` for both runners. The Stage 2 Codex
 screening validated the opt-in mode as an isolated experiment; it did not test
 Claude behavior or authorize a production-routing change.
+
+`breadthLedgerMode` accepts `full` or `structural-compact`. `full` preserves the
+legacy transfer contract and fails when the complete breadth JSON exceeds the
+24,000-character investigation limit. `structural-compact` keeps every
+candidate, escalation, covered file, unavailable item, and exact per-file and
+per-lane clear count while retaining a bounded sample of whole clear
+explanations. The runner records original, transmitted, and omitted counts plus
+the original JSON hash, and still fails closed when the preserved high-value
+content alone exceeds the limit. Provider output is validated and secret-scanned
+before compaction; the compact ledger remains untrusted model text.
+
+The backward-compatible default is `full` for both runners. Structural
+compaction is an opt-in Stage 2 experiment until its paired benchmark and the
+full visible checkpoint comparison satisfy the plan's acceptance gate.
 
 ## Pricing contracts
 

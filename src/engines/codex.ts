@@ -3,14 +3,25 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { buildBreadthPrompt, buildInvestigationPrompt } from "../core/prompt.js";
 import { compileInvestigatorMethodPacket } from "../core/method-packet.js";
-import { parseBreadthResult } from "../core/breadth-result.js";
+import {
+  breadthSchemaName,
+  parseBreadthResult,
+  serializeBreadthLedger,
+} from "../core/breadth-result.js";
 import { prepareReviewManifest } from "../core/manifest.js";
 import { bundledSkillDir, schemaPath } from "../core/paths.js";
 import { buildEngineResult, parseReviewPayload } from "../core/review-result.js";
 import { applyUsageCost } from "../core/pricing.js";
 import { RunFailureError, runFailureKind, runFailureTelemetry } from "../core/run-failure.js";
 import { codexUsageFromEvents, combineUsage, sha256 } from "../core/telemetry.js";
-import type { CodexEffort, EngineResult, ReviewContext, StageTelemetry, Usage } from "../types.js";
+import type {
+  BreadthLedgerEvidence,
+  CodexEffort,
+  EngineResult,
+  ReviewContext,
+  StageTelemetry,
+  Usage,
+} from "../types.js";
 import { type ExecResult, exec } from "../util/exec.js";
 import type { Engine } from "./engine.js";
 import { assertNoSecrets, safeDiagnostic } from "../security/secrets.js";
@@ -196,8 +207,21 @@ function codexStageFailure(kind: "timeout" | "provider", message: string, stage:
   return new RunFailureError(kind, message, { telemetry: singleCodexStageFailure(stage.model, stage) });
 }
 
-function codexStage(stage: StageTelemetry["stage"], result: CodexStageResult, completed: boolean): StageTelemetry {
-  return { stage, model: result.model, promptSha256: result.promptSha256, usage: result.usage, durationMs: result.durationMs, completed };
+function codexStage(
+  stage: StageTelemetry["stage"],
+  result: CodexStageResult,
+  completed: boolean,
+  breadthLedgerEvidence?: BreadthLedgerEvidence,
+): StageTelemetry {
+  return {
+    stage,
+    model: result.model,
+    promptSha256: result.promptSha256,
+    usage: result.usage,
+    durationMs: result.durationMs,
+    completed,
+    ...(breadthLedgerEvidence ? { breadthLedgerEvidence } : {}),
+  };
 }
 
 function wrapCodexFailure(error: unknown, modelConfig: string, started: number, completed: StageTelemetry[]): RunFailureError {
@@ -277,10 +301,14 @@ export function createCodexEngine(
             model: cfg.breadthModel,
             effort: cfg.breadthEffort,
             schema: ctx.evaluationIsolation
-              ? join(ctx.evaluationIsolation.providerAssetsRoot, "schemas", "breadth-result.schema.json")
-              : schemaPath("breadth-result"),
+              ? join(
+                ctx.evaluationIsolation.providerAssetsRoot,
+                "schemas",
+                `${breadthSchemaName(cfg.breadthLedgerMode)}.schema.json`,
+              )
+              : schemaPath(breadthSchemaName(cfg.breadthLedgerMode)),
             output: breadthOutput,
-            prompt: buildBreadthPrompt(ctx, skillDir, manifest),
+            prompt: buildBreadthPrompt(ctx, skillDir, manifest, cfg.breadthLedgerMode),
             timeoutMs: breadthTimeout,
             stage: "breadth",
           });
@@ -288,10 +316,22 @@ export function createCodexEngine(
           throw wrapCodexFailure(error, modelConfig, started, []);
         }
         let breadthPayload;
+        let breadthLedger;
+        let breadthLedgerEvidence: BreadthLedgerEvidence;
         try {
-          breadthPayload = parseBreadthResult(JSON.parse(breadth.output), "codex breadth output");
+          breadthPayload = parseBreadthResult(
+            JSON.parse(breadth.output),
+            "codex breadth output",
+            cfg.breadthLedgerMode ?? "full",
+          );
           assertNoSecrets(breadthPayload, "codex breadth output");
-          observedStages = [codexStage("breadth", breadth, true)];
+          breadthLedger = serializeBreadthLedger(breadthPayload, cfg.breadthLedgerMode ?? "full");
+          breadthLedgerEvidence = {
+            providerOutput: breadthPayload,
+            transmittedLedger: breadthLedger.output,
+            telemetry: breadthLedger.telemetry,
+          };
+          observedStages = [codexStage("breadth", breadth, true, breadthLedgerEvidence)];
         } catch (error) {
           throw wrapCodexFailure(
             new RunFailureError("parse", "codex breadth stage returned invalid structured JSON", { cause: error }),
@@ -307,11 +347,11 @@ export function createCodexEngine(
             new RunFailureError("timeout", `codex review exhausted its ${cfg.timeoutMs}ms timeout`),
             modelConfig,
             started,
-            [codexStage("breadth", breadth, true)],
+            [codexStage("breadth", breadth, true, breadthLedgerEvidence)],
           );
         }
         const reviewOutput = join(outDir, "review.json");
-        const breadthText = JSON.stringify(breadthPayload);
+        const breadthText = breadthLedger.text;
         let investigation: CodexStageResult;
         try {
           investigation = await runStage({
@@ -336,7 +376,12 @@ export function createCodexEngine(
             stage: "investigation",
           });
         } catch (error) {
-          throw wrapCodexFailure(error, modelConfig, started, [codexStage("breadth", breadth, true)]);
+          throw wrapCodexFailure(
+            error,
+            modelConfig,
+            started,
+            [codexStage("breadth", breadth, true, breadthLedgerEvidence)],
+          );
         }
 
         let rawPayload: unknown;
@@ -347,14 +392,17 @@ export function createCodexEngine(
             new RunFailureError("parse", "codex investigation returned invalid structured JSON", { cause: error }),
             modelConfig,
             started,
-            [codexStage("breadth", breadth, true), codexStage("investigation", investigation, false)],
+            [
+              codexStage("breadth", breadth, true, breadthLedgerEvidence),
+              codexStage("investigation", investigation, false),
+            ],
           );
         }
         let payload;
         try {
           payload = parseReviewPayload(rawPayload, "codex review output");
           observedStages = [
-            codexStage("breadth", breadth, true),
+            codexStage("breadth", breadth, true, breadthLedgerEvidence),
             codexStage("investigation", investigation, true),
           ];
         } catch (error) {
@@ -366,7 +414,10 @@ export function createCodexEngine(
             ),
             modelConfig,
             started,
-            [codexStage("breadth", breadth, true), codexStage("investigation", investigation, false)],
+            [
+              codexStage("breadth", breadth, true, breadthLedgerEvidence),
+              codexStage("investigation", investigation, false),
+            ],
           );
         }
         try {
@@ -381,6 +432,8 @@ export function createCodexEngine(
               manifest: manifest.available ? manifest.output : manifest.reason,
               breadth: {
                 output: breadthPayload,
+                transmittedLedger: breadthLedger.output,
+                breadthLedger: breadthLedger.telemetry,
                 model: breadth.model,
                 promptSha256: breadth.promptSha256,
                 usage: breadth.usage,
@@ -410,7 +463,10 @@ export function createCodexEngine(
             ),
             modelConfig,
             started,
-            [codexStage("breadth", breadth, true), codexStage("investigation", investigation, true)],
+            [
+              codexStage("breadth", breadth, true, breadthLedgerEvidence),
+              codexStage("investigation", investigation, true),
+            ],
           );
         }
       } catch (error) {

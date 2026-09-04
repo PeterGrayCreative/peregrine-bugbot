@@ -393,6 +393,73 @@ test("terminal provider records must match the immutable experiment model identi
   );
 });
 
+test("terminal provider records bind the configured breadth ledger mode", () => {
+  const manifest = {
+    models: [{
+      configName: "control",
+      runner: "claude",
+      effectiveConfigSha256: "a".repeat(64),
+      breadthModel: "claude-breadth",
+      breadthEffort: "high",
+      investigationModel: "claude-investigation",
+      investigationEffort: "high",
+      breadthLedgerMode: "structural-compact",
+    }],
+  } satisfies Pick<ExperimentManifest, "models">;
+  const attempt = pairedSchedule(1)[0]!;
+  const record = completedRecord(attempt, 100, 0.01);
+  if (record.outcome.status !== "completed") throw new Error("expected completed fixture");
+  record.outcome.result.modelConfig = "claude-breadth/high->claude-investigation/high";
+  record.outcome.result.raw = {
+    breadth: { breadthLedger: { mode: "structural-compact" } },
+  };
+
+  assert.doesNotThrow(() => assertExperimentRecordModelIdentity(manifest, record));
+  const mismatched = structuredClone(record);
+  if (mismatched.outcome.status !== "completed") throw new Error("expected completed fixture");
+  ((mismatched.outcome.result.raw as { breadth: { breadthLedger: { mode: string } } })
+    .breadth.breadthLedger).mode = "full";
+  assert.throws(
+    () => assertExperimentRecordModelIdentity(manifest, mismatched),
+    /breadth ledger mode does not match its immutable experiment model identity/,
+  );
+
+  const missing = structuredClone(record);
+  if (missing.outcome.status !== "completed") throw new Error("expected completed fixture");
+  delete (missing.outcome.result.raw as { breadth: { breadthLedger?: unknown } })
+    .breadth.breadthLedger;
+  assert.throws(
+    () => assertExperimentRecordModelIdentity(manifest, missing),
+    /completed breadth stage does not bind its breadth ledger mode/,
+  );
+
+  const failedWithoutLedger = failedRecord(attempt, 100);
+  failedWithoutLedger.outcome = {
+    status: "failed",
+    failureKind: "timeout",
+    message: "investigation timed out",
+    durationMs: 100,
+    telemetry: {
+      engine: "claude",
+      modelConfig: "claude-breadth/high->claude-investigation/high",
+      usage: { ...mockUsage(), provider: "anthropic" },
+      durationMs: 100,
+      stages: [{
+        stage: "breadth",
+        model: "claude-breadth",
+        promptSha256: "b".repeat(64),
+        usage: { ...mockUsage(), provider: "anthropic" },
+        durationMs: 100,
+        completed: true,
+      }],
+    },
+  };
+  assert.throws(
+    () => assertExperimentRecordModelIdentity(manifest, failedWithoutLedger),
+    /completed breadth stage does not bind its breadth ledger mode/,
+  );
+});
+
 test("observed cost, wall time, failure rate, and consecutive failures stop before the next attempt", () => {
   const schedule = pairedSchedule(4);
   const costly = completedRecord(schedule[0]!, 100, 10);
@@ -689,6 +756,70 @@ test("the Stage 2 PR 8 preregistration isolates the method-packet intervention",
     ],
   );
   assert.equal(config.repeats * config.caseIds.length * config.configs.length, 48);
+});
+
+test("the Stage 2 PR 9 preregistration isolates structural breadth compaction", () => {
+  const config = JSON.parse(
+    readFileSync(join(process.cwd(), "eval", "matrix.codex.stage2-pr9.json"), "utf8"),
+  ) as {
+    repeats: number;
+    corpora: string[];
+    caseIds: string[];
+    configs: Array<{
+      name: string;
+      runner: string;
+      overrides: Record<string, unknown>;
+    }>;
+    experiment: unknown;
+  };
+  const protocol = parseExperimentProtocol(config.experiment, "matrix.codex.stage2-pr9.json");
+
+  assert.equal(protocol.mode, "screening");
+  assert.equal(protocol.control, "method-packet-full-ledger");
+  assert.equal(protocol.treatment, "method-packet-structural-compact");
+  assert.equal(protocol.providerAccess, "cli-session");
+  assert.equal(protocol.cacheCondition, "uncontrolled");
+  assert.equal(protocol.limits.maxProviderAttempts, 72);
+  assert.equal(config.repeats, 3);
+  assert.deepEqual(config.corpora, ["development"]);
+  assert.equal(config.caseIds.length, 10);
+  assert.equal(new Set(config.caseIds).size, config.caseIds.length);
+  assert.ok(config.caseIds.every((id) => /^case-[0-9a-f]{8}$/.test(id)));
+  assert.deepEqual(
+    config.configs.map(({ name, runner, overrides }) => ({
+      name,
+      runner,
+      breadthLedgerMode: overrides.breadthLedgerMode,
+      promptMode: overrides.investigationPromptMode,
+      breadthModel: overrides.breadthModel,
+      breadthEffort: overrides.breadthEffort,
+      investigationModel: overrides.investigationModel,
+      investigationEffort: overrides.investigationEffort,
+    })),
+    [
+      {
+        name: "method-packet-full-ledger",
+        runner: "codex",
+        breadthLedgerMode: "full",
+        promptMode: "method-packet",
+        breadthModel: "gpt-5.6-luna",
+        breadthEffort: "high",
+        investigationModel: "gpt-5.6-sol",
+        investigationEffort: "high",
+      },
+      {
+        name: "method-packet-structural-compact",
+        runner: "codex",
+        breadthLedgerMode: "structural-compact",
+        promptMode: "method-packet",
+        breadthModel: "gpt-5.6-luna",
+        breadthEffort: "high",
+        investigationModel: "gpt-5.6-sol",
+        investigationEffort: "high",
+      },
+    ],
+  );
+  assert.equal(config.repeats * config.caseIds.length * config.configs.length, 60);
 });
 
 test("stop records and write-once marker records parse strictly", () => {

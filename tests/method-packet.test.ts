@@ -83,6 +83,33 @@ test("method-packet prompts keep the identical core before every variable field"
   assert.doesNotMatch(firstPacket.activatedLaneDetails, /Response, error, transport, and observability contracts/);
 });
 
+test("method-packet investigation keeps binary changes visible as typed metadata", async () => {
+  const typed = typedManifest({
+    changedFiles: [{
+      path: "assets/logo.png",
+      status: "M",
+      additions: null,
+      deletions: null,
+      binary: true,
+      activatedLanes: [],
+    }],
+    activatedLanes: [],
+  });
+  const manifest: ReviewManifest = { available: true, output: "legacy text", typed };
+  const packet = await compileInvestigatorMethodPacket({ skillDir, ctx: context(), manifest });
+  const prompt = buildInvestigationPrompt(
+    context(),
+    "/provider/skill",
+    "route",
+    "{\"candidates\":[]}",
+    manifest,
+    packet,
+  );
+
+  assert.match(prompt, /\"path\":\"assets\/logo\.png\"/);
+  assert.match(prompt, /\"additions\":null,\"deletions\":null,\"binary\":true/);
+});
+
 test("repository profile and custom-lane prose retain merge-base provenance outside trusted method tags", async () => {
   const mergeBase = "a".repeat(40);
   const profilePath = resolve(".peregrine/profile.md");
