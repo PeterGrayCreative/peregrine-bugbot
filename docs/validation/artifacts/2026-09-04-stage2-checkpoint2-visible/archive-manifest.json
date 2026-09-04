@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "3d4a67e08b52dbe32fff167f83f8f7648d66977cf0671ae200ee63d9abb6be5c",
+  "sourceRunDirectory": "eval/runs/2026-09-04T10-24-44-905Z",
+  "archivedAt": "2026-09-04T18:31:19.742Z",
+  "redaction": "Raw provider session material and verbose prompt/output envelopes excluded. All terminal results, findings, grading classifications, telemetry, manifests, semantic decisions, seals, and source artifact hashes retained.",
+  "files": [
+    {
+      "file": "README.md",
+      "sha256": "94e89be8c506e985efd85bd5433566ea8abf2657e12bebb6371aef966779962c"
+    },
+    {
+      "file": "attempt-results.json",
+      "sha256": "956742988521c5dc89bb837f371605912fc4f0bb2ceeccecc9041b895cb4cc77"
+    },
+    {
+      "file": "benchmark.html",
+      "sha256": "e3328658540ddec6359be46d7d920c5858b519bf42fb3122a03e07cd194b6cf2"
+    },
+    {
+      "file": "benchmark.json",
+      "sha256": "d0958912a940cd5207e314680eb68a7c0357b393e56946cc180d5ff5cec01200"
+    },
+    {
+      "file": "experiment-grading-seal.json",
+      "sha256": "c6660fb6878b322768205ec5fca28e4931e71dc0b10a3c5ea0c8df42af8bd094"
+    },
+    {
+      "file": "experiment-manifest.json",
+      "sha256": "d4fc5641101e031f803ec078d2a7268d438f988b15e54ab715a17db00773b777"
+    },
+    {
+      "file": "experiment-terminal-seal.json",
+      "sha256": "6363a8ebeb5698f7077b3f11ba908e668ce1fc21996104f832f9f4def27b1cbb"
+    },
+    {
+      "file": "independent-adjudication.md",
+      "sha256": "871e336aa73ca63d010dfcc57a863906236d41f670961b8a73ddfea3ef3bea3a"
+    },
+    {
+      "file": "judge-manifest.json",
+      "sha256": "05059feee2385da1273cbdfbe8137b22ef5a9ab9c57b21fb9f052025bdaf9c6a"
+    },
+    {
+      "file": "judge-results.json",
+      "sha256": "ad0aee099bf0ad79df62be697a8c2fe2b26cba1c3358257bee9e0bf697a92cb7"
+    },
+    {
+      "file": "judge-terminal-seal.json",
+      "sha256": "6f7afc654121e5ea1147f03de060c3fc4664454c03c38e247228194be490ed34"
+    },
+    {
+      "file": "matrix-manifest.json",
+      "sha256": "93f0fd8854bc10a62d99fa9f5030c1daa3045bf020ca2b5278b0645b43dab036"
+    },
+    {
+      "file": "paired-analysis.json",
+      "sha256": "c7fb89b982bd0b5129ec33ae6dcf1342c877d3c59dbbcb1b1081a49a70c8edf5"
+    }
+  ]
+}

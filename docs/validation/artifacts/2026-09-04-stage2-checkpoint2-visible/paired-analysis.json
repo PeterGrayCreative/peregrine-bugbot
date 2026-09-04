@@ -1,0 +1,600 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "3d4a67e08b52dbe32fff167f83f8f7648d66977cf0671ae200ee63d9abb6be5c",
+  "analysis": {
+    "primaryMetric": "median paired percent change in attemptDurationMs",
+    "deltaFormula": "100 * (treatment - control) / control",
+    "bootstrap": {
+      "resamples": 10000,
+      "seed": 202609043,
+      "prng": "32-bit LCG: x[n+1] = (1664525*x[n] + 1013904223) mod 2^32",
+      "statistic": "ordinary median of paired percent changes",
+      "quantiles": "R type-7 linear interpolation at 0.025 and 0.975"
+    },
+    "failedPairPolicy": "Exclude a block from paired work/duration metrics when either arm lacks that metric; retain failures in completion and failure-inclusive quality.",
+    "sensitivity": "Case-cluster bootstrap resamples cases and retains all repeats; reported separately for the primary wall-time metric."
+  },
+  "paired": {
+    "development": {
+      "blocks": 60,
+      "completePairs": 60,
+      "treatmentFasterPairs": 52,
+      "metrics": {
+        "attemptDurationMs": {
+          "pairedObservations": 60,
+          "medianPercentChange": -28.310381409353134,
+          "bootstrap95Percent": [
+            -38.963530135792894,
+            -19.963201102483847
+          ]
+        },
+        "engineDurationMs": {
+          "pairedObservations": 60,
+          "medianPercentChange": -29.40511720005273,
+          "bootstrap95Percent": [
+            -40.11516472668942,
+            -20.921495299532094
+          ]
+        },
+        "inputTokens": {
+          "pairedObservations": 60,
+          "medianPercentChange": -54.41772413277724,
+          "bootstrap95Percent": [
+            -65.65900413332665,
+            -46.13296450357648
+          ]
+        },
+        "uncachedInputTokens": {
+          "pairedObservations": 60,
+          "medianPercentChange": -39.955171111995405,
+          "bootstrap95Percent": [
+            -47.7191842729635,
+            -25.13100389206584
+          ]
+        },
+        "cachedInputTokens": {
+          "pairedObservations": 60,
+          "medianPercentChange": -59.11626220520429,
+          "bootstrap95Percent": [
+            -71.74657534246576,
+            -54.19398177379533
+          ]
+        },
+        "outputTokens": {
+          "pairedObservations": 60,
+          "medianPercentChange": -26.54360909523337,
+          "bootstrap95Percent": [
+            -41.1496670171749,
+            -21.516164994425864
+          ]
+        },
+        "reasoningOutputTokens": {
+          "pairedObservations": 60,
+          "medianPercentChange": -26.644998384972794,
+          "bootstrap95Percent": [
+            -39.33126110398478,
+            -20.3843913803145
+          ]
+        },
+        "turns": {
+          "pairedObservations": 60,
+          "medianPercentChange": 0,
+          "bootstrap95Percent": [
+            0,
+            0
+          ]
+        },
+        "toolCalls": {
+          "pairedObservations": 60,
+          "medianPercentChange": -43.65079365079365,
+          "bootstrap95Percent": [
+            -57.14285714285714,
+            -36.66666666666667
+          ]
+        },
+        "toolOutputBytes": {
+          "pairedObservations": 60,
+          "medianPercentChange": -93.12103135072753,
+          "bootstrap95Percent": [
+            -94.67044284243048,
+            -72.5258982499334
+          ]
+        },
+        "promptBytes": {
+          "pairedObservations": 60,
+          "medianPercentChange": 287.8981079409995,
+          "bootstrap95Percent": [
+            274.71266039461494,
+            298.8316240425808
+          ]
+        },
+        "breadthDurationMs": {
+          "pairedObservations": 60,
+          "medianPercentChange": -8.50190009882561,
+          "bootstrap95Percent": [
+            -18.497084621321207,
+            -2.978859705317104
+          ]
+        },
+        "investigationDurationMs": {
+          "pairedObservations": 60,
+          "medianPercentChange": -40.51261630558134,
+          "bootstrap95Percent": [
+            -54.692956701795595,
+            -35.850398867456676
+          ]
+        },
+        "investigationInputTokens": {
+          "pairedObservations": 60,
+          "medianPercentChange": -70.39783513238609,
+          "bootstrap95Percent": [
+            -81.12800812554791,
+            -61.01590601025237
+          ]
+        },
+        "investigationUncachedInputTokens": {
+          "pairedObservations": 60,
+          "medianPercentChange": -53.43056162823694,
+          "bootstrap95Percent": [
+            -63.593856914772296,
+            -39.23102784314924
+          ]
+        },
+        "investigationCachedInputTokens": {
+          "pairedObservations": 60,
+          "medianPercentChange": -78.09563624781016,
+          "bootstrap95Percent": [
+            -88.72526461113668,
+            -64.60819927348209
+          ]
+        },
+        "investigationToolCalls": {
+          "pairedObservations": 60,
+          "medianPercentChange": -66.66666666666666,
+          "bootstrap95Percent": [
+            -80,
+            -50
+          ]
+        },
+        "investigationToolOutputBytes": {
+          "pairedObservations": 60,
+          "medianPercentChange": -98.08926215531638,
+          "bootstrap95Percent": [
+            -98.1386565956299,
+            -71.11558723272388
+          ]
+        },
+        "investigationPromptBytes": {
+          "pairedObservations": 60,
+          "medianPercentChange": 456.84761683356686,
+          "bootstrap95Percent": [
+            425.2310852447792,
+            482.06326383896476
+          ]
+        }
+      },
+      "wallTimeCaseClusterBootstrap95Percent": [
+        -38.07922129215559,
+        -19.6910852949914
+      ]
+    },
+    "validation": {
+      "blocks": 48,
+      "completePairs": 47,
+      "treatmentFasterPairs": 36,
+      "metrics": {
+        "attemptDurationMs": {
+          "pairedObservations": 47,
+          "medianPercentChange": -29.8786402757425,
+          "bootstrap95Percent": [
+            -40.45494001647043,
+            -15.456605364388471
+          ]
+        },
+        "engineDurationMs": {
+          "pairedObservations": 47,
+          "medianPercentChange": -30.950925836576708,
+          "bootstrap95Percent": [
+            -41.65051950627832,
+            -16.000526766313293
+          ]
+        },
+        "inputTokens": {
+          "pairedObservations": 47,
+          "medianPercentChange": -66.39528288509713,
+          "bootstrap95Percent": [
+            -80.84184314165557,
+            -48.029752230176555
+          ]
+        },
+        "uncachedInputTokens": {
+          "pairedObservations": 47,
+          "medianPercentChange": -34.71763968041884,
+          "bootstrap95Percent": [
+            -50.24458091208053,
+            -23.72863493523415
+          ]
+        },
+        "cachedInputTokens": {
+          "pairedObservations": 47,
+          "medianPercentChange": -72.8125,
+          "bootstrap95Percent": [
+            -83.49637109498265,
+            -54.536390827517444
+          ]
+        },
+        "outputTokens": {
+          "pairedObservations": 47,
+          "medianPercentChange": -22.46435297282755,
+          "bootstrap95Percent": [
+            -39.23377638780297,
+            -11.508704061895552
+          ]
+        },
+        "reasoningOutputTokens": {
+          "pairedObservations": 47,
+          "medianPercentChange": -25.963092099668337,
+          "bootstrap95Percent": [
+            -41.858190709046454,
+            -6.435037925128456
+          ]
+        },
+        "turns": {
+          "pairedObservations": 47,
+          "medianPercentChange": 0,
+          "bootstrap95Percent": [
+            0,
+            0
+          ]
+        },
+        "toolCalls": {
+          "pairedObservations": 47,
+          "medianPercentChange": -60,
+          "bootstrap95Percent": [
+            -66.66666666666666,
+            -50
+          ]
+        },
+        "toolOutputBytes": {
+          "pairedObservations": 47,
+          "medianPercentChange": -94.71129279509454,
+          "bootstrap95Percent": [
+            -97.01442307692307,
+            -92.82809931654987
+          ]
+        },
+        "promptBytes": {
+          "pairedObservations": 47,
+          "medianPercentChange": 290.1119402985075,
+          "bootstrap95Percent": [
+            271.4758589202146,
+            307.5565831102458
+          ]
+        },
+        "breadthDurationMs": {
+          "pairedObservations": 47,
+          "medianPercentChange": -3.162898499376278,
+          "bootstrap95Percent": [
+            -16.603489303693785,
+            5.945161650359016
+          ]
+        },
+        "investigationDurationMs": {
+          "pairedObservations": 47,
+          "medianPercentChange": -54.40632703368941,
+          "bootstrap95Percent": [
+            -64.5600346770698,
+            -34.96845949535193
+          ]
+        },
+        "investigationInputTokens": {
+          "pairedObservations": 47,
+          "medianPercentChange": -83.70497646341329,
+          "bootstrap95Percent": [
+            -87.18604538401861,
+            -72.8213120832574
+          ]
+        },
+        "investigationUncachedInputTokens": {
+          "pairedObservations": 47,
+          "medianPercentChange": -43.30291588000839,
+          "bootstrap95Percent": [
+            -58.43923393592267,
+            -29.84460087661044
+          ]
+        },
+        "investigationCachedInputTokens": {
+          "pairedObservations": 47,
+          "medianPercentChange": -89.33717579250721,
+          "bootstrap95Percent": [
+            -92.86995515695067,
+            -80.98510882016036
+          ]
+        },
+        "investigationToolCalls": {
+          "pairedObservations": 47,
+          "medianPercentChange": -80,
+          "bootstrap95Percent": [
+            -92.5925925925926,
+            -66.66666666666666
+          ]
+        },
+        "investigationToolOutputBytes": {
+          "pairedObservations": 47,
+          "medianPercentChange": -98.28287017834924,
+          "bootstrap95Percent": [
+            -99.75832720395083,
+            -98.10751508502469
+          ]
+        },
+        "investigationPromptBytes": {
+          "pairedObservations": 47,
+          "medianPercentChange": 442.4714262050688,
+          "bootstrap95Percent": [
+            398.3005366726297,
+            488.6269569911823
+          ]
+        }
+      },
+      "wallTimeCaseClusterBootstrap95Percent": [
+        -47.26535934487778,
+        -11.12095384051395
+      ]
+    },
+    "combined": {
+      "blocks": 108,
+      "completePairs": 107,
+      "treatmentFasterPairs": 88,
+      "metrics": {
+        "attemptDurationMs": {
+          "pairedObservations": 107,
+          "medianPercentChange": -29.81014562916247,
+          "bootstrap95Percent": [
+            -36.66969754977029,
+            -20.3113975257538
+          ]
+        },
+        "engineDurationMs": {
+          "pairedObservations": 107,
+          "medianPercentChange": -30.950925836576708,
+          "bootstrap95Percent": [
+            -37.8582862021129,
+            -21.24268239903419
+          ]
+        },
+        "inputTokens": {
+          "pairedObservations": 107,
+          "medianPercentChange": -62.145100758750104,
+          "bootstrap95Percent": [
+            -67.39333941349233,
+            -49.90261029229319
+          ]
+        },
+        "uncachedInputTokens": {
+          "pairedObservations": 107,
+          "medianPercentChange": -39.35207523850641,
+          "bootstrap95Percent": [
+            -44.67081769068766,
+            -27.43857321460465
+          ]
+        },
+        "cachedInputTokens": {
+          "pairedObservations": 107,
+          "medianPercentChange": -63.64846870838882,
+          "bootstrap95Percent": [
+            -74.54954954954955,
+            -56.60989456609895
+          ]
+        },
+        "outputTokens": {
+          "pairedObservations": 107,
+          "medianPercentChange": -25.250067585834007,
+          "bootstrap95Percent": [
+            -36.53061224489796,
+            -20.824709441171787
+          ]
+        },
+        "reasoningOutputTokens": {
+          "pairedObservations": 107,
+          "medianPercentChange": -25.963092099668337,
+          "bootstrap95Percent": [
+            -35.09700176366843,
+            -19.290920133616762
+          ]
+        },
+        "turns": {
+          "pairedObservations": 107,
+          "medianPercentChange": 0,
+          "bootstrap95Percent": [
+            0,
+            0
+          ]
+        },
+        "toolCalls": {
+          "pairedObservations": 107,
+          "medianPercentChange": -50,
+          "bootstrap95Percent": [
+            -62.5,
+            -42.857142857142854
+          ]
+        },
+        "toolOutputBytes": {
+          "pairedObservations": 107,
+          "medianPercentChange": -94.52959830866807,
+          "bootstrap95Percent": [
+            -94.72208057113718,
+            -92.63148527186972
+          ]
+        },
+        "promptBytes": {
+          "pairedObservations": 107,
+          "medianPercentChange": 288.3375474083439,
+          "bootstrap95Percent": [
+            278.66782760121896,
+            299.3192724026336
+          ]
+        },
+        "breadthDurationMs": {
+          "pairedObservations": 107,
+          "medianPercentChange": -6.56413739569183,
+          "bootstrap95Percent": [
+            -15.57621199671323,
+            -1.408823085058166
+          ]
+        },
+        "investigationDurationMs": {
+          "pairedObservations": 107,
+          "medianPercentChange": -46.287561146051715,
+          "bootstrap95Percent": [
+            -55.65724328610927,
+            -37.92840516895417
+          ]
+        },
+        "investigationInputTokens": {
+          "pairedObservations": 107,
+          "medianPercentChange": -77.96789033687115,
+          "bootstrap95Percent": [
+            -83.70497646341329,
+            -68.84050741709962
+          ]
+        },
+        "investigationUncachedInputTokens": {
+          "pairedObservations": 107,
+          "medianPercentChange": -47.443727947438866,
+          "bootstrap95Percent": [
+            -58.43923393592267,
+            -37.03664589713803
+          ]
+        },
+        "investigationCachedInputTokens": {
+          "pairedObservations": 107,
+          "medianPercentChange": -85.13119533527697,
+          "bootstrap95Percent": [
+            -89.26128590971271,
+            -75.66718995290424
+          ]
+        },
+        "investigationToolCalls": {
+          "pairedObservations": 107,
+          "medianPercentChange": -75,
+          "bootstrap95Percent": [
+            -83.33333333333334,
+            -66.66666666666666
+          ]
+        },
+        "investigationToolOutputBytes": {
+          "pairedObservations": 107,
+          "medianPercentChange": -98.12330009066184,
+          "bootstrap95Percent": [
+            -98.32429369383955,
+            -98.07100922560805
+          ]
+        },
+        "investigationPromptBytes": {
+          "pairedObservations": 107,
+          "medianPercentChange": 454.75994060386074,
+          "bootstrap95Percent": [
+            428.3240223463687,
+            479.3775649794802
+          ]
+        }
+      },
+      "wallTimeCaseClusterBootstrap95Percent": [
+        -36.905327776685596,
+        -19.72774091883093
+      ]
+    }
+  },
+  "reliability": {
+    "development": {
+      "checkpoint-legacy-investigator": {
+        "bugInstances": {
+          "total": 14,
+          "reliablyDetected": 14
+        },
+        "rootCauses": {
+          "total": 12,
+          "reliablyDetected": 12
+        },
+        "highSeverityRootCauses": {
+          "total": 7,
+          "reliablyDetected": 7
+        }
+      },
+      "checkpoint-method-packet": {
+        "bugInstances": {
+          "total": 14,
+          "reliablyDetected": 14
+        },
+        "rootCauses": {
+          "total": 12,
+          "reliablyDetected": 12
+        },
+        "highSeverityRootCauses": {
+          "total": 7,
+          "reliablyDetected": 7
+        }
+      }
+    },
+    "validation": {
+      "checkpoint-legacy-investigator": {
+        "bugInstances": {
+          "total": 14,
+          "reliablyDetected": 14
+        },
+        "rootCauses": {
+          "total": 12,
+          "reliablyDetected": 12
+        },
+        "highSeverityRootCauses": {
+          "total": 5,
+          "reliablyDetected": 5
+        }
+      },
+      "checkpoint-method-packet": {
+        "bugInstances": {
+          "total": 14,
+          "reliablyDetected": 14
+        },
+        "rootCauses": {
+          "total": 12,
+          "reliablyDetected": 12
+        },
+        "highSeverityRootCauses": {
+          "total": 5,
+          "reliablyDetected": 5
+        }
+      }
+    },
+    "combined": {
+      "checkpoint-legacy-investigator": {
+        "bugInstances": {
+          "total": 28,
+          "reliablyDetected": 28
+        },
+        "rootCauses": {
+          "total": 24,
+          "reliablyDetected": 24
+        },
+        "highSeverityRootCauses": {
+          "total": 12,
+          "reliablyDetected": 12
+        }
+      },
+      "checkpoint-method-packet": {
+        "bugInstances": {
+          "total": 28,
+          "reliablyDetected": 28
+        },
+        "rootCauses": {
+          "total": 24,
+          "reliablyDetected": 24
+        },
+        "highSeverityRootCauses": {
+          "total": 12,
+          "reliablyDetected": 12
+        }
+      }
+    }
+  }
+}

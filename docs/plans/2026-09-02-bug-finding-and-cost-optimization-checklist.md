@@ -40,7 +40,7 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | Plan PR 8 | Stable investigator core and variable appendix | PR 7 | Merged; attributable screen passed | [#24](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/24), [results](../validation/2026-09-04-stage2-pr8-results.md) |
 | Visible checkpoint protocol | Admit full visible seeded development/validation comparisons without gold claims | Benchmark checkpoint | Merged | [#25](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/25) |
 | Plan PR 9 | Structural breadth compaction and schema bounds | PR 8 | Two implementations benchmarked and rejected; unmerged | [decision](../validation/2026-09-04-stage2-pr9-decision.md) |
-| Checkpoint 2 full comparison | Legacy/full versus accepted method-packet/full stack | PR 8, visible protocol | Preregistered; provider run pending | [protocol](../validation/2026-09-04-stage2-checkpoint2-visible-preregistration.md) |
+| Checkpoint 2 full comparison | Legacy/full versus accepted method-packet/full stack | PR 8, visible protocol | Complete; visible cost gates passed, corpus correction required before Checkpoint 3 measurement | [results](../validation/2026-09-04-stage2-checkpoint2-visible-results.md) |
 | Plan PR 10 | Activated-lane counterexamples and seam checklist | PR 8 and Checkpoint 2 | Not started | - |
 | Plan PR 11 | Investigation coverage and runner-owned completeness | PR 10 | Not started | - |
 | Plan PR 12 | Bounded risk-sensitive candidate budgets | PR 11 | Not started | - |
@@ -428,12 +428,20 @@ families, a steward-controlled holdout, and the full unmodified baseline exist.
   paired wall time.
 - [x] Freeze the evidence-driven substitution: the accepted Stage 2 treatment
   is PR 8's method packet with the existing full ledger.
-- [ ] No reliably detected high-severity root cause regresses.
-- [ ] No more than one total visible seeded bug regresses from detection in at
+- [x] No registered reliably detected high-severity root cause regresses.
+- [x] No more than one total registered visible seeded bug regresses from detection in at
   least two of three runs.
-- [ ] Blocking false positives and completion do not regress.
-- [ ] Effective cost or median wall time improves by at least 20%.
-- [ ] Paired case-level deltas and uncertainty support the aggregate result.
+- [x] Blocking false positives and completion do not regress.
+- [x] Effective cost or median wall time improves by at least 20%.
+- [x] Paired case-level deltas and uncertainty support the aggregate result.
+
+Evidence: [Checkpoint 2 visible results](../validation/2026-09-04-stage2-checkpoint2-visible-results.md)
+and its [complete experiment archive](../validation/artifacts/2026-09-04-stage2-checkpoint2-visible/README.md).
+The archive preserves all 216 terminal attempts and all 197 semantic decisions.
+Independent adjudication found contaminated clean/truth-complete cases and one
+newly discovered medium-root reliability regression, so those cases must be
+repaired or replaced before Checkpoint 3 precision/FDR measurement. This does
+not authorize historical-gold, holdout, routing, or final non-inferiority claims.
 
 ### Checkpoint 3 - Recall and completeness intervention
 

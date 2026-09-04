@@ -1,0 +1,2182 @@
+{
+  "schemaVersion": 2,
+  "createdAt": "2026-09-04T10:23:49.690Z",
+  "expectedAttempts": [
+    {
+      "id": "attempt-000001",
+      "caseName": "development/case-c85d174e",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000001.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000002",
+      "caseName": "development/case-c85d174e",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000002.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000003",
+      "caseName": "development/case-5ea42d18",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000003.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000004",
+      "caseName": "development/case-5ea42d18",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000004.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000005",
+      "caseName": "validation/case-f16c8b40",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000005.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000006",
+      "caseName": "validation/case-f16c8b40",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000006.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000007",
+      "caseName": "development/case-a73e69c2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000007.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000008",
+      "caseName": "development/case-a73e69c2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000008.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000009",
+      "caseName": "development/case-a73e69c2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000009.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000010",
+      "caseName": "development/case-a73e69c2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000010.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000011",
+      "caseName": "development/case-d0629f8b",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000011.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000012",
+      "caseName": "development/case-d0629f8b",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000012.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000013",
+      "caseName": "validation/case-f16c8b40",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000013.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000014",
+      "caseName": "validation/case-f16c8b40",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000014.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000015",
+      "caseName": "validation/case-3ef9a502",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000015.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000016",
+      "caseName": "validation/case-3ef9a502",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000016.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000017",
+      "caseName": "development/case-1ab7d3c9",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000017.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000018",
+      "caseName": "development/case-1ab7d3c9",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000018.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000019",
+      "caseName": "validation/case-c95a81e4",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000019.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000020",
+      "caseName": "validation/case-c95a81e4",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000020.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000021",
+      "caseName": "development/case-17ac84e2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000021.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000022",
+      "caseName": "development/case-17ac84e2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000022.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000023",
+      "caseName": "development/case-2cd8e4a1",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000023.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000024",
+      "caseName": "development/case-2cd8e4a1",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000024.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000025",
+      "caseName": "development/case-e95d2a63",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000025.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000026",
+      "caseName": "development/case-e95d2a63",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000026.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000027",
+      "caseName": "development/case-d0629f8b",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000027.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000028",
+      "caseName": "development/case-d0629f8b",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000028.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000029",
+      "caseName": "development/case-39e6a1c4",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000029.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000030",
+      "caseName": "development/case-39e6a1c4",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000030.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000031",
+      "caseName": "development/case-13f0a2c1",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000031.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000032",
+      "caseName": "development/case-13f0a2c1",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000032.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000033",
+      "caseName": "development/case-c39a25e8",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000033.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000034",
+      "caseName": "development/case-c39a25e8",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000034.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000035",
+      "caseName": "development/case-17ac84e2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000035.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000036",
+      "caseName": "development/case-17ac84e2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000036.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000037",
+      "caseName": "development/case-c4e71b39",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000037.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000038",
+      "caseName": "development/case-c4e71b39",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000038.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000039",
+      "caseName": "development/case-a17c4e92",
+      "corpus": "development",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000039.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000040",
+      "caseName": "development/case-a17c4e92",
+      "corpus": "development",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000040.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000041",
+      "caseName": "validation/case-b62f09d4",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000041.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000042",
+      "caseName": "validation/case-b62f09d4",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000042.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000043",
+      "caseName": "development/case-a13f09c2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000043.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000044",
+      "caseName": "development/case-a13f09c2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000044.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000045",
+      "caseName": "development/case-6c19f4ab",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000045.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000046",
+      "caseName": "development/case-6c19f4ab",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000046.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000047",
+      "caseName": "development/case-d40b36f9",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000047.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000048",
+      "caseName": "development/case-d40b36f9",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000048.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000049",
+      "caseName": "development/case-a73e69c2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000049.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000050",
+      "caseName": "development/case-a73e69c2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000050.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000051",
+      "caseName": "development/case-c83a51e7",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000051.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000052",
+      "caseName": "development/case-c83a51e7",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000052.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000053",
+      "caseName": "development/case-c4e71b39",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000053.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000054",
+      "caseName": "development/case-c4e71b39",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000054.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000055",
+      "caseName": "validation/case-d3f8026e",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000055.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000056",
+      "caseName": "validation/case-d3f8026e",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000056.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000057",
+      "caseName": "development/case-39e6a1c4",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000057.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000058",
+      "caseName": "development/case-39e6a1c4",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000058.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000059",
+      "caseName": "development/case-13f0a2c1",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000059.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000060",
+      "caseName": "development/case-13f0a2c1",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000060.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000061",
+      "caseName": "development/case-f62d58b1",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000061.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000062",
+      "caseName": "development/case-f62d58b1",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000062.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000063",
+      "caseName": "validation/case-e51c47a0",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000063.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000064",
+      "caseName": "validation/case-e51c47a0",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000064.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000065",
+      "caseName": "validation/case-d04b79f1",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000065.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000066",
+      "caseName": "validation/case-d04b79f1",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000066.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000067",
+      "caseName": "validation/case-8b6d9e04",
+      "corpus": "validation",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000067.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000068",
+      "caseName": "validation/case-8b6d9e04",
+      "corpus": "validation",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000068.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000069",
+      "caseName": "validation/case-7ab54e20",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000069.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000070",
+      "caseName": "validation/case-7ab54e20",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000070.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000071",
+      "caseName": "validation/case-f9b30d26",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000071.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000072",
+      "caseName": "validation/case-f9b30d26",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000072.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000073",
+      "caseName": "validation/case-d3f8026e",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000073.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000074",
+      "caseName": "validation/case-d3f8026e",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000074.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000075",
+      "caseName": "development/case-2d91ac76",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000075.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000076",
+      "caseName": "development/case-2d91ac76",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000076.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000077",
+      "caseName": "validation/case-e51c47a0",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000077.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000078",
+      "caseName": "validation/case-e51c47a0",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000078.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000079",
+      "caseName": "validation/case-e41a7c53",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000079.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000080",
+      "caseName": "validation/case-e41a7c53",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000080.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000081",
+      "caseName": "development/case-c85d174e",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000081.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000082",
+      "caseName": "development/case-c85d174e",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000082.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000083",
+      "caseName": "validation/case-c95a81e4",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000083.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000084",
+      "caseName": "validation/case-c95a81e4",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000084.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000085",
+      "caseName": "validation/case-b7f203ac",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000085.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000086",
+      "caseName": "validation/case-b7f203ac",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000086.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000087",
+      "caseName": "development/case-c85d174e",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000087.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000088",
+      "caseName": "development/case-c85d174e",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000088.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000089",
+      "caseName": "development/case-d40b36f9",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000089.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000090",
+      "caseName": "development/case-d40b36f9",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000090.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000091",
+      "caseName": "development/case-6c19f4ab",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000091.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000092",
+      "caseName": "development/case-6c19f4ab",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000092.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000093",
+      "caseName": "validation/case-b7f203ac",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000093.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000094",
+      "caseName": "validation/case-b7f203ac",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000094.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000095",
+      "caseName": "development/case-f62d58b1",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000095.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000096",
+      "caseName": "development/case-f62d58b1",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000096.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000097",
+      "caseName": "development/case-2d91ac76",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000097.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000098",
+      "caseName": "development/case-2d91ac76",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000098.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000099",
+      "caseName": "validation/case-28d5f0b9",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000099.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000100",
+      "caseName": "validation/case-28d5f0b9",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000100.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000101",
+      "caseName": "development/case-39e6a1c4",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000101.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000102",
+      "caseName": "development/case-39e6a1c4",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000102.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000103",
+      "caseName": "validation/case-7ab54e20",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000103.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000104",
+      "caseName": "validation/case-7ab54e20",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000104.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000105",
+      "caseName": "validation/case-e51c47a0",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000105.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000106",
+      "caseName": "validation/case-e51c47a0",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000106.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000107",
+      "caseName": "validation/case-b62f09d4",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000107.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000108",
+      "caseName": "validation/case-b62f09d4",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000108.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000109",
+      "caseName": "validation/case-b28e14d7",
+      "corpus": "validation",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000109.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000110",
+      "caseName": "validation/case-b28e14d7",
+      "corpus": "validation",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000110.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000111",
+      "caseName": "validation/case-a8073f5d",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000111.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000112",
+      "caseName": "validation/case-a8073f5d",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000112.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000113",
+      "caseName": "validation/case-e41a7c53",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000113.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000114",
+      "caseName": "validation/case-e41a7c53",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000114.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000115",
+      "caseName": "validation/case-d3f8026e",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000115.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000116",
+      "caseName": "validation/case-d3f8026e",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000116.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000117",
+      "caseName": "development/case-5ea42d18",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000117.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000118",
+      "caseName": "development/case-5ea42d18",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000118.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000119",
+      "caseName": "development/case-e95d2a63",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000119.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000120",
+      "caseName": "development/case-e95d2a63",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000120.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000121",
+      "caseName": "development/case-13f0a2c1",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000121.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000122",
+      "caseName": "development/case-13f0a2c1",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000122.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000123",
+      "caseName": "development/case-c39a25e8",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000123.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000124",
+      "caseName": "development/case-c39a25e8",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000124.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000125",
+      "caseName": "validation/case-f9b30d26",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000125.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000126",
+      "caseName": "validation/case-f9b30d26",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000126.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000127",
+      "caseName": "development/case-a13f09c2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000127.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000128",
+      "caseName": "development/case-a13f09c2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000128.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000129",
+      "caseName": "development/case-c4e71b39",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000129.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000130",
+      "caseName": "development/case-c4e71b39",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000130.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000131",
+      "caseName": "validation/case-b28e14d7",
+      "corpus": "validation",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000131.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000132",
+      "caseName": "validation/case-b28e14d7",
+      "corpus": "validation",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000132.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000133",
+      "caseName": "validation/case-b84f70d3",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000133.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000134",
+      "caseName": "validation/case-b84f70d3",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000134.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000135",
+      "caseName": "validation/case-b84f70d3",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000135.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000136",
+      "caseName": "validation/case-b84f70d3",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000136.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000137",
+      "caseName": "development/case-d40b36f9",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000137.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000138",
+      "caseName": "development/case-d40b36f9",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000138.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000139",
+      "caseName": "validation/case-b7f203ac",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000139.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000140",
+      "caseName": "validation/case-b7f203ac",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000140.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000141",
+      "caseName": "development/case-a17c4e92",
+      "corpus": "development",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000141.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000142",
+      "caseName": "development/case-a17c4e92",
+      "corpus": "development",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000142.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000143",
+      "caseName": "development/case-f62d58b1",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000143.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000144",
+      "caseName": "development/case-f62d58b1",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000144.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000145",
+      "caseName": "validation/case-28d5f0b9",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000145.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000146",
+      "caseName": "validation/case-28d5f0b9",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000146.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000147",
+      "caseName": "validation/case-d04b79f1",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000147.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000148",
+      "caseName": "validation/case-d04b79f1",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000148.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000149",
+      "caseName": "development/case-a1c4e90d",
+      "corpus": "development",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000149.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000150",
+      "caseName": "development/case-a1c4e90d",
+      "corpus": "development",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000150.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000151",
+      "caseName": "development/case-1ab7d3c9",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000151.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000152",
+      "caseName": "development/case-1ab7d3c9",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000152.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000153",
+      "caseName": "validation/case-7ab54e20",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000153.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000154",
+      "caseName": "validation/case-7ab54e20",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000154.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000155",
+      "caseName": "validation/case-a8073f5d",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000155.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000156",
+      "caseName": "validation/case-a8073f5d",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000156.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000157",
+      "caseName": "development/case-c83a51e7",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000157.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000158",
+      "caseName": "development/case-c83a51e7",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000158.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000159",
+      "caseName": "validation/case-3ef9a502",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000159.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000160",
+      "caseName": "validation/case-3ef9a502",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000160.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000161",
+      "caseName": "development/case-a17c4e92",
+      "corpus": "development",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000161.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000162",
+      "caseName": "development/case-a17c4e92",
+      "corpus": "development",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000162.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000163",
+      "caseName": "validation/case-f16c8b40",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000163.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000164",
+      "caseName": "validation/case-f16c8b40",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000164.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000165",
+      "caseName": "validation/case-3ef9a502",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000165.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000166",
+      "caseName": "validation/case-3ef9a502",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000166.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000167",
+      "caseName": "validation/case-a8073f5d",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000167.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000168",
+      "caseName": "validation/case-a8073f5d",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000168.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000169",
+      "caseName": "development/case-c39a25e8",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000169.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000170",
+      "caseName": "development/case-c39a25e8",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000170.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000171",
+      "caseName": "development/case-2cd8e4a1",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000171.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000172",
+      "caseName": "development/case-2cd8e4a1",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000172.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000173",
+      "caseName": "validation/case-c95a81e4",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000173.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000174",
+      "caseName": "validation/case-c95a81e4",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000174.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000175",
+      "caseName": "development/case-2cd8e4a1",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000175.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000176",
+      "caseName": "development/case-2cd8e4a1",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000176.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000177",
+      "caseName": "validation/case-b84f70d3",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000177.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000178",
+      "caseName": "validation/case-b84f70d3",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000178.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000179",
+      "caseName": "development/case-6c19f4ab",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000179.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000180",
+      "caseName": "development/case-6c19f4ab",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000180.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000181",
+      "caseName": "development/case-c83a51e7",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000181.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000182",
+      "caseName": "development/case-c83a51e7",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000182.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000183",
+      "caseName": "validation/case-8b6d9e04",
+      "corpus": "validation",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000183.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000184",
+      "caseName": "validation/case-8b6d9e04",
+      "corpus": "validation",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000184.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000185",
+      "caseName": "development/case-a13f09c2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000185.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000186",
+      "caseName": "development/case-a13f09c2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000186.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000187",
+      "caseName": "development/case-1ab7d3c9",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000187.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000188",
+      "caseName": "development/case-1ab7d3c9",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000188.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000189",
+      "caseName": "validation/case-f9b30d26",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000189.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000190",
+      "caseName": "validation/case-f9b30d26",
+      "corpus": "validation",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000190.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000191",
+      "caseName": "validation/case-e41a7c53",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000191.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000192",
+      "caseName": "validation/case-e41a7c53",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000192.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000193",
+      "caseName": "validation/case-28d5f0b9",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000193.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000194",
+      "caseName": "validation/case-28d5f0b9",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000194.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000195",
+      "caseName": "validation/case-b28e14d7",
+      "corpus": "validation",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000195.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000196",
+      "caseName": "validation/case-b28e14d7",
+      "corpus": "validation",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000196.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000197",
+      "caseName": "development/case-a1c4e90d",
+      "corpus": "development",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-method-packet",
+      "repeat": 3,
+      "file": "attempt-000197.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000198",
+      "caseName": "development/case-a1c4e90d",
+      "corpus": "development",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 3,
+      "file": "attempt-000198.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000199",
+      "caseName": "development/case-17ac84e2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000199.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000200",
+      "caseName": "development/case-17ac84e2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000200.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000201",
+      "caseName": "development/case-2d91ac76",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000201.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000202",
+      "caseName": "development/case-2d91ac76",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000202.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000203",
+      "caseName": "development/case-d0629f8b",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000203.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000204",
+      "caseName": "development/case-d0629f8b",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000204.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000205",
+      "caseName": "validation/case-8b6d9e04",
+      "corpus": "validation",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000205.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000206",
+      "caseName": "validation/case-8b6d9e04",
+      "corpus": "validation",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000206.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000207",
+      "caseName": "validation/case-d04b79f1",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000207.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000208",
+      "caseName": "validation/case-d04b79f1",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000208.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000209",
+      "caseName": "development/case-a1c4e90d",
+      "corpus": "development",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-method-packet",
+      "repeat": 2,
+      "file": "attempt-000209.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000210",
+      "caseName": "development/case-a1c4e90d",
+      "corpus": "development",
+      "expectedBugCount": 2,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 2,
+      "file": "attempt-000210.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000211",
+      "caseName": "development/case-5ea42d18",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000211.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000212",
+      "caseName": "development/case-5ea42d18",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000212.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000213",
+      "caseName": "development/case-e95d2a63",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000213.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000214",
+      "caseName": "development/case-e95d2a63",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000214.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000215",
+      "caseName": "validation/case-b62f09d4",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-legacy-investigator",
+      "repeat": 1,
+      "file": "attempt-000215.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000216",
+      "caseName": "validation/case-b62f09d4",
+      "corpus": "validation",
+      "expectedBugCount": 1,
+      "configName": "checkpoint-method-packet",
+      "repeat": 1,
+      "file": "attempt-000216.json",
+      "runner": "codex"
+    }
+  ],
+  "providerNetworkIsolation": {
+    "codex": {
+      "status": "limited",
+      "mechanism": "OCI mount isolation is attested; provider egress uses the Docker bridge without an independently attested destination allowlist."
+    }
+  },
+  "providerFilesystemIsolation": {
+    "codex": {
+      "status": "enforced",
+      "mechanism": "Digest-pinned OCI container exposes only read-only checkout/assets, private attempt output, and tmpfs state."
+    }
+  },
+  "runtimeImage": {
+    "reference": "ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:0ad23c12cc2172a54b2b298ebde4096d3e4924efc3d3bf5c2c4f616c7d00e6b3",
+    "pullPolicy": "never"
+  }
+}
