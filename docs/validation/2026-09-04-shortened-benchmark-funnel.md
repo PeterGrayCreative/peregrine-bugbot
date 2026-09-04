@@ -60,9 +60,10 @@ CI result are recorded below before merge.
 
 ## Final result
 
-Clean-commit `npm run validate` passed:
+Clean-commit `npm run validate` passed again after the independent-review fixes:
 
-- 247/247 Node tests passed.
+- 248/248 Node tests passed, including sealed-artifact metric derivation,
+  frozen gate binding, diagnostic exclusion, and decision tamper rejection.
 - All 36 admitted visible cases revalidated; seeded-visible readiness remained
   true while historical-gold and sealed-holdout readiness remained false.
 - 26/26 skill checks, 9/9 packaging/install checks, and 4/4 plugin-manager
