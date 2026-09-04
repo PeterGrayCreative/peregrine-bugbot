@@ -26,7 +26,8 @@ interval did not support an improvement.
 | Attempt-level recall | 100% | 100% | no change |
 | Attempt-level root-cause recall | 100% | 100% | no change |
 | Reliably detected seeded cases | 6/6 | 6/6 | no change |
-| Reliably detected seeded root causes | 8/8 | 8/8 | no change |
+| Reliably detected seeded bug instances | 8/8 | 8/8 | no change |
+| Reliably detected seeded root causes | 6/6 | 6/6 | no change |
 | Blocking false positives on clean cases | 0 | 0 | no change |
 | Unresolved clean-case findings | 3 | 3 | no change |
 | Median wall time | 70.841 s | 80.0065 s | +12.94% marginal |
