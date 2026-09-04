@@ -41,7 +41,7 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | Visible checkpoint protocol | Admit full visible seeded development/validation comparisons without gold claims | Benchmark checkpoint | Merged | [#25](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/25) |
 | Plan PR 9 | Structural breadth compaction and schema bounds | PR 8 | Two implementations benchmarked and rejected; unmerged | [decision](../validation/2026-09-04-stage2-pr9-decision.md) |
 | Checkpoint 2 full comparison | Legacy/full versus accepted method-packet/full stack | PR 8, visible protocol | Complete; visible cost gates passed, corpus correction required before Checkpoint 3 measurement | [results](../validation/2026-09-04-stage2-checkpoint2-visible-results.md) |
-| Shortened benchmark funnel | Frozen smoke, fast-screen, confirmation, and full-checkpoint panels with fail-closed decisions | Checkpoint 2 adjudication | In progress | - |
+| Shortened benchmark funnel | Frozen smoke, fast-screen, confirmation, and full-checkpoint panels with fail-closed decisions | Checkpoint 2 adjudication | Implemented and locally validated; review pending | - |
 | Plan PR 10 | Activated-lane counterexamples and seam checklist | PR 8 and Checkpoint 2 | Not started | - |
 | Plan PR 11 | Investigation coverage and runner-owned completeness | PR 10 | Not started | - |
 | Plan PR 12 | Bounded risk-sensitive candidate budgets | PR 11 | Not started | - |
@@ -469,7 +469,7 @@ not authorize historical-gold, holdout, routing, or final non-inferiority claims
 - [x] Add deterministic selection, corpus restriction, schedule, evidence-use,
   failure-accounting, assessment, and stopping-rule tests.
 - [x] Document what each category can and cannot prove.
-- [ ] Run the full local validation gate under Node 22.
+- [x] Run the full local validation gate under Node 22.
 - [ ] Complete independent code and benchmark-method reviews.
 - [ ] Push the branch, pass remote CI/review, merge, and record the PR here.
 
