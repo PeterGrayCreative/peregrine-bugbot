@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { readFileSync, writeFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import test from "node:test";
 import { createClaudeEngine } from "../src/engines/claude.js";
 import { createCodexEngine } from "../src/engines/codex.js";
@@ -243,6 +244,7 @@ test("Codex runner performs isolated breadth and investigation stages", async ()
     };
   };
   const ctx = context();
+  ctx.config.runners.codex.investigationPromptMode = "method-packet";
   ctx.evaluationIsolation = {
     providerHome: "/tmp/peregrine-test-provider-home",
     providerAssetsRoot: resolve("."),
@@ -257,7 +259,12 @@ test("Codex runner performs isolated breadth and investigation stages", async ()
   assert.ok(calls.every((call) => call.args.includes("project_doc_fallback_filenames=[]")));
   assert.ok(calls.every((call) => call.args.some((arg) => /^projects\..+\.trust_level="untrusted"$/.test(arg))));
   assert.match(calls[0]?.stdin ?? "", /^PEREGRINE_ROLE: breadth-worker/);
-  assert.match(calls[1]?.stdin ?? "", /^PEREGRINE_ROLE: investigation-worker/);
+  assert.match(
+    calls[1]?.stdin ?? "",
+    /^PEREGRINE_ROLE: investigation-worker\n\n<peregrine-method-core trusted="true"/,
+  );
+  assert.match(calls[1]?.stdin ?? "", /<peregrine-variable-appendix trusted="false">/);
+  assert.doesNotMatch(calls[1]?.stdin ?? "", /Read .*\/SKILL\.md completely/);
   assert.match(calls[1]?.stdin ?? "", /breadth pass produced the ledger/);
   assert.equal(reviewed.engine, "codex");
   assert.equal(reviewed.findings.length, 1);
@@ -266,10 +273,49 @@ test("Codex runner performs isolated breadth and investigation stages", async ()
   assert.equal(reviewed.usage.uncachedInputTokens, 18);
   assert.equal(reviewed.usage.cacheReadInputTokens, 4);
   assert.equal(reviewed.usage.costUsd, undefined);
-  const raw = reviewed.raw as { breadth: { model: string; promptSha256: string } };
+  const raw = reviewed.raw as {
+    breadth: { model: string; promptSha256: string };
+    investigation: { methodCoreSha256: string; methodSourceSha256: string };
+  };
   assert.equal(raw.breadth.model, context().config.runners.codex.breadthModel);
   assert.equal(raw.breadth.promptSha256, sha256(calls[0]?.stdin ?? ""));
+  assert.match(raw.investigation.methodCoreSha256, /^[a-f0-9]{64}$/);
+  assert.match(raw.investigation.methodSourceSha256, /^[a-f0-9]{64}$/);
   assert.deepEqual(validatedStages, ["breadth", "investigation"]);
+});
+
+test("method-packet compilation fails as a typed configuration outcome before provider work", async () => {
+  const assets = mkdtempSync(join(tmpdir(), "peregrine-missing-method-assets-"));
+  try {
+    for (const runner of ["claude", "codex"] as const) {
+      let calls = 0;
+      const fake: typeof exec = async () => {
+        calls++;
+        return { stdout: "", stderr: "", code: 0, timedOut: false };
+      };
+      const ctx = context();
+      ctx.config.runners[runner].investigationPromptMode = "method-packet";
+      ctx.evaluationIsolation = {
+        providerHome: "/tmp/peregrine-test-provider-home",
+        providerAssetsRoot: assets,
+        validatePrompt() {},
+      };
+      const engine = runner === "claude" ? createClaudeEngine(fake) : createCodexEngine(fake);
+      await assert.rejects(
+        () => engine.review(ctx),
+        (error: unknown) => {
+          assert.ok(error instanceof RunFailureError);
+          assert.equal(error.kind, "configuration");
+          assert.match(error.message, /investigator method packet unavailable/);
+          assert.equal(error.telemetry, undefined);
+          return true;
+        },
+      );
+      assert.equal(calls, 0);
+    }
+  } finally {
+    rmSync(assets, { recursive: true, force: true });
+  }
 });
 
 test("Codex temporary-output cleanup failures retain completed provider telemetry", async () => {

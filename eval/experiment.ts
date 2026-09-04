@@ -34,6 +34,7 @@ const OPAQUE_CASE_ID = /^case-[a-f0-9]{8,32}$/;
 const EXPERIMENT_MODES = ["structural-smoke", "screening", "checkpoint"] as const;
 const CACHE_CONDITIONS = ["cold", "warm", "uncontrolled", "not-applicable"] as const;
 const JUDGE_KINDS = ["exact", "claude", "codex"] as const;
+const INVESTIGATION_PROMPT_MODES = ["legacy", "method-packet"] as const;
 const PROVIDER_AVAILABILITY_STATUSES = [
   "configured",
   "denied",
@@ -107,6 +108,7 @@ export interface ExperimentModelIdentity {
   breadthEffort?: string;
   investigationModel?: string;
   investigationEffort?: string;
+  investigationPromptMode?: (typeof INVESTIGATION_PROMPT_MODES)[number];
 }
 
 export interface ExperimentCliVersion {
@@ -1212,7 +1214,7 @@ function parseModelIdentity(value: unknown, source: string): ExperimentModelIden
   const root = object(value, source);
   onlyKeys(root, new Set([
     "configName", "runner", "effectiveConfigSha256", "breadthModel", "breadthEffort",
-    "investigationModel", "investigationEffort",
+    "investigationModel", "investigationEffort", "investigationPromptMode",
   ]), source);
   const runner = member(root.runner, RUNNER_NAMES, `${source}.runner`);
   const parsed: ExperimentModelIdentity = {
@@ -1223,6 +1225,13 @@ function parseModelIdentity(value: unknown, source: string): ExperimentModelIden
   for (const key of ["breadthModel", "breadthEffort", "investigationModel", "investigationEffort"] as const) {
     const item = optionalBoundedString(root[key], `${source}.${key}`);
     if (item !== undefined) parsed[key] = item;
+  }
+  if (root.investigationPromptMode !== undefined) {
+    parsed.investigationPromptMode = member(
+      root.investigationPromptMode,
+      INVESTIGATION_PROMPT_MODES,
+      `${source}.investigationPromptMode`,
+    );
   }
   const stagesPresent = parsed.breadthModel !== undefined && parsed.breadthEffort !== undefined &&
     parsed.investigationModel !== undefined && parsed.investigationEffort !== undefined;

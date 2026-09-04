@@ -161,6 +161,10 @@ test("config validation rejects unknown runners, placeholders, and invalid effor
   effort.runners.claude.breadthEffort = "impossible" as never;
   assert.throws(() => validateConfig(effort), /breadthEffort.*low, medium, high/);
 
+  const promptMode = config();
+  promptMode.runners.codex.investigationPromptMode = "unsafe" as never;
+  assert.throws(() => validateConfig(promptMode), /investigationPromptMode.*legacy, method-packet/);
+
   const turns = config();
   turns.runners.claude.maxTurns = 2.5;
   assert.throws(() => validateConfig(turns), /maxTurns.*integer/);
@@ -203,16 +207,24 @@ test("provider-scoped environment overrides cannot change the other provider", (
   }
 });
 
-test("schema version 1 configs without Claude breadth effort migrate to high", () => {
+test("schema version 1 configs acquire stable legacy defaults", () => {
   const dir = mkdtempSync(join(tmpdir(), "peregrine-config-compat-"));
   const path = join(dir, "config.json");
   const legacy = JSON.parse(JSON.stringify(config())) as {
-    runners: { claude: Partial<PeregrineConfig["runners"]["claude"]> };
+    runners: {
+      claude: Partial<PeregrineConfig["runners"]["claude"]>;
+      codex: Partial<PeregrineConfig["runners"]["codex"]>;
+    };
   };
   delete legacy.runners.claude.breadthEffort;
+  delete legacy.runners.claude.investigationPromptMode;
+  delete legacy.runners.codex.investigationPromptMode;
   try {
     writeFileSync(path, JSON.stringify(legacy));
-    assert.equal(loadConfig(path).runners.claude.breadthEffort, "high");
+    const loaded = loadConfig(path);
+    assert.equal(loaded.runners.claude.breadthEffort, "high");
+    assert.equal(loaded.runners.claude.investigationPromptMode, "legacy");
+    assert.equal(loaded.runners.codex.investigationPromptMode, "legacy");
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

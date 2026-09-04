@@ -1,0 +1,70 @@
+{
+  "repeats": 3,
+  "corpora": ["development"],
+  "caseIds": [
+    "case-13f0a2c1",
+    "case-17ac84e2",
+    "case-1ab7d3c9",
+    "case-39e6a1c4",
+    "case-6c19f4ab",
+    "case-a17c4e92",
+    "case-a1c4e90d",
+    "case-d40b36f9"
+  ],
+  "configs": [
+    {
+      "name": "legacy-investigator-prompt",
+      "runner": "codex",
+      "overrides": {
+        "breadthModel": "gpt-5.6-luna",
+        "breadthEffort": "high",
+        "investigationModel": "gpt-5.6-sol",
+        "investigationEffort": "high",
+        "investigationPromptMode": "legacy"
+      }
+    },
+    {
+      "name": "stable-method-packet",
+      "runner": "codex",
+      "overrides": {
+        "breadthModel": "gpt-5.6-luna",
+        "breadthEffort": "high",
+        "investigationModel": "gpt-5.6-sol",
+        "investigationEffort": "high",
+        "investigationPromptMode": "method-packet"
+      }
+    }
+  ],
+  "experiment": {
+    "mode": "screening",
+    "seed": 202609032,
+    "cacheCondition": "uncontrolled",
+    "providerCalls": "allow",
+    "providerAccess": "cli-session",
+    "costAccounting": "best-effort",
+    "control": "legacy-investigator-prompt",
+    "treatment": "stable-method-packet",
+    "judge": {
+      "kind": "codex",
+      "model": "gpt-5.6-luna",
+      "effort": "medium",
+      "version": "semantic-v1",
+      "limits": {
+        "maxProviderCostUsd": null,
+        "maxProviderAttempts": 72,
+        "maxWallTimeMs": 21600000,
+        "maxFailureRate": 0.2,
+        "minAttemptsForFailureRate": 12,
+        "maxConsecutiveFailures": 3
+      }
+    },
+    "limits": {
+      "maxProviderCostUsd": null,
+      "maxProviderAttempts": 48,
+      "maxWallTimeMs": 21600000,
+      "maxFailureRate": 0.2,
+      "minAttemptsForFailureRate": 12,
+      "maxConsecutiveFailures": 3
+    }
+  }
+}

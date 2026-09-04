@@ -39,6 +39,7 @@ import {
   parseExperimentTerminalSeal,
 } from "../eval/experiment-seals.js";
 import { codexUsageFromEvents, combineUsage, mockUsage } from "../src/core/telemetry.js";
+import { RunFailureError } from "../src/core/run-failure.js";
 import type {
   CaseCorpus,
   EngineResult,
@@ -417,6 +418,69 @@ test("provider-enabled protocols pass the former global gate and preserve contai
   }
 });
 
+test("pre-provider configuration failure does not create provider-work evidence", async () => {
+  const root = mkdtempSync(join(realpathSync(tmpdir()), "peregrine-experiment-pre-provider-"));
+  const materializationRoot = join(root, "materialized");
+  mkdirSync(materializationRoot);
+  const casesDir = join(root, "cases");
+  createFixtureCase(casesDir, "case-68686868", "development");
+  const matrixPath = join(root, "matrix.json");
+  writeFileSync(matrixPath, JSON.stringify({
+    repeats: 1,
+    corpora: ["development"],
+    configs: [{ name: "control", runner: "codex" }, { name: "treatment", runner: "codex" }],
+    experiment: {
+      ...cliSessionProtocol,
+      providerCalls: "allow",
+      limits: { ...cliSessionProtocol.limits, maxProviderAttempts: 10 },
+    },
+  }));
+  let engineCalls = 0;
+  let providerCalls = 0;
+  try {
+    const runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+      casesDir,
+      engineFor: () => ({
+        name: "codex",
+        async review() {
+          engineCalls++;
+          throw new RunFailureError("configuration", "investigator method packet unavailable");
+        },
+      }),
+      runtimeMetadataFor: availableRuntimeMetadataFor,
+      manifestPreparer,
+      materializeCaseFor: (caseRoot, spec, policy, options) =>
+        materializeCase(caseRoot, spec, policy, {
+          ...options,
+          tempRoot: materializationRoot,
+          prepareProviderAssets: false,
+        }),
+      prepareContainment: async () => ({
+        runProvider: async () => {
+          providerCalls++;
+          return { stdout: "", stderr: "", code: 0, timedOut: false };
+        },
+        readProviderOutput: () => { throw new Error("provider output must not be read"); },
+      }),
+    });
+    assert.equal(engineCalls, 2);
+    assert.equal(providerCalls, 0);
+    assert.equal(
+      readdirSync(join(runsDir, "state")).filter((file) => file.endsWith(".provider-started.json")).length,
+      0,
+    );
+    const records = readdirSync(runsDir)
+      .filter((file) => /^attempt-[0-9]{6}\.json$/.test(file))
+      .map((file) => JSON.parse(readFileSync(join(runsDir, file), "utf8")) as RunRecord);
+    assert.equal(records.length, 2);
+    assert.ok(records.every((record) =>
+      record.outcome.status === "failed" && record.outcome.failureKind === "configuration"));
+    assert.ok(existsSync(join(runsDir, EXPERIMENT_TERMINAL_SEAL_FILENAME)));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test("fake contained semantic judge completes grading seals and report accounting end to end", async () => {
   const root = mkdtempSync(join(realpathSync(tmpdir()), "peregrine-experiment-semantic-e2e-"));
   const materializationRoot = join(root, "materialized");
@@ -443,6 +507,7 @@ test("fake contained semantic judge completes grading seals and report accountin
   const engine: Engine = {
     name: "codex",
     review: async (ctx) => {
+      await ctx.evaluationIsolation?.runProvider?.("codex", [], { inheritEnv: false });
       const result = completedWithFinding(ctx);
       const breadthUsage = codexUsageFromEvents([{
         type: "turn.completed",
@@ -470,6 +535,7 @@ test("fake contained semantic judge completes grading seals and report accountin
           investigation: {
             output: { findings: result.findings }, model: codex.investigationModel,
             promptSha256: "b".repeat(64), usage: investigationUsage, durationMs: 1, malformedEventLines: 0,
+            methodCoreSha256: "c".repeat(64), methodSourceSha256: "d".repeat(64),
           },
         },
       };
@@ -497,6 +563,14 @@ test("fake contained semantic judge completes grading seals and report accountin
       .map((path) => JSON.parse(readFileSync(join(runsDir, path), "utf8")) as RunRecord);
     assert.equal(rawAttempts.length, 2);
     assert.ok(rawAttempts.every((attempt) => attempt.outcome.status === "completed"));
+    assert.ok(rawAttempts.every((attempt) => {
+      if (attempt.outcome.status !== "completed") return false;
+      const investigation = (attempt.outcome.result.raw as {
+        investigation?: { methodCoreSha256?: string; methodSourceSha256?: string };
+      }).investigation;
+      return investigation?.methodCoreSha256 === "c".repeat(64) &&
+        investigation.methodSourceSha256 === "d".repeat(64);
+    }));
     let judgeCalls = 0;
     const judged = await runSemanticJudge(runsDir, casesDir, { execute: async () => {
       judgeCalls += 1;

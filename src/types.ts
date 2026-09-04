@@ -26,6 +26,7 @@ export type FindingDisposition = "fix-in-pr" | "follow-up";
 export type ReviewStatus = "completed" | "clean" | "skipped";
 export type CodexEffort = "low" | "medium" | "high" | "xhigh" | "max" | "ultra";
 export type ClaudeEffort = "low" | "medium" | "high" | "xhigh" | "max";
+export type InvestigationPromptMode = "legacy" | "method-packet";
 
 export interface TypedReviewManifest {
   schemaVersion: 1;
@@ -268,6 +269,7 @@ export interface ClaudeRunnerConfig {
   breadthEffort: ClaudeEffort;
   investigationModel: string;
   investigationEffort: ClaudeEffort;
+  investigationPromptMode?: InvestigationPromptMode;
   skillName: string;
   maxTurns: number;
   maxBudgetUsd: number;
@@ -279,6 +281,7 @@ export interface CodexRunnerConfig {
   investigationModel: string;
   breadthEffort: CodexEffort;
   investigationEffort: CodexEffort;
+  investigationPromptMode?: InvestigationPromptMode;
   skillName: string;
   timeoutMs: number;
 }
