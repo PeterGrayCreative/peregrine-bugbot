@@ -70,8 +70,9 @@ Every new matrix config must declare one of four experiment modes:
   is ready.
 - `visible-checkpoint` uses the admitted visible seeded benchmark across
   development and validation without claiming historical-gold or sealed-holdout
-  status. An opaque `caseIds` allowlist produces `diagnostic-visible-subset`
-  evidence; omitting it runs the full visible corpus and produces
+  status. A frozen shortened-funnel category produces `visible-seeded-panel`;
+  an ad hoc opaque `caseIds` allowlist produces `diagnostic-visible-subset`
+  evidence; omitting both runs the full visible corpus and produces
   `visible-seeded-checkpoint` evidence.
 - `checkpoint` is the larger contemporaneous control/treatment comparison used
   at the historical-gold evaluation gate. Development and validation results
@@ -104,7 +105,8 @@ eval/runs/<timestamp>/
 ├── experiment-stop.json                      # present only after a ceiling stops the run
 ├── experiment-terminal-seal.json             # complete/stopped manifests, state, attempts, stop
 ├── attempt-000001.graded.json                 # completed attempts only
-└── experiment-grading-seal.json              # all applicable graded artifacts
+├── experiment-grading-seal.json              # all applicable graded artifacts
+└── funnel-decision.json                       # optional write-once stage decision
 ```
 
 Manifests, state markers, terminal attempts, and stop records use exclusive,
@@ -170,6 +172,67 @@ provide the portable structural shapes. Their strict parsers remain authoritativ
 for relationships JSON Schema cannot express here, including self-authentication,
 exact artifact sets and digests, paired block topology, balanced ordering,
 runtime/runner consistency, retry equality, and secret rejection.
+
+## Shortened benchmark funnel
+
+`eval/benchmark-panels.json` freezes four nested, preregistered panels. Select
+one with `--benchmark-category`; selection replaces arbitrary `repeats`,
+`corpora`, and `caseIds`. The exact panel, restricted-case policy, gate policy,
+definition hash, and evidence use are authenticated by the experiment manifest.
+
+| Category | Cases | Repeats | Paired review attempts | Intended use |
+| --- | ---: | ---: | ---: | --- |
+| `smoke` | 6 development | 1 | 12 | Catch an observed sentinel regression; it cannot establish repeat reliability or efficiency. |
+| `fast-screen` | 12 development | 2 | 48 | Reject unsafe or clearly slower ideas using a frozen two-observation rule; it does not establish three-repeat confirmation. |
+| `confirmation` | 19 development/validation | 3 | 114 | Confirm reliable visible-root and uncertainty gates before the largest panel. |
+| `full-checkpoint` | 32 development/validation | 3 | 192 | Maximum corrected visible-corpus checkpoint; still not historical-gold or sealed-holdout evidence. |
+
+Each panel preserves high-risk sentinels, clean controls, variable cases, and a
+compatibility-sensitive contract proxy. Confirmation and full-checkpoint also
+schedule `case-d3f8026e` solely as a diagnostic large-diff transport and
+registered-root sentinel. Independent adjudication showed that it is not
+truth-complete, so its unmatched findings are structurally excluded from
+precision, false-discovery, and required-adjudication gates by the decision
+builder. The other four contaminated
+cases listed by the registry are never scheduled. The exact logging-constants
+compatibility case remains excluded; the smaller panels use declared contract
+proxies and cannot prove that exact sensitivity is fixed.
+
+Run the fail-closed template only after deliberately enabling provider calls
+and configuring credential/session containment:
+
+```sh
+npm run eval:matrix -- --config eval/matrix.codex.funnel.json \
+  --benchmark-category smoke
+
+# Development iteration only: one treatment attempt per case/repeat.
+# It is authenticated as treatment-only-diagnostic and cannot advance a gate.
+npm run eval:matrix -- --config eval/matrix.codex.funnel.json \
+  --benchmark-category fast-screen --treatment-only
+```
+
+Acceptance evidence always uses contemporaneous paired control/treatment
+blocks. After judge, grade, and report complete, derive and persist the
+write-once decision directly from the sealed artifacts:
+
+```sh
+npm run eval:funnel-decision -- --runs eval/runs/<dir>
+```
+
+The decision rejects stopped or unpaired experiments, missing terminal work,
+treatment completion degradation, reliable high-severity regressions,
+additional blocking unsupported treatment findings, and efficiency results
+whose intervals cannot reach the preregistered target. Required unresolved
+adjudications and weak confirmation remain `inconclusive`. Smoke does not gate
+efficiency; fast-screen requires a positive signal; confirmation and
+full-checkpoint require the frozen 20% target plus a case-cluster bootstrap
+interval wholly above zero. Only a paired full-checkpoint can return
+`visible-funnel-complete`, which is not a release, gold, or holdout claim. The
+panel snapshot, seal identities, derived metrics and completion counts, result,
+and content hash are retained in `funnel-decision.json`. Its portable structural
+shape is `schemas/funnel-decision.schema.json`; the evidence reader verifies the
+referenced seals and corpus, re-derives every metric, and requires byte-equivalent
+decision content.
 
 ## Case library
 
@@ -505,10 +568,10 @@ reordering `caseIds` does not change attempt order. Use a preregistered,
 stratified subset (for example, representative defect lanes, clean controls,
 change shapes, and sizes); do not choose cases after seeing model output.
 `caseIds` is rejected for structural smoke and historical-gold checkpoint runs.
-A visible-checkpoint subset is immutably classified as
-`diagnostic-visible-subset`; a no-allowlist visible checkpoint is classified as
-`visible-seeded-checkpoint`. Neither classification is historical-gold or
-sealed-holdout evidence.
+A preregistered categorized subset is immutably classified as
+`visible-seeded-panel`; an ad hoc subset is `diagnostic-visible-subset`; a
+no-allowlist visible checkpoint is `visible-seeded-checkpoint`. None is
+historical-gold or sealed-holdout evidence.
 
 The admitted seeded corpus supports development screening and, once
 `visibleSeededBenchmarkReady`, visible-checkpoint runs. A historical-gold

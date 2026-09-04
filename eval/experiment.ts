@@ -19,6 +19,7 @@ import { assertNoSecrets } from "../src/security/secrets.js";
 import {
   CASE_CORPORA,
   RUNNER_NAMES,
+  type ExperimentBenchmarkCategory,
   type CaseCorpus,
   type ExperimentProtocol,
   type ExperimentEvidenceClass,
@@ -26,6 +27,7 @@ import {
   type RunRecord,
   type RunnerName,
 } from "../src/types.js";
+import { parseBenchmarkCategoryBinding } from "./benchmark-panels.js";
 
 const SHA256 = /^[a-f0-9]{64}$/;
 const GIT_OID = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
@@ -33,7 +35,7 @@ const ATTEMPT_ID = /^attempt-[0-9]{6}$/;
 const BLOCK_ID = /^(?:block|retry)-[0-9]{6}$/;
 const OPAQUE_CASE_ID = /^case-[a-f0-9]{8,32}$/;
 const EXPERIMENT_MODES = ["structural-smoke", "screening", "visible-checkpoint", "checkpoint"] as const;
-const EXPERIMENT_EVIDENCE_CLASSES = ["diagnostic-visible-subset", "visible-seeded-checkpoint"] as const;
+const EXPERIMENT_EVIDENCE_CLASSES = ["diagnostic-visible-subset", "visible-seeded-panel", "visible-seeded-checkpoint"] as const;
 const CACHE_CONDITIONS = ["cold", "warm", "uncontrolled", "not-applicable"] as const;
 const JUDGE_KINDS = ["exact", "claude", "codex"] as const;
 const INVESTIGATION_PROMPT_MODES = ["legacy", "method-packet"] as const;
@@ -146,6 +148,7 @@ export interface ExperimentManifest {
   protocol: ExperimentProtocol;
   /** Required only for visible-checkpoint; derived from full-corpus vs allowlisted selection. */
   evidenceClass?: ExperimentEvidenceClass;
+  benchmarkCategory?: ExperimentBenchmarkCategory;
   hashes: ExperimentHashes;
   models: ExperimentModelIdentity[];
   runtime: ExperimentRuntime;
@@ -212,6 +215,7 @@ export interface BuildExperimentManifestInput {
   repositoryCommit: string;
   protocol: ExperimentProtocol;
   evidenceClass?: ExperimentEvidenceClass;
+  benchmarkCategory?: ExperimentBenchmarkCategory;
   hashes: ExperimentHashes;
   models: ExperimentModelIdentity[];
   runtime: ExperimentRuntime;
@@ -343,6 +347,7 @@ function parseExperimentProtocolValue(
   const root = object(value, source);
   onlyKeys(root, new Set([
     "mode",
+    "comparison",
     "seed",
     "cacheCondition",
     "providerCalls",
@@ -354,6 +359,9 @@ function parseExperimentProtocolValue(
     "limits",
   ]), source);
   const mode = member(root.mode, EXPERIMENT_MODES, `${source}.mode`);
+  const comparison = root.comparison === undefined
+    ? undefined
+    : member(root.comparison, ["treatment-only"] as const, `${source}.comparison`);
   const seed = integer(root.seed, `${source}.seed`, 0, 0xffff_ffff);
   const cacheCondition = member(root.cacheCondition, CACHE_CONDITIONS, `${source}.cacheCondition`);
   const providerCalls = member(root.providerCalls, ["allow", "deny"] as const, `${source}.providerCalls`);
@@ -396,6 +404,7 @@ function parseExperimentProtocolValue(
   const control = optionalBoundedString(root.control, `${source}.control`);
   const treatment = optionalBoundedString(root.treatment, `${source}.treatment`);
   if (mode === "structural-smoke") {
+    if (comparison !== undefined) throw new Error(`${source}: structural-smoke cannot be treatment-only`);
     if (control !== undefined || treatment !== undefined) {
       throw new Error(`${source}: structural-smoke must not declare control or treatment`);
     }
@@ -415,10 +424,17 @@ function parseExperimentProtocolValue(
       throw new Error(`${source}: structural-smoke must not declare provider cost or attempt capacity`);
     }
   } else {
-    if (control === undefined || treatment === undefined) {
-      throw new Error(`${source}: ${mode} requires control and treatment`);
+    if (comparison === "treatment-only") {
+      if (mode !== "screening") throw new Error(`${source}: treatment-only is supported only for screening`);
+      if (control !== undefined || treatment === undefined) {
+        throw new Error(`${source}: treatment-only requires treatment and forbids control`);
+      }
+    } else {
+      if (control === undefined || treatment === undefined) {
+        throw new Error(`${source}: ${mode} requires control and treatment`);
+      }
+      if (control === treatment) throw new Error(`${source}: control and treatment must differ`);
     }
-    if (control === treatment) throw new Error(`${source}: control and treatment must differ`);
     if (cacheCondition !== "uncontrolled") {
       throw new Error(
         `${source}: live cache state must remain uncontrolled until a cache protocol is enforced`,
@@ -451,6 +467,7 @@ function parseExperimentProtocolValue(
 
   return {
     mode,
+    ...(comparison === undefined ? {} : { comparison }),
     seed,
     cacheCondition,
     providerCalls,
@@ -512,8 +529,20 @@ export function buildExperimentSchedule(input: {
       continue;
     }
 
-    const control = configs.find((item) => item.name === protocol.control);
     const treatment = configs.find((item) => item.name === protocol.treatment);
+    if (protocol.comparison === "treatment-only") {
+      if (!treatment) throw new Error("internal error: treatment config is absent");
+      scheduled.push(scheduleAttempt({
+        sequence: scheduled.length + 1,
+        blockId,
+        block,
+        config: treatment,
+        variant: "treatment",
+        position: 1,
+      }));
+      continue;
+    }
+    const control = configs.find((item) => item.name === protocol.control);
     if (!control || !treatment) throw new Error("internal error: paired configs are absent");
     const controlFirst = blockIndex % 2 === 0 ? firstControlFirst : !firstControlFirst;
     const ordered = controlFirst
@@ -687,6 +716,7 @@ export function parseExperimentManifest(
     "repositoryCommit",
     "protocol",
     "evidenceClass",
+    "benchmarkCategory",
     "hashes",
     "models",
     "runtime",
@@ -957,6 +987,7 @@ function parseManifestBody(value: unknown, source: string): Omit<ExperimentManif
     "repositoryCommit",
     "protocol",
     "evidenceClass",
+    "benchmarkCategory",
     "hashes",
     "models",
     "runtime",
@@ -972,11 +1003,25 @@ function parseManifestBody(value: unknown, source: string): Omit<ExperimentManif
   const evidenceClass = root.evidenceClass === undefined
     ? undefined
     : member(root.evidenceClass, EXPERIMENT_EVIDENCE_CLASSES, `${source}.evidenceClass`);
+  const benchmarkCategory = root.benchmarkCategory === undefined
+    ? undefined
+    : parseBenchmarkCategoryBinding(root.benchmarkCategory, `${source}.benchmarkCategory`);
+  if (benchmarkCategory && benchmarkCategory.evidenceUse !== (
+    protocol.comparison === "treatment-only" ? "treatment-only-diagnostic" : "paired-acceptance"
+  )) {
+    throw new Error(`${source}.benchmarkCategory.evidenceUse does not match the experiment comparison`);
+  }
   if (protocol.mode === "visible-checkpoint" && evidenceClass === undefined) {
     throw new Error(`${source}: visible-checkpoint must bind its evidence class`);
   }
   if (protocol.mode !== "visible-checkpoint" && evidenceClass !== undefined) {
     throw new Error(`${source}: evidenceClass is supported only for visible-checkpoint`);
+  }
+  if (benchmarkCategory && benchmarkCategory.definition.mode !== protocol.mode) {
+    throw new Error(`${source}.benchmarkCategory definition mode does not match the protocol`);
+  }
+  if (benchmarkCategory && protocol.mode === "visible-checkpoint" && evidenceClass !== "visible-seeded-panel") {
+    throw new Error(`${source}: categorized visible-checkpoint evidence must be visible-seeded-panel`);
   }
   const hashes = parseHashes(root.hashes, `${source}.hashes`);
   const models = array(root.models, `${source}.models`).map((item, index) =>
@@ -989,6 +1034,7 @@ function parseManifestBody(value: unknown, source: string): Omit<ExperimentManif
     parseScheduledAttempt(item, `${source}.schedule[${index}]`));
   const lineage = root.lineage === undefined ? undefined : parseLineage(root.lineage, `${source}.lineage`);
   validateSchedule(schedule, protocol, lineage);
+  if (benchmarkCategory && !lineage) validateBenchmarkCategorySchedule(benchmarkCategory, schedule, source);
   const modelNames = new Set(models.map((model) => model.configName));
   const modelByName = new Map(models.map((model) => [model.configName, model]));
   for (const attempt of schedule) {
@@ -1007,6 +1053,7 @@ function parseManifestBody(value: unknown, source: string): Omit<ExperimentManif
     repositoryCommit,
     protocol,
     ...(evidenceClass === undefined ? {} : { evidenceClass }),
+    ...(benchmarkCategory === undefined ? {} : { benchmarkCategory }),
     hashes,
     models,
     runtime,
@@ -1015,6 +1062,31 @@ function parseManifestBody(value: unknown, source: string): Omit<ExperimentManif
   };
   assertNoSecrets(parsed, `${source} artifact`);
   return parsed;
+}
+
+function validateBenchmarkCategorySchedule(
+  binding: ExperimentBenchmarkCategory,
+  schedule: readonly ExperimentScheduledAttempt[],
+  source: string,
+): void {
+  const variants = binding.evidenceUse === "treatment-only-diagnostic" ? 1 : 2;
+  if (schedule.length !== binding.definition.caseIds.length * binding.definition.repeats * variants) {
+    throw new Error(`${source}: benchmark category schedule size is invalid`);
+  }
+  const selected = new Set(binding.definition.caseIds);
+  const counts = new Map<string, number>();
+  for (const attempt of schedule) {
+    const caseId = attempt.caseName.split("/").at(-1)!;
+    if (!selected.has(caseId) || !binding.definition.corpora.includes(attempt.corpus)) {
+      throw new Error(`${source}: benchmark category schedule contains an unbound case`);
+    }
+    counts.set(caseId, (counts.get(caseId) ?? 0) + 1);
+  }
+  for (const caseId of binding.definition.caseIds) {
+    if (counts.get(caseId) !== binding.definition.repeats * variants) {
+      throw new Error(`${source}: benchmark category schedule coverage is invalid for ${caseId}`);
+    }
+  }
 }
 
 function validateModeInputs(
@@ -1031,11 +1103,19 @@ function validateModeInputs(
     }
     return;
   }
-  if (configs.length !== 2) throw new Error(`${protocol.mode} requires exactly two configs`);
+  if (protocol.comparison === "treatment-only") {
+    if (configs.length !== 1 || configs[0]?.name !== protocol.treatment) {
+      throw new Error("treatment-only screening requires exactly the declared treatment config");
+    }
+  } else if (configs.length !== 2) {
+    throw new Error(`${protocol.mode} requires exactly two configs`);
+  }
   const control = configs.find((item) => item.name === protocol.control);
   const treatment = configs.find((item) => item.name === protocol.treatment);
-  if (!control || !treatment) throw new Error("control and treatment must name the two matrix configs");
-  if (control.runner !== treatment.runner) {
+  if (!treatment || (protocol.comparison !== "treatment-only" && !control)) {
+    throw new Error("control and treatment must name the matrix configs required by the comparison");
+  }
+  if (control && control.runner !== treatment.runner) {
     throw new Error("control and treatment must use the same provider runner");
   }
   if (protocol.mode === "screening" && cases.some((item) => item.corpus !== "development")) {
@@ -1106,6 +1186,16 @@ function validateSchedule(
         throw new Error("each structural-smoke block must contain one structural attempt");
       }
       if (block[0].runner !== "mock") throw new Error("structural-smoke attempts must use the mock runner");
+    }
+    return;
+  }
+  if (protocol.comparison === "treatment-only") {
+    for (const block of groups.values()) {
+      const attempt = block[0];
+      if (block.length !== 1 || attempt?.variant !== "treatment" || attempt.position !== 1 ||
+        attempt.configName !== protocol.treatment) {
+        throw new Error("each treatment-only block must contain one declared treatment attempt");
+      }
     }
     return;
   }

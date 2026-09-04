@@ -388,6 +388,39 @@ Extend the matrix runner with control/treatment pairing, seeded randomization, i
 
 Keep three execution modes separate: structural smoke, stratified screening, and full checkpoint. A screening pass can reject a bad intervention but cannot establish release-level efficacy. Full checkpoint runs use the contemporaneous control, not an old benchmark directory.
 
+Within behavioral execution, use the checked-in shortened funnel rather than
+paying for the entire visible suite after every edit. The four nested categories
+are smoke (six development cases, one repeat), fast-screen (twelve development
+cases, two repeats), confirmation (nineteen development/validation cases,
+three repeats), and full-checkpoint (thirty-two development/validation cases,
+three repeats). Panel membership, restricted-case handling, repeat reliability,
+next-stage routing, and efficiency gates are frozen and content-addressed before a run.
+Smoke catches obvious breakage; fast-screen rejects unsafe or clearly inferior
+ideas; confirmation establishes three-repeat visible reliability and
+uncertainty; full-checkpoint is the largest corrected visible-corpus gate. None
+is historical-gold or sealed-holdout evidence.
+
+Acceptance decisions always use contemporaneous paired control/treatment
+blocks. Treatment-only smoke or fast-screen work is permitted for development
+economy only when the manifest labels it diagnostic-only; it can never advance
+a gate. Stop sequentially on a reliable high-severity regression, additional
+blocking unsupported treatment findings, completion degradation, incomplete or
+stopped evidence, or an efficiency interval that makes the registered target
+unattainable. Unresolved required adjudications and weak confirmation are
+inconclusive, not clean or passing. The decision is derived from the sealed
+per-attempt grading and duration evidence; operators cannot supply summary
+metrics or change the target after execution.
+
+Independent Checkpoint 2 adjudication invalidated four clean-control labels and
+one truth-complete label. Exclude the four invalid clean cases from every
+shortened panel. Retain the seeded large-diff case only as a plainly
+diagnostic-only transport and registered-root sentinel; do not use its
+unmatched findings for precision, false-discovery, or required-adjudication
+gates. This preserves honest large-diff execution coverage without claiming
+that incomplete truth is complete. Use smaller contract cases only as declared
+compatibility proxies; they do not prove the excluded logging-constants
+sensitivity.
+
 **Files:** `eval/run-matrix.ts`, new experiment-manifest schema/types, CLI/config documentation, report code, and tests.
 **Must stay untouched:** review prompts and route selection.
 **Risk:** retry replacement, cache ordering, or provider drift can bias the comparison. Preserve every attempt and randomize block order.

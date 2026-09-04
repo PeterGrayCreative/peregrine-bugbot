@@ -363,7 +363,48 @@ export interface MatrixModelConfig {
 
 export const EXPERIMENT_MODES = ["structural-smoke", "screening", "visible-checkpoint", "checkpoint"] as const;
 export type ExperimentMode = (typeof EXPERIMENT_MODES)[number];
-export type ExperimentEvidenceClass = "diagnostic-visible-subset" | "visible-seeded-checkpoint";
+export type ExperimentEvidenceClass = "diagnostic-visible-subset" | "visible-seeded-panel" | "visible-seeded-checkpoint";
+export const BENCHMARK_CATEGORIES = ["smoke", "fast-screen", "confirmation", "full-checkpoint"] as const;
+export type BenchmarkCategory = (typeof BENCHMARK_CATEGORIES)[number];
+export interface BenchmarkPanelRoles {
+  highRiskSentinels: string[];
+  variableCases: string[];
+  cleanControls: string[];
+  compatibilityProxies: string[];
+  largeDiffCases: string[];
+  diagnosticOnlyCases: string[];
+}
+export interface BenchmarkGatePolicy {
+  nextCategory: BenchmarkCategory | null;
+  efficiencyMetric: "paired-median-wall-time";
+  targetImprovementPercent: number | null;
+  requireConfidenceIntervalAboveZero: boolean;
+  reliableDetectionMinimum: number;
+  bootstrapSamples: number;
+  bootstrapSeed: number;
+  mayComplete: boolean;
+}
+export interface BenchmarkPanelDefinition {
+  mode: "screening" | "visible-checkpoint";
+  repeats: number;
+  corpora: CaseCorpus[];
+  caseIds: string[];
+  roles: BenchmarkPanelRoles;
+  gate: BenchmarkGatePolicy;
+}
+export interface BenchmarkRestrictedCasePolicy {
+  caseId: string;
+  reason: string;
+  evidence: string;
+  allowedUse?: "diagnostic-only";
+}
+export interface ExperimentBenchmarkCategory {
+  name: BenchmarkCategory;
+  definitionSha256: string;
+  evidenceUse: "paired-acceptance" | "treatment-only-diagnostic";
+  definition: BenchmarkPanelDefinition;
+  restrictedCasePolicies: BenchmarkRestrictedCasePolicy[];
+}
 export type ExperimentCacheCondition = "cold" | "warm" | "uncontrolled" | "not-applicable";
 export type ExperimentJudge = "exact" | "claude" | "codex";
 export type ExperimentProviderAccess = "api-key" | "cli-session" | "not-applicable";
@@ -384,6 +425,8 @@ export interface ExperimentLimits {
 
 export interface ExperimentProtocol {
   mode: ExperimentMode;
+  /** Omitted means the historical paired protocol. Treatment-only runs are diagnostic. */
+  comparison?: "treatment-only";
   seed: number;
   cacheCondition: ExperimentCacheCondition;
   /** Explicit authorization gate; `deny` still permits the zero-cost mock runner. */
@@ -411,6 +454,8 @@ export interface MatrixConfig {
   corpora?: CaseCorpus[];
   /** Optional opaque case allowlist for screening or diagnostic visible-checkpoint subsets. */
   caseIds?: string[];
+  /** Checked-in shortened-funnel category whose immutable definition this matrix must match. */
+  benchmarkCategory?: BenchmarkCategory;
   experiment: ExperimentProtocol;
 }
 

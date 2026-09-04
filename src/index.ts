@@ -9,7 +9,7 @@ import { parseEngineResult } from "./core/review-result.js";
 import { getEngine } from "./engines/engine.js";
 import { formatUsageCost } from "./core/telemetry.js";
 import { postReview } from "./github/post-review.js";
-import type { EngineResult, ReviewContext, RunnerName } from "./types.js";
+import { BENCHMARK_CATEGORIES, type BenchmarkCategory, type EngineResult, type ReviewContext, type RunnerName } from "./types.js";
 import { exec } from "./util/exec.js";
 
 function arg(flag: string): string | undefined {
@@ -185,12 +185,19 @@ async function main(): Promise<void> {
       if (resumeDir && retryRuns) {
         throw new Error("matrix --resume and --retry-runs are mutually exclusive");
       }
+      const categoryValue = arg("--benchmark-category");
+      const treatmentOnly = process.argv.includes("--treatment-only");
+      if (categoryValue !== undefined && !BENCHMARK_CATEGORIES.includes(categoryValue as BenchmarkCategory)) {
+        throw new Error(`--benchmark-category must be one of: ${BENCHMARK_CATEGORIES.join(", ")}`);
+      }
       await (await import("../eval/run-matrix.js")).runMatrix(
         arg("--config"),
         undefined,
         {
           ...(resumeDir ? { resumeDir } : {}),
           ...(retryRuns && retryAttempt ? { retry: { runsDir: retryRuns, attemptId: retryAttempt } } : {}),
+          ...(categoryValue ? { benchmarkCategory: categoryValue as BenchmarkCategory } : {}),
+          ...(treatmentOnly ? { treatmentOnly: true } : {}),
         },
       );
       return;
@@ -209,8 +216,15 @@ async function main(): Promise<void> {
       await (await import("../eval/report.js")).buildReport(arg("--runs"));
       return;
     }
+    case "funnel-decision": {
+      const runs = arg("--runs");
+      if (!runs) throw new Error("funnel-decision requires --runs");
+      const result = (await import("../eval/funnel-decision.js")).writeFunnelDecision(runs);
+      console.log(JSON.stringify(result, null, 2));
+      return;
+    }
     default:
-      console.error("Usage: peregrine <review|post|doctor|matrix|judge|grade|report> [options]");
+      console.error("Usage: peregrine <review|post|doctor|matrix|judge|grade|report|funnel-decision> [options]");
       process.exitCode = 1;
   }
 }

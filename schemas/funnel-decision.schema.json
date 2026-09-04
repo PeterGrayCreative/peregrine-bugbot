@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Peregrine Shortened Funnel Decision",
+  "$comment": "Structural schema only. parseFunnelDecisionArtifact is authoritative for panel snapshot authentication, frozen-gate equality, derived-result equality, secret rejection, and the decision content address.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "experimentId": { "$ref": "#/$defs/sha256" },
+    "benchmarkCategory": { "type": "object" },
+    "terminalSealSha256": { "$ref": "#/$defs/sha256" },
+    "terminal": { "enum": ["completed", "stopped"] },
+    "gradingSealSha256": { "$ref": "#/$defs/sha256" },
+    "completion": { "type": "object" },
+    "metrics": { "type": ["object", "null"] },
+    "result": { "type": "object" },
+    "decisionSha256": { "$ref": "#/$defs/sha256" }
+  },
+  "required": [
+    "schemaVersion", "experimentId", "benchmarkCategory", "terminalSealSha256",
+    "terminal", "completion", "metrics", "result", "decisionSha256"
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

@@ -343,6 +343,7 @@ function rejectUndeclaredTopLevelEntries(
     ".experiment.lock",
     "benchmark.json",
     "benchmark.html",
+    "funnel-decision.json",
     EXPERIMENT_TERMINAL_SEAL_FILENAME,
     EXPERIMENT_GRADING_SEAL_FILENAME,
     ...(experiment.protocol.judge.kind === "exact" ? [] : ["judge"]),

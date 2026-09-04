@@ -1,0 +1,230 @@
+{
+  "schemaVersion": 1,
+  "excludedCases": [
+    {
+      "caseId": "case-c39a25e8",
+      "reason": "A reproducible logger-error masking defect invalidates the clean-control label.",
+      "evidence": "docs/validation/artifacts/2026-09-04-stage2-checkpoint2-visible/independent-adjudication.md"
+    },
+    {
+      "caseId": "case-3ef9a502",
+      "reason": "The added examples exercise the standard-library scanner instead of the changed local package, invalidating the clean-control label.",
+      "evidence": "docs/validation/artifacts/2026-09-04-stage2-checkpoint2-visible/independent-adjudication.md"
+    },
+    {
+      "caseId": "case-c95a81e4",
+      "reason": "The window rewrite changes fractional and negative slice semantics, invalidating the clean-control label.",
+      "evidence": "docs/validation/artifacts/2026-09-04-stage2-checkpoint2-visible/independent-adjudication.md"
+    },
+    {
+      "caseId": "case-d3f8026e",
+      "reason": "At least 18 reachable roots are omitted from the supposedly truth-complete single-bug case.",
+      "evidence": "docs/validation/artifacts/2026-09-04-stage2-checkpoint2-visible/independent-adjudication.md",
+      "allowedUse": "diagnostic-only"
+    },
+    {
+      "caseId": "case-f9b30d26",
+      "reason": "Multiple reproducible logging defects invalidate the clean-control label, including the known compatibility-constants sensitivity.",
+      "evidence": "docs/validation/artifacts/2026-09-04-stage2-checkpoint2-visible/independent-adjudication.md"
+    }
+  ],
+  "panels": {
+    "smoke": {
+      "mode": "screening",
+      "repeats": 1,
+      "corpora": ["development"],
+      "caseIds": [
+        "case-13f0a2c1",
+        "case-17ac84e2",
+        "case-1ab7d3c9",
+        "case-5ea42d18",
+        "case-6c19f4ab",
+        "case-a1c4e90d"
+      ],
+      "roles": {
+        "highRiskSentinels": ["case-13f0a2c1", "case-6c19f4ab", "case-a1c4e90d"],
+        "variableCases": ["case-17ac84e2"],
+        "cleanControls": ["case-1ab7d3c9", "case-5ea42d18"],
+        "compatibilityProxies": ["case-17ac84e2"],
+        "largeDiffCases": [],
+        "diagnosticOnlyCases": []
+      },
+      "gate": {
+        "nextCategory": "fast-screen",
+        "efficiencyMetric": "paired-median-wall-time",
+        "targetImprovementPercent": null,
+        "requireConfidenceIntervalAboveZero": false,
+        "reliableDetectionMinimum": 1,
+        "bootstrapSamples": 10000,
+        "bootstrapSeed": 17011,
+        "mayComplete": false
+      }
+    },
+    "fast-screen": {
+      "mode": "screening",
+      "repeats": 2,
+      "corpora": ["development"],
+      "caseIds": [
+        "case-13f0a2c1",
+        "case-17ac84e2",
+        "case-1ab7d3c9",
+        "case-2cd8e4a1",
+        "case-5ea42d18",
+        "case-6c19f4ab",
+        "case-a17c4e92",
+        "case-a1c4e90d",
+        "case-c4e71b39",
+        "case-c83a51e7",
+        "case-d40b36f9",
+        "case-e95d2a63"
+      ],
+      "roles": {
+        "highRiskSentinels": ["case-13f0a2c1", "case-6c19f4ab", "case-a17c4e92", "case-a1c4e90d"],
+        "variableCases": ["case-17ac84e2", "case-c83a51e7", "case-d40b36f9", "case-e95d2a63"],
+        "cleanControls": ["case-1ab7d3c9", "case-2cd8e4a1", "case-5ea42d18", "case-c4e71b39"],
+        "compatibilityProxies": ["case-17ac84e2"],
+        "largeDiffCases": [],
+        "diagnosticOnlyCases": []
+      },
+      "gate": {
+        "nextCategory": "confirmation",
+        "efficiencyMetric": "paired-median-wall-time",
+        "targetImprovementPercent": 20,
+        "requireConfidenceIntervalAboveZero": false,
+        "reliableDetectionMinimum": 2,
+        "bootstrapSamples": 10000,
+        "bootstrapSeed": 29021,
+        "mayComplete": false
+      }
+    },
+    "confirmation": {
+      "mode": "visible-checkpoint",
+      "repeats": 3,
+      "corpora": ["development", "validation"],
+      "caseIds": [
+        "case-13f0a2c1",
+        "case-17ac84e2",
+        "case-1ab7d3c9",
+        "case-2cd8e4a1",
+        "case-5ea42d18",
+        "case-6c19f4ab",
+        "case-a17c4e92",
+        "case-a1c4e90d",
+        "case-c4e71b39",
+        "case-c83a51e7",
+        "case-d40b36f9",
+        "case-e95d2a63",
+        "case-28d5f0b9",
+        "case-a8073f5d",
+        "case-b28e14d7",
+        "case-b84f70d3",
+        "case-e41a7c53",
+        "case-7ab54e20",
+        "case-d3f8026e"
+      ],
+      "roles": {
+        "highRiskSentinels": ["case-13f0a2c1", "case-6c19f4ab", "case-a17c4e92", "case-a1c4e90d", "case-b28e14d7"],
+        "variableCases": ["case-17ac84e2", "case-c83a51e7", "case-d40b36f9", "case-e95d2a63", "case-a8073f5d"],
+        "cleanControls": ["case-1ab7d3c9", "case-2cd8e4a1", "case-5ea42d18", "case-c4e71b39", "case-7ab54e20"],
+        "compatibilityProxies": ["case-17ac84e2", "case-28d5f0b9"],
+        "largeDiffCases": ["case-d3f8026e"],
+        "diagnosticOnlyCases": ["case-d3f8026e"]
+      },
+      "gate": {
+        "nextCategory": "full-checkpoint",
+        "efficiencyMetric": "paired-median-wall-time",
+        "targetImprovementPercent": 20,
+        "requireConfidenceIntervalAboveZero": true,
+        "reliableDetectionMinimum": 2,
+        "bootstrapSamples": 10000,
+        "bootstrapSeed": 39041,
+        "mayComplete": false
+      }
+    },
+    "full-checkpoint": {
+      "mode": "visible-checkpoint",
+      "repeats": 3,
+      "corpora": ["development", "validation"],
+      "caseIds": [
+        "case-13f0a2c1",
+        "case-17ac84e2",
+        "case-1ab7d3c9",
+        "case-2cd8e4a1",
+        "case-5ea42d18",
+        "case-6c19f4ab",
+        "case-a17c4e92",
+        "case-a1c4e90d",
+        "case-c4e71b39",
+        "case-c83a51e7",
+        "case-d40b36f9",
+        "case-e95d2a63",
+        "case-28d5f0b9",
+        "case-a8073f5d",
+        "case-b28e14d7",
+        "case-b84f70d3",
+        "case-e41a7c53",
+        "case-7ab54e20",
+        "case-39e6a1c4",
+        "case-c85d174e",
+        "case-f62d58b1",
+        "case-a13f09c2",
+        "case-a73e69c2",
+        "case-d0629f8b",
+        "case-2d91ac76",
+        "case-8b6d9e04",
+        "case-b62f09d4",
+        "case-b7f203ac",
+        "case-d04b79f1",
+        "case-e51c47a0",
+        "case-f16c8b40",
+        "case-d3f8026e"
+      ],
+      "roles": {
+        "highRiskSentinels": [
+          "case-13f0a2c1",
+          "case-17ac84e2",
+          "case-2d91ac76",
+          "case-6c19f4ab",
+          "case-a17c4e92",
+          "case-a1c4e90d",
+          "case-e95d2a63",
+          "case-8b6d9e04",
+          "case-b28e14d7",
+          "case-b62f09d4",
+          "case-b7f203ac"
+        ],
+        "variableCases": [
+          "case-17ac84e2",
+          "case-a8073f5d",
+          "case-c83a51e7",
+          "case-d40b36f9",
+          "case-e95d2a63",
+          "case-f16c8b40"
+        ],
+        "cleanControls": [
+          "case-1ab7d3c9",
+          "case-2cd8e4a1",
+          "case-39e6a1c4",
+          "case-5ea42d18",
+          "case-c4e71b39",
+          "case-c85d174e",
+          "case-f62d58b1",
+          "case-7ab54e20"
+        ],
+        "compatibilityProxies": ["case-17ac84e2", "case-28d5f0b9"],
+        "largeDiffCases": ["case-d3f8026e"],
+        "diagnosticOnlyCases": ["case-d3f8026e"]
+      },
+      "gate": {
+        "nextCategory": null,
+        "efficiencyMetric": "paired-median-wall-time",
+        "targetImprovementPercent": 20,
+        "requireConfidenceIntervalAboveZero": true,
+        "reliableDetectionMinimum": 2,
+        "bootstrapSamples": 10000,
+        "bootstrapSeed": 49057,
+        "mayComplete": true
+      }
+    }
+  }
+}

@@ -41,6 +41,7 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | Visible checkpoint protocol | Admit full visible seeded development/validation comparisons without gold claims | Benchmark checkpoint | Merged | [#25](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/25) |
 | Plan PR 9 | Structural breadth compaction and schema bounds | PR 8 | Two implementations benchmarked and rejected; unmerged | [decision](../validation/2026-09-04-stage2-pr9-decision.md) |
 | Checkpoint 2 full comparison | Legacy/full versus accepted method-packet/full stack | PR 8, visible protocol | Complete; visible cost gates passed, corpus correction required before Checkpoint 3 measurement | [results](../validation/2026-09-04-stage2-checkpoint2-visible-results.md) |
+| Shortened benchmark funnel | Frozen smoke, fast-screen, confirmation, and full-checkpoint panels with fail-closed decisions | Checkpoint 2 adjudication | Implemented and locally validated; review pending | - |
 | Plan PR 10 | Activated-lane counterexamples and seam checklist | PR 8 and Checkpoint 2 | Not started | - |
 | Plan PR 11 | Investigation coverage and runner-owned completeness | PR 10 | Not started | - |
 | Plan PR 12 | Bounded risk-sensitive candidate budgets | PR 11 | Not started | - |
@@ -442,6 +443,41 @@ Independent adjudication found contaminated clean/truth-complete cases and one
 newly discovered medium-root reliability regression, so those cases must be
 repaired or replaced before Checkpoint 3 precision/FDR measurement. This does
 not authorize historical-gold, holdout, routing, or final non-inferiority claims.
+
+### Shortened benchmark funnel
+
+- [x] Freeze nested smoke (6 x 1), fast-screen (12 x 2), confirmation
+  (19 x 3), and full-checkpoint (32 x 3) category definitions.
+- [x] Bind category name, exact panel/restricted-case/gate snapshot, definition
+  hash, and paired-versus-diagnostic evidence use into the immutable manifest.
+- [x] Exclude the four invalid clean-control cases from all panels.
+- [x] Restrict the truth-incomplete seeded large-diff case to diagnostic-only
+  transport and registered-root use; prohibit precision/FDR claims from its
+  unmatched findings.
+- [x] Preserve high-risk sentinels, variable cases, at least 25% clean controls,
+  compatibility proxies, and large-diff execution coverage at the appropriate
+  stages.
+- [x] Add `--benchmark-category` selection that replaces arbitrary repeats,
+  corpora, and case allowlists with the frozen definition.
+- [x] Add treatment-only smoke/fast development runs that are immutably labeled
+  diagnostic and can never advance a gate.
+- [x] Add write-once, content-addressed funnel decisions bound to the experiment
+  and terminal/grading seals, with metrics derived from sealed graded runs.
+- [x] Reject stopped, unpaired, missing, completion-regressed, high-severity
+  regressed, blocking-unsupported-regressed, or unattainable-efficiency work;
+  keep unresolved or weak evidence inconclusive.
+- [x] Add deterministic selection, corpus restriction, schedule, evidence-use,
+  failure-accounting, derived-metric, content-address, and stopping-rule tests.
+- [x] Document what each category can and cannot prove.
+- [x] Run the full local validation gate under Node 22.
+- [x] Complete independent code and benchmark-method reviews.
+- [x] Push the branch, pass remote CI/review, merge, and record the PR here.
+  [PR #28](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/28)
+  passed CI, CodeQL/review analysis, review posting, and credential-free
+  build/smoke; this checklist commit merged with the implementation.
+
+Rollback boundary: revert this funnel slice. Existing full visible experiment
+artifacts and earlier matrix configurations remain readable and unchanged.
 
 ### Checkpoint 3 - Recall and completeness intervention
 

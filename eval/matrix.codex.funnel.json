@@ -1,0 +1,59 @@
+{
+  "repeats": 1,
+  "configs": [
+    {
+      "name": "accepted-method-packet",
+      "runner": "codex",
+      "overrides": {
+        "breadthModel": "gpt-5.6-luna",
+        "breadthEffort": "high",
+        "investigationModel": "gpt-5.6-sol",
+        "investigationEffort": "high",
+        "investigationPromptMode": "method-packet"
+      }
+    },
+    {
+      "name": "candidate-luna-max-terra-xhigh",
+      "runner": "codex",
+      "overrides": {
+        "breadthModel": "gpt-5.6-luna",
+        "breadthEffort": "max",
+        "investigationModel": "gpt-5.6-terra",
+        "investigationEffort": "xhigh",
+        "investigationPromptMode": "method-packet"
+      }
+    }
+  ],
+  "experiment": {
+    "mode": "screening",
+    "seed": 202609041,
+    "cacheCondition": "uncontrolled",
+    "providerCalls": "deny",
+    "providerAccess": "cli-session",
+    "costAccounting": "best-effort",
+    "control": "accepted-method-packet",
+    "treatment": "candidate-luna-max-terra-xhigh",
+    "judge": {
+      "kind": "codex",
+      "model": "gpt-5.6-luna",
+      "effort": "medium",
+      "version": "semantic-v1",
+      "limits": {
+        "maxProviderCostUsd": null,
+        "maxProviderAttempts": 500,
+        "maxWallTimeMs": 43200000,
+        "maxFailureRate": 0.2,
+        "minAttemptsForFailureRate": 12,
+        "maxConsecutiveFailures": 3
+      }
+    },
+    "limits": {
+      "maxProviderCostUsd": null,
+      "maxProviderAttempts": 192,
+      "maxWallTimeMs": 129600000,
+      "maxFailureRate": 0.2,
+      "minAttemptsForFailureRate": 12,
+      "maxConsecutiveFailures": 3
+    }
+  }
+}
