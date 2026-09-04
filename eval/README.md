@@ -60,7 +60,7 @@ and are excluded from the behavioral cost-versus-recall plot.
 
 ## Immutable experiments
 
-Every new matrix config must declare one of three experiment modes:
+Every new matrix config must declare one of four experiment modes:
 
 - `structural-smoke` uses the mock runner, exact grading, and no provider
   access. It proves only the deterministic harness path.
@@ -68,9 +68,14 @@ Every new matrix config must declare one of three experiment modes:
   to reject an unsafe or clearly inferior intervention. It is not release-level
   efficacy evidence, holdout evidence, or proof that the visible gold-set gate
   is ready.
+- `visible-checkpoint` uses the admitted visible seeded benchmark across
+  development and validation without claiming historical-gold or sealed-holdout
+  status. An opaque `caseIds` allowlist produces `diagnostic-visible-subset`
+  evidence; omitting it runs the full visible corpus and produces
+  `visible-seeded-checkpoint` evidence.
 - `checkpoint` is the larger contemporaneous control/treatment comparison used
-  at a planned evaluation gate. Development and validation results remain
-  separate in the report.
+  at the historical-gold evaluation gate. Development and validation results
+  remain separate in the report.
 
 A fresh run writes a self-authenticating `experiment-manifest.json` before its
 first attempt. The manifest freezes the repository commit; repository, corpus,
@@ -80,7 +85,7 @@ efforts; CLI versions and provider availability; the random seed and cache
 condition; access and cost-accounting modes; all ceilings; timestamps; and the
 complete run order. `matrix-manifest.json` is derived from that schedule.
 
-For screening and checkpoint experiments, the seeded scheduler shuffles
+For screening, visible-checkpoint, and checkpoint experiments, the seeded scheduler shuffles
 case/repeat blocks, keeps each control/treatment pair adjacent, and alternates
 which variant runs first. Attempts execute sequentially so the two variants are
 contemporaneous without concurrent sessions obscuring rate limits or accounting.
@@ -154,7 +159,7 @@ material through the containment backend; it must not read the operator's
 ambient home or silently switch to an API key. Likewise, an `api-key`
 experiment must not borrow an ambient login.
 
-Provider-enabled screening and checkpoint experiments are accepted only when
+Provider-enabled screening, visible-checkpoint, and checkpoint experiments are accepted only when
 the review runner and the immutable semantic judge both use their exact
 contained profiles and independent ceilings. The judge consumes a complete,
 content-addressed comparison schedule, writes a separate authenticated ledger,
@@ -463,7 +468,7 @@ repeat and uncontrolled cache state, so its result is screening evidence only,
 not checkpoint, routing-approval, or holdout evidence.
 The only immutable semantic judge profile is Codex `gpt-5.6-luna` at medium
 effort using `semantic-v1`.
-Before enabling any screening or checkpoint config, set explicit positive
+Before enabling any screening, visible-checkpoint, or checkpoint config, set explicit positive
 provider-attempt and wall-time limits plus deliberate failure thresholds; set a
 dollar ceiling only when cost accounting is required or sufficiently reliable.
 Changing `providerCalls` to `allow` requires the private-image pre-pull,
@@ -471,36 +476,47 @@ authenticated API-key or sanitized CLI-session setup, and deliberate ceilings.
 Live cache state remains `uncontrolled` until a separate cache
 protocol can enforce and attest cold or warm conditions.
 
-Screening and checkpoint share the control/treatment protocol. Set
+Screening, visible-checkpoint, and checkpoint share the control/treatment protocol. Set
 `experiment.mode` to `screening` for a curated development subset or
+`visible-checkpoint` for an admitted visible development/validation comparison
+that is explicitly not gold or holdout evidence, or
 `checkpoint` for the planned
 historical gold development/validation gate, and name exactly one `control` and
 one `treatment` from `configs`. Before creating a run directory or starting a
 provider, screening requires a non-empty selection and fully validates every
-selected behavioral case. Checkpoint schedules must contain both development
-and validation cases, contain no structural-smoke cases, and require the
-complete visible corpus to satisfy `goldSetReady`. The checked-in
+selected behavioral case. Visible-checkpoint and checkpoint schedules must
+contain both development and validation cases and no structural-smoke cases.
+Visible-checkpoint additionally requires the complete visible corpus to satisfy
+`visibleSeededBenchmarkReady`; checkpoint requires `goldSetReady`. The checked-in
 provider-enabled screening config is intentionally separate from the fail-closed
 checkpoint examples. Running it is an explicit operator decision backed by the
 private-image and credential setup; do not broaden its case list or reuse its
 result as holdout evidence after inspecting model output.
 
-For a practical screening run, add `caseIds` at the matrix root. It must be a
+For a practical screening or diagnostic visible-checkpoint run, add `caseIds`
+at the matrix root. It must be a
 non-empty, duplicate-free list of opaque `case-...` IDs, and every ID must name
-an admitted case in the selected development corpus. Discovery and global ID
+an admitted case in the selected corpora. Screening allowlists remain
+development-only; visible-checkpoint allowlists may span development and
+validation. Discovery and global ID
 collision checks still cover the complete case tree before the allowlist is
 applied. The scheduled subset is sorted canonically before seeded shuffling, so
 reordering `caseIds` does not change attempt order. Use a preregistered,
 stratified subset (for example, representative defect lanes, clean controls,
 change shapes, and sizes); do not choose cases after seeing model output.
-`caseIds` is rejected for structural smoke and checkpoint runs. A subset result
-is diagnostic screening evidence only, never holdout or complete-gold evidence.
+`caseIds` is rejected for structural smoke and historical-gold checkpoint runs.
+A visible-checkpoint subset is immutably classified as
+`diagnostic-visible-subset`; a no-allowlist visible checkpoint is classified as
+`visible-seeded-checkpoint`. Neither classification is historical-gold or
+sealed-holdout evidence.
 
-The admitted seeded corpus supports development screening. A checkpoint still
-fails before creating run artifacts or starting a provider until the visible
-corpus satisfies the stricter historical-gold readiness contract. The harness
-never substitutes structural fixtures or presents smoke results as model
-evidence. Reports group development and validation attempts separately.
+The admitted seeded corpus supports development screening and, once
+`visibleSeededBenchmarkReady`, visible-checkpoint runs. A historical-gold
+checkpoint still fails before creating run artifacts or starting a provider
+until the corpus satisfies the stricter `goldSetReady` contract. The harness
+never substitutes structural fixtures or presents smoke or visible-checkpoint
+results as gold or holdout evidence. Reports group development and validation
+attempts separately.
 
 - Repeats (default 3, `eval/matrix.config.json`) are not optional — runs are
   stochastic, and single-run model comparisons will mislead you.

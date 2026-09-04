@@ -20,6 +20,7 @@ import {
   parseExperimentProviderStartedRecord,
   parseExperimentStopRecord,
   providerStartedFile,
+  visibleCheckpointEvidenceClass,
   type ExperimentManifest,
   type ExperimentScheduledAttempt,
 } from "../eval/experiment.js";
@@ -69,10 +70,16 @@ const providerEnabledProtocol: ExperimentProtocol = {
   providerCalls: "allow",
 };
 
+const visibleCheckpointProtocol: ExperimentProtocol = {
+  ...screeningProtocol,
+  mode: "visible-checkpoint",
+};
+
 test("experiment protocol is explicit and mode-sensitive", () => {
   assert.deepEqual(parseExperimentProtocol(smokeProtocol), smokeProtocol);
   assert.deepEqual(parseExperimentProtocol(screeningProtocol), screeningProtocol);
   assert.deepEqual(parseExperimentProtocol(providerEnabledProtocol), providerEnabledProtocol);
+  assert.deepEqual(parseExperimentProtocol(visibleCheckpointProtocol), visibleCheckpointProtocol);
   assert.throws(
     () => parseExperimentProtocol({ ...smokeProtocol, cacheCondition: "cold" }),
     /not-applicable/,
@@ -120,7 +127,7 @@ test("experiment protocol is explicit and mode-sensitive", () => {
       ...screeningProtocol,
       judge: { kind: "exact", version: "exact-v1" },
     }),
-    /screening and checkpoint must preregister a semantic judge/,
+    /live paired experiments must preregister a semantic judge/,
   );
   assert.throws(
     () => parseExperimentProtocol({
@@ -129,6 +136,54 @@ test("experiment protocol is explicit and mode-sensitive", () => {
     }),
     /codex\/exact-v1 is not supported; expected codex\/semantic-v1/,
   );
+});
+
+test("visible checkpoint scheduling permits only paired development and validation cases", () => {
+  const configs = [
+    { name: "control", runner: "codex" as const },
+    { name: "treatment", runner: "codex" as const },
+  ];
+  const schedule = buildExperimentSchedule({
+    protocol: visibleCheckpointProtocol,
+    repeats: 1,
+    configs,
+    cases: [
+      { caseName: "development/case-11111111", corpus: "development", expectedBugCount: 1 },
+      { caseName: "validation/case-22222222", corpus: "validation", expectedBugCount: 0 },
+    ],
+  });
+  assert.equal(schedule.length, 4);
+  assert.deepEqual(new Set(schedule.map((item) => item.corpus)), new Set(["development", "validation"]));
+  assert.throws(() => buildExperimentSchedule({
+    protocol: visibleCheckpointProtocol,
+    repeats: 1,
+    configs,
+    cases: [{ caseName: "structural-smoke/case-00000001", corpus: "structural-smoke", expectedBugCount: 0 }],
+  }), /visible-checkpoint may only schedule development and validation/);
+});
+
+test("visible checkpoint manifests bind a non-gold evidence classification", () => {
+  assert.equal(visibleCheckpointEvidenceClass(), "visible-seeded-checkpoint");
+  assert.equal(visibleCheckpointEvidenceClass(["case-11111111"]), "diagnostic-visible-subset");
+  const existing = buildManifest();
+  const { experimentId: _ignored, ...body } = existing;
+  const subset = buildExperimentManifest({
+    ...body,
+    protocol: visibleCheckpointProtocol,
+    evidenceClass: "diagnostic-visible-subset",
+  });
+  assert.equal(parseExperimentManifest(subset).evidenceClass, "diagnostic-visible-subset");
+  assert.throws(() => buildExperimentManifest({
+    ...body,
+    protocol: visibleCheckpointProtocol,
+  }), /must bind its evidence class/);
+  assert.throws(() => buildExperimentManifest({
+    ...body,
+    evidenceClass: "visible-seeded-checkpoint",
+  }), /supported only for visible-checkpoint/);
+  const tampered = JSON.parse(JSON.stringify(subset));
+  tampered.evidenceClass = "historical-gold-checkpoint";
+  assert.throws(() => parseExperimentManifest(tampered), /evidenceClass/);
 });
 
 test("seeded paired scheduling is deterministic, interleaved, and position-balanced", () => {
@@ -492,6 +547,8 @@ test("checked-in experiment schema tracks parser enums, required hashes, and emi
   assert.deepEqual(protocol.properties.providerCalls.enum, ["allow", "deny"]);
   assert.deepEqual(protocol.properties.providerAccess.enum, ["api-key", "cli-session", "not-applicable"]);
   assert.deepEqual(protocol.properties.costAccounting.enum, ["required", "best-effort", "not-applicable"]);
+  assert.deepEqual(protocol.properties.mode.enum, ["structural-smoke", "screening", "visible-checkpoint", "checkpoint"]);
+  assert.deepEqual(schema.properties.evidenceClass.enum, ["diagnostic-visible-subset", "visible-seeded-checkpoint"]);
   const liveProtocol = protocol.allOf[0].else as Record<string, any>;
   assert.deepEqual(liveProtocol.oneOf, [
     {

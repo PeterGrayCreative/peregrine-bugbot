@@ -361,8 +361,9 @@ export interface MatrixModelConfig {
   overrides?: Record<string, unknown>;
 }
 
-export const EXPERIMENT_MODES = ["structural-smoke", "screening", "checkpoint"] as const;
+export const EXPERIMENT_MODES = ["structural-smoke", "screening", "visible-checkpoint", "checkpoint"] as const;
 export type ExperimentMode = (typeof EXPERIMENT_MODES)[number];
+export type ExperimentEvidenceClass = "diagnostic-visible-subset" | "visible-seeded-checkpoint";
 export type ExperimentCacheCondition = "cold" | "warm" | "uncontrolled" | "not-applicable";
 export type ExperimentJudge = "exact" | "claude" | "codex";
 export type ExperimentProviderAccess = "api-key" | "cli-session" | "not-applicable";
@@ -398,7 +399,7 @@ export interface ExperimentProtocol {
     /** Independently enforced; review attempts never consume this budget. */
     limits?: ExperimentLimits;
   };
-  /** Required together for screening and checkpoint comparisons. */
+  /** Required together for live paired comparisons. */
   control?: string;
   treatment?: string;
   limits: ExperimentLimits;
@@ -408,7 +409,7 @@ export interface MatrixConfig {
   repeats: number;
   configs: MatrixModelConfig[];
   corpora?: CaseCorpus[];
-  /** Optional opaque case allowlist for diagnostic development-corpus screening only. */
+  /** Optional opaque case allowlist for screening or diagnostic visible-checkpoint subsets. */
   caseIds?: string[];
   experiment: ExperimentProtocol;
 }
