@@ -7,7 +7,7 @@ import { readCaseGroundTruth } from "./case-truth.js";
 import { canonicalJsonSha256, hashExperimentCorpus, readExperimentJson, writeExclusiveJson, type ExperimentScheduledAttempt } from "./experiment.js";
 import { MATRIX_MANIFEST_FILENAME } from "./experiment-evidence.js";
 import { parseBenchmarkCategoryBinding } from "./benchmark-panels.js";
-import { rootCauseKey, rootCauseMatches } from "./grading-contract.js";
+import { assertGradingEvidenceConsistent, rootCauseKey, rootCauseMatches } from "./grading-contract.js";
 import { requireValidExperimentGradingSeal, requireValidExperimentTerminalSeal } from "./experiment-seals.js";
 
 export const FUNNEL_DECISION_FILENAME = "funnel-decision.json";
@@ -219,6 +219,7 @@ export function writeFunnelDecision(runDirectory: string, casesDirectory = "eval
       throw new Error("current benchmark corpus does not match the experiment's authenticated corpus snapshot");
     }
     const records = new Map(evidence.records.map((record) => [record.attemptId, record]));
+    const truths = new Map(uniqueCases.map((caseName) => [caseName, readCaseGroundTruth(corpusRoot, caseName)]));
     const gradedRuns = new Map<string, GradedRun>();
     for (const attempt of evidence.experiment.schedule) {
       const record = records.get(attempt.id);
@@ -227,9 +228,16 @@ export function writeFunnelDecision(runDirectory: string, casesDirectory = "eval
       if (!existsSync(path)) throw new Error(`missing sealed grade ${path}`);
       const graded = parseGradedRun(readExperimentJson(path), path, attempt);
       assertGradedMatchesRun(graded, record, path);
+      const truth = required(truths.get(attempt.caseName), `missing truth for ${attempt.caseName}`);
+      const expectedBugIds = truth.bugs.map((bug) => bug.id).sort();
+      const actualBugIds = Object.keys(graded.matches).sort();
+      if (expectedBugIds.length !== actualBugIds.length || expectedBugIds.some((id, index) => id !== actualBugIds[index])) {
+        throw new Error(`${path}.matches does not match ground truth bug IDs`);
+      }
+      const gradingEvidence = required(graded.grading, `missing authenticated grading evidence for ${attempt.id}`);
+      assertGradingEvidenceConsistent(truth, graded.outcome.result.findings, graded.matches, gradingEvidence, path);
       gradedRuns.set(attempt.id, graded);
     }
-    const truths = new Map(uniqueCases.map((caseName) => [caseName, readCaseGroundTruth(corpusRoot, caseName)]));
     metrics = deriveFunnelMetrics({ binding, schedule: evidence.experiment.schedule, records: evidence.records, gradedRuns, truths });
   }
   const result = evaluateFunnelDecision({ binding, terminal: terminalSeal.terminal, completion, metrics });
