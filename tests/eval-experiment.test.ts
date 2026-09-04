@@ -39,6 +39,7 @@ import {
   parseExperimentTerminalSeal,
 } from "../eval/experiment-seals.js";
 import { codexUsageFromEvents, combineUsage, mockUsage } from "../src/core/telemetry.js";
+import { serializeBreadthLedger } from "../src/core/breadth-result.js";
 import { RunFailureError } from "../src/core/run-failure.js";
 import type {
   CaseCorpus,
@@ -519,6 +520,17 @@ test("fake contained semantic judge completes grading seals and report accountin
       }], "fake investigation prompt");
       const codex = ctx.config.runners.codex;
       const modelConfig = `${codex.breadthModel}/${codex.breadthEffort}->${codex.investigationModel}/${codex.investigationEffort}`;
+      const breadthOutput = {
+        model: codex.breadthModel,
+        candidates: [],
+        clear: [],
+        escalations: [],
+        coverage: { coveredFiles: ["src/value.ts"], unavailable: [] },
+      };
+      const breadthLedger = serializeBreadthLedger(
+        breadthOutput,
+        codex.breadthLedgerMode ?? "full",
+      );
       return {
         ...result,
         engine: "codex",
@@ -528,7 +540,9 @@ test("fake contained semantic judge completes grading seals and report accountin
         raw: {
           manifest: (await manifestPreparer(ctx)).output,
           breadth: {
-            output: { model: codex.breadthModel, candidates: [], clear: [], escalations: [], coverage: { coveredFiles: ["src/value.ts"], unavailable: [] } },
+            output: breadthOutput,
+            transmittedLedger: breadthLedger.output,
+            breadthLedger: breadthLedger.telemetry,
             model: codex.breadthModel,
             promptSha256: "a".repeat(64), usage: breadthUsage, durationMs: 1, malformedEventLines: 0,
           },
