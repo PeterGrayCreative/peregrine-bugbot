@@ -896,6 +896,140 @@ test("the Stage 2 PR 9 preregistration isolates structural breadth compaction", 
   assert.equal(config.repeats * config.caseIds.length * config.configs.length, 60);
 });
 
+test("the adaptive PR 9 preregistration freezes a diagnostic visible subset and strict gates", () => {
+  const matrixPath = join(process.cwd(), "eval", "matrix.codex.stage2-pr9-adaptive.json");
+  const config = JSON.parse(readFileSync(matrixPath, "utf8")) as {
+    repeats: number;
+    corpora: string[];
+    caseIds: string[];
+    configs: Array<{
+      name: string;
+      runner: string;
+      overrides: Record<string, unknown>;
+    }>;
+    experiment: unknown;
+  };
+  const protocol = parseExperimentProtocol(
+    config.experiment,
+    "matrix.codex.stage2-pr9-adaptive.json",
+  );
+  const developmentCases = [
+    "case-13f0a2c1",
+    "case-a1c4e90d",
+    "case-d40b36f9",
+    "case-1ab7d3c9",
+    "case-c39a25e8",
+  ];
+  const validationCases = [
+    "case-d3f8026e",
+    "case-b28e14d7",
+    "case-3ef9a502",
+    "case-f9b30d26",
+    "case-c95a81e4",
+  ];
+
+  assert.equal(protocol.mode, "visible-checkpoint");
+  assert.equal(visibleCheckpointEvidenceClass(config.caseIds), "diagnostic-visible-subset");
+  assert.equal(protocol.seed, 202609042);
+  assert.equal(protocol.control, "method-packet-full-ledger");
+  assert.equal(protocol.treatment, "method-packet-adaptive-structural-compact");
+  assert.equal(protocol.providerAccess, "cli-session");
+  assert.equal(protocol.cacheCondition, "uncontrolled");
+  assert.equal(protocol.limits.maxProviderAttempts, 72);
+  assert.equal(protocol.limits.maxWallTimeMs, 21_600_000);
+  assert.equal(protocol.judge.kind, "codex");
+  assert.equal(protocol.judge.model, "gpt-5.6-luna");
+  assert.equal(protocol.judge.effort, "medium");
+  assert.equal(protocol.judge.limits?.maxProviderAttempts, 72);
+  assert.equal(config.repeats, 3);
+  assert.deepEqual(config.corpora, ["development", "validation"]);
+  assert.deepEqual(config.caseIds, [...developmentCases, ...validationCases]);
+  assert.deepEqual(
+    config.configs.map(({ name, runner, overrides }) => ({
+      name,
+      runner,
+      breadthLedgerMode: overrides.breadthLedgerMode,
+      promptMode: overrides.investigationPromptMode,
+      breadthModel: overrides.breadthModel,
+      breadthEffort: overrides.breadthEffort,
+      investigationModel: overrides.investigationModel,
+      investigationEffort: overrides.investigationEffort,
+    })),
+    [
+      {
+        name: "method-packet-full-ledger",
+        runner: "codex",
+        breadthLedgerMode: "full",
+        promptMode: "method-packet",
+        breadthModel: "gpt-5.6-luna",
+        breadthEffort: "high",
+        investigationModel: "gpt-5.6-sol",
+        investigationEffort: "high",
+      },
+      {
+        name: "method-packet-adaptive-structural-compact",
+        runner: "codex",
+        breadthLedgerMode: "adaptive-structural-compact",
+        promptMode: "method-packet",
+        breadthModel: "gpt-5.6-luna",
+        breadthEffort: "high",
+        investigationModel: "gpt-5.6-sol",
+        investigationEffort: "high",
+      },
+    ],
+  );
+  assert.equal(config.repeats * config.caseIds.length * config.configs.length, 60);
+
+  let bugObservations = 0;
+  const rootCauses = new Set<string>();
+  for (const [corpus, caseIds] of [
+    ["development", developmentCases],
+    ["validation", validationCases],
+  ] as const) {
+    for (const caseId of caseIds) {
+      const truth = JSON.parse(readFileSync(
+        join(process.cwd(), "eval", "cases", corpus, caseId, "ground_truth.json"),
+        "utf8",
+      )) as { bugs: Array<{ rootCauseGroup?: string }> };
+      bugObservations += truth.bugs.length;
+      truth.bugs.forEach((bug, index) => {
+        rootCauses.add(bug.rootCauseGroup ?? `${caseId}:${index}`);
+      });
+    }
+  }
+  assert.equal(bugObservations, 7);
+  assert.equal(rootCauses.size, 5);
+
+  const largeCases = config.caseIds.filter((caseId) => {
+    const corpus = developmentCases.includes(caseId) ? "development" : "validation";
+    const curation = JSON.parse(readFileSync(
+      join(process.cwd(), "eval", "cases", corpus, caseId, "curation.json"),
+      "utf8",
+    )) as { strata: { size: string; changeShapes: string[] } };
+    return curation.strata.size === "large" &&
+      curation.strata.changeShapes.includes("large-diff");
+  });
+  assert.deepEqual(largeCases, ["case-d3f8026e", "case-3ef9a502", "case-f9b30d26"]);
+  assert.equal(largeCases.length * config.repeats, 9);
+
+  const preregistration = readFileSync(
+    join(
+      process.cwd(),
+      "docs",
+      "validation",
+      "2026-09-04-stage2-pr9-adaptive-preregistration.md",
+    ),
+    "utf8",
+  );
+  assert.match(preregistration, /post-hoc revised diagnostic/);
+  assert.match(preregistration, /not historical-gold, sealed-holdout/);
+  assert.match(preregistration, /at least\n+six/);
+  assert.match(preregistration, /at least one repeat of each/);
+  assert.match(preregistration, /all five seeded root causes and all seven seeded\n+  bug observations/);
+  assert.match(preregistration, /at least 20%/);
+  assert.match(preregistration, /bootstrap 95% interval entirely below\n+  zero/);
+});
+
 test("stop records and write-once marker records parse strictly", () => {
   const schedule = pairedSchedule();
   const decision = evaluateExperimentCeilings({

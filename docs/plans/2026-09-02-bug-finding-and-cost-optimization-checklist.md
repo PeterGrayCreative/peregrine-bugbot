@@ -38,7 +38,7 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | Benchmark capability checkpoint | Reproducible Codex screening, contained judge, grading, and report | PRs 1-7 | Merged | [#21](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/21) |
 | Stage 2 variance baseline | Three-repeat strong-control versus Luna-medium screening | Benchmark checkpoint | Complete; Luna-medium replacement rejected | Pending |
 | Plan PR 8 | Stable investigator core and variable appendix | PR 7 | Merged; screening accepted | [#24](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/24), [results](../validation/2026-09-04-stage2-pr8-results.md) |
-| Plan PR 9 | Structural breadth compaction and schema bounds | PR 8 | First design rejected; adaptive revision pending | [results](../validation/2026-09-04-stage2-pr9-results.md) |
+| Plan PR 9 | Structural breadth compaction and schema bounds | PR 8 | First design rejected; adaptive revision awaiting preregistered diagnostic screen | [original results](../validation/2026-09-04-stage2-pr9-results.md), [adaptive preregistration](../validation/2026-09-04-stage2-pr9-adaptive-preregistration.md) |
 | Plan PR 10 | Activated-lane counterexamples and seam checklist | PR 9 | Not started | - |
 | Plan PR 11 | Investigation coverage and runner-owned completeness | PR 10 | Not started | - |
 | Plan PR 12 | Bounded risk-sensitive candidate budgets | PR 11 | Not started | - |
@@ -297,6 +297,11 @@ and high-value ledger preservation matched control, but median paired wall time
 was 12.85% slower with a 95% bootstrap interval of approximately -7.08% to
 +24.09%. See the [PR 9 results](../validation/2026-09-04-stage2-pr9-results.md).
 Any adaptive revision requires a new preregistration and paired run.
+
+Adaptive revision status: implementation complete and awaiting its
+[preregistered post-hoc diagnostic visible-subset screen](../validation/2026-09-04-stage2-pr9-adaptive-preregistration.md).
+The original `structural-compact` design remains rejected; the adaptive mode
+has not yet passed its activation, strict-quality, or efficiency gates.
 
 Rollback boundary: revert PR 9 independently of PR 8.
 
