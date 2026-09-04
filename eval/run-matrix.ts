@@ -17,6 +17,7 @@ import { getEngine } from "../src/engines/engine.js";
 import { assertNoSecrets, safeDiagnostic } from "../src/security/secrets.js";
 import { nonSensitiveEnvironment } from "../src/security/provider-env.js";
 import { formatUsageCost } from "../src/core/telemetry.js";
+import { parseBreadthLedgerEvidence } from "../src/core/breadth-result.js";
 import { packageRoot } from "../src/core/paths.js";
 import { exec } from "../src/util/exec.js";
 import {
@@ -1310,6 +1311,18 @@ function completedStage(
   ) {
     return undefined;
   }
+  let breadthLedgerEvidence: StageTelemetry["breadthLedgerEvidence"];
+  if (stage === "breadth") {
+    try {
+      breadthLedgerEvidence = parseBreadthLedgerEvidence({
+        providerOutput: record.output,
+        transmittedLedger: record.transmittedLedger,
+        telemetry: record.breadthLedger,
+      }, "completed breadth stage");
+    } catch {
+      return undefined;
+    }
+  }
   return {
     stage,
     model: record.model,
@@ -1317,6 +1330,9 @@ function completedStage(
     usage: record.usage as StageTelemetry["usage"],
     durationMs: Number(record.durationMs),
     completed: true,
+    ...(breadthLedgerEvidence ? {
+      breadthLedgerEvidence,
+    } : {}),
   };
 }
 

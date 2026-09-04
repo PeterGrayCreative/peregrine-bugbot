@@ -509,50 +509,7 @@ test("fake contained semantic judge completes grading seals and report accountin
     name: "codex",
     review: async (ctx) => {
       await ctx.evaluationIsolation?.runProvider?.("codex", [], { inheritEnv: false });
-      const result = completedWithFinding(ctx);
-      const breadthUsage = codexUsageFromEvents([{
-        type: "turn.completed",
-        usage: { input_tokens: 1, cached_input_tokens: 0, output_tokens: 1, reasoning_output_tokens: 0 },
-      }], "fake breadth prompt");
-      const investigationUsage = codexUsageFromEvents([{
-        type: "turn.completed",
-        usage: { input_tokens: 1, cached_input_tokens: 0, output_tokens: 1, reasoning_output_tokens: 0 },
-      }], "fake investigation prompt");
-      const codex = ctx.config.runners.codex;
-      const modelConfig = `${codex.breadthModel}/${codex.breadthEffort}->${codex.investigationModel}/${codex.investigationEffort}`;
-      const breadthOutput = {
-        model: codex.breadthModel,
-        candidates: [],
-        clear: [],
-        escalations: [],
-        coverage: { coveredFiles: ["src/value.ts"], unavailable: [] },
-      };
-      const breadthLedger = serializeBreadthLedger(
-        breadthOutput,
-        codex.breadthLedgerMode ?? "full",
-      );
-      return {
-        ...result,
-        engine: "codex",
-        modelConfig,
-        durationMs: 2,
-        usage: combineUsage(breadthUsage, investigationUsage),
-        raw: {
-          manifest: (await manifestPreparer(ctx)).output,
-          breadth: {
-            output: breadthOutput,
-            transmittedLedger: breadthLedger.output,
-            breadthLedger: breadthLedger.telemetry,
-            model: codex.breadthModel,
-            promptSha256: "a".repeat(64), usage: breadthUsage, durationMs: 1, malformedEventLines: 0,
-          },
-          investigation: {
-            output: { findings: result.findings }, model: codex.investigationModel,
-            promptSha256: "b".repeat(64), usage: investigationUsage, durationMs: 1, malformedEventLines: 0,
-            methodCoreSha256: "c".repeat(64), methodSourceSha256: "d".repeat(64),
-          },
-        },
-      };
+      return completedCodexResult(ctx);
     },
   };
   try {
@@ -613,6 +570,84 @@ test("fake contained semantic judge completes grading seals and report accountin
     const html = readFileSync(join(runsDir, "benchmark.html"), "utf8");
     assert.match(html, /Semantic judge accounting/);
     assert.match(html, /12 \/ n\/a \/ 2 \/ 1/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test("post-provider cleanup failures retain authenticated breadth-ledger evidence", async () => {
+  const root = mkdtempSync(join(realpathSync(tmpdir()), "peregrine-experiment-cleanup-evidence-"));
+  const materializationRoot = join(root, "materialized");
+  mkdirSync(materializationRoot, { recursive: true });
+  const casesDir = join(root, "cases");
+  createFixtureCase(casesDir, "case-45454545", "development");
+  const matrixPath = join(root, "matrix.json");
+  writeFileSync(matrixPath, JSON.stringify({
+    repeats: 1,
+    corpora: ["development"],
+    configs: [
+      { name: "control", runner: "codex", overrides: {
+        investigationPromptMode: "method-packet", breadthLedgerMode: "full",
+      } },
+      { name: "treatment", runner: "codex", overrides: {
+        investigationPromptMode: "method-packet", breadthLedgerMode: "structural-compact",
+      } },
+    ],
+    experiment: {
+      ...cliSessionProtocol,
+      providerCalls: "allow",
+      limits: { ...cliSessionProtocol.limits, maxProviderAttempts: 10 },
+    },
+  }));
+  const engine: Engine = {
+    name: "codex",
+    review: async (ctx) => {
+      await ctx.evaluationIsolation?.runProvider?.("codex", [], { inheritEnv: false });
+      return completedCodexResult(ctx);
+    },
+  };
+  try {
+    const runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+      casesDir,
+      engineFor: () => engine,
+      runtimeMetadataFor: availableRuntimeMetadataFor,
+      manifestPreparer,
+      materializeCaseFor: async (caseRoot, spec, policy, options) => {
+        const materialized = await materializeCase(caseRoot, spec, policy, {
+          ...options,
+          tempRoot: materializationRoot,
+          prepareProviderAssets: false,
+        });
+        return {
+          ...materialized,
+          cleanup() {
+            materialized.cleanup();
+            throw new Error("forced cleanup failure");
+          },
+        };
+      },
+      prepareContainment: async () => ({
+        runProvider: async () => ({ stdout: "", stderr: "", code: 0, timedOut: false }),
+        readProviderOutput: () => { throw new Error("fake engine must not read provider output"); },
+      }),
+    });
+    assert.ok(existsSync(join(runsDir, EXPERIMENT_TERMINAL_SEAL_FILENAME)));
+    const attempts = readdirSync(runsDir)
+      .filter((path) => /^attempt-[0-9]{6}\.json$/.test(path))
+      .map((path) => JSON.parse(readFileSync(join(runsDir, path), "utf8")) as RunRecord);
+    assert.equal(attempts.length, 2);
+    for (const attempt of attempts) {
+      assert.equal(attempt.outcome.status, "failed");
+      if (attempt.outcome.status !== "failed") continue;
+      assert.equal(attempt.outcome.failureKind, "configuration");
+      assert.equal(attempt.outcome.telemetry?.stages.length, 2);
+      const breadth = attempt.outcome.telemetry?.stages[0];
+      assert.equal(breadth?.stage, "breadth");
+      assert.equal(breadth?.completed, true);
+      assert.ok(breadth?.breadthLedgerEvidence);
+      assert.equal(
+        breadth.breadthLedgerEvidence.telemetry.mode,
+        attempt.configName === "control" ? "full" : "structural-compact",
+      );
+    }
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
@@ -1123,6 +1158,53 @@ function completedWithFinding(ctx: ReviewContext): EngineResult {
       failurePath: "The exported value is false.",
       confidence: 0.99,
     }],
+  };
+}
+
+async function completedCodexResult(ctx: ReviewContext): Promise<EngineResult> {
+  const result = completedWithFinding(ctx);
+  const breadthUsage = codexUsageFromEvents([{
+    type: "turn.completed",
+    usage: { input_tokens: 1, cached_input_tokens: 0, output_tokens: 1, reasoning_output_tokens: 0 },
+  }], "fake breadth prompt");
+  const investigationUsage = codexUsageFromEvents([{
+    type: "turn.completed",
+    usage: { input_tokens: 1, cached_input_tokens: 0, output_tokens: 1, reasoning_output_tokens: 0 },
+  }], "fake investigation prompt");
+  const codex = ctx.config.runners.codex;
+  const modelConfig = `${codex.breadthModel}/${codex.breadthEffort}->${codex.investigationModel}/${codex.investigationEffort}`;
+  const breadthOutput = {
+    model: codex.breadthModel,
+    candidates: [],
+    clear: [],
+    escalations: [],
+    coverage: { coveredFiles: ["src/value.ts"], unavailable: [] },
+  };
+  const breadthLedger = serializeBreadthLedger(
+    breadthOutput,
+    codex.breadthLedgerMode ?? "full",
+  );
+  return {
+    ...result,
+    engine: "codex",
+    modelConfig,
+    durationMs: 2,
+    usage: combineUsage(breadthUsage, investigationUsage),
+    raw: {
+      manifest: (await manifestPreparer(ctx)).output,
+      breadth: {
+        output: breadthOutput,
+        transmittedLedger: breadthLedger.output,
+        breadthLedger: breadthLedger.telemetry,
+        model: codex.breadthModel,
+        promptSha256: "a".repeat(64), usage: breadthUsage, durationMs: 1, malformedEventLines: 0,
+      },
+      investigation: {
+        output: { findings: result.findings }, model: codex.investigationModel,
+        promptSha256: "b".repeat(64), usage: investigationUsage, durationMs: 1, malformedEventLines: 0,
+        methodCoreSha256: "c".repeat(64), methodSourceSha256: "d".repeat(64),
+      },
+    },
   };
 }
 
