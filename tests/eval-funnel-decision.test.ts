@@ -53,6 +53,14 @@ test("safety and completion regressions reject before efficiency", () => {
   ]) {
     assert.equal(evaluateFunnelDecision({ binding: binding("fast-screen"), terminal: "completed", ...changed }).status, "reject");
   }
+  assert.equal(evaluateFunnelDecision({
+    binding: binding("smoke"), terminal: "completed",
+    completion: {
+      control: { scheduled: 6, completed: 0, failed: 6 },
+      treatment: { scheduled: 6, completed: 0, failed: 6 },
+    },
+    metrics: { ...metrics, efficiency: { ...metrics.efficiency, targetImprovementPercent: null, observedImprovementPercent: null, pairedAttempts: 0 } },
+  }).status, "reject");
 });
 
 test("frozen stage gates distinguish promising, unattainable, and confirmed efficiency", () => {
@@ -85,6 +93,10 @@ test("decision artifacts reject mutation after their content address is written"
   };
   const artifact = { ...body, decisionSha256: canonicalJsonSha256(body) };
   assert.deepEqual(parseFunnelDecisionArtifact(artifact), artifact);
+  const { gradingSealSha256: _gradingSealSha256, ...ungradedBody } = body;
+  assert.throws(() => parseFunnelDecisionArtifact({
+    ...ungradedBody, decisionSha256: canonicalJsonSha256(ungradedBody),
+  }), /gradingSealSha256/);
   assert.throws(() => parseFunnelDecisionArtifact({ ...artifact, completion: { ...complete, control: { ...complete.control, completed: 0 } } }), /authenticate/);
 });
 

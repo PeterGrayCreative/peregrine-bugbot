@@ -4,11 +4,12 @@ import { assertNoSecrets } from "../src/security/secrets.js";
 import type { BenchmarkCategory, ExperimentBenchmarkCategory, GradedRun, GroundTruth, RunRecord } from "../src/types.js";
 import { assertGradedMatchesRun, parseGradedRun, parseMatrixRunManifest } from "./artifacts.js";
 import { readCaseGroundTruth } from "./case-truth.js";
-import { canonicalJsonSha256, hashExperimentCorpus, readExperimentJson, writeExclusiveJson, type ExperimentScheduledAttempt } from "./experiment.js";
+import { canonicalJson, canonicalJsonSha256, hashExperimentCorpus, readExperimentJson, writeExclusiveJson, type ExperimentScheduledAttempt } from "./experiment.js";
 import { MATRIX_MANIFEST_FILENAME } from "./experiment-evidence.js";
 import { parseBenchmarkCategoryBinding } from "./benchmark-panels.js";
 import { assertGradingEvidenceConsistent, rootCauseKey, rootCauseMatches } from "./grading-contract.js";
 import { requireValidExperimentGradingSeal, requireValidExperimentTerminalSeal } from "./experiment-seals.js";
+import { CODEX_SEMANTIC_JUDGE } from "./judge-runtime.js";
 
 export const FUNNEL_DECISION_FILENAME = "funnel-decision.json";
 
@@ -71,6 +72,9 @@ export function evaluateFunnelDecision(input: {
   }
   if (control.completed + control.failed !== control.scheduled || treatment.completed + treatment.failed !== treatment.scheduled) {
     return decision("reject", null, ["Scheduled attempts are missing terminal evidence."]);
+  }
+  if (control.failed > 0 || treatment.failed > 0) {
+    return decision("reject", null, ["Acceptance evidence contains failed attempts; every paired attempt must complete."]);
   }
   if (treatment.completed / treatment.scheduled < control.completed / control.scheduled) {
     return decision("reject", null, ["Treatment completion rate regressed relative to control."]);
@@ -200,6 +204,27 @@ export function deriveFunnelMetrics(input: {
 }
 
 export function writeFunnelDecision(runDirectory: string, casesDirectory = "eval/cases"): FunnelDecision {
+  const artifact = buildFunnelDecisionArtifact(runDirectory, casesDirectory);
+  const root = resolve(runDirectory);
+  writeExclusiveJson(root, join(root, FUNNEL_DECISION_FILENAME), artifact);
+  return artifact.result;
+}
+
+export function readFunnelDecisionArtifact(
+  runDirectory: string,
+  casesDirectory = "eval/cases",
+): FunnelDecisionArtifact {
+  const root = resolve(runDirectory);
+  const path = join(root, FUNNEL_DECISION_FILENAME);
+  const parsed = parseFunnelDecisionArtifact(readExperimentJson(path), path);
+  const derived = buildFunnelDecisionArtifact(root, casesDirectory);
+  if (canonicalJson(parsed) !== canonicalJson(derived)) {
+    throw new Error(`${path} does not match the currently verified sealed experiment evidence`);
+  }
+  return parsed;
+}
+
+function buildFunnelDecisionArtifact(runDirectory: string, casesDirectory: string): FunnelDecisionArtifact {
   const root = resolve(runDirectory);
   const matrixPath = join(root, MATRIX_MANIFEST_FILENAME);
   const matrix = parseMatrixRunManifest(readExperimentJson(matrixPath), matrixPath);
@@ -220,6 +245,14 @@ export function writeFunnelDecision(runDirectory: string, casesDirectory = "eval
     }
     const records = new Map(evidence.records.map((record) => [record.attemptId, record]));
     const truths = new Map(uniqueCases.map((caseName) => [caseName, readCaseGroundTruth(corpusRoot, caseName)]));
+    const declaredJudge = evidence.experiment.protocol.judge;
+    const expectedJudge: NonNullable<GradedRun["grading"]>["judge"] = declaredJudge.kind === "exact"
+      ? { kind: "exact", version: "exact-v1" }
+      : {
+          kind: declaredJudge.kind,
+          version: "semantic-v1",
+          configSha256: canonicalJsonSha256({ judge: CODEX_SEMANTIC_JUDGE, limits: declaredJudge.limits }),
+        };
     const gradedRuns = new Map<string, GradedRun>();
     for (const attempt of evidence.experiment.schedule) {
       const record = records.get(attempt.id);
@@ -235,7 +268,7 @@ export function writeFunnelDecision(runDirectory: string, casesDirectory = "eval
         throw new Error(`${path}.matches does not match ground truth bug IDs`);
       }
       const gradingEvidence = required(graded.grading, `missing authenticated grading evidence for ${attempt.id}`);
-      assertGradingEvidenceConsistent(truth, graded.outcome.result.findings, graded.matches, gradingEvidence, path);
+      assertGradingEvidenceConsistent(truth, graded.outcome.result.findings, graded.matches, gradingEvidence, path, expectedJudge);
       gradedRuns.set(attempt.id, graded);
     }
     metrics = deriveFunnelMetrics({ binding, schedule: evidence.experiment.schedule, records: evidence.records, gradedRuns, truths });
@@ -254,10 +287,10 @@ export function writeFunnelDecision(runDirectory: string, casesDirectory = "eval
   };
   const artifact = { ...body, decisionSha256: canonicalJsonSha256(body) };
   assertNoSecrets(artifact, "funnel decision artifact");
-  writeExclusiveJson(root, join(root, FUNNEL_DECISION_FILENAME), artifact);
-  return result;
+  return artifact;
 }
 
+/** Structural/content-address parser; use readFunnelDecisionArtifact to verify referenced run evidence. */
 export function parseFunnelDecisionArtifact(value: unknown, source = "funnel decision"): FunnelDecisionArtifact {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${source} must be an object`);
   const artifact = value as FunnelDecisionArtifact;
@@ -275,6 +308,9 @@ export function parseFunnelDecisionArtifact(value: unknown, source = "funnel dec
     throw new Error(`${source} contains an invalid identity hash`);
   }
   if (artifact.terminal !== "completed" && artifact.terminal !== "stopped") throw new Error(`${source}.terminal is invalid`);
+  if ((artifact.terminal === "completed") !== (artifact.gradingSealSha256 !== undefined)) {
+    throw new Error(`${source}.gradingSealSha256 must be present exactly for completed experiments`);
+  }
   const completion = parseCompletion(artifact.completion, `${source}.completion`);
   const metrics = artifact.metrics === null ? null : parseMetrics(artifact.metrics, binding, `${source}.metrics`);
   const result = evaluateFunnelDecision({ binding, terminal: artifact.terminal, completion, metrics });

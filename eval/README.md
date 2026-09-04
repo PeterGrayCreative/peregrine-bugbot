@@ -230,8 +230,9 @@ interval wholly above zero. Only a paired full-checkpoint can return
 `visible-funnel-complete`, which is not a release, gold, or holdout claim. The
 panel snapshot, seal identities, derived metrics and completion counts, result,
 and content hash are retained in `funnel-decision.json`. Its portable structural
-shape is `schemas/funnel-decision.schema.json`; the strict reader also verifies
-the content address and re-derives the recorded result.
+shape is `schemas/funnel-decision.schema.json`; the evidence reader verifies the
+referenced seals and corpus, re-derives every metric, and requires byte-equivalent
+decision content.
 
 ## Case library
 

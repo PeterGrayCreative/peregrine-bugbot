@@ -26,6 +26,8 @@ import { buildReport } from "../eval/report.js";
 import { runMatrix } from "../eval/run-matrix.js";
 import { runSemanticJudge } from "../eval/run-semantic-judge.js";
 import { unavailableJudgeUsage } from "../eval/judge-runtime.js";
+import { loadBenchmarkPanelRegistry } from "../eval/benchmark-panels.js";
+import { readFunnelDecisionArtifact, writeFunnelDecision } from "../eval/funnel-decision.js";
 import { materializeCase } from "../eval/case-isolation.js";
 import {
   caseBundleSha256,
@@ -486,13 +488,15 @@ test("fake contained semantic judge completes grading seals and report accountin
   const materializationRoot = join(root, "materialized");
   mkdirSync(materializationRoot);
   const casesDir = join(root, "cases");
-  const caseDir = createFixtureCase(casesDir, "case-67676767", "development", { bugs: [{
-    id: "bug-67676767", lane: "logic-correctness",
-    expectedDisposition: "fix-in-pr", expectedSeverity: "high", file: "src/value.ts",
-    startLine: 1, endLine: 1, description: "Polarity reversed.",
-    reachablePreconditions: "Export is consumed.", observableImpact: "Feature stays off.",
-    provenance: "fixture",
-  }] });
+  for (const caseId of loadBenchmarkPanelRegistry().panels.smoke.caseIds) {
+    createFixtureCase(casesDir, caseId, "development", { bugs: [{
+      id: `bug-${caseId.slice("case-".length)}`, lane: "logic-correctness",
+      expectedDisposition: "fix-in-pr", expectedSeverity: "high", file: "src/value.ts",
+      startLine: 1, endLine: 1, description: "Polarity reversed.",
+      reachablePreconditions: "Export is consumed.", observableImpact: "Feature stays off.",
+      provenance: "fixture",
+    }] }, caseId);
+  }
   const matrixPath = join(root, "matrix.json");
   writeFileSync(matrixPath, JSON.stringify({
     repeats: 1,
@@ -501,7 +505,7 @@ test("fake contained semantic judge completes grading seals and report accountin
     experiment: {
       ...cliSessionProtocol,
       providerCalls: "allow",
-      limits: { ...cliSessionProtocol.limits, maxProviderAttempts: 10 },
+      limits: { ...cliSessionProtocol.limits, maxProviderAttempts: 20 },
     },
   }));
   const engine: Engine = {
@@ -543,6 +547,7 @@ test("fake contained semantic judge completes grading seals and report accountin
   };
   try {
     const runsDir = await runMatrix(matrixPath, join(root, "runs"), {
+      benchmarkCategory: "smoke",
       casesDir,
       engineFor: () => engine,
       runtimeMetadataFor: availableRuntimeMetadataFor,
@@ -561,7 +566,7 @@ test("fake contained semantic judge completes grading seals and report accountin
     const rawAttempts = readdirSync(runsDir)
       .filter((path) => /^attempt-[0-9]{6}\.json$/.test(path))
       .map((path) => JSON.parse(readFileSync(join(runsDir, path), "utf8")) as RunRecord);
-    assert.equal(rawAttempts.length, 2);
+    assert.equal(rawAttempts.length, 12);
     assert.ok(rawAttempts.every((attempt) => attempt.outcome.status === "completed"));
     assert.ok(rawAttempts.every((attempt) => {
       if (attempt.outcome.status !== "completed") return false;
@@ -579,16 +584,16 @@ test("fake contained semantic judge completes grading seals and report accountin
       } };
     } });
     assert.equal(judged.terminal, "completed");
-    assert.equal(judgeCalls, 1, "identical comparisons across variants share one immutable decision");
+    assert.equal(judgeCalls, 6, "identical comparisons across variants share one immutable decision per case");
     await gradeRuns(runsDir, casesDir);
     const stats = await buildReport(runsDir, { casesDir });
     assert.equal(stats.length, 2);
     for (const configName of ["control", "treatment"]) {
       const config = stats.find((item) => item.config === configName);
       assert.ok(config, `${configName} report row exists`);
-      assert.equal(config.expectedRuns, 1);
-      assert.equal(config.runs, 1);
-      assert.equal(config.completedRuns, 1);
+      assert.equal(config.expectedRuns, 6);
+      assert.equal(config.runs, 6);
+      assert.equal(config.completedRuns, 6);
       assert.equal(config.failedRuns, 0);
       assert.equal(config.missingRuns, 0);
     }
@@ -598,7 +603,9 @@ test("fake contained semantic judge completes grading seals and report accountin
     validateAgainstSchema(gradingSeal, gradingSealSchema);
     const html = readFileSync(join(runsDir, "benchmark.html"), "utf8");
     assert.match(html, /Semantic judge accounting/);
-    assert.match(html, /12 \/ n\/a \/ 2 \/ 1/);
+    assert.match(html, /72 \/ n\/a \/ 12 \/ 6/);
+    assert.equal(writeFunnelDecision(runsDir, casesDir).status, "advance");
+    assert.equal(readFunnelDecisionArtifact(runsDir, casesDir).result.status, "advance");
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 
@@ -1016,11 +1023,20 @@ function createFixtureCase(
   id: string,
   corpus: CaseCorpus,
   truth: GroundTruth = { bugs: [] },
+  variant?: string,
 ): string {
   const caseDir = join(casesDir, corpus, id);
   mkdirSync(join(caseDir, "fixture", "src"), { recursive: true });
-  writeFileSync(join(caseDir, "fixture", "src", "value.ts"), HEAD);
-  writeFileSync(join(caseDir, "diff.patch"), PATCH);
+  const head = variant === undefined ? HEAD : `${HEAD}export const caseMarker = ${JSON.stringify(variant)};\n`;
+  writeFileSync(join(caseDir, "fixture", "src", "value.ts"), head);
+  const patch = variant === undefined ? PATCH : [
+    "diff --git a/src/value.ts b/src/value.ts",
+    `index ${gitBlobSha1("export const enabled = true;\n")}..${gitBlobSha1(head)} 100644`,
+    "--- a/src/value.ts", "+++ b/src/value.ts", "@@ -1 +1,2 @@",
+    "-export const enabled = true;", "+export const enabled = false;",
+    `+export const caseMarker = ${JSON.stringify(variant)};`, "",
+  ].join("\n");
+  writeFileSync(join(caseDir, "diff.patch"), patch);
   writeFileSync(join(caseDir, "ground_truth.json"), JSON.stringify(truth));
   const spec = {
     id,
@@ -1051,7 +1067,7 @@ function createFixtureCase(
         kind: spec.kind,
         repositoryAlias: "experiment-fixture",
         repositoryIdentitySha256: fixtureSourceIdentitySha256(caseDir, "fixture"),
-        changeIdentitySha256: createHash("sha256").update(PATCH).digest("hex"),
+        changeIdentitySha256: createHash("sha256").update(patch).digest("hex"),
         access: "public",
       },
       strata: {
@@ -1077,6 +1093,10 @@ function createFixtureCase(
     writeFileSync(join(caseDir, "curation.json"), JSON.stringify(curation));
   }
   return caseDir;
+}
+
+function gitBlobSha1(content: string): string {
+  return createHash("sha1").update(`blob ${Buffer.byteLength(content)}\0${content}`).digest("hex");
 }
 
 function completed(ctx: ReviewContext): EngineResult {
