@@ -38,7 +38,7 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | Benchmark capability checkpoint | Reproducible Codex screening, contained judge, grading, and report | PRs 1-7 | Merged | [#21](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/21) |
 | Stage 2 variance baseline | Three-repeat strong-control versus Luna-medium screening | Benchmark checkpoint | Complete; Luna-medium replacement rejected | Pending |
 | Plan PR 8 | Stable investigator core and variable appendix | PR 7 | Merged; screening accepted | [#24](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/24), [results](../validation/2026-09-04-stage2-pr8-results.md) |
-| Plan PR 9 | Structural breadth compaction and schema bounds | PR 8 | Implementation and preregistration complete; validation and screening pending | [preregistration](../validation/2026-09-04-stage2-pr9-preregistration.md) |
+| Plan PR 9 | Structural breadth compaction and schema bounds | PR 8 | First design rejected; adaptive revision pending | [results](../validation/2026-09-04-stage2-pr9-results.md) |
 | Plan PR 10 | Activated-lane counterexamples and seam checklist | PR 9 | Not started | - |
 | Plan PR 11 | Investigation coverage and runner-owned completeness | PR 10 | Not started | - |
 | Plan PR 12 | Bounded risk-sensitive candidate budgets | PR 11 | Not started | - |
@@ -288,8 +288,15 @@ Rollback boundary: revert PR 8; no other intervention depends on its measured be
 - [x] Run `npm run validate` under Node `22.22.1`: 240/240 Node tests,
   36/36 admitted corpus cases, all skill/package/plugin checks, and the 8/8
   zero-cost structural smoke passed with 5/5 expected markers.
-- [ ] Run a randomized paired 8-12 case screening comparison.
+- [x] Run a randomized paired ten-case screening comparison: 60/60 review
+  attempts and 48/48 semantic adjudications completed.
 - [ ] Pass the cost-change non-inferiority gate before merging.
+
+First-design decision: rejected. Quality, completion, blocking false positives,
+and high-value ledger preservation matched control, but median paired wall time
+was 12.85% slower with a 95% bootstrap interval of approximately -7.08% to
++24.09%. See the [PR 9 results](../validation/2026-09-04-stage2-pr9-results.md).
+Any adaptive revision requires a new preregistration and paired run.
 
 Rollback boundary: revert PR 9 independently of PR 8.
 
