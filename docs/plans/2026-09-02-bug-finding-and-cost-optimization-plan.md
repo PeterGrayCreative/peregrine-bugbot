@@ -393,7 +393,8 @@ paying for the entire visible suite after every edit. The four nested categories
 are smoke (six development cases, one repeat), fast-screen (twelve development
 cases, two repeats), confirmation (nineteen development/validation cases,
 three repeats), and full-checkpoint (thirty-two development/validation cases,
-three repeats). Panel membership is frozen and content-addressed before a run.
+three repeats). Panel membership, restricted-case handling, repeat reliability,
+next-stage routing, and efficiency gates are frozen and content-addressed before a run.
 Smoke catches obvious breakage; fast-screen rejects unsafe or clearly inferior
 ideas; confirmation establishes three-repeat visible reliability and
 uncertainty; full-checkpoint is the largest corrected visible-corpus gate. None
@@ -406,7 +407,9 @@ a gate. Stop sequentially on a reliable high-severity regression, additional
 blocking unsupported treatment findings, completion degradation, incomplete or
 stopped evidence, or an efficiency interval that makes the registered target
 unattainable. Unresolved required adjudications and weak confirmation are
-inconclusive, not clean or passing.
+inconclusive, not clean or passing. The decision is derived from the sealed
+per-attempt grading and duration evidence; operators cannot supply summary
+metrics or change the target after execution.
 
 Independent Checkpoint 2 adjudication invalidated four clean-control labels and
 one truth-complete label. Exclude the four invalid clean cases from every

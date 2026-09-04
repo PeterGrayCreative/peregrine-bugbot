@@ -45,9 +45,19 @@
         "highRiskSentinels": ["case-13f0a2c1", "case-6c19f4ab", "case-a1c4e90d"],
         "variableCases": ["case-17ac84e2"],
         "cleanControls": ["case-1ab7d3c9", "case-5ea42d18"],
-        "compatibilitySensitivity": ["case-17ac84e2"],
+        "compatibilityProxies": ["case-17ac84e2"],
         "largeDiffCases": [],
         "diagnosticOnlyCases": []
+      },
+      "gate": {
+        "nextCategory": "fast-screen",
+        "efficiencyMetric": "paired-median-wall-time",
+        "targetImprovementPercent": null,
+        "requireConfidenceIntervalAboveZero": false,
+        "reliableDetectionMinimum": 1,
+        "bootstrapSamples": 10000,
+        "bootstrapSeed": 17011,
+        "mayComplete": false
       }
     },
     "fast-screen": {
@@ -72,9 +82,19 @@
         "highRiskSentinels": ["case-13f0a2c1", "case-6c19f4ab", "case-a17c4e92", "case-a1c4e90d"],
         "variableCases": ["case-17ac84e2", "case-c83a51e7", "case-d40b36f9", "case-e95d2a63"],
         "cleanControls": ["case-1ab7d3c9", "case-2cd8e4a1", "case-5ea42d18", "case-c4e71b39"],
-        "compatibilitySensitivity": ["case-17ac84e2"],
+        "compatibilityProxies": ["case-17ac84e2"],
         "largeDiffCases": [],
         "diagnosticOnlyCases": []
+      },
+      "gate": {
+        "nextCategory": "confirmation",
+        "efficiencyMetric": "paired-median-wall-time",
+        "targetImprovementPercent": 20,
+        "requireConfidenceIntervalAboveZero": false,
+        "reliableDetectionMinimum": 2,
+        "bootstrapSamples": 10000,
+        "bootstrapSeed": 29021,
+        "mayComplete": false
       }
     },
     "confirmation": {
@@ -106,9 +126,19 @@
         "highRiskSentinels": ["case-13f0a2c1", "case-6c19f4ab", "case-a17c4e92", "case-a1c4e90d", "case-b28e14d7"],
         "variableCases": ["case-17ac84e2", "case-c83a51e7", "case-d40b36f9", "case-e95d2a63", "case-a8073f5d"],
         "cleanControls": ["case-1ab7d3c9", "case-2cd8e4a1", "case-5ea42d18", "case-c4e71b39", "case-7ab54e20"],
-        "compatibilitySensitivity": ["case-17ac84e2", "case-28d5f0b9"],
+        "compatibilityProxies": ["case-17ac84e2", "case-28d5f0b9"],
         "largeDiffCases": ["case-d3f8026e"],
         "diagnosticOnlyCases": ["case-d3f8026e"]
+      },
+      "gate": {
+        "nextCategory": "full-checkpoint",
+        "efficiencyMetric": "paired-median-wall-time",
+        "targetImprovementPercent": 20,
+        "requireConfidenceIntervalAboveZero": true,
+        "reliableDetectionMinimum": 2,
+        "bootstrapSamples": 10000,
+        "bootstrapSeed": 39041,
+        "mayComplete": false
       }
     },
     "full-checkpoint": {
@@ -181,9 +211,19 @@
           "case-f62d58b1",
           "case-7ab54e20"
         ],
-        "compatibilitySensitivity": ["case-17ac84e2", "case-28d5f0b9"],
+        "compatibilityProxies": ["case-17ac84e2", "case-28d5f0b9"],
         "largeDiffCases": ["case-d3f8026e"],
         "diagnosticOnlyCases": ["case-d3f8026e"]
+      },
+      "gate": {
+        "nextCategory": null,
+        "efficiencyMetric": "paired-median-wall-time",
+        "targetImprovementPercent": 20,
+        "requireConfidenceIntervalAboveZero": true,
+        "reliableDetectionMinimum": 2,
+        "bootstrapSamples": 10000,
+        "bootstrapSeed": 49057,
+        "mayComplete": true
       }
     }
   }

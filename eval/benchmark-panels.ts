@@ -6,42 +6,19 @@ import {
   BENCHMARK_CATEGORIES,
   CASE_CORPORA,
   type BenchmarkCategory,
+  type BenchmarkPanelDefinition,
+  type BenchmarkRestrictedCasePolicy,
   type CaseCorpus,
   type ExperimentMode,
+  type ExperimentBenchmarkCategory,
   type MatrixConfig,
 } from "../src/types.js";
 import { assertOpaqueCaseId } from "./case-isolation.js";
 
-export interface BenchmarkPanelDefinition {
-  mode: "screening" | "visible-checkpoint";
-  repeats: number;
-  corpora: CaseCorpus[];
-  caseIds: string[];
-  roles: {
-    highRiskSentinels: string[];
-    variableCases: string[];
-    cleanControls: string[];
-    compatibilitySensitivity: string[];
-    largeDiffCases: string[];
-    diagnosticOnlyCases: string[];
-  };
-}
-
 export interface BenchmarkPanelRegistry {
   schemaVersion: 1;
-  excludedCases: Array<{
-    caseId: string;
-    reason: string;
-    evidence: string;
-    allowedUse?: "diagnostic-only";
-  }>;
+  excludedCases: BenchmarkRestrictedCasePolicy[];
   panels: Record<BenchmarkCategory, BenchmarkPanelDefinition>;
-}
-
-export interface BenchmarkCategoryBinding {
-  name: BenchmarkCategory;
-  definitionSha256: string;
-  evidenceUse: "paired-acceptance" | "treatment-only-diagnostic";
 }
 
 export function loadBenchmarkPanelRegistry(
@@ -89,7 +66,7 @@ export function parseBenchmarkPanelRegistry(value: unknown, source = "benchmark 
 export function bindBenchmarkCategory(
   matrix: MatrixConfig,
   registry: BenchmarkPanelRegistry,
-): BenchmarkCategoryBinding | undefined {
+): import("../src/types.js").ExperimentBenchmarkCategory | undefined {
   if (matrix.benchmarkCategory === undefined) return undefined;
   if (!BENCHMARK_CATEGORIES.includes(matrix.benchmarkCategory)) {
     throw new Error(`matrix benchmarkCategory is invalid`);
@@ -107,16 +84,57 @@ export function bindBenchmarkCategory(
   if (!sameArray(matrix.caseIds, definition.caseIds)) {
     throw new Error(`${matrix.benchmarkCategory} caseIds do not match the frozen panel`);
   }
+  const restrictedCasePolicies = registry.excludedCases.filter((item) => definition.caseIds.includes(item.caseId));
   return {
     name: matrix.benchmarkCategory,
-    definitionSha256: canonicalSha256({
-      definition,
-      restrictedCasePolicies: registry.excludedCases.filter((item) => definition.caseIds.includes(item.caseId)),
-    }),
+    definitionSha256: canonicalSha256({ definition, restrictedCasePolicies }),
     evidenceUse: matrix.experiment.comparison === "treatment-only"
       ? "treatment-only-diagnostic"
       : "paired-acceptance",
+    definition,
+    restrictedCasePolicies,
   };
+}
+
+export function parseBenchmarkCategoryBinding(
+  value: unknown,
+  source = "benchmark category binding",
+): ExperimentBenchmarkCategory {
+  const root = strictObject(value, source, [
+    "name", "definitionSha256", "evidenceUse", "definition", "restrictedCasePolicies",
+  ]);
+  if (!BENCHMARK_CATEGORIES.includes(root.name as BenchmarkCategory)) throw new Error(`${source}.name is invalid`);
+  const name = root.name as BenchmarkCategory;
+  if (root.evidenceUse !== "paired-acceptance" && root.evidenceUse !== "treatment-only-diagnostic") {
+    throw new Error(`${source}.evidenceUse is invalid`);
+  }
+  if (!Array.isArray(root.restrictedCasePolicies)) throw new Error(`${source}.restrictedCasePolicies must be an array`);
+  const restrictedCasePolicies = root.restrictedCasePolicies.map((value, index) => {
+    const item = strictObject(value, `${source}.restrictedCasePolicies[${index}]`, ["caseId", "reason", "evidence"], ["allowedUse"]);
+    const allowedUse = item.allowedUse === undefined
+      ? undefined
+      : exact(item.allowedUse, "diagnostic-only", `${source}.restrictedCasePolicies[${index}].allowedUse`);
+    return {
+      caseId: opaqueId(item.caseId, `${source}.restrictedCasePolicies[${index}].caseId`),
+      reason: nonEmpty(item.reason, `${source}.restrictedCasePolicies[${index}].reason`),
+      evidence: nonEmpty(item.evidence, `${source}.restrictedCasePolicies[${index}].evidence`),
+      ...(allowedUse ? { allowedUse } : {}),
+    };
+  });
+  const policies = new Map(restrictedCasePolicies.map((item) => [item.caseId, item.allowedUse ?? "exclude"] as const));
+  if (policies.size !== restrictedCasePolicies.length) throw new Error(`${source}.restrictedCasePolicies contains duplicates`);
+  const definition = parsePanel(root.definition, name, policies, `${source}.definition`);
+  const selectedRestricted = restrictedCasePolicies.filter((item) => definition.caseIds.includes(item.caseId));
+  if (selectedRestricted.length !== restrictedCasePolicies.length) {
+    throw new Error(`${source}.restrictedCasePolicies contains an unselected case`);
+  }
+  const definitionSha256 = typeof root.definitionSha256 === "string" && /^[a-f0-9]{64}$/.test(root.definitionSha256)
+    ? root.definitionSha256
+    : (() => { throw new Error(`${source}.definitionSha256 must be a SHA-256`); })();
+  if (definitionSha256 !== canonicalSha256({ definition, restrictedCasePolicies })) {
+    throw new Error(`${source}.definitionSha256 does not authenticate its snapshot`);
+  }
+  return { name, definitionSha256, evidenceUse: root.evidenceUse, definition, restrictedCasePolicies };
 }
 
 export function applyBenchmarkCategory(
@@ -165,7 +183,7 @@ function parsePanel(
   excluded: ReadonlyMap<string, "exclude" | "diagnostic-only">,
   source: string,
 ): BenchmarkPanelDefinition {
-  const root = strictObject(value, source, ["mode", "repeats", "corpora", "caseIds", "roles"]);
+  const root = strictObject(value, source, ["mode", "repeats", "corpora", "caseIds", "roles", "gate"]);
   const expectedMode: ExperimentMode = name === "smoke" || name === "fast-screen"
     ? "screening"
     : "visible-checkpoint";
@@ -183,14 +201,14 @@ function parsePanel(
   }
   const caseIds = idArray(root.caseIds, `${source}.caseIds`);
   const rolesRoot = strictObject(root.roles, `${source}.roles`, [
-    "highRiskSentinels", "variableCases", "cleanControls", "compatibilitySensitivity", "largeDiffCases",
+    "highRiskSentinels", "variableCases", "cleanControls", "compatibilityProxies", "largeDiffCases",
     "diagnosticOnlyCases",
   ]);
   const roles = {
     highRiskSentinels: idArray(rolesRoot.highRiskSentinels, `${source}.roles.highRiskSentinels`),
     variableCases: idArray(rolesRoot.variableCases, `${source}.roles.variableCases`),
     cleanControls: idArray(rolesRoot.cleanControls, `${source}.roles.cleanControls`),
-    compatibilitySensitivity: idArray(rolesRoot.compatibilitySensitivity, `${source}.roles.compatibilitySensitivity`),
+    compatibilityProxies: idArray(rolesRoot.compatibilityProxies, `${source}.roles.compatibilityProxies`),
     largeDiffCases: idArray(rolesRoot.largeDiffCases, `${source}.roles.largeDiffCases`, true),
     diagnosticOnlyCases: idArray(rolesRoot.diagnosticOnlyCases, `${source}.roles.diagnosticOnlyCases`, true),
   };
@@ -210,10 +228,46 @@ function parsePanel(
     }
   }
   if (roles.highRiskSentinels.length === 0 || roles.cleanControls.length === 0 ||
-    roles.variableCases.length === 0 || roles.compatibilitySensitivity.length === 0) {
+    roles.variableCases.length === 0 || roles.compatibilityProxies.length === 0) {
     throw new Error(`${source} must preserve high-risk, clean, variable, and compatibility signals`);
   }
-  return { mode: expectedMode, repeats: root.repeats as number, corpora, caseIds, roles };
+  const gateRoot = strictObject(root.gate, `${source}.gate`, [
+    "nextCategory", "efficiencyMetric", "targetImprovementPercent", "requireConfidenceIntervalAboveZero",
+    "reliableDetectionMinimum", "bootstrapSamples", "bootstrapSeed", "mayComplete",
+  ]);
+  const expectedNext = ({ smoke: "fast-screen", "fast-screen": "confirmation", confirmation: "full-checkpoint", "full-checkpoint": null } as const)[name];
+  if (gateRoot.nextCategory !== expectedNext) throw new Error(`${source}.gate.nextCategory is invalid`);
+  if (gateRoot.efficiencyMetric !== "paired-median-wall-time") throw new Error(`${source}.gate.efficiencyMetric is invalid`);
+  const target = gateRoot.targetImprovementPercent;
+  if (target !== null && (typeof target !== "number" || !Number.isFinite(target) || target < 0)) {
+    throw new Error(`${source}.gate.targetImprovementPercent is invalid`);
+  }
+  const reliableDetectionMinimum = positiveInteger(gateRoot.reliableDetectionMinimum, `${source}.gate.reliableDetectionMinimum`);
+  if (reliableDetectionMinimum > (root.repeats as number)) {
+    throw new Error(`${source}.gate.reliableDetectionMinimum exceeds repeats`);
+  }
+  const bootstrapSamples = positiveInteger(gateRoot.bootstrapSamples, `${source}.gate.bootstrapSamples`);
+  const bootstrapSeed = positiveInteger(gateRoot.bootstrapSeed, `${source}.gate.bootstrapSeed`);
+  if (typeof gateRoot.requireConfidenceIntervalAboveZero !== "boolean" || typeof gateRoot.mayComplete !== "boolean") {
+    throw new Error(`${source}.gate boolean fields are invalid`);
+  }
+  if (gateRoot.mayComplete !== (name === "full-checkpoint")) throw new Error(`${source}.gate.mayComplete is invalid`);
+  const gate = {
+    nextCategory: expectedNext,
+    efficiencyMetric: "paired-median-wall-time" as const,
+    targetImprovementPercent: target as number | null,
+    requireConfidenceIntervalAboveZero: gateRoot.requireConfidenceIntervalAboveZero,
+    reliableDetectionMinimum,
+    bootstrapSamples,
+    bootstrapSeed,
+    mayComplete: gateRoot.mayComplete,
+  };
+  return { mode: expectedMode, repeats: root.repeats as number, corpora, caseIds, roles, gate };
+}
+
+function positiveInteger(value: unknown, source: string): number {
+  if (!Number.isSafeInteger(value) || (value as number) < 1) throw new Error(`${source} must be a positive integer`);
+  return value as number;
 }
 
 function assertNested(smaller: string[], larger: string[], smallerName: string, largerName: string, source: string): void {

@@ -18,7 +18,6 @@ import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "nod
 import { assertNoSecrets } from "../src/security/secrets.js";
 import {
   CASE_CORPORA,
-  BENCHMARK_CATEGORIES,
   RUNNER_NAMES,
   type ExperimentBenchmarkCategory,
   type CaseCorpus,
@@ -28,6 +27,7 @@ import {
   type RunRecord,
   type RunnerName,
 } from "../src/types.js";
+import { parseBenchmarkCategoryBinding } from "./benchmark-panels.js";
 
 const SHA256 = /^[a-f0-9]{64}$/;
 const GIT_OID = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
@@ -35,7 +35,7 @@ const ATTEMPT_ID = /^attempt-[0-9]{6}$/;
 const BLOCK_ID = /^(?:block|retry)-[0-9]{6}$/;
 const OPAQUE_CASE_ID = /^case-[a-f0-9]{8,32}$/;
 const EXPERIMENT_MODES = ["structural-smoke", "screening", "visible-checkpoint", "checkpoint"] as const;
-const EXPERIMENT_EVIDENCE_CLASSES = ["diagnostic-visible-subset", "visible-seeded-checkpoint"] as const;
+const EXPERIMENT_EVIDENCE_CLASSES = ["diagnostic-visible-subset", "visible-seeded-panel", "visible-seeded-checkpoint"] as const;
 const CACHE_CONDITIONS = ["cold", "warm", "uncontrolled", "not-applicable"] as const;
 const JUDGE_KINDS = ["exact", "claude", "codex"] as const;
 const INVESTIGATION_PROMPT_MODES = ["legacy", "method-packet"] as const;
@@ -1005,7 +1005,7 @@ function parseManifestBody(value: unknown, source: string): Omit<ExperimentManif
     : member(root.evidenceClass, EXPERIMENT_EVIDENCE_CLASSES, `${source}.evidenceClass`);
   const benchmarkCategory = root.benchmarkCategory === undefined
     ? undefined
-    : parseBenchmarkCategory(root.benchmarkCategory, `${source}.benchmarkCategory`);
+    : parseBenchmarkCategoryBinding(root.benchmarkCategory, `${source}.benchmarkCategory`);
   if (benchmarkCategory && benchmarkCategory.evidenceUse !== (
     protocol.comparison === "treatment-only" ? "treatment-only-diagnostic" : "paired-acceptance"
   )) {
@@ -1016,6 +1016,12 @@ function parseManifestBody(value: unknown, source: string): Omit<ExperimentManif
   }
   if (protocol.mode !== "visible-checkpoint" && evidenceClass !== undefined) {
     throw new Error(`${source}: evidenceClass is supported only for visible-checkpoint`);
+  }
+  if (benchmarkCategory && benchmarkCategory.definition.mode !== protocol.mode) {
+    throw new Error(`${source}.benchmarkCategory definition mode does not match the protocol`);
+  }
+  if (benchmarkCategory && protocol.mode === "visible-checkpoint" && evidenceClass !== "visible-seeded-panel") {
+    throw new Error(`${source}: categorized visible-checkpoint evidence must be visible-seeded-panel`);
   }
   const hashes = parseHashes(root.hashes, `${source}.hashes`);
   const models = array(root.models, `${source}.models`).map((item, index) =>
@@ -1028,6 +1034,7 @@ function parseManifestBody(value: unknown, source: string): Omit<ExperimentManif
     parseScheduledAttempt(item, `${source}.schedule[${index}]`));
   const lineage = root.lineage === undefined ? undefined : parseLineage(root.lineage, `${source}.lineage`);
   validateSchedule(schedule, protocol, lineage);
+  if (benchmarkCategory && !lineage) validateBenchmarkCategorySchedule(benchmarkCategory, schedule, source);
   const modelNames = new Set(models.map((model) => model.configName));
   const modelByName = new Map(models.map((model) => [model.configName, model]));
   for (const attempt of schedule) {
@@ -1057,18 +1064,29 @@ function parseManifestBody(value: unknown, source: string): Omit<ExperimentManif
   return parsed;
 }
 
-function parseBenchmarkCategory(value: unknown, source: string): ExperimentBenchmarkCategory {
-  const root = object(value, source);
-  onlyKeys(root, new Set(["name", "definitionSha256", "evidenceUse"]), source);
-  return {
-    name: member(root.name, BENCHMARK_CATEGORIES, `${source}.name`),
-    definitionSha256: hash(root.definitionSha256, `${source}.definitionSha256`),
-    evidenceUse: member(
-      root.evidenceUse,
-      ["paired-acceptance", "treatment-only-diagnostic"] as const,
-      `${source}.evidenceUse`,
-    ),
-  };
+function validateBenchmarkCategorySchedule(
+  binding: ExperimentBenchmarkCategory,
+  schedule: readonly ExperimentScheduledAttempt[],
+  source: string,
+): void {
+  const variants = binding.evidenceUse === "treatment-only-diagnostic" ? 1 : 2;
+  if (schedule.length !== binding.definition.caseIds.length * binding.definition.repeats * variants) {
+    throw new Error(`${source}: benchmark category schedule size is invalid`);
+  }
+  const selected = new Set(binding.definition.caseIds);
+  const counts = new Map<string, number>();
+  for (const attempt of schedule) {
+    const caseId = attempt.caseName.split("/").at(-1)!;
+    if (!selected.has(caseId) || !binding.definition.corpora.includes(attempt.corpus)) {
+      throw new Error(`${source}: benchmark category schedule contains an unbound case`);
+    }
+    counts.set(caseId, (counts.get(caseId) ?? 0) + 1);
+  }
+  for (const caseId of binding.definition.caseIds) {
+    if (counts.get(caseId) !== binding.definition.repeats * variants) {
+      throw new Error(`${source}: benchmark category schedule coverage is invalid for ${caseId}`);
+    }
+  }
 }
 
 function validateModeInputs(

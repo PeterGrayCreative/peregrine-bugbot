@@ -310,19 +310,11 @@ test("experiment manifests authenticate normalized immutable provenance", () => 
   tampered.repositoryCommit = "2".repeat(40);
   assert.throws(() => parseExperimentManifest(tampered), /does not authenticate/);
 
-  const { experimentId: _experimentId, ...manifestBody } = manifest;
-  const categorized = buildExperimentManifest({
-    ...manifestBody,
-    benchmarkCategory: {
-      name: "fast-screen",
-      definitionSha256: "e".repeat(64),
-      evidenceUse: "paired-acceptance",
-    },
-  });
-  assert.equal(parseExperimentManifest(categorized).benchmarkCategory?.name, "fast-screen");
-  const categoryTamper = JSON.parse(JSON.stringify(categorized));
-  categoryTamper.benchmarkCategory.name = "confirmation";
-  assert.throws(() => parseExperimentManifest(categoryTamper), /does not authenticate/);
+  const malformed = JSON.parse(JSON.stringify(manifest));
+  malformed.benchmarkCategory = {
+    name: "fast-screen", definitionSha256: "e".repeat(64), evidenceUse: "paired-acceptance",
+  };
+  assert.throws(() => parseExperimentManifest(malformed), /definition/);
 });
 
 test("ceiling decisions deny providers, distinguish pre-provider failures, and stop on unknown spend", () => {
@@ -582,7 +574,9 @@ test("checked-in experiment schema tracks parser enums, required hashes, and emi
   assert.deepEqual(protocol.properties.providerAccess.enum, ["api-key", "cli-session", "not-applicable"]);
   assert.deepEqual(protocol.properties.costAccounting.enum, ["required", "best-effort", "not-applicable"]);
   assert.deepEqual(protocol.properties.mode.enum, ["structural-smoke", "screening", "visible-checkpoint", "checkpoint"]);
-  assert.deepEqual(schema.properties.evidenceClass.enum, ["diagnostic-visible-subset", "visible-seeded-checkpoint"]);
+  assert.deepEqual(schema.properties.evidenceClass.enum, [
+    "diagnostic-visible-subset", "visible-seeded-panel", "visible-seeded-checkpoint",
+  ]);
   const liveProtocol = protocol.allOf[0].else as Record<string, any>;
   assert.deepEqual(liveProtocol.oneOf, [
     {

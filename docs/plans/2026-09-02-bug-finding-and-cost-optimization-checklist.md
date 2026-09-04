@@ -448,8 +448,8 @@ not authorize historical-gold, holdout, routing, or final non-inferiority claims
 
 - [x] Freeze nested smoke (6 x 1), fast-screen (12 x 2), confirmation
   (19 x 3), and full-checkpoint (32 x 3) category definitions.
-- [x] Bind category name, exact definition hash, and paired-versus-diagnostic
-  evidence use into the immutable experiment manifest.
+- [x] Bind category name, exact panel/restricted-case/gate snapshot, definition
+  hash, and paired-versus-diagnostic evidence use into the immutable manifest.
 - [x] Exclude the four invalid clean-control cases from all panels.
 - [x] Restrict the truth-incomplete seeded large-diff case to diagnostic-only
   transport and registered-root use; prohibit precision/FDR claims from its
@@ -461,13 +461,13 @@ not authorize historical-gold, holdout, routing, or final non-inferiority claims
   corpora, and case allowlists with the frozen definition.
 - [x] Add treatment-only smoke/fast development runs that are immutably labeled
   diagnostic and can never advance a gate.
-- [x] Add write-once funnel decisions bound to the experiment, terminal seal,
-  grading seal, assessment, and derived completion counts.
+- [x] Add write-once, content-addressed funnel decisions bound to the experiment
+  and terminal/grading seals, with metrics derived from sealed graded runs.
 - [x] Reject stopped, unpaired, missing, completion-regressed, high-severity
   regressed, blocking-unsupported-regressed, or unattainable-efficiency work;
   keep unresolved or weak evidence inconclusive.
 - [x] Add deterministic selection, corpus restriction, schedule, evidence-use,
-  failure-accounting, assessment, and stopping-rule tests.
+  failure-accounting, derived-metric, content-address, and stopping-rule tests.
 - [x] Document what each category can and cannot prove.
 - [x] Run the full local validation gate under Node 22.
 - [ ] Complete independent code and benchmark-method reviews.

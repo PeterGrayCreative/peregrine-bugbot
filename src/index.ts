@@ -218,9 +218,8 @@ async function main(): Promise<void> {
     }
     case "funnel-decision": {
       const runs = arg("--runs");
-      const assessment = arg("--assessment");
-      if (!runs || !assessment) throw new Error("funnel-decision requires --runs and --assessment");
-      const result = (await import("../eval/funnel-decision.js")).writeFunnelDecision(runs, assessment);
+      if (!runs) throw new Error("funnel-decision requires --runs");
+      const result = (await import("../eval/funnel-decision.js")).writeFunnelDecision(runs);
       console.log(JSON.stringify(result, null, 2));
       return;
     }

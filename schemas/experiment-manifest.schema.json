@@ -11,7 +11,7 @@
     "repositoryCommit": { "$ref": "#/$defs/gitObjectId" },
     "protocol": { "$ref": "#/$defs/protocol" },
     "evidenceClass": {
-      "enum": ["diagnostic-visible-subset", "visible-seeded-checkpoint"]
+      "enum": ["diagnostic-visible-subset", "visible-seeded-panel", "visible-seeded-checkpoint"]
     },
     "benchmarkCategory": { "$ref": "#/$defs/benchmarkCategory" },
     "hashes": { "$ref": "#/$defs/hashes" },
@@ -180,9 +180,36 @@
       "properties": {
         "name": { "enum": ["smoke", "fast-screen", "confirmation", "full-checkpoint"] },
         "definitionSha256": { "$ref": "#/$defs/sha256" },
-        "evidenceUse": { "enum": ["paired-acceptance", "treatment-only-diagnostic"] }
+        "evidenceUse": { "enum": ["paired-acceptance", "treatment-only-diagnostic"] },
+        "definition": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": { "enum": ["screening", "visible-checkpoint"] },
+            "repeats": { "type": "integer", "minimum": 1 },
+            "corpora": { "type": "array", "minItems": 1, "items": { "enum": ["development", "validation"] } },
+            "caseIds": { "type": "array", "minItems": 1, "items": { "type": "string", "pattern": "^case-[a-f0-9]{8,32}$" } },
+            "roles": { "type": "object" },
+            "gate": { "type": "object" }
+          },
+          "required": ["mode", "repeats", "corpora", "caseIds", "roles", "gate"]
+        },
+        "restrictedCasePolicies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "caseId": { "type": "string", "pattern": "^case-[a-f0-9]{8,32}$" },
+              "reason": { "$ref": "#/$defs/boundedString" },
+              "evidence": { "$ref": "#/$defs/boundedString" },
+              "allowedUse": { "const": "diagnostic-only" }
+            },
+            "required": ["caseId", "reason", "evidence"]
+          }
+        }
       },
-      "required": ["name", "definitionSha256", "evidenceUse"]
+      "required": ["name", "definitionSha256", "evidenceUse", "definition", "restrictedCasePolicies"]
     },
     "limits": {
       "type": "object",

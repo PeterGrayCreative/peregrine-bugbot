@@ -37,8 +37,9 @@ states that they cannot prove the exact sensitivity.
   degradation, reliable high-severity regression, additional blocking
   unsupported treatment findings, and unattainable efficiency reject.
 - Unresolved required adjudication and weak confirmation remain inconclusive.
-- The final decision is write-once and binds the experiment, terminal/grading
-  seals, strict assessment, derived completion counts, and its own content.
+- The final decision is write-once and binds the experiment, its frozen panel
+  and gate policy, terminal/grading seals, mechanically derived metrics and
+  completion counts, and its own content. It accepts no post-run summary input.
 
 ## Validation
 

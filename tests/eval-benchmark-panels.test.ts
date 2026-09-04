@@ -7,6 +7,7 @@ import {
   applyTreatmentOnlyDiagnostic,
   bindBenchmarkCategory,
   loadBenchmarkPanelRegistry,
+  parseBenchmarkCategoryBinding,
   parseBenchmarkPanelRegistry,
 } from "../eval/benchmark-panels.js";
 import type { MatrixConfig } from "../src/types.js";
@@ -57,7 +58,8 @@ test("shortened benchmark panels are nested, balanced, and exclude contaminated 
     assert.ok(panel.roles.highRiskSentinels.length > 0);
     assert.ok(panel.roles.variableCases.length > 0);
     assert.ok(panel.roles.cleanControls.length > 0);
-    assert.ok(panel.roles.compatibilitySensitivity.length > 0);
+    assert.ok(panel.roles.compatibilityProxies.length > 0);
+    assert.equal(panel.gate.mayComplete, panel === registry.panels["full-checkpoint"]);
     assert.ok(panel.caseIds.every((id) => !excluded.has(id) || panel.roles.diagnosticOnlyCases.includes(id)));
   }
   assert.deepEqual(registry.panels.confirmation.roles.largeDiffCases, ["case-d3f8026e"]);
@@ -92,6 +94,12 @@ test("category selection replaces arbitrary case settings and binds the exact de
   assert.equal(binding?.name, "fast-screen");
   assert.match(binding?.definitionSha256 ?? "", /^[a-f0-9]{64}$/);
   assert.equal(binding?.evidenceUse, "paired-acceptance");
+  assert.deepEqual(binding?.definition, registry.panels["fast-screen"]);
+  assert.deepEqual(parseBenchmarkCategoryBinding(binding), binding);
+  assert.throws(
+    () => parseBenchmarkCategoryBinding({ ...binding, definition: { ...binding!.definition, repeats: 1 } }),
+    /authenticate|repeats/,
+  );
   assert.throws(
     () => bindBenchmarkCategory({ ...selected, repeats: 1 }, registry),
     /requires 2 repeat/,

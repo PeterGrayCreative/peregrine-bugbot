@@ -104,7 +104,6 @@ import {
   applyTreatmentOnlyDiagnostic,
   bindBenchmarkCategory,
   loadBenchmarkPanelRegistry,
-  type BenchmarkCategoryBinding,
 } from "./benchmark-panels.js";
 
 interface RunMatrixOptions {
@@ -725,7 +724,7 @@ interface PrepareExperimentManifestInput {
   runtimeMetadataFor?: RunMatrixOptions["runtimeMetadataFor"];
   /** Safe only after repository and corpus hashes are revalidated unchanged. */
   reuseProfileSha256?: string;
-  benchmarkCategory?: BenchmarkCategoryBinding;
+  benchmarkCategory?: import("../src/types.js").ExperimentBenchmarkCategory;
 }
 
 function effectiveMatrixConfigs(
@@ -955,7 +954,9 @@ async function prepareExperimentManifest(
     repositoryCommit,
     protocol: input.protocol,
     ...(input.protocol.mode === "visible-checkpoint" ? {
-      evidenceClass: visibleCheckpointEvidenceClass(input.matrix.caseIds),
+      evidenceClass: input.benchmarkCategory
+        ? "visible-seeded-panel" as const
+        : visibleCheckpointEvidenceClass(input.matrix.caseIds),
     } : {}),
     ...(input.benchmarkCategory ? { benchmarkCategory: input.benchmarkCategory } : {}),
     hashes: {
