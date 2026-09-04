@@ -471,9 +471,10 @@ not authorize historical-gold, holdout, routing, or final non-inferiority claims
 - [x] Document what each category can and cannot prove.
 - [x] Run the full local validation gate under Node 22.
 - [x] Complete independent code and benchmark-method reviews.
-- [ ] Push the branch, pass remote CI/review, merge, and record the PR here.
-  Branch pushed and [PR #28](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/28)
-  opened; remote CI and merge remain pending.
+- [x] Push the branch, pass remote CI/review, merge, and record the PR here.
+  [PR #28](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/28)
+  passed CI, CodeQL/review analysis, review posting, and credential-free
+  build/smoke; this checklist commit merged with the implementation.
 
 Rollback boundary: revert this funnel slice. Existing full visible experiment
 artifacts and earlier matrix configurations remain readable and unchanged.

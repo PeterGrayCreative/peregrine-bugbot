@@ -72,5 +72,7 @@ Clean-commit `npm run validate` passed again after the independent-review fixes:
   and produced zero unexpected findings.
 
 No live model benchmark or optimization experiment was run for this change.
-Three independent final reviews approved commit `f93e8da`. PR #28 is open;
-remote CI and merge status are recorded before completion.
+Three independent final reviews approved commit `f93e8da`. On PR #28, CI,
+CodeQL/review analysis, review posting, and credential-free build/smoke
+passed. The image publication job correctly skipped for the pull request. This
+record merged with PR #28.
