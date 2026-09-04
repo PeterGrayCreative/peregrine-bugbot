@@ -285,7 +285,7 @@ Rollback boundary: revert PR 8; no other intervention depends on its measured be
 - [x] Fail closed only when preserved high-value content exceeds the hard limit.
 - [x] Keep binary changes visible as structured metadata.
 - [x] Add clear-heavy compaction, high-value overflow, no-loss, artifact-tamper, and failure-accounting tests.
-- [x] Run `npm run validate` under Node `22.22.1`: 239/239 Node tests,
+- [x] Run `npm run validate` under Node `22.22.1`: 240/240 Node tests,
   36/36 admitted corpus cases, all skill/package/plugin checks, and the 8/8
   zero-cost structural smoke passed with 5/5 expected markers.
 - [ ] Run a randomized paired 8-12 case screening comparison.
