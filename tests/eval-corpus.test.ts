@@ -508,7 +508,7 @@ test("screening rejects duplicate IDs across selected and unselected behavioral 
   }
 });
 
-test("screening caseIds must be non-empty, unique opaque IDs and are rejected by other modes", async () => {
+test("screening caseIds must be non-empty, unique opaque IDs and are rejected by unsupported modes", async () => {
   const root = mkdtempSync(join(tmpdir(), "peregrine-screening-case-id-config-"));
   try {
     for (const [index, [caseIds, pattern]] of ([
@@ -545,14 +545,117 @@ test("screening caseIds must be non-empty, unique opaque IDs and are rejected by
         },
       },
     }));
-    await assert.rejects(() => runMatrix(structural, join(root, "runs")), /only for screening/);
+    await assert.rejects(() => runMatrix(structural, join(root, "runs")), /only for screening and visible-checkpoint/);
 
     const checkpoint = join(root, "checkpoint.json");
     writeFileSync(checkpoint, JSON.stringify({
       ...behavioralMatrix("checkpoint", ["development", "validation"]),
       caseIds: ["case-eeeeaaaa"],
     }));
-    await assert.rejects(() => runMatrix(checkpoint, join(root, "runs")), /only for screening/);
+    await assert.rejects(() => runMatrix(checkpoint, join(root, "runs")), /only for screening and visible-checkpoint/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("visible checkpoint requires ready admitted visible cases before artifacts", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-visible-checkpoint-ready-"));
+  const casesRoot = join(root, "cases");
+  const runsRoot = join(root, "runs");
+  try {
+    createCleanBehavioralCase(casesRoot, "development", "case-eeeed001", "admitted", "case-00000001");
+    createCleanBehavioralCase(casesRoot, "validation", "case-eeeed002", "admitted", "case-00000002");
+    const matrix = join(root, "matrix.json");
+    writeFileSync(matrix, JSON.stringify({
+      ...behavioralMatrix("visible-checkpoint", ["development", "validation"]),
+      caseIds: ["case-eeeed001", "case-eeeed002"],
+    }));
+    await assert.rejects(
+      () => runMatrix(matrix, runsRoot, { casesDir: casesRoot }),
+      /visible-checkpoint requires a ready admitted visible seeded benchmark/,
+    );
+    assert.equal(existsSync(runsRoot), false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("visible checkpoint allowlists reject drafts and tampering before artifacts", async () => {
+  const root = mkdtempSync(join(tmpdir(), "peregrine-visible-checkpoint-admission-"));
+  try {
+    const casesRoot = join(root, "draft-cases");
+    createCleanBehavioralCase(casesRoot, "development", "case-eeeed011", "admitted", "case-00000001");
+    createCleanBehavioralCase(casesRoot, "validation", "case-eeeed012", "draft", "case-00000002");
+    const draftMatrix = join(root, "draft.json");
+    writeFileSync(draftMatrix, JSON.stringify({
+      ...behavioralMatrix("visible-checkpoint", ["development", "validation"]),
+      caseIds: ["case-eeeed011", "case-eeeed012"],
+    }));
+    const draftRuns = join(root, "draft-runs");
+    await assert.rejects(
+      () => runMatrix(draftMatrix, draftRuns, { casesDir: casesRoot }),
+      /visible-checkpoint requires a ready admitted visible seeded benchmark: every visible behavioral case is admitted/,
+    );
+    assert.equal(existsSync(draftRuns), false);
+
+    const tamperCases = join(root, "tamper-cases");
+    createCleanBehavioralCase(tamperCases, "development", "case-eeeed021", "admitted", "case-00000001");
+    const tampered = createCleanBehavioralCase(
+      tamperCases, "validation", "case-eeeed022", "admitted", "case-00000002",
+    );
+    writeFileSync(join(tampered, "proof.md"), "tampered after admission\n");
+    const tamperMatrix = join(root, "tamper.json");
+    writeFileSync(tamperMatrix, JSON.stringify({
+      ...behavioralMatrix("visible-checkpoint", ["development", "validation"]),
+      caseIds: ["case-eeeed021", "case-eeeed022"],
+    }));
+    const tamperRuns = join(root, "tamper-runs");
+    await assert.rejects(
+      () => runMatrix(tamperMatrix, tamperRuns, { casesDir: tamperCases }),
+      /proof digest does not match/,
+    );
+    assert.equal(existsSync(tamperRuns), false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("visible checkpoint classifies cross-corpus allowlists as diagnostic and no allowlist as full visible evidence", async () => {
+  const root = mkdtempSync(join(realpathSync(tmpdir()), "peregrine-visible-checkpoint-subset-"));
+  try {
+    const matrix = join(root, "matrix.json");
+    writeFileSync(matrix, JSON.stringify({
+      ...behavioralMatrix("visible-checkpoint", ["development", "validation"]),
+      caseIds: ["case-13f0a2c1", "case-d3f8026e"],
+    }));
+    const outDir = await runMatrix(matrix, join(root, "runs"), {
+      casesDir: join(process.cwd(), "eval/cases"),
+      runtimeMetadataFor,
+      now: () => Date.parse("2026-09-04T12:00:00.000Z"),
+    });
+    const manifest = JSON.parse(readFileSync(join(outDir, "experiment-manifest.json"), "utf8"));
+    assert.equal(manifest.protocol.mode, "visible-checkpoint");
+    assert.equal(manifest.evidenceClass, "diagnostic-visible-subset");
+    assert.deepEqual(
+      new Set(manifest.schedule.map((attempt: { corpus: string }) => attempt.corpus)),
+      new Set(["development", "validation"]),
+    );
+    assert.equal(manifest.schedule.length, 4);
+
+    const fullMatrix = join(root, "full-matrix.json");
+    writeFileSync(fullMatrix, JSON.stringify(
+      behavioralMatrix("visible-checkpoint", ["development", "validation"]),
+    ));
+    const fullOutDir = await runMatrix(fullMatrix, join(root, "full-runs"), {
+      casesDir: join(process.cwd(), "eval/cases"),
+      runtimeMetadataFor,
+      now: () => Date.parse("2026-09-04T12:00:01.000Z"),
+    });
+    const fullManifest = JSON.parse(
+      readFileSync(join(fullOutDir, "experiment-manifest.json"), "utf8"),
+    );
+    assert.equal(fullManifest.evidenceClass, "visible-seeded-checkpoint");
+    assert.equal(fullManifest.schedule.length, 72);
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -861,7 +964,7 @@ function validHoldoutCommitment(): Record<string, unknown> {
 }
 
 function behavioralMatrix(
-  mode: "screening" | "checkpoint",
+  mode: "screening" | "visible-checkpoint" | "checkpoint",
   corpora: Array<"development" | "validation" | "structural-smoke">,
 ): Record<string, unknown> {
   return {

@@ -21,6 +21,7 @@ import {
   RUNNER_NAMES,
   type CaseCorpus,
   type ExperimentProtocol,
+  type ExperimentEvidenceClass,
   type MatrixModelConfig,
   type RunRecord,
   type RunnerName,
@@ -31,7 +32,8 @@ const GIT_OID = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
 const ATTEMPT_ID = /^attempt-[0-9]{6}$/;
 const BLOCK_ID = /^(?:block|retry)-[0-9]{6}$/;
 const OPAQUE_CASE_ID = /^case-[a-f0-9]{8,32}$/;
-const EXPERIMENT_MODES = ["structural-smoke", "screening", "checkpoint"] as const;
+const EXPERIMENT_MODES = ["structural-smoke", "screening", "visible-checkpoint", "checkpoint"] as const;
+const EXPERIMENT_EVIDENCE_CLASSES = ["diagnostic-visible-subset", "visible-seeded-checkpoint"] as const;
 const CACHE_CONDITIONS = ["cold", "warm", "uncontrolled", "not-applicable"] as const;
 const JUDGE_KINDS = ["exact", "claude", "codex"] as const;
 const INVESTIGATION_PROMPT_MODES = ["legacy", "method-packet"] as const;
@@ -142,6 +144,8 @@ export interface ExperimentManifest {
   createdAt: string;
   repositoryCommit: string;
   protocol: ExperimentProtocol;
+  /** Required only for visible-checkpoint; derived from full-corpus vs allowlisted selection. */
+  evidenceClass?: ExperimentEvidenceClass;
   hashes: ExperimentHashes;
   models: ExperimentModelIdentity[];
   runtime: ExperimentRuntime;
@@ -196,10 +200,18 @@ export interface HashTreeOptions {
   excludeRelativePaths?: readonly string[];
 }
 
+/** Classifies visible-checkpoint evidence without permitting gold or holdout labels. */
+export function visibleCheckpointEvidenceClass(
+  caseIds?: readonly string[],
+): ExperimentEvidenceClass {
+  return caseIds === undefined ? "visible-seeded-checkpoint" : "diagnostic-visible-subset";
+}
+
 export interface BuildExperimentManifestInput {
   createdAt: string;
   repositoryCommit: string;
   protocol: ExperimentProtocol;
+  evidenceClass?: ExperimentEvidenceClass;
   hashes: ExperimentHashes;
   models: ExperimentModelIdentity[];
   runtime: ExperimentRuntime;
@@ -424,7 +436,7 @@ function parseExperimentProtocolValue(
       );
     }
     if (judgeKind === "exact") {
-      throw new Error(`${source}: screening and checkpoint must preregister a semantic judge`);
+      throw new Error(`${source}: live paired experiments must preregister a semantic judge`);
     }
     if (costAccounting === "required" && limits.maxProviderCostUsd === null) {
       throw new Error(`${source}: required cost accounting needs maxProviderCostUsd`);
@@ -674,6 +686,7 @@ export function parseExperimentManifest(
     "createdAt",
     "repositoryCommit",
     "protocol",
+    "evidenceClass",
     "hashes",
     "models",
     "runtime",
@@ -943,6 +956,7 @@ function parseManifestBody(value: unknown, source: string): Omit<ExperimentManif
     "createdAt",
     "repositoryCommit",
     "protocol",
+    "evidenceClass",
     "hashes",
     "models",
     "runtime",
@@ -955,6 +969,15 @@ function parseManifestBody(value: unknown, source: string): Omit<ExperimentManif
   const repositoryCommit = boundedString(root.repositoryCommit, `${source}.repositoryCommit`);
   if (!GIT_OID.test(repositoryCommit)) throw new Error(`${source}.repositoryCommit must be a full Git object ID`);
   const protocol = parseExperimentProtocol(root.protocol, `${source}.protocol`);
+  const evidenceClass = root.evidenceClass === undefined
+    ? undefined
+    : member(root.evidenceClass, EXPERIMENT_EVIDENCE_CLASSES, `${source}.evidenceClass`);
+  if (protocol.mode === "visible-checkpoint" && evidenceClass === undefined) {
+    throw new Error(`${source}: visible-checkpoint must bind its evidence class`);
+  }
+  if (protocol.mode !== "visible-checkpoint" && evidenceClass !== undefined) {
+    throw new Error(`${source}: evidenceClass is supported only for visible-checkpoint`);
+  }
   const hashes = parseHashes(root.hashes, `${source}.hashes`);
   const models = array(root.models, `${source}.models`).map((item, index) =>
     parseModelIdentity(item, `${source}.models[${index}]`));
@@ -983,6 +1006,7 @@ function parseManifestBody(value: unknown, source: string): Omit<ExperimentManif
     createdAt,
     repositoryCommit,
     protocol,
+    ...(evidenceClass === undefined ? {} : { evidenceClass }),
     hashes,
     models,
     runtime,
@@ -1017,8 +1041,9 @@ function validateModeInputs(
   if (protocol.mode === "screening" && cases.some((item) => item.corpus !== "development")) {
     throw new Error("screening may only schedule development cases");
   }
-  if (protocol.mode === "checkpoint" && cases.some((item) => item.corpus === "structural-smoke")) {
-    throw new Error("checkpoint may only schedule development and validation cases");
+  if ((protocol.mode === "visible-checkpoint" || protocol.mode === "checkpoint") &&
+    cases.some((item) => item.corpus === "structural-smoke")) {
+    throw new Error(`${protocol.mode} may only schedule development and validation cases`);
   }
 }
 

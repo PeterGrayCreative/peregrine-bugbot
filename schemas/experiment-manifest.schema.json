@@ -10,6 +10,9 @@
     "createdAt": { "$ref": "#/$defs/canonicalTimestamp" },
     "repositoryCommit": { "$ref": "#/$defs/gitObjectId" },
     "protocol": { "$ref": "#/$defs/protocol" },
+    "evidenceClass": {
+      "enum": ["diagnostic-visible-subset", "visible-seeded-checkpoint"]
+    },
     "hashes": { "$ref": "#/$defs/hashes" },
     "models": {
       "type": "array",
@@ -98,7 +101,7 @@
         "not": { "required": ["lineage"] },
         "properties": {
           "protocol": {
-            "properties": { "mode": { "enum": ["screening", "checkpoint"] } },
+            "properties": { "mode": { "enum": ["screening", "visible-checkpoint", "checkpoint"] } },
             "required": ["mode"]
           }
         }
@@ -119,6 +122,19 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "properties": {
+          "protocol": {
+            "properties": { "mode": { "const": "visible-checkpoint" } },
+            "required": ["mode"]
+          }
+        },
+        "required": ["protocol"]
+      },
+      "then": { "required": ["evidenceClass"] },
+      "else": { "not": { "required": ["evidenceClass"] } }
     }
   ],
   "$defs": {
@@ -242,7 +258,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "mode": { "enum": ["structural-smoke", "screening", "checkpoint"] },
+        "mode": { "enum": ["structural-smoke", "screening", "visible-checkpoint", "checkpoint"] },
         "seed": {
           "type": "integer",
           "minimum": 0,
