@@ -296,13 +296,14 @@ test("both runners transmit the exact runner-compacted breadth ledger", async ()
         reason: `clear explanation ${index}`,
       })),
     };
+    let breadthResponse = clearHeavy;
     const fake: typeof exec = async (_cmd, args, options) => {
       calls.push({ args, stdin: options?.stdin });
       if (runner === "claude") {
         const schema = JSON.parse(args[args.indexOf("--json-schema") + 1]!) as { title?: string };
         return {
           stdout: JSON.stringify({
-            structured_output: schema.title?.includes("Breadth") ? clearHeavy : { findings: [finding] },
+            structured_output: schema.title?.includes("Breadth") ? breadthResponse : { findings: [finding] },
             total_cost_usd: 0.01,
             usage: { input_tokens: 10, cache_creation_input_tokens: 0, cache_read_input_tokens: 0, output_tokens: 20 },
           }),
@@ -313,8 +314,8 @@ test("both runners transmit the exact runner-compacted breadth ledger", async ()
       }
       const output = args[args.indexOf("--output-last-message") + 1]!;
       const schema = args[args.indexOf("--output-schema") + 1]!;
-      writeFileSync(output, schema.endsWith("breadth-result-compact.schema.json")
-        ? JSON.stringify(clearHeavy)
+      writeFileSync(output, schema.includes("breadth-result")
+        ? JSON.stringify(breadthResponse)
         : JSON.stringify({ findings: [finding] }));
       return {
         stdout: `${JSON.stringify({ type: "turn.completed", usage: { input_tokens: 11, cached_input_tokens: 2, output_tokens: 3 } })}\n`,
@@ -361,6 +362,41 @@ test("both runners transmit the exact runner-compacted breadth ledger", async ()
       const schema = calls[0]!.args[calls[0]!.args.indexOf("--output-schema") + 1]!;
       assert.match(schema, /breadth-result-compact\.schema\.json$/);
     }
+
+    calls.length = 0;
+    breadthResponse = breadth;
+    ctx.config.runners[runner].breadthLedgerMode = "adaptive-structural-compact";
+    const adaptive = await engine.review(ctx);
+    const adaptiveRaw = adaptive.raw as {
+      breadth: {
+        output: typeof breadth;
+        transmittedLedger: typeof breadth;
+        breadthLedger: { mode: string; applied: boolean };
+      };
+    };
+    assert.deepEqual(adaptiveRaw.breadth.output, breadth);
+    assert.deepEqual(adaptiveRaw.breadth.transmittedLedger, breadth);
+    assert.equal(adaptiveRaw.breadth.breadthLedger.mode, "adaptive-structural-compact");
+    assert.equal(adaptiveRaw.breadth.breadthLedger.applied, false);
+    assert.equal(
+      investigationValidation?.untrustedModelText,
+      JSON.stringify(adaptiveRaw.breadth.transmittedLedger),
+    );
+    if (runner === "claude") {
+      const schema = JSON.parse(
+        calls[0]!.args[calls[0]!.args.indexOf("--json-schema") + 1]!,
+      ) as { title: string };
+      assert.equal(schema.title, "Peregrine Breadth Sweep");
+    } else {
+      const schema = calls[0]!.args[calls[0]!.args.indexOf("--output-schema") + 1]!;
+      assert.match(schema, /breadth-result\.schema\.json$/);
+    }
+
+    const adaptiveBreadthPrompt = calls[0]!.stdin;
+    calls.length = 0;
+    ctx.config.runners[runner].breadthLedgerMode = "full";
+    await engine.review(ctx);
+    assert.equal(calls[0]!.stdin, adaptiveBreadthPrompt);
   }
 });
 

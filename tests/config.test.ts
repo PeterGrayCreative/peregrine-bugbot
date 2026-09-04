@@ -167,7 +167,15 @@ test("config validation rejects unknown runners, placeholders, and invalid effor
 
   const ledgerMode = config();
   ledgerMode.runners.codex.breadthLedgerMode = "lossy" as never;
-  assert.throws(() => validateConfig(ledgerMode), /breadthLedgerMode.*full, structural-compact/);
+  assert.throws(
+    () => validateConfig(ledgerMode),
+    /breadthLedgerMode.*full, structural-compact, adaptive-structural-compact/,
+  );
+
+  const adaptiveLedger = config();
+  adaptiveLedger.runners.claude.breadthLedgerMode = "adaptive-structural-compact";
+  adaptiveLedger.runners.codex.breadthLedgerMode = "adaptive-structural-compact";
+  assert.doesNotThrow(() => validateConfig(adaptiveLedger));
 
   const turns = config();
   turns.runners.claude.maxTurns = 2.5;

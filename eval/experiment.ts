@@ -35,7 +35,11 @@ const EXPERIMENT_MODES = ["structural-smoke", "screening", "checkpoint"] as cons
 const CACHE_CONDITIONS = ["cold", "warm", "uncontrolled", "not-applicable"] as const;
 const JUDGE_KINDS = ["exact", "claude", "codex"] as const;
 const INVESTIGATION_PROMPT_MODES = ["legacy", "method-packet"] as const;
-const BREADTH_LEDGER_MODES = ["full", "structural-compact"] as const;
+const BREADTH_LEDGER_MODES = [
+  "full",
+  "structural-compact",
+  "adaptive-structural-compact",
+] as const;
 const PROVIDER_AVAILABILITY_STATUSES = [
   "configured",
   "denied",

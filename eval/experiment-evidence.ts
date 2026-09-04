@@ -282,7 +282,9 @@ export function assertExperimentRecordModelIdentity(
   }
 }
 
-function completedBreadthLedgerMode(record: RunRecord): "full" | "structural-compact" | undefined {
+function completedBreadthLedgerMode(
+  record: RunRecord,
+): "full" | "structural-compact" | "adaptive-structural-compact" | undefined {
   if (record.outcome.status !== "completed") return undefined;
   const raw = record.outcome.result.raw;
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
@@ -291,7 +293,11 @@ function completedBreadthLedgerMode(record: RunRecord): "full" | "structural-com
   const telemetry = (breadth as Record<string, unknown>).breadthLedger;
   if (!telemetry || typeof telemetry !== "object" || Array.isArray(telemetry)) return undefined;
   const mode = (telemetry as Record<string, unknown>).mode;
-  return mode === "full" || mode === "structural-compact" ? mode : undefined;
+  return mode === "full" ||
+      mode === "structural-compact" ||
+      mode === "adaptive-structural-compact"
+    ? mode
+    : undefined;
 }
 
 function assertScheduleMatchesMatrix(

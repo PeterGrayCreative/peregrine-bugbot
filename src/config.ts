@@ -14,7 +14,11 @@ import { validatePricingCatalog } from "./core/pricing.js";
 const CODEX_EFFORTS: CodexEffort[] = ["low", "medium", "high", "xhigh", "max", "ultra"];
 const CLAUDE_EFFORTS: ClaudeEffort[] = ["low", "medium", "high", "xhigh", "max"];
 const INVESTIGATION_PROMPT_MODES: InvestigationPromptMode[] = ["legacy", "method-packet"];
-const BREADTH_LEDGER_MODES: BreadthLedgerMode[] = ["full", "structural-compact"];
+const BREADTH_LEDGER_MODES: BreadthLedgerMode[] = [
+  "full",
+  "structural-compact",
+  "adaptive-structural-compact",
+];
 
 export function loadConfig(path = "peregrine.config.json"): PeregrineConfig {
   let parsed: unknown;

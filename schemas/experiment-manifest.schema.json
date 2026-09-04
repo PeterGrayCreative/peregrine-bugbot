@@ -383,7 +383,9 @@
         "investigationModel": { "$ref": "#/$defs/boundedString" },
         "investigationEffort": { "$ref": "#/$defs/boundedString" },
         "investigationPromptMode": { "enum": ["legacy", "method-packet"] },
-        "breadthLedgerMode": { "enum": ["full", "structural-compact"] }
+        "breadthLedgerMode": {
+          "enum": ["full", "structural-compact", "adaptive-structural-compact"]
+        }
       },
       "required": ["configName", "runner", "effectiveConfigSha256"],
       "allOf": [

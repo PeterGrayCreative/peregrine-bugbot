@@ -71,7 +71,9 @@ export function parseBreadthLedgerTelemetry(
     "transmittedCharacters",
     "originalSha256",
   ]), source);
-  if (!(root.mode === "full" || root.mode === "structural-compact")) {
+  if (!(root.mode === "full" ||
+      root.mode === "structural-compact" ||
+      root.mode === "adaptive-structural-compact")) {
     throw new Error(`${source}.mode is invalid`);
   }
   if (typeof root.applied !== "boolean") throw new Error(`${source}.applied must be boolean`);
@@ -320,6 +322,39 @@ export function serializeBreadthLedger(
         originalCounts,
         transmittedCounts: { ...originalCounts },
         omittedCounts: zeroOmitted,
+        originalCharacters: originalText.length,
+        transmittedCharacters: originalText.length,
+        originalSha256: createHash("sha256").update(originalText).digest("hex"),
+      },
+    };
+  }
+
+  if (mode === "adaptive-structural-compact" &&
+      originalText.length <= MAX_BREADTH_LEDGER_CHARS) {
+    let sampleCount = Math.min(MAX_CLEAR_EXPLANATION_SAMPLES, result.clear.length);
+    while (sampleCount >= 0) {
+      const output = buildCompactedLedger(
+        result,
+        result.clear.slice(0, sampleCount),
+        clearCounts,
+        originalCounts,
+        originalText,
+      );
+      const text = JSON.stringify(output);
+      if (text.length < originalText.length) {
+        return { output, text, telemetry: { mode, ...output.compaction } };
+      }
+      sampleCount -= 1;
+    }
+    return {
+      output: result,
+      text: originalText,
+      telemetry: {
+        mode,
+        applied: false,
+        originalCounts,
+        transmittedCounts: { ...originalCounts },
+        omittedCounts: zeroCounts(),
         originalCharacters: originalText.length,
         transmittedCharacters: originalText.length,
         originalSha256: createHash("sha256").update(originalText).digest("hex"),

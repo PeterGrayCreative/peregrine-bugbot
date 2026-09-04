@@ -9,7 +9,9 @@ With `breadthLedgerMode: "structural-compact"`, the breadth schema bounds
 low-value clear prose and the runner structurally compacts the validated result
 before investigation. Required candidates, escalations, and coverage are never
 sampled or silently truncated. The default `full` mode retains the legacy
-schema and transfer behavior.
+schema and transfer behavior. `adaptive-structural-compact` uses that same full
+provider prompt and schema, then selects a compact representation only when it
+is strictly smaller; otherwise it transfers the exact full ledger.
 
 Both use a read-only sandbox, strict config, ignored user config, explicit models/effort, stdin prompts, and an output file outside the target checkout. Missing, failed, timed-out, or malformed stages fail the review.
 

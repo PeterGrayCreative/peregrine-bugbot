@@ -6,7 +6,10 @@ The optional `breadthLedgerMode: "structural-compact"` bounds low-value clear
 prose at generation time and structurally compacts the validated breadth result
 before investigation. Every candidate, escalation, covered file, unavailable
 item, and exact clear count is retained. The default `full` mode preserves the
-legacy schema and transfer behavior.
+legacy schema and transfer behavior. `adaptive-structural-compact` uses the
+same full provider prompt and schema, then selects a compact representation
+only when it is strictly smaller; otherwise it transfers the exact full
+ledger.
 
 Local authentication is handled by Claude Code. CI passes `ANTHROPIC_API_KEY` only to the Claude analysis step. The pinned workflow CLI version is recorded in `.github/actions/setup-peregrine/action.yml`.
 

@@ -27,7 +27,10 @@ export type ReviewStatus = "completed" | "clean" | "skipped";
 export type CodexEffort = "low" | "medium" | "high" | "xhigh" | "max" | "ultra";
 export type ClaudeEffort = "low" | "medium" | "high" | "xhigh" | "max";
 export type InvestigationPromptMode = "legacy" | "method-packet";
-export type BreadthLedgerMode = "full" | "structural-compact";
+export type BreadthLedgerMode =
+  | "full"
+  | "structural-compact"
+  | "adaptive-structural-compact";
 
 export interface TypedReviewManifest {
   schemaVersion: 1;

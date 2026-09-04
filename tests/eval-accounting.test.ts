@@ -638,6 +638,30 @@ test("evaluation artifact parsers reject schema, identity, enum, and numeric tam
     /breadthLedger.*count candidates does not reconcile/,
   );
 
+  const adaptiveCurrentBreadth = structuredClone(validRecord());
+  if (adaptiveCurrentBreadth.outcome.status !== "completed") {
+    throw new Error("expected completed fixture");
+  }
+  const adaptiveOutput = serializeBreadthLedger(
+    emptyBreadthOutput(),
+    "adaptive-structural-compact",
+  );
+  (adaptiveCurrentBreadth.outcome.result.raw as {
+    breadth: {
+      output: unknown;
+      transmittedLedger?: unknown;
+      breadthLedger?: unknown;
+    };
+  }).breadth = {
+    ...(adaptiveCurrentBreadth.outcome.result.raw as { breadth: object }).breadth,
+    output: emptyBreadthOutput(),
+    transmittedLedger: adaptiveOutput.output,
+    breadthLedger: adaptiveOutput.telemetry,
+  };
+  assert.doesNotThrow(
+    () => parseRunRecord(adaptiveCurrentBreadth, "current adaptive breadth", attempt),
+  );
+
   const splitBrainCodex = validCodexRecord();
   const codexRaw = splitBrainCodex.outcome.status === "completed"
     ? splitBrainCodex.outcome.result.raw as { investigation: { output: { findings: unknown[] } } }

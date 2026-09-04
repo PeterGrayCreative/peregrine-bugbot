@@ -5,7 +5,10 @@ import {
   MAX_BREADTH_LEDGER_CHARS,
   MAX_CLEAR_EXPLANATION_SAMPLES,
   MAX_COMPACT_CLEAR_ITEMS,
+  MAX_COMPACT_CLEAR_REASON_CHARS,
+  breadthSchemaName,
   parseBreadthArtifactOutput,
+  parseBreadthLedgerEvidence,
   parseBreadthResult,
   parseCompactedBreadthLedger,
   serializeBreadthLedger,
@@ -110,6 +113,96 @@ test("clear-heavy output compacts but preserved high-value overflow fails closed
   assert.equal((zeroSample.output as CompactedBreadthLedger).clearExamples.length, 0);
 });
 
+test("adaptive compaction keeps small ledgers full and compacts only for a strict size win", () => {
+  const small = result(1);
+  const adaptiveSmall = serializeBreadthLedger(small, "adaptive-structural-compact");
+  assert.equal(breadthSchemaName("adaptive-structural-compact"), "breadth-result");
+  assert.equal(adaptiveSmall.text, JSON.stringify(small));
+  assert.deepEqual(adaptiveSmall.output, small);
+  assert.equal(adaptiveSmall.telemetry.mode, "adaptive-structural-compact");
+  assert.equal(adaptiveSmall.telemetry.applied, false);
+  assert.deepEqual(
+    parseBreadthLedgerEvidence({
+      providerOutput: small,
+      transmittedLedger: adaptiveSmall.output,
+      telemetry: adaptiveSmall.telemetry,
+    }),
+    {
+      providerOutput: small,
+      transmittedLedger: small,
+      telemetry: adaptiveSmall.telemetry,
+    },
+  );
+
+  const sampleBoundary: BreadthResult = {
+    model: "m",
+    candidates: [],
+    clear: Array.from({ length: 3 }, (_, index) => ({
+      lane: "l",
+      file: "f",
+      reason: `${"x".repeat(286)}${index}`,
+    })),
+    escalations: [],
+    coverage: { coveredFiles: ["f"], unavailable: [] },
+  };
+  const historicalBoundary = serializeBreadthLedger(
+    sampleBoundary,
+    "structural-compact",
+  );
+  assert.ok(historicalBoundary.text.length >= JSON.stringify(sampleBoundary).length);
+  const adaptiveBoundary = serializeBreadthLedger(
+    sampleBoundary,
+    "adaptive-structural-compact",
+  );
+  assert.equal(
+    (adaptiveBoundary.output as CompactedBreadthLedger).clearExamples.length,
+    1,
+  );
+  assert.ok(adaptiveBoundary.text.length < JSON.stringify(sampleBoundary).length);
+
+  const compressible = result(40);
+  const adaptiveCompact = serializeBreadthLedger(
+    compressible,
+    "adaptive-structural-compact",
+  );
+  assert.equal(
+    (adaptiveCompact.output as CompactedBreadthLedger).kind,
+    "structural-compact",
+  );
+  assert.ok(adaptiveCompact.text.length < JSON.stringify(compressible).length);
+  assert.equal(adaptiveCompact.telemetry.mode, "adaptive-structural-compact");
+  assert.ok(adaptiveCompact.telemetry.omittedCounts.clearExplanations > 0);
+  assert.deepEqual(
+    parseBreadthLedgerEvidence({
+      providerOutput: compressible,
+      transmittedLedger: adaptiveCompact.output,
+      telemetry: adaptiveCompact.telemetry,
+    }).transmittedLedger,
+    adaptiveCompact.output,
+  );
+
+  const overLimit = result(MAX_COMPACT_CLEAR_ITEMS);
+  overLimit.clear = overLimit.clear.map((entry) => ({
+    ...entry,
+    reason: "o".repeat(MAX_COMPACT_CLEAR_REASON_CHARS),
+  }));
+  assert.ok(JSON.stringify(overLimit).length > MAX_BREADTH_LEDGER_CHARS);
+  const requiredCompact = serializeBreadthLedger(
+    overLimit,
+    "adaptive-structural-compact",
+  );
+  assert.ok(requiredCompact.text.length <= MAX_BREADTH_LEDGER_CHARS);
+  assert.equal(requiredCompact.telemetry.originalCounts.candidates, 2);
+  assert.equal(requiredCompact.telemetry.omittedCounts.candidates, 0);
+
+  const historicalSmall = serializeBreadthLedger(small, "structural-compact");
+  assert.equal(
+    (historicalSmall.output as CompactedBreadthLedger).kind,
+    "structural-compact",
+  );
+  assert.ok(historicalSmall.text.length > JSON.stringify(small).length);
+});
+
 test("compacted-ledger parsing rejects forged counts, sizes, and provider metadata", () => {
   const input = result();
   const compacted = serializeBreadthLedger(input, "structural-compact").output as CompactedBreadthLedger;
@@ -155,6 +248,9 @@ test("the compact provider schema bounds low-value volume and all parser-bounded
   assert.throws(
     () => parseBreadthResult(tooMany, "compact provider", "structural-compact"),
     /clear must contain at most 64 entries/,
+  );
+  assert.doesNotThrow(
+    () => parseBreadthResult(tooMany, "adaptive provider", "adaptive-structural-compact"),
   );
   const verbose = result(1);
   verbose.clear[0]!.reason = "r".repeat(401);

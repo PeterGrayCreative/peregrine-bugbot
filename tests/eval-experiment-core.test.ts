@@ -458,6 +458,23 @@ test("terminal provider records bind the configured breadth ledger mode", () => 
     () => assertExperimentRecordModelIdentity(manifest, failedWithoutLedger),
     /completed breadth stage does not bind its breadth ledger mode/,
   );
+
+  const adaptiveManifest: Pick<ExperimentManifest, "models"> = {
+    models: manifest.models.map((model) => ({
+      ...model,
+      breadthLedgerMode: "adaptive-structural-compact",
+    })),
+  };
+  const adaptiveRecord = structuredClone(record);
+  if (adaptiveRecord.outcome.status !== "completed") {
+    throw new Error("expected completed fixture");
+  }
+  ((adaptiveRecord.outcome.result.raw as {
+    breadth: { breadthLedger: { mode: string } };
+  }).breadth.breadthLedger).mode = "adaptive-structural-compact";
+  assert.doesNotThrow(
+    () => assertExperimentRecordModelIdentity(adaptiveManifest, adaptiveRecord),
+  );
 });
 
 test("observed cost, wall time, failure rate, and consecutive failures stop before the next attempt", () => {

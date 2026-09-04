@@ -53,7 +53,8 @@ The checked-in default remains `legacy` for both runners. The Stage 2 Codex
 screening validated the opt-in mode as an isolated experiment; it did not test
 Claude behavior or authorize a production-routing change.
 
-`breadthLedgerMode` accepts `full` or `structural-compact`. `full` preserves the
+`breadthLedgerMode` accepts `full`, `structural-compact`, or
+`adaptive-structural-compact`. `full` preserves the
 legacy transfer contract and fails when the complete breadth JSON exceeds the
 24,000-character investigation limit. `structural-compact` keeps every
 candidate, escalation, covered file, unavailable item, and exact per-file and
@@ -63,8 +64,17 @@ the original JSON hash, and still fails closed when the preserved high-value
 content alone exceeds the limit. Provider output is validated and secret-scanned
 before compaction; the compact ledger remains untrusted model text.
 
-The backward-compatible default is `full` for both runners. Structural
-compaction is an opt-in Stage 2 experiment until its paired benchmark and the
+`adaptive-structural-compact` keeps the same full provider prompt and schema as
+`full`, then evaluates bounded compact representations after validation. It
+uses the largest clear-entry sample that is strictly smaller than the full
+ledger; if none is smaller, it transmits the exact full ledger. Inputs above the
+24,000-character limit must compact to fit or fail closed when their preserved
+high-value content cannot fit. This isolates representation size from provider
+generation behavior and prevents compaction from expanding the investigator
+input.
+
+The backward-compatible default is `full` for both runners. Both compaction
+modes are opt-in Stage 2 experiments until their paired benchmark and the
 full visible checkpoint comparison satisfy the plan's acceptance gate.
 
 ## Pricing contracts
