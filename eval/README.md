@@ -104,7 +104,8 @@ eval/runs/<timestamp>/
 ├── experiment-stop.json                      # present only after a ceiling stops the run
 ├── experiment-terminal-seal.json             # complete/stopped manifests, state, attempts, stop
 ├── attempt-000001.graded.json                 # completed attempts only
-└── experiment-grading-seal.json              # all applicable graded artifacts
+├── experiment-grading-seal.json              # all applicable graded artifacts
+└── funnel-decision.json                       # optional write-once stage decision
 ```
 
 Manifests, state markers, terminal attempts, and stop records use exclusive,
@@ -170,6 +171,65 @@ provide the portable structural shapes. Their strict parsers remain authoritativ
 for relationships JSON Schema cannot express here, including self-authentication,
 exact artifact sets and digests, paired block topology, balanced ordering,
 runtime/runner consistency, retry equality, and secret rejection.
+
+## Shortened benchmark funnel
+
+`eval/benchmark-panels.json` freezes four nested, preregistered panels. Select
+one with `--benchmark-category`; selection replaces arbitrary `repeats`,
+`corpora`, and `caseIds`. The exact panel definition hash and evidence use are
+authenticated by the experiment manifest.
+
+| Category | Cases | Repeats | Paired review attempts | Intended use |
+| --- | ---: | ---: | ---: | --- |
+| `smoke` | 6 development | 1 | 12 | Catch obvious breakage; it cannot establish reliability or efficiency. |
+| `fast-screen` | 12 development | 2 | 48 | Reject unsafe or clearly slower ideas and identify promising ones; two repeats cannot establish reliable detection. |
+| `confirmation` | 19 development/validation | 3 | 114 | Confirm reliable visible-root and uncertainty gates before the largest panel. |
+| `full-checkpoint` | 32 development/validation | 3 | 192 | Maximum corrected visible-corpus checkpoint; still not historical-gold or sealed-holdout evidence. |
+
+Each panel preserves high-risk sentinels, clean controls, variable cases, and a
+compatibility-sensitive contract proxy. Confirmation and full-checkpoint also
+schedule `case-d3f8026e` solely as a diagnostic large-diff transport and
+registered-root sentinel. Independent adjudication showed that it is not
+truth-complete, so assessors must exclude its unmatched findings from precision,
+false-discovery, and required-adjudication gates and record that exclusion in
+the assessment notes. The other four contaminated
+cases listed by the registry are never scheduled. The exact logging-constants
+compatibility case remains excluded; the smaller panels use declared contract
+proxies and cannot prove that exact sensitivity is fixed.
+
+Run the fail-closed template only after deliberately enabling provider calls
+and configuring credential/session containment:
+
+```sh
+npm run eval:matrix -- --config eval/matrix.codex.funnel.json \
+  --benchmark-category smoke
+
+# Development iteration only: one treatment attempt per case/repeat.
+# It is authenticated as treatment-only-diagnostic and cannot advance a gate.
+npm run eval:matrix -- --config eval/matrix.codex.funnel.json \
+  --benchmark-category fast-screen --treatment-only
+```
+
+Acceptance evidence always uses contemporaneous paired control/treatment
+blocks. After judge, grade, and report complete, create a strict assessment
+matching `schemas/funnel-assessment.schema.json`, then persist the write-once
+decision:
+
+```sh
+npm run eval:funnel-decision -- \
+  --runs eval/runs/<dir> --assessment /path/to/funnel-assessment.json
+```
+
+The decision rejects stopped or unpaired experiments, missing terminal work,
+treatment completion degradation, reliable high-severity regressions,
+additional blocking unsupported treatment findings, and efficiency results
+whose intervals cannot reach the preregistered target. Required unresolved
+adjudications and weak confirmation remain `inconclusive`. Smoke does not gate
+efficiency; fast-screen requires a positive signal; confirmation and
+full-checkpoint require the target improvement plus an interval wholly above
+zero. Only a paired full-checkpoint can return `complete`. The assessment,
+seal identities, derived completion counts, result, and content hash are
+retained in `funnel-decision.json`.
 
 ## Case library
 

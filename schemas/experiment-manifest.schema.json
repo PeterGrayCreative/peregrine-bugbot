@@ -13,6 +13,7 @@
     "evidenceClass": {
       "enum": ["diagnostic-visible-subset", "visible-seeded-checkpoint"]
     },
+    "benchmarkCategory": { "$ref": "#/$defs/benchmarkCategory" },
     "hashes": { "$ref": "#/$defs/hashes" },
     "models": {
       "type": "array",
@@ -173,6 +174,16 @@
       "type": "string",
       "pattern": "^attempt-[0-9]{6}\\.json$"
     },
+    "benchmarkCategory": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "enum": ["smoke", "fast-screen", "confirmation", "full-checkpoint"] },
+        "definitionSha256": { "$ref": "#/$defs/sha256" },
+        "evidenceUse": { "enum": ["paired-acceptance", "treatment-only-diagnostic"] }
+      },
+      "required": ["name", "definitionSha256", "evidenceUse"]
+    },
     "limits": {
       "type": "object",
       "additionalProperties": false,
@@ -259,6 +270,7 @@
       "additionalProperties": false,
       "properties": {
         "mode": { "enum": ["structural-smoke", "screening", "visible-checkpoint", "checkpoint"] },
+        "comparison": { "const": "treatment-only" },
         "seed": {
           "type": "integer",
           "minimum": 0,
@@ -307,6 +319,7 @@
             },
             "not": {
               "anyOf": [
+                { "required": ["comparison"] },
                 { "required": ["control"] },
                 { "required": ["treatment"] }
               ]
@@ -321,7 +334,17 @@
                 "properties": { "kind": { "enum": ["claude", "codex"] } }
               }
             },
-            "required": ["control", "treatment"],
+            "allOf": [
+              {
+                "if": { "required": ["comparison"] },
+                "then": {
+                  "properties": { "mode": { "const": "screening" } },
+                  "required": ["treatment"],
+                  "not": { "required": ["control"] }
+                },
+                "else": { "required": ["control", "treatment"] }
+              }
+            ],
             "oneOf": [
               {
                 "properties": {

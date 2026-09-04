@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://peregrine.dev/schemas/funnel-assessment.schema.json",
+  "title": "Peregrine shortened benchmark funnel assessment",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "experimentId": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "benchmarkCategory": { "enum": ["smoke", "fast-screen", "confirmation", "full-checkpoint"] },
+    "reliableHighSeverityRegressions": { "type": "integer", "minimum": 0 },
+    "reliableOtherRegressions": { "type": "integer", "minimum": 0 },
+    "blockingUnsupportedFindings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "control": { "type": "integer", "minimum": 0 },
+        "treatment": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["control", "treatment"]
+    },
+    "unresolvedRequiredAdjudications": { "type": "integer", "minimum": 0 },
+    "efficiency": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "metric": { "enum": ["paired-median-wall-time", "effective-cost"] },
+        "targetImprovementPercent": { "type": "number", "minimum": 0 },
+        "observedImprovementPercent": { "type": ["number", "null"] },
+        "confidenceIntervalPercent": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "lower": { "type": "number" },
+                "upper": { "type": "number" }
+              },
+              "required": ["lower", "upper"]
+            }
+          ]
+        }
+      },
+      "required": ["metric", "targetImprovementPercent", "observedImprovementPercent", "confidenceIntervalPercent"]
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "experimentId",
+    "benchmarkCategory",
+    "reliableHighSeverityRegressions",
+    "reliableOtherRegressions",
+    "blockingUnsupportedFindings",
+    "unresolvedRequiredAdjudications",
+    "efficiency",
+    "notes"
+  ]
+}

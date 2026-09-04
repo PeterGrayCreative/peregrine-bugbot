@@ -162,6 +162,26 @@ test("visible checkpoint scheduling permits only paired development and validati
   }), /visible-checkpoint may only schedule development and validation/);
 });
 
+test("treatment-only screening schedules one diagnostic attempt per block", () => {
+  const protocol: ExperimentProtocol = {
+    ...screeningProtocol,
+    comparison: "treatment-only",
+    control: undefined,
+  };
+  const schedule = buildExperimentSchedule({
+    protocol,
+    repeats: 2,
+    configs: [{ name: "treatment", runner: "codex" }],
+    cases: [{ caseName: "development/case-11111111", corpus: "development", expectedBugCount: 1 }],
+  });
+  assert.equal(schedule.length, 2);
+  assert.ok(schedule.every((item) => item.variant === "treatment" && item.position === 1));
+  assert.throws(
+    () => parseExperimentProtocol({ ...protocol, mode: "visible-checkpoint" }),
+    /supported only for screening/,
+  );
+});
+
 test("visible checkpoint manifests bind a non-gold evidence classification", () => {
   assert.equal(visibleCheckpointEvidenceClass(), "visible-seeded-checkpoint");
   assert.equal(visibleCheckpointEvidenceClass(["case-11111111"]), "diagnostic-visible-subset");
@@ -289,6 +309,20 @@ test("experiment manifests authenticate normalized immutable provenance", () => 
   const tampered = JSON.parse(JSON.stringify(manifest)) as ExperimentManifest;
   tampered.repositoryCommit = "2".repeat(40);
   assert.throws(() => parseExperimentManifest(tampered), /does not authenticate/);
+
+  const { experimentId: _experimentId, ...manifestBody } = manifest;
+  const categorized = buildExperimentManifest({
+    ...manifestBody,
+    benchmarkCategory: {
+      name: "fast-screen",
+      definitionSha256: "e".repeat(64),
+      evidenceUse: "paired-acceptance",
+    },
+  });
+  assert.equal(parseExperimentManifest(categorized).benchmarkCategory?.name, "fast-screen");
+  const categoryTamper = JSON.parse(JSON.stringify(categorized));
+  categoryTamper.benchmarkCategory.name = "confirmation";
+  assert.throws(() => parseExperimentManifest(categoryTamper), /does not authenticate/);
 });
 
 test("ceiling decisions deny providers, distinguish pre-provider failures, and stop on unknown spend", () => {

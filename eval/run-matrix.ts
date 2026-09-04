@@ -99,6 +99,13 @@ import {
   probeContainedRuntime,
 } from "./runtime-containment.js";
 import { readBehavioralCaseAdmission } from "./case-curation.js";
+import {
+  applyBenchmarkCategory,
+  applyTreatmentOnlyDiagnostic,
+  bindBenchmarkCategory,
+  loadBenchmarkPanelRegistry,
+  type BenchmarkCategoryBinding,
+} from "./benchmark-panels.js";
 
 interface RunMatrixOptions {
   casesDir?: string;
@@ -118,6 +125,10 @@ interface RunMatrixOptions {
   ) => Promise<ExperimentRuntime>;
   /** Test seam for simulating interruption after durable terminal evidence. */
   afterAttemptPersisted?: (attempt: RunAttempt) => void;
+  /** Select one immutable shortened-funnel category from benchmark-panels.json. */
+  benchmarkCategory?: import("../src/types.js").BenchmarkCategory;
+  /** Run only the treatment arm; permitted solely as smoke/fast diagnostic evidence. */
+  treatmentOnly?: boolean;
   /** Test seam; production and normal eval calls use prepareReviewManifest. */
   manifestPreparer?: EvaluationManifestPreparer;
   /** Test seam for verifying that attempt cleanup cannot erase incurred work. */
@@ -161,8 +172,18 @@ export async function runMatrix(
   }
   const resolvedConfigPath = resolve(configPath ?? "eval/matrix.config.json");
   const matrixSource = readFileSync(resolvedConfigPath, "utf8");
-  const matrix = JSON.parse(matrixSource) as MatrixConfig;
+  const parsedMatrix = JSON.parse(matrixSource) as MatrixConfig;
+  const panelRegistry = parsedMatrix.benchmarkCategory !== undefined || options.benchmarkCategory !== undefined
+    ? loadBenchmarkPanelRegistry()
+    : undefined;
+  const selectedMatrix = options.benchmarkCategory === undefined
+    ? parsedMatrix
+    : applyBenchmarkCategory(parsedMatrix, options.benchmarkCategory, panelRegistry!);
+  const matrix = options.treatmentOnly ? applyTreatmentOnlyDiagnostic(selectedMatrix) : selectedMatrix;
   validateMatrixCaseSelection(matrix);
+  const benchmarkCategory = matrix.benchmarkCategory === undefined
+    ? undefined
+    : bindBenchmarkCategory(matrix, panelRegistry!);
   const protocol = matrix.experiment === undefined
     ? undefined
     : parseExperimentProtocol(matrix.experiment, `${resolvedConfigPath}.experiment`);
@@ -272,6 +293,7 @@ export async function runMatrix(
         schedule: experimentSchedule,
         lineage: experimentManifest.lineage,
         runtimeMetadataFor: options.runtimeMetadataFor,
+        benchmarkCategory,
       });
       if (canonicalJson(current) !== canonicalJson(experimentManifest)) {
         throw new Error("resume environment does not match the immutable experiment manifest");
@@ -327,6 +349,7 @@ export async function runMatrix(
           schedule: source.experiment.schedule,
           ...(source.experiment.lineage ? { lineage: source.experiment.lineage } : {}),
           runtimeMetadataFor: options.runtimeMetadataFor,
+          benchmarkCategory,
         });
         assertRetryEnvironmentMatches(source.experiment, comparable);
         schedule = buildRetrySchedule(sourceAttempt, reference);
@@ -347,6 +370,7 @@ export async function runMatrix(
         schedule,
         ...(lineage ? { lineage } : {}),
         runtimeMetadataFor: options.runtimeMetadataFor,
+        benchmarkCategory,
       });
       manifest = matrixManifestFromExperiment(experimentManifest);
       outDir = createUniqueRunDirectory(runsBase, now());
@@ -701,6 +725,7 @@ interface PrepareExperimentManifestInput {
   runtimeMetadataFor?: RunMatrixOptions["runtimeMetadataFor"];
   /** Safe only after repository and corpus hashes are revalidated unchanged. */
   reuseProfileSha256?: string;
+  benchmarkCategory?: BenchmarkCategoryBinding;
 }
 
 function effectiveMatrixConfigs(
@@ -932,6 +957,7 @@ async function prepareExperimentManifest(
     ...(input.protocol.mode === "visible-checkpoint" ? {
       evidenceClass: visibleCheckpointEvidenceClass(input.matrix.caseIds),
     } : {}),
+    ...(input.benchmarkCategory ? { benchmarkCategory: input.benchmarkCategory } : {}),
     hashes: {
       repositorySha256,
       corpusSha256,
@@ -977,6 +1003,7 @@ async function assertExperimentSnapshotUnchanged(input: {
     ...(input.expected.lineage ? { lineage: input.expected.lineage } : {}),
     runtimeMetadataFor: input.runtimeMetadataFor,
     reuseProfileSha256: input.expected.hashes.profileSha256,
+    benchmarkCategory: input.expected.benchmarkCategory,
   });
   if (canonicalJson(current) !== canonicalJson(input.expected)) {
     throw new Error("experiment inputs changed after the immutable manifest was written");
@@ -1512,7 +1539,7 @@ function validateMatrixCaseSelection(matrix: MatrixConfig): void {
   if (!Array.isArray(matrix.configs)) throw new Error("matrix configs must be an array");
   if (matrix.experiment !== undefined) {
     const unexpected = Object.keys(matrix).filter(
-      (key) => !["repeats", "configs", "corpora", "caseIds", "experiment"].includes(key),
+      (key) => !["repeats", "configs", "corpora", "caseIds", "benchmarkCategory", "experiment"].includes(key),
     );
     if (unexpected.length > 0) {
       throw new Error(`matrix config contains unsupported field ${unexpected[0]}`);
@@ -1560,6 +1587,10 @@ function validateMatrixCaseSelection(matrix: MatrixConfig): void {
     if (new Set(matrix.caseIds).size !== matrix.caseIds.length) {
       throw new Error("matrix caseIds must not contain duplicates");
     }
+  }
+  if (matrix.benchmarkCategory !== undefined &&
+    !(["smoke", "fast-screen", "confirmation", "full-checkpoint"] as const).includes(matrix.benchmarkCategory)) {
+    throw new Error("matrix benchmarkCategory is invalid");
   }
 }
 
