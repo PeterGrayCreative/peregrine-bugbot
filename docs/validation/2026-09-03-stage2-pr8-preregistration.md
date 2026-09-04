@@ -62,3 +62,21 @@ is uncontrolled.
 This screening is diagnostic seeded-corpus evidence. It cannot establish
 historical-gold, sealed-holdout, production-routing, or final non-inferiority
 approval.
+
+## Pre-execution amendment
+
+An initial launch from `3cb554ff3c7ed9c1daeb599db3b2fd9f6b3a8d6c` was
+interrupted after two terminal attempts and one started attempt when independent
+review found that the new method hashes were not accepted by strict artifact
+ingestion and that pre-provider compilation happened after provider-started
+accounting. The unsealed local directory is
+`eval/runs/2026-09-04T01-42-48-423Z`; it is invalid evidence and will not be
+resumed, graded, or used for decisions.
+
+Commit `067e51c` admits and validates the paired hashes and moves the durable
+provider-started boundary to the first actual contained provider invocation.
+The case panel, schedule seed, arms, stopping rules, metrics, and acceptance
+criteria above remain unchanged. A fresh experiment directory and experiment
+identity will be used after this amendment is committed, validated, reviewed,
+and pushed. No partial finding result was used to change the protocol or
+implementation.
