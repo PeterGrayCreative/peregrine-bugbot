@@ -2,7 +2,7 @@
 
 **Companion plan:** [2026-09-02-bug-finding-and-cost-optimization-plan.md](./2026-09-02-bug-finding-and-cost-optimization-plan.md)
 **Status:** Active
-**Last updated:** 2026-09-03
+**Last updated:** 2026-09-04
 
 This checklist tracks delivery of the plan without replacing its rationale, risk analysis, or acceptance criteria. Update the status table and the relevant PR section whenever a branch is opened, validation evidence changes, a decision is made, or a PR merges.
 
@@ -36,10 +36,12 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | Plan PR 6 | Typed manifest shadow/parity mode | PR 3 | Merged | [#16](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/16) |
 | Plan PR 7 | Seeded visible corpus and diagnostic baseline | PRs 4-6 | Seeded corpus merged; historical gold and holdout remain pending | [#21](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/21) |
 | Benchmark capability checkpoint | Reproducible Codex screening, contained judge, grading, and report | PRs 1-7 | Merged | [#21](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/21) |
-| Stage 2 variance baseline | Three-repeat strong-control versus Luna-medium screening | Benchmark checkpoint | Complete; Luna-medium replacement rejected | Pending |
-| Plan PR 8 | Stable investigator core and variable appendix | PR 7 | Implementation and screening complete; pending PR, CI, and merge | [results](../validation/2026-09-04-stage2-pr8-results.md) |
-| Plan PR 9 | Structural breadth compaction and schema bounds | PR 8 | Not started | - |
-| Plan PR 10 | Activated-lane counterexamples and seam checklist | PR 9 | Not started | - |
+| Stage 2 variance baseline | Three-repeat strong-control versus Luna-medium screening | Benchmark checkpoint | Complete; Luna-medium replacement rejected | [results](../validation/2026-09-03-stage2-baseline-results.md) |
+| Plan PR 8 | Stable investigator core and variable appendix | PR 7 | Merged; attributable screen passed | [#24](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/24), [results](../validation/2026-09-04-stage2-pr8-results.md) |
+| Visible checkpoint protocol | Admit full visible seeded development/validation comparisons without gold claims | Benchmark checkpoint | Merged | [#25](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/25) |
+| Plan PR 9 | Structural breadth compaction and schema bounds | PR 8 | Two implementations benchmarked and rejected; unmerged | [decision](../validation/2026-09-04-stage2-pr9-decision.md) |
+| Checkpoint 2 full comparison | Legacy/full versus accepted method-packet/full stack | PR 8, visible protocol | Preregistered; provider run pending | [protocol](../validation/2026-09-04-stage2-checkpoint2-visible-preregistration.md) |
+| Plan PR 10 | Activated-lane counterexamples and seam checklist | PR 8 and Checkpoint 2 | Not started | - |
 | Plan PR 11 | Investigation coverage and runner-owned completeness | PR 10 | Not started | - |
 | Plan PR 12 | Bounded risk-sensitive candidate budgets | PR 11 | Not started | - |
 | Plan PR 13 | First trusted repository profile and benchmark | PRs 7, 12 | Not started | - |
@@ -420,7 +422,12 @@ families, a steward-controlled holdout, and the full unmodified baseline exist.
 - [x] Run and record the preregistered three-repeat Stage 2 variance baseline.
 - [x] Reject Luna-medium-only as a production replacement after one reliable
   high-severity seeded regression despite a 25.7% median paired wall-time gain.
-- [ ] PRs 8-9 merged.
+- [x] PR 8 merged.
+- [x] PR 9's structural and adaptive compaction designs received attributable
+  paired screens and were rejected rather than merged after worsening median
+  paired wall time.
+- [x] Freeze the evidence-driven substitution: the accepted Stage 2 treatment
+  is PR 8's method packet with the existing full ledger.
 - [ ] No reliably detected high-severity root cause regresses.
 - [ ] No more than one total visible seeded bug regresses from detection in at
   least two of three runs.

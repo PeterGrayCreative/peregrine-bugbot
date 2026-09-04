@@ -143,14 +143,21 @@ Implement as small, independently reviewable PRs:
 | 7 | Curate gold set v1 and record the unmodified baseline | 4–6 |
 | 8 | Add a stable investigator core plus variable lane/profile appendix | 7 |
 | 9 | Add structural breadth compaction and concise output-schema bounds | 8 |
-| 10 | Add activated-lane counterexamples and the seam checklist | 9 |
+| 10 | Add activated-lane counterexamples and the seam checklist | 8 |
 | 11 | Add compact investigation coverage and runner-owned completeness semantics | 10 |
 | 12 | Add bounded, risk-sensitive candidate budgets | 11 |
 | 13 | Build and benchmark the first target-repository profile | 7, 12 |
 | 14 | Pilot hunk-safe large-diff chunking | 12 |
 | 15 | Expand to approximately 50 cases and pilot repository-opt-in routing | 13, 14 |
 
-PRs 8–12 each receive their own paired screening comparison. Run the full development/validation corpus at Checkpoints 2 and 3. PRs 13–15 remain feature-flagged until their specific gates pass, and the sealed holdout runs only after the selected design, thresholds, and route policy are frozen.
+PRs 8–12 each receive their own paired screening comparison. A failed
+intervention remains recorded as negative evidence and is not merged merely to
+preserve the sequence. The next independent intervention may proceed from the
+latest accepted dependency when the plan records that substitution before its
+benchmark is frozen. Run the full development/validation corpus at Checkpoints
+2 and 3. PRs 13–15 remain feature-flagged until their specific gates pass, and
+the sealed holdout runs only after the selected design, thresholds, and route
+policy are frozen.
 
 ---
 
@@ -477,7 +484,10 @@ Do not use shorter Codex timeouts as a budget. Use concise prompts, schema bound
 Using randomized, contemporaneous control/treatment blocks across three repeats, define a bug as reliably detected when it is independently adjudicated as found in at least two of three runs. Pre-register the primary cost condition (cold, warm, or a production-weighted mix) and the non-inferiority margin before running:
 
 - No reliably detected high-severity root cause is lost.
-- No more than one total gold bug regresses from detection in at least two of three runs.
+- At the visible Stage 2 and Stage 3 checkpoints, no more than one total visible
+  seeded bug regresses from detection in at least two of three runs. At the
+  final release/routing gate, apply the separately frozen historical-gold and
+  sealed-holdout margins instead; a visible checkpoint cannot satisfy them.
 - Blocking false positives do not increase.
 - Completion rate does not decline.
 - Effective cost or median wall time falls by at least 20%.
@@ -487,7 +497,19 @@ Use this paired non-inferiority gate instead of “within one standard deviation
 
 ### Checkpoint 2
 
-The method-packet and compaction interventions each have attributable results. Effective cost or median wall time is at least 20% lower without material recall regression.
+The method-packet and compaction interventions each have attributable results.
+If an intervention fails its registered gate, retain the negative evidence and
+exclude that implementation from the accepted stack. The full visible
+development/validation comparison tests the accepted Stage 2 stack against a
+contemporaneous control. Effective cost or median wall time is at least 20%
+lower without material recall regression.
+
+The first structural-compaction implementation and its adaptive revision both
+preserved measured quality but worsened median paired wall time. They are
+rejected and remain unmerged. The accepted Checkpoint 2 treatment is therefore
+PR 8's stable method packet with the existing full breadth ledger. PR 10 may
+proceed from PR 8 after Checkpoint 2 passes; it does not depend on accepting a
+failed compaction representation.
 
 ---
 
