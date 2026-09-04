@@ -538,24 +538,33 @@ export async function runMatrix(
           }
 
           if (experimentManifest && modelConfig.runner !== "mock") {
-            await assertExperimentSnapshotUnchanged({
-              expected: experimentManifest,
-              matrix,
-              matrixSource,
-              cases,
-              casesDir,
-              protocol: experimentManifest.protocol,
-              baseConfig,
-              effective,
-              runtimeMetadataFor: options.runtimeMetadataFor,
-            });
-            writeExclusiveJson(outDir, join(outDir, providerStartedFile(attemptId)), {
-              schemaVersion: 1,
-              experimentId: experimentManifest.experimentId,
-              attemptId,
-              providerStartedAt: isoTimestamp(now()),
-            });
-            providerStartedIds.push(attemptId);
+            const activeExperiment = experimentManifest;
+            const containedRun = materialized.evaluationIsolation.runProvider!;
+            let providerStarted = false;
+            materialized.evaluationIsolation.runProvider = async (...providerArgs) => {
+              if (!providerStarted) {
+                await assertExperimentSnapshotUnchanged({
+                  expected: activeExperiment,
+                  matrix,
+                  matrixSource,
+                  cases,
+                  casesDir,
+                  protocol: activeExperiment.protocol,
+                  baseConfig,
+                  effective,
+                  runtimeMetadataFor: options.runtimeMetadataFor,
+                });
+                writeExclusiveJson(outDir, join(outDir, providerStartedFile(attemptId)), {
+                  schemaVersion: 1,
+                  experimentId: activeExperiment.experimentId,
+                  attemptId,
+                  providerStartedAt: isoTimestamp(now()),
+                });
+                providerStartedIds.push(attemptId);
+                providerStarted = true;
+              }
+              return containedRun(...providerArgs);
+            };
           }
 
           const result = await (options.engineFor ?? getEngine)(modelConfig.runner).review(ctx);

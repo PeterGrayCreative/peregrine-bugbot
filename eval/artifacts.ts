@@ -1226,11 +1226,14 @@ function validateEngineStageTelemetry(
   for (const stageName of ["breadth", "investigation"] as const) {
     if (raw[stageName] === undefined) continue;
     const stage = object(raw[stageName], `${source}.${stageName}`);
+    const methodHashes = stageName === "investigation"
+      ? ["methodCoreSha256", "methodSourceSha256"]
+      : [];
     const keys = engine === "codex"
-      ? new Set(["output", "model", "promptSha256", "usage", "durationMs", "malformedEventLines"])
+      ? new Set(["output", "model", "promptSha256", "usage", "durationMs", "malformedEventLines", ...methodHashes])
       : stageName === "breadth"
         ? new Set(["output", "model", "promptSha256", "usage", "durationMs"])
-        : new Set(["model", "promptSha256", "usage", "durationMs"]);
+        : new Set(["model", "promptSha256", "usage", "durationMs", ...methodHashes]);
     onlyKeys(stage, keys, `${source}.${stageName}`);
     if (stage.durationMs === undefined || stage.usage === undefined ||
       stage.model === undefined || stage.promptSha256 === undefined) {
@@ -1245,6 +1248,20 @@ function validateEngineStageTelemetry(
     const promptSha256 = strictString(stage.promptSha256, `${source}.${stageName}.promptSha256`, 64);
     if (!/^[a-f0-9]{64}$/.test(promptSha256)) {
       throw new Error(`${source}.${stageName}.promptSha256 must be lowercase SHA-256 hex`);
+    }
+    if (stageName === "investigation") {
+      const hasCoreHash = stage.methodCoreSha256 !== undefined;
+      const hasSourceHash = stage.methodSourceSha256 !== undefined;
+      if (hasCoreHash !== hasSourceHash) {
+        throw new Error(`${source}.${stageName} method hashes must be present together`);
+      }
+      for (const field of ["methodCoreSha256", "methodSourceSha256"] as const) {
+        if (stage[field] === undefined) continue;
+        const hash = strictString(stage[field], `${source}.${stageName}.${field}`, 64);
+        if (!/^[a-f0-9]{64}$/.test(hash)) {
+          throw new Error(`${source}.${stageName}.${field} must be lowercase SHA-256 hex`);
+        }
+      }
     }
     if (stageName === "breadth" || engine === "codex") {
       const output = object(stage.output, `${source}.${stageName}.output`);
