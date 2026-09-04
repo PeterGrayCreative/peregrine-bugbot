@@ -630,6 +630,67 @@ test("the Stage 2 baseline preregistration freezes a bounded repeated screening"
   assert.equal(config.repeats * config.caseIds.length * config.configs.length, 72);
 });
 
+test("the Stage 2 PR 8 preregistration isolates the method-packet intervention", () => {
+  const config = JSON.parse(
+    readFileSync(join(process.cwd(), "eval", "matrix.codex.stage2-pr8.json"), "utf8"),
+  ) as {
+    repeats: number;
+    corpora: string[];
+    caseIds: string[];
+    configs: Array<{
+      name: string;
+      runner: string;
+      overrides: Record<string, unknown>;
+    }>;
+    experiment: unknown;
+  };
+  const protocol = parseExperimentProtocol(config.experiment, "matrix.codex.stage2-pr8.json");
+
+  assert.equal(protocol.mode, "screening");
+  assert.equal(protocol.control, "legacy-investigator-prompt");
+  assert.equal(protocol.treatment, "stable-method-packet");
+  assert.equal(protocol.providerAccess, "cli-session");
+  assert.equal(protocol.cacheCondition, "uncontrolled");
+  assert.equal(protocol.limits.maxProviderAttempts, 48);
+  assert.equal(config.repeats, 3);
+  assert.deepEqual(config.corpora, ["development"]);
+  assert.equal(config.caseIds.length, 8);
+  assert.equal(new Set(config.caseIds).size, config.caseIds.length);
+  assert.ok(config.caseIds.every((id) => /^case-[0-9a-f]{8}$/.test(id)));
+  assert.deepEqual(
+    config.configs.map(({ name, runner, overrides }) => ({
+      name,
+      runner,
+      promptMode: overrides.investigationPromptMode,
+      breadthModel: overrides.breadthModel,
+      breadthEffort: overrides.breadthEffort,
+      investigationModel: overrides.investigationModel,
+      investigationEffort: overrides.investigationEffort,
+    })),
+    [
+      {
+        name: "legacy-investigator-prompt",
+        runner: "codex",
+        promptMode: "legacy",
+        breadthModel: "gpt-5.6-luna",
+        breadthEffort: "high",
+        investigationModel: "gpt-5.6-sol",
+        investigationEffort: "high",
+      },
+      {
+        name: "stable-method-packet",
+        runner: "codex",
+        promptMode: "method-packet",
+        breadthModel: "gpt-5.6-luna",
+        breadthEffort: "high",
+        investigationModel: "gpt-5.6-sol",
+        investigationEffort: "high",
+      },
+    ],
+  );
+  assert.equal(config.repeats * config.caseIds.length * config.configs.length, 48);
+});
+
 test("stop records and write-once marker records parse strictly", () => {
   const schedule = pairedSchedule();
   const decision = evaluateExperimentCeilings({

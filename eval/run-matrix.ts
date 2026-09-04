@@ -726,6 +726,7 @@ function effectiveMatrixConfig(
     identity.breadthEffort = stageConfig.breadthEffort;
     identity.investigationModel = stageConfig.investigationModel;
     identity.investigationEffort = stageConfig.investigationEffort;
+    identity.investigationPromptMode = stageConfig.investigationPromptMode ?? "legacy";
   }
   return { config, identity };
 }

@@ -2,6 +2,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { buildBreadthPrompt, buildInvestigationPrompt } from "../core/prompt.js";
+import { compileInvestigatorMethodPacket } from "../core/method-packet.js";
 import { parseBreadthResult } from "../core/breadth-result.js";
 import { prepareReviewManifest } from "../core/manifest.js";
 import { bundledSkillDir, schemaPath } from "../core/paths.js";
@@ -237,6 +238,27 @@ export function createCodexEngine(
         : bundledSkillDir(cfg.skillName);
       const manifest = await prepareReviewManifest(ctx, cfg.skillName);
       const modelConfig = `${cfg.breadthModel}/${cfg.breadthEffort}->${cfg.investigationModel}/${cfg.investigationEffort}`;
+      let methodPacket;
+      try {
+        methodPacket = cfg.investigationPromptMode === "method-packet"
+          ? await compileInvestigatorMethodPacket({
+              skillDir: ctx.evaluationIsolation
+                ? join(ctx.evaluationIsolation.providerAssetsRoot, "skills", cfg.skillName)
+                : skillDir,
+              ctx,
+              manifest,
+              run,
+            })
+          : undefined;
+      } catch (error) {
+        throw new RunFailureError(
+          "configuration",
+          `codex investigator method packet unavailable: ${safeDiagnostic(
+            error instanceof Error ? error.message : String(error),
+          )}`,
+          { cause: error },
+        );
+      }
       const outDir = mkdtempSync(join(
         ctx.evaluationIsolation?.providerOutputRoot ?? tmpdir(),
         "peregrine-codex-",
@@ -307,6 +329,7 @@ export function createCodexEngine(
               `A separate ${cfg.breadthModel}/${cfg.breadthEffort} breadth pass produced the ledger below. Investigate and adjudicate on ${cfg.investigationModel}/${cfg.investigationEffort}.`,
               breadthText,
               manifest,
+              methodPacket,
             ),
             untrustedModelText: breadthText,
             timeoutMs: remaining,
@@ -371,6 +394,10 @@ export function createCodexEngine(
                 usage: investigation.usage,
                 durationMs: investigation.durationMs,
                 malformedEventLines: investigation.malformedEventLines,
+                ...(methodPacket ? {
+                  methodCoreSha256: methodPacket.stableCoreSha256,
+                  methodSourceSha256: methodPacket.sourceSha256,
+                } : {}),
               },
             },
           });

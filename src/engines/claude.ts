@@ -1,6 +1,7 @@
 import { breadthSchemaJson, parseBreadthResult } from "../core/breadth-result.js";
 import { prepareReviewManifest } from "../core/manifest.js";
 import { buildBreadthPrompt, buildInvestigationPrompt } from "../core/prompt.js";
+import { compileInvestigatorMethodPacket } from "../core/method-packet.js";
 import { bundledSkillDir, packageRoot } from "../core/paths.js";
 import { join } from "node:path";
 import { buildEngineResult, parseReviewPayload, reviewSchemaJson } from "../core/review-result.js";
@@ -253,6 +254,27 @@ export function createClaudeEngine(
         ? join(ctx.evaluationIsolation.runProvider ? "/opt/peregrine" : ctx.evaluationIsolation.providerAssetsRoot, "skills", cfg.skillName)
         : bundledSkillDir(cfg.skillName);
       const manifest = await prepareReviewManifest(ctx, cfg.skillName);
+      let methodPacket;
+      try {
+        methodPacket = cfg.investigationPromptMode === "method-packet"
+          ? await compileInvestigatorMethodPacket({
+              skillDir: ctx.evaluationIsolation
+                ? join(ctx.evaluationIsolation.providerAssetsRoot, "skills", cfg.skillName)
+                : skillDir,
+              ctx,
+              manifest,
+              run,
+            })
+          : undefined;
+      } catch (error) {
+        throw new RunFailureError(
+          "configuration",
+          `claude investigator method packet unavailable: ${safeDiagnostic(
+            error instanceof Error ? error.message : String(error),
+          )}`,
+          { cause: error },
+        );
+      }
       const totalTurns = ctx.deep ? cfg.maxTurns * 2 : cfg.maxTurns;
       const totalBudget = ctx.deep ? cfg.maxBudgetUsd * 2 : cfg.maxBudgetUsd;
       const breadthTurns = Math.max(1, Math.floor(totalTurns * 0.25));
@@ -303,6 +325,7 @@ export function createClaudeEngine(
             `A separate ${cfg.breadthModel}/${cfg.breadthEffort} breadth process produced the ledger below. Investigate and adjudicate on ${cfg.investigationModel}/${cfg.investigationEffort}.`,
             breadthText,
             manifest,
+            methodPacket,
           ),
           untrustedModelText: breadthText,
           schema: reviewSchemaJson(),
@@ -339,6 +362,10 @@ export function createClaudeEngine(
               promptSha256: investigation.promptSha256,
               usage: investigation.usage,
               durationMs: investigation.durationMs,
+              ...(methodPacket ? {
+                methodCoreSha256: methodPacket.stableCoreSha256,
+                methodSourceSha256: methodPacket.sourceSha256,
+              } : {}),
             },
           },
         });

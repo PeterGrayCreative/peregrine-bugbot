@@ -4,6 +4,7 @@ import {
   RUNNER_NAMES,
   type ClaudeEffort,
   type CodexEffort,
+  type InvestigationPromptMode,
   type PeregrineConfig,
   type RunnerName,
 } from "./types.js";
@@ -11,6 +12,7 @@ import { validatePricingCatalog } from "./core/pricing.js";
 
 const CODEX_EFFORTS: CodexEffort[] = ["low", "medium", "high", "xhigh", "max", "ultra"];
 const CLAUDE_EFFORTS: ClaudeEffort[] = ["low", "medium", "high", "xhigh", "max"];
+const INVESTIGATION_PROMPT_MODES: InvestigationPromptMode[] = ["legacy", "method-packet"];
 
 export function loadConfig(path = "peregrine.config.json"): PeregrineConfig {
   let parsed: unknown;
@@ -30,6 +32,9 @@ export function loadConfig(path = "peregrine.config.json"): PeregrineConfig {
 function normalizeConfig(cfg: PeregrineConfig): void {
   const claude = cfg?.runners?.claude as Partial<PeregrineConfig["runners"]["claude"]> | undefined;
   if (claude && claude.breadthEffort === undefined) claude.breadthEffort = "high";
+  if (claude && claude.investigationPromptMode === undefined) claude.investigationPromptMode = "legacy";
+  const codex = cfg?.runners?.codex as Partial<PeregrineConfig["runners"]["codex"]> | undefined;
+  if (codex && codex.investigationPromptMode === undefined) codex.investigationPromptMode = "legacy";
 }
 
 function applyEnvOverrides(cfg: PeregrineConfig): void {
@@ -118,6 +123,10 @@ export function validateConfig(cfg: PeregrineConfig, path = "config"): void {
       fail(`"runners.claude.${key}" must be one of: ${CLAUDE_EFFORTS.join(", ")}`);
     }
   }
+  if (claude.investigationPromptMode !== undefined &&
+      !INVESTIGATION_PROMPT_MODES.includes(claude.investigationPromptMode as InvestigationPromptMode)) {
+    fail(`"runners.claude.investigationPromptMode" must be one of: ${INVESTIGATION_PROMPT_MODES.join(", ")}`);
+  }
   for (const key of ["maxTurns", "maxBudgetUsd", "timeoutMs"] as const) {
     positive(claude[key], `runners.claude.${key}`);
   }
@@ -131,6 +140,10 @@ export function validateConfig(cfg: PeregrineConfig, path = "config"): void {
     if (!CODEX_EFFORTS.includes(codex[key] as CodexEffort)) {
       fail(`"runners.codex.${key}" must be one of: ${CODEX_EFFORTS.join(", ")}`);
     }
+  }
+  if (codex.investigationPromptMode !== undefined &&
+      !INVESTIGATION_PROMPT_MODES.includes(codex.investigationPromptMode as InvestigationPromptMode)) {
+    fail(`"runners.codex.investigationPromptMode" must be one of: ${INVESTIGATION_PROMPT_MODES.join(", ")}`);
   }
   positive(codex.timeoutMs, "runners.codex.timeoutMs");
   object(cfg.runners.mock, "runners.mock");
