@@ -36,6 +36,7 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | Plan PR 6 | Typed manifest shadow/parity mode | PR 3 | Merged | [#16](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/16) |
 | Plan PR 7 | Seeded visible corpus and diagnostic baseline | PRs 4-6 | Seeded corpus merged; historical gold and holdout remain pending | [#21](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/21) |
 | Benchmark capability checkpoint | Reproducible Codex screening, contained judge, grading, and report | PRs 1-7 | Merged | [#21](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/21) |
+| Stage 2 variance baseline | Three-repeat strong-control versus Luna-medium screening | Benchmark checkpoint | Complete; Luna-medium replacement rejected | Pending |
 | Plan PR 8 | Stable investigator core and variable appendix | PR 7 | Not started | - |
 | Plan PR 9 | Structural breadth compaction and schema bounds | PR 8 | Not started | - |
 | Plan PR 10 | Activated-lane counterexamples and seam checklist | PR 9 | Not started | - |
@@ -416,9 +417,13 @@ families, a steward-controlled holdout, and the full unmodified baseline exist.
 
 ### Checkpoint 2 - Cost intervention
 
+- [x] Run and record the preregistered three-repeat Stage 2 variance baseline.
+- [x] Reject Luna-medium-only as a production replacement after one reliable
+  high-severity seeded regression despite a 25.7% median paired wall-time gain.
 - [ ] PRs 8-9 merged.
 - [ ] No reliably detected high-severity root cause regresses.
-- [ ] No more than one total gold bug regresses from detection in at least two of three runs.
+- [ ] No more than one total visible seeded bug regresses from detection in at
+  least two of three runs.
 - [ ] Blocking false positives and completion do not regress.
 - [ ] Effective cost or median wall time improves by at least 20%.
 - [ ] Paired case-level deltas and uncertainty support the aggregate result.
