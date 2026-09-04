@@ -434,7 +434,12 @@ families, a steward-controlled holdout, and the full unmodified baseline exist.
 - [x] Run and record the preregistered three-repeat Stage 2 variance baseline.
 - [x] Reject Luna-medium-only as a production replacement after one reliable
   high-severity seeded regression despite a 25.7% median paired wall-time gain.
-- [ ] PRs 8-9 merged.
+- [x] PR 8 merged.
+- [x] PR 9's structural and adaptive compaction designs were independently
+  benchmarked and rejected because they preserved quality but worsened median
+  paired wall time. Neither implementation is merged.
+- [ ] Freeze the evidence-driven Checkpoint 2 substitution: accepted Stage 2
+  treatment is PR 8's method packet with the existing full ledger.
 - [ ] No reliably detected high-severity root cause regresses.
 - [ ] No more than one total visible seeded bug regresses from detection in at
   least two of three runs.
