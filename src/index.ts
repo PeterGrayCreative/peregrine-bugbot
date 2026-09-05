@@ -223,8 +223,16 @@ async function main(): Promise<void> {
       console.log(JSON.stringify(result, null, 2));
       return;
     }
+    case "adjudicate": {
+      const runs = arg("--runs");
+      const input = arg("--input");
+      if (!runs || !input) throw new Error("adjudicate requires --runs and --input");
+      const ledger = (await import("../eval/adjudication-ledger.js")).writeExperimentAdjudication(runs, input);
+      console.log(JSON.stringify({ ledgerSha256: ledger.ledgerSha256, records: ledger.records.length }, null, 2));
+      return;
+    }
     default:
-      console.error("Usage: peregrine <review|post|doctor|matrix|judge|grade|report|funnel-decision> [options]");
+      console.error("Usage: peregrine <review|post|doctor|matrix|judge|grade|report|adjudicate|funnel-decision> [options]");
       process.exitCode = 1;
   }
 }

@@ -43,6 +43,7 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | Checkpoint 2 full comparison | Legacy/full versus accepted method-packet/full stack | PR 8, visible protocol | Complete; visible cost gates passed, corpus correction required before Checkpoint 3 measurement | [results](../validation/2026-09-04-stage2-checkpoint2-visible-results.md) |
 | Shortened benchmark funnel | Frozen smoke, fast-screen, confirmation, and full-checkpoint panels with fail-closed decisions | Checkpoint 2 adjudication | Merged | [#28](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/28) |
 | Luna-max / Terra-xhigh route screen | Paired smoke against accepted Luna-high / Sol-high route | Shortened benchmark funnel | Stopped before fast-screen; wall time unacceptable | [results](../validation/2026-09-04-luna-max-terra-xhigh-smoke-results.md) |
+| Benchmark semantics remediation | Append-only adjudication, diagnostic quarantine, truthful miss attribution | Shortened benchmark funnel | In progress | This branch |
 | Plan PR 10 | Activated-lane counterexamples and seam checklist | PR 8 and Checkpoint 2 | Not started | - |
 | Plan PR 11 | Investigation coverage and runner-owned completeness | PR 10 | Not started | - |
 | Plan PR 12 | Bounded risk-sensitive candidate budgets | PR 11 | Not started | - |
@@ -179,7 +180,8 @@ Must stay untouched: grading policy, prompts, budgets, and routing.
 - [x] Record semantic-judge failures as outcomes instead of aborting or dropping attempts.
 - [x] Blind the semantic judge to engine, route, and treatment.
 - [x] Classify unmatched findings as `confirmed-new`, `unsupported`, or `unresolved`.
-- [x] Classify misses as routing, breadth, investigation, budget, presentation, or infrastructure failures.
+- [x] Preserve legacy miss labels for readability; new grades use
+  `unattributed` unless authenticated stage evidence supports a narrower cause.
 - [x] Add deterministic many-to-one, cross-group, disagreement, clean-control, and judge-failure tests.
 - [x] Freeze and hash judge behavior before comparisons.
 - [x] Run `npm run validate` and contained semantic-judge comparisons.
@@ -481,12 +483,15 @@ not authorize historical-gold, holdout, routing, or final non-inferiority claims
   [PR #28](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/28)
   passed CI, CodeQL/review analysis, review posting, and credential-free
   build/smoke; this checklist commit merged with the implementation.
-- [ ] Add a separately sealed, run-bound curator-adjudication ledger so an exact
+- [x] Add a separately sealed, run-bound curator-adjudication ledger so an exact
   unresolved finding can be classified without rewriting its semantic grade or
   original funnel decision. The first paired smoke exposed this follow-up; it
   is not required to reject that route on the operator's wall-time constraint.
-- [ ] Apply diagnostic-only case restrictions consistently to aggregate reports
+- [x] Apply diagnostic-only case restrictions consistently to aggregate reports
   as well as funnel decisions so quarantined findings cannot null precision/FDR.
+- [x] Report legacy automatically inferred infrastructure misses as
+  `unattributed`; new grades do not claim a causal stage without authenticated
+  runner-owned evidence.
 
 Rollback boundary: revert this funnel slice. Existing full visible experiment
 artifacts and earlier matrix configurations remain readable and unchanged.
