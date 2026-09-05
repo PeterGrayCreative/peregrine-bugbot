@@ -46,6 +46,18 @@ Outer run sealing/stop/retry, historical consumer integration, authenticated
 scope availability, runtime/tool-policy and egress probes remain unfinished.
 R2 human curation, protected partitions, and R4 authorization gates also remain.
 
+Runner commit `e8ce1b6` passed the complete local `npm run validate`, GitHub
+`check`, and credential-free build/smoke. The structural integration report
+does not convert those passes into model-quality evidence.
+
+R2 now has four offline-complete local snapshot archives (44.26 MiB) with
+independently checked hashes, source trees, licenses, and canonical diffs.
+Their [manifest and report](../validation/2026-09-05-r2-local-replay-archive.md)
+are tracked; binaries remain local-only. All four retain shallow history and
+therefore remain rejected by the historical materializer's complete-ancestry
+gate. Bull, Next.js, NestJS, and Axios also lack required unchanged blobs.
+No newly admitted cases or protected partitions were created.
+
 - [Feasibility report](../validation/2026-09-04-r1-historical-reconstruction-feasibility.md)
 - [Machine-readable manifest](../validation/artifacts/2026-09-04-r1-historical-reconstructions/manifest.json)
 - [Source response hashes](../validation/artifacts/2026-09-04-r1-historical-reconstructions/source-hashes.md)

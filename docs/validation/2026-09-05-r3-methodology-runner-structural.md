@@ -47,7 +47,10 @@ git diff --check
 
 The methodology suite contains 45 tests. The affected production-engine,
 method-packet, and legacy experiment-core suites contain 45 tests. Both suites
-passed during integration; final-head verification remains recorded in PR CI.
+passed during integration. Commit `e8ce1b64ed365b53c81723e8e6bffddda3a825e1`
+then passed full local `npm run validate`, GitHub `check`, and the
+credential-free image build/smoke. Skipped model-review/posting/publication jobs
+are not counted as executed checks.
 
 Independent review identified and corrected inherited cheap-model priming,
 unavailable production-only context requirements, invocation self-hash trust,
