@@ -109,7 +109,7 @@ export function verifyMethodologyAssetManifest(
   return actual;
 }
 
-function parseManifest(value: unknown): MethodologyAssetManifest {
+export function parseMethodologyAssetManifest(value: unknown): MethodologyAssetManifest {
   const root = strictObject(value, "methodology asset manifest", [
     "schemaVersion", "protocol", "armId", "files", "treeSha256",
   ]);
@@ -147,6 +147,8 @@ function parseManifest(value: unknown): MethodologyAssetManifest {
     treeSha256: root.treeSha256,
   };
 }
+
+const parseManifest = parseMethodologyAssetManifest;
 
 function listTreeEntries(root: string): { files: string[]; directories: string[] } {
   const files: string[] = [];

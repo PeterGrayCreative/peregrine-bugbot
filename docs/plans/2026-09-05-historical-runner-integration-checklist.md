@@ -1,6 +1,6 @@
 # Historical runner integration checklist
 
-Status: future integration work after the R3 contract checkpoint. No historical
+Status: partial integration, updated 2026-09-05. No historical
 reviewer invocation is authorized or enabled by this checklist.
 
 Binding plan: [TS/JS evidence and ablation](2026-09-04-typescript-javascript-evidence-ablation-plan.md).
@@ -32,7 +32,7 @@ minimal experimental review and discovery output. They require no lane,
 invariant, confidence, disposition, or fix plan. Incomplete responses retain
 findings and limitations; an empty completed response is model self-report,
 never proof of complete scope or a globally clean case. These contracts are
-not yet mounted or used by the engines. Fourteen focused tests and nineteen
+used only by the experimental runner, not production engines. Fourteen initial focused tests and nineteen
 legacy experiment-core tests pass under Node 22 (33 total); typechecking passes.
 Review corrected path whitespace, credential-like diagnostic keys, duplicate
 cross-corpus case IDs, and oversized schedule allocation risks.
@@ -46,7 +46,7 @@ per-arm allowlists, without changing the default preparer:
 | C | Common review schema and neutral discovery schema |
 | D | Common review schema, production breadth schema, and the exact breadth-worker packet |
 
-B/D investigator methodology will be compiled inline; the whole skill tree is
+B/D investigator methodology is compiled inline; the whole skill tree is
 not mounted as a substitute. Generic arms receive no installed skill, plugin
 manifest, profile, examples, or production finding schema. Manifests bind exact
 paths and copied bytes. Missing/extra files, unexpected empty directories,
@@ -61,7 +61,36 @@ identical across arms; default materialization retains its prior asset package.
 Independent review approved this bounded slice. These tests do not establish
 historical admission, prompt neutrality, network containment, or efficacy.
 
-- [ ] **Versioned four-arm scheduling.** Extend the existing experiment machinery
+The experimental prompt/compiler and executor are now integrated with the
+existing Codex stage function. A/B dispatch one stage; C/D dispatch discovery
+and a fresh reviewer. Generic prompts retain the competent minimal baseline;
+method arms use trusted current method sources with explicit static-context,
+format, and topology adaptations. Review removed inherited model-tier priming
+and unsatisfied production-only context requirements. Every arm receives the
+same canonical raw scope. A separate exact-prompt validator preserves answer
+restrictions without inventing a breadth ledger for single-reviewer arms.
+
+Before each dispatch, exclusive invocation-intent records capture exact prompt,
+schema, resource manifest, requested route, stage cap, absolute attempt deadline,
+and previous output. Returned digests must be retained outside those mutable
+files. Terminal records bind those receipts, observed stage traces, exact raw
+outputs, aggregate usage, and rederived model limitations. Stage two must use
+the first stage's actual output. An intent is not proof of provider contact or
+served model identity. The outer run seal, stop/retry handling, and registered
+runtime/tool-policy authentication still need integration.
+
+The executor authenticates the materialized two-commit comparison with Git,
+rechecks assets at dispatch, charges preparation/sealing time to the attempt
+deadline, and retains failed-stage telemetry and non-secret malformed output.
+Its result always marks runner scope availability **unverified**; no experimental
+result is converted to production `EngineResult` or `clean`.
+
+See the [structural integration report](../validation/2026-09-05-r3-methodology-runner-structural.md)
+for tests, corrections, and remaining boundaries. No historical case admission,
+actual model inference, container leak probe, or efficacy claim follows from
+the injected test provider.
+
+- [x] **Versioned four-arm scheduling.** Extend the existing experiment machinery
   (`src/types.ts`, `eval/experiment.ts`) without reinterpreting legacy
   control/treatment pairs. One case/repeat block contains A, B, C, and D with
   deterministic balanced order. Twelve cases and two repeats must derive 24

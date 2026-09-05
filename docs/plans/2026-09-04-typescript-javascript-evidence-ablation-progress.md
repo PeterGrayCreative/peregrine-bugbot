@@ -31,13 +31,20 @@ The contract checkpoint at `2ff9961` is pushed; GitHub `check` and
 credential-free build/smoke both passed. These are implementation checks, not
 historical efficacy evidence.
 
-The next slice adds the four-arm schedule compiler and neutral output
-contracts. Its synthetic test derives 96 review attempts and 144 model calls;
-33 combined focused/legacy tests and typechecking pass. Exact resource
-allowlists now integrate with the existing materializer: nine additional tests
-verify identical raw scope, generic asset isolation, and unchanged defaults.
-Prompt assembly, runtime mount/egress attestation, execution, stage seals, and
-consumer integration remain pending.
+The four-arm compiler derives 96 review attempts and 144 planned model calls
+for the proposed twelve-case/two-repeat design. Exact per-arm resource
+allowlists integrate with the existing materializer. The pushed asset slice
+`b2ebbf0` passed GitHub `check` and credential-free build/smoke.
+
+The next integrated slice adds actual A/B/C/D prompt assembly, reuse of the
+Codex stage runner, exact pre-dispatch input receipts, and terminal records
+binding stage outputs and handoffs. Its tests inject deterministic provider
+outputs: four attempts, six dispatches, no real model calls. Results keep scope
+unverified and never claim `clean`. See the
+[structural integration report](../validation/2026-09-05-r3-methodology-runner-structural.md).
+Outer run sealing/stop/retry, historical consumer integration, authenticated
+scope availability, runtime/tool-policy and egress probes remain unfinished.
+R2 human curation, protected partitions, and R4 authorization gates also remain.
 
 - [Feasibility report](../validation/2026-09-04-r1-historical-reconstruction-feasibility.md)
 - [Machine-readable manifest](../validation/artifacts/2026-09-04-r1-historical-reconstructions/manifest.json)

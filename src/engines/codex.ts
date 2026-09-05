@@ -169,6 +169,10 @@ async function runStage(args: {
   };
 }
 
+// Research harnesses may reuse the exact Codex CLI, telemetry, and failure
+// boundary without changing the production engine's orchestration contract.
+export { runStage as runCodexStage };
+
 function withCleanupDetail(message: string, result: ExecResult): string {
   return result.cleanupErrors?.length
     ? `${message}; containment cleanup failed: ${result.cleanupErrors.join("; ")}`
