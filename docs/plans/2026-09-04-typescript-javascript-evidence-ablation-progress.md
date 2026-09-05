@@ -145,6 +145,38 @@ These totals exclude the earlier 12 exposed reconstruction opportunities.
 The next fixed batches are defect slots alpha-008/013/014/015 and random
 slots 013–016. Shared-family relationships remain explicit.
 
+Comparison batch 5 subsequently added one draft card and three retained losses
+([bindings](../validation/2026-09-05-r2-human-packet-comparison-batch5.md)).
+The integrator independently matched all four manifest hashes; the preparer
+validated 62 receipts, 58 response objects, and all four canonical historical
+diffs offline. Completed new preparation now totals **24 attempted slots,
+15 draft cards (eight defect, seven comparison), nine losses, zero admissions**.
+Random slots 017–020 are next, without substitution or inventory expansion.
+The earlier 12 exposed opportunities are also being packaged for the same
+single human review, retaining their limitations and shared-PR relationships.
+
+The integrator additionally checked batch 5's eight diff/card files and four
+decoded license payloads against their bound hashes and byte lengths. An
+initial direct-file license check failed because `license.path` names the
+historical repository path, not a copied slot-root file. The actual license
+bytes were recovered from hash-authenticated raw API objects and matched;
+the final portable packet still needs separately materialized license files.
+No original manifest or source artifact was changed by these checks.
+
+Defect batch 4 added four draft cards with no losses
+([bindings](../validation/2026-09-05-r2-human-packet-defect-batch4.md)).
+The integrator independently verified all 227 bound files, byte lengths,
+hashes, direct paths and absence of symlink traversal. Ninety GET receipts and
+two resolved acquisition failures remain preserved by the preparer. One
+two-work-item shared-root relationship has zero independent-root credit
+claimed; raw card counts must not become independent-case counts.
+
+The current completed new-batch total is **28 attempted slots, 19 draft cards
+(12 defect, seven comparison), nine losses, zero admissions**. Earlier exposed
+opportunities remain separate. Further fixed-queue collection, existing-dossier
+packaging, stopped/missing-run closure and credential-free read-tool work are
+in progress. None authorizes a model run or satisfies the human review gate.
+
 The user's sole-human curator/verifier arrangement is confirmed. Preparation
 continues toward one consolidated review request, not serial approvals. A
 portable [packet assembler](../validation/2026-09-05-r2-human-packet-assembler.md)
@@ -154,6 +186,10 @@ blank decisions, but authenticating a complete input file list and reference
 closure remains the preparer's responsibility. No real packet has been assembled.
 Neither packet
 assembly nor one person's approval can satisfy two independent-human claims.
+
+The exact assembler commit `fdae0689509d3bf59fbcb05fd94f8ecb350d9b1c` passed
+GitHub `check` and credential-free image build/smoke; draft posting, analysis
+and publishing jobs were skipped. This is structural/tooling evidence only.
 
 Commit `f53ff59` adds schedule-order enforcement and neutral grading with 86/86
 focused methodology tests and passing typecheck. GitHub `check` and
