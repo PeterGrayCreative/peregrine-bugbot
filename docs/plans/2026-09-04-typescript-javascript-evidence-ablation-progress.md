@@ -96,6 +96,18 @@ instruction author, so those slots are visible development preparation, not
 protected validation. The next two defect and two random-comparison slots are
 being prepared without changing the frozen 100-slot inventory.
 
+Comparison batch 2 subsequently finished: `r2-random-003` is a preserved
+sampled loss, and `r2-random-004` supplies one additional draft decision card.
+The [aggregate report](../validation/2026-09-05-r2-human-packet-comparison-batch2.md)
+publishes no causal answers. Its two manifest file hashes were independently
+recomputed by the integrator and match the report. The preparer authenticated
+29 receipts and 27 deduplicated response objects and reproduced both diffs
+offline. This is source/preparation evidence, not human admission.
+
+The frozen inventory integrity replay still verifies 772 receipts, 686 raw
+objects, exactly 100 attempted slots, and zero admitted cases. Comparison
+preparation continues through fixed slots 005–008; losses remain in the sample.
+
 Commit `f53ff59` adds schedule-order enforcement and neutral grading with 86/86
 focused methodology tests and passing typecheck. GitHub `check` and
 credential-free image build/smoke both passed for that exact head. See the
