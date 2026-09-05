@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/ReactiveX/rxjs/pulls/2552/comments",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T13:31:39.275Z",
+  "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/2552/comments?page=1&per_page=100",
+  "sha256": "e7df696b84d1a859acb32054cd637e05815fc605d0f2b1290d97b5960e9e617b",
+  "bytes": 19100
+}

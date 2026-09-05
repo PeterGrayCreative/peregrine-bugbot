@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/sequelize/sequelize/contents/LICENSE",
+    "parameters": {
+      "ref": "bda0df47ebcca4ad06f9eec006d35537ce6deb43"
+    }
+  },
+  "retrievedAt": "2026-09-05T13:27:51.215Z",
+  "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/contents/LICENSE?ref=bda0df47ebcca4ad06f9eec006d35537ce6deb43",
+  "sha256": "bed487f906cfc5a8c4485171315221061188b39799115dfbda91bab93a41b724",
+  "bytes": 2413
+}

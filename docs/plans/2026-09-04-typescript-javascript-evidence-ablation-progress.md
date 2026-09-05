@@ -14,8 +14,8 @@ minimal reviewer. Production routing remains frozen.
 | Step | State | Evidence / remaining gate |
 | --- | --- | --- |
 | R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
-| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. Six development reconstructions have independent AI static checks; six more are underway. Zero new admitted cases. Human curation and protected partitioning remain open. |
-| R3: neutral and truthful harness | In progress | Integrated audited PR30 adjudication/reporting and attribution. Partial historical truth and opt-in source contracts have 13 passing tests; legacy failures retain attempt accounting. New protocol scheduling fails closed until admission/metric integration. Completeness, isolation and neutral arms remain open. |
+| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. Twelve exposed leads checked: twelve recoverable opportunities from eleven PRs, plus one unrecoverable lead. Two heads from one PR are not independent cases. Zero new admitted cases. Human curation and protected partitioning remain open. |
+| R3: neutral and truthful harness | In progress | Integrated audited PR30 adjudication/reporting and attribution. Partial historical truth, opt-in source, and research-only scope contracts have 21 passing tests; legacy failures retain attempt accounting. New protocol scheduling fails closed until admission/metric integration. Runner evidence integration, isolation and neutral arms remain open. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |
 | R6: select and confirm | Not started | Requires frozen candidate and new powered confirmation corpus. |

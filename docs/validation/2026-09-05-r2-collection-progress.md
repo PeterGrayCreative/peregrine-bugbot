@@ -107,10 +107,34 @@ branch. It also separated webpack's timestamp-deletion and time-boundary
 defects into distinct candidate roots. The two comparisons are narrowly scoped;
 the VS Code hover defect is low-impact presentation evidence only.
 
-`development-exposure-v1.json` records 12 exposed reconstruction opportunities,
-including six additional attempts now underway. This is not an admitted
-12-case development set. The final 12/24 split is not frozen. Selection control,
-36-case admission, and independent human curation remain open.
+`development-exposure-v1.json` records 12 exposed reconstruction leads. Both
+six-lead batches now have primary and independent AI static checks. The second
+archive, `development-reconstruction-bundle-second-v1.json`, binds 149 files
+and references the immutable first bundle. Exact raw responses and canonical
+diffs are retained; scratch source clones are not included. Neither archive is
+yet a self-contained replay bundle.
+
+| Second-batch lead | Checked disposition | Important limit |
+| --- | --- | --- |
+| Sequelize #8430 | Scoped comparison: manual transaction setup preserves outer CLS state | Not globally clean; managed transactions remain a separate path |
+| RxJS #2397 | Recoverable declaration-contract regression | Final force-pushed sibling preserves the generic break; no restoration fix found in the bounded search |
+| Nest #5710 | Scoped comparison: existing client-option branch remains accepted | Review head is from 2020; merge is from 2021; original chronology retained |
+| Axios #874 | Scoped comparison against the contemporaneous Node header contract | Independent check reverses the primary rejection: absence of a historical review does not disqualify a naturally sampled comparison |
+| VS Code #98988 | Unrecoverable original reviewed head; excluded from primary replay | Rebased/fixed corroborating code is retained, never substituted for the missing head |
+| Nest #383 | Two recoverable reviewed heads with distinct option-handling defects | Same PR and statistical family; never counted as independent changes |
+
+Across both batches, 12 lead attempts yielded 12 recoverable opportunities
+from 11 PRs and one unrecoverable lead. Seven opportunities are bug-bearing
+static candidates (including the low-impact hover defect), and five are scoped
+comparisons. This does not satisfy an admitted eight-bug/four-comparison
+development set: consequential-impact admission, human verification, duplicate
+grouping, and exact replay remain required. No runtime reproduction or human
+confirmation is claimed. Primary reports and independent corrections both
+remain visible; a favorable correction never overwrites a prior disposition.
+
+The final 12/24 split is not frozen. Selection control, 36-case admission, and
+independent human curation remain open. Exposed leads cannot be relabeled as
+reserved selection, confirmation, or sealed holdout.
 
 ## R3 measurement prerequisites
 
@@ -136,6 +160,20 @@ the new protocol until versioned curation and metric eligibility are integrated.
 The barrier does not pre-validate legacy cases: malformed legacy inputs still
 produce scheduled configuration-failure artifacts. Combined truth/source tests
 pass 13/13; history-plus-source tests pass 16/16; accounting tests pass 17/17.
+
+A research-only scope-completeness contract now binds the exact registered
+input/tool/context requirements to a deterministic digest. Missing positive
+runner evidence stays unverified; unavailable or contradictory facts and model
+limitations stay incomplete. Tool-call counts and an empty finding list cannot
+establish completeness. Its strongest verdict means availability of registered
+scope, not proof that a model read or understood every file. The consumer must
+authenticate each evidence artifact and bind the registration digest to the
+immutable schedule; that runner integration is still pending. Combined
+truth/source/scope tests pass 21/21 under Node 22, with typechecking and an
+independent bounded code review. Production behavior is unchanged.
+
+GitHub Actions `check` and credential-free build/smoke also passed at pushed
+head `940ff7b`. Later changes need their own current-head verification.
 
 At pushed head `68bfefc`, GitHub Actions `check` and credential-free build/smoke
 both passed. Local full validation initially reached 256/259 unit tests because

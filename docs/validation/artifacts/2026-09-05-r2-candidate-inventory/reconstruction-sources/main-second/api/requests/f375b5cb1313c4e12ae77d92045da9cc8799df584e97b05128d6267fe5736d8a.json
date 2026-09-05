@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/nestjs/nest/pulls/383/comments",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T13:27:21.555Z",
+  "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/383/comments?page=1&per_page=100",
+  "sha256": "076eeba4df5db572ec356b41d90614e4a11853caacec14c6ff380d6df774c1ea",
+  "bytes": 36982
+}

@@ -1,0 +1,246 @@
+diff --git a/integration/microservices/e2e/sum-rpc.spec.ts b/integration/microservices/e2e/sum-rpc.spec.ts
+index 7a46a3fec0fc10e4d56e6dff30b6849cc300311f..7d94fee9e3be37078671a14561ce95a1c60c3866 100644
+--- a/integration/microservices/e2e/sum-rpc.spec.ts
++++ b/integration/microservices/e2e/sum-rpc.spec.ts
+@@ -105,6 +105,22 @@ describe('RPC transport', () => {
+       });
+   });
+ 
++  it('/POST (custom client)', () => {
++    return request(server)
++      .post('/error?client=custom')
++      .send({})
++      .expect(200)
++      .expect('true');
++  });
++
++  it('/POST (standard client)', () => {
++    return request(server)
++      .post('/error?client=standard')
++      .send({})
++      .expect(200)
++      .expect('false');
++  });
++
+   afterEach(async () => {
+     await app.close();
+   });
+diff --git a/integration/microservices/src/app.controller.ts b/integration/microservices/src/app.controller.ts
+index 245db7ad12110a314eb3710bf1b03641ad267418..77798b30879cb63df05bc9b204ae7e787bef2ccb 100644
+--- a/integration/microservices/src/app.controller.ts
++++ b/integration/microservices/src/app.controller.ts
+@@ -12,15 +12,17 @@ import {
+   EventPattern,
+   MessagePattern,
+   Transport,
++  RpcException,
+ } from '@nestjs/microservices';
+-import { from, Observable, of } from 'rxjs';
+-import { scan } from 'rxjs/operators';
++import { from, Observable, of, throwError } from 'rxjs';
++import { catchError, scan } from 'rxjs/operators';
+ 
+ @Controller()
+ export class AppController {
+   constructor(
+     @Inject('USE_CLASS_CLIENT') private useClassClient: ClientProxy,
+     @Inject('USE_FACTORY_CLIENT') private useFactoryClient: ClientProxy,
++    @Inject('CUSTOM_PROXY_CLIENT') private customClient: ClientProxy,
+   ) {}
+   static IS_NOTIFIED = false;
+ 
+@@ -75,6 +77,17 @@ export class AppController {
+       .reduce(async (a, b) => (await a) && b);
+   }
+ 
++  @Post('error')
++  @HttpCode(200)
++  serializeError(@Query('client') query: 'custom' | 'standard' = 'standard', @Body() body: Record<string, any>): Observable<boolean> {
++    const client = query === 'custom' ? this.customClient : this.client;
++    return client.send({ cmd: 'err' }, {}).pipe(
++      catchError((err) => {
++        return of(err instanceof RpcException);
++      })
++    )
++  }
++
+   @MessagePattern({ cmd: 'sum' })
+   sum(data: number[]): number {
+     return (data || []).reduce((a, b) => a + b);
+@@ -95,6 +108,11 @@ export class AppController {
+     return from(data);
+   }
+ 
++  @MessagePattern({ cmd: 'err' })
++  throwAnError() {
++    return throwError(new Error('err'));
++  }
++
+   @Post('notify')
+   async sendNotification(): Promise<any> {
+     return this.client.emit<number>('notification', true);
+diff --git a/integration/microservices/src/app.module.ts b/integration/microservices/src/app.module.ts
+index 0289321ace284a7508be949d456c04165cbe1425..fb088d797ab7b514c4aee6f5b58b09b81cb68c8d 100644
+--- a/integration/microservices/src/app.module.ts
++++ b/integration/microservices/src/app.module.ts
+@@ -5,8 +5,16 @@ import {
+   Transport,
+   ClientsModuleOptionsFactory,
+   ClientOptions,
++  ClientTCP,
++  RpcException,
+ } from '@nestjs/microservices';
+ 
++class ErrorHandlingProxy extends ClientTCP {
++  serializeError(err) {
++    return new RpcException(err);
++  }
++}
++
+ @Injectable()
+ class ConfigService {
+   private readonly config = {
+@@ -51,7 +59,14 @@ class ClientOptionService implements ClientsModuleOptionsFactory {
+         name: 'USE_CLASS_CLIENT',
+         useClass: ClientOptionService,
+         inject: [ConfigService],
+-      },
++      }, {
++        imports: [ConfigModule],
++        inject: [ConfigService],
++        name: 'CUSTOM_PROXY_CLIENT',
++        useFactory: (config: ConfigService) => ({
++          customClass: ErrorHandlingProxy
++        })
++      }
+     ]),
+   ],
+   controllers: [AppController],
+diff --git a/packages/microservices/client/client-proxy-factory.ts b/packages/microservices/client/client-proxy-factory.ts
+index 3ff1ae2027738bedbcf3d5dd3ff2706946299e10..2f780b2b4a1ae2028a3fd44c01fd47ddc8c80e17 100644
+--- a/packages/microservices/client/client-proxy-factory.ts
++++ b/packages/microservices/client/client-proxy-factory.ts
+@@ -1,6 +1,7 @@
+ import { Transport } from '../enums/transport.enum';
+ import {
+   ClientOptions,
++  CustomClientOptions,
+   TcpClientOptions,
+ } from '../interfaces/client-metadata.interface';
+ import { Closeable } from '../interfaces/closeable.interface';
+@@ -30,7 +31,16 @@ export class ClientProxyFactory {
+     clientOptions: { transport: Transport.GRPC } & ClientOptions,
+   ): ClientGrpcProxy;
+   public static create(clientOptions: ClientOptions): ClientProxy & Closeable;
+-  public static create(clientOptions: ClientOptions): ClientProxy & Closeable {
++  public static create(
++    clientOptions: CustomClientOptions,
++  ): ClientProxy & Closeable;
++  public static create(
++    clientOptions: ClientOptions | CustomClientOptions,
++  ): ClientProxy & Closeable {
++    if (this.isCustomOptions(clientOptions)) {
++      const { customClass, options } = clientOptions;
++      return new customClass(options);
++    }
+     const { transport, options } = clientOptions;
+     switch (transport) {
+       case Transport.REDIS:
+@@ -49,4 +59,10 @@ export class ClientProxyFactory {
+         return new ClientTCP(options as TcpClientOptions['options']);
+     }
+   }
++
++  private static isCustomOptions(
++    options: ClientOptions | CustomClientOptions,
++  ): options is CustomClientOptions {
++    return !!(options as CustomClientOptions).customClass;
++  }
+ }
+diff --git a/packages/microservices/client/client-proxy.ts b/packages/microservices/client/client-proxy.ts
+index 8f966b43db1b4e3ac2795e85c15e2ef2fe0fc47f..6f570fb4c461b6adaff13f9a4a0acd68f01c0fea 100644
+--- a/packages/microservices/client/client-proxy.ts
++++ b/packages/microservices/client/client-proxy.ts
+@@ -84,17 +84,25 @@ export abstract class ClientProxy {
+   ): (packet: WritePacket) => void {
+     return ({ err, response, isDisposed }: WritePacket) => {
+       if (err) {
+-        return observer.error(err);
++        return observer.error(this.serializeError(err));
+       } else if (response !== undefined && isDisposed) {
+-        observer.next(response);
++        observer.next(this.serializeResponse(response));
+         return observer.complete();
+       } else if (isDisposed) {
+         return observer.complete();
+       }
+-      observer.next(response);
++      observer.next(this.serializeResponse(response));
+     };
+   }
+ 
++  protected serializeError(err: any): any {
++    return err;
++  }
++
++  protected serializeResponse(response: any): any {
++    return response;
++  }
++
+   protected assignPacketId(packet: ReadPacket): ReadPacket & PacketId {
+     const id = randomStringGenerator();
+     return Object.assign(packet, { id });
+diff --git a/packages/microservices/interfaces/client-metadata.interface.ts b/packages/microservices/interfaces/client-metadata.interface.ts
+index 5fd76666139eb47d9e074e1cf22af3288c087d3a..4962eecc12daf918d6cb23e693e081050107919b 100644
+--- a/packages/microservices/interfaces/client-metadata.interface.ts
++++ b/packages/microservices/interfaces/client-metadata.interface.ts
+@@ -1,3 +1,5 @@
++import { Type } from '@nestjs/common';
++import { ClientProxy } from '../client';
+ import { Transport } from '../enums/transport.enum';
+ import { Deserializer } from './deserializer.interface';
+ import {
+@@ -19,6 +21,11 @@ export type ClientOptions =
+   | TcpClientOptions
+   | RmqOptions;
+ 
++export interface CustomClientOptions {
++  customClass: Type<ClientProxy>;
++  options?: Record<string, any>;
++}
++
+ export interface TcpClientOptions {
+   transport: Transport.TCP;
+   options?: {
+diff --git a/packages/microservices/module/interfaces/clients-module.interface.ts b/packages/microservices/module/interfaces/clients-module.interface.ts
+index 2fab5d6d7e5cd5f440f253ce0e68e0d41520268c..37e5a2e1b63f39911cb48ec52770d6825dc916b3 100644
+--- a/packages/microservices/module/interfaces/clients-module.interface.ts
++++ b/packages/microservices/module/interfaces/clients-module.interface.ts
+@@ -1,21 +1,23 @@
+-import { ClientOptions } from '../../interfaces';
++import { ClientOptions, CustomClientOptions } from '../../interfaces';
+ import { Type, Provider, ModuleMetadata } from '@nestjs/common/interfaces';
+ 
+-export type ClientProviderOptions = ClientOptions & {
++export type ClientProvider = ClientOptions | CustomClientOptions;
++
++export type ClientProviderOptions = ClientProvider & {
+   name: string | symbol;
+ };
+ 
+ export type ClientsModuleOptions = Array<ClientProviderOptions>;
+ 
+ export interface ClientsModuleOptionsFactory {
+-  createClientOptions(): Promise<ClientOptions> | ClientOptions;
++  createClientOptions(): Promise<ClientProvider> | ClientProvider;
+ }
+ 
+ export interface ClientsProviderAsyncOptions
+   extends Pick<ModuleMetadata, 'imports'> {
+   useExisting?: Type<ClientsModuleOptionsFactory>;
+   useClass?: Type<ClientsModuleOptionsFactory>;
+-  useFactory?: (...args: any[]) => Promise<ClientOptions> | ClientOptions;
++  useFactory?: (...args: any[]) => Promise<ClientProvider> | ClientProvider;
+   inject?: any[];
+   extraProviders?: Provider[];
+   name: string | symbol;

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/nestjs/nest/pulls/383/reviews",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T13:27:22.240Z",
+  "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/383/reviews?page=1&per_page=100",
+  "sha256": "03d41349074675bc89dacac23fa1ecb3f8a9f0489798d6c4ff71b98b958787e7",
+  "bytes": 15716
+}
