@@ -90,19 +90,52 @@ all four terminal records through the complete outer seal. It does not yet bind
 the historical admission or lane-activation provenance in the invocation
 registration; that explicit prerequisite is being added before R4.
 
+## Frozen inputs and lifecycle follow-up
+
+The input plan and trusted historical runner now close the earlier admission
+and lane-provenance integration gap. Before lifecycle start, the runner reads
+the caller-held plan digest; during preparation it repeats source
+materialization and B/D code-only activation and compares both with the frozen
+plan. A/C never receive the lane result. Generic prompt/resource canary tests
+exclude hidden truth and plan contents from reviewer-visible inputs.
+
+Four static stage prompts are frozen exactly. The two second-stage prompts
+freeze a deterministic template; only the canonical, authenticated first-stage
+handoff is substituted. Changed prompt bytes with recomputed local hashes,
+different handoffs, stale scope/admission, and late plan registration reject.
+
+Lifecycle records capture start before preparation, dispatch-start at the
+injected ProviderExec boundary, zero-dispatch preflight failure, and partial
+execution. Stage-one and stage-two post-intent/pre-dispatch failures preserve
+their respective one/two intents with zero/one dispatches. The composite seal
+binds this lifecycle, the input plan, all actual planned inputs, and the older
+complete review-terminal seal where applicable. It requires every scheduled
+lifecycle; missing/stopped schedules cannot masquerade as complete.
+
+Independent review approved the input-plan, lifecycle, trusted runner, and
+composite evidence slices. The expanded Node 22 methodology suite passes
+78/78; typechecking and diff hygiene pass. Earlier commit `15cb7d1` also passed
+GitHub `check` and credential-free image build/smoke. No production code or
+default route changed in this follow-up.
+
 ## Remaining integration boundary
 
 This slice is not R3 completion or R4 readiness. Invocation intents prove input
 capture, not provider contact; terminal records are runner evidence bound to
 caller-held receipts, not independent signatures or runtime-model attestation.
-The outer immutable run lifecycle must bind all scheduled attempts, intents,
-terminals, stop/retry lineage, actual runtime/tool policy, and authenticated
-scope evidence. Historic curation, grading/report eligibility, and arm-blinded
+Stopped/missing schedule seals, retry lineage, actual runtime/tool policy, and
+authenticated scope evidence remain unfinished. Historical curation,
+grading/report eligibility, and arm-blinded
 adjudication still require consumer integration. The CLI historical execution
 barrier remains intact.
 
-No live provider, historical runtime reproduction, container/network isolation
-probe, human admission, reserved partition, holdout, precision/recall estimate,
+No live provider, historical runtime reproduction, human admission, reserved
+partition, holdout, precision/recall estimate,
 or efficacy result is produced here. The proposed 96-attempt experiment remains
 unregistered and unauthorized. The research continues; this report is not a
 request to stop at another checkpoint.
+
+A separate [credential-free runtime diagnostic](2026-09-05-r3-offline-codex-read-probe.md)
+does exercise the pinned image: direct reads work, but nested Codex read-only
+sandbox execution fails before the read. It does not establish usable review
+tools or provider-connected egress, and no security settings were relaxed.

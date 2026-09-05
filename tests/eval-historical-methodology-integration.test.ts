@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import test from "node:test";
-import { leakagePolicyForCase, repositoryFamilyIdentitySha256 } from "../eval/case-isolation.js";
+import { repositoryFamilyIdentitySha256 } from "../eval/case-isolation.js";
 import type { CuratorPolicy } from "../eval/case-curation.js";
 import { canonicalJsonSha256 } from "../eval/experiment.js";
 import {
@@ -21,24 +21,28 @@ import {
 } from "../eval/historical-methodology-case.js";
 import { historicalPermittedMetrics, parseHistoricalGroundTruth } from "../eval/historical-truth.js";
 import {
-  createMethodologyInvocationRecorder,
   readMethodologyInvocation,
   registerMethodologyInvocations,
 } from "../eval/methodology-invocations.js";
 import { prepareMethodologyLaneActivation } from "../eval/methodology-lane-activation.js";
+import { registerMethodologyInputPlan } from "../eval/methodology-input-plan.js";
+import { readMethodologyAttemptLifecycleTerminal } from "../eval/methodology-attempt-lifecycle.js";
+import { runRegisteredHistoricalMethodologyAttempt } from "../eval/historical-methodology-runner.js";
+import { readMethodologyExecutionEvidence, writeMethodologyExecutionEvidence,
+  type MethodologyLifecycleSealReceipt } from "../eval/methodology-execution-evidence.js";
 import { readMethodologyRunSeal, writeMethodologyRunSeal,
   type MethodologyTerminalReceipt } from "../eval/methodology-run-seal.js";
-import { runMethodologyAttempt } from "../eval/methodology-runner.js";
 import {
   buildMethodologySchedule,
   methodologyArmConfigIdentitySha256,
   type MethodologyDesign,
 } from "../eval/methodology-schedule.js";
-import { readMethodologyAttemptTerminal, writeMethodologyAttemptTerminal } from "../eval/methodology-terminal.js";
+import { readMethodologyAttemptTerminal } from "../eval/methodology-terminal.js";
 import type { HistoricalCaseSpec, PeregrineConfig, ProviderExec, ReviewContext } from "../src/types.js";
 
 const CURATOR_ONE = "1".repeat(64);
 const CURATOR_TWO = "2".repeat(64);
+const TRUTH_CANARY = "CURATOR_ONLY_TRUTH_CANARY_7f9c2a";
 const REVIEW_OUTPUT = JSON.stringify({ status: "completed", limitations: [], findings: [] });
 const DISCOVERY_OUTPUT = JSON.stringify({
   status: "completed",
@@ -72,7 +76,6 @@ test("an admitted synthetic historical case reaches a terminal-complete four-arm
   const prepared: MaterializedHistoricalMethodologyCase[] = [];
   try {
     const registration = readHistoricalMethodologyCase(fixture.caseDir, TRUSTED_POLICY);
-    const leakagePolicy = leakagePolicyForCase(fixture.caseDir, fixture.spec);
     const schedule = buildSchedule(registration.caseName, registration.truth.registeredRootCount);
     for (const armId of ["A", "B", "C", "D"] as const) {
       prepared.push(await materializeHistoricalMethodologyCase(
@@ -96,47 +99,74 @@ test("an admitted synthetic historical case reaches a terminal-complete four-arm
       scopeSha256ByCase: { [registration.caseName]: canonicalJsonSha256(referenceScope) },
       assetsByArm: prepared.map((item) => item.assetsManifest),
     });
-    const recordInvocation = createMethodologyInvocationRecorder(evidenceRoot, registrationSha256);
+    const planContext = reviewContext(prepared.find((item) => item.assetsManifest.armId === "B")!);
+    const activation = await prepareMethodologyLaneActivation({
+      armId: "B",
+      context: planContext,
+      rawScope: referenceScope,
+    });
+    const inputPlanSha256 = await registerMethodologyInputPlan(evidenceRoot, {
+      invocationRegistrationSha256: registrationSha256,
+      cases: [{
+        historicalRegistration: registration,
+        admissionBinding: prepared[0]!.admissionBinding,
+        rawScope: referenceScope,
+        laneActivation: activation,
+      }],
+    });
     const terminalReceipts: MethodologyTerminalReceipt[] = [];
+    const lifecycleReceipts: MethodologyLifecycleSealReceipt[] = [];
     let mockedStages = 0;
+    const modelVisibleBytes: string[] = [];
 
-    for (const item of prepared) {
-      const armId = item.assetsManifest.armId;
+    for (const armId of ["A", "B", "C", "D"] as const) {
       const attempt = schedule.attempts.find((candidate) =>
         candidate.caseName === registration.caseName && candidate.armId === armId)!;
-      const outputs = new Map<string, string>();
       const calls: string[][] = [];
-      const runProvider: ProviderExec = async (_command, args) => {
-        calls.push([...args]);
-        mockedStages++;
-        const outputPath = argumentAfter(args, "--output-last-message");
-        const schema = basename(argumentAfter(args, "--output-schema"));
-        outputs.set(outputPath, schema === "methodology-discovery.schema.json"
-          ? DISCOVERY_OUTPUT
-          : schema === "breadth-result.schema.json" ? BREADTH_OUTPUT : REVIEW_OUTPUT);
-        return { stdout: "", stderr: "", code: 0, timedOut: false };
-      };
-      const context = reviewContext(item, runProvider, outputs);
-      const activation = armId === "B" || armId === "D"
-        ? await prepareMethodologyLaneActivation({ armId, context, rawScope: item.rawScope })
-        : null;
-      if (activation) {
-        assert.equal(activation.rawScopeSha256, canonicalJsonSha256(item.rawScope));
-        assert.equal(activation.profilePolicy, "no-profile-or-custom-lanes");
-      }
-      const result = await runMethodologyAttempt({
-        schedule,
+      const outputs = new Map<string, string>();
+      let attachedRepoPath = "";
+      const lifecycle = await runRegisteredHistoricalMethodologyAttempt({
+        evidenceRoot,
+        invocationRegistrationSha256: registrationSha256,
+        inputPlanSha256,
         attemptId: attempt.id,
-        assetManifest: item.assetsManifest,
-        rawScope: item.rawScope,
-        ...(activation ? { activatedLanes: activation.activatedLanes } : {}),
-        leakagePolicy,
-        context,
-        beforeInvocation: recordInvocation,
+        trustedCuratorPolicy: TRUSTED_POLICY,
+        config: config(),
+        attachProvider: (request) => {
+          attachedRepoPath = request.repoPath;
+          assert.equal(request.armId, armId);
+          assert.doesNotMatch(JSON.stringify(request), new RegExp(escapeRegex(evidenceRoot)));
+          assert.doesNotMatch(JSON.stringify(request), new RegExp(escapeRegex(fixture.caseDir)));
+          const manifest = prepared.find((item) => item.assetsManifest.armId === armId)!.assetsManifest;
+          for (const file of manifest.files) {
+            modelVisibleBytes.push(readFileSync(join(request.providerAssetsRoot, ...file.path.split("/")), "utf8"));
+          }
+          const runProvider: ProviderExec = async (_command, args, options) => {
+            calls.push([...args]);
+            mockedStages++;
+            modelVisibleBytes.push(options?.stdin ?? "");
+            const outputPath = argumentAfter(args, "--output-last-message");
+            const schema = basename(argumentAfter(args, "--output-schema"));
+            outputs.set(outputPath, schema === "methodology-discovery.schema.json"
+              ? DISCOVERY_OUTPUT
+              : schema === "breadth-result.schema.json" ? BREADTH_OUTPUT : REVIEW_OUTPUT);
+            return { stdout: "", stderr: "", code: 0, timedOut: false };
+          };
+          return { runProvider, readProviderOutput: (path: string) => outputs.get(path)! };
+        },
       });
-      assert.equal(result.outcome.status, "completed");
+      assert.ok(attachedRepoPath);
+      assert.equal(existsSync(attachedRepoPath), false);
+      assert.equal(lifecycle.status, "review-terminal");
       assert.equal(calls.length, attempt.expectedStages);
-      assert.equal(result.intentReceipts.length, attempt.expectedStages);
+      assert.equal(lifecycle.dispatchReceipts.length, attempt.expectedStages);
+      const lifecycleRecord = readMethodologyAttemptLifecycleTerminal(
+        evidenceRoot, registrationSha256, attempt.id, lifecycle.lifecycleTerminalSha256,
+      );
+      const result = readMethodologyAttemptTerminal(
+        evidenceRoot, registrationSha256, attempt.id, lifecycle.reviewTerminalSha256!,
+      );
+      assert.equal(result.outcome.status, "completed");
       for (const receipt of result.intentReceipts) {
         const invocation = readMethodologyInvocation(
           evidenceRoot,
@@ -145,18 +175,19 @@ test("an admitted synthetic historical case reaches a terminal-complete four-arm
           receipt.stageIndex,
           receipt.invocationSha256,
         );
-        assert.equal(invocation.input.compiled.rawScopeSha256, canonicalJsonSha256(item.rawScope));
+        assert.equal(invocation.input.compiled.rawScopeSha256, canonicalJsonSha256(referenceScope));
         assert.equal(invocation.input.compiled.armId, armId);
       }
-      const terminalSha256 = writeMethodologyAttemptTerminal(evidenceRoot, registrationSha256, result);
-      assert.equal(
-        readMethodologyAttemptTerminal(evidenceRoot, registrationSha256, attempt.id, terminalSha256).outcome.status,
-        "completed",
-      );
-      terminalReceipts.push({ attemptId: attempt.id, terminalSha256 });
+      assert.equal(lifecycleRecord.reviewTerminalSha256, lifecycle.reviewTerminalSha256);
+      terminalReceipts.push({ attemptId: attempt.id, terminalSha256: lifecycle.reviewTerminalSha256! });
+      lifecycleReceipts.push({ attemptId: attempt.id,
+        lifecycleTerminalSha256: lifecycle.lifecycleTerminalSha256 });
     }
 
     terminalReceipts.sort((left, right) =>
+      schedule.attempts.findIndex((attempt) => attempt.id === left.attemptId) -
+      schedule.attempts.findIndex((attempt) => attempt.id === right.attemptId));
+    lifecycleReceipts.sort((left, right) =>
       schedule.attempts.findIndex((attempt) => attempt.id === left.attemptId) -
       schedule.attempts.findIndex((attempt) => attempt.id === right.attemptId));
     assert.equal(mockedStages, 6);
@@ -171,6 +202,57 @@ test("an admitted synthetic historical case reaches a terminal-complete four-arm
     assert.equal(seal.claims.providerContact, "not-established-by-this-seal");
     assert.equal(seal.claims.efficacy, "not-evaluated-by-this-seal");
     assert.equal(seal.artifactBindings.filter((item) => item.path.endsWith(".input.json")).length, 6);
+    const executionEvidenceSha256 = writeMethodologyExecutionEvidence(evidenceRoot, {
+      invocationRegistrationSha256: registrationSha256,
+      inputPlanSha256,
+      terminalRunSealSha256: sealSha256,
+      lifecycleReceipts,
+    });
+    const executionEvidence = readMethodologyExecutionEvidence(evidenceRoot, executionEvidenceSha256);
+    assert.deepEqual(executionEvidence.accounting, {
+      scheduled: 4,
+      reviewTerminal: 4,
+      preflightFailed: 0,
+      interrupted: 0,
+    });
+    assert.equal(executionEvidence.claims.providerContact, "not-established");
+    assert.throws(() => writeMethodologyExecutionEvidence(evidenceRoot, {
+      invocationRegistrationSha256: registrationSha256,
+      inputPlanSha256,
+      terminalRunSealSha256: sealSha256,
+      lifecycleReceipts: lifecycleReceipts.slice(0, -1),
+    }), /every scheduled lifecycle/);
+    assert.throws(() => readMethodologyExecutionEvidence(evidenceRoot, "f".repeat(64)), /digest mismatch/);
+    const lifecyclePath = join(evidenceRoot,
+      `${lifecycleReceipts[0]!.attemptId}.methodology-lifecycle-terminal.json`);
+    const lifecycleBytes = readFileSync(lifecyclePath);
+    try {
+      rmSync(lifecyclePath);
+      assert.throws(() => readMethodologyExecutionEvidence(evidenceRoot, executionEvidenceSha256),
+        /ENOENT|no such file/i);
+    } finally {
+      writeFileSync(lifecyclePath, lifecycleBytes);
+    }
+    writeFileSync(join(evidenceRoot, "orphan.json"), "{}\n");
+    assert.throws(() => readMethodologyExecutionEvidence(evidenceRoot, executionEvidenceSha256),
+      /orphaned artifacts/);
+    rmSync(join(evidenceRoot, "orphan.json"));
+    writeFileSync(lifecyclePath, Buffer.concat([lifecycleBytes, Buffer.from("\n")]));
+    assert.throws(() => readMethodologyExecutionEvidence(evidenceRoot, executionEvidenceSha256),
+      /does not derive from its sealed inputs/);
+    writeFileSync(lifecyclePath, lifecycleBytes);
+    assert.throws(() => writeMethodologyExecutionEvidence(evidenceRoot, {
+      invocationRegistrationSha256: registrationSha256,
+      inputPlanSha256: "f".repeat(64),
+      terminalRunSealSha256: sealSha256,
+      lifecycleReceipts,
+    }), /input plan digest mismatch|digest mismatch/);
+    assert.ok(modelVisibleBytes.length > 6);
+    for (const bytes of modelVisibleBytes) {
+      assert.doesNotMatch(bytes, new RegExp(TRUTH_CANARY));
+      assert.doesNotMatch(bytes, new RegExp(escapeRegex(evidenceRoot)));
+      assert.doesNotMatch(bytes, new RegExp(escapeRegex(fixture.caseDir)));
+    }
   } finally {
     prepared.forEach((item) => item.cleanup());
     rmSync(evidenceRoot, { recursive: true, force: true });
@@ -178,11 +260,7 @@ test("an admitted synthetic historical case reaches a terminal-complete four-arm
   }
 });
 
-function reviewContext(
-  item: MaterializedHistoricalMethodologyCase,
-  runProvider: ProviderExec,
-  outputs: Map<string, string>,
-): ReviewContext {
+function reviewContext(item: MaterializedHistoricalMethodologyCase): ReviewContext {
   const value = item.materialized;
   return {
     repoPath: value.repoPath,
@@ -190,12 +268,8 @@ function reviewContext(
     diffText: value.diffText,
     baseRef: value.baseRef,
     headRef: value.headRef,
-    config: JSON.parse(readFileSync(resolve("peregrine.config.json"), "utf8")) as PeregrineConfig,
-    evaluationIsolation: {
-      ...value.evaluationIsolation,
-      runProvider,
-      readProviderOutput: (path) => outputs.get(path)!,
-    },
+    config: config(),
+    evaluationIsolation: value.evaluationIsolation,
   };
 }
 
@@ -255,7 +329,7 @@ function createHistoricalFixture(): { root: string; caseDir: string; spec: Histo
       file: "src/retry.ts",
       startLine: 1,
       endLine: 1,
-      description: "The changed retry path omits callback completion.",
+      description: `The changed retry path omits callback completion. ${TRUTH_CANARY}`,
       reachablePreconditions: "A caller supplies a completion callback.",
       observableImpact: "The caller remains pending.",
       provenance: "The exact historical head and repair support this declared root.",
@@ -346,4 +420,12 @@ function git(cwd: string, ...raw: Array<string | { trim: boolean }>): string {
 
 function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");
+}
+
+function config(): PeregrineConfig {
+  return JSON.parse(readFileSync(resolve("peregrine.config.json"), "utf8")) as PeregrineConfig;
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

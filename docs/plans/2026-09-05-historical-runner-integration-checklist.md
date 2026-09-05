@@ -105,8 +105,21 @@ curator declarations in tests are not independent human admission.
 Method arms derive lanes from the actual sanitized code through the existing
 trusted manifest script, with no profile or custom-lane argument. B/D use the
 same source-hashed activation. Curator truth labels are not an input; generic
-A/C arms reject lane activation. Freezing and consuming those activation and
-admission digests in a whole-run preregistration is still required.
+A/C arms reject lane activation. An immutable input plan now freezes admission,
+activation, raw scope, exact static prompts, and deterministic second-stage
+handoff templates before attempt evidence exists. The trusted historical
+runner re-materializes the case, rederives B/D activation, compares fresh
+preparation to that plan, and checks each assembled invocation before recording
+it. The truth-bearing plan and curator store remain outside provider mounts.
+
+Lifecycle records separate preflight failure from dispatch-start and retain
+partial two-stage work. Dispatch-start is not provider contact. Composite
+execution evidence binds the input plan, registration, every scheduled
+lifecycle, actual planned inputs, and the complete review-terminal seal when
+applicable. Missing schedules cannot use this complete-only contract;
+stopped-run sealing and retry lineage remain unfinished. Scope availability
+and actual provider/model identity remain unverified. The expanded structural
+methodology suite passes 78/78.
 
 - [x] **Versioned four-arm scheduling.** Extend the existing experiment machinery
   (`src/types.ts`, `eval/experiment.ts`) without reinterpreting legacy
@@ -114,7 +127,7 @@ admission digests in a whole-run preregistration is still required.
   deterministic balanced order. Twelve cases and two repeats must derive 24
   blocks, 96 review attempts, and 144 planned review-model invocations. Tampered,
   incomplete, duplicated, or cross-protocol blocks must reject.
-- [ ] **Neutral prompts and resource mounts.** Add an experimental-only arm
+- [x] **Neutral prompts and resource mounts (structural preparation).** Add an experimental-only arm
   compiler and common output/candidate contracts. A/C receive no Peregrine
   packets, lanes, profiles, examples, semantic manifest annotations, or detailed
   finding schema. Current `prepareProviderAssets` copies all skills and schemas;
@@ -157,3 +170,9 @@ allowance is not equal consumed compute. B remains an adapted experimental
 single-worker method, not the installed production skill. Full-context history
 sanitization and provider-egress restrictions require their own verified probes;
 content filtering and an empty session are insufficient.
+
+The [offline CLI diagnostic](../validation/2026-09-05-r3-offline-codex-read-probe.md)
+found that nested Codex read-only sandbox execution fails at namespace creation
+under the tested accepted-image restrictions. Direct reads succeed. This is a
+runtime-readiness blocker, not an excuse to disable sandboxing; passing existing
+image smoke checks alone does not establish working review-agent tools.
