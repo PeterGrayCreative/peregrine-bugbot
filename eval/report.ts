@@ -43,6 +43,14 @@ import {
   EXPERIMENT_TERMINAL_SEAL_FILENAME,
   requireValidExperimentGradingSeal,
 } from "./experiment-seals.js";
+import {
+  EXPERIMENT_ADJUDICATION_FILENAME,
+  adjudicationKey,
+  adjudicationMap,
+  readExperimentAdjudication,
+  type FinalAdjudicationClassification,
+} from "./adjudication-ledger.js";
+import { FUNNEL_ADJUDICATED_DECISION_FILENAME, FUNNEL_DECISION_FILENAME } from "./funnel-decision.js";
 
 type LegacyGradedRun = Omit<GradedRun, "schemaVersion" | "attemptId" | "finishedAt" | "attemptDurationMs" | "outcome" | "caseCorpus" | "runner"> & {
   result: EngineResult;
@@ -50,6 +58,7 @@ type LegacyGradedRun = Omit<GradedRun, "schemaVersion" | "attemptId" | "finished
 type CompatibilityGradedRun = Omit<GradedRun, "attemptDurationMs"> & { attemptDurationMs?: number };
 type ReportCostSource = "provider" | "estimated" | "mixed" | "mock" | "unknown" | null;
 type ScoredRun = Pick<GradedRun, "outcome" | "matches" | "falsePositiveIndexes"> & {
+  attemptId?: string;
   attemptDurationMs?: number;
   caseName?: string;
   grading?: GradedRun["grading"];
@@ -82,6 +91,8 @@ export interface ConfigStats {
   unsupportedFindings: number | null;
   unresolvedFindings: number | null;
   blockingFalsePositivesOnCleanCases: number | null;
+  diagnosticExcludedRuns: number | null;
+  diagnosticExcludedFindings: number | null;
   missesByStage: Record<string, number>;
   costPerReliablyFoundRootCause: number | null;
   failureInclusiveRecallMean: number | null;
@@ -198,7 +209,20 @@ function buildReportLocked(dir: string, casesDir: string): ConfigStats[] {
             };
         if (declaredJudge.kind !== "exact") judgeAccounting = readJudgeAccounting(dir);
       }
-      stats = trackedStats(dir, casesDir, currentManifest, expectedJudge);
+      const diagnosticOnlyCaseIds = new Set(
+        gradingEvidence?.experiment.benchmarkCategory?.definition.roles.diagnosticOnlyCases ?? [],
+      );
+      const adjudications = gradingEvidence
+        ? adjudicationMap(readExperimentAdjudication(dir))
+        : undefined;
+      stats = trackedStats(
+        dir,
+        casesDir,
+        currentManifest,
+        expectedJudge,
+        diagnosticOnlyCaseIds,
+        adjudications,
+      );
     }
   } else {
     if (hasExperimentMetadata) {
@@ -309,6 +333,8 @@ function trackedStats(
   casesDir: string,
   manifest: MatrixRunManifest,
   expectedJudge?: NonNullable<GradedRun["grading"]>["judge"],
+  diagnosticOnlyCaseIds: ReadonlySet<string> = new Set(),
+  adjudications?: ReadonlyMap<string, FinalAdjudicationClassification>,
 ): ConfigStats[] {
   preflightTrackedRunSet(dir, casesDir, manifest);
   const byConfig = groupBy(manifest.expectedAttempts, (attempt) =>
@@ -391,6 +417,8 @@ function trackedStats(
       structuralExpectedMarkers: attempts.every((attempt) => attempt.expectedBugCount !== null)
         ? attempts.reduce((sum, attempt) => sum + attempt.expectedBugCount!, 0)
         : null,
+      diagnosticOnlyCaseIds,
+      adjudications,
     });
   });
 }
@@ -468,6 +496,9 @@ function experimentMetadataFiles(includeExperiment: boolean): ReadonlySet<string
           EXPERIMENT_METADATA_FILENAMES.experimentStop,
           EXPERIMENT_TERMINAL_SEAL_FILENAME,
           EXPERIMENT_GRADING_SEAL_FILENAME,
+          EXPERIMENT_ADJUDICATION_FILENAME,
+          FUNNEL_DECISION_FILENAME,
+          FUNNEL_ADJUDICATED_DECISION_FILENAME,
         ]
       : []),
   ]);
@@ -699,29 +730,59 @@ export function calculateStats(args: {
   failureInclusiveRecalls: number[] | null;
   expectedRootCauseRuns: number | null;
   structuralExpectedMarkers: number | null;
+  diagnosticOnlyCaseIds?: ReadonlySet<string>;
+  adjudications?: ReadonlyMap<string, FinalAdjudicationClassification>;
 }): ConfigStats {
   const behavioral = args.benchmarkKind === "behavioral";
+  const diagnosticOnlyCaseIds = args.diagnosticOnlyCaseIds ?? new Set<string>();
+  const findingMetricRuns = args.completed.filter((run) =>
+    !diagnosticOnlyCaseIds.has(caseIdOf(run.caseName)),
+  );
+  const diagnosticExcludedRuns = args.completed.length - findingMetricRuns.length;
+  const diagnosticExcludedFindings = args.completed
+    .filter((run) => diagnosticOnlyCaseIds.has(caseIdOf(run.caseName)))
+    .reduce((sum, run) => sum + run.outcome.result.findings.length, 0);
   const recalls = args.completed.map(runRecall).filter((value): value is number => value !== null);
-  const fps = args.completed.map((run) => run.falsePositiveIndexes.length);
+  const classificationFor = (
+    run: ScoredRun,
+    item: NonNullable<GradedRun["grading"]>["unmatchedFindings"][number],
+  ) => run.attemptId === undefined
+    ? item.classification
+    : args.adjudications?.get(adjudicationKey(run.attemptId, item.findingIndex, item.findingEvidenceSha256))
+      ?? item.classification;
+  const fps = findingMetricRuns.map((run) => run.grading
+    ? run.grading.unmatchedFindings.filter((item) => classificationFor(run, item) === "unsupported").length
+    : run.falsePositiveIndexes.length);
   const rootCauseRecalls = args.completed.flatMap((run) => {
     const groups = run.grading ? Object.values(run.grading.rootCauseMatches) : [];
     return groups.length === 0 ? [] : [groups.filter(Boolean).length / groups.length];
   });
-  const unmatched = args.completed.flatMap((run) => run.grading?.unmatchedFindings ?? []);
+  const unmatched = findingMetricRuns.flatMap((run) => (run.grading?.unmatchedFindings ?? []).map((item) => ({
+    ...item,
+    classification: classificationFor(run, item),
+  })));
   const confirmedNewFindings = unmatched.filter((item) => item.classification === "confirmed-new").length;
   const unsupportedFindings = unmatched.filter((item) => item.classification === "unsupported").length;
   const unresolvedFindings = unmatched.filter((item) => item.classification === "unresolved").length;
-  const blockingFalsePositivesOnCleanCases = args.completed.reduce((sum, run) =>
+  const blockingFalsePositivesOnCleanCases = findingMetricRuns.reduce((sum, run) =>
     Object.keys(run.matches).length === 0
-      ? sum + (run.grading?.unmatchedFindings.filter((item) => item.classification === "unsupported").length ?? 0)
+      ? sum + (run.grading?.unmatchedFindings.filter((item) => {
+          return classificationFor(run, item) === "unsupported";
+        }).length ?? 0)
       : sum,
   0);
-  const matchedFindings = args.completed.reduce((sum, run) => sum + new Set(
+  const matchedFindings = findingMetricRuns.reduce((sum, run) => sum + new Set(
     Object.values(run.matches).filter((value): value is number => value !== null),
   ).size, 0);
   const precisionDenominator = matchedFindings + confirmedNewFindings + unsupportedFindings;
   const missesByStage = countBy(
-    args.completed.flatMap((run) => run.grading ? Object.values(run.grading.missStages).filter((stage) => stage !== "none") : []),
+    args.completed.flatMap((run) => run.grading
+      ? Object.values(run.grading.missStages)
+          .filter((stage) => stage !== "none")
+          .map((stage) => run.grading?.version === "root-cause-v1" && stage === "infrastructure"
+            ? "unattributed"
+            : stage)
+      : []),
     (stage) => stage,
   );
   const costs = args.completed
@@ -837,6 +898,8 @@ export function calculateStats(args: {
     unsupportedFindings: behavioral ? unsupportedFindings : null,
     unresolvedFindings: behavioral ? unresolvedFindings : null,
     blockingFalsePositivesOnCleanCases: behavioral ? blockingFalsePositivesOnCleanCases : null,
+    diagnosticExcludedRuns: behavioral ? diagnosticExcludedRuns : null,
+    diagnosticExcludedFindings: behavioral ? diagnosticExcludedFindings : null,
     missesByStage: behavioral ? missesByStage : {},
     costPerReliablyFoundRootCause: behavioral && hasComparableCost && totalCost !== null &&
       reliableRootCauses !== null && reliableRootCauses > 0
@@ -934,6 +997,10 @@ function runRecall(run: ScoredRun): number | null {
   return Object.values(run.matches).filter((match) => match !== null).length / total;
 }
 
+function caseIdOf(caseName: string | undefined): string {
+  return caseName?.split("/").at(-1) ?? "";
+}
+
 const mean = (values: number[]) =>
   values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
 const median = (values: number[]) => {
@@ -1021,7 +1088,10 @@ function formatNumber(value: number | null, digits: number): string {
 
 function formatAdjudication(stats: ConfigStats): string {
   if (stats.confirmedNewFindings === null) return "n/a";
-  return `${stats.confirmedNewFindings} confirmed new; ${stats.unsupportedFindings} unsupported; ${stats.unresolvedFindings} unresolved`;
+  const excluded = stats.diagnosticExcludedRuns
+    ? `; ${stats.diagnosticExcludedFindings} findings from ${stats.diagnosticExcludedRuns} diagnostic runs excluded`
+    : "";
+  return `${stats.confirmedNewFindings} confirmed new; ${stats.unsupportedFindings} unsupported; ${stats.unresolvedFindings} unresolved${excluded}`;
 }
 
 function formatMisses(stats: ConfigStats): string {

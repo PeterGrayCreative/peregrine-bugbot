@@ -206,7 +206,18 @@ At the current 450-second reference duration, 30 cases × 3 repeats × 2 variant
 - The semantic judge is blind to engine, route, and variant. Its decision is evidence, not final authority.
 - Blindly adjudicate every control/treatment disagreement, every unmatched High finding, and every candidate new defect. Audit a stratified sample of agreements as a calibration check.
 - Classify unmatched findings as `confirmed-new`, `unsupported`, or `unresolved`; do not automatically call them false positives.
+- Preserve semantic grades as immutable evidence. Finalize an unmatched finding
+  only through a separate append-only ledger bound to the experiment,
+  terminal/grading seals, exact attempt/finding occurrence, and a reviewed
+  committed Git source. Re-derive a versioned decision linked to the original
+  decision instead of replacing either artifact.
+- Do not infer a miss stage from absence alone. Record `unattributed` until
+  runner-owned authenticated evidence supports routing, breadth,
+  investigation, budget, presentation, or infrastructure attribution.
 - Report bug-instance recall, root-cause recall, precision/false-discovery rate across all cases, blocking false positives on clean cases, comment volume, and confidence calibration.
+- Apply diagnostic-only restrictions to every report and decision surface;
+  quarantined findings cannot enter precision, false-discovery,
+  false-positive, or required-adjudication metrics.
 - Keep semantic-judge and human-adjudication costs separate from production review cost.
 
 ---
