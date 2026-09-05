@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "251f82be481b224856534e5fe61c185789c591adc7fddc7b44616da2ba983185",
+  "experimentManifestSha256": "d8989d01741f424e9119d4c79cfefcd58a5983be95d67cb171b61e17c6741d50",
+  "experimentTerminalSealSha256": "6d7e11cb0d2340a2668d043c647efaca21c36460ef6e2aba6e39899aaf38588d",
+  "corpusSha256": "50403abd51ac7e84186efbaa9523a17406addca4aec2bde79801d48f41aae1d1",
+  "judgeImplementationSha256": "8c86bd3d3ce18ac25a0c582ab0be7c2a459385504d78a88c49143c71a8236197",
+  "judgeConfigSha256": "8c91468ab1300e1875c0aafb597b5ad5e680337b4069c1cc9476393f337fff66",
+  "judge": {
+    "kind": "codex",
+    "model": "gpt-5.6-luna",
+    "effort": "medium",
+    "version": "semantic-v1"
+  },
+  "providerAccess": "cli-session",
+  "limits": {
+    "maxProviderCostUsd": null,
+    "maxProviderAttempts": 192,
+    "maxWallTimeMs": 21600000,
+    "maxFailureRate": 0.2,
+    "minAttemptsForFailureRate": 12,
+    "maxConsecutiveFailures": 3
+  },
+  "schedule": [
+    {
+      "id": "00772ba8e2e89bfbb47a6733b8b936e8660fb4c84f0aa2ef1d0097d3d148dc0a",
+      "groundTruthSha256": "66430d3e5e9c529f71df04a450088d49af586bed781e30474f9912ea5bef3a39",
+      "findingEvidenceSha256": "e8d17c9183f12a2a9d8f5cafab55b58e3e50f7ca26a70e785f8ebcda0b0ec1cb",
+      "promptSha256": "48346b6da54af3998751c91e2af1ac97d5d2ff40f892b734fe06f32b01b1c498",
+      "file": "judge/attempt-00772ba8e2e89bfbb47a6733b8b936e8660fb4c84f0aa2ef1d0097d3d148dc0a.json",
+      "sequence": 1
+    },
+    {
+      "id": "046e1dc3e9bd95c9734d4c77be184b0bb9ed9fef0c76c343b129e67a520c057b",
+      "groundTruthSha256": "66430d3e5e9c529f71df04a450088d49af586bed781e30474f9912ea5bef3a39",
+      "findingEvidenceSha256": "0bac4dae20315c4eec6326ba33d1e26fbd1c25d17aee5b6efffb7fbe8280725f",
+      "promptSha256": "97c6fda98ebd8988f7b690b6c16b2dc97a6461d52fa19224e117b29763c39d1b",
+      "file": "judge/attempt-046e1dc3e9bd95c9734d4c77be184b0bb9ed9fef0c76c343b129e67a520c057b.json",
+      "sequence": 2
+    },
+    {
+      "id": "0d14c71796b33d0e25a2a937b91a52f8f71f8e292e714172d905e00f91fee9d5",
+      "groundTruthSha256": "353fbe666cd08b1a4a25fc75edd8f843fd1bbb077d68a1372a7a890f264958d1",
+      "findingEvidenceSha256": "81c6bc458eb0b1b393d0413d023a0f4fece2076e23c5d026e1ea69ed3c59f8d4",
+      "promptSha256": "60b831d2fdedac23995efa7c8ff782a4342103e2c0f944efb5a2c95ec29b23dc",
+      "file": "judge/attempt-0d14c71796b33d0e25a2a937b91a52f8f71f8e292e714172d905e00f91fee9d5.json",
+      "sequence": 3
+    },
+    {
+      "id": "0e499b7e8ec7c895b1a8dd504c8bd52fe1844fbb546ad97c0720a4d20285785f",
+      "groundTruthSha256": "e8ae28905be7149643f058227a96e7514f12817588c4ad35461108bb6110c5cf",
+      "findingEvidenceSha256": "2464d94b88707c1037f53833a0065cbf4bf49a97e84b9629d2ef5b0f249924f0",
+      "promptSha256": "cdb09f87e0a19ecc87fb64392a872dbe44c552352190acfe6efda428ecc8543f",
+      "file": "judge/attempt-0e499b7e8ec7c895b1a8dd504c8bd52fe1844fbb546ad97c0720a4d20285785f.json",
+      "sequence": 4
+    },
+    {
+      "id": "212871ff5731a4542d908c1906581082b3d01331ef32f4e81dfaca25728590eb",
+      "groundTruthSha256": "171138d1b65fc1e3f72f7f4f6320c4c7c398f345d2996dd7fbec5fd748439f91",
+      "findingEvidenceSha256": "55c9d96e870bc10d7af555934056b06e1d350047a6bd4254dac39600f5af28ca",
+      "promptSha256": "a31009e7643a48abffefb2c301fba97d0761db876b31a51e870d099bbec5fc0d",
+      "file": "judge/attempt-212871ff5731a4542d908c1906581082b3d01331ef32f4e81dfaca25728590eb.json",
+      "sequence": 5
+    },
+    {
+      "id": "5943a01980e34248cff5c92a313c4345fd869eaa5f37b4398ecbfb80e408ae90",
+      "groundTruthSha256": "e8ae28905be7149643f058227a96e7514f12817588c4ad35461108bb6110c5cf",
+      "findingEvidenceSha256": "4cc15158a6f5660aa4c06b8e8b8656756b3dc52f9f72d42b3590475932ac84cd",
+      "promptSha256": "84f6e8b7be0bd17efbe8264fbda97bb6417c40a6a2c0c49a47721f706d634e0b",
+      "file": "judge/attempt-5943a01980e34248cff5c92a313c4345fd869eaa5f37b4398ecbfb80e408ae90.json",
+      "sequence": 6
+    },
+    {
+      "id": "662435d835edc3cb16b48d9630826fa0e0d50694e15e6dc2105428b2c3cfbdda",
+      "groundTruthSha256": "353fbe666cd08b1a4a25fc75edd8f843fd1bbb077d68a1372a7a890f264958d1",
+      "findingEvidenceSha256": "55c9d96e870bc10d7af555934056b06e1d350047a6bd4254dac39600f5af28ca",
+      "promptSha256": "11c2319c42fc295f844e5bb6c1dc9011a9c7a0359a9f341224569a56a86fdf72",
+      "file": "judge/attempt-662435d835edc3cb16b48d9630826fa0e0d50694e15e6dc2105428b2c3cfbdda.json",
+      "sequence": 7
+    },
+    {
+      "id": "beb8533c0a520f575df80bff8d609703ae2a68a53189ee3d06ed343c705e01ac",
+      "groundTruthSha256": "171138d1b65fc1e3f72f7f4f6320c4c7c398f345d2996dd7fbec5fd748439f91",
+      "findingEvidenceSha256": "81c6bc458eb0b1b393d0413d023a0f4fece2076e23c5d026e1ea69ed3c59f8d4",
+      "promptSha256": "c6c3a5d49cb45e04d6823272bef08445b2326e5017f34a33a9b7394843998b91",
+      "file": "judge/attempt-beb8533c0a520f575df80bff8d609703ae2a68a53189ee3d06ed343c705e01ac.json",
+      "sequence": 8
+    },
+    {
+      "id": "d061901d2612add338c11c7067a4e9f1095288af42100ba1c1a981f31451b3c9",
+      "groundTruthSha256": "ed3d0a68feb88e1f7a1d0b4d29d76399989678b6b33aa4ad681e1eaff10105c0",
+      "findingEvidenceSha256": "1947c9e81e619daa31b664a2f0d67d427c79913e9bce5490ef2a5c506bb74bec",
+      "promptSha256": "6fcc2e23fbf267de827533bc11ee9292f518a830f7f28e3fbcc7d531bd06e663",
+      "file": "judge/attempt-d061901d2612add338c11c7067a4e9f1095288af42100ba1c1a981f31451b3c9.json",
+      "sequence": 9
+    },
+    {
+      "id": "f3209d2b2d4d70a48c7b0f2be85639e6ce389200a5641113eb680f7c9136eb61",
+      "groundTruthSha256": "ed3d0a68feb88e1f7a1d0b4d29d76399989678b6b33aa4ad681e1eaff10105c0",
+      "findingEvidenceSha256": "10a165430b342addd1a27db538e86e861a8dce92f458e6d14af8af300a2e8f58",
+      "promptSha256": "9069963aad17d39fb7b09ee05d9e4a4c85edc24f95cee4c5fb531552c2701269",
+      "file": "judge/attempt-f3209d2b2d4d70a48c7b0f2be85639e6ce389200a5641113eb680f7c9136eb61.json",
+      "sequence": 10
+    }
+  ],
+  "manifestSha256": "f23f01f3071413e036d69f7e936ff6aad21edb39dfec980ffa8d15a4e9420946"
+}

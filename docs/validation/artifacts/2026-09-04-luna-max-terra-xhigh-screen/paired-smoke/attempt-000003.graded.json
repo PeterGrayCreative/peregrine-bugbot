@@ -1,0 +1,278 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "251f82be481b224856534e5fe61c185789c591adc7fddc7b44616da2ba983185",
+  "experimentManifestSha256": "d8989d01741f424e9119d4c79cfefcd58a5983be95d67cb171b61e17c6741d50",
+  "attemptId": "attempt-000003",
+  "caseName": "development/case-a1c4e90d",
+  "caseKind": "seeded",
+  "configName": "accepted-method-packet",
+  "repeat": 1,
+  "caseCorpus": "development",
+  "runner": "codex",
+  "startedAt": "2026-09-04T23:52:39.405Z",
+  "finishedAt": "2026-09-04T23:53:43.141Z",
+  "attemptDurationMs": 63736,
+  "evaluationProvenance": {
+    "history": {
+      "schemaVersion": 1,
+      "materialization": "fixture-patch",
+      "objectFormat": "sha1",
+      "baseRef": "06fbcc80855026987374c4ed0afc920efb767c32",
+      "headRef": "ce610905c3dd376121efafcf9e274edc1a33ea48",
+      "mergeBase": "06fbcc80855026987374c4ed0afc920efb767c32",
+      "baseTree": "7c7816172d3d9f1d9a7d00c7decc8ba81d7b8200",
+      "headTree": "297f36a009327748bd982dc3b60a83aedaf2e2c4",
+      "commitCount": 2,
+      "baseIsMergeBase": true,
+      "checkedOutTreeMatchesHead": true,
+      "treeReproductionVerified": true,
+      "diffNormalization": "identity-v1",
+      "diffSha256": "2aa26cb9fd1135d64e0fa751a7682a3be536a8491193ea92586c75af9f8fbfa7"
+    },
+    "manifest": {
+      "entryPoint": "prepareReviewManifest",
+      "skillName": "invariant-first-pr-review",
+      "baseRef": "06fbcc80855026987374c4ed0afc920efb767c32",
+      "headRef": "ce610905c3dd376121efafcf9e274edc1a33ea48",
+      "mergeBase": "06fbcc80855026987374c4ed0afc920efb767c32",
+      "outputSha256": "7491daf71aac4ea38b777e06eed0d1e66766faffc109875642caa02467fca815",
+      "output": "Invariant-first review manifest\nbase: 06fbcc80855026987374c4ed0afc920efb767c32 (argument)\nhead: ce610905c3dd376121efafcf9e274edc1a33ea48\nmerge-base: 06fbcc80855026987374c4ed0afc920efb767c32\n\nChanged files\nM\torder_store.py\n\nDiff summary\n order_store.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n(none detected)\n\nIdentifier normalization and uniqueness [lane: identifiers]\n(none detected)\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n(none detected)\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- order_store.py\n\nError Handling and Recovery [lane: error-handling]\n(none detected)\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n(none detected)\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+      "typed": {
+        "schemaVersion": 1,
+        "available": true,
+        "base": {
+          "ref": "06fbcc80855026987374c4ed0afc920efb767c32",
+          "commit": "06fbcc80855026987374c4ed0afc920efb767c32",
+          "source": "argument"
+        },
+        "head": {
+          "ref": "ce610905c3dd376121efafcf9e274edc1a33ea48",
+          "commit": "ce610905c3dd376121efafcf9e274edc1a33ea48"
+        },
+        "mergeBase": "06fbcc80855026987374c4ed0afc920efb767c32",
+        "profile": {
+          "source": "none",
+          "requestedPath": null,
+          "changedAtHead": false
+        },
+        "changedFiles": [
+          {
+            "path": "order_store.py",
+            "status": "M",
+            "additions": 1,
+            "deletions": 1,
+            "binary": false,
+            "activatedLanes": [
+              {
+                "id": "logic-correctness",
+                "reason": "content"
+              },
+              {
+                "id": "logic-correctness",
+                "reason": "path"
+              }
+            ]
+          }
+        ],
+        "activatedLanes": [
+          "logic-correctness"
+        ],
+        "customLanes": [],
+        "largeFiles": [],
+        "warnings": []
+      },
+      "typedSha256": "8bcff28d888ca6973dffa81a706fb9f828600d408eece9689ff2786345dec1da",
+      "profileSource": "none",
+      "headProfileChanged": false
+    }
+  },
+  "outcome": {
+    "status": "completed",
+    "result": {
+      "engine": "codex",
+      "status": "completed",
+      "modelConfig": "gpt-5.6-luna/high->gpt-5.6-sol/high",
+      "reviewedBaseRef": "06fbcc80855026987374c4ed0afc920efb767c32",
+      "reviewedHeadRef": "ce610905c3dd376121efafcf9e274edc1a33ea48",
+      "findings": [
+        {
+          "file": "order_store.py",
+          "startLine": 19,
+          "endLine": 19,
+          "severity": "high",
+          "disposition": "fix-in-pr",
+          "category": "data-integrity",
+          "invariant": "order-and-inventory-atomicity",
+          "title": "Early commit persists orders when inventory updates fail",
+          "explanation": "`apply_order` explicitly begins a transaction intended to cover both writes, but the added commit ends it immediately after inserting the order. For a missing or out-of-stock SKU, the inventory update affects zero rows and raises `ValueError`; the exception handler's rollback cannot undo the already committed order. This creates a persisted order without a corresponding inventory decrement. Moving the commit back after the stock check restores the shared transaction boundary.",
+          "failurePath": "Call `apply_order` with a new order ID and a SKU whose inventory row is absent or has `available = 0` → insert succeeds → line 19 commits the order → inventory update affects zero rows → `ValueError(\"out of stock\")` is raised → rollback executes but cannot reverse the committed insert.",
+          "confidence": 0.99
+        }
+      ],
+      "usage": {
+        "provider": "openai",
+        "aggregation": "stage-sum",
+        "inputTokens": 100732,
+        "uncachedInputTokens": 36092,
+        "cachedInputTokens": 64640,
+        "cacheReadInputTokens": 64640,
+        "outputTokens": 2166,
+        "reasoningOutputTokens": 1312,
+        "turns": 2,
+        "toolCalls": 4,
+        "toolOutputBytes": 828,
+        "promptBytes": 31986,
+        "toolCallsByType": {
+          "command_execution": 4
+        },
+        "unavailable": [
+          "baseInputTokens",
+          "cacheWriteInputTokens",
+          "costUsd"
+        ]
+      },
+      "durationMs": 60126,
+      "raw": {
+        "manifest": "Invariant-first review manifest\nbase: 06fbcc80855026987374c4ed0afc920efb767c32 (argument)\nhead: ce610905c3dd376121efafcf9e274edc1a33ea48\nmerge-base: 06fbcc80855026987374c4ed0afc920efb767c32\n\nChanged files\nM\torder_store.py\n\nDiff summary\n order_store.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n(none detected)\n\nIdentifier normalization and uniqueness [lane: identifiers]\n(none detected)\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n(none detected)\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- order_store.py\n\nError Handling and Recovery [lane: error-handling]\n(none detected)\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n(none detected)\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+        "breadth": {
+          "output": {
+            "model": "Peregrine Breadth Sweep",
+            "candidates": [
+              {
+                "id": "order-store-commit-before-inventory-update",
+                "lane": "logic-correctness",
+                "file": "order_store.py",
+                "line": 19,
+                "invariant": "Order creation and inventory decrement must be atomic: a failed stock check must leave neither a persisted order nor a changed inventory state.",
+                "counterexample": "The new commit permanently stores the order before the stock update. For an out-of-stock SKU, the subsequent ValueError rolls back only the later transaction, leaving an order without inventory. If the update succeeds, it runs after the commit in a new transaction that this function never commits, so the inventory decrement can also be rolled back independently.",
+                "evidenceNeeded": "Confirm callers expect apply_order to atomically persist both changes, and verify the connection's transaction behavior after the early commit (especially on exception or connection close)."
+              }
+            ],
+            "clear": [],
+            "escalations": [],
+            "coverage": {
+              "coveredFiles": [
+                "order_store.py"
+              ],
+              "unavailable": []
+            }
+          },
+          "model": "gpt-5.6-luna",
+          "promptSha256": "7b20dcfda5a97f7bd8f855e412c6f478d9c378480cb2c6fc65d4b7b8668316cd",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 40499,
+            "uncachedInputTokens": 15411,
+            "cachedInputTokens": 25088,
+            "cacheReadInputTokens": 25088,
+            "outputTokens": 1352,
+            "reasoningOutputTokens": 927,
+            "turns": 1,
+            "toolCalls": 2,
+            "toolCallsByType": {
+              "command_execution": 2
+            },
+            "toolOutputBytes": 414,
+            "promptBytes": 3499,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 33606,
+          "malformedEventLines": 0
+        },
+        "investigation": {
+          "output": {
+            "findings": [
+              {
+                "file": "order_store.py",
+                "startLine": 19,
+                "endLine": 19,
+                "severity": "high",
+                "disposition": "fix-in-pr",
+                "category": "data-integrity",
+                "invariant": "order-and-inventory-atomicity",
+                "title": "Early commit persists orders when inventory updates fail",
+                "explanation": "`apply_order` explicitly begins a transaction intended to cover both writes, but the added commit ends it immediately after inserting the order. For a missing or out-of-stock SKU, the inventory update affects zero rows and raises `ValueError`; the exception handler's rollback cannot undo the already committed order. This creates a persisted order without a corresponding inventory decrement. Moving the commit back after the stock check restores the shared transaction boundary.",
+                "failurePath": "Call `apply_order` with a new order ID and a SKU whose inventory row is absent or has `available = 0` → insert succeeds → line 19 commits the order → inventory update affects zero rows → `ValueError(\"out of stock\")` is raised → rollback executes but cannot reverse the committed insert.",
+                "confidence": 0.99
+              }
+            ]
+          },
+          "model": "gpt-5.6-sol",
+          "promptSha256": "462b2da1943bd542d4f64ff0b350571ab7c50a7a13f42a6c5d6cd4cff3fa49f5",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 60233,
+            "uncachedInputTokens": 20681,
+            "cachedInputTokens": 39552,
+            "cacheReadInputTokens": 39552,
+            "outputTokens": 814,
+            "reasoningOutputTokens": 385,
+            "turns": 1,
+            "toolCalls": 2,
+            "toolCallsByType": {
+              "command_execution": 2
+            },
+            "toolOutputBytes": 414,
+            "promptBytes": 28487,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 24927,
+          "malformedEventLines": 0,
+          "methodCoreSha256": "4ebaf0b75a9afcf06b5396499b8c9b653ced97cd93cc73dab335465751b20899",
+          "methodSourceSha256": "a2525e27ffcad95f8efbf8bb74052ce7b97079ffe6150a89bd54a5e6af1d3db5"
+        }
+      }
+    }
+  },
+  "matches": {
+    "bug-a11e04c1": 0,
+    "bug-72bca830": 0
+  },
+  "falsePositiveIndexes": [],
+  "grading": {
+    "version": "root-cause-v1",
+    "judge": {
+      "kind": "codex",
+      "version": "semantic-v1",
+      "configSha256": "8c91468ab1300e1875c0aafb597b5ad5e680337b4069c1cc9476393f337fff66"
+    },
+    "decisions": [
+      {
+        "decisionId": "82d20c0b3005104daf11faed46de76ab48ac18e5f2cc8efdb04542921af28f12",
+        "judgeVersion": "semantic-v1",
+        "judgeConfigSha256": "8c91468ab1300e1875c0aafb597b5ad5e680337b4069c1cc9476393f337fff66",
+        "bugId": "bug-a11e04c1",
+        "findingIndex": 0,
+        "findingEvidenceSha256": "55c9d96e870bc10d7af555934056b06e1d350047a6bd4254dac39600f5af28ca",
+        "verdict": "same-root-cause"
+      },
+      {
+        "decisionId": "2f10e726ea69af109a0a21a747abe4c4a61852344f91a546b9cf2126460c7127",
+        "judgeVersion": "semantic-v1",
+        "judgeConfigSha256": "8c91468ab1300e1875c0aafb597b5ad5e680337b4069c1cc9476393f337fff66",
+        "bugId": "bug-72bca830",
+        "findingIndex": 0,
+        "findingEvidenceSha256": "55c9d96e870bc10d7af555934056b06e1d350047a6bd4254dac39600f5af28ca",
+        "verdict": "same-root-cause"
+      }
+    ],
+    "rootCauseMatches": {
+      "[\"group\",\"root-117cf208\"]": true
+    },
+    "missStages": {
+      "bug-a11e04c1": "none",
+      "bug-72bca830": "none"
+    },
+    "unmatchedFindings": []
+  }
+}

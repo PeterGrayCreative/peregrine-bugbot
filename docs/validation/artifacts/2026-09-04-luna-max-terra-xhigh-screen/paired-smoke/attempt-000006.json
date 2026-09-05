@@ -1,0 +1,260 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "251f82be481b224856534e5fe61c185789c591adc7fddc7b44616da2ba983185",
+  "experimentManifestSha256": "d8989d01741f424e9119d4c79cfefcd58a5983be95d67cb171b61e17c6741d50",
+  "attemptId": "attempt-000006",
+  "caseName": "development/case-5ea42d18",
+  "caseCorpus": "development",
+  "caseKind": "clean",
+  "configName": "accepted-method-packet",
+  "repeat": 1,
+  "runner": "codex",
+  "startedAt": "2026-09-04T23:59:06.153Z",
+  "finishedAt": "2026-09-05T00:00:44.028Z",
+  "attemptDurationMs": 97875,
+  "evaluationProvenance": {
+    "history": {
+      "schemaVersion": 1,
+      "materialization": "fixture-patch",
+      "objectFormat": "sha1",
+      "baseRef": "839aa3ec1b21a7f0d03a3e81616167c5c72e16a2",
+      "headRef": "fef05ac44ae06257513accc0ec8776bd880a4da1",
+      "mergeBase": "839aa3ec1b21a7f0d03a3e81616167c5c72e16a2",
+      "baseTree": "e2828c1a8f96693b2d0437ceee39822d546c8658",
+      "headTree": "4e3d533152f5c9088dfdc56f5f621a7af67f6433",
+      "commitCount": 2,
+      "baseIsMergeBase": true,
+      "checkedOutTreeMatchesHead": true,
+      "treeReproductionVerified": true,
+      "diffNormalization": "identity-v1",
+      "diffSha256": "94b8947b86808321f328b6737a5d710d8806377bcb1ff2c6040a9b2bdff523dd"
+    },
+    "manifest": {
+      "entryPoint": "prepareReviewManifest",
+      "skillName": "invariant-first-pr-review",
+      "baseRef": "839aa3ec1b21a7f0d03a3e81616167c5c72e16a2",
+      "headRef": "fef05ac44ae06257513accc0ec8776bd880a4da1",
+      "mergeBase": "839aa3ec1b21a7f0d03a3e81616167c5c72e16a2",
+      "outputSha256": "4ac7b703fd73ee527c002a5872b69c2b7170833908de59e70109a9a7bc024e30",
+      "output": "Invariant-first review manifest\nbase: 839aa3ec1b21a7f0d03a3e81616167c5c72e16a2 (argument)\nhead: fef05ac44ae06257513accc0ec8776bd880a4da1\nmerge-base: 839aa3ec1b21a7f0d03a3e81616167c5c72e16a2\n\nChanged files\nM\tsrc/member-service.ts\n\nDiff summary\n src/member-service.ts | 8 +++++---\n 1 file changed, 5 insertions(+), 3 deletions(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n- src/member-service.ts\n\nIdentifier normalization and uniqueness [lane: identifiers]\n- src/member-service.ts\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n(none detected)\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- src/member-service.ts\n\nError Handling and Recovery [lane: error-handling]\n(none detected)\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n(none detected)\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+      "typed": {
+        "schemaVersion": 1,
+        "available": true,
+        "base": {
+          "ref": "839aa3ec1b21a7f0d03a3e81616167c5c72e16a2",
+          "commit": "839aa3ec1b21a7f0d03a3e81616167c5c72e16a2",
+          "source": "argument"
+        },
+        "head": {
+          "ref": "fef05ac44ae06257513accc0ec8776bd880a4da1",
+          "commit": "fef05ac44ae06257513accc0ec8776bd880a4da1"
+        },
+        "mergeBase": "839aa3ec1b21a7f0d03a3e81616167c5c72e16a2",
+        "profile": {
+          "source": "none",
+          "requestedPath": null,
+          "changedAtHead": false
+        },
+        "changedFiles": [
+          {
+            "path": "src/member-service.ts",
+            "status": "M",
+            "additions": 5,
+            "deletions": 3,
+            "binary": false,
+            "activatedLanes": [
+              {
+                "id": "authorization",
+                "reason": "content"
+              },
+              {
+                "id": "identifiers",
+                "reason": "content"
+              },
+              {
+                "id": "logic-correctness",
+                "reason": "content"
+              },
+              {
+                "id": "logic-correctness",
+                "reason": "path"
+              }
+            ]
+          }
+        ],
+        "activatedLanes": [
+          "authorization",
+          "identifiers",
+          "logic-correctness"
+        ],
+        "customLanes": [],
+        "largeFiles": [],
+        "warnings": []
+      },
+      "typedSha256": "486ebf29efed28610d288c3e5a0d64b09df72467c1d15d6c234858256b25a5c7",
+      "profileSource": "none",
+      "headProfileChanged": false
+    }
+  },
+  "outcome": {
+    "status": "completed",
+    "result": {
+      "engine": "codex",
+      "status": "completed",
+      "modelConfig": "gpt-5.6-luna/high->gpt-5.6-sol/high",
+      "reviewedBaseRef": "839aa3ec1b21a7f0d03a3e81616167c5c72e16a2",
+      "reviewedHeadRef": "fef05ac44ae06257513accc0ec8776bd880a4da1",
+      "findings": [
+        {
+          "file": "src/member-service.ts",
+          "startLine": 9,
+          "endLine": 9,
+          "severity": "medium",
+          "disposition": "fix-in-pr",
+          "category": "contracts",
+          "invariant": "preserve-exported-cache-key-input-contract",
+          "title": "Narrowing the exported cache-key helper breaks existing callers",
+          "explanation": "The base API accepted any string member ID, while the current head requires the newly branded MemberId. A previously valid TypeScript call such as memberCacheKey(tenantId, \"MEM-123456\") now fails type checking even though the value satisfies the documented format. Because branding is compile-time-only and cache-key construction itself has unchanged runtime semantics, this change creates a source-incompatible public contract without a compatibility path or coordinated caller migration. Preserve compatibility by accepting and parsing a string internally, or migrate every consumer in the same change.",
+          "failurePath": "An existing caller passes a validated plain string to memberCacheKey; TypeScript checks it against MemberId, rejects the missing nominal brand, and prevents that caller or package from compiling.",
+          "confidence": 0.88
+        }
+      ],
+      "usage": {
+        "provider": "openai",
+        "aggregation": "stage-sum",
+        "inputTokens": 127966,
+        "uncachedInputTokens": 52190,
+        "cachedInputTokens": 75776,
+        "cacheReadInputTokens": 75776,
+        "outputTokens": 3559,
+        "reasoningOutputTokens": 2489,
+        "turns": 2,
+        "toolCalls": 4,
+        "toolOutputBytes": 828,
+        "promptBytes": 36992,
+        "toolCallsByType": {
+          "command_execution": 4
+        },
+        "unavailable": [
+          "baseInputTokens",
+          "cacheWriteInputTokens",
+          "costUsd"
+        ]
+      },
+      "durationMs": 94264,
+      "raw": {
+        "manifest": "Invariant-first review manifest\nbase: 839aa3ec1b21a7f0d03a3e81616167c5c72e16a2 (argument)\nhead: fef05ac44ae06257513accc0ec8776bd880a4da1\nmerge-base: 839aa3ec1b21a7f0d03a3e81616167c5c72e16a2\n\nChanged files\nM\tsrc/member-service.ts\n\nDiff summary\n src/member-service.ts | 8 +++++---\n 1 file changed, 5 insertions(+), 3 deletions(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n- src/member-service.ts\n\nIdentifier normalization and uniqueness [lane: identifiers]\n- src/member-service.ts\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n(none detected)\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- src/member-service.ts\n\nError Handling and Recovery [lane: error-handling]\n(none detected)\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n(none detected)\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+        "breadth": {
+          "output": {
+            "model": "gpt-5",
+            "candidates": [
+              {
+                "id": "BRD-IDENT-001",
+                "lane": "identifiers",
+                "file": "src/member-service.ts",
+                "line": 9,
+                "invariant": "Public cache-key construction must remain callable by existing callers that hold a validated member ID as a plain string.",
+                "counterexample": "A caller invoking memberCacheKey(tenantId, \"MEM-123456\") now fails TypeScript compilation because the literal is not assignable to the branded MemberId type.",
+                "evidenceNeeded": "Search immediate callers and the exported API/type contract to confirm whether plain-string callers are supported or whether a coordinated migration exists."
+              }
+            ],
+            "clear": [
+              {
+                "lane": "authorization",
+                "file": "src/member-service.ts",
+                "reason": "The change only adds a compile-time brand; tenant scoping and cache-key construction remain unchanged, with no authorization decision or tenant-boundary behavior altered."
+              },
+              {
+                "lane": "logic-correctness",
+                "file": "src/member-service.ts",
+                "reason": "Normalization, validation, and cache-key formatting are semantically unchanged; parseMemberId still trims, uppercases, validates, and returns the normalized value."
+              }
+            ],
+            "escalations": [],
+            "coverage": {
+              "coveredFiles": [
+                "src/member-service.ts"
+              ],
+              "unavailable": [
+                "/opt/peregrine/skills/invariant-first-pr-review/references/breadth-worker-packet.md"
+              ]
+            }
+          },
+          "model": "gpt-5.6-luna",
+          "promptSha256": "23027a0457aecfcbb00883edd7b852810473eca207124445c7170e936258c4cf",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 64246,
+            "uncachedInputTokens": 30198,
+            "cachedInputTokens": 34048,
+            "cacheReadInputTokens": 34048,
+            "outputTokens": 1800,
+            "reasoningOutputTokens": 1209,
+            "turns": 1,
+            "toolCalls": 2,
+            "toolCallsByType": {
+              "command_execution": 2
+            },
+            "toolOutputBytes": 414,
+            "promptBytes": 3502,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 44955,
+          "malformedEventLines": 0
+        },
+        "investigation": {
+          "output": {
+            "findings": [
+              {
+                "file": "src/member-service.ts",
+                "startLine": 9,
+                "endLine": 9,
+                "severity": "medium",
+                "disposition": "fix-in-pr",
+                "category": "contracts",
+                "invariant": "preserve-exported-cache-key-input-contract",
+                "title": "Narrowing the exported cache-key helper breaks existing callers",
+                "explanation": "The base API accepted any string member ID, while the current head requires the newly branded MemberId. A previously valid TypeScript call such as memberCacheKey(tenantId, \"MEM-123456\") now fails type checking even though the value satisfies the documented format. Because branding is compile-time-only and cache-key construction itself has unchanged runtime semantics, this change creates a source-incompatible public contract without a compatibility path or coordinated caller migration. Preserve compatibility by accepting and parsing a string internally, or migrate every consumer in the same change.",
+                "failurePath": "An existing caller passes a validated plain string to memberCacheKey; TypeScript checks it against MemberId, rejects the missing nominal brand, and prevents that caller or package from compiling.",
+                "confidence": 0.88
+              }
+            ]
+          },
+          "model": "gpt-5.6-sol",
+          "promptSha256": "e70de054e22348a8f5d8f1bb8d361c48be0b77148aa007fb9a728430371adb2d",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 63720,
+            "uncachedInputTokens": 21992,
+            "cachedInputTokens": 41728,
+            "cacheReadInputTokens": 41728,
+            "outputTokens": 1759,
+            "reasoningOutputTokens": 1280,
+            "turns": 1,
+            "toolCalls": 2,
+            "toolCallsByType": {
+              "command_execution": 2
+            },
+            "toolOutputBytes": 414,
+            "promptBytes": 33490,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 47688,
+          "malformedEventLines": 0,
+          "methodCoreSha256": "4ebaf0b75a9afcf06b5396499b8c9b653ced97cd93cc73dab335465751b20899",
+          "methodSourceSha256": "a2525e27ffcad95f8efbf8bb74052ce7b97079ffe6150a89bd54a5e6af1d3db5"
+        }
+      }
+    }
+  }
+}

@@ -544,6 +544,12 @@ PR 8's stable method packet with the existing full breadth ledger. PR 10 may
 proceed from PR 8 after Checkpoint 2 passes; it does not depend on accepting a
 failed compaction representation.
 
+A later Luna-max breadth / Terra-xhigh investigation smoke also preserved all
+registered roots but increased paired median wall time by approximately 82.7%.
+It was stopped before fast-screen. Subsequent method and prompt experiments use
+Luna high breadth and Sol high investigation on both arms unless model routing
+is the isolated, preregistered intervention.
+
 ---
 
 ## Stage 3: Improve recall with compact evidence and bounded investigation

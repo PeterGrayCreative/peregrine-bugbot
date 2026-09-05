@@ -1,0 +1,221 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "251f82be481b224856534e5fe61c185789c591adc7fddc7b44616da2ba983185",
+  "experimentManifestSha256": "d8989d01741f424e9119d4c79cfefcd58a5983be95d67cb171b61e17c6741d50",
+  "attemptId": "attempt-000010",
+  "caseName": "development/case-1ab7d3c9",
+  "caseKind": "clean",
+  "configName": "accepted-method-packet",
+  "repeat": 1,
+  "caseCorpus": "development",
+  "runner": "codex",
+  "startedAt": "2026-09-05T00:08:33.394Z",
+  "finishedAt": "2026-09-05T00:09:48.602Z",
+  "attemptDurationMs": 75208,
+  "evaluationProvenance": {
+    "history": {
+      "schemaVersion": 1,
+      "materialization": "fixture-patch",
+      "objectFormat": "sha1",
+      "baseRef": "889bb7ba7ace19a29f0dbc1c9b4a474ad47e1c66",
+      "headRef": "01402ed2bc93a96a00a7d5b44d54e14e67964fb6",
+      "mergeBase": "889bb7ba7ace19a29f0dbc1c9b4a474ad47e1c66",
+      "baseTree": "158a28ccafa0e7c65dbae5f900b892b784653932",
+      "headTree": "88a1f8a4dc0122f18feb630205759a6bc4231379",
+      "commitCount": 2,
+      "baseIsMergeBase": true,
+      "checkedOutTreeMatchesHead": true,
+      "treeReproductionVerified": true,
+      "diffNormalization": "identity-v1",
+      "diffSha256": "3835438024508a543eb1fb0816bba8c2f33ac1aabb9fdb28eeebd73e53776ba2"
+    },
+    "manifest": {
+      "entryPoint": "prepareReviewManifest",
+      "skillName": "invariant-first-pr-review",
+      "baseRef": "889bb7ba7ace19a29f0dbc1c9b4a474ad47e1c66",
+      "headRef": "01402ed2bc93a96a00a7d5b44d54e14e67964fb6",
+      "mergeBase": "889bb7ba7ace19a29f0dbc1c9b4a474ad47e1c66",
+      "outputSha256": "cf56fa9205a3caf84cebe419a8b59d29db013377044ca3a7a7f920667d1e84fa",
+      "output": "Invariant-first review manifest\nbase: 889bb7ba7ace19a29f0dbc1c9b4a474ad47e1c66 (argument)\nhead: 01402ed2bc93a96a00a7d5b44d54e14e67964fb6\nmerge-base: 889bb7ba7ace19a29f0dbc1c9b4a474ad47e1c66\n\nChanged files\nM\tregistry/registry.go\n\nDiff summary\n registry/registry.go | 4 ++--\n 1 file changed, 2 insertions(+), 2 deletions(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n(none detected)\n\nIdentifier normalization and uniqueness [lane: identifiers]\n(none detected)\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n(none detected)\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- registry/registry.go\n\nError Handling and Recovery [lane: error-handling]\n(none detected)\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n(none detected)\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+      "typed": {
+        "schemaVersion": 1,
+        "available": true,
+        "base": {
+          "ref": "889bb7ba7ace19a29f0dbc1c9b4a474ad47e1c66",
+          "commit": "889bb7ba7ace19a29f0dbc1c9b4a474ad47e1c66",
+          "source": "argument"
+        },
+        "head": {
+          "ref": "01402ed2bc93a96a00a7d5b44d54e14e67964fb6",
+          "commit": "01402ed2bc93a96a00a7d5b44d54e14e67964fb6"
+        },
+        "mergeBase": "889bb7ba7ace19a29f0dbc1c9b4a474ad47e1c66",
+        "profile": {
+          "source": "none",
+          "requestedPath": null,
+          "changedAtHead": false
+        },
+        "changedFiles": [
+          {
+            "path": "registry/registry.go",
+            "status": "M",
+            "additions": 2,
+            "deletions": 2,
+            "binary": false,
+            "activatedLanes": [
+              {
+                "id": "logic-correctness",
+                "reason": "content"
+              },
+              {
+                "id": "logic-correctness",
+                "reason": "path"
+              }
+            ]
+          }
+        ],
+        "activatedLanes": [
+          "logic-correctness"
+        ],
+        "customLanes": [],
+        "largeFiles": [],
+        "warnings": []
+      },
+      "typedSha256": "bdeaf6c18ec4167a02c8ddbc772148f5897c76e38509e291a6acba7d46f9573a",
+      "profileSource": "none",
+      "headProfileChanged": false
+    }
+  },
+  "outcome": {
+    "status": "completed",
+    "result": {
+      "engine": "codex",
+      "status": "clean",
+      "modelConfig": "gpt-5.6-luna/high->gpt-5.6-sol/high",
+      "reviewedBaseRef": "889bb7ba7ace19a29f0dbc1c9b4a474ad47e1c66",
+      "reviewedHeadRef": "01402ed2bc93a96a00a7d5b44d54e14e67964fb6",
+      "findings": [],
+      "usage": {
+        "provider": "openai",
+        "aggregation": "stage-sum",
+        "inputTokens": 127723,
+        "uncachedInputTokens": 46955,
+        "cachedInputTokens": 80768,
+        "cacheReadInputTokens": 80768,
+        "outputTokens": 1934,
+        "reasoningOutputTokens": 1204,
+        "turns": 2,
+        "toolCalls": 4,
+        "toolOutputBytes": 828,
+        "promptBytes": 30730,
+        "toolCallsByType": {
+          "command_execution": 4
+        },
+        "unavailable": [
+          "baseInputTokens",
+          "cacheWriteInputTokens",
+          "costUsd"
+        ]
+      },
+      "durationMs": 71561,
+      "raw": {
+        "manifest": "Invariant-first review manifest\nbase: 889bb7ba7ace19a29f0dbc1c9b4a474ad47e1c66 (argument)\nhead: 01402ed2bc93a96a00a7d5b44d54e14e67964fb6\nmerge-base: 889bb7ba7ace19a29f0dbc1c9b4a474ad47e1c66\n\nChanged files\nM\tregistry/registry.go\n\nDiff summary\n registry/registry.go | 4 ++--\n 1 file changed, 2 insertions(+), 2 deletions(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n(none detected)\n\nIdentifier normalization and uniqueness [lane: identifiers]\n(none detected)\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n(none detected)\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- registry/registry.go\n\nError Handling and Recovery [lane: error-handling]\n(none detected)\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n(none detected)\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+        "breadth": {
+          "output": {
+            "model": "gpt-5",
+            "candidates": [],
+            "clear": [
+              {
+                "lane": "logic-correctness",
+                "file": "registry/registry.go",
+                "reason": "Snapshot still copies the values map while holding the registry read lock; changing Lock/RUnlock to RLock/RUnlock preserves the synchronization invariant and safely permits concurrent readers."
+              }
+            ],
+            "escalations": [],
+            "coverage": {
+              "coveredFiles": [
+                "registry/registry.go"
+              ],
+              "unavailable": [
+                "/opt/peregrine/skills/invariant-first-pr-review/references/breadth-worker-packet.md"
+              ]
+            }
+          },
+          "model": "gpt-5.6-luna",
+          "promptSha256": "9f086b7696ef79e90173d5e9215f68e76c429cc7f65244a620f805d90250ffcb",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 88259,
+            "uncachedInputTokens": 26819,
+            "cachedInputTokens": 61440,
+            "cacheReadInputTokens": 61440,
+            "outputTokens": 1486,
+            "reasoningOutputTokens": 893,
+            "turns": 1,
+            "toolCalls": 3,
+            "toolCallsByType": {
+              "command_execution": 3
+            },
+            "toolOutputBytes": 621,
+            "promptBytes": 3143,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 50255,
+          "malformedEventLines": 0
+        },
+        "investigation": {
+          "output": {
+            "findings": []
+          },
+          "model": "gpt-5.6-sol",
+          "promptSha256": "2a1067c990dd5ca26d5b8e351f05e0bcf489e36d3a9a2f772d177d53e589f6fb",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 39464,
+            "uncachedInputTokens": 20136,
+            "cachedInputTokens": 19328,
+            "cacheReadInputTokens": 19328,
+            "outputTokens": 448,
+            "reasoningOutputTokens": 311,
+            "turns": 1,
+            "toolCalls": 1,
+            "toolCallsByType": {
+              "command_execution": 1
+            },
+            "toolOutputBytes": 207,
+            "promptBytes": 27587,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 19701,
+          "malformedEventLines": 0,
+          "methodCoreSha256": "4ebaf0b75a9afcf06b5396499b8c9b653ced97cd93cc73dab335465751b20899",
+          "methodSourceSha256": "a2525e27ffcad95f8efbf8bb74052ce7b97079ffe6150a89bd54a5e6af1d3db5"
+        }
+      }
+    }
+  },
+  "matches": {},
+  "falsePositiveIndexes": [],
+  "grading": {
+    "version": "root-cause-v1",
+    "judge": {
+      "kind": "codex",
+      "version": "semantic-v1",
+      "configSha256": "8c91468ab1300e1875c0aafb597b5ad5e680337b4069c1cc9476393f337fff66"
+    },
+    "decisions": [],
+    "rootCauseMatches": {},
+    "missStages": {},
+    "unmatchedFindings": []
+  }
+}

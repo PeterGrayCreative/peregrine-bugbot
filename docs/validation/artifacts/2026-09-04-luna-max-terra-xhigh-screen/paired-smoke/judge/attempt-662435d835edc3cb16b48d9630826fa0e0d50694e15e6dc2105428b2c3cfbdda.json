@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "251f82be481b224856534e5fe61c185789c591adc7fddc7b44616da2ba983185",
+  "judgeManifestSha256": "f23f01f3071413e036d69f7e936ff6aad21edb39dfec980ffa8d15a4e9420946",
+  "decisionId": "662435d835edc3cb16b48d9630826fa0e0d50694e15e6dc2105428b2c3cfbdda",
+  "startedAt": "2026-09-05T00:17:31.204Z",
+  "finishedAt": "2026-09-05T00:17:38.838Z",
+  "durationMs": 7607,
+  "providerCostUsd": null,
+  "usage": {
+    "inputTokens": null,
+    "cachedInputTokens": null,
+    "outputTokens": null,
+    "reasoningTokens": null,
+    "turns": null,
+    "toolCalls": null
+  },
+  "outcome": {
+    "status": "completed",
+    "verdict": "same-root-cause"
+  }
+}

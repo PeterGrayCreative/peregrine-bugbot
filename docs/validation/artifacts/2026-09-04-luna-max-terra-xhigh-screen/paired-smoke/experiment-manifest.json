@@ -1,0 +1,312 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-09-04T23:47:28.054Z",
+  "repositoryCommit": "5d719102bb424e0148d967509665a204b39166b0",
+  "protocol": {
+    "mode": "screening",
+    "seed": 202609041,
+    "cacheCondition": "uncontrolled",
+    "providerCalls": "allow",
+    "providerAccess": "cli-session",
+    "costAccounting": "best-effort",
+    "judge": {
+      "kind": "codex",
+      "model": "gpt-5.6-luna",
+      "effort": "medium",
+      "version": "semantic-v1",
+      "limits": {
+        "maxProviderCostUsd": null,
+        "maxProviderAttempts": 192,
+        "maxWallTimeMs": 21600000,
+        "maxFailureRate": 0.2,
+        "minAttemptsForFailureRate": 12,
+        "maxConsecutiveFailures": 3
+      }
+    },
+    "control": "accepted-method-packet",
+    "treatment": "candidate-luna-max-terra-xhigh",
+    "limits": {
+      "maxProviderCostUsd": null,
+      "maxProviderAttempts": 48,
+      "maxWallTimeMs": 21600000,
+      "maxFailureRate": 0.2,
+      "minAttemptsForFailureRate": 12,
+      "maxConsecutiveFailures": 3
+    }
+  },
+  "benchmarkCategory": {
+    "name": "smoke",
+    "definitionSha256": "53f8b0d142430666b76f0d621afda59a7df0a10d8adc1a606971ea8b153b7e48",
+    "evidenceUse": "paired-acceptance",
+    "definition": {
+      "mode": "screening",
+      "repeats": 1,
+      "corpora": [
+        "development"
+      ],
+      "caseIds": [
+        "case-13f0a2c1",
+        "case-17ac84e2",
+        "case-1ab7d3c9",
+        "case-5ea42d18",
+        "case-6c19f4ab",
+        "case-a1c4e90d"
+      ],
+      "roles": {
+        "highRiskSentinels": [
+          "case-13f0a2c1",
+          "case-6c19f4ab",
+          "case-a1c4e90d"
+        ],
+        "variableCases": [
+          "case-17ac84e2"
+        ],
+        "cleanControls": [
+          "case-1ab7d3c9",
+          "case-5ea42d18"
+        ],
+        "compatibilityProxies": [
+          "case-17ac84e2"
+        ],
+        "largeDiffCases": [],
+        "diagnosticOnlyCases": []
+      },
+      "gate": {
+        "nextCategory": "fast-screen",
+        "efficiencyMetric": "paired-median-wall-time",
+        "targetImprovementPercent": null,
+        "requireConfidenceIntervalAboveZero": false,
+        "reliableDetectionMinimum": 1,
+        "bootstrapSamples": 10000,
+        "bootstrapSeed": 17011,
+        "mayComplete": false
+      }
+    },
+    "restrictedCasePolicies": []
+  },
+  "hashes": {
+    "repositorySha256": "77c4df188be93ab74d256d08804841369d25306be9a1240f42bbb44e29ffc04a",
+    "corpusSha256": "50403abd51ac7e84186efbaa9523a17406addca4aec2bde79801d48f41aae1d1",
+    "promptSha256": "8b7c5fdc221fcc7ecf6dd9cbd28386b87f07177f90a01764e7e24f611e224c18",
+    "methodSha256": "9b8c899b5866d5c128c3c5be8c731f8a873abfe10dc13d0c1afdf0aa56ad95f3",
+    "schemaSha256": "6997f28d461c50b885268c9d79b3085af5b00a2b1ee4efb05acbf0a6d3a3d9f6",
+    "profileSha256": "817c8e984a6279188ec6e1a05ecca15b77b5e77c939de83425d6663c867da70c",
+    "judgeSha256": "8c86bd3d3ce18ac25a0c582ab0be7c2a459385504d78a88c49143c71a8236197",
+    "matrixManifestSha256": "864dda17cbb78b41ce620b0d27a4c0ab5b01e5b3dfebda6f8ab89c2aca06cfa9",
+    "matrixConfigSha256": "f4279d7b7c1b074c3d94e0d770f32e563631cafb0be852a63d95f4819fe23758",
+    "peregrineConfigSha256": "78ea1f692b100fe7a4af159bd852bad440f5bb09c046d7709977d54933def155",
+    "configurationSha256": "c9f9603c9cd3d411e3f22b9246bead28edebed3f12864fe3540a1087ac627273"
+  },
+  "models": [
+    {
+      "configName": "accepted-method-packet",
+      "runner": "codex",
+      "effectiveConfigSha256": "9a406c713de08e2bf15408d27a0a15d7d8ed71e03dd8c8c1ec01e27e4b513739",
+      "breadthModel": "gpt-5.6-luna",
+      "breadthEffort": "high",
+      "investigationModel": "gpt-5.6-sol",
+      "investigationEffort": "high",
+      "investigationPromptMode": "method-packet"
+    },
+    {
+      "configName": "candidate-luna-max-terra-xhigh",
+      "runner": "codex",
+      "effectiveConfigSha256": "6e9829dde4eede6fbcd81e7d2a48232904a007b431f0a8d374c97ba21cbe3e3e",
+      "breadthModel": "gpt-5.6-luna",
+      "breadthEffort": "max",
+      "investigationModel": "gpt-5.6-terra",
+      "investigationEffort": "xhigh",
+      "investigationPromptMode": "method-packet"
+    }
+  ],
+  "runtime": {
+    "observedAt": "2026-09-04T23:47:28.054Z",
+    "nodeVersion": "v22.22.1",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cliVersions": [
+      {
+        "runner": "codex",
+        "status": "observed",
+        "version": "0.152.0"
+      }
+    ],
+    "providerAvailability": [
+      {
+        "runner": "codex",
+        "status": "configured"
+      }
+    ]
+  },
+  "schedule": [
+    {
+      "id": "attempt-000001",
+      "blockId": "block-000001",
+      "sequence": 1,
+      "caseName": "development/case-17ac84e2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "candidate-luna-max-terra-xhigh",
+      "repeat": 1,
+      "runner": "codex",
+      "variant": "treatment",
+      "position": 1,
+      "file": "attempt-000001.json"
+    },
+    {
+      "id": "attempt-000002",
+      "blockId": "block-000001",
+      "sequence": 2,
+      "caseName": "development/case-17ac84e2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "accepted-method-packet",
+      "repeat": 1,
+      "runner": "codex",
+      "variant": "control",
+      "position": 2,
+      "file": "attempt-000002.json"
+    },
+    {
+      "id": "attempt-000003",
+      "blockId": "block-000002",
+      "sequence": 3,
+      "caseName": "development/case-a1c4e90d",
+      "corpus": "development",
+      "expectedBugCount": 2,
+      "configName": "accepted-method-packet",
+      "repeat": 1,
+      "runner": "codex",
+      "variant": "control",
+      "position": 1,
+      "file": "attempt-000003.json"
+    },
+    {
+      "id": "attempt-000004",
+      "blockId": "block-000002",
+      "sequence": 4,
+      "caseName": "development/case-a1c4e90d",
+      "corpus": "development",
+      "expectedBugCount": 2,
+      "configName": "candidate-luna-max-terra-xhigh",
+      "repeat": 1,
+      "runner": "codex",
+      "variant": "treatment",
+      "position": 2,
+      "file": "attempt-000004.json"
+    },
+    {
+      "id": "attempt-000005",
+      "blockId": "block-000003",
+      "sequence": 5,
+      "caseName": "development/case-5ea42d18",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "candidate-luna-max-terra-xhigh",
+      "repeat": 1,
+      "runner": "codex",
+      "variant": "treatment",
+      "position": 1,
+      "file": "attempt-000005.json"
+    },
+    {
+      "id": "attempt-000006",
+      "blockId": "block-000003",
+      "sequence": 6,
+      "caseName": "development/case-5ea42d18",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "accepted-method-packet",
+      "repeat": 1,
+      "runner": "codex",
+      "variant": "control",
+      "position": 2,
+      "file": "attempt-000006.json"
+    },
+    {
+      "id": "attempt-000007",
+      "blockId": "block-000004",
+      "sequence": 7,
+      "caseName": "development/case-13f0a2c1",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "accepted-method-packet",
+      "repeat": 1,
+      "runner": "codex",
+      "variant": "control",
+      "position": 1,
+      "file": "attempt-000007.json"
+    },
+    {
+      "id": "attempt-000008",
+      "blockId": "block-000004",
+      "sequence": 8,
+      "caseName": "development/case-13f0a2c1",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "candidate-luna-max-terra-xhigh",
+      "repeat": 1,
+      "runner": "codex",
+      "variant": "treatment",
+      "position": 2,
+      "file": "attempt-000008.json"
+    },
+    {
+      "id": "attempt-000009",
+      "blockId": "block-000005",
+      "sequence": 9,
+      "caseName": "development/case-1ab7d3c9",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "candidate-luna-max-terra-xhigh",
+      "repeat": 1,
+      "runner": "codex",
+      "variant": "treatment",
+      "position": 1,
+      "file": "attempt-000009.json"
+    },
+    {
+      "id": "attempt-000010",
+      "blockId": "block-000005",
+      "sequence": 10,
+      "caseName": "development/case-1ab7d3c9",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "accepted-method-packet",
+      "repeat": 1,
+      "runner": "codex",
+      "variant": "control",
+      "position": 2,
+      "file": "attempt-000010.json"
+    },
+    {
+      "id": "attempt-000011",
+      "blockId": "block-000006",
+      "sequence": 11,
+      "caseName": "development/case-6c19f4ab",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "accepted-method-packet",
+      "repeat": 1,
+      "runner": "codex",
+      "variant": "control",
+      "position": 1,
+      "file": "attempt-000011.json"
+    },
+    {
+      "id": "attempt-000012",
+      "blockId": "block-000006",
+      "sequence": 12,
+      "caseName": "development/case-6c19f4ab",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "candidate-luna-max-terra-xhigh",
+      "repeat": 1,
+      "runner": "codex",
+      "variant": "treatment",
+      "position": 2,
+      "file": "attempt-000012.json"
+    }
+  ],
+  "experimentId": "251f82be481b224856534e5fe61c185789c591adc7fddc7b44616da2ba983185"
+}

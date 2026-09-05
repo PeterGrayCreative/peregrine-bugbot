@@ -1,0 +1,303 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "251f82be481b224856534e5fe61c185789c591adc7fddc7b44616da2ba983185",
+  "experimentManifestSha256": "d8989d01741f424e9119d4c79cfefcd58a5983be95d67cb171b61e17c6741d50",
+  "attemptId": "attempt-000001",
+  "caseName": "development/case-17ac84e2",
+  "caseKind": "seeded",
+  "configName": "candidate-luna-max-terra-xhigh",
+  "repeat": 1,
+  "caseCorpus": "development",
+  "runner": "codex",
+  "startedAt": "2026-09-04T23:47:36.623Z",
+  "finishedAt": "2026-09-04T23:50:36.821Z",
+  "attemptDurationMs": 180198,
+  "evaluationProvenance": {
+    "history": {
+      "schemaVersion": 1,
+      "materialization": "fixture-patch",
+      "objectFormat": "sha1",
+      "baseRef": "19cbcacfa44041341534594e85bca3acbc5ab4a9",
+      "headRef": "a69f36bc3931b01d49f471aca1c06a1d3d50431d",
+      "mergeBase": "19cbcacfa44041341534594e85bca3acbc5ab4a9",
+      "baseTree": "de34fd11054c416e18c5a49373a4e4b34cfa10f3",
+      "headTree": "d43ccfca2b4049d5fc00371c0fd5ab672bf25de4",
+      "commitCount": 2,
+      "baseIsMergeBase": true,
+      "checkedOutTreeMatchesHead": true,
+      "treeReproductionVerified": true,
+      "diffNormalization": "identity-v1",
+      "diffSha256": "baa7a67da1b27496f95828da5a0d2706b5f4a53293724234a5f7c3286ef66634"
+    },
+    "manifest": {
+      "entryPoint": "prepareReviewManifest",
+      "skillName": "invariant-first-pr-review",
+      "baseRef": "19cbcacfa44041341534594e85bca3acbc5ab4a9",
+      "headRef": "a69f36bc3931b01d49f471aca1c06a1d3d50431d",
+      "mergeBase": "19cbcacfa44041341534594e85bca3acbc5ab4a9",
+      "outputSha256": "19e22797d29afa7010d808e140f6dbf308cacc475b675da52f751a2fc80e11c7",
+      "output": "Invariant-first review manifest\nbase: 19cbcacfa44041341534594e85bca3acbc5ab4a9 (argument)\nhead: a69f36bc3931b01d49f471aca1c06a1d3d50431d\nmerge-base: 19cbcacfa44041341534594e85bca3acbc5ab4a9\n\nChanged files\nM\tpage_response.py\n\nDiff summary\n page_response.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n(none detected)\n\nIdentifier normalization and uniqueness [lane: identifiers]\n(none detected)\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n- page_response.py\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- page_response.py\n\nError Handling and Recovery [lane: error-handling]\n(none detected)\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n- page_response.py\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+      "typed": {
+        "schemaVersion": 1,
+        "available": true,
+        "base": {
+          "ref": "19cbcacfa44041341534594e85bca3acbc5ab4a9",
+          "commit": "19cbcacfa44041341534594e85bca3acbc5ab4a9",
+          "source": "argument"
+        },
+        "head": {
+          "ref": "a69f36bc3931b01d49f471aca1c06a1d3d50431d",
+          "commit": "a69f36bc3931b01d49f471aca1c06a1d3d50431d"
+        },
+        "mergeBase": "19cbcacfa44041341534594e85bca3acbc5ab4a9",
+        "profile": {
+          "source": "none",
+          "requestedPath": null,
+          "changedAtHead": false
+        },
+        "changedFiles": [
+          {
+            "path": "page_response.py",
+            "status": "M",
+            "additions": 1,
+            "deletions": 1,
+            "binary": false,
+            "activatedLanes": [
+              {
+                "id": "boundaries-pagination",
+                "reason": "content"
+              },
+              {
+                "id": "contracts",
+                "reason": "content"
+              },
+              {
+                "id": "logic-correctness",
+                "reason": "content"
+              },
+              {
+                "id": "logic-correctness",
+                "reason": "path"
+              }
+            ]
+          }
+        ],
+        "activatedLanes": [
+          "boundaries-pagination",
+          "contracts",
+          "logic-correctness"
+        ],
+        "customLanes": [],
+        "largeFiles": [],
+        "warnings": []
+      },
+      "typedSha256": "01864a8c761775a39eb4ea789f4fd0e26e3d845447587c1b30b86f207376c99b",
+      "profileSource": "none",
+      "headProfileChanged": false
+    }
+  },
+  "outcome": {
+    "status": "completed",
+    "result": {
+      "engine": "codex",
+      "status": "completed",
+      "modelConfig": "gpt-5.6-luna/max->gpt-5.6-terra/xhigh",
+      "reviewedBaseRef": "19cbcacfa44041341534594e85bca3acbc5ab4a9",
+      "reviewedHeadRef": "a69f36bc3931b01d49f471aca1c06a1d3d50431d",
+      "findings": [
+        {
+          "file": "page_response.py",
+          "startLine": 13,
+          "endLine": 13,
+          "severity": "medium",
+          "disposition": "fix-in-pr",
+          "category": "contracts",
+          "invariant": "pagination-continuation-contract",
+          "title": "Preserve the established continuation-token response field",
+          "explanation": "This changes the serialized public field from `next_cursor` to `cursor` without any accompanying consumer, schema, or compatibility update. A page with `next_cursor=\"abc\"` now omits `next_cursor`, so existing callers cannot obtain the continuation token and pagination fails. The same root cause covers both the response-contract and pagination-boundary concerns.",
+          "failurePath": "A caller serializes a nonterminal `Page`; `serialize_page` emits only `cursor`; a consumer reading the previously published `next_cursor` field receives no token and cannot request the next page.",
+          "confidence": 0.88
+        }
+      ],
+      "usage": {
+        "provider": "openai",
+        "aggregation": "stage-sum",
+        "inputTokens": 379065,
+        "uncachedInputTokens": 60089,
+        "cachedInputTokens": 318976,
+        "cacheReadInputTokens": 318976,
+        "outputTokens": 7626,
+        "reasoningOutputTokens": 6045,
+        "turns": 2,
+        "toolCalls": 7,
+        "toolOutputBytes": 13090,
+        "promptBytes": 35754,
+        "toolCallsByType": {
+          "command_execution": 4,
+          "mcp_tool_call": 3
+        },
+        "unavailable": [
+          "baseInputTokens",
+          "cacheWriteInputTokens",
+          "costUsd"
+        ]
+      },
+      "durationMs": 176585,
+      "raw": {
+        "manifest": "Invariant-first review manifest\nbase: 19cbcacfa44041341534594e85bca3acbc5ab4a9 (argument)\nhead: a69f36bc3931b01d49f471aca1c06a1d3d50431d\nmerge-base: 19cbcacfa44041341534594e85bca3acbc5ab4a9\n\nChanged files\nM\tpage_response.py\n\nDiff summary\n page_response.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n(none detected)\n\nIdentifier normalization and uniqueness [lane: identifiers]\n(none detected)\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n- page_response.py\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- page_response.py\n\nError Handling and Recovery [lane: error-handling]\n(none detected)\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n- page_response.py\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+        "breadth": {
+          "output": {
+            "model": "gpt-5",
+            "candidates": [
+              {
+                "id": "BW-001",
+                "lane": "contracts",
+                "file": "page_response.py",
+                "line": 13,
+                "invariant": "Serialized page responses must preserve the established continuation-token field expected by callers.",
+                "counterexample": "A consumer reading response['next_cursor'] receives a missing field because head emits only 'cursor', so pagination or response parsing fails.",
+                "evidenceNeeded": "Inspect immediate callers, response schemas, fixtures, and client migration evidence for next_cursor versus cursor."
+              },
+              {
+                "id": "BW-002",
+                "lane": "boundaries-pagination",
+                "file": "page_response.py",
+                "line": 13,
+                "invariant": "A non-null Page.next_cursor must remain available under the pagination continuation field used by page consumers, with terminal null semantics preserved.",
+                "counterexample": "For a page whose next_cursor is 'abc', the serializer exposes cursor='abc' instead; an existing pager treats the continuation token as absent or cannot follow it.",
+                "evidenceNeeded": "Verify pagination helpers and API contract consumers, including whether cursor is an intentional coordinated field rename."
+              }
+            ],
+            "clear": [
+              {
+                "lane": "logic-correctness",
+                "file": "page_response.py",
+                "reason": "No independent algorithmic or value-computation change is visible; the only behavior change is the response-field rename covered by the contract and pagination candidates."
+              }
+            ],
+            "escalations": [
+              {
+                "target": "strong-investigator",
+                "reason": "Validate whether the response key rename is coordinated across immediate callers and schemas, and deduplicate the contract/pagination candidates if appropriate."
+              }
+            ],
+            "coverage": {
+              "coveredFiles": [
+                "page_response.py"
+              ],
+              "unavailable": [
+                "/opt/peregrine/skills/invariant-first-pr-review/references/breadth-worker-packet.md (exec_command sandbox namespace failure)",
+                "Immediate caller and schema searches (exec_command sandbox namespace failure)"
+              ]
+            }
+          },
+          "model": "gpt-5.6-luna",
+          "promptSha256": "df0a86e8ba61e9d1a14fc1d6850fa0d3dd0ef9a1397588c73c7d3b2b7cf7421a",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 177835,
+            "uncachedInputTokens": 24235,
+            "cachedInputTokens": 153600,
+            "cacheReadInputTokens": 153600,
+            "outputTokens": 6218,
+            "reasoningOutputTokens": 5207,
+            "turns": 1,
+            "toolCalls": 4,
+            "toolCallsByType": {
+              "command_execution": 3,
+              "mcp_tool_call": 1
+            },
+            "toolOutputBytes": 11193,
+            "promptBytes": 3032,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 135200,
+          "malformedEventLines": 0
+        },
+        "investigation": {
+          "output": {
+            "findings": [
+              {
+                "file": "page_response.py",
+                "startLine": 13,
+                "endLine": 13,
+                "severity": "medium",
+                "disposition": "fix-in-pr",
+                "category": "contracts",
+                "invariant": "pagination-continuation-contract",
+                "title": "Preserve the established continuation-token response field",
+                "explanation": "This changes the serialized public field from `next_cursor` to `cursor` without any accompanying consumer, schema, or compatibility update. A page with `next_cursor=\"abc\"` now omits `next_cursor`, so existing callers cannot obtain the continuation token and pagination fails. The same root cause covers both the response-contract and pagination-boundary concerns.",
+                "failurePath": "A caller serializes a nonterminal `Page`; `serialize_page` emits only `cursor`; a consumer reading the previously published `next_cursor` field receives no token and cannot request the next page.",
+                "confidence": 0.88
+              }
+            ]
+          },
+          "model": "gpt-5.6-terra",
+          "promptSha256": "56a414e260c1674ca299876502954e61eff1eb36a40e06dee0ddfadb3ec95954",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 201230,
+            "uncachedInputTokens": 35854,
+            "cachedInputTokens": 165376,
+            "cacheReadInputTokens": 165376,
+            "outputTokens": 1408,
+            "reasoningOutputTokens": 838,
+            "turns": 1,
+            "toolCalls": 3,
+            "toolCallsByType": {
+              "command_execution": 1,
+              "mcp_tool_call": 2
+            },
+            "toolOutputBytes": 1897,
+            "promptBytes": 32722,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 39782,
+          "malformedEventLines": 0,
+          "methodCoreSha256": "4ebaf0b75a9afcf06b5396499b8c9b653ced97cd93cc73dab335465751b20899",
+          "methodSourceSha256": "a2525e27ffcad95f8efbf8bb74052ce7b97079ffe6150a89bd54a5e6af1d3db5"
+        }
+      }
+    }
+  },
+  "matches": {
+    "bug-19c805bf": 0
+  },
+  "falsePositiveIndexes": [],
+  "grading": {
+    "version": "root-cause-v1",
+    "judge": {
+      "kind": "codex",
+      "version": "semantic-v1",
+      "configSha256": "8c91468ab1300e1875c0aafb597b5ad5e680337b4069c1cc9476393f337fff66"
+    },
+    "decisions": [
+      {
+        "decisionId": "b0947b16dd9532b7c9984f1d21bfb417ad52802994cbc2785995740f21dd96e2",
+        "judgeVersion": "semantic-v1",
+        "judgeConfigSha256": "8c91468ab1300e1875c0aafb597b5ad5e680337b4069c1cc9476393f337fff66",
+        "bugId": "bug-19c805bf",
+        "findingIndex": 0,
+        "findingEvidenceSha256": "e8d17c9183f12a2a9d8f5cafab55b58e3e50f7ca26a70e785f8ebcda0b0ec1cb",
+        "verdict": "same-root-cause"
+      }
+    ],
+    "rootCauseMatches": {
+      "[\"bug\",\"bug-19c805bf\"]": true
+    },
+    "missStages": {
+      "bug-19c805bf": "none"
+    },
+    "unmatchedFindings": []
+  }
+}

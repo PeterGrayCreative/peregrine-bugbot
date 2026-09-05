@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 2,
+  "createdAt": "2026-09-04T23:47:28.054Z",
+  "expectedAttempts": [
+    {
+      "id": "attempt-000001",
+      "caseName": "development/case-17ac84e2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "candidate-luna-max-terra-xhigh",
+      "repeat": 1,
+      "file": "attempt-000001.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000002",
+      "caseName": "development/case-17ac84e2",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "accepted-method-packet",
+      "repeat": 1,
+      "file": "attempt-000002.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000003",
+      "caseName": "development/case-a1c4e90d",
+      "corpus": "development",
+      "expectedBugCount": 2,
+      "configName": "accepted-method-packet",
+      "repeat": 1,
+      "file": "attempt-000003.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000004",
+      "caseName": "development/case-a1c4e90d",
+      "corpus": "development",
+      "expectedBugCount": 2,
+      "configName": "candidate-luna-max-terra-xhigh",
+      "repeat": 1,
+      "file": "attempt-000004.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000005",
+      "caseName": "development/case-5ea42d18",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "candidate-luna-max-terra-xhigh",
+      "repeat": 1,
+      "file": "attempt-000005.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000006",
+      "caseName": "development/case-5ea42d18",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "accepted-method-packet",
+      "repeat": 1,
+      "file": "attempt-000006.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000007",
+      "caseName": "development/case-13f0a2c1",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "accepted-method-packet",
+      "repeat": 1,
+      "file": "attempt-000007.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000008",
+      "caseName": "development/case-13f0a2c1",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "candidate-luna-max-terra-xhigh",
+      "repeat": 1,
+      "file": "attempt-000008.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000009",
+      "caseName": "development/case-1ab7d3c9",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "candidate-luna-max-terra-xhigh",
+      "repeat": 1,
+      "file": "attempt-000009.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000010",
+      "caseName": "development/case-1ab7d3c9",
+      "corpus": "development",
+      "expectedBugCount": 0,
+      "configName": "accepted-method-packet",
+      "repeat": 1,
+      "file": "attempt-000010.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000011",
+      "caseName": "development/case-6c19f4ab",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "accepted-method-packet",
+      "repeat": 1,
+      "file": "attempt-000011.json",
+      "runner": "codex"
+    },
+    {
+      "id": "attempt-000012",
+      "caseName": "development/case-6c19f4ab",
+      "corpus": "development",
+      "expectedBugCount": 1,
+      "configName": "candidate-luna-max-terra-xhigh",
+      "repeat": 1,
+      "file": "attempt-000012.json",
+      "runner": "codex"
+    }
+  ],
+  "providerNetworkIsolation": {
+    "codex": {
+      "status": "limited",
+      "mechanism": "OCI mount isolation is attested; provider egress uses the Docker bridge without an independently attested destination allowlist."
+    }
+  },
+  "providerFilesystemIsolation": {
+    "codex": {
+      "status": "enforced",
+      "mechanism": "Digest-pinned OCI container exposes only read-only checkout/assets, private attempt output, and tmpfs state."
+    }
+  },
+  "runtimeImage": {
+    "reference": "ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:0ad23c12cc2172a54b2b298ebde4096d3e4924efc3d3bf5c2c4f616c7d00e6b3",
+    "pullPolicy": "never"
+  }
+}

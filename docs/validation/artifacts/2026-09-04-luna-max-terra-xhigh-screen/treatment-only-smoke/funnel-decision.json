@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "f468e08f304b9562209ad6680b6dde7c5c0b63ab0a9d6191e01f37c405bbecbe",
+  "benchmarkCategory": {
+    "name": "smoke",
+    "definitionSha256": "53f8b0d142430666b76f0d621afda59a7df0a10d8adc1a606971ea8b153b7e48",
+    "evidenceUse": "treatment-only-diagnostic",
+    "definition": {
+      "mode": "screening",
+      "repeats": 1,
+      "corpora": [
+        "development"
+      ],
+      "caseIds": [
+        "case-13f0a2c1",
+        "case-17ac84e2",
+        "case-1ab7d3c9",
+        "case-5ea42d18",
+        "case-6c19f4ab",
+        "case-a1c4e90d"
+      ],
+      "roles": {
+        "highRiskSentinels": [
+          "case-13f0a2c1",
+          "case-6c19f4ab",
+          "case-a1c4e90d"
+        ],
+        "variableCases": [
+          "case-17ac84e2"
+        ],
+        "cleanControls": [
+          "case-1ab7d3c9",
+          "case-5ea42d18"
+        ],
+        "compatibilityProxies": [
+          "case-17ac84e2"
+        ],
+        "largeDiffCases": [],
+        "diagnosticOnlyCases": []
+      },
+      "gate": {
+        "nextCategory": "fast-screen",
+        "efficiencyMetric": "paired-median-wall-time",
+        "targetImprovementPercent": null,
+        "requireConfidenceIntervalAboveZero": false,
+        "reliableDetectionMinimum": 1,
+        "bootstrapSamples": 10000,
+        "bootstrapSeed": 17011,
+        "mayComplete": false
+      }
+    },
+    "restrictedCasePolicies": []
+  },
+  "terminalSealSha256": "1fd21ff27136439feea245aab9240446f166ac3af6517f3dc3f24550ddb26e59",
+  "terminal": "completed",
+  "gradingSealSha256": "db58e2aeba6fd53f68059a04da0c751aa07b66ffde6cdcd9262fe41a0f4f1c40",
+  "completion": {
+    "control": {
+      "scheduled": 0,
+      "completed": 0,
+      "failed": 0
+    },
+    "treatment": {
+      "scheduled": 6,
+      "completed": 6,
+      "failed": 0
+    }
+  },
+  "metrics": {
+    "reliableHighSeverityRegressions": [],
+    "reliableOtherRegressions": [],
+    "blockingUnsupportedFindings": {
+      "control": 0,
+      "treatment": 0
+    },
+    "confirmedNewFindingsOnCleanControls": 0,
+    "unresolvedRequiredAdjudications": 0,
+    "diagnosticExcludedFindingCount": 0,
+    "efficiency": {
+      "metric": "paired-median-wall-time",
+      "targetImprovementPercent": null,
+      "observedImprovementPercent": null,
+      "confidenceIntervalPercent": null,
+      "pairedAttempts": 0,
+      "resamplingUnit": "case"
+    }
+  },
+  "result": {
+    "status": "diagnostic-only",
+    "nextCategory": null,
+    "reasons": [
+      "Treatment-only evidence can guide development but cannot advance or complete the funnel."
+    ]
+  },
+  "decisionSha256": "5f55c48df6fc5f69e9c16b91c89ccd55f585ef7d155ec155939ec6fa09f30add"
+}

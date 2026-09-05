@@ -1,0 +1,302 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "251f82be481b224856534e5fe61c185789c591adc7fddc7b44616da2ba983185",
+  "experimentManifestSha256": "d8989d01741f424e9119d4c79cfefcd58a5983be95d67cb171b61e17c6741d50",
+  "attemptId": "attempt-000011",
+  "caseName": "development/case-6c19f4ab",
+  "caseCorpus": "development",
+  "caseKind": "seeded",
+  "configName": "accepted-method-packet",
+  "repeat": 1,
+  "runner": "codex",
+  "startedAt": "2026-09-05T00:09:48.628Z",
+  "finishedAt": "2026-09-05T00:11:55.113Z",
+  "attemptDurationMs": 126485,
+  "evaluationProvenance": {
+    "history": {
+      "schemaVersion": 1,
+      "materialization": "fixture-patch",
+      "objectFormat": "sha1",
+      "baseRef": "eb61111159d8d83bb9647dbf3c2b9b53a98a83ab",
+      "headRef": "24fd2c58a913dd2330b4d706a514c9f40e51fcb7",
+      "mergeBase": "eb61111159d8d83bb9647dbf3c2b9b53a98a83ab",
+      "baseTree": "c5865b33acd9cfb86a24ae4d68f6481ca5fdbfc6",
+      "headTree": "e5888af5d2f3155626d90901dc63d2c25e2d6f7f",
+      "commitCount": 2,
+      "baseIsMergeBase": true,
+      "checkedOutTreeMatchesHead": true,
+      "treeReproductionVerified": true,
+      "diffNormalization": "identity-v1",
+      "diffSha256": "dcc4e7e857634483e2fa94939554b46a8723bb19df5c2cf5cc8d7815e9ecbb08"
+    },
+    "manifest": {
+      "entryPoint": "prepareReviewManifest",
+      "skillName": "invariant-first-pr-review",
+      "baseRef": "eb61111159d8d83bb9647dbf3c2b9b53a98a83ab",
+      "headRef": "24fd2c58a913dd2330b4d706a514c9f40e51fcb7",
+      "mergeBase": "eb61111159d8d83bb9647dbf3c2b9b53a98a83ab",
+      "outputSha256": "63be6f1d67cc0ffb1ad17273e9338fcbfe3ee8103ec78eb1f97bc3516c793b97",
+      "output": "Invariant-first review manifest\nbase: eb61111159d8d83bb9647dbf3c2b9b53a98a83ab (argument)\nhead: 24fd2c58a913dd2330b4d706a514c9f40e51fcb7\nmerge-base: eb61111159d8d83bb9647dbf3c2b9b53a98a83ab\n\nChanged files\nM\tsrc/ledger-service.ts\n\nDiff summary\n src/ledger-service.ts | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n(none detected)\n\nIdentifier normalization and uniqueness [lane: identifiers]\n(none detected)\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n(none detected)\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- src/ledger-service.ts\n\nError Handling and Recovery [lane: error-handling]\n- src/ledger-service.ts\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n(none detected)\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+      "typed": {
+        "schemaVersion": 1,
+        "available": true,
+        "base": {
+          "ref": "eb61111159d8d83bb9647dbf3c2b9b53a98a83ab",
+          "commit": "eb61111159d8d83bb9647dbf3c2b9b53a98a83ab",
+          "source": "argument"
+        },
+        "head": {
+          "ref": "24fd2c58a913dd2330b4d706a514c9f40e51fcb7",
+          "commit": "24fd2c58a913dd2330b4d706a514c9f40e51fcb7"
+        },
+        "mergeBase": "eb61111159d8d83bb9647dbf3c2b9b53a98a83ab",
+        "profile": {
+          "source": "none",
+          "requestedPath": null,
+          "changedAtHead": false
+        },
+        "changedFiles": [
+          {
+            "path": "src/ledger-service.ts",
+            "status": "M",
+            "additions": 1,
+            "deletions": 1,
+            "binary": false,
+            "activatedLanes": [
+              {
+                "id": "error-handling",
+                "reason": "content"
+              },
+              {
+                "id": "logic-correctness",
+                "reason": "content"
+              },
+              {
+                "id": "logic-correctness",
+                "reason": "path"
+              }
+            ]
+          }
+        ],
+        "activatedLanes": [
+          "error-handling",
+          "logic-correctness"
+        ],
+        "customLanes": [],
+        "largeFiles": [],
+        "warnings": []
+      },
+      "typedSha256": "ef0b598aa5e654a7f75365c739f50fb8d8b52f36b2b958a40fd16f248044421c",
+      "profileSource": "none",
+      "headProfileChanged": false
+    }
+  },
+  "outcome": {
+    "status": "completed",
+    "result": {
+      "engine": "codex",
+      "status": "completed",
+      "modelConfig": "gpt-5.6-luna/high->gpt-5.6-sol/high",
+      "reviewedBaseRef": "eb61111159d8d83bb9647dbf3c2b9b53a98a83ab",
+      "reviewedHeadRef": "24fd2c58a913dd2330b4d706a514c9f40e51fcb7",
+      "findings": [
+        {
+          "file": "src/ledger-service.ts",
+          "startLine": 16,
+          "endLine": 16,
+          "severity": "high",
+          "disposition": "fix-in-pr",
+          "category": "data-integrity",
+          "invariant": "validate-transfer-before-mutation",
+          "title": "Validate the destination before debiting the source",
+          "explanation": "For a transfer with sufficient funds to an existing account whose ID begins with `locked-`, current head subtracts `cents` from the source and then throws `destination locked`. The destination is never credited, so a rejected transfer still changes the ledger. No rollback exists in the changed function. Restore the lock validation before either balance mutation and add a regression assertion that both balances remain unchanged after rejection.",
+          "failurePath": "`transfer` resolves both accounts and passes the funds check, debits `from.balanceCents`, detects the locked destination, and throws before crediting `to.balanceCents`; the caller observes failure while the source retains the debit.",
+          "confidence": 0.99
+        }
+      ],
+      "usage": {
+        "provider": "openai",
+        "aggregation": "stage-sum",
+        "inputTokens": 129899,
+        "uncachedInputTokens": 48363,
+        "cachedInputTokens": 81536,
+        "cacheReadInputTokens": 81536,
+        "outputTokens": 5203,
+        "reasoningOutputTokens": 3980,
+        "turns": 2,
+        "toolCalls": 3,
+        "toolOutputBytes": 621,
+        "promptBytes": 35038,
+        "toolCallsByType": {
+          "command_execution": 3
+        },
+        "unavailable": [
+          "baseInputTokens",
+          "cacheWriteInputTokens",
+          "costUsd"
+        ]
+      },
+      "durationMs": 122944,
+      "raw": {
+        "manifest": "Invariant-first review manifest\nbase: eb61111159d8d83bb9647dbf3c2b9b53a98a83ab (argument)\nhead: 24fd2c58a913dd2330b4d706a514c9f40e51fcb7\nmerge-base: eb61111159d8d83bb9647dbf3c2b9b53a98a83ab\n\nChanged files\nM\tsrc/ledger-service.ts\n\nDiff summary\n src/ledger-service.ts | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n(none detected)\n\nIdentifier normalization and uniqueness [lane: identifiers]\n(none detected)\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n(none detected)\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- src/ledger-service.ts\n\nError Handling and Recovery [lane: error-handling]\n- src/ledger-service.ts\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n(none detected)\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+        "breadth": {
+          "output": {
+            "model": "gpt-5",
+            "candidates": [
+              {
+                "id": "ledger-transfer-validation-order",
+                "lane": "logic-correctness",
+                "file": "src/ledger-service.ts",
+                "line": 16,
+                "invariant": "Transfer validation must complete before either account balance is mutated.",
+                "counterexample": "With sufficient funds and a destination whose ID starts with \"locked-\", the source balance is decremented and then the function throws, leaving the transfer partially applied.",
+                "evidenceNeeded": "Confirm the transfer contract or tests require rejected transfers to leave both account balances unchanged; reproduce with a locked destination and inspect state after the exception."
+              },
+              {
+                "id": "ledger-transfer-exception-partial-mutation",
+                "lane": "error-handling",
+                "file": "src/ledger-service.ts",
+                "line": 16,
+                "invariant": "An exception during transfer must not leave persistent in-memory state partially mutated.",
+                "counterexample": "The moved destination-lock check throws after the debit, so callers receive an error while the source account has already lost the funds.",
+                "evidenceNeeded": "Verify expected rollback/atomicity behavior in callers or tests, and reproduce the locked-destination exception path."
+              }
+            ],
+            "clear": [
+              {
+                "lane": "authorization",
+                "file": "src/ledger-service.ts",
+                "reason": "No authorization, identity, or tenant-isolation logic changed."
+              },
+              {
+                "lane": "identifiers",
+                "file": "src/ledger-service.ts",
+                "reason": "No identifier normalization, generation, or uniqueness behavior changed."
+              },
+              {
+                "lane": "data-integrity",
+                "file": "src/ledger-service.ts",
+                "reason": "No independent lifecycle, validation, or limit issue identified; the mutation-ordering concern is covered by the logic and error-handling candidates."
+              },
+              {
+                "lane": "persistence",
+                "file": "src/ledger-service.ts",
+                "reason": "No schema, persistence, migration, or transaction-layer behavior changed."
+              },
+              {
+                "lane": "runtime-config",
+                "file": "src/ledger-service.ts",
+                "reason": "No runtime configuration, container, or harness behavior changed."
+              },
+              {
+                "lane": "contracts",
+                "file": "src/ledger-service.ts",
+                "reason": "No response, transport, or observability contract changed."
+              },
+              {
+                "lane": "concurrency",
+                "file": "src/ledger-service.ts",
+                "reason": "No concurrency, performance, or resource-use behavior changed."
+              },
+              {
+                "lane": "test-quality",
+                "file": "src/ledger-service.ts",
+                "reason": "No tests or test infrastructure changed."
+              },
+              {
+                "lane": "frontend-state",
+                "file": "src/ledger-service.ts",
+                "reason": "No frontend state or effects are involved."
+              },
+              {
+                "lane": "boundaries-pagination",
+                "file": "src/ledger-service.ts",
+                "reason": "No pagination, ordering, or boundary traversal behavior changed."
+              }
+            ],
+            "escalations": [],
+            "coverage": {
+              "coveredFiles": [
+                "src/ledger-service.ts"
+              ],
+              "unavailable": []
+            }
+          },
+          "model": "gpt-5.6-luna",
+          "promptSha256": "389b98f3f40eb935a90f2ed3cdaa6232db68533b18de5f38d2793af46672a45f",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 88670,
+            "uncachedInputTokens": 27230,
+            "cachedInputTokens": 61440,
+            "cacheReadInputTokens": 61440,
+            "outputTokens": 4322,
+            "reasoningOutputTokens": 3444,
+            "turns": 1,
+            "toolCalls": 2,
+            "toolCallsByType": {
+              "command_execution": 2
+            },
+            "toolOutputBytes": 414,
+            "promptBytes": 3333,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 92963,
+          "malformedEventLines": 0
+        },
+        "investigation": {
+          "output": {
+            "findings": [
+              {
+                "file": "src/ledger-service.ts",
+                "startLine": 16,
+                "endLine": 16,
+                "severity": "high",
+                "disposition": "fix-in-pr",
+                "category": "data-integrity",
+                "invariant": "validate-transfer-before-mutation",
+                "title": "Validate the destination before debiting the source",
+                "explanation": "For a transfer with sufficient funds to an existing account whose ID begins with `locked-`, current head subtracts `cents` from the source and then throws `destination locked`. The destination is never credited, so a rejected transfer still changes the ledger. No rollback exists in the changed function. Restore the lock validation before either balance mutation and add a regression assertion that both balances remain unchanged after rejection.",
+                "failurePath": "`transfer` resolves both accounts and passes the funds check, debits `from.balanceCents`, detects the locked destination, and throws before crediting `to.balanceCents`; the caller observes failure while the source retains the debit.",
+                "confidence": 0.99
+              }
+            ]
+          },
+          "model": "gpt-5.6-sol",
+          "promptSha256": "1671a5d878dbbc7562707037ad26b9f9681553bd306af87bf0c6ddb6429da887",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 41229,
+            "uncachedInputTokens": 21133,
+            "cachedInputTokens": 20096,
+            "cacheReadInputTokens": 20096,
+            "outputTokens": 881,
+            "reasoningOutputTokens": 536,
+            "turns": 1,
+            "toolCalls": 1,
+            "toolCallsByType": {
+              "command_execution": 1
+            },
+            "toolOutputBytes": 207,
+            "promptBytes": 31705,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 28391,
+          "malformedEventLines": 0,
+          "methodCoreSha256": "4ebaf0b75a9afcf06b5396499b8c9b653ced97cd93cc73dab335465751b20899",
+          "methodSourceSha256": "a2525e27ffcad95f8efbf8bb74052ce7b97079ffe6150a89bd54a5e6af1d3db5"
+        }
+      }
+    }
+  }
+}

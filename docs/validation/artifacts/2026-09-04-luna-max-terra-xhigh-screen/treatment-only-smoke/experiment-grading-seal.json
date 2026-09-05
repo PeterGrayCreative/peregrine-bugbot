@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "kind": "experiment-grading",
+  "experimentId": "f468e08f304b9562209ad6680b6dde7c5c0b63ab0a9d6191e01f37c405bbecbe",
+  "experimentManifestSha256": "b69f27df8871b8e43285e0a674f4ccad35277d470248d8b2c4354ff2f29cb0e9",
+  "terminalSealSha256": "4c1bff45a4ebb85af9c97b30a1d509675427e4cbf5409764973b5ab6f0e18d76",
+  "sealedAt": "2026-09-04T23:47:01.833Z",
+  "artifacts": [
+    {
+      "path": "attempt-000001.graded.json",
+      "sha256": "0f7e65313318d7ec90aa5dd32cfdc507a520a54fa5acc01c1c94e27970553802"
+    },
+    {
+      "path": "attempt-000002.graded.json",
+      "sha256": "dd30f1b7724635162f73d2eed8b15e53cbf182595032e354e4e4427c727ef9bd"
+    },
+    {
+      "path": "attempt-000003.graded.json",
+      "sha256": "b0abf2a8bf1e387310c7f563e2f48114d93ba300e4f18e6c36951a6a73a8dcb3"
+    },
+    {
+      "path": "attempt-000004.graded.json",
+      "sha256": "40326262a0be20c92d42058ddcb006907453f828a4291ff2d482bbac9d45fa9d"
+    },
+    {
+      "path": "attempt-000005.graded.json",
+      "sha256": "025d204e0c5b01c74311120ae012f549efa72158957b90c8f59d7de724629282"
+    },
+    {
+      "path": "attempt-000006.graded.json",
+      "sha256": "cc714090544102e8f25bc7f7579537b1937bc7e811fd2bf5ae9d85323bc1ab6f"
+    },
+    {
+      "path": "judge/manifest.json",
+      "sha256": "62393a4c7f6a8db0902e0ce7db5f44e3efdd725c4bca1078e542e3aa64e0d046"
+    },
+    {
+      "path": "judge/terminal-seal.json",
+      "sha256": "87438fc16adcb3fe6b197f268d400cccb49b8950b2f9151eadd5d038681824d8"
+    }
+  ],
+  "sealSha256": "db58e2aeba6fd53f68059a04da0c751aa07b66ffde6cdcd9262fe41a0f4f1c40"
+}

@@ -1,0 +1,252 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "f468e08f304b9562209ad6680b6dde7c5c0b63ab0a9d6191e01f37c405bbecbe",
+  "experimentManifestSha256": "b69f27df8871b8e43285e0a674f4ccad35277d470248d8b2c4354ff2f29cb0e9",
+  "attemptId": "attempt-000003",
+  "caseName": "development/case-5ea42d18",
+  "caseKind": "clean",
+  "configName": "candidate-luna-max-terra-xhigh",
+  "repeat": 1,
+  "caseCorpus": "development",
+  "runner": "codex",
+  "startedAt": "2026-09-04T23:33:24.195Z",
+  "finishedAt": "2026-09-04T23:36:21.367Z",
+  "attemptDurationMs": 177172,
+  "evaluationProvenance": {
+    "history": {
+      "schemaVersion": 1,
+      "materialization": "fixture-patch",
+      "objectFormat": "sha1",
+      "baseRef": "839aa3ec1b21a7f0d03a3e81616167c5c72e16a2",
+      "headRef": "fef05ac44ae06257513accc0ec8776bd880a4da1",
+      "mergeBase": "839aa3ec1b21a7f0d03a3e81616167c5c72e16a2",
+      "baseTree": "e2828c1a8f96693b2d0437ceee39822d546c8658",
+      "headTree": "4e3d533152f5c9088dfdc56f5f621a7af67f6433",
+      "commitCount": 2,
+      "baseIsMergeBase": true,
+      "checkedOutTreeMatchesHead": true,
+      "treeReproductionVerified": true,
+      "diffNormalization": "identity-v1",
+      "diffSha256": "94b8947b86808321f328b6737a5d710d8806377bcb1ff2c6040a9b2bdff523dd"
+    },
+    "manifest": {
+      "entryPoint": "prepareReviewManifest",
+      "skillName": "invariant-first-pr-review",
+      "baseRef": "839aa3ec1b21a7f0d03a3e81616167c5c72e16a2",
+      "headRef": "fef05ac44ae06257513accc0ec8776bd880a4da1",
+      "mergeBase": "839aa3ec1b21a7f0d03a3e81616167c5c72e16a2",
+      "outputSha256": "4ac7b703fd73ee527c002a5872b69c2b7170833908de59e70109a9a7bc024e30",
+      "output": "Invariant-first review manifest\nbase: 839aa3ec1b21a7f0d03a3e81616167c5c72e16a2 (argument)\nhead: fef05ac44ae06257513accc0ec8776bd880a4da1\nmerge-base: 839aa3ec1b21a7f0d03a3e81616167c5c72e16a2\n\nChanged files\nM\tsrc/member-service.ts\n\nDiff summary\n src/member-service.ts | 8 +++++---\n 1 file changed, 5 insertions(+), 3 deletions(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n- src/member-service.ts\n\nIdentifier normalization and uniqueness [lane: identifiers]\n- src/member-service.ts\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n(none detected)\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- src/member-service.ts\n\nError Handling and Recovery [lane: error-handling]\n(none detected)\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n(none detected)\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+      "typed": {
+        "schemaVersion": 1,
+        "available": true,
+        "base": {
+          "ref": "839aa3ec1b21a7f0d03a3e81616167c5c72e16a2",
+          "commit": "839aa3ec1b21a7f0d03a3e81616167c5c72e16a2",
+          "source": "argument"
+        },
+        "head": {
+          "ref": "fef05ac44ae06257513accc0ec8776bd880a4da1",
+          "commit": "fef05ac44ae06257513accc0ec8776bd880a4da1"
+        },
+        "mergeBase": "839aa3ec1b21a7f0d03a3e81616167c5c72e16a2",
+        "profile": {
+          "source": "none",
+          "requestedPath": null,
+          "changedAtHead": false
+        },
+        "changedFiles": [
+          {
+            "path": "src/member-service.ts",
+            "status": "M",
+            "additions": 5,
+            "deletions": 3,
+            "binary": false,
+            "activatedLanes": [
+              {
+                "id": "authorization",
+                "reason": "content"
+              },
+              {
+                "id": "identifiers",
+                "reason": "content"
+              },
+              {
+                "id": "logic-correctness",
+                "reason": "content"
+              },
+              {
+                "id": "logic-correctness",
+                "reason": "path"
+              }
+            ]
+          }
+        ],
+        "activatedLanes": [
+          "authorization",
+          "identifiers",
+          "logic-correctness"
+        ],
+        "customLanes": [],
+        "largeFiles": [],
+        "warnings": []
+      },
+      "typedSha256": "486ebf29efed28610d288c3e5a0d64b09df72467c1d15d6c234858256b25a5c7",
+      "profileSource": "none",
+      "headProfileChanged": false
+    }
+  },
+  "outcome": {
+    "status": "completed",
+    "result": {
+      "engine": "codex",
+      "status": "clean",
+      "modelConfig": "gpt-5.6-luna/max->gpt-5.6-terra/xhigh",
+      "reviewedBaseRef": "839aa3ec1b21a7f0d03a3e81616167c5c72e16a2",
+      "reviewedHeadRef": "fef05ac44ae06257513accc0ec8776bd880a4da1",
+      "findings": [],
+      "usage": {
+        "provider": "openai",
+        "aggregation": "stage-sum",
+        "inputTokens": 211767,
+        "uncachedInputTokens": 55095,
+        "cachedInputTokens": 156672,
+        "cacheReadInputTokens": 156672,
+        "outputTokens": 7876,
+        "reasoningOutputTokens": 6865,
+        "turns": 2,
+        "toolCalls": 5,
+        "toolOutputBytes": 1036,
+        "promptBytes": 37062,
+        "toolCallsByType": {
+          "command_execution": 5
+        },
+        "unavailable": [
+          "baseInputTokens",
+          "cacheWriteInputTokens",
+          "costUsd"
+        ]
+      },
+      "durationMs": 173547,
+      "raw": {
+        "manifest": "Invariant-first review manifest\nbase: 839aa3ec1b21a7f0d03a3e81616167c5c72e16a2 (argument)\nhead: fef05ac44ae06257513accc0ec8776bd880a4da1\nmerge-base: 839aa3ec1b21a7f0d03a3e81616167c5c72e16a2\n\nChanged files\nM\tsrc/member-service.ts\n\nDiff summary\n src/member-service.ts | 8 +++++---\n 1 file changed, 5 insertions(+), 3 deletions(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n- src/member-service.ts\n\nIdentifier normalization and uniqueness [lane: identifiers]\n- src/member-service.ts\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n(none detected)\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- src/member-service.ts\n\nError Handling and Recovery [lane: error-handling]\n(none detected)\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n(none detected)\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+        "breadth": {
+          "output": {
+            "model": "gpt-5",
+            "candidates": [
+              {
+                "id": "member-cache-key-public-type-break",
+                "lane": "logic-correctness",
+                "file": "src/member-service.ts",
+                "line": 9,
+                "invariant": "Changing the public helper to require MemberId must not break existing valid callers unless every caller is migrated.",
+                "counterexample": "A caller holding a valid canonical ID as a plain string can no longer pass it to memberCacheKey because the brand is compile-time-only.",
+                "evidenceNeeded": "Search immediate memberCacheKey call sites and verify the existing typecheck/build for unbranded string arguments."
+              }
+            ],
+            "clear": [
+              {
+                "lane": "authorization",
+                "file": "src/member-service.ts",
+                "reason": "No authorization decision changes; the cache key still includes a length-delimited tenant ID."
+              },
+              {
+                "lane": "identifiers",
+                "file": "src/member-service.ts",
+                "reason": "Runtime trimming, uppercasing, and MEM-###### validation are unchanged; the new brand does not alter normalized values."
+              }
+            ],
+            "escalations": [
+              {
+                "target": "strong-investigator",
+                "reason": "Validate whether existing memberCacheKey callers pass plain strings; the local command runner could not read the packet or search the repository."
+              }
+            ],
+            "coverage": {
+              "coveredFiles": [
+                "src/member-service.ts"
+              ],
+              "unavailable": [
+                "/opt/peregrine/skills/invariant-first-pr-review/references/breadth-worker-packet.md",
+                "Immediate repository caller/typecheck evidence"
+              ]
+            }
+          },
+          "model": "gpt-5.6-luna",
+          "promptSha256": "23027a0457aecfcbb00883edd7b852810473eca207124445c7170e936258c4cf",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 169884,
+            "uncachedInputTokens": 33436,
+            "cachedInputTokens": 136448,
+            "cacheReadInputTokens": 136448,
+            "outputTokens": 6552,
+            "reasoningOutputTokens": 5748,
+            "turns": 1,
+            "toolCalls": 4,
+            "toolCallsByType": {
+              "command_execution": 4
+            },
+            "toolOutputBytes": 829,
+            "promptBytes": 3502,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 138269,
+          "malformedEventLines": 0
+        },
+        "investigation": {
+          "output": {
+            "findings": []
+          },
+          "model": "gpt-5.6-terra",
+          "promptSha256": "f747919fa47f07f12343d72e4125ba93b1f1e0507aadc1f988ee0c1874db7640",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 41883,
+            "uncachedInputTokens": 21659,
+            "cachedInputTokens": 20224,
+            "cacheReadInputTokens": 20224,
+            "outputTokens": 1324,
+            "reasoningOutputTokens": 1117,
+            "turns": 1,
+            "toolCalls": 1,
+            "toolCallsByType": {
+              "command_execution": 1
+            },
+            "toolOutputBytes": 207,
+            "promptBytes": 33560,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 33638,
+          "malformedEventLines": 0,
+          "methodCoreSha256": "4ebaf0b75a9afcf06b5396499b8c9b653ced97cd93cc73dab335465751b20899",
+          "methodSourceSha256": "a2525e27ffcad95f8efbf8bb74052ce7b97079ffe6150a89bd54a5e6af1d3db5"
+        }
+      }
+    }
+  },
+  "matches": {},
+  "falsePositiveIndexes": [],
+  "grading": {
+    "version": "root-cause-v1",
+    "judge": {
+      "kind": "codex",
+      "version": "semantic-v1",
+      "configSha256": "8c91468ab1300e1875c0aafb597b5ad5e680337b4069c1cc9476393f337fff66"
+    },
+    "decisions": [],
+    "rootCauseMatches": {},
+    "missStages": {},
+    "unmatchedFindings": []
+  }
+}

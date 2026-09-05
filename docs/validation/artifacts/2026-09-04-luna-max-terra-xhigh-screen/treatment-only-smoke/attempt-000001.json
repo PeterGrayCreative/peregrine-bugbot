@@ -1,0 +1,321 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "f468e08f304b9562209ad6680b6dde7c5c0b63ab0a9d6191e01f37c405bbecbe",
+  "experimentManifestSha256": "b69f27df8871b8e43285e0a674f4ccad35277d470248d8b2c4354ff2f29cb0e9",
+  "attemptId": "attempt-000001",
+  "caseName": "development/case-17ac84e2",
+  "caseCorpus": "development",
+  "caseKind": "seeded",
+  "configName": "candidate-luna-max-terra-xhigh",
+  "repeat": 1,
+  "runner": "codex",
+  "startedAt": "2026-09-04T23:26:53.782Z",
+  "finishedAt": "2026-09-04T23:30:04.348Z",
+  "attemptDurationMs": 190566,
+  "evaluationProvenance": {
+    "history": {
+      "schemaVersion": 1,
+      "materialization": "fixture-patch",
+      "objectFormat": "sha1",
+      "baseRef": "19cbcacfa44041341534594e85bca3acbc5ab4a9",
+      "headRef": "a69f36bc3931b01d49f471aca1c06a1d3d50431d",
+      "mergeBase": "19cbcacfa44041341534594e85bca3acbc5ab4a9",
+      "baseTree": "de34fd11054c416e18c5a49373a4e4b34cfa10f3",
+      "headTree": "d43ccfca2b4049d5fc00371c0fd5ab672bf25de4",
+      "commitCount": 2,
+      "baseIsMergeBase": true,
+      "checkedOutTreeMatchesHead": true,
+      "treeReproductionVerified": true,
+      "diffNormalization": "identity-v1",
+      "diffSha256": "baa7a67da1b27496f95828da5a0d2706b5f4a53293724234a5f7c3286ef66634"
+    },
+    "manifest": {
+      "entryPoint": "prepareReviewManifest",
+      "skillName": "invariant-first-pr-review",
+      "baseRef": "19cbcacfa44041341534594e85bca3acbc5ab4a9",
+      "headRef": "a69f36bc3931b01d49f471aca1c06a1d3d50431d",
+      "mergeBase": "19cbcacfa44041341534594e85bca3acbc5ab4a9",
+      "outputSha256": "19e22797d29afa7010d808e140f6dbf308cacc475b675da52f751a2fc80e11c7",
+      "output": "Invariant-first review manifest\nbase: 19cbcacfa44041341534594e85bca3acbc5ab4a9 (argument)\nhead: a69f36bc3931b01d49f471aca1c06a1d3d50431d\nmerge-base: 19cbcacfa44041341534594e85bca3acbc5ab4a9\n\nChanged files\nM\tpage_response.py\n\nDiff summary\n page_response.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n(none detected)\n\nIdentifier normalization and uniqueness [lane: identifiers]\n(none detected)\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n- page_response.py\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- page_response.py\n\nError Handling and Recovery [lane: error-handling]\n(none detected)\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n- page_response.py\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+      "typed": {
+        "schemaVersion": 1,
+        "available": true,
+        "base": {
+          "ref": "19cbcacfa44041341534594e85bca3acbc5ab4a9",
+          "commit": "19cbcacfa44041341534594e85bca3acbc5ab4a9",
+          "source": "argument"
+        },
+        "head": {
+          "ref": "a69f36bc3931b01d49f471aca1c06a1d3d50431d",
+          "commit": "a69f36bc3931b01d49f471aca1c06a1d3d50431d"
+        },
+        "mergeBase": "19cbcacfa44041341534594e85bca3acbc5ab4a9",
+        "profile": {
+          "source": "none",
+          "requestedPath": null,
+          "changedAtHead": false
+        },
+        "changedFiles": [
+          {
+            "path": "page_response.py",
+            "status": "M",
+            "additions": 1,
+            "deletions": 1,
+            "binary": false,
+            "activatedLanes": [
+              {
+                "id": "boundaries-pagination",
+                "reason": "content"
+              },
+              {
+                "id": "contracts",
+                "reason": "content"
+              },
+              {
+                "id": "logic-correctness",
+                "reason": "content"
+              },
+              {
+                "id": "logic-correctness",
+                "reason": "path"
+              }
+            ]
+          }
+        ],
+        "activatedLanes": [
+          "boundaries-pagination",
+          "contracts",
+          "logic-correctness"
+        ],
+        "customLanes": [],
+        "largeFiles": [],
+        "warnings": []
+      },
+      "typedSha256": "01864a8c761775a39eb4ea789f4fd0e26e3d845447587c1b30b86f207376c99b",
+      "profileSource": "none",
+      "headProfileChanged": false
+    }
+  },
+  "outcome": {
+    "status": "completed",
+    "result": {
+      "engine": "codex",
+      "status": "completed",
+      "modelConfig": "gpt-5.6-luna/max->gpt-5.6-terra/xhigh",
+      "reviewedBaseRef": "19cbcacfa44041341534594e85bca3acbc5ab4a9",
+      "reviewedHeadRef": "a69f36bc3931b01d49f471aca1c06a1d3d50431d",
+      "findings": [
+        {
+          "file": "page_response.py",
+          "startLine": 13,
+          "endLine": 13,
+          "severity": "high",
+          "disposition": "fix-in-pr",
+          "category": "contracts",
+          "invariant": "pagination-continuation-wire-key",
+          "title": "Preserve the established `next_cursor` response field",
+          "explanation": "This serialization change removes `next_cursor` from every page response and emits an undocumented new `cursor` key instead. A client that reads `next_cursor` will receive no continuation value for both nonterminal and terminal pages, breaking pagination traversal and terminal-page detection. The same root cause covers the pagination-boundary and response-contract lanes.",
+          "failurePath": "A caller passes a Page with `next_cursor` set to a token (or None) to `serialize_page`; the serializer now returns `{items, cursor}`. Consumers expecting the prior `{items, next_cursor}` contract cannot find the continuation field.",
+          "confidence": 0.86
+        }
+      ],
+      "usage": {
+        "provider": "openai",
+        "aggregation": "stage-sum",
+        "inputTokens": 399831,
+        "uncachedInputTokens": 101847,
+        "cachedInputTokens": 297984,
+        "cacheReadInputTokens": 297984,
+        "outputTokens": 8376,
+        "reasoningOutputTokens": 6286,
+        "turns": 2,
+        "toolCalls": 9,
+        "toolOutputBytes": 15767,
+        "promptBytes": 36751,
+        "toolCallsByType": {
+          "command_execution": 4,
+          "mcp_tool_call": 5
+        },
+        "unavailable": [
+          "baseInputTokens",
+          "cacheWriteInputTokens",
+          "costUsd"
+        ]
+      },
+      "durationMs": 186210,
+      "raw": {
+        "manifest": "Invariant-first review manifest\nbase: 19cbcacfa44041341534594e85bca3acbc5ab4a9 (argument)\nhead: a69f36bc3931b01d49f471aca1c06a1d3d50431d\nmerge-base: 19cbcacfa44041341534594e85bca3acbc5ab4a9\n\nChanged files\nM\tpage_response.py\n\nDiff summary\n page_response.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n(none detected)\n\nIdentifier normalization and uniqueness [lane: identifiers]\n(none detected)\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n- page_response.py\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- page_response.py\n\nError Handling and Recovery [lane: error-handling]\n(none detected)\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n- page_response.py\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+        "breadth": {
+          "output": {
+            "model": "gpt-5",
+            "candidates": [
+              {
+                "id": "contracts-wire-key",
+                "lane": "contracts",
+                "file": "page_response.py",
+                "line": 13,
+                "invariant": "The version-one pagination response preserves its established next_cursor wire key and nullable shape.",
+                "counterexample": "Existing clients reading next_cursor receive a missing field for both populated and terminal pages, so they may stop pagination or reject the response.",
+                "evidenceNeeded": "Confirm there is no versioned migration; the sibling pagination tests still assert next_cursor for token and None cases."
+              },
+              {
+                "id": "pagination-wire-key",
+                "lane": "boundaries-pagination",
+                "file": "page_response.py",
+                "line": 13,
+                "invariant": "Pagination continuation state is emitted under the key consumers use, including the terminal None case.",
+                "counterexample": "A client cannot find next_cursor after serialization, preventing continuation or terminal-page detection.",
+                "evidenceNeeded": "Verify pagination consumers and the established response schema."
+              }
+            ],
+            "clear": [
+              {
+                "lane": "authorization",
+                "file": "page_response.py",
+                "reason": "No identity, authorization, or tenant-isolation behavior changes."
+              },
+              {
+                "lane": "identifiers",
+                "file": "page_response.py",
+                "reason": "No identifier normalization or uniqueness behavior changes."
+              },
+              {
+                "lane": "data-integrity",
+                "file": "page_response.py",
+                "reason": "No stored-data, lifecycle, validation, or limit behavior changes."
+              },
+              {
+                "lane": "persistence",
+                "file": "page_response.py",
+                "reason": "No schema, persistence, migration, or transaction behavior changes."
+              },
+              {
+                "lane": "runtime-config",
+                "file": "page_response.py",
+                "reason": "No runtime configuration, container, or harness behavior changes."
+              },
+              {
+                "lane": "logic-correctness",
+                "file": "page_response.py",
+                "reason": "Items and the cursor value are still forwarded without an independent algorithmic change; the wire-key concern is covered by the contracts and pagination candidates."
+              },
+              {
+                "lane": "error-handling",
+                "file": "page_response.py",
+                "reason": "No error or recovery behavior changes."
+              },
+              {
+                "lane": "frontend-state",
+                "file": "page_response.py",
+                "reason": "No frontend state or effect behavior changes."
+              },
+              {
+                "lane": "concurrency",
+                "file": "page_response.py",
+                "reason": "No concurrency, performance, or resource-use behavior changes."
+              },
+              {
+                "lane": "test-quality",
+                "file": "page_response.py",
+                "reason": "No test files or test-harness behavior are changed."
+              }
+            ],
+            "escalations": [
+              {
+                "target": "strong-investigator",
+                "reason": "Verify the established version-one response contract and downstream pagination consumers before final adjudication."
+              },
+              {
+                "target": "packet-access",
+                "reason": "The required breadth-worker packet could not be read because the local shell sandbox could not create its namespace."
+              }
+            ],
+            "coverage": {
+              "coveredFiles": [
+                "page_response.py"
+              ],
+              "unavailable": [
+                "/opt/peregrine/skills/invariant-first-pr-review/references/breadth-worker-packet.md",
+                "local worktree search due sandbox namespace restriction"
+              ]
+            }
+          },
+          "model": "gpt-5.6-luna",
+          "promptSha256": "df0a86e8ba61e9d1a14fc1d6850fa0d3dd0ef9a1397588c73c7d3b2b7cf7421a",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 357859,
+            "uncachedInputTokens": 80099,
+            "cachedInputTokens": 277760,
+            "cacheReadInputTokens": 277760,
+            "outputTokens": 7179,
+            "reasoningOutputTokens": 5481,
+            "turns": 1,
+            "toolCalls": 8,
+            "toolCallsByType": {
+              "command_execution": 3,
+              "mcp_tool_call": 5
+            },
+            "toolOutputBytes": 15560,
+            "promptBytes": 3032,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 154026,
+          "malformedEventLines": 0
+        },
+        "investigation": {
+          "output": {
+            "findings": [
+              {
+                "file": "page_response.py",
+                "startLine": 13,
+                "endLine": 13,
+                "severity": "high",
+                "disposition": "fix-in-pr",
+                "category": "contracts",
+                "invariant": "pagination-continuation-wire-key",
+                "title": "Preserve the established `next_cursor` response field",
+                "explanation": "This serialization change removes `next_cursor` from every page response and emits an undocumented new `cursor` key instead. A client that reads `next_cursor` will receive no continuation value for both nonterminal and terminal pages, breaking pagination traversal and terminal-page detection. The same root cause covers the pagination-boundary and response-contract lanes.",
+                "failurePath": "A caller passes a Page with `next_cursor` set to a token (or None) to `serialize_page`; the serializer now returns `{items, cursor}`. Consumers expecting the prior `{items, next_cursor}` contract cannot find the continuation field.",
+                "confidence": 0.86
+              }
+            ]
+          },
+          "model": "gpt-5.6-terra",
+          "promptSha256": "663a4b8eadf96f1e6851f11a595b517d43ccc60b1a205ac5716c68918542509b",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 41972,
+            "uncachedInputTokens": 21748,
+            "cachedInputTokens": 20224,
+            "cacheReadInputTokens": 20224,
+            "outputTokens": 1197,
+            "reasoningOutputTokens": 805,
+            "turns": 1,
+            "toolCalls": 1,
+            "toolCallsByType": {
+              "command_execution": 1
+            },
+            "toolOutputBytes": 207,
+            "promptBytes": 33719,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 30291,
+          "malformedEventLines": 0,
+          "methodCoreSha256": "4ebaf0b75a9afcf06b5396499b8c9b653ced97cd93cc73dab335465751b20899",
+          "methodSourceSha256": "a2525e27ffcad95f8efbf8bb74052ce7b97079ffe6150a89bd54a5e6af1d3db5"
+        }
+      }
+    }
+  }
+}
