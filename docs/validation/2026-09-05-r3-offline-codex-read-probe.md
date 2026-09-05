@@ -108,3 +108,38 @@ may expose readable provider credentials. The backend remains a candidate for
 further isolated probes, not an approved historical execution profile. No
 container capability, seccomp policy, network policy, or production default
 was relaxed; no provider call or historical code execution occurred.
+
+## Follow-up: synthetic credential-path read
+
+A further network-disabled probe tested whether the alternate backend also
+denies reads at the runner's configured credential path. The only host mount
+was a newly created public canary, not a login file:
+
+```json
+{"syntheticCanary":"peregrine-public-test-marker-not-a-real-credential"}
+```
+
+Source: `/private/tmp/peregrine-auth-read-canary-20260905.json`. The same image,
+user 1000:1000, network-disabled/read-only container, dropped capabilities,
+no-new-privileges, and temporary-filesystem flags from the reproduction above
+were retained. The additional mount and command were:
+
+```text
+--mount type=bind,src=/private/tmp/peregrine-auth-read-canary-20260905.json,dst=/home/peregrine/.codex/auth.json,readonly
+<same pinned image>
+codex --sandbox read-only --enable use_legacy_landlock sandbox -- /bin/cat /home/peregrine/.codex/auth.json
+```
+
+Result: exit 0, with the exact public JSON canary printed. The CLI also emitted
+`WARNING: proceeding, even though we could not create PATH aliases: Permission denied (os error 13)`.
+The warning did not prevent the read.
+
+This proves no path-based read denial for this readable synthetic file under
+the tested configuration. It does not prove access to an actual credential,
+which was never mounted, nor does it test every file-ownership arrangement.
+`eval/runtime-containment.ts` uses this destination for Codex CLI-session
+credentials; therefore the alternate backend alone is not sufficient evidence
+of the historical runner's required credential isolation. A credential-free
+tool boundary or independently enforced read-deny policy must be demonstrated
+before adopting it. No model call, real authentication material, source code,
+production configuration change, or security-policy relaxation was involved.
