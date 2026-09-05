@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "search/issues",
+    "parameters": {
+      "order": "asc",
+      "page": 1,
+      "per_page": 100,
+      "q": "repo:axios/axios is:pr is:merged created:2017-01-01..2020-12-31 comments:>=3",
+      "sort": "created"
+    }
+  },
+  "retrievedAt": "2026-09-05T12:53:12.272Z",
+  "sourceUrl": "https://api.github.com/search/issues?order=asc&page=1&per_page=100&q=repo%3Aaxios%2Faxios+is%3Apr+is%3Amerged+created%3A2017-01-01..2020-12-31+comments%3A%3E%3D3&sort=created",
+  "sha256": "a4872a0c6ed34957e1d91fbba346fe270a9dc2a48b7a84c18750f3bd8f672beb",
+  "bytes": 342746
+}

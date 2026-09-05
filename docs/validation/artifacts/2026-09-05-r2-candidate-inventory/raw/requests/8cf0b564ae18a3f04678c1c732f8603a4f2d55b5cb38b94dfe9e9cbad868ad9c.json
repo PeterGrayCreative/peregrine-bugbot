@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/microsoft/vscode/pulls/75286/files",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T11:58:39.099Z",
+  "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/75286/files?page=1&per_page=100",
+  "sha256": "a86e6c41ac1a4f693a46b4e9e91345d9e3dd89d8e1ead5c322e68edb844f635a",
+  "bytes": 3106
+}

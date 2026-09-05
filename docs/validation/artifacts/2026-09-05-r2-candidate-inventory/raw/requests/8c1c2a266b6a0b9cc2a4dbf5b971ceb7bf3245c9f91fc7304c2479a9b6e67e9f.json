@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/ReactiveX/rxjs/issues/2470/comments",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:57:04.569Z",
+  "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/issues/2470/comments?page=1&per_page=100",
+  "sha256": "33c524eef7ff0fc3f847231cc9bd077483d358edc1d7c64a1d64de0701795a39",
+  "bytes": 10829
+}

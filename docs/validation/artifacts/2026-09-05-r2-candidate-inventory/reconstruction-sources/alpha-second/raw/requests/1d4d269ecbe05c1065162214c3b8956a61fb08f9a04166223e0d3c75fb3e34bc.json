@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/sequelize/sequelize/pulls/8430/reviews",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T13:29:41.029Z",
+  "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/8430/reviews?page=1&per_page=100",
+  "sha256": "9b1355b1747115df5bef15743c2003253c21426c3cf414bc7d3cdb98f8b58545",
+  "bytes": 20311
+}

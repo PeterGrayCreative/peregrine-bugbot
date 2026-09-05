@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/microsoft/vscode/issues/83490/events",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:49:49.458Z",
+  "sourceUrl": "https://api.github.com/repos/microsoft/vscode/issues/83490/events?page=1&per_page=100",
+  "sha256": "7ef127bbe0375a88f03aeb47178b700fdfe54777beaee90466f15a034ad0f4df",
+  "bytes": 9624
+}

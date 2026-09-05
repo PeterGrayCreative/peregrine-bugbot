@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Experimental candidate output only. Use parseMethodologyDiscoveryOutput for path safety, line order, completion/limitation consistency, and secret rejection. Candidates are untrusted hypotheses, not verified findings.",
+  "title": "Experimental Discovery Output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "limitations", "candidates"],
+  "properties": {
+    "status": { "enum": ["completed", "unable-to-complete"] },
+    "limitations": { "type": "array", "items": { "type": "string", "minLength": 1, "maxLength": 4000 } },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["file", "startLine", "endLine", "hypothesis", "evidenceNeeded"],
+        "properties": {
+          "file": { "type": "string", "minLength": 1, "maxLength": 1024 },
+          "startLine": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+          "endLine": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+          "hypothesis": { "type": "string", "minLength": 1, "maxLength": 8000 },
+          "evidenceNeeded": { "type": "string", "minLength": 1, "maxLength": 8000 }
+        }
+      }
+    }
+  }
+}

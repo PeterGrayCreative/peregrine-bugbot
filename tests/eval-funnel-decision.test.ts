@@ -100,6 +100,22 @@ test("decision artifacts reject mutation after their content address is written"
   assert.throws(() => parseFunnelDecisionArtifact({ ...artifact, completion: { ...complete, control: { ...complete.control, completed: 0 } } }), /authenticate/);
 });
 
+test("adjudicated decision artifacts link to the original decision and ledger", () => {
+  const body = {
+    schemaVersion: 2 as const, experimentId: "a".repeat(64), benchmarkCategory: binding("fast-screen"),
+    terminalSealSha256: "b".repeat(64), terminal: "completed" as const,
+    gradingSealSha256: "c".repeat(64), completion: complete, metrics,
+    result: evaluateFunnelDecision({ binding: binding("fast-screen"), terminal: "completed", completion: complete, metrics }),
+    previousDecisionSha256: "d".repeat(64), adjudicationLedgerSha256: "e".repeat(64),
+  };
+  const artifact = { ...body, decisionSha256: canonicalJsonSha256(body) };
+  assert.deepEqual(parseFunnelDecisionArtifact(artifact), artifact);
+  const { adjudicationLedgerSha256: _ledger, ...invalidBody } = body;
+  assert.throws(() => parseFunnelDecisionArtifact({
+    ...invalidBody, decisionSha256: canonicalJsonSha256(invalidBody),
+  }), /linkage/);
+});
+
 test("metrics are derived from per-repeat roots, paired durations, and structured diagnostic exclusions", () => {
   const scheduled = [
     scheduledAttempt("attempt-000001", "block-000001", "control", 1),
@@ -130,6 +146,27 @@ test("metrics are derived from per-repeat roots, paired durations, and structure
   });
   assert.equal(diagnostic.diagnosticExcludedFindingCount, 1);
   assert.deepEqual(diagnostic.blockingUnsupportedFindings, { control: 0, treatment: 0 });
+
+  const cleanAttempt = scheduledAttempt(
+    scheduled[0]!.id,
+    scheduled[0]!.blockId,
+    scheduled[0]!.variant as "control",
+    scheduled[0]!.repeat,
+    "development/case-5ea42d18",
+  );
+  const unresolvedGrade = grade(cleanAttempt, false) as GradedRun;
+  unresolvedGrade.outcome.result.findings = [{ disposition: "fix-in-pr" }] as GradedRun["outcome"]["result"]["findings"];
+  unresolvedGrade.grading!.unmatchedFindings = [{
+    findingIndex: 0, findingEvidenceSha256: "a".repeat(64), classification: "unresolved",
+  }];
+  const adjudicated = deriveFunnelMetrics({
+    binding: binding("fast-screen"), schedule: [cleanAttempt], records: [record(cleanAttempt, 100)],
+    gradedRuns: new Map([[cleanAttempt.id, unresolvedGrade]]),
+    truths: new Map([[cleanAttempt.caseName, truth]]),
+    adjudications: new Map([[`${cleanAttempt.id}\0${0}\0${"a".repeat(64)}`, "unsupported"]]),
+  });
+  assert.equal(adjudicated.unresolvedRequiredAdjudications, 0);
+  assert.equal(adjudicated.blockingUnsupportedFindings.control, 1);
 });
 
 function binding(

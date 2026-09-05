@@ -1,0 +1,1178 @@
+[
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/548510469",
+    "pull_request_review_id": 558482273,
+    "id": 548510469,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU0ODUxMDQ2OQ==",
+    "diff_hunk": "@@ -3755,6 +3755,42 @@ declare module 'vscode' {\n \t\tprovideSignatureHelp(document: TextDocument, position: Position, token: CancellationToken, context: SignatureHelpContext): ProviderResult<SignatureHelp>;\n \t}\n \n+\t/**\n+\t * Argument label information of signature.\n+\t */\n+\texport class SignautreArgumentsLabel {\n+\t\t/**\n+\t\t * The name of the parameter.\n+\t\t */\n+\t\tname: string;",
+    "path": "src/vs/vscode.d.ts",
+    "commit_id": "30f17c9572ad73b61bbe90f581a28c00ce7910b5",
+    "original_commit_id": "d24ab0a201a90dbaa43e53e5872999b1f6767502",
+    "user": {
+      "login": "CyrusNajmabadi",
+      "id": 4564579,
+      "node_id": "MDQ6VXNlcjQ1NjQ1Nzk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4564579?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/CyrusNajmabadi",
+      "html_url": "https://github.com/CyrusNajmabadi",
+      "followers_url": "https://api.github.com/users/CyrusNajmabadi/followers",
+      "following_url": "https://api.github.com/users/CyrusNajmabadi/following{/other_user}",
+      "gists_url": "https://api.github.com/users/CyrusNajmabadi/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/CyrusNajmabadi/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/CyrusNajmabadi/subscriptions",
+      "organizations_url": "https://api.github.com/users/CyrusNajmabadi/orgs",
+      "repos_url": "https://api.github.com/users/CyrusNajmabadi/repos",
+      "events_url": "https://api.github.com/users/CyrusNajmabadi/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/CyrusNajmabadi/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "note: in roslyn we support classified text in our 'hints', not just plain text.",
+    "created_at": "2020-12-24T12:05:03Z",
+    "updated_at": "2021-01-19T03:17:13Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/113285#discussion_r548510469",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/113285",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/548510469"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/113285#discussion_r548510469"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/113285"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/548510469/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 3765,
+    "side": "RIGHT",
+    "author_association": "NONE",
+    "original_position": 11,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/548511385",
+    "pull_request_review_id": 558483461,
+    "id": 548511385,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU0ODUxMTM4NQ==",
+    "diff_hunk": "@@ -3755,6 +3755,42 @@ declare module 'vscode' {\n \t\tprovideSignatureHelp(document: TextDocument, position: Position, token: CancellationToken, context: SignatureHelpContext): ProviderResult<SignatureHelp>;\n \t}\n \n+\t/**\n+\t * Argument label information of signature.\n+\t */\n+\texport class SignautreArgumentsLabel {\n+\t\t/**\n+\t\t * The name of the parameter.\n+\t\t */\n+\t\tname: string;",
+    "path": "src/vs/vscode.d.ts",
+    "commit_id": "30f17c9572ad73b61bbe90f581a28c00ce7910b5",
+    "original_commit_id": "d24ab0a201a90dbaa43e53e5872999b1f6767502",
+    "user": {
+      "login": "CyrusNajmabadi",
+      "id": 4564579,
+      "node_id": "MDQ6VXNlcjQ1NjQ1Nzk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4564579?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/CyrusNajmabadi",
+      "html_url": "https://github.com/CyrusNajmabadi",
+      "followers_url": "https://api.github.com/users/CyrusNajmabadi/followers",
+      "following_url": "https://api.github.com/users/CyrusNajmabadi/following{/other_user}",
+      "gists_url": "https://api.github.com/users/CyrusNajmabadi/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/CyrusNajmabadi/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/CyrusNajmabadi/subscriptions",
+      "organizations_url": "https://api.github.com/users/CyrusNajmabadi/orgs",
+      "repos_url": "https://api.github.com/users/CyrusNajmabadi/repos",
+      "events_url": "https://api.github.com/users/CyrusNajmabadi/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/CyrusNajmabadi/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "We also support the user hovering over these hints to get additional information (for example, what quick-info would show for teh entity in the hint).",
+    "created_at": "2020-12-24T12:08:46Z",
+    "updated_at": "2021-01-19T03:17:13Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/113285#discussion_r548511385",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/113285",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/548511385"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/113285#discussion_r548511385"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/113285"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/548511385/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 3765,
+    "side": "RIGHT",
+    "in_reply_to_id": 548510469,
+    "author_association": "NONE",
+    "original_position": 11,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/548511658",
+    "pull_request_review_id": 558483883,
+    "id": 548511658,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU0ODUxMTY1OA==",
+    "diff_hunk": "@@ -287,11 +287,12 @@ export enum EditorOption {\n \twrappingIndent = 117,\n \twrappingStrategy = 118,\n \tshowDeprecated = 119,\n-\teditorClassName = 120,\n-\tpixelRatio = 121,\n-\ttabFocusMode = 122,\n-\tlayoutInfo = 123,\n-\twrappingInfo = 124\n+\tshowSignatureArgumentsLabel = 120,\n+\teditorClassName = 121,\n+\tpixelRatio = 122,\n+\ttabFocusMode = 123,\n+\tlayoutInfo = 124,\n+\twrappingInfo = 125",
+    "path": "src/vs/editor/common/standalone/standaloneEnums.ts",
+    "commit_id": "30f17c9572ad73b61bbe90f581a28c00ce7910b5",
+    "original_commit_id": "d24ab0a201a90dbaa43e53e5872999b1f6767502",
+    "user": {
+      "login": "CyrusNajmabadi",
+      "id": 4564579,
+      "node_id": "MDQ6VXNlcjQ1NjQ1Nzk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4564579?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/CyrusNajmabadi",
+      "html_url": "https://github.com/CyrusNajmabadi",
+      "followers_url": "https://api.github.com/users/CyrusNajmabadi/followers",
+      "following_url": "https://api.github.com/users/CyrusNajmabadi/following{/other_user}",
+      "gists_url": "https://api.github.com/users/CyrusNajmabadi/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/CyrusNajmabadi/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/CyrusNajmabadi/subscriptions",
+      "organizations_url": "https://api.github.com/users/CyrusNajmabadi/orgs",
+      "repos_url": "https://api.github.com/users/CyrusNajmabadi/repos",
+      "events_url": "https://api.github.com/users/CyrusNajmabadi/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/CyrusNajmabadi/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "it seems bad that enum constant values are changing.",
+    "created_at": "2020-12-24T12:10:01Z",
+    "updated_at": "2021-01-19T03:17:13Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/113285#discussion_r548511658",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/113285",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/548511658"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/113285#discussion_r548511658"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/113285"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/548511658/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 295,
+    "original_line": 295,
+    "side": "RIGHT",
+    "author_association": "NONE",
+    "original_position": 14,
+    "position": 14,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/548511706",
+    "pull_request_review_id": 558483937,
+    "id": 548511706,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU0ODUxMTcwNg==",
+    "diff_hunk": "@@ -0,0 +1,233 @@\n+/*---------------------------------------------------------------------------------------------\n+ *  Copyright (c) Microsoft Corporation. All rights reserved.\n+ *  Licensed under the MIT License. See License.txt in the project root for license information.\n+ *--------------------------------------------------------------------------------------------*/\n+\n+import { CancelablePromise, TimeoutTimer, createCancelablePromise } from 'vs/base/common/async';\n+import { onUnexpectedError } from 'vs/base/common/errors';\n+import { hash } from 'vs/base/common/hash';\n+import { Disposable, DisposableStore } from 'vs/base/common/lifecycle';\n+import { ICodeEditor } from 'vs/editor/browser/editorBrowser';\n+import { registerEditorContribution } from 'vs/editor/browser/editorExtensions';\n+import { ICodeEditorService } from 'vs/editor/browser/services/codeEditorService';\n+import { IEditorContribution } from 'vs/editor/common/editorCommon';\n+import { IModelDeltaDecoration, ITextModel } from 'vs/editor/common/model';\n+import { ModelDecorationOptions } from 'vs/editor/common/model/textModel';\n+import { SignatureArgumentsLabelProvider, SignatureArgumentsLabelProviderRegistry, SignautreArgumentsLabel } from 'vs/editor/common/modes';\n+import { EditorOption } from 'vs/editor/common/config/editorOptions';\n+import { flatten } from 'vs/base/common/arrays';\n+import { CancellationToken } from 'vs/base/common/cancellation';\n+\n+const MAX_DECORATORS = 500;\n+\n+export interface SignatureArgumentsLabelData {\n+\tlist: SignautreArgumentsLabel[];\n+\tprovider: SignatureArgumentsLabelProvider;\n+}\n+\n+export function getSignatures(model: ITextModel, token: CancellationToken): Promise<SignatureArgumentsLabelData[]> {\n+\tconst datas: SignatureArgumentsLabelData[] = [];\n+\tconst providers = SignatureArgumentsLabelProviderRegistry.ordered(model).reverse();\n+\tconst promises = providers.map(provider => Promise.resolve(provider.provideSignatureArgumentsLabels(model, token)).then(result => {\n+\t\tif (result) {\n+\t\t\tdatas.push({ list: result, provider });\n+",
+    "path": "src/vs/editor/contrib/signatureArgumentsLabel/signatureArgumentsLabel.ts",
+    "commit_id": "30f17c9572ad73b61bbe90f581a28c00ce7910b5",
+    "original_commit_id": "d24ab0a201a90dbaa43e53e5872999b1f6767502",
+    "user": {
+      "login": "CyrusNajmabadi",
+      "id": 4564579,
+      "node_id": "MDQ6VXNlcjQ1NjQ1Nzk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4564579?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/CyrusNajmabadi",
+      "html_url": "https://github.com/CyrusNajmabadi",
+      "followers_url": "https://api.github.com/users/CyrusNajmabadi/followers",
+      "following_url": "https://api.github.com/users/CyrusNajmabadi/following{/other_user}",
+      "gists_url": "https://api.github.com/users/CyrusNajmabadi/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/CyrusNajmabadi/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/CyrusNajmabadi/subscriptions",
+      "organizations_url": "https://api.github.com/users/CyrusNajmabadi/orgs",
+      "repos_url": "https://api.github.com/users/CyrusNajmabadi/repos",
+      "events_url": "https://api.github.com/users/CyrusNajmabadi/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/CyrusNajmabadi/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "```suggestion\r\n```",
+    "created_at": "2020-12-24T12:10:12Z",
+    "updated_at": "2021-01-19T03:17:13Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/113285#discussion_r548511706",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/113285",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/548511706"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/113285#discussion_r548511706"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/113285"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/548511706/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 34,
+    "side": "RIGHT",
+    "author_association": "NONE",
+    "original_position": 34,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/548511996",
+    "pull_request_review_id": 558484314,
+    "id": 548511996,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU0ODUxMTk5Ng==",
+    "diff_hunk": "@@ -3755,6 +3755,42 @@ declare module 'vscode' {\n \t\tprovideSignatureHelp(document: TextDocument, position: Position, token: CancellationToken, context: SignatureHelpContext): ProviderResult<SignatureHelp>;\n \t}\n \n+\t/**\n+\t * Argument label information of signature.\n+\t */\n+\texport class SignautreArgumentsLabel {\n+\t\t/**\n+\t\t * The name of the parameter.\n+\t\t */\n+\t\tname: string;",
+    "path": "src/vs/vscode.d.ts",
+    "commit_id": "30f17c9572ad73b61bbe90f581a28c00ce7910b5",
+    "original_commit_id": "d24ab0a201a90dbaa43e53e5872999b1f6767502",
+    "user": {
+      "login": "CyrusNajmabadi",
+      "id": 4564579,
+      "node_id": "MDQ6VXNlcjQ1NjQ1Nzk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/4564579?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/CyrusNajmabadi",
+      "html_url": "https://github.com/CyrusNajmabadi",
+      "followers_url": "https://api.github.com/users/CyrusNajmabadi/followers",
+      "following_url": "https://api.github.com/users/CyrusNajmabadi/following{/other_user}",
+      "gists_url": "https://api.github.com/users/CyrusNajmabadi/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/CyrusNajmabadi/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/CyrusNajmabadi/subscriptions",
+      "organizations_url": "https://api.github.com/users/CyrusNajmabadi/orgs",
+      "repos_url": "https://api.github.com/users/CyrusNajmabadi/repos",
+      "events_url": "https://api.github.com/users/CyrusNajmabadi/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/CyrusNajmabadi/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "for reference: https://github.com/dotnet/roslyn/blob/18d8e7c9a135e0b042a079823d9ef95c63b84b33/src/Features/Core/Portable/InlineHints/InlineHint.cs#L16-L18",
+    "created_at": "2020-12-24T12:11:32Z",
+    "updated_at": "2021-01-19T03:17:13Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/113285#discussion_r548511996",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/113285",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/548511996"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/113285#discussion_r548511996"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/113285"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/548511996/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 3765,
+    "side": "RIGHT",
+    "in_reply_to_id": 548510469,
+    "author_association": "NONE",
+    "original_position": 11,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/551242588",
+    "pull_request_review_id": 560935402,
+    "id": 551242588,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU1MTI0MjU4OA==",
+    "diff_hunk": "@@ -1062,6 +1062,26 @@ class SignatureHelpAdapter {\n \t}\n }\n \n+class InlineHintsAdapter {\n+\tprivate readonly _cache = new Cache<vscode.InlineHint[]>('InlineHints');",
+    "path": "src/vs/workbench/api/common/extHostLanguageFeatures.ts",
+    "commit_id": "30f17c9572ad73b61bbe90f581a28c00ce7910b5",
+    "original_commit_id": "413b5d4705782466dc30e8c134a283141cdb6b5f",
+    "user": {
+      "login": "jrieken",
+      "id": 1794099,
+      "node_id": "MDQ6VXNlcjE3OTQwOTk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1794099?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jrieken",
+      "html_url": "https://github.com/jrieken",
+      "followers_url": "https://api.github.com/users/jrieken/followers",
+      "following_url": "https://api.github.com/users/jrieken/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jrieken/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jrieken/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jrieken/subscriptions",
+      "organizations_url": "https://api.github.com/users/jrieken/orgs",
+      "repos_url": "https://api.github.com/users/jrieken/repos",
+      "events_url": "https://api.github.com/users/jrieken/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jrieken/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Caching is only required when having a `resolve`-function on a provider. Right now this is a leak",
+    "created_at": "2021-01-04T10:47:26Z",
+    "updated_at": "2021-01-19T03:17:13Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/113285#discussion_r551242588",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/113285",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/551242588"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/113285#discussion_r551242588"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/113285"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/551242588/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1066,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 5,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/551243456",
+    "pull_request_review_id": 560935402,
+    "id": 551243456,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU1MTI0MzQ1Ng==",
+    "diff_hunk": "@@ -1015,6 +1018,17 @@ export namespace SignatureHelp {\n \t}\n }\n \n+export namespace InlineHint {\n+\texport function from(hint: vscode.InlineHint): modes.InlineHint {\n+\t\treturn {\n+\t\t\ttext: hint.text,\n+\t\t\tposition: Position.from(hint.position),\n+\t\t\twhitespaceBefore: hint.whitespaceBefore,\n+\t\t\twhitespaceAfter: hint.whitespaceAfter\n+\t\t};\n+\t}",
+    "path": "src/vs/workbench/api/common/extHostTypeConverters.ts",
+    "commit_id": "30f17c9572ad73b61bbe90f581a28c00ce7910b5",
+    "original_commit_id": "413b5d4705782466dc30e8c134a283141cdb6b5f",
+    "user": {
+      "login": "jrieken",
+      "id": 1794099,
+      "node_id": "MDQ6VXNlcjE3OTQwOTk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1794099?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jrieken",
+      "html_url": "https://github.com/jrieken",
+      "followers_url": "https://api.github.com/users/jrieken/followers",
+      "following_url": "https://api.github.com/users/jrieken/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jrieken/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jrieken/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jrieken/subscriptions",
+      "organizations_url": "https://api.github.com/users/jrieken/orgs",
+      "repos_url": "https://api.github.com/users/jrieken/repos",
+      "events_url": "https://api.github.com/users/jrieken/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jrieken/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This needs a `to` counterpart is will be used for an API command so that other extension can execute this logic (without UI) as well. ",
+    "created_at": "2021-01-04T10:49:06Z",
+    "updated_at": "2021-01-19T03:17:13Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/113285#discussion_r551243456",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/113285",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/551243456"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/113285#discussion_r551243456"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/113285"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/551243456/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 1038,
+    "original_line": 1029,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 26,
+    "position": 24,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/551243915",
+    "pull_request_review_id": 560935402,
+    "id": 551243915,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU1MTI0MzkxNQ==",
+    "diff_hunk": "@@ -482,6 +482,9 @@ export function createApiFactoryAndRegisterActors(accessor: ServicesAccessor): I\n \t\t\tgetTokenInformationAtPosition(doc: vscode.TextDocument, pos: vscode.Position) {\n \t\t\t\tcheckProposedApiEnabled(extension);\n \t\t\t\treturn extHostLanguages.tokenAtPosition(doc, pos);\n+\t\t\t},\n+\t\t\tregisterInlineHintsProvider(selector: vscode.DocumentSelector, provider: vscode.InlineHintsProvider): vscode.Disposable {\n+\t\t\t\treturn extHostLanguageFeatures.registerInlineHintsProvider(extension, selector, provider);",
+    "path": "src/vs/workbench/api/common/extHost.api.impl.ts",
+    "commit_id": "30f17c9572ad73b61bbe90f581a28c00ce7910b5",
+    "original_commit_id": "413b5d4705782466dc30e8c134a283141cdb6b5f",
+    "user": {
+      "login": "jrieken",
+      "id": 1794099,
+      "node_id": "MDQ6VXNlcjE3OTQwOTk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1794099?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jrieken",
+      "html_url": "https://github.com/jrieken",
+      "followers_url": "https://api.github.com/users/jrieken/followers",
+      "following_url": "https://api.github.com/users/jrieken/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jrieken/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jrieken/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jrieken/subscriptions",
+      "organizations_url": "https://api.github.com/users/jrieken/orgs",
+      "repos_url": "https://api.github.com/users/jrieken/repos",
+      "events_url": "https://api.github.com/users/jrieken/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jrieken/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Misses: `checkProposedApiEnabled(extension)`",
+    "created_at": "2021-01-04T10:50:00Z",
+    "updated_at": "2021-01-19T03:17:13Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/113285#discussion_r551243915",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/113285",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/551243915"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/113285#discussion_r551243915"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/113285"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/551243915/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 467,
+    "original_line": 487,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 6,
+    "position": 7,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/551245276",
+    "pull_request_review_id": 560935402,
+    "id": 551245276,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU1MTI0NTI3Ng==",
+    "diff_hunk": "@@ -4133,6 +4148,9 @@ declare namespace monaco.editor {\n \t\tshowFoldingControls: IEditorOption<EditorOption.showFoldingControls, 'always' | 'mouseover'>;\n \t\tshowUnused: IEditorOption<EditorOption.showUnused, boolean>;\n \t\tshowDeprecated: IEditorOption<EditorOption.showDeprecated, boolean>;\n+\t\tshowInlineHints: IEditorOption<EditorOption.showInlineHints, boolean>;",
+    "path": "src/vs/monaco.d.ts",
+    "commit_id": "30f17c9572ad73b61bbe90f581a28c00ce7910b5",
+    "original_commit_id": "413b5d4705782466dc30e8c134a283141cdb6b5f",
+    "user": {
+      "login": "jrieken",
+      "id": 1794099,
+      "node_id": "MDQ6VXNlcjE3OTQwOTk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1794099?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jrieken",
+      "html_url": "https://github.com/jrieken",
+      "followers_url": "https://api.github.com/users/jrieken/followers",
+      "following_url": "https://api.github.com/users/jrieken/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jrieken/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jrieken/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jrieken/subscriptions",
+      "organizations_url": "https://api.github.com/users/jrieken/orgs",
+      "repos_url": "https://api.github.com/users/jrieken/repos",
+      "events_url": "https://api.github.com/users/jrieken/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jrieken/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Maybe have a config object like `editor.inlineHints.enabled`, `editor.inlineHints.fontSize` etc. That pattern is becoming more popular but I'd need to check myself what the recommendation is.",
+    "created_at": "2021-01-04T10:52:41Z",
+    "updated_at": "2021-01-19T03:17:13Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/113285#discussion_r551245276",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/113285",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/551245276"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/113285#discussion_r551245276"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/113285"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/551245276/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 4151,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 43,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/551246118",
+    "pull_request_review_id": 560935402,
+    "id": 551246118,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU1MTI0NjExOA==",
+    "diff_hunk": "@@ -0,0 +1,244 @@\n+/*---------------------------------------------------------------------------------------------\n+ *  Copyright (c) Microsoft Corporation. All rights reserved.\n+ *  Licensed under the MIT License. See License.txt in the project root for license information.\n+ *--------------------------------------------------------------------------------------------*/\n+\n+import { CancelablePromise, createCancelablePromise, RunOnceScheduler } from 'vs/base/common/async';\n+import { onUnexpectedError } from 'vs/base/common/errors';\n+import { hash } from 'vs/base/common/hash';\n+import { Disposable, DisposableStore } from 'vs/base/common/lifecycle';\n+import { ICodeEditor } from 'vs/editor/browser/editorBrowser';\n+import { registerEditorContribution } from 'vs/editor/browser/editorExtensions';\n+import { ICodeEditorService } from 'vs/editor/browser/services/codeEditorService';\n+import { IEditorContribution } from 'vs/editor/common/editorCommon';\n+import { IModelDeltaDecoration, ITextModel } from 'vs/editor/common/model';\n+import { ModelDecorationOptions } from 'vs/editor/common/model/textModel';\n+import { InlineHintsProvider, InlineHintsProviderRegistry, InlineHint } from 'vs/editor/common/modes';\n+import { EditorOption } from 'vs/editor/common/config/editorOptions';\n+import { flatten } from 'vs/base/common/arrays';\n+import { inlineHintForeground, inlineHintBackground } from 'vs/platform/theme/common/colorRegistry';\n+import { CancellationToken } from 'vs/base/common/cancellation';\n+import { IThemeService } from 'vs/platform/theme/common/themeService';\n+import { Range } from 'vs/editor/common/core/range';\n+import { LanguageFeatureRequestDelays } from 'vs/editor/common/modes/languageFeatureRegistry';\n+\n+const MAX_DECORATORS = 500;\n+\n+export interface InlineHintsData {\n+\tlist: InlineHint[];\n+\tprovider: InlineHintsProvider;\n+}\n+\n+export function getInlineHints(model: ITextModel, ranges: Range[], token: CancellationToken): Promise<InlineHintsData[]> {\n+\tconst datas: InlineHintsData[] = [];\n+\tconst providers = InlineHintsProviderRegistry.ordered(model).reverse();\n+\tconst promises = flatten(providers.map(provider => ranges.map(range => Promise.resolve(provider.provideInlineHints(model, range, token)).then(result => {\n+\t\tif (result) {\n+\t\t\tdatas.push({ list: result, provider });\n+\t\t}\n+\t}))));\n+\n+\treturn Promise.all(promises).then(() => datas);\n+}\n+\n+export class InlineHintsDetector extends Disposable implements IEditorContribution {\n+\n+\tstatic readonly ID: string = 'editor.contrib.InlineHints';\n+\tprivate readonly _localToDispose = this._register(new DisposableStore());\n+\tprivate _decorationsIds: string[] = [];\n+\tprivate _hintsDatas = new Map<string, InlineHintsData>();\n+\tprivate _hintsDecoratorIds: string[] = [];\n+\tprivate readonly _decorationsTypes = new Set<string>();\n+\tprivate _isEnabled: boolean;\n+\tprivate _getInlineHintsPromise: CancelablePromise<InlineHintsData[]> | undefined;\n+\tprivate readonly _getInlineHintsDelays = new LanguageFeatureRequestDelays(InlineHintsProviderRegistry, 250, 2500);\n+\n+\tconstructor(private readonly _editor: ICodeEditor,\n+\t\t@ICodeEditorService private readonly _codeEditorService: ICodeEditorService,\n+\t\t@IThemeService private readonly _themeService: IThemeService,\n+\t) {\n+\t\tsuper();\n+\t\tthis._register(_editor.onDidChangeModel(() => {\n+\t\t\tthis._isEnabled = this.isEnabled();\n+\t\t\tthis._onModelChanged();\n+\t\t}));\n+\t\tthis._register(_editor.onDidChangeModelLanguage(() => this._onModelChanged()));\n+\t\tthis._register(InlineHintsProviderRegistry.onDidChange(() => this._onModelChanged()));\n+\t\tthis._register(_editor.onDidChangeConfiguration(() => {\n+\t\t\tlet prevIsEnabled = this._isEnabled;\n+\t\t\tthis._isEnabled = this.isEnabled();\n+\t\t\tif (prevIsEnabled !== this._isEnabled) {\n+\t\t\t\tif (this._isEnabled) {\n+\t\t\t\t\tthis._onModelChanged();\n+\t\t\t\t} else {\n+\t\t\t\t\tthis._removeAllDecorations();\n+\t\t\t\t}\n+\t\t\t}\n+\t\t}));\n+\t\tthis._register(_editor.onDidScrollChange(() => {\n+\t\t\tthis._onModelChanged();\n+\t\t}));\n+\n+\t\tthis._isEnabled = this.isEnabled();\n+\t\tthis._onModelChanged();\n+\t}\n+\n+\tisEnabled(): boolean {\n+\t\tconst model = this._editor.getModel();\n+\t\tif (!model) {\n+\t\t\treturn false;\n+\t\t}\n+\n+\t\treturn this._editor.getOption(EditorOption.showInlineHints);\n+\t}\n+\n+\tstatic get(editor: ICodeEditor): InlineHintsDetector {\n+\t\treturn editor.getContribution<InlineHintsDetector>(this.ID);\n+\t}\n+\n+\tdispose(): void {\n+\t\tthis._stop();\n+\t\tthis._removeAllDecorations();\n+\t\tsuper.dispose();\n+\t}\n+\n+\tprivate _onModelChanged(): void {\n+\t\tthis._stop();\n+\n+\t\tif (!this._isEnabled) {\n+\t\t\treturn;\n+\t\t}\n+\t\tconst model = this._editor.getModel();\n+\n+\t\tif (!model || !InlineHintsProviderRegistry.has(model)) {\n+\t\t\treturn;\n+\t\t}\n+\n+\t\tconst scheduler = new RunOnceScheduler(() => {\n+\t\t\tconst t1 = Date.now();\n+\n+\t\t\tthis._getInlineHintsPromise?.cancel();\n+\t\t\tthis._getInlineHintsPromise = createCancelablePromise(token => {\n+\t\t\t\tconst visibleRanges = this._editor.getVisibleRangesPlusViewportAboveBelow();\n+\t\t\t\treturn getInlineHints(model, visibleRanges, token);\n+\t\t\t});\n+\n+\t\t\tthis._getInlineHintsPromise.then(result => {\n+\t\t\t\t// update moving average\n+\t\t\t\tconst newDelay = this._getInlineHintsDelays.update(model, Date.now() - t1);\n+\t\t\t\tscheduler.delay = newDelay;\n+\n+\t\t\t\t// render hints\n+\t\t\t\tthis._updateDecorations(result);\n+\t\t\t\tthis._updateHintsDecorators(result);\n+\t\t\t}, onUnexpectedError);\n+\n+\t\t}, this._getInlineHintsDelays.get(model));\n+\n+\t\tthis._localToDispose.add(scheduler);\n+\t\tthis._localToDispose.add(this._editor.onDidChangeModelContent(() => {\n+\t\t\tscheduler.schedule();\n+\t\t}));\n+\t\tscheduler.schedule();\n+\t}\n+\n+\tprivate _stop(): void {\n+\t\tif (this._getInlineHintsPromise) {\n+\t\t\tthis._getInlineHintsPromise.cancel();\n+\t\t\tthis._getInlineHintsPromise = undefined;\n+\t\t}\n+\t\tthis._localToDispose.clear();\n+\t}\n+\n+\tprivate _updateDecorations(hintsData: InlineHintsData[]): void {\n+\t\tconst decorations = flatten(hintsData.map(hints => hints.list.map(hint => {\n+\t\t\treturn {\n+\t\t\t\trange: {\n+\t\t\t\t\tstartLineNumber: hint.position.lineNumber,\n+\t\t\t\t\tstartColumn: hint.position.column,\n+\t\t\t\t\tendLineNumber: hint.position.lineNumber,\n+\t\t\t\t\tendColumn: hint.position.column\n+\t\t\t\t},\n+\t\t\t\toptions: ModelDecorationOptions.EMPTY\n+\t\t\t};\n+\t\t})));\n+\n+\t\tthis._decorationsIds = this._editor.deltaDecorations(this._decorationsIds, decorations);\n+\n+\t\tthis._hintsDatas = new Map<string, InlineHintsData>();\n+\t\tthis._decorationsIds.forEach((id, i) => this._hintsDatas.set(id, hintsData[i]));\n+\t}\n+\n+\tprivate _updateHintsDecorators(hintsData: InlineHintsData[]): void {\n+\t\tlet decorations: IModelDeltaDecoration[] = [];\n+\t\tlet newDecorationsTypes: { [key: string]: boolean } = {};\n+\t\tconst { fontSize, fontFamily } = this._getLayoutInfo();\n+\t\tconst backgroundColor = this._themeService.getColorTheme().getColor(inlineHintBackground);\n+\t\tconst fontColor = this._themeService.getColorTheme().getColor(inlineHintForeground);\n+\n+\t\tfor (let i = 0; i < hintsData.length; i++) {\n+\t\t\tconst hint = hintsData[i].list;\n+\t\t\tfor (let j = 0; j < hint.length && decorations.length < MAX_DECORATORS; j++) {\n+\t\t\t\tconst { text, position, whitespaceBefore, whitespaceAfter } = hint[j];\n+\t\t\t\tconst marginBefore = whitespaceBefore ? 5 : 0;\n+\t\t\t\tconst marginAfter = whitespaceAfter ? 5 : 0;",
+    "path": "src/vs/editor/contrib/inlineHints/inlineHintsController.ts",
+    "commit_id": "30f17c9572ad73b61bbe90f581a28c00ce7910b5",
+    "original_commit_id": "413b5d4705782466dc30e8c134a283141cdb6b5f",
+    "user": {
+      "login": "jrieken",
+      "id": 1794099,
+      "node_id": "MDQ6VXNlcjE3OTQwOTk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1794099?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jrieken",
+      "html_url": "https://github.com/jrieken",
+      "followers_url": "https://api.github.com/users/jrieken/followers",
+      "following_url": "https://api.github.com/users/jrieken/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jrieken/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jrieken/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jrieken/subscriptions",
+      "organizations_url": "https://api.github.com/users/jrieken/orgs",
+      "repos_url": "https://api.github.com/users/jrieken/repos",
+      "events_url": "https://api.github.com/users/jrieken/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jrieken/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Margins should be relative to font size, like fontSize/3 or so",
+    "created_at": "2021-01-04T10:54:24Z",
+    "updated_at": "2021-01-19T03:17:13Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/113285#discussion_r551246118",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/113285",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/551246118"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/113285#discussion_r551246118"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/113285"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/551246118/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 184,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 184,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/556354148",
+    "pull_request_review_id": 567003228,
+    "id": 556354148,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU1NjM1NDE0OA==",
+    "diff_hunk": "@@ -1952,6 +1952,18 @@ declare module 'vscode' {\n \n \texport namespace languages {\n \t\texport function getTokenInformationAtPosition(document: TextDocument, position: Position): Promise<TokenInformation>;\n+\t\t/**\n+\t\t * Register a inline hints provider.\n+\t\t *\n+\t\t * Multiple providers can be registered for a language. In that case providers are sorted\n+\t\t * by their [score](#languages.match) and the best-matching provider is used. Failure\n+\t\t * of the selected provider will cause a failure of the whole operation.\n+\t\t *\n+\t\t * @param selector A selector that defines the documents this provider is applicable to.\n+\t\t * @param provider An on type inline hints provider.\n+\t\t * @return A [disposable](#Disposable) that unregisters this provider when being disposed.\n+\t\t */\n+\t\texport function registerInlineHintsProvider(selector: DocumentSelector, provider: InlineHintsProvider): Disposable;",
+    "path": "src/vs/vscode.proposed.d.ts",
+    "commit_id": "30f17c9572ad73b61bbe90f581a28c00ce7910b5",
+    "original_commit_id": "73b4dabb2d4c6401d0b99754782711a6f545f90a",
+    "user": {
+      "login": "jrieken",
+      "id": 1794099,
+      "node_id": "MDQ6VXNlcjE3OTQwOTk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1794099?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jrieken",
+      "html_url": "https://github.com/jrieken",
+      "followers_url": "https://api.github.com/users/jrieken/followers",
+      "following_url": "https://api.github.com/users/jrieken/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jrieken/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jrieken/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jrieken/subscriptions",
+      "organizations_url": "https://api.github.com/users/jrieken/orgs",
+      "repos_url": "https://api.github.com/users/jrieken/repos",
+      "events_url": "https://api.github.com/users/jrieken/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jrieken/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "please have proposed API together (you can savely repeat the languages namespace) and make sure that all changes are enclosed by #region-comments (as done across this file)",
+    "created_at": "2021-01-13T08:50:17Z",
+    "updated_at": "2021-01-19T03:17:13Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/113285#discussion_r556354148",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/113285",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/556354148"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/113285#discussion_r556354148"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/113285"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/556354148/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 1962,
+    "original_line": 1966,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 15,
+    "position": 18,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/556354684",
+    "pull_request_review_id": 567003228,
+    "id": 556354684,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU1NjM1NDY4NA==",
+    "diff_hunk": "@@ -2359,6 +2371,67 @@ declare module 'vscode' {\n \n \t//#endregion\n \n+\texport interface ThemableDecorationAttachmentRenderOptions {\n+\t\t/**\n+\t\t * CSS styling property that will be applied to the decoration attachment.\n+\t\t */\n+\t\tfontSize?: string;\n+\t\t/**\n+\t\t * CSS styling property that will be applied to the decoration attachment.\n+\t\t */\n+\t\tfontFamily?: string;\n+\t\t/**\n+\t\t * CSS styling property that will be applied to the decoration attachment.\n+\t\t */\n+\t\tpadding?: string;",
+    "path": "src/vs/vscode.proposed.d.ts",
+    "commit_id": "30f17c9572ad73b61bbe90f581a28c00ce7910b5",
+    "original_commit_id": "73b4dabb2d4c6401d0b99754782711a6f545f90a",
+    "user": {
+      "login": "jrieken",
+      "id": 1794099,
+      "node_id": "MDQ6VXNlcjE3OTQwOTk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1794099?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jrieken",
+      "html_url": "https://github.com/jrieken",
+      "followers_url": "https://api.github.com/users/jrieken/followers",
+      "following_url": "https://api.github.com/users/jrieken/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jrieken/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jrieken/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jrieken/subscriptions",
+      "organizations_url": "https://api.github.com/users/jrieken/orgs",
+      "repos_url": "https://api.github.com/users/jrieken/repos",
+      "events_url": "https://api.github.com/users/jrieken/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jrieken/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I don't think that these changes are needed here. We don't want to extend the general `ThemableDecorationAttachmentRenderOptions` API",
+    "created_at": "2021-01-13T08:51:16Z",
+    "updated_at": "2021-01-19T03:17:13Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/113285#discussion_r556354684",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/113285",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/556354684"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/113285#discussion_r556354684"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/113285"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/556354684/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 2386,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 35,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/556356077",
+    "pull_request_review_id": 567003228,
+    "id": 556356077,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU1NjM1NjA3Nw==",
+    "diff_hunk": "@@ -1762,6 +1776,12 @@ export class ExtHostLanguageFeatures implements extHostProtocol.ExtHostLanguageF\n \t\treturn this._createDisposable(handle);\n \t}\n \n+\tregisterInlineHintsProvider(extension: IExtensionDescription, selector: vscode.DocumentSelector, provider: vscode.InlineHintsProvider): vscode.Disposable {\n+\t\tconst handle = this._addNewAdapter(new InlineHintsAdapter(this._documents, provider), extension);\n+\t\tthis._proxy.$registerInlineHintsProvider(handle, this._transformDocumentSelector(selector));\n+\t\treturn this._createDisposable(handle);\n+\t}",
+    "path": "src/vs/workbench/api/common/extHostLanguageFeatures.ts",
+    "commit_id": "30f17c9572ad73b61bbe90f581a28c00ce7910b5",
+    "original_commit_id": "73b4dabb2d4c6401d0b99754782711a6f545f90a",
+    "user": {
+      "login": "jrieken",
+      "id": 1794099,
+      "node_id": "MDQ6VXNlcjE3OTQwOTk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1794099?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jrieken",
+      "html_url": "https://github.com/jrieken",
+      "followers_url": "https://api.github.com/users/jrieken/followers",
+      "following_url": "https://api.github.com/users/jrieken/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jrieken/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jrieken/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jrieken/subscriptions",
+      "organizations_url": "https://api.github.com/users/jrieken/orgs",
+      "repos_url": "https://api.github.com/users/jrieken/repos",
+      "events_url": "https://api.github.com/users/jrieken/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jrieken/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Move this just above `$provideInlineHints` and below the `// --- inline hints` comment",
+    "created_at": "2021-01-13T08:53:30Z",
+    "updated_at": "2021-01-19T03:17:13Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/113285#discussion_r556356077",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/113285",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/556356077"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/113285#discussion_r556356077"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/113285"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/556356077/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1783,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 38,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/556356978",
+    "pull_request_review_id": 567003228,
+    "id": 556356978,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU1NjM1Njk3OA==",
+    "diff_hunk": "@@ -260,6 +260,8 @@ export const editorHintBorder = registerColor('editorHint.border', { dark: null,\n \n export const sashHoverBorder = registerColor('sash.hoverBorder', { dark: null, light: null, hc: null }, nls.localize('sashActiveBorder', \"Border color of active sashes.\"));\n \n+export const inlineHintForeground = registerColor('inlineHint.foreground', { dark: '#A7A6A5', light: '#A7A6A5', hc: null }, nls.localize('inlineHintForeground', 'Foreground color of inline hints'));\n+export const inlineHintBackground = registerColor('inlineHint.background', { dark: '#3A3A3A', light: '#3A3A3A', hc: null }, nls.localize('inlineHintBackground', 'Background color of inline hints'));",
+    "path": "src/vs/platform/theme/common/colorRegistry.ts",
+    "commit_id": "30f17c9572ad73b61bbe90f581a28c00ce7910b5",
+    "original_commit_id": "73b4dabb2d4c6401d0b99754782711a6f545f90a",
+    "user": {
+      "login": "jrieken",
+      "id": 1794099,
+      "node_id": "MDQ6VXNlcjE3OTQwOTk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1794099?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jrieken",
+      "html_url": "https://github.com/jrieken",
+      "followers_url": "https://api.github.com/users/jrieken/followers",
+      "following_url": "https://api.github.com/users/jrieken/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jrieken/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jrieken/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jrieken/subscriptions",
+      "organizations_url": "https://api.github.com/users/jrieken/orgs",
+      "repos_url": "https://api.github.com/users/jrieken/repos",
+      "events_url": "https://api.github.com/users/jrieken/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jrieken/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "@aeschli would know best but I think these names should be starting editor. Like `editorInlineHint.foreground` etc",
+    "created_at": "2021-01-13T08:54:59Z",
+    "updated_at": "2021-01-19T03:17:13Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/113285#discussion_r556356978",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/113285",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/556356978"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/113285#discussion_r556356978"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/113285"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/556356978/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 264,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 5,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/556358814",
+    "pull_request_review_id": 567003228,
+    "id": 556358814,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU1NjM1ODgxNA==",
+    "diff_hunk": "@@ -2359,6 +2371,67 @@ declare module 'vscode' {\n \n \t//#endregion\n \n+\texport interface ThemableDecorationAttachmentRenderOptions {\n+\t\t/**\n+\t\t * CSS styling property that will be applied to the decoration attachment.\n+\t\t */\n+\t\tfontSize?: string;\n+\t\t/**\n+\t\t * CSS styling property that will be applied to the decoration attachment.\n+\t\t */\n+\t\tfontFamily?: string;\n+\t\t/**\n+\t\t * CSS styling property that will be applied to the decoration attachment.\n+\t\t */\n+\t\tpadding?: string;\n+\t}\n+\n+\t/**\n+\t * Inline hint information.\n+\t */\n+\texport class InlineHint {\n+\t\t/**\n+\t\t * The text of the hint.\n+\t\t */\n+\t\ttext: string;\n+\t\t/**\n+\t\t * The position of the hint.\n+\t\t */\n+\t\tposition: Position;",
+    "path": "src/vs/vscode.proposed.d.ts",
+    "commit_id": "30f17c9572ad73b61bbe90f581a28c00ce7910b5",
+    "original_commit_id": "73b4dabb2d4c6401d0b99754782711a6f545f90a",
+    "user": {
+      "login": "jrieken",
+      "id": 1794099,
+      "node_id": "MDQ6VXNlcjE3OTQwOTk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1794099?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jrieken",
+      "html_url": "https://github.com/jrieken",
+      "followers_url": "https://api.github.com/users/jrieken/followers",
+      "following_url": "https://api.github.com/users/jrieken/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jrieken/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jrieken/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jrieken/subscriptions",
+      "organizations_url": "https://api.github.com/users/jrieken/orgs",
+      "repos_url": "https://api.github.com/users/jrieken/repos",
+      "events_url": "https://api.github.com/users/jrieken/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jrieken/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This should be a `Range`, see https://github.com/microsoft/vscode/pull/113285#issuecomment-750942605",
+    "created_at": "2021-01-13T08:57:55Z",
+    "updated_at": "2021-01-19T03:17:13Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/113285#discussion_r556358814",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/113285",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/556358814"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/113285#discussion_r556358814"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/113285"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/556358814/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 2400,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 49,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/559425172",
+    "pull_request_review_id": 570308444,
+    "id": 559425172,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU1OTQyNTE3Mg==",
+    "diff_hunk": "@@ -1956,6 +1956,116 @@ declare module 'vscode' {\n \n \t//#endregion\n \n+\t//@region https://github.com/microsoft/vscode/issues/16221\n+\n+\texport namespace languages {\n+\t\t/**\n+\t\t * Register a inline hints provider.\n+\t\t *\n+\t\t * Multiple providers can be registered for a language. In that case providers are sorted\n+\t\t * by their [score](#languages.match) and the best-matching provider is used. Failure\n+\t\t * of the selected provider will cause a failure of the whole operation.\n+\t\t *\n+\t\t * @param selector A selector that defines the documents this provider is applicable to.\n+\t\t * @param provider An on type inline hints provider.\n+\t\t * @return A [disposable](#Disposable) that unregisters this provider when being disposed.\n+\t\t */\n+\t\texport function registerInlineHintsProvider(selector: DocumentSelector, provider: InlineHintsProvider): Disposable;\n+\t}\n+\n+\texport interface ThemableDecorationAttachmentRenderOptions {\n+\t\t/**\n+\t\t * CSS styling property that will be applied to the decoration attachment.\n+\t\t */\n+\t\tfontSize?: string;\n+\t\t/**\n+\t\t * CSS styling property that will be applied to the decoration attachment.\n+\t\t */\n+\t\tfontFamily?: string;\n+\t\t/**\n+\t\t * CSS styling property that will be applied to the decoration attachment.\n+\t\t */\n+\t\tpadding?: string;\n+\t}\n+\n+\t/**\n+\t * Inline hint information.\n+\t */\n+\texport class InlineHint {\n+\t\t/**\n+\t\t * The text of the hint.\n+\t\t */\n+\t\ttext: string;\n+\t\t/**\n+\t\t * The range of the hint.\n+\t\t */\n+\t\trange: Range;\n+\t\t/**\n+\t\t * The position of hint trigger.\n+\t\t */\n+\t\ttriggerPosition: Position;\n+\t\t/**\n+\t\t * Prefix of hint text.\n+\t\t */\n+\t\tprefix?: string;\n+\t\t/**\n+\t\t * Postfix of hint text.\n+\t\t */\n+\t\tpostfix?: string;\n+\t\t/**\n+\t\t * Context for the hint.\n+\t\t */\n+\t\tcontextValue?: string;",
+    "path": "src/vs/vscode.proposed.d.ts",
+    "commit_id": "30f17c9572ad73b61bbe90f581a28c00ce7910b5",
+    "original_commit_id": "fcc00b29f5e2d5265f76e3881a5a057787bb8651",
+    "user": {
+      "login": "jrieken",
+      "id": 1794099,
+      "node_id": "MDQ6VXNlcjE3OTQwOTk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1794099?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jrieken",
+      "html_url": "https://github.com/jrieken",
+      "followers_url": "https://api.github.com/users/jrieken/followers",
+      "following_url": "https://api.github.com/users/jrieken/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jrieken/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jrieken/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jrieken/subscriptions",
+      "organizations_url": "https://api.github.com/users/jrieken/orgs",
+      "repos_url": "https://api.github.com/users/jrieken/repos",
+      "events_url": "https://api.github.com/users/jrieken/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jrieken/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Sorry, I am not up to speed with all these changes but I am not a fan of those four fields (triggerPosition, prefix, postfix, contextValue)",
+    "created_at": "2021-01-18T09:29:57Z",
+    "updated_at": "2021-01-19T03:17:13Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/113285#discussion_r559425172",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/113285",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/559425172"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/113285#discussion_r559425172"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/113285"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/559425172/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 2018,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 63,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/559426098",
+    "pull_request_review_id": 570309829,
+    "id": 559426098,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU1OTQyNjA5OA==",
+    "diff_hunk": "@@ -1956,6 +1956,116 @@ declare module 'vscode' {\n \n \t//#endregion\n \n+\t//@region https://github.com/microsoft/vscode/issues/16221\n+\n+\texport namespace languages {\n+\t\t/**\n+\t\t * Register a inline hints provider.\n+\t\t *\n+\t\t * Multiple providers can be registered for a language. In that case providers are sorted\n+\t\t * by their [score](#languages.match) and the best-matching provider is used. Failure\n+\t\t * of the selected provider will cause a failure of the whole operation.\n+\t\t *\n+\t\t * @param selector A selector that defines the documents this provider is applicable to.\n+\t\t * @param provider An on type inline hints provider.\n+\t\t * @return A [disposable](#Disposable) that unregisters this provider when being disposed.\n+\t\t */\n+\t\texport function registerInlineHintsProvider(selector: DocumentSelector, provider: InlineHintsProvider): Disposable;\n+\t}\n+\n+\texport interface ThemableDecorationAttachmentRenderOptions {\n+\t\t/**\n+\t\t * CSS styling property that will be applied to the decoration attachment.\n+\t\t */\n+\t\tfontSize?: string;\n+\t\t/**\n+\t\t * CSS styling property that will be applied to the decoration attachment.\n+\t\t */\n+\t\tfontFamily?: string;\n+\t\t/**\n+\t\t * CSS styling property that will be applied to the decoration attachment.\n+\t\t */\n+\t\tpadding?: string;\n+\t}\n+\n+\t/**\n+\t * Inline hint information.\n+\t */\n+\texport class InlineHint {\n+\t\t/**\n+\t\t * The text of the hint.\n+\t\t */\n+\t\ttext: string;\n+\t\t/**\n+\t\t * The range of the hint.\n+\t\t */\n+\t\trange: Range;\n+\t\t/**\n+\t\t * The position of hint trigger.\n+\t\t */\n+\t\ttriggerPosition: Position;\n+\t\t/**\n+\t\t * Prefix of hint text.\n+\t\t */\n+\t\tprefix?: string;\n+\t\t/**\n+\t\t * Postfix of hint text.\n+\t\t */\n+\t\tpostfix?: string;\n+\t\t/**\n+\t\t * Context for the hint.\n+\t\t */\n+\t\tcontextValue?: string;",
+    "path": "src/vs/vscode.proposed.d.ts",
+    "commit_id": "30f17c9572ad73b61bbe90f581a28c00ce7910b5",
+    "original_commit_id": "fcc00b29f5e2d5265f76e3881a5a057787bb8651",
+    "user": {
+      "login": "jrieken",
+      "id": 1794099,
+      "node_id": "MDQ6VXNlcjE3OTQwOTk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1794099?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jrieken",
+      "html_url": "https://github.com/jrieken",
+      "followers_url": "https://api.github.com/users/jrieken/followers",
+      "following_url": "https://api.github.com/users/jrieken/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jrieken/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jrieken/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jrieken/subscriptions",
+      "organizations_url": "https://api.github.com/users/jrieken/orgs",
+      "repos_url": "https://api.github.com/users/jrieken/repos",
+      "events_url": "https://api.github.com/users/jrieken/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jrieken/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "The information returned by the API should be self-contained and not rely on something from the outside, like context menus. The language API should also have a future in LSP and there such concepts (context value etc) do not exist",
+    "created_at": "2021-01-18T09:31:23Z",
+    "updated_at": "2021-01-19T03:17:13Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/113285#discussion_r559426098",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/113285",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/559426098"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/113285#discussion_r559426098"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/113285"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/559426098/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 2018,
+    "side": "RIGHT",
+    "in_reply_to_id": 559425172,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 63,
+    "position": 1,
+    "subject_type": "line"
+  }
+]

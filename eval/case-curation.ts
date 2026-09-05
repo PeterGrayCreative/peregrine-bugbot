@@ -530,3 +530,7 @@ function directDirectory(root: string, name: string, label: string): string {
 function fileSha256(path: string): string {
   return createHash("sha256").update(readFileSync(path)).digest("hex");
 }
+
+// Shared with the versioned historical admission reader so both protocols use
+// identical regular-file confinement and byte-digest semantics.
+export { directFile, fileSha256 };

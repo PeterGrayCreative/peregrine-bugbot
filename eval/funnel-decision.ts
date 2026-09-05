@@ -10,8 +10,16 @@ import { parseBenchmarkCategoryBinding } from "./benchmark-panels.js";
 import { assertGradingEvidenceConsistent, rootCauseKey, rootCauseMatches } from "./grading-contract.js";
 import { requireValidExperimentGradingSeal, requireValidExperimentTerminalSeal } from "./experiment-seals.js";
 import { CODEX_SEMANTIC_JUDGE } from "./judge-runtime.js";
+import {
+  adjudicationKey,
+  adjudicationMap,
+  readExperimentAdjudication,
+  type ExperimentAdjudicationLedger,
+  type FinalAdjudicationClassification,
+} from "./adjudication-ledger.js";
 
 export const FUNNEL_DECISION_FILENAME = "funnel-decision.json";
+export const FUNNEL_ADJUDICATED_DECISION_FILENAME = "funnel-decision-adjudicated.json";
 
 export interface FunnelCompletion {
   control: { scheduled: number; completed: number; failed: number };
@@ -42,7 +50,7 @@ export interface FunnelDecision {
 }
 
 export interface FunnelDecisionArtifact {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   experimentId: string;
   benchmarkCategory: ExperimentBenchmarkCategory;
   terminalSealSha256: string;
@@ -51,6 +59,8 @@ export interface FunnelDecisionArtifact {
   completion: FunnelCompletion;
   metrics: FunnelMetrics | null;
   result: FunnelDecision;
+  previousDecisionSha256?: string;
+  adjudicationLedgerSha256?: string;
   decisionSha256: string;
 }
 
@@ -120,6 +130,7 @@ export function deriveFunnelMetrics(input: {
   records: readonly RunRecord[];
   gradedRuns: ReadonlyMap<string, GradedRun>;
   truths: ReadonlyMap<string, GroundTruth>;
+  adjudications?: ReadonlyMap<string, FinalAdjudicationClassification>;
 }): FunnelMetrics {
   const policy = input.binding.definition.gate;
   const diagnostic = new Set(input.binding.definition.roles.diagnosticOnlyCases);
@@ -144,7 +155,12 @@ export function deriveFunnelMetrics(input: {
       if (matched) counts[attempt.variant]++;
       rootCounts.set(key, counts);
     }
-    const unmatched = required(run.grading, `missing authenticated grading evidence for ${attempt.id}`).unmatchedFindings;
+    const unmatched = required(run.grading, `missing authenticated grading evidence for ${attempt.id}`).unmatchedFindings.map((item) => ({
+      ...item,
+      classification: input.adjudications?.get(
+        adjudicationKey(attempt.id, item.findingIndex, item.findingEvidenceSha256),
+      ) ?? item.classification,
+    }));
     if (diagnostic.has(caseId)) {
       diagnosticExcludedFindingCount += unmatched.length;
       continue;
@@ -204,10 +220,28 @@ export function deriveFunnelMetrics(input: {
 }
 
 export function writeFunnelDecision(runDirectory: string, casesDirectory = "eval/cases"): FunnelDecision {
-  const artifact = buildFunnelDecisionArtifact(runDirectory, casesDirectory);
   const root = resolve(runDirectory);
-  writeExclusiveJson(root, join(root, FUNNEL_DECISION_FILENAME), artifact);
-  return artifact.result;
+  const basePath = join(root, FUNNEL_DECISION_FILENAME);
+  const derivedBase = buildFunnelDecisionArtifact(root, casesDirectory);
+  const base = existsSync(basePath)
+    ? parseFunnelDecisionArtifact(readExperimentJson(basePath), basePath)
+    : derivedBase;
+  if (base.schemaVersion !== 1 || canonicalJson(base) !== canonicalJson(derivedBase)) {
+    throw new Error(`${basePath} does not match the currently verified sealed experiment evidence`);
+  }
+  if (!existsSync(basePath)) writeExclusiveJson(root, basePath, base);
+
+  const ledger = readExperimentAdjudication(root);
+  if (!ledger) return base.result;
+  const revised = buildFunnelDecisionArtifact(root, casesDirectory, ledger, base);
+  const revisedPath = join(root, FUNNEL_ADJUDICATED_DECISION_FILENAME);
+  if (existsSync(revisedPath)) {
+    const parsed = parseFunnelDecisionArtifact(readExperimentJson(revisedPath), revisedPath);
+    if (canonicalJson(parsed) !== canonicalJson(revised)) throw new Error(`${revisedPath} does not match the currently verified adjudicated evidence`);
+    return parsed.result;
+  }
+  writeExclusiveJson(root, revisedPath, revised);
+  return revised.result;
 }
 
 export function readFunnelDecisionArtifact(
@@ -215,16 +249,31 @@ export function readFunnelDecisionArtifact(
   casesDirectory = "eval/cases",
 ): FunnelDecisionArtifact {
   const root = resolve(runDirectory);
-  const path = join(root, FUNNEL_DECISION_FILENAME);
-  const parsed = parseFunnelDecisionArtifact(readExperimentJson(path), path);
-  const derived = buildFunnelDecisionArtifact(root, casesDirectory);
-  if (canonicalJson(parsed) !== canonicalJson(derived)) {
-    throw new Error(`${path} does not match the currently verified sealed experiment evidence`);
+  const basePath = join(root, FUNNEL_DECISION_FILENAME);
+  const base = parseFunnelDecisionArtifact(readExperimentJson(basePath), basePath);
+  const derivedBase = buildFunnelDecisionArtifact(root, casesDirectory);
+  if (base.schemaVersion !== 1 || canonicalJson(base) !== canonicalJson(derivedBase)) {
+    throw new Error(`${basePath} does not match the currently verified sealed experiment evidence`);
   }
+  const ledger = readExperimentAdjudication(root);
+  if (!ledger) {
+    if (existsSync(join(root, FUNNEL_ADJUDICATED_DECISION_FILENAME))) throw new Error("adjudicated funnel decision has no valid adjudication ledger");
+    return base;
+  }
+  const revisedPath = join(root, FUNNEL_ADJUDICATED_DECISION_FILENAME);
+  if (!existsSync(revisedPath)) throw new Error("adjudication ledger exists but its derived funnel decision has not been written");
+  const parsed = parseFunnelDecisionArtifact(readExperimentJson(revisedPath), revisedPath);
+  const derived = buildFunnelDecisionArtifact(root, casesDirectory, ledger, base);
+  if (parsed.schemaVersion !== 2 || canonicalJson(parsed) !== canonicalJson(derived)) throw new Error(`${revisedPath} does not match the currently verified adjudicated evidence`);
   return parsed;
 }
 
-function buildFunnelDecisionArtifact(runDirectory: string, casesDirectory: string): FunnelDecisionArtifact {
+function buildFunnelDecisionArtifact(
+  runDirectory: string,
+  casesDirectory: string,
+  adjudicationLedger?: ExperimentAdjudicationLedger,
+  previousDecision?: FunnelDecisionArtifact,
+): FunnelDecisionArtifact {
   const root = resolve(runDirectory);
   const matrixPath = join(root, MATRIX_MANIFEST_FILENAME);
   const matrix = parseMatrixRunManifest(readExperimentJson(matrixPath), matrixPath);
@@ -271,11 +320,18 @@ function buildFunnelDecisionArtifact(runDirectory: string, casesDirectory: strin
       assertGradingEvidenceConsistent(truth, graded.outcome.result.findings, graded.matches, gradingEvidence, path, expectedJudge);
       gradedRuns.set(attempt.id, graded);
     }
-    metrics = deriveFunnelMetrics({ binding, schedule: evidence.experiment.schedule, records: evidence.records, gradedRuns, truths });
+    metrics = deriveFunnelMetrics({
+      binding,
+      schedule: evidence.experiment.schedule,
+      records: evidence.records,
+      gradedRuns,
+      truths,
+      ...(adjudicationLedger ? { adjudications: adjudicationMap(adjudicationLedger) } : {}),
+    });
   }
   const result = evaluateFunnelDecision({ binding, terminal: terminalSeal.terminal, completion, metrics });
   const body = {
-    schemaVersion: 1 as const,
+    schemaVersion: adjudicationLedger ? 2 as const : 1 as const,
     experimentId: evidence.experiment.experimentId,
     benchmarkCategory: binding,
     terminalSealSha256: terminalSeal.sealSha256,
@@ -284,6 +340,10 @@ function buildFunnelDecisionArtifact(runDirectory: string, casesDirectory: strin
     completion,
     metrics,
     result,
+    ...(adjudicationLedger ? {
+      previousDecisionSha256: required(previousDecision?.decisionSha256, "adjudicated decision requires its prior decision"),
+      adjudicationLedgerSha256: adjudicationLedger.ledgerSha256,
+    } : {}),
   };
   const artifact = { ...body, decisionSha256: canonicalJsonSha256(body) };
   assertNoSecrets(artifact, "funnel decision artifact");
@@ -296,15 +356,21 @@ export function parseFunnelDecisionArtifact(value: unknown, source = "funnel dec
   const artifact = value as FunnelDecisionArtifact;
   const keys = ["schemaVersion", "experimentId", "benchmarkCategory", "terminalSealSha256", "terminal", "completion", "metrics", "result", "decisionSha256"];
   if (artifact.gradingSealSha256 !== undefined) keys.push("gradingSealSha256");
+  if (artifact.previousDecisionSha256 !== undefined) keys.push("previousDecisionSha256");
+  if (artifact.adjudicationLedgerSha256 !== undefined) keys.push("adjudicationLedgerSha256");
   const unexpected = Object.keys(artifact).filter((key) => !keys.includes(key));
-  if (unexpected.length || artifact.schemaVersion !== 1 || typeof artifact.decisionSha256 !== "string") throw new Error(`${source} has an invalid shape`);
+  if (unexpected.length || (artifact.schemaVersion !== 1 && artifact.schemaVersion !== 2) || typeof artifact.decisionSha256 !== "string") throw new Error(`${source} has an invalid shape`);
+  const revised = artifact.schemaVersion === 2;
+  if (revised !== (artifact.previousDecisionSha256 !== undefined) || revised !== (artifact.adjudicationLedgerSha256 !== undefined)) throw new Error(`${source} adjudication linkage does not match its schema version`);
   const { decisionSha256, ...body } = artifact;
   if (!/^[a-f0-9]{64}$/.test(decisionSha256) || decisionSha256 !== canonicalJsonSha256(body)) {
     throw new Error(`${source}.decisionSha256 does not authenticate its contents`);
   }
   const binding = parseBenchmarkCategoryBinding(artifact.benchmarkCategory, `${source}.benchmarkCategory`);
   if (!isSha256(artifact.experimentId) || !isSha256(artifact.terminalSealSha256) ||
-    (artifact.gradingSealSha256 !== undefined && !isSha256(artifact.gradingSealSha256))) {
+    (artifact.gradingSealSha256 !== undefined && !isSha256(artifact.gradingSealSha256)) ||
+    (artifact.previousDecisionSha256 !== undefined && !isSha256(artifact.previousDecisionSha256)) ||
+    (artifact.adjudicationLedgerSha256 !== undefined && !isSha256(artifact.adjudicationLedgerSha256))) {
     throw new Error(`${source} contains an invalid identity hash`);
   }
   if (artifact.terminal !== "completed" && artifact.terminal !== "stopped") throw new Error(`${source}.terminal is invalid`);

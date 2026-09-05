@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/vercel/next.js/pulls/7669/reviews",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T11:57:46.575Z",
+  "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7669/reviews?page=1&per_page=100",
+  "sha256": "870c501df81da5882fabfad06e872e4128cc5cba50083363616f0dba55e14c2e",
+  "bytes": 9179
+}

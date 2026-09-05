@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/sequelize/sequelize/issues/10254/comments",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:59:30.564Z",
+  "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/issues/10254/comments?page=1&per_page=100",
+  "sha256": "177aa013669ddaeee411745b6b769a4847af2e8dac7b1275f47ed8a5328212f8",
+  "bytes": 10494
+}

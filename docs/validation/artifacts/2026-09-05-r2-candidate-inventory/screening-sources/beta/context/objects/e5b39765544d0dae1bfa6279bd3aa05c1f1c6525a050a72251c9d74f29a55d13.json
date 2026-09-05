@@ -1,0 +1,141 @@
+[
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/546630729",
+    "pull_request_review_id": 556282705,
+    "id": 546630729,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU0NjYzMDcyOQ==",
+    "diff_hunk": "@@ -1,21 +1,23 @@\n-import { ClientOptions } from '../../interfaces';\n+import { ClientOptions, CustomClientOptions } from '../../interfaces';\n import { Type, Provider, ModuleMetadata } from '@nestjs/common/interfaces';\n \n-export type ClientProviderOptions = ClientOptions & {\n+export type ClientProvider = ClientOptions | CustomClientOptions;\n+\n+export type ClientProviderOptions = ClientProvider & {\n   name: string | symbol;\n };\n \n export type ClientsModuleOptions = Array<ClientProviderOptions>;\n \n export interface ClientsModuleOptionsFactory {\n-  createClientOptions(): Promise<ClientOptions> | ClientOptions;\n+  createClientOptions(): Promise<ClientProvider> | ClientProvider;",
+    "path": "packages/microservices/module/interfaces/clients-module.interface.ts",
+    "commit_id": "525ef913079e44f28d11de7bc60e323f3c05ac0a",
+    "original_commit_id": "525ef913079e44f28d11de7bc60e323f3c05ac0a",
+    "user": {
+      "login": "kamilmysliwiec",
+      "id": 23244943,
+      "node_id": "MDQ6VXNlcjIzMjQ0OTQz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23244943?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/kamilmysliwiec",
+      "html_url": "https://github.com/kamilmysliwiec",
+      "followers_url": "https://api.github.com/users/kamilmysliwiec/followers",
+      "following_url": "https://api.github.com/users/kamilmysliwiec/following{/other_user}",
+      "gists_url": "https://api.github.com/users/kamilmysliwiec/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/kamilmysliwiec/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/kamilmysliwiec/subscriptions",
+      "organizations_url": "https://api.github.com/users/kamilmysliwiec/orgs",
+      "repos_url": "https://api.github.com/users/kamilmysliwiec/repos",
+      "events_url": "https://api.github.com/users/kamilmysliwiec/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/kamilmysliwiec/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Just wondering - isn't it a breaking change? cc @jmcdo29 ",
+    "created_at": "2020-12-21T10:35:24Z",
+    "updated_at": "2020-12-21T10:35:24Z",
+    "html_url": "https://github.com/nestjs/nest/pull/5710#discussion_r546630729",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/5710",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/546630729"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/5710#discussion_r546630729"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/5710"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/546630729/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 13,
+    "original_line": 13,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 16,
+    "position": 16,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/546825579",
+    "pull_request_review_id": 556533873,
+    "id": 546825579,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU0NjgyNTU3OQ==",
+    "diff_hunk": "@@ -1,21 +1,23 @@\n-import { ClientOptions } from '../../interfaces';\n+import { ClientOptions, CustomClientOptions } from '../../interfaces';\n import { Type, Provider, ModuleMetadata } from '@nestjs/common/interfaces';\n \n-export type ClientProviderOptions = ClientOptions & {\n+export type ClientProvider = ClientOptions | CustomClientOptions;\n+\n+export type ClientProviderOptions = ClientProvider & {\n   name: string | symbol;\n };\n \n export type ClientsModuleOptions = Array<ClientProviderOptions>;\n \n export interface ClientsModuleOptionsFactory {\n-  createClientOptions(): Promise<ClientOptions> | ClientOptions;\n+  createClientOptions(): Promise<ClientProvider> | ClientProvider;",
+    "path": "packages/microservices/module/interfaces/clients-module.interface.ts",
+    "commit_id": "525ef913079e44f28d11de7bc60e323f3c05ac0a",
+    "original_commit_id": "525ef913079e44f28d11de7bc60e323f3c05ac0a",
+    "user": {
+      "login": "jmcdo29",
+      "id": 28268680,
+      "node_id": "MDQ6VXNlcjI4MjY4Njgw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/28268680?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jmcdo29",
+      "html_url": "https://github.com/jmcdo29",
+      "followers_url": "https://api.github.com/users/jmcdo29/followers",
+      "following_url": "https://api.github.com/users/jmcdo29/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jmcdo29/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jmcdo29/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jmcdo29/subscriptions",
+      "organizations_url": "https://api.github.com/users/jmcdo29/orgs",
+      "repos_url": "https://api.github.com/users/jmcdo29/repos",
+      "events_url": "https://api.github.com/users/jmcdo29/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jmcdo29/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "`ClientProvider` is a union of `ClientOptions` and the `CustomProvider`, so it shouldn't break anything if the original `ClientOptions` are used. I didn't update any of the original integration tests and had no build issues there, so I don't think it's a breaking change",
+    "created_at": "2020-12-21T17:10:53Z",
+    "updated_at": "2020-12-21T17:10:53Z",
+    "html_url": "https://github.com/nestjs/nest/pull/5710#discussion_r546825579",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/5710",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/546825579"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/5710#discussion_r546825579"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/5710"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/546825579/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 13,
+    "original_line": 13,
+    "side": "RIGHT",
+    "in_reply_to_id": 546630729,
+    "author_association": "MEMBER",
+    "original_position": 16,
+    "position": 16,
+    "subject_type": "line"
+  }
+]

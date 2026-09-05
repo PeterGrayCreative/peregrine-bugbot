@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/sequelize/sequelize/pulls/11015/commits",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T11:58:50.194Z",
+  "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11015/commits?page=1&per_page=100",
+  "sha256": "3497641b05732718ec6c42334d2ca41e38b2e1c7f24d0fb69028dc4dcdea1ef0",
+  "bytes": 1476
+}

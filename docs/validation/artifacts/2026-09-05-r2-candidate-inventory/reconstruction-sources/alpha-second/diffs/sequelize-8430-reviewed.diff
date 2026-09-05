@@ -1,0 +1,63 @@
+diff --git a/lib/sequelize.js b/lib/sequelize.js
+index 662d599dfcc83d7f2916eced255eaabb44aa5410..1ea25a9caf9bf75a80541f832b468e7c90efcc3d 100755
+--- a/lib/sequelize.js
++++ b/lib/sequelize.js
+@@ -962,7 +962,7 @@ class Sequelize {
+ 
+     const transaction = new Transaction(this, options);
+ 
+-    if (!autoCallback) return transaction.prepareEnvironment().return(transaction);
++    if (!autoCallback) return transaction.prepareEnvironment(false).return(transaction);
+ 
+     // autoCallback provided
+     return Sequelize._clsRun(() => {
+diff --git a/lib/transaction.js b/lib/transaction.js
+index e51bb087a427c044f723567e27cc5246edf249e2..44dba99a115dd8d7691841bdfed95c2a2cca5864 100644
+--- a/lib/transaction.js
++++ b/lib/transaction.js
+@@ -99,9 +99,13 @@ class Transaction {
+       });
+   }
+ 
+-  prepareEnvironment() {
++  prepareEnvironment(useCLS) {
+     let connectionPromise;
+ 
++    if (typeof useCLS === 'undefined') {
++      useCLS = true;
++    }
++
+     if (this.parent) {
+       connectionPromise = Utils.Promise.resolve(this.parent.connection);
+     } else {
+@@ -125,7 +129,7 @@ class Transaction {
+         throw setupErr;
+       }))
+       .tap(() => {
+-        if (this.sequelize.constructor._cls) {
++        if (useCLS && this.sequelize.constructor._cls) {
+           this.sequelize.constructor._cls.set('transaction', this);
+         }
+         return null;
+diff --git a/test/integration/cls.test.js b/test/integration/cls.test.js
+index 1147f739bafd4ba144db29195e409e2854a0c8b2..da1e03a847d5f3380e187ba88833f1f64615e0a2 100644
+--- a/test/integration/cls.test.js
++++ b/test/integration/cls.test.js
+@@ -33,6 +33,17 @@ if (current.dialect.supports.transactions) {
+     });
+ 
+     describe('context', () => {
++      it('does not use continuation storage on manually managed transactions', function() {
++        const self = this;
++
++        return Sequelize._clsRun(() => {
++          return this.sequelize.transaction().then(transaction => {
++            expect(self.ns.get('transaction')).to.be.undefined;
++            return transaction.rollback();
++          });
++        });
++      });
++
+       it('supports several concurrent transactions', function() {
+         let t1id, t2id;
+         const self = this;

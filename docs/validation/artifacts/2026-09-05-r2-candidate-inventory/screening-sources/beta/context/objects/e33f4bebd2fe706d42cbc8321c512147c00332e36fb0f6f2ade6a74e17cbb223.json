@@ -1,0 +1,1115 @@
+[
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/489998681",
+    "pull_request_review_id": 490276356,
+    "id": 489998681,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ4OTk5ODY4MQ==",
+    "diff_hunk": "@@ -501,6 +502,10 @@ class DropOverlay extends Themable {\n \n \tprivate getOverlayOffsetHeight(): number {\n \t\tif (!this.groupView.isEmpty && this.accessor.partOptions.showTabs) {\n+\t\t\tconst tablist = document.querySelector(DropOverlay.TABS_SELECTOR) as HTMLElement;",
+    "path": "src/vs/workbench/browser/parts/editor/editorDropTarget.ts",
+    "commit_id": "e6ee5f61f0df3d4dd1ec2dc9ee7d10b03895c51d",
+    "original_commit_id": "f28b382003884276c9efd0a1767f9eba673617ae",
+    "user": {
+      "login": "bpasero",
+      "id": 900690,
+      "node_id": "MDQ6VXNlcjkwMDY5MA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/900690?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/bpasero",
+      "html_url": "https://github.com/bpasero",
+      "followers_url": "https://api.github.com/users/bpasero/followers",
+      "following_url": "https://api.github.com/users/bpasero/following{/other_user}",
+      "gists_url": "https://api.github.com/users/bpasero/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/bpasero/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/bpasero/subscriptions",
+      "organizations_url": "https://api.github.com/users/bpasero/orgs",
+      "repos_url": "https://api.github.com/users/bpasero/repos",
+      "events_url": "https://api.github.com/users/bpasero/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/bpasero/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This will not work properly once you have more than one editor group opened because then you will have more than one `div.tabs-container`. \r\n\r\nI suggest an alternate solution where the `accessor` provides a method to ask for the height of the editor title area. The `accessor` in this case is the `EditorPart` which can delegate this to the group in question and then the group can forward this to the title control. And I would only use the `offsetHeight` property if mutli-line tabs are enabled.",
+    "created_at": "2020-09-17T06:25:12Z",
+    "updated_at": "2021-01-04T08:51:08Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/106448#discussion_r489998681",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/106448",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/489998681"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/106448#discussion_r489998681"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/106448"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/489998681/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 505,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/490000705",
+    "pull_request_review_id": 490276356,
+    "id": 490000705,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ5MDAwMDcwNQ==",
+    "diff_hunk": "@@ -517,15 +529,17 @@ export class TabsTitleControl extends TitleControl {\n \t\t\toldOptions.pinnedTabSizing !== newOptions.pinnedTabSizing ||\n \t\t\toldOptions.showIcons !== newOptions.showIcons ||\n \t\t\toldOptions.hasIcons !== newOptions.hasIcons ||\n-\t\t\toldOptions.highlightModifiedTabs !== newOptions.highlightModifiedTabs\n+\t\t\toldOptions.highlightModifiedTabs !== newOptions.highlightModifiedTabs ||\n+\t\t\toldOptions.multiLineTabs !== newOptions.multiLineTabs\n \t\t) {\n \t\t\tthis.redraw();\n \t\t}\n+\t}\n \n-\t\t// Udate tabs scrollbar sizing\n-\t\tif (oldOptions.titleScrollbarSizing !== newOptions.titleScrollbarSizing) {\n-\t\t\tthis.updateTabsScrollbarSizing();\n-\t\t}\n+\tprivate updateMultiLineTabs(): void {",
+    "path": "src/vs/workbench/browser/parts/editor/tabsTitleControl.ts",
+    "commit_id": "e6ee5f61f0df3d4dd1ec2dc9ee7d10b03895c51d",
+    "original_commit_id": "f28b382003884276c9efd0a1767f9eba673617ae",
+    "user": {
+      "login": "bpasero",
+      "id": 900690,
+      "node_id": "MDQ6VXNlcjkwMDY5MA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/900690?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/bpasero",
+      "html_url": "https://github.com/bpasero",
+      "followers_url": "https://api.github.com/users/bpasero/followers",
+      "following_url": "https://api.github.com/users/bpasero/following{/other_user}",
+      "gists_url": "https://api.github.com/users/bpasero/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/bpasero/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/bpasero/subscriptions",
+      "organizations_url": "https://api.github.com/users/bpasero/orgs",
+      "repos_url": "https://api.github.com/users/bpasero/repos",
+      "events_url": "https://api.github.com/users/bpasero/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/bpasero/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "There now seems to be a weird condition under which we seem to be adding the `multi-line` class when settings change but we conditionally add and remove it in the `layout` call. Shouldn't we exclusively be setting this class only from the layout call given that this is the only place where we know that we need it when the size is little?\r\n\r\nI would say we let the `layout` method take care and make sure it is called when this setting changes.",
+    "created_at": "2020-09-17T06:29:55Z",
+    "updated_at": "2021-01-04T08:51:08Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/106448#discussion_r490000705",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/106448",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/490000705"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/106448#discussion_r490000705"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/106448"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/490000705/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 539,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 44,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/490001910",
+    "pull_request_review_id": 490276356,
+    "id": 490001910,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ5MDAwMTkxMA==",
+    "diff_hunk": "@@ -1174,6 +1188,10 @@ export class TabsTitleControl extends TitleControl {\n \t\t\ttabContainer.style.backgroundColor = this.getColor(isGroupActive ? TAB_INACTIVE_BACKGROUND : TAB_UNFOCUSED_INACTIVE_BACKGROUND) || '';\n \t\t\ttabContainer.style.boxShadow = '';\n \n+\t\t\t// bottom border when wrapping multi-line",
+    "path": "src/vs/workbench/browser/parts/editor/tabsTitleControl.ts",
+    "commit_id": "e6ee5f61f0df3d4dd1ec2dc9ee7d10b03895c51d",
+    "original_commit_id": "f28b382003884276c9efd0a1767f9eba673617ae",
+    "user": {
+      "login": "bpasero",
+      "id": 900690,
+      "node_id": "MDQ6VXNlcjkwMDY5MA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/900690?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/bpasero",
+      "html_url": "https://github.com/bpasero",
+      "followers_url": "https://api.github.com/users/bpasero/followers",
+      "following_url": "https://api.github.com/users/bpasero/following{/other_user}",
+      "gists_url": "https://api.github.com/users/bpasero/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/bpasero/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/bpasero/subscriptions",
+      "organizations_url": "https://api.github.com/users/bpasero/orgs",
+      "repos_url": "https://api.github.com/users/bpasero/repos",
+      "events_url": "https://api.github.com/users/bpasero/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/bpasero/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "My suggestion was to reuse the `tab-border-bottom` helper for this case too and not introduce yet another border. Currently the `tab-border-bottom` is reserved for active tabs because the border was only used for active tabs, but to ensure we get a consistent look, we should be using the same thing for the separator as well. Otherwise we end up with an active border that is not on the exact same line as the separator border.",
+    "created_at": "2020-09-17T06:32:49Z",
+    "updated_at": "2021-01-04T08:51:08Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/106448#discussion_r490001910",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/106448",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/490001910"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/106448#discussion_r490001910"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/106448"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/490001910/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1191,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 55,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/490574302",
+    "pull_request_review_id": 491004050,
+    "id": 490574302,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ5MDU3NDMwMg==",
+    "diff_hunk": "@@ -501,6 +502,10 @@ class DropOverlay extends Themable {\n \n \tprivate getOverlayOffsetHeight(): number {\n \t\tif (!this.groupView.isEmpty && this.accessor.partOptions.showTabs) {\n+\t\t\tconst tablist = document.querySelector(DropOverlay.TABS_SELECTOR) as HTMLElement;",
+    "path": "src/vs/workbench/browser/parts/editor/editorDropTarget.ts",
+    "commit_id": "e6ee5f61f0df3d4dd1ec2dc9ee7d10b03895c51d",
+    "original_commit_id": "f28b382003884276c9efd0a1767f9eba673617ae",
+    "user": {
+      "login": "jmannanc",
+      "id": 32284796,
+      "node_id": "MDQ6VXNlcjMyMjg0Nzk2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32284796?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jmannanc",
+      "html_url": "https://github.com/jmannanc",
+      "followers_url": "https://api.github.com/users/jmannanc/followers",
+      "following_url": "https://api.github.com/users/jmannanc/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jmannanc/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jmannanc/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jmannanc/subscriptions",
+      "organizations_url": "https://api.github.com/users/jmannanc/orgs",
+      "repos_url": "https://api.github.com/users/jmannanc/repos",
+      "events_url": "https://api.github.com/users/jmannanc/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jmannanc/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Done, please let me know if I've done this incorrectly.",
+    "created_at": "2020-09-17T21:32:28Z",
+    "updated_at": "2021-01-04T08:51:08Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/106448#discussion_r490574302",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/106448",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/490574302"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/106448#discussion_r490574302"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/106448"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/490574302/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 505,
+    "side": "RIGHT",
+    "in_reply_to_id": 489998681,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/490574346",
+    "pull_request_review_id": 491004105,
+    "id": 490574346,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ5MDU3NDM0Ng==",
+    "diff_hunk": "@@ -517,15 +529,17 @@ export class TabsTitleControl extends TitleControl {\n \t\t\toldOptions.pinnedTabSizing !== newOptions.pinnedTabSizing ||\n \t\t\toldOptions.showIcons !== newOptions.showIcons ||\n \t\t\toldOptions.hasIcons !== newOptions.hasIcons ||\n-\t\t\toldOptions.highlightModifiedTabs !== newOptions.highlightModifiedTabs\n+\t\t\toldOptions.highlightModifiedTabs !== newOptions.highlightModifiedTabs ||\n+\t\t\toldOptions.multiLineTabs !== newOptions.multiLineTabs\n \t\t) {\n \t\t\tthis.redraw();\n \t\t}\n+\t}\n \n-\t\t// Udate tabs scrollbar sizing\n-\t\tif (oldOptions.titleScrollbarSizing !== newOptions.titleScrollbarSizing) {\n-\t\t\tthis.updateTabsScrollbarSizing();\n-\t\t}\n+\tprivate updateMultiLineTabs(): void {",
+    "path": "src/vs/workbench/browser/parts/editor/tabsTitleControl.ts",
+    "commit_id": "e6ee5f61f0df3d4dd1ec2dc9ee7d10b03895c51d",
+    "original_commit_id": "f28b382003884276c9efd0a1767f9eba673617ae",
+    "user": {
+      "login": "jmannanc",
+      "id": 32284796,
+      "node_id": "MDQ6VXNlcjMyMjg0Nzk2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32284796?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jmannanc",
+      "html_url": "https://github.com/jmannanc",
+      "followers_url": "https://api.github.com/users/jmannanc/followers",
+      "following_url": "https://api.github.com/users/jmannanc/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jmannanc/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jmannanc/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jmannanc/subscriptions",
+      "organizations_url": "https://api.github.com/users/jmannanc/orgs",
+      "repos_url": "https://api.github.com/users/jmannanc/repos",
+      "events_url": "https://api.github.com/users/jmannanc/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jmannanc/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Ah yes, I forgot about that when moving it to the `layout` method. I've removed it now, thanks.",
+    "created_at": "2020-09-17T21:32:34Z",
+    "updated_at": "2021-01-04T08:51:08Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/106448#discussion_r490574346",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/106448",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/490574346"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/106448#discussion_r490574346"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/106448"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/490574346/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 539,
+    "side": "RIGHT",
+    "in_reply_to_id": 490000705,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 44,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/490574362",
+    "pull_request_review_id": 491004131,
+    "id": 490574362,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ5MDU3NDM2Mg==",
+    "diff_hunk": "@@ -1174,6 +1188,10 @@ export class TabsTitleControl extends TitleControl {\n \t\t\ttabContainer.style.backgroundColor = this.getColor(isGroupActive ? TAB_INACTIVE_BACKGROUND : TAB_UNFOCUSED_INACTIVE_BACKGROUND) || '';\n \t\t\ttabContainer.style.boxShadow = '';\n \n+\t\t\t// bottom border when wrapping multi-line",
+    "path": "src/vs/workbench/browser/parts/editor/tabsTitleControl.ts",
+    "commit_id": "e6ee5f61f0df3d4dd1ec2dc9ee7d10b03895c51d",
+    "original_commit_id": "f28b382003884276c9efd0a1767f9eba673617ae",
+    "user": {
+      "login": "jmannanc",
+      "id": 32284796,
+      "node_id": "MDQ6VXNlcjMyMjg0Nzk2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32284796?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jmannanc",
+      "html_url": "https://github.com/jmannanc",
+      "followers_url": "https://api.github.com/users/jmannanc/followers",
+      "following_url": "https://api.github.com/users/jmannanc/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jmannanc/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jmannanc/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jmannanc/subscriptions",
+      "organizations_url": "https://api.github.com/users/jmannanc/orgs",
+      "repos_url": "https://api.github.com/users/jmannanc/repos",
+      "events_url": "https://api.github.com/users/jmannanc/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jmannanc/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Done, I misunderstood what you suggested earlier but hopefully it's correct now?",
+    "created_at": "2020-09-17T21:32:37Z",
+    "updated_at": "2021-01-04T08:51:08Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/106448#discussion_r490574362",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/106448",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/490574362"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/106448#discussion_r490574362"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/106448"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/490574362/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1191,
+    "side": "RIGHT",
+    "in_reply_to_id": 490001910,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 55,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/499741152",
+    "pull_request_review_id": 502247293,
+    "id": 499741152,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ5OTc0MTE1Mg==",
+    "diff_hunk": "@@ -1253,6 +1272,8 @@ export class TabsTitleControl extends TitleControl {\n \t\t\t\tthis.layoutScheduled.clear();\n \t\t\t});\n \t\t}\n+\n+\t\treturn this.getDimensions().height;",
+    "path": "src/vs/workbench/browser/parts/editor/tabsTitleControl.ts",
+    "commit_id": "e6ee5f61f0df3d4dd1ec2dc9ee7d10b03895c51d",
+    "original_commit_id": "ac0a02482669a6b142d0d09f516f733fe2b906c5",
+    "user": {
+      "login": "bpasero",
+      "id": 900690,
+      "node_id": "MDQ6VXNlcjkwMDY5MA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/900690?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/bpasero",
+      "html_url": "https://github.com/bpasero",
+      "followers_url": "https://api.github.com/users/bpasero/followers",
+      "following_url": "https://api.github.com/users/bpasero/following{/other_user}",
+      "gists_url": "https://api.github.com/users/bpasero/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/bpasero/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/bpasero/subscriptions",
+      "organizations_url": "https://api.github.com/users/bpasero/orgs",
+      "repos_url": "https://api.github.com/users/bpasero/repos",
+      "events_url": "https://api.github.com/users/bpasero/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/bpasero/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "As you can see from the code above, the layout is scheduled `async` to prevent perf issues. As such, you return a dimension here from a time before the layout is actually applied. This is one of the issues I talked about earlier, we cannot return the height until we actually applied the CSS classes. I fear we probably have to switch to a sync layout when multi-line tabs are enabled.",
+    "created_at": "2020-10-05T16:56:36Z",
+    "updated_at": "2021-01-04T08:51:08Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/106448#discussion_r499741152",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/106448",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/499741152"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/106448#discussion_r499741152"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/106448"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/499741152/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1276,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 83,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/499742365",
+    "pull_request_review_id": 502247293,
+    "id": 499742365,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ5OTc0MjM2NQ==",
+    "diff_hunk": "@@ -1698,14 +1702,12 @@ export class EditorGroupView extends Themable implements IEditorGroupView {\n \tlayout(width: number, height: number): void {\n \t\tthis.dimension = new Dimension(width, height);\n \n-\t\t// Ensure editor container gets height as CSS depending on the preferred height of the title control\n-\t\tconst titleHeight = this.titleDimensions.height;\n-\t\tconst editorHeight = Math.max(0, height - titleHeight);\n-\t\tthis.editorContainer.style.height = `${editorHeight}px`;\n+\t\t// Use the initial height of the title area to layout\n+\t\tconst initialTitleHeight = this.titleDimensions.height;\n+\t\tconst titleHeight = this.titleAreaControl.layout(new Dimension(width, initialTitleHeight)) as number;",
+    "path": "src/vs/workbench/browser/parts/editor/editorGroupView.ts",
+    "commit_id": "e6ee5f61f0df3d4dd1ec2dc9ee7d10b03895c51d",
+    "original_commit_id": "ac0a02482669a6b142d0d09f516f733fe2b906c5",
+    "user": {
+      "login": "bpasero",
+      "id": 900690,
+      "node_id": "MDQ6VXNlcjkwMDY5MA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/900690?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/bpasero",
+      "html_url": "https://github.com/bpasero",
+      "followers_url": "https://api.github.com/users/bpasero/followers",
+      "following_url": "https://api.github.com/users/bpasero/following{/other_user}",
+      "gists_url": "https://api.github.com/users/bpasero/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/bpasero/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/bpasero/subscriptions",
+      "organizations_url": "https://api.github.com/users/bpasero/orgs",
+      "repos_url": "https://api.github.com/users/bpasero/repos",
+      "events_url": "https://api.github.com/users/bpasero/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/bpasero/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Can we not simply pass the full dimensions over that we get above instead of asking the title for its height? Together with the max dimensions for the title widget I thought along the lines of:\r\n* one parameter is the dimension of the entire group and the title widget can use it up to...\r\n* a second parameter defines a certain maximum of size the title widget can have\r\n\r\nBased on these 2 parameters the title widget then decides wether it goes multi-line or not.",
+    "created_at": "2020-10-05T16:58:43Z",
+    "updated_at": "2021-01-04T08:51:08Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/106448#discussion_r499742365",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/106448",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/499742365"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/106448#discussion_r499742365"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/106448"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/499742365/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1707,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 21,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/499742736",
+    "pull_request_review_id": 502247293,
+    "id": 499742736,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ5OTc0MjczNg==",
+    "diff_hunk": "@@ -407,7 +407,7 @@ export abstract class TitleControl extends Themable {\n \n \tabstract updateStyles(): void;\n \n-\tabstract layout(dimension: Dimension): void;\n+\tabstract layout(dimension: Dimension): number | undefined;",
+    "path": "src/vs/workbench/browser/parts/editor/titleControl.ts",
+    "commit_id": "e6ee5f61f0df3d4dd1ec2dc9ee7d10b03895c51d",
+    "original_commit_id": "ac0a02482669a6b142d0d09f516f733fe2b906c5",
+    "user": {
+      "login": "bpasero",
+      "id": 900690,
+      "node_id": "MDQ6VXNlcjkwMDY5MA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/900690?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/bpasero",
+      "html_url": "https://github.com/bpasero",
+      "followers_url": "https://api.github.com/users/bpasero/followers",
+      "following_url": "https://api.github.com/users/bpasero/following{/other_user}",
+      "gists_url": "https://api.github.com/users/bpasero/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/bpasero/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/bpasero/subscriptions",
+      "organizations_url": "https://api.github.com/users/bpasero/orgs",
+      "repos_url": "https://api.github.com/users/bpasero/repos",
+      "events_url": "https://api.github.com/users/bpasero/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/bpasero/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "For consistency I would suggest that `layout` returns both `height` and `width` (as a `Dimension`) and not just the one property. I would think that the `width` property can be used that is passed in because the title widget always gets as wide as what is given.",
+    "created_at": "2020-10-05T16:59:22Z",
+    "updated_at": "2021-01-04T08:51:08Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/106448#discussion_r499742736",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/106448",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/499742736"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/106448#discussion_r499742736"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/106448"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/499742736/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 410,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 5,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/500000038",
+    "pull_request_review_id": 502576180,
+    "id": 500000038,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDUwMDAwMDAzOA==",
+    "diff_hunk": "@@ -407,7 +407,7 @@ export abstract class TitleControl extends Themable {\n \n \tabstract updateStyles(): void;\n \n-\tabstract layout(dimension: Dimension): void;\n+\tabstract layout(dimension: Dimension): number | undefined;",
+    "path": "src/vs/workbench/browser/parts/editor/titleControl.ts",
+    "commit_id": "e6ee5f61f0df3d4dd1ec2dc9ee7d10b03895c51d",
+    "original_commit_id": "ac0a02482669a6b142d0d09f516f733fe2b906c5",
+    "user": {
+      "login": "jmannanc",
+      "id": 32284796,
+      "node_id": "MDQ6VXNlcjMyMjg0Nzk2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32284796?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jmannanc",
+      "html_url": "https://github.com/jmannanc",
+      "followers_url": "https://api.github.com/users/jmannanc/followers",
+      "following_url": "https://api.github.com/users/jmannanc/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jmannanc/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jmannanc/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jmannanc/subscriptions",
+      "organizations_url": "https://api.github.com/users/jmannanc/orgs",
+      "repos_url": "https://api.github.com/users/jmannanc/repos",
+      "events_url": "https://api.github.com/users/jmannanc/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jmannanc/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Done, it now returns a `Dimension`. It still has the problem of returning a `Dimension` before the layout call actually happens on the next scheduled frame, but once we figure out how to proceed with that, I'm sure it can be easily fit in.",
+    "created_at": "2020-10-06T04:33:01Z",
+    "updated_at": "2021-01-04T08:51:08Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/106448#discussion_r500000038",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/106448",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/500000038"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/106448#discussion_r500000038"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/106448"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/500000038/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 410,
+    "side": "RIGHT",
+    "in_reply_to_id": 499742736,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 5,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/500000059",
+    "pull_request_review_id": 502576214,
+    "id": 500000059,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDUwMDAwMDA1OQ==",
+    "diff_hunk": "@@ -1698,14 +1702,12 @@ export class EditorGroupView extends Themable implements IEditorGroupView {\n \tlayout(width: number, height: number): void {\n \t\tthis.dimension = new Dimension(width, height);\n \n-\t\t// Ensure editor container gets height as CSS depending on the preferred height of the title control\n-\t\tconst titleHeight = this.titleDimensions.height;\n-\t\tconst editorHeight = Math.max(0, height - titleHeight);\n-\t\tthis.editorContainer.style.height = `${editorHeight}px`;\n+\t\t// Use the initial height of the title area to layout\n+\t\tconst initialTitleHeight = this.titleDimensions.height;\n+\t\tconst titleHeight = this.titleAreaControl.layout(new Dimension(width, initialTitleHeight)) as number;",
+    "path": "src/vs/workbench/browser/parts/editor/editorGroupView.ts",
+    "commit_id": "e6ee5f61f0df3d4dd1ec2dc9ee7d10b03895c51d",
+    "original_commit_id": "ac0a02482669a6b142d0d09f516f733fe2b906c5",
+    "user": {
+      "login": "jmannanc",
+      "id": 32284796,
+      "node_id": "MDQ6VXNlcjMyMjg0Nzk2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32284796?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jmannanc",
+      "html_url": "https://github.com/jmannanc",
+      "followers_url": "https://api.github.com/users/jmannanc/followers",
+      "following_url": "https://api.github.com/users/jmannanc/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jmannanc/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jmannanc/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jmannanc/subscriptions",
+      "organizations_url": "https://api.github.com/users/jmannanc/orgs",
+      "repos_url": "https://api.github.com/users/jmannanc/repos",
+      "events_url": "https://api.github.com/users/jmannanc/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jmannanc/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Ok I can try and start working on that, what would you suggest as the maximum size the title widget can have?",
+    "created_at": "2020-10-06T04:33:08Z",
+    "updated_at": "2021-01-04T08:51:08Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/106448#discussion_r500000059",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/106448",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/500000059"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/106448#discussion_r500000059"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/106448"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/500000059/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1707,
+    "side": "RIGHT",
+    "in_reply_to_id": 499742365,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 21,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/500000099",
+    "pull_request_review_id": 502576246,
+    "id": 500000099,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDUwMDAwMDA5OQ==",
+    "diff_hunk": "@@ -1253,6 +1272,8 @@ export class TabsTitleControl extends TitleControl {\n \t\t\t\tthis.layoutScheduled.clear();\n \t\t\t});\n \t\t}\n+\n+\t\treturn this.getDimensions().height;",
+    "path": "src/vs/workbench/browser/parts/editor/tabsTitleControl.ts",
+    "commit_id": "e6ee5f61f0df3d4dd1ec2dc9ee7d10b03895c51d",
+    "original_commit_id": "ac0a02482669a6b142d0d09f516f733fe2b906c5",
+    "user": {
+      "login": "jmannanc",
+      "id": 32284796,
+      "node_id": "MDQ6VXNlcjMyMjg0Nzk2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32284796?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jmannanc",
+      "html_url": "https://github.com/jmannanc",
+      "followers_url": "https://api.github.com/users/jmannanc/followers",
+      "following_url": "https://api.github.com/users/jmannanc/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jmannanc/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jmannanc/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jmannanc/subscriptions",
+      "organizations_url": "https://api.github.com/users/jmannanc/orgs",
+      "repos_url": "https://api.github.com/users/jmannanc/repos",
+      "events_url": "https://api.github.com/users/jmannanc/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jmannanc/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Ah true, I overlooked that. I'm not very familiar with how the delegation of the layout to a new animation frame works, so I may need some assistance on the implementation here.",
+    "created_at": "2020-10-06T04:33:15Z",
+    "updated_at": "2021-01-04T08:51:08Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/106448#discussion_r500000099",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/106448",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/500000099"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/106448#discussion_r500000099"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/106448"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/500000099/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1276,
+    "side": "RIGHT",
+    "in_reply_to_id": 499741152,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 83,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/500014173",
+    "pull_request_review_id": 502593628,
+    "id": 500014173,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDUwMDAxNDE3Mw==",
+    "diff_hunk": "@@ -1698,14 +1702,12 @@ export class EditorGroupView extends Themable implements IEditorGroupView {\n \tlayout(width: number, height: number): void {\n \t\tthis.dimension = new Dimension(width, height);\n \n-\t\t// Ensure editor container gets height as CSS depending on the preferred height of the title control\n-\t\tconst titleHeight = this.titleDimensions.height;\n-\t\tconst editorHeight = Math.max(0, height - titleHeight);\n-\t\tthis.editorContainer.style.height = `${editorHeight}px`;\n+\t\t// Use the initial height of the title area to layout\n+\t\tconst initialTitleHeight = this.titleDimensions.height;\n+\t\tconst titleHeight = this.titleAreaControl.layout(new Dimension(width, initialTitleHeight)) as number;",
+    "path": "src/vs/workbench/browser/parts/editor/editorGroupView.ts",
+    "commit_id": "e6ee5f61f0df3d4dd1ec2dc9ee7d10b03895c51d",
+    "original_commit_id": "ac0a02482669a6b142d0d09f516f733fe2b906c5",
+    "user": {
+      "login": "bpasero",
+      "id": 900690,
+      "node_id": "MDQ6VXNlcjkwMDY5MA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/900690?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/bpasero",
+      "html_url": "https://github.com/bpasero",
+      "followers_url": "https://api.github.com/users/bpasero/followers",
+      "following_url": "https://api.github.com/users/bpasero/following{/other_user}",
+      "gists_url": "https://api.github.com/users/bpasero/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/bpasero/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/bpasero/subscriptions",
+      "organizations_url": "https://api.github.com/users/bpasero/orgs",
+      "repos_url": "https://api.github.com/users/bpasero/repos",
+      "events_url": "https://api.github.com/users/bpasero/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/bpasero/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I would think that the maximum size is:\r\n* `width`: the same as the entire width, aka there is no maximum\r\n* `height`: the entire height minus the minimal height of the editor control",
+    "created_at": "2020-10-06T05:30:24Z",
+    "updated_at": "2021-01-04T08:51:08Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/106448#discussion_r500014173",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/106448",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/500014173"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/106448#discussion_r500014173"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/106448"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/500014173/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1707,
+    "side": "RIGHT",
+    "in_reply_to_id": 499742365,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 21,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/500725862",
+    "pull_request_review_id": 503510854,
+    "id": 500725862,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDUwMDcyNTg2Mg==",
+    "diff_hunk": "@@ -1698,14 +1702,12 @@ export class EditorGroupView extends Themable implements IEditorGroupView {\n \tlayout(width: number, height: number): void {\n \t\tthis.dimension = new Dimension(width, height);\n \n-\t\t// Ensure editor container gets height as CSS depending on the preferred height of the title control\n-\t\tconst titleHeight = this.titleDimensions.height;\n-\t\tconst editorHeight = Math.max(0, height - titleHeight);\n-\t\tthis.editorContainer.style.height = `${editorHeight}px`;\n+\t\t// Use the initial height of the title area to layout\n+\t\tconst initialTitleHeight = this.titleDimensions.height;\n+\t\tconst titleHeight = this.titleAreaControl.layout(new Dimension(width, initialTitleHeight)) as number;",
+    "path": "src/vs/workbench/browser/parts/editor/editorGroupView.ts",
+    "commit_id": "e6ee5f61f0df3d4dd1ec2dc9ee7d10b03895c51d",
+    "original_commit_id": "ac0a02482669a6b142d0d09f516f733fe2b906c5",
+    "user": {
+      "login": "jmannanc",
+      "id": 32284796,
+      "node_id": "MDQ6VXNlcjMyMjg0Nzk2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32284796?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jmannanc",
+      "html_url": "https://github.com/jmannanc",
+      "followers_url": "https://api.github.com/users/jmannanc/followers",
+      "following_url": "https://api.github.com/users/jmannanc/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jmannanc/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jmannanc/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jmannanc/subscriptions",
+      "organizations_url": "https://api.github.com/users/jmannanc/orgs",
+      "repos_url": "https://api.github.com/users/jmannanc/repos",
+      "events_url": "https://api.github.com/users/jmannanc/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jmannanc/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Ok I just pushed a very rough implementation that uses a `maxDimensions` parameter to try and remove multi-line tabs. There are problems that arise when testing, presumably due to scheduling the layout on the next frame. I'm sure it needs some fixing so let me know what you think.",
+    "created_at": "2020-10-07T04:08:51Z",
+    "updated_at": "2021-01-04T08:51:08Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/106448#discussion_r500725862",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/106448",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/500725862"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/106448#discussion_r500725862"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/106448"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/500725862/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1707,
+    "side": "RIGHT",
+    "in_reply_to_id": 499742365,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 21,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/543117225",
+    "pull_request_review_id": 552179691,
+    "id": 543117225,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU0MzExNzIyNQ==",
+    "diff_hunk": "@@ -1437,13 +1438,14 @@ export class TabsTitleControl extends TitleControl {\n \t\t\tlet tabsWrapMultiLine = tabsContainer.classList.contains('wrap');\n \n \t\t\t// Tabs do not wrap multiline: add wrapping if tabs exceed the tabs container width\n-\t\t\tif (!tabsWrapMultiLine && allTabsWidth > visibleTabsContainerWidth) {\n+\t\t\t// and the height of the tabs container does not exceed the maximum\n+\t\t\tif (!tabsWrapMultiLine && allTabsWidth > visibleTabsContainerWidth && (tabsContainer.offsetHeight <= TabsTitleControl.MAX_WRAPPED_HEIGHT)) {\n \t\t\t\ttabsContainer.classList.add('wrap');\n \t\t\t\ttabsWrapMultiLine = true;\n \t\t\t}\n \n-\t\t\t// Tabs wrap multiline: remove wrapping if height exceeds available height\n-\t\t\tif (tabsWrapMultiLine && tabsContainer.offsetHeight > dimensions.available.height) {\n+\t\t\t// Tabs wrap multiline: remove wrapping if height exceeds the maximum\n+\t\t\tif (tabsWrapMultiLine && tabsContainer.offsetHeight > TabsTitleControl.MAX_WRAPPED_HEIGHT) {",
+    "path": "src/vs/workbench/browser/parts/editor/tabsTitleControl.ts",
+    "commit_id": "e6ee5f61f0df3d4dd1ec2dc9ee7d10b03895c51d",
+    "original_commit_id": "97beb87dedc5f3d2df86e3728fae20557729cdcb",
+    "user": {
+      "login": "bpasero",
+      "id": 900690,
+      "node_id": "MDQ6VXNlcjkwMDY5MA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/900690?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/bpasero",
+      "html_url": "https://github.com/bpasero",
+      "followers_url": "https://api.github.com/users/bpasero/followers",
+      "following_url": "https://api.github.com/users/bpasero/following{/other_user}",
+      "gists_url": "https://api.github.com/users/bpasero/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/bpasero/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/bpasero/subscriptions",
+      "organizations_url": "https://api.github.com/users/bpasero/orgs",
+      "repos_url": "https://api.github.com/users/bpasero/repos",
+      "events_url": "https://api.github.com/users/bpasero/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/bpasero/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "@SneakyFish5 shouldn't we check on both `dimensions.available.height` and `MAX_WRAPPED_HEIGHT`? What if the available height is less than `MAX_WRAPPED_HEIGHT`?",
+    "created_at": "2020-12-15T07:47:24Z",
+    "updated_at": "2021-01-04T08:51:08Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/106448#discussion_r543117225",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/106448",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/543117225"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/106448#discussion_r543117225"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/106448"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/543117225/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1448,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 22,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/543940576",
+    "pull_request_review_id": 553352065,
+    "id": 543940576,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDU0Mzk0MDU3Ng==",
+    "diff_hunk": "@@ -1437,13 +1438,14 @@ export class TabsTitleControl extends TitleControl {\n \t\t\tlet tabsWrapMultiLine = tabsContainer.classList.contains('wrap');\n \n \t\t\t// Tabs do not wrap multiline: add wrapping if tabs exceed the tabs container width\n-\t\t\tif (!tabsWrapMultiLine && allTabsWidth > visibleTabsContainerWidth) {\n+\t\t\t// and the height of the tabs container does not exceed the maximum\n+\t\t\tif (!tabsWrapMultiLine && allTabsWidth > visibleTabsContainerWidth && (tabsContainer.offsetHeight <= TabsTitleControl.MAX_WRAPPED_HEIGHT)) {\n \t\t\t\ttabsContainer.classList.add('wrap');\n \t\t\t\ttabsWrapMultiLine = true;\n \t\t\t}\n \n-\t\t\t// Tabs wrap multiline: remove wrapping if height exceeds available height\n-\t\t\tif (tabsWrapMultiLine && tabsContainer.offsetHeight > dimensions.available.height) {\n+\t\t\t// Tabs wrap multiline: remove wrapping if height exceeds the maximum\n+\t\t\tif (tabsWrapMultiLine && tabsContainer.offsetHeight > TabsTitleControl.MAX_WRAPPED_HEIGHT) {",
+    "path": "src/vs/workbench/browser/parts/editor/tabsTitleControl.ts",
+    "commit_id": "e6ee5f61f0df3d4dd1ec2dc9ee7d10b03895c51d",
+    "original_commit_id": "97beb87dedc5f3d2df86e3728fae20557729cdcb",
+    "user": {
+      "login": "jmannanc",
+      "id": 32284796,
+      "node_id": "MDQ6VXNlcjMyMjg0Nzk2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/32284796?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/jmannanc",
+      "html_url": "https://github.com/jmannanc",
+      "followers_url": "https://api.github.com/users/jmannanc/followers",
+      "following_url": "https://api.github.com/users/jmannanc/following{/other_user}",
+      "gists_url": "https://api.github.com/users/jmannanc/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/jmannanc/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/jmannanc/subscriptions",
+      "organizations_url": "https://api.github.com/users/jmannanc/orgs",
+      "repos_url": "https://api.github.com/users/jmannanc/repos",
+      "events_url": "https://api.github.com/users/jmannanc/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/jmannanc/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Oh right good point, I re-added that in, thanks. Changed max amount of rows to 3 as well as requested.",
+    "created_at": "2020-12-16T04:41:24Z",
+    "updated_at": "2021-01-04T08:51:08Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/106448#discussion_r543940576",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/106448",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/543940576"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/106448#discussion_r543940576"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/106448"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/543940576/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1448,
+    "side": "RIGHT",
+    "in_reply_to_id": 543117225,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 22,
+    "position": 1,
+    "subject_type": "line"
+  }
+]

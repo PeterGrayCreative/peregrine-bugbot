@@ -234,6 +234,32 @@ shape is `schemas/funnel-decision.schema.json`; the evidence reader verifies the
 referenced seals and corpus, re-derives every metric, and requires byte-equivalent
 decision content.
 
+Unmatched findings are finalized only through a committed curator source and a
+separate append-only ledger. The source must be reviewed, committed on a clean
+descendant of the experiment's repository commit, and bind each decision to the
+experiment ID, attempt ID, finding index, and finding digest. Because the ledger
+is write-once, the source must classify every unresolved finding required by the
+registered panel in one pass. Diagnostic-only cases are quarantined and do not
+need classification for a decision. Then run:
+
+```sh
+npm run eval:adjudicate -- --runs eval/runs/<dir> \
+  --input docs/validation/<adjudication-source>.json
+npm run eval:funnel-decision -- --runs eval/runs/<dir>
+npm run eval:report -- --runs eval/runs/<dir>
+```
+
+`experiment-adjudication.json` authenticates the original experiment,
+terminal/grading seals, committed Git source, and final classifications.
+`funnel-decision-adjudicated.json` is a versioned derived decision linked to
+both the ledger and the original `funnel-decision.json`; neither original
+grades nor the original decision are rewritten. Diagnostic-only cases remain
+available for registered-root recall and transport diagnostics, but their
+findings are excluded consistently from aggregate precision, false-discovery,
+false-positive, and required-adjudication metrics. The source and ledger shapes
+are documented by `schemas/experiment-adjudication-source.schema.json` and
+`schemas/experiment-adjudication.schema.json`.
+
 ## Case library
 
 Cases are separated by intended use before any provider run:

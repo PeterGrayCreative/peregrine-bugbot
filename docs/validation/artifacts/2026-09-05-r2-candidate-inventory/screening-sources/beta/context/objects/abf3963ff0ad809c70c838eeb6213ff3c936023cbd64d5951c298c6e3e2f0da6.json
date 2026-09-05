@@ -1,0 +1,908 @@
+[
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/322592231",
+    "pull_request_review_id": 285956330,
+    "id": 322592231,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMyMjU5MjIzMQ==",
+    "diff_hunk": "@@ -34,107 +34,93 @@ describe(\"RemovedFiles\", () => {\n \t\treturn;\n \t}\n \n-\tjest.setTimeout(20000);\n+\tjest.setTimeout(10000);\n \n \tfunction cleanup() {\n \t\trimraf.sync(tempFolderPath);\n \t}\n \n-\tbeforeAll(() => {\n+\tbeforeEach(() => {\n \t\tcleanup();\n \t\tfs.mkdirSync(tempFolderPath);\n+\n+\t\t// Set file timestamps to 5 seconds earlier,\n+\t\t// otherwise the newly-created files will trigger the webpack watch mode to re-compile.\n+\t\tlet fakeTime = new Date(Date.now() - 5000);\n \t\tfs.writeFileSync(\n \t\t\ttempFilePath,\n \t\t\t\"module.exports = function temp() {return 'temp file';};\\n require('./temp-file2')\",\n \t\t\t\"utf-8\"\n \t\t);\n+\t\tfs.utimesSync(tempFilePath, fakeTime, fakeTime);\n \t\tfs.writeFileSync(\n \t\t\ttempFile2Path,\n \t\t\t\"module.exports = function temp2() {return 'temp file 2';};\",\n \t\t\t\"utf-8\"\n \t\t);\n+\t\tfs.utimesSync(tempFile2Path, fakeTime, fakeTime);\n+\t\t// Wait 1s, otherwise the newly-created files will trigger our test compilers to re-compile.\n \t});\n-\tafterAll(done => {\n+\tafterEach(() => {\n \t\tcleanup();\n-\t\tdone();\n \t});\n \n \tit(\"should track removed files when they've been deleted in watchRun\", done => {\n \t\tconst compiler = createSingleCompiler();\n \t\tlet watcher;\n-\t\tfunction handleError(err) {\n-\t\t\tif (err) done(err);\n-\t\t}\n-\t\tsetTimeout(() => {\n-\t\t\tfs.unlinkSync(tempFilePath, handleError);\n-\t\t}, 2000);\n-\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", (compiler, err) => {\n-\t\t\tif (err) {\n-\t\t\t\tdone(err);\n-\t\t\t}\n+\n+\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", compiler => {\n \t\t\tconst removals = Array.from(compiler.removedFiles);\n \t\t\tif (removals.length > 0) {\n-\t\t\t\tsetTimeout(() => {\n-\t\t\t\t\texpect(removals).toContain(tempFilePath);\n-\t\t\t\t\twatcher.close();\n-\t\t\t\t\tdone();\n-\t\t\t\t}, 100);\n+\t\t\t\texpect(removals).toContain(tempFilePath);\n+\t\t\t\twatcher.close();\n+\t\t\t\tdone();\n \t\t\t}\n \t\t});\n \n-\t\twatcher = compiler.watch(\n-\t\t\t{\n-\t\t\t\taggregateTimeout: 50\n-\t\t\t},\n-\t\t\t(err, stats) => {}\n-\t\t);\n+\t\twatcher = compiler.watch({ aggregateTimeout: 50 }, () => {});\n+\n+\t\tsetTimeout(() => {\n+\t\t\tfs.unlinkSync(tempFilePath);\n+\t\t}, 1000);\n \t});\n \n-\tit(\"should not track removed files when they have not been deleted in watchRun\", done => {\n+\tit(\"should not track removed files during initial watchRun\", done => {\n \t\tconst compiler = createSingleCompiler();\n+\t\tlet watchRunFinished;\n \t\tlet watcher;\n-\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", (compiler, err) => {\n-\t\t\tif (err) {\n-\t\t\t\tdone(err);\n-\t\t\t}\n-\t\t\texpect(Array.from(compiler.removedFiles)).toHaveLength(0);\n-\t\t\tdone();\n-\t\t\twatcher.close();\n+\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", compiler => {\n+\t\t\tconst removals = Array.from(compiler.removedFiles);\n+\t\t\twatchRunFinished = new Promise(resolve => {",
+    "path": "test/RemoveFiles.test.js",
+    "commit_id": "bc9da6139094fcb212a4e75c88fa7c6e7050f44e",
+    "original_commit_id": "d5b421a408dc59ee0120019cc0947330f53fee2a",
+    "user": {
+      "login": "sokra",
+      "id": 1365881,
+      "node_id": "MDQ6VXNlcjEzNjU4ODE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sokra",
+      "html_url": "https://github.com/sokra",
+      "followers_url": "https://api.github.com/users/sokra/followers",
+      "following_url": "https://api.github.com/users/sokra/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sokra/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sokra/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sokra/subscriptions",
+      "organizations_url": "https://api.github.com/users/sokra/orgs",
+      "repos_url": "https://api.github.com/users/sokra/repos",
+      "events_url": "https://api.github.com/users/sokra/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sokra/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "That looks suspicious. Should it be more like this:\r\n\r\n``` js\r\nconst watchRunFinished = new Promise(resolve => {\r\n  compiler.hooks.watchRun.tap(\"RemovedFilesTest\", compiler => {\r\n    const removals = Array.from(compiler.removedFiles);\r\n    expect(removals).toHaveLength(0);\r\n    resolve();\r\n  });\r\n});\r\n```",
+    "created_at": "2019-09-10T07:35:36Z",
+    "updated_at": "2019-11-15T19:32:01Z",
+    "html_url": "https://github.com/webpack/webpack/pull/9679#discussion_r322592231",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/9679",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/322592231"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/9679#discussion_r322592231"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/9679"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/322592231/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 94,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 94,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/322592566",
+    "pull_request_review_id": 285956330,
+    "id": 322592566,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMyMjU5MjU2Ng==",
+    "diff_hunk": "@@ -34,107 +34,93 @@ describe(\"RemovedFiles\", () => {\n \t\treturn;\n \t}\n \n-\tjest.setTimeout(20000);\n+\tjest.setTimeout(10000);\n \n \tfunction cleanup() {\n \t\trimraf.sync(tempFolderPath);\n \t}\n \n-\tbeforeAll(() => {\n+\tbeforeEach(() => {\n \t\tcleanup();\n \t\tfs.mkdirSync(tempFolderPath);\n+\n+\t\t// Set file timestamps to 5 seconds earlier,\n+\t\t// otherwise the newly-created files will trigger the webpack watch mode to re-compile.\n+\t\tlet fakeTime = new Date(Date.now() - 5000);\n \t\tfs.writeFileSync(\n \t\t\ttempFilePath,\n \t\t\t\"module.exports = function temp() {return 'temp file';};\\n require('./temp-file2')\",\n \t\t\t\"utf-8\"\n \t\t);\n+\t\tfs.utimesSync(tempFilePath, fakeTime, fakeTime);\n \t\tfs.writeFileSync(\n \t\t\ttempFile2Path,\n \t\t\t\"module.exports = function temp2() {return 'temp file 2';};\",\n \t\t\t\"utf-8\"\n \t\t);\n+\t\tfs.utimesSync(tempFile2Path, fakeTime, fakeTime);\n+\t\t// Wait 1s, otherwise the newly-created files will trigger our test compilers to re-compile.\n \t});\n-\tafterAll(done => {\n+\tafterEach(() => {\n \t\tcleanup();\n-\t\tdone();\n \t});\n \n \tit(\"should track removed files when they've been deleted in watchRun\", done => {\n \t\tconst compiler = createSingleCompiler();\n \t\tlet watcher;\n-\t\tfunction handleError(err) {\n-\t\t\tif (err) done(err);\n-\t\t}\n-\t\tsetTimeout(() => {\n-\t\t\tfs.unlinkSync(tempFilePath, handleError);\n-\t\t}, 2000);\n-\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", (compiler, err) => {\n-\t\t\tif (err) {\n-\t\t\t\tdone(err);\n-\t\t\t}\n+\n+\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", compiler => {\n \t\t\tconst removals = Array.from(compiler.removedFiles);\n \t\t\tif (removals.length > 0) {\n-\t\t\t\tsetTimeout(() => {\n-\t\t\t\t\texpect(removals).toContain(tempFilePath);\n-\t\t\t\t\twatcher.close();\n-\t\t\t\t\tdone();\n-\t\t\t\t}, 100);\n+\t\t\t\texpect(removals).toContain(tempFilePath);\n+\t\t\t\twatcher.close();\n+\t\t\t\tdone();\n \t\t\t}\n \t\t});\n \n-\t\twatcher = compiler.watch(\n-\t\t\t{\n-\t\t\t\taggregateTimeout: 50\n-\t\t\t},\n-\t\t\t(err, stats) => {}\n-\t\t);\n+\t\twatcher = compiler.watch({ aggregateTimeout: 50 }, () => {});\n+\n+\t\tsetTimeout(() => {\n+\t\t\tfs.unlinkSync(tempFilePath);\n+\t\t}, 1000);\n \t});\n \n-\tit(\"should not track removed files when they have not been deleted in watchRun\", done => {\n+\tit(\"should not track removed files during initial watchRun\", done => {\n \t\tconst compiler = createSingleCompiler();\n+\t\tlet watchRunFinished;\n \t\tlet watcher;\n-\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", (compiler, err) => {\n-\t\t\tif (err) {\n-\t\t\t\tdone(err);\n-\t\t\t}\n-\t\t\texpect(Array.from(compiler.removedFiles)).toHaveLength(0);\n-\t\t\tdone();\n-\t\t\twatcher.close();\n+\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", compiler => {\n+\t\t\tconst removals = Array.from(compiler.removedFiles);\n+\t\t\twatchRunFinished = new Promise(resolve => {",
+    "path": "test/RemoveFiles.test.js",
+    "commit_id": "bc9da6139094fcb212a4e75c88fa7c6e7050f44e",
+    "original_commit_id": "d5b421a408dc59ee0120019cc0947330f53fee2a",
+    "user": {
+      "login": "sokra",
+      "id": 1365881,
+      "node_id": "MDQ6VXNlcjEzNjU4ODE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sokra",
+      "html_url": "https://github.com/sokra",
+      "followers_url": "https://api.github.com/users/sokra/followers",
+      "following_url": "https://api.github.com/users/sokra/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sokra/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sokra/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sokra/subscriptions",
+      "organizations_url": "https://api.github.com/users/sokra/orgs",
+      "repos_url": "https://api.github.com/users/sokra/repos",
+      "events_url": "https://api.github.com/users/sokra/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sokra/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "But we even bothering with a Promise, the original code should work fine here and is simpler.",
+    "created_at": "2019-09-10T07:36:33Z",
+    "updated_at": "2019-11-15T19:32:01Z",
+    "html_url": "https://github.com/webpack/webpack/pull/9679#discussion_r322592566",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/9679",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/322592566"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/9679#discussion_r322592566"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/9679"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/322592566/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 94,
+    "side": "RIGHT",
+    "in_reply_to_id": 322592231,
+    "author_association": "MEMBER",
+    "original_position": 94,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/322593608",
+    "pull_request_review_id": 285956330,
+    "id": 322593608,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMyMjU5MzYwOA==",
+    "diff_hunk": "@@ -134,6 +134,7 @@ class Watching {\n \t\t\t\tthis.compiler.fileTimestamps = fileTimestamps;\n \t\t\t\tthis.compiler.contextTimestamps = contextTimestamps;\n \t\t\t\tthis.compiler.removedFiles = removedFiles;\n+\t\t\t\tthis.compiler.modifiedFiles = modifiedFiles;",
+    "path": "lib/Watching.js",
+    "commit_id": "bc9da6139094fcb212a4e75c88fa7c6e7050f44e",
+    "original_commit_id": "d5b421a408dc59ee0120019cc0947330f53fee2a",
+    "user": {
+      "login": "sokra",
+      "id": 1365881,
+      "node_id": "MDQ6VXNlcjEzNjU4ODE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sokra",
+      "html_url": "https://github.com/sokra",
+      "followers_url": "https://api.github.com/users/sokra/followers",
+      "following_url": "https://api.github.com/users/sokra/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sokra/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sokra/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sokra/subscriptions",
+      "organizations_url": "https://api.github.com/users/sokra/orgs",
+      "repos_url": "https://api.github.com/users/sokra/repos",
+      "events_url": "https://api.github.com/users/sokra/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sokra/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Convert it to a Set here, add a TODO to remove this in webpack 5.",
+    "created_at": "2019-09-10T07:39:24Z",
+    "updated_at": "2019-11-15T19:32:01Z",
+    "html_url": "https://github.com/webpack/webpack/pull/9679#discussion_r322593608",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/9679",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/322593608"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/9679#discussion_r322593608"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/9679"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/322593608/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 137,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 17,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/322593796",
+    "pull_request_review_id": 285956330,
+    "id": 322593796,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMyMjU5Mzc5Ng==",
+    "diff_hunk": "@@ -58,9 +58,9 @@ class NodeWatchFileSystem {\n \t\t\tremovals = new Set(removals.filter(file => files.has(file)));\n \t\t\tcallback(\n \t\t\t\tnull,\n-\t\t\t\tchanges.filter(file => files.has(file)).sort(),\n-\t\t\t\tchanges.filter(file => dirs.has(file)).sort(),\n-\t\t\t\tchanges.filter(file => missing.has(file)).sort(),\n+\t\t\t\tnew Set(changes.filter(file => files.has(file))),",
+    "path": "lib/node/NodeWatchFileSystem.js",
+    "commit_id": "bc9da6139094fcb212a4e75c88fa7c6e7050f44e",
+    "original_commit_id": "d5b421a408dc59ee0120019cc0947330f53fee2a",
+    "user": {
+      "login": "sokra",
+      "id": 1365881,
+      "node_id": "MDQ6VXNlcjEzNjU4ODE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sokra",
+      "html_url": "https://github.com/sokra",
+      "followers_url": "https://api.github.com/users/sokra/followers",
+      "following_url": "https://api.github.com/users/sokra/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sokra/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sokra/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sokra/subscriptions",
+      "organizations_url": "https://api.github.com/users/sokra/orgs",
+      "repos_url": "https://api.github.com/users/sokra/repos",
+      "events_url": "https://api.github.com/users/sokra/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sokra/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "That's an interface change (breaking change). You can't do that in the master branch. Add a TODO to change it to a Set in webpack 5.",
+    "created_at": "2019-09-10T07:39:55Z",
+    "updated_at": "2019-11-15T19:32:01Z",
+    "html_url": "https://github.com/webpack/webpack/pull/9679#discussion_r322593796",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/9679",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/322593796"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/9679#discussion_r322593796"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/9679"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/322593796/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 61,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 7,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/322594107",
+    "pull_request_review_id": 285956330,
+    "id": 322594107,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMyMjU5NDEwNw==",
+    "diff_hunk": "@@ -0,0 +1,128 @@\n+\"use strict\";\n+\n+/* globals describe it */\n+const path = require(\"path\");\n+const MemoryFs = require(\"memory-fs\");\n+const webpack = require(\"../\");\n+const fs = require(\"fs\");\n+const rimraf = require(\"rimraf\");\n+\n+const createCompiler = config => {\n+\tconst compiler = webpack(config);\n+\tcompiler.outputFileSystem = new MemoryFs();\n+\treturn compiler;\n+};\n+\n+const tempFolderPath = path.join(__dirname, \"temp\");\n+const tempFilePath = path.join(tempFolderPath, \"temp-file.js\");\n+const tempFile2Path = path.join(tempFolderPath, \"temp-file2.js\");\n+\n+const createSingleCompiler = () => {\n+\treturn createCompiler({\n+\t\tentry: tempFilePath,\n+\t\twatch: true,\n+\t\toutput: {\n+\t\t\tpath: tempFolderPath,\n+\t\t\tfilename: \"bundle.js\"\n+\t\t}\n+\t});\n+};\n+\n+describe(\"ModifiedFiles\", () => {\n+\tif (process.env.NO_WATCH_TESTS) {\n+\t\tit.skip(\"watch tests excluded\", () => {});\n+\t\treturn;\n+\t}\n+\n+\tjest.setTimeout(10000);\n+\n+\tfunction cleanup() {\n+\t\trimraf.sync(tempFolderPath);\n+\t}\n+\n+\tbeforeEach(() => {",
+    "path": "test/ModifiedFiles.test.js",
+    "commit_id": "bc9da6139094fcb212a4e75c88fa7c6e7050f44e",
+    "original_commit_id": "d5b421a408dc59ee0120019cc0947330f53fee2a",
+    "user": {
+      "login": "sokra",
+      "id": 1365881,
+      "node_id": "MDQ6VXNlcjEzNjU4ODE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sokra",
+      "html_url": "https://github.com/sokra",
+      "followers_url": "https://api.github.com/users/sokra/followers",
+      "following_url": "https://api.github.com/users/sokra/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sokra/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sokra/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sokra/subscriptions",
+      "organizations_url": "https://api.github.com/users/sokra/orgs",
+      "repos_url": "https://api.github.com/users/sokra/repos",
+      "events_url": "https://api.github.com/users/sokra/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sokra/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This seem to duplicate a lot of code from `RemovedFiles.test.js`. Maybe it makes sense to merge both files into one.",
+    "created_at": "2019-09-10T07:40:50Z",
+    "updated_at": "2019-11-15T19:32:01Z",
+    "html_url": "https://github.com/webpack/webpack/pull/9679#discussion_r322594107",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/9679",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/322594107"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/9679#discussion_r322594107"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/9679"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/322594107/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 43,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 43,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/322905387",
+    "pull_request_review_id": 286361387,
+    "id": 322905387,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMyMjkwNTM4Nw==",
+    "diff_hunk": "@@ -34,107 +34,93 @@ describe(\"RemovedFiles\", () => {\n \t\treturn;\n \t}\n \n-\tjest.setTimeout(20000);\n+\tjest.setTimeout(10000);\n \n \tfunction cleanup() {\n \t\trimraf.sync(tempFolderPath);\n \t}\n \n-\tbeforeAll(() => {\n+\tbeforeEach(() => {\n \t\tcleanup();\n \t\tfs.mkdirSync(tempFolderPath);\n+\n+\t\t// Set file timestamps to 5 seconds earlier,\n+\t\t// otherwise the newly-created files will trigger the webpack watch mode to re-compile.\n+\t\tlet fakeTime = new Date(Date.now() - 5000);\n \t\tfs.writeFileSync(\n \t\t\ttempFilePath,\n \t\t\t\"module.exports = function temp() {return 'temp file';};\\n require('./temp-file2')\",\n \t\t\t\"utf-8\"\n \t\t);\n+\t\tfs.utimesSync(tempFilePath, fakeTime, fakeTime);\n \t\tfs.writeFileSync(\n \t\t\ttempFile2Path,\n \t\t\t\"module.exports = function temp2() {return 'temp file 2';};\",\n \t\t\t\"utf-8\"\n \t\t);\n+\t\tfs.utimesSync(tempFile2Path, fakeTime, fakeTime);\n+\t\t// Wait 1s, otherwise the newly-created files will trigger our test compilers to re-compile.\n \t});\n-\tafterAll(done => {\n+\tafterEach(() => {\n \t\tcleanup();\n-\t\tdone();\n \t});\n \n \tit(\"should track removed files when they've been deleted in watchRun\", done => {\n \t\tconst compiler = createSingleCompiler();\n \t\tlet watcher;\n-\t\tfunction handleError(err) {\n-\t\t\tif (err) done(err);\n-\t\t}\n-\t\tsetTimeout(() => {\n-\t\t\tfs.unlinkSync(tempFilePath, handleError);\n-\t\t}, 2000);\n-\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", (compiler, err) => {\n-\t\t\tif (err) {\n-\t\t\t\tdone(err);\n-\t\t\t}\n+\n+\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", compiler => {\n \t\t\tconst removals = Array.from(compiler.removedFiles);\n \t\t\tif (removals.length > 0) {\n-\t\t\t\tsetTimeout(() => {\n-\t\t\t\t\texpect(removals).toContain(tempFilePath);\n-\t\t\t\t\twatcher.close();\n-\t\t\t\t\tdone();\n-\t\t\t\t}, 100);\n+\t\t\t\texpect(removals).toContain(tempFilePath);\n+\t\t\t\twatcher.close();\n+\t\t\t\tdone();\n \t\t\t}\n \t\t});\n \n-\t\twatcher = compiler.watch(\n-\t\t\t{\n-\t\t\t\taggregateTimeout: 50\n-\t\t\t},\n-\t\t\t(err, stats) => {}\n-\t\t);\n+\t\twatcher = compiler.watch({ aggregateTimeout: 50 }, () => {});\n+\n+\t\tsetTimeout(() => {\n+\t\t\tfs.unlinkSync(tempFilePath);\n+\t\t}, 1000);\n \t});\n \n-\tit(\"should not track removed files when they have not been deleted in watchRun\", done => {\n+\tit(\"should not track removed files during initial watchRun\", done => {\n \t\tconst compiler = createSingleCompiler();\n+\t\tlet watchRunFinished;\n \t\tlet watcher;\n-\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", (compiler, err) => {\n-\t\t\tif (err) {\n-\t\t\t\tdone(err);\n-\t\t\t}\n-\t\t\texpect(Array.from(compiler.removedFiles)).toHaveLength(0);\n-\t\t\tdone();\n-\t\t\twatcher.close();\n+\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", compiler => {\n+\t\t\tconst removals = Array.from(compiler.removedFiles);\n+\t\t\twatchRunFinished = new Promise(resolve => {",
+    "path": "test/RemoveFiles.test.js",
+    "commit_id": "bc9da6139094fcb212a4e75c88fa7c6e7050f44e",
+    "original_commit_id": "d5b421a408dc59ee0120019cc0947330f53fee2a",
+    "user": {
+      "login": "maxwoo-houzz",
+      "id": 52716546,
+      "node_id": "MDQ6VXNlcjUyNzE2NTQ2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52716546?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/maxwoo-houzz",
+      "html_url": "https://github.com/maxwoo-houzz",
+      "followers_url": "https://api.github.com/users/maxwoo-houzz/followers",
+      "following_url": "https://api.github.com/users/maxwoo-houzz/following{/other_user}",
+      "gists_url": "https://api.github.com/users/maxwoo-houzz/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/maxwoo-houzz/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/maxwoo-houzz/subscriptions",
+      "organizations_url": "https://api.github.com/users/maxwoo-houzz/orgs",
+      "repos_url": "https://api.github.com/users/maxwoo-houzz/repos",
+      "events_url": "https://api.github.com/users/maxwoo-houzz/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/maxwoo-houzz/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "so one of the issues I ran into was that the initial watchRun hook was being called before `watcher` was assigned, and it would throw an error at `watcher.close()`. In fact, if you look at the original code, `done()` is being called before `watcher.close()`, and I realized that it pretty much just hides the error, because the test succeed before the error can be thrown",
+    "created_at": "2019-09-10T18:48:21Z",
+    "updated_at": "2019-11-15T19:32:01Z",
+    "html_url": "https://github.com/webpack/webpack/pull/9679#discussion_r322905387",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/9679",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/322905387"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/9679#discussion_r322905387"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/9679"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/322905387/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 94,
+    "side": "RIGHT",
+    "in_reply_to_id": 322592231,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 94,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/322905737",
+    "pull_request_review_id": 286361855,
+    "id": 322905737,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMyMjkwNTczNw==",
+    "diff_hunk": "@@ -0,0 +1,128 @@\n+\"use strict\";\n+\n+/* globals describe it */\n+const path = require(\"path\");\n+const MemoryFs = require(\"memory-fs\");\n+const webpack = require(\"../\");\n+const fs = require(\"fs\");\n+const rimraf = require(\"rimraf\");\n+\n+const createCompiler = config => {\n+\tconst compiler = webpack(config);\n+\tcompiler.outputFileSystem = new MemoryFs();\n+\treturn compiler;\n+};\n+\n+const tempFolderPath = path.join(__dirname, \"temp\");\n+const tempFilePath = path.join(tempFolderPath, \"temp-file.js\");\n+const tempFile2Path = path.join(tempFolderPath, \"temp-file2.js\");\n+\n+const createSingleCompiler = () => {\n+\treturn createCompiler({\n+\t\tentry: tempFilePath,\n+\t\twatch: true,\n+\t\toutput: {\n+\t\t\tpath: tempFolderPath,\n+\t\t\tfilename: \"bundle.js\"\n+\t\t}\n+\t});\n+};\n+\n+describe(\"ModifiedFiles\", () => {\n+\tif (process.env.NO_WATCH_TESTS) {\n+\t\tit.skip(\"watch tests excluded\", () => {});\n+\t\treturn;\n+\t}\n+\n+\tjest.setTimeout(10000);\n+\n+\tfunction cleanup() {\n+\t\trimraf.sync(tempFolderPath);\n+\t}\n+\n+\tbeforeEach(() => {",
+    "path": "test/ModifiedFiles.test.js",
+    "commit_id": "bc9da6139094fcb212a4e75c88fa7c6e7050f44e",
+    "original_commit_id": "d5b421a408dc59ee0120019cc0947330f53fee2a",
+    "user": {
+      "login": "maxwoo-houzz",
+      "id": 52716546,
+      "node_id": "MDQ6VXNlcjUyNzE2NTQ2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52716546?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/maxwoo-houzz",
+      "html_url": "https://github.com/maxwoo-houzz",
+      "followers_url": "https://api.github.com/users/maxwoo-houzz/followers",
+      "following_url": "https://api.github.com/users/maxwoo-houzz/following{/other_user}",
+      "gists_url": "https://api.github.com/users/maxwoo-houzz/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/maxwoo-houzz/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/maxwoo-houzz/subscriptions",
+      "organizations_url": "https://api.github.com/users/maxwoo-houzz/orgs",
+      "repos_url": "https://api.github.com/users/maxwoo-houzz/repos",
+      "events_url": "https://api.github.com/users/maxwoo-houzz/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/maxwoo-houzz/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "this is a good point, I will merge them into a `ChangesAndRemovals.test.js` file",
+    "created_at": "2019-09-10T18:49:11Z",
+    "updated_at": "2019-11-15T19:32:01Z",
+    "html_url": "https://github.com/webpack/webpack/pull/9679#discussion_r322905737",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/9679",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/322905737"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/9679#discussion_r322905737"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/9679"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/322905737/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 43,
+    "side": "RIGHT",
+    "in_reply_to_id": 322594107,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 43,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/322906604",
+    "pull_request_review_id": 286362906,
+    "id": 322906604,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMyMjkwNjYwNA==",
+    "diff_hunk": "@@ -58,9 +58,9 @@ class NodeWatchFileSystem {\n \t\t\tremovals = new Set(removals.filter(file => files.has(file)));\n \t\t\tcallback(\n \t\t\t\tnull,\n-\t\t\t\tchanges.filter(file => files.has(file)).sort(),\n-\t\t\t\tchanges.filter(file => dirs.has(file)).sort(),\n-\t\t\t\tchanges.filter(file => missing.has(file)).sort(),\n+\t\t\t\tnew Set(changes.filter(file => files.has(file))),",
+    "path": "lib/node/NodeWatchFileSystem.js",
+    "commit_id": "bc9da6139094fcb212a4e75c88fa7c6e7050f44e",
+    "original_commit_id": "d5b421a408dc59ee0120019cc0947330f53fee2a",
+    "user": {
+      "login": "maxwoo-houzz",
+      "id": 52716546,
+      "node_id": "MDQ6VXNlcjUyNzE2NTQ2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52716546?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/maxwoo-houzz",
+      "html_url": "https://github.com/maxwoo-houzz",
+      "followers_url": "https://api.github.com/users/maxwoo-houzz/followers",
+      "following_url": "https://api.github.com/users/maxwoo-houzz/following{/other_user}",
+      "gists_url": "https://api.github.com/users/maxwoo-houzz/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/maxwoo-houzz/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/maxwoo-houzz/subscriptions",
+      "organizations_url": "https://api.github.com/users/maxwoo-houzz/orgs",
+      "repos_url": "https://api.github.com/users/maxwoo-houzz/repos",
+      "events_url": "https://api.github.com/users/maxwoo-houzz/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/maxwoo-houzz/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "good point, I didn't catch that. I'll change this",
+    "created_at": "2019-09-10T18:51:05Z",
+    "updated_at": "2019-11-15T19:32:01Z",
+    "html_url": "https://github.com/webpack/webpack/pull/9679#discussion_r322906604",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/9679",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/322906604"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/9679#discussion_r322906604"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/9679"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/322906604/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 61,
+    "side": "RIGHT",
+    "in_reply_to_id": 322593796,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 7,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/323094772",
+    "pull_request_review_id": 286600169,
+    "id": 323094772,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMyMzA5NDc3Mg==",
+    "diff_hunk": "@@ -34,107 +34,93 @@ describe(\"RemovedFiles\", () => {\n \t\treturn;\n \t}\n \n-\tjest.setTimeout(20000);\n+\tjest.setTimeout(10000);\n \n \tfunction cleanup() {\n \t\trimraf.sync(tempFolderPath);\n \t}\n \n-\tbeforeAll(() => {\n+\tbeforeEach(() => {\n \t\tcleanup();\n \t\tfs.mkdirSync(tempFolderPath);\n+\n+\t\t// Set file timestamps to 5 seconds earlier,\n+\t\t// otherwise the newly-created files will trigger the webpack watch mode to re-compile.\n+\t\tlet fakeTime = new Date(Date.now() - 5000);\n \t\tfs.writeFileSync(\n \t\t\ttempFilePath,\n \t\t\t\"module.exports = function temp() {return 'temp file';};\\n require('./temp-file2')\",\n \t\t\t\"utf-8\"\n \t\t);\n+\t\tfs.utimesSync(tempFilePath, fakeTime, fakeTime);\n \t\tfs.writeFileSync(\n \t\t\ttempFile2Path,\n \t\t\t\"module.exports = function temp2() {return 'temp file 2';};\",\n \t\t\t\"utf-8\"\n \t\t);\n+\t\tfs.utimesSync(tempFile2Path, fakeTime, fakeTime);\n+\t\t// Wait 1s, otherwise the newly-created files will trigger our test compilers to re-compile.\n \t});\n-\tafterAll(done => {\n+\tafterEach(() => {\n \t\tcleanup();\n-\t\tdone();\n \t});\n \n \tit(\"should track removed files when they've been deleted in watchRun\", done => {\n \t\tconst compiler = createSingleCompiler();\n \t\tlet watcher;\n-\t\tfunction handleError(err) {\n-\t\t\tif (err) done(err);\n-\t\t}\n-\t\tsetTimeout(() => {\n-\t\t\tfs.unlinkSync(tempFilePath, handleError);\n-\t\t}, 2000);\n-\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", (compiler, err) => {\n-\t\t\tif (err) {\n-\t\t\t\tdone(err);\n-\t\t\t}\n+\n+\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", compiler => {\n \t\t\tconst removals = Array.from(compiler.removedFiles);\n \t\t\tif (removals.length > 0) {\n-\t\t\t\tsetTimeout(() => {\n-\t\t\t\t\texpect(removals).toContain(tempFilePath);\n-\t\t\t\t\twatcher.close();\n-\t\t\t\t\tdone();\n-\t\t\t\t}, 100);\n+\t\t\t\texpect(removals).toContain(tempFilePath);\n+\t\t\t\twatcher.close();\n+\t\t\t\tdone();\n \t\t\t}\n \t\t});\n \n-\t\twatcher = compiler.watch(\n-\t\t\t{\n-\t\t\t\taggregateTimeout: 50\n-\t\t\t},\n-\t\t\t(err, stats) => {}\n-\t\t);\n+\t\twatcher = compiler.watch({ aggregateTimeout: 50 }, () => {});\n+\n+\t\tsetTimeout(() => {\n+\t\t\tfs.unlinkSync(tempFilePath);\n+\t\t}, 1000);\n \t});\n \n-\tit(\"should not track removed files when they have not been deleted in watchRun\", done => {\n+\tit(\"should not track removed files during initial watchRun\", done => {\n \t\tconst compiler = createSingleCompiler();\n+\t\tlet watchRunFinished;\n \t\tlet watcher;\n-\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", (compiler, err) => {\n-\t\t\tif (err) {\n-\t\t\t\tdone(err);\n-\t\t\t}\n-\t\t\texpect(Array.from(compiler.removedFiles)).toHaveLength(0);\n-\t\t\tdone();\n-\t\t\twatcher.close();\n+\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", compiler => {\n+\t\t\tconst removals = Array.from(compiler.removedFiles);\n+\t\t\twatchRunFinished = new Promise(resolve => {",
+    "path": "test/RemoveFiles.test.js",
+    "commit_id": "bc9da6139094fcb212a4e75c88fa7c6e7050f44e",
+    "original_commit_id": "d5b421a408dc59ee0120019cc0947330f53fee2a",
+    "user": {
+      "login": "sokra",
+      "id": 1365881,
+      "node_id": "MDQ6VXNlcjEzNjU4ODE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sokra",
+      "html_url": "https://github.com/sokra",
+      "followers_url": "https://api.github.com/users/sokra/followers",
+      "following_url": "https://api.github.com/users/sokra/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sokra/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sokra/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sokra/subscriptions",
+      "organizations_url": "https://api.github.com/users/sokra/orgs",
+      "repos_url": "https://api.github.com/users/sokra/repos",
+      "events_url": "https://api.github.com/users/sokra/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sokra/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Ok that makes sense.\r\n\r\nThis first comment still makes sense, because you should not assume that watchRun is called synchrously in `.watch`.\r\n\r\nMaybe it even makes sense to wait for compilation completion before ending the test. `close()` has a callback that is called when the watcher has closed: `watch.close(done)`.",
+    "created_at": "2019-09-11T07:27:56Z",
+    "updated_at": "2019-11-15T19:32:01Z",
+    "html_url": "https://github.com/webpack/webpack/pull/9679#discussion_r323094772",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/9679",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/323094772"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/9679#discussion_r323094772"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/9679"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/323094772/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 94,
+    "side": "RIGHT",
+    "in_reply_to_id": 322592231,
+    "author_association": "MEMBER",
+    "original_position": 94,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/324006383",
+    "pull_request_review_id": 287776281,
+    "id": 324006383,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMyNDAwNjM4Mw==",
+    "diff_hunk": "@@ -34,107 +34,93 @@ describe(\"RemovedFiles\", () => {\n \t\treturn;\n \t}\n \n-\tjest.setTimeout(20000);\n+\tjest.setTimeout(10000);\n \n \tfunction cleanup() {\n \t\trimraf.sync(tempFolderPath);\n \t}\n \n-\tbeforeAll(() => {\n+\tbeforeEach(() => {\n \t\tcleanup();\n \t\tfs.mkdirSync(tempFolderPath);\n+\n+\t\t// Set file timestamps to 5 seconds earlier,\n+\t\t// otherwise the newly-created files will trigger the webpack watch mode to re-compile.\n+\t\tlet fakeTime = new Date(Date.now() - 5000);\n \t\tfs.writeFileSync(\n \t\t\ttempFilePath,\n \t\t\t\"module.exports = function temp() {return 'temp file';};\\n require('./temp-file2')\",\n \t\t\t\"utf-8\"\n \t\t);\n+\t\tfs.utimesSync(tempFilePath, fakeTime, fakeTime);\n \t\tfs.writeFileSync(\n \t\t\ttempFile2Path,\n \t\t\t\"module.exports = function temp2() {return 'temp file 2';};\",\n \t\t\t\"utf-8\"\n \t\t);\n+\t\tfs.utimesSync(tempFile2Path, fakeTime, fakeTime);\n+\t\t// Wait 1s, otherwise the newly-created files will trigger our test compilers to re-compile.\n \t});\n-\tafterAll(done => {\n+\tafterEach(() => {\n \t\tcleanup();\n-\t\tdone();\n \t});\n \n \tit(\"should track removed files when they've been deleted in watchRun\", done => {\n \t\tconst compiler = createSingleCompiler();\n \t\tlet watcher;\n-\t\tfunction handleError(err) {\n-\t\t\tif (err) done(err);\n-\t\t}\n-\t\tsetTimeout(() => {\n-\t\t\tfs.unlinkSync(tempFilePath, handleError);\n-\t\t}, 2000);\n-\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", (compiler, err) => {\n-\t\t\tif (err) {\n-\t\t\t\tdone(err);\n-\t\t\t}\n+\n+\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", compiler => {\n \t\t\tconst removals = Array.from(compiler.removedFiles);\n \t\t\tif (removals.length > 0) {\n-\t\t\t\tsetTimeout(() => {\n-\t\t\t\t\texpect(removals).toContain(tempFilePath);\n-\t\t\t\t\twatcher.close();\n-\t\t\t\t\tdone();\n-\t\t\t\t}, 100);\n+\t\t\t\texpect(removals).toContain(tempFilePath);\n+\t\t\t\twatcher.close();\n+\t\t\t\tdone();\n \t\t\t}\n \t\t});\n \n-\t\twatcher = compiler.watch(\n-\t\t\t{\n-\t\t\t\taggregateTimeout: 50\n-\t\t\t},\n-\t\t\t(err, stats) => {}\n-\t\t);\n+\t\twatcher = compiler.watch({ aggregateTimeout: 50 }, () => {});\n+\n+\t\tsetTimeout(() => {\n+\t\t\tfs.unlinkSync(tempFilePath);\n+\t\t}, 1000);\n \t});\n \n-\tit(\"should not track removed files when they have not been deleted in watchRun\", done => {\n+\tit(\"should not track removed files during initial watchRun\", done => {\n \t\tconst compiler = createSingleCompiler();\n+\t\tlet watchRunFinished;\n \t\tlet watcher;\n-\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", (compiler, err) => {\n-\t\t\tif (err) {\n-\t\t\t\tdone(err);\n-\t\t\t}\n-\t\t\texpect(Array.from(compiler.removedFiles)).toHaveLength(0);\n-\t\t\tdone();\n-\t\t\twatcher.close();\n+\t\tcompiler.hooks.watchRun.tap(\"RemovedFilesTest\", compiler => {\n+\t\t\tconst removals = Array.from(compiler.removedFiles);\n+\t\t\twatchRunFinished = new Promise(resolve => {",
+    "path": "test/RemoveFiles.test.js",
+    "commit_id": "bc9da6139094fcb212a4e75c88fa7c6e7050f44e",
+    "original_commit_id": "d5b421a408dc59ee0120019cc0947330f53fee2a",
+    "user": {
+      "login": "maxwoo-houzz",
+      "id": 52716546,
+      "node_id": "MDQ6VXNlcjUyNzE2NTQ2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52716546?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/maxwoo-houzz",
+      "html_url": "https://github.com/maxwoo-houzz",
+      "followers_url": "https://api.github.com/users/maxwoo-houzz/followers",
+      "following_url": "https://api.github.com/users/maxwoo-houzz/following{/other_user}",
+      "gists_url": "https://api.github.com/users/maxwoo-houzz/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/maxwoo-houzz/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/maxwoo-houzz/subscriptions",
+      "organizations_url": "https://api.github.com/users/maxwoo-houzz/orgs",
+      "repos_url": "https://api.github.com/users/maxwoo-houzz/repos",
+      "events_url": "https://api.github.com/users/maxwoo-houzz/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/maxwoo-houzz/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "you're right, I should have wrapped the entire thing in the promise. I changed it, should be visible in the latest commit",
+    "created_at": "2019-09-13T01:14:13Z",
+    "updated_at": "2019-11-15T19:32:01Z",
+    "html_url": "https://github.com/webpack/webpack/pull/9679#discussion_r324006383",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/9679",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/324006383"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/9679#discussion_r324006383"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/9679"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/324006383/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 94,
+    "side": "RIGHT",
+    "in_reply_to_id": 322592231,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 94,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/324009705",
+    "pull_request_review_id": 287780454,
+    "id": 324009705,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMyNDAwOTcwNQ==",
+    "diff_hunk": "@@ -58,9 +58,9 @@ class NodeWatchFileSystem {\n \t\t\tremovals = new Set(removals.filter(file => files.has(file)));\n \t\t\tcallback(\n \t\t\t\tnull,\n-\t\t\t\tchanges.filter(file => files.has(file)).sort(),\n-\t\t\t\tchanges.filter(file => dirs.has(file)).sort(),\n-\t\t\t\tchanges.filter(file => missing.has(file)).sort(),\n+\t\t\t\tnew Set(changes.filter(file => files.has(file))),",
+    "path": "lib/node/NodeWatchFileSystem.js",
+    "commit_id": "bc9da6139094fcb212a4e75c88fa7c6e7050f44e",
+    "original_commit_id": "d5b421a408dc59ee0120019cc0947330f53fee2a",
+    "user": {
+      "login": "maxwoo-houzz",
+      "id": 52716546,
+      "node_id": "MDQ6VXNlcjUyNzE2NTQ2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52716546?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/maxwoo-houzz",
+      "html_url": "https://github.com/maxwoo-houzz",
+      "followers_url": "https://api.github.com/users/maxwoo-houzz/followers",
+      "following_url": "https://api.github.com/users/maxwoo-houzz/following{/other_user}",
+      "gists_url": "https://api.github.com/users/maxwoo-houzz/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/maxwoo-houzz/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/maxwoo-houzz/subscriptions",
+      "organizations_url": "https://api.github.com/users/maxwoo-houzz/orgs",
+      "repos_url": "https://api.github.com/users/maxwoo-houzz/repos",
+      "events_url": "https://api.github.com/users/maxwoo-houzz/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/maxwoo-houzz/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "alright I reversed this change, should be visible in the latest commit",
+    "created_at": "2019-09-13T01:38:00Z",
+    "updated_at": "2019-11-15T19:32:01Z",
+    "html_url": "https://github.com/webpack/webpack/pull/9679#discussion_r324009705",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/9679",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/324009705"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/9679#discussion_r324009705"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/9679"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/324009705/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 61,
+    "side": "RIGHT",
+    "in_reply_to_id": 322593796,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 7,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/324009758",
+    "pull_request_review_id": 287780535,
+    "id": 324009758,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMyNDAwOTc1OA==",
+    "diff_hunk": "@@ -0,0 +1,128 @@\n+\"use strict\";\n+\n+/* globals describe it */\n+const path = require(\"path\");\n+const MemoryFs = require(\"memory-fs\");\n+const webpack = require(\"../\");\n+const fs = require(\"fs\");\n+const rimraf = require(\"rimraf\");\n+\n+const createCompiler = config => {\n+\tconst compiler = webpack(config);\n+\tcompiler.outputFileSystem = new MemoryFs();\n+\treturn compiler;\n+};\n+\n+const tempFolderPath = path.join(__dirname, \"temp\");\n+const tempFilePath = path.join(tempFolderPath, \"temp-file.js\");\n+const tempFile2Path = path.join(tempFolderPath, \"temp-file2.js\");\n+\n+const createSingleCompiler = () => {\n+\treturn createCompiler({\n+\t\tentry: tempFilePath,\n+\t\twatch: true,\n+\t\toutput: {\n+\t\t\tpath: tempFolderPath,\n+\t\t\tfilename: \"bundle.js\"\n+\t\t}\n+\t});\n+};\n+\n+describe(\"ModifiedFiles\", () => {\n+\tif (process.env.NO_WATCH_TESTS) {\n+\t\tit.skip(\"watch tests excluded\", () => {});\n+\t\treturn;\n+\t}\n+\n+\tjest.setTimeout(10000);\n+\n+\tfunction cleanup() {\n+\t\trimraf.sync(tempFolderPath);\n+\t}\n+\n+\tbeforeEach(() => {",
+    "path": "test/ModifiedFiles.test.js",
+    "commit_id": "bc9da6139094fcb212a4e75c88fa7c6e7050f44e",
+    "original_commit_id": "d5b421a408dc59ee0120019cc0947330f53fee2a",
+    "user": {
+      "login": "maxwoo-houzz",
+      "id": 52716546,
+      "node_id": "MDQ6VXNlcjUyNzE2NTQ2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52716546?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/maxwoo-houzz",
+      "html_url": "https://github.com/maxwoo-houzz",
+      "followers_url": "https://api.github.com/users/maxwoo-houzz/followers",
+      "following_url": "https://api.github.com/users/maxwoo-houzz/following{/other_user}",
+      "gists_url": "https://api.github.com/users/maxwoo-houzz/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/maxwoo-houzz/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/maxwoo-houzz/subscriptions",
+      "organizations_url": "https://api.github.com/users/maxwoo-houzz/orgs",
+      "repos_url": "https://api.github.com/users/maxwoo-houzz/repos",
+      "events_url": "https://api.github.com/users/maxwoo-houzz/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/maxwoo-houzz/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "alright it should be visible in the latest commit",
+    "created_at": "2019-09-13T01:38:29Z",
+    "updated_at": "2019-11-15T19:32:01Z",
+    "html_url": "https://github.com/webpack/webpack/pull/9679#discussion_r324009758",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/9679",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/324009758"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/9679#discussion_r324009758"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/9679"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/324009758/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 43,
+    "side": "RIGHT",
+    "in_reply_to_id": 322594107,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 43,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/324009808",
+    "pull_request_review_id": 287780591,
+    "id": 324009808,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMyNDAwOTgwOA==",
+    "diff_hunk": "@@ -134,6 +134,7 @@ class Watching {\n \t\t\t\tthis.compiler.fileTimestamps = fileTimestamps;\n \t\t\t\tthis.compiler.contextTimestamps = contextTimestamps;\n \t\t\t\tthis.compiler.removedFiles = removedFiles;\n+\t\t\t\tthis.compiler.modifiedFiles = modifiedFiles;",
+    "path": "lib/Watching.js",
+    "commit_id": "bc9da6139094fcb212a4e75c88fa7c6e7050f44e",
+    "original_commit_id": "d5b421a408dc59ee0120019cc0947330f53fee2a",
+    "user": {
+      "login": "maxwoo-houzz",
+      "id": 52716546,
+      "node_id": "MDQ6VXNlcjUyNzE2NTQ2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/52716546?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/maxwoo-houzz",
+      "html_url": "https://github.com/maxwoo-houzz",
+      "followers_url": "https://api.github.com/users/maxwoo-houzz/followers",
+      "following_url": "https://api.github.com/users/maxwoo-houzz/following{/other_user}",
+      "gists_url": "https://api.github.com/users/maxwoo-houzz/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/maxwoo-houzz/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/maxwoo-houzz/subscriptions",
+      "organizations_url": "https://api.github.com/users/maxwoo-houzz/orgs",
+      "repos_url": "https://api.github.com/users/maxwoo-houzz/repos",
+      "events_url": "https://api.github.com/users/maxwoo-houzz/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/maxwoo-houzz/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "done, should be visible in the latest commit",
+    "created_at": "2019-09-13T01:38:48Z",
+    "updated_at": "2019-11-15T19:32:01Z",
+    "html_url": "https://github.com/webpack/webpack/pull/9679#discussion_r324009808",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/9679",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/324009808"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/9679#discussion_r324009808"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/9679"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/324009808/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 137,
+    "side": "RIGHT",
+    "in_reply_to_id": 322593608,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 17,
+    "position": 1,
+    "subject_type": "line"
+  }
+]

@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Peregrine Historical Efficacy Ground Truth",
+  "$comment": "Opt-in historical-efficacy-v1 shape contract. Admission MUST also run parseHistoricalGroundTruth: standard JSON Schema does not enforce endLine >= startLine or unique bug IDs across objects. This does not change the visible seeded benchmark schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "scope", "bugs"],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol", "truthVersion", "status", "completeness", "reviewedScope", "permittedMetrics"],
+      "properties": {
+        "protocol": { "const": "historical-efficacy-v1" },
+        "truthVersion": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$" },
+        "status": { "enum": ["known-roots", "reviewed-comparison"] },
+        "completeness": { "const": "partial" },
+        "reviewedScope": { "type": "string", "minLength": 1, "maxLength": 4000, "pattern": "\\S" },
+        "permittedMetrics": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["known-root-recall", "finding-adjudication", "novel-discovery", "completion", "resource-use"] }
+        }
+      }
+    },
+    "bugs": { "type": "array", "items": { "$ref": "#/$defs/bug" } }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "scope": { "properties": { "status": { "const": "known-roots" } } } } },
+      "then": {
+        "properties": {
+          "scope": { "properties": { "permittedMetrics": { "const": ["known-root-recall", "finding-adjudication", "novel-discovery", "completion", "resource-use"] } } },
+          "bugs": { "minItems": 1 }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "scope": { "properties": { "status": { "const": "reviewed-comparison" } } } } },
+      "then": {
+        "properties": {
+          "scope": { "properties": { "permittedMetrics": { "const": ["finding-adjudication", "novel-discovery", "completion", "resource-use"] } } },
+          "bugs": { "maxItems": 0 }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "bug": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "lane", "mechanismFamily", "proofLevel", "expectedDisposition", "expectedSeverity", "file", "startLine", "endLine", "description", "reachablePreconditions", "observableImpact", "provenance"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^bug-[a-f0-9]{8,32}$" },
+        "rootCauseGroup": { "type": "string", "pattern": "^root-[a-f0-9]{8,32}$" },
+        "lane": { "enum": ["authorization", "identifiers", "data-integrity", "persistence", "runtime-config", "contracts", "concurrency", "test-quality", "logic-correctness", "error-handling", "frontend-state", "boundaries-pagination", "other-unclassified"] },
+        "mechanismFamily": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" },
+        "proofLevel": { "enum": ["reproduced", "complete-static-trace"] },
+        "expectedDisposition": { "enum": ["fix-in-pr", "follow-up"] },
+        "expectedSeverity": { "enum": ["high", "medium", "low"] },
+        "file": { "type": "string", "minLength": 1, "maxLength": 512, "pattern": "^(?!\\s)(?!.*\\s$)(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)(?!.*[\\u0000-\\u001f\\u007f])(?!.*\\\\)(?!.*[/]$).+$" },
+        "startLine": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+        "endLine": { "type": "integer", "minimum": 1, "maximum": 9007199254740991 },
+        "description": { "type": "string", "minLength": 1, "maxLength": 8000, "pattern": "\\S" },
+        "reachablePreconditions": { "type": "string", "minLength": 1, "maxLength": 8000, "pattern": "\\S" },
+        "observableImpact": { "type": "string", "minLength": 1, "maxLength": 8000, "pattern": "\\S" },
+        "provenance": { "type": "string", "minLength": 1, "maxLength": 8000, "pattern": "\\S" }
+      }
+    }
+  }
+}

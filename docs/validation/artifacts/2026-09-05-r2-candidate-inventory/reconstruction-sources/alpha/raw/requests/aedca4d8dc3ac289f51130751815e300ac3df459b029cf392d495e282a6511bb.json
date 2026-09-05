@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/webpack/webpack/commits/7f583400fb94c597e1b9898a9f2f5d2d63204a9c",
+    "parameters": {}
+  },
+  "retrievedAt": "2026-09-05T13:11:10.926Z",
+  "sourceUrl": "https://api.github.com/repos/webpack/webpack/commits/7f583400fb94c597e1b9898a9f2f5d2d63204a9c?",
+  "sha256": "f60b9a72505045762df141f823620dc0367f40333849f0b6e8deac58fb9a51a4",
+  "bytes": 10531
+}

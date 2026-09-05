@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/vercel/next.js/pulls/7646/commits",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T11:58:42.591Z",
+  "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7646/commits?page=1&per_page=100",
+  "sha256": "1ec05681dc291eb7197b11a3242985f12ba44f315e8141f4683df8a7a15db0c1",
+  "bytes": 8714
+}

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/axios/axios/issues/2297/timeline",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:59:43.794Z",
+  "sourceUrl": "https://api.github.com/repos/axios/axios/issues/2297/timeline?page=1&per_page=100",
+  "sha256": "20dde182cde19a3cbf4e23de4712f12c58a282845aede0559e18f56deb6a9419",
+  "bytes": 6580
+}

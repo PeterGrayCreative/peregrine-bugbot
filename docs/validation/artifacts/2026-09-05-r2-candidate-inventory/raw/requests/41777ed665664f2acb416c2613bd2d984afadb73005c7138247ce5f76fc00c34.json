@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "search/issues",
+    "parameters": {
+      "order": "asc",
+      "page": 5,
+      "per_page": 100,
+      "q": "repo:microsoft/vscode is:pr is:merged created:2017-01-01..2017-12-31 comments:>=3",
+      "sort": "created"
+    }
+  },
+  "retrievedAt": "2026-09-05T12:41:03.993Z",
+  "sourceUrl": "https://api.github.com/search/issues?order=asc&page=5&per_page=100&q=repo%3Amicrosoft%2Fvscode+is%3Apr+is%3Amerged+created%3A2017-01-01..2017-12-31+comments%3A%3E%3D3&sort=created",
+  "sha256": "2ee161fc4434f97f13fc449101529f50de4208ab17d36ff30d6227a17f25bf01",
+  "bytes": 321903
+}

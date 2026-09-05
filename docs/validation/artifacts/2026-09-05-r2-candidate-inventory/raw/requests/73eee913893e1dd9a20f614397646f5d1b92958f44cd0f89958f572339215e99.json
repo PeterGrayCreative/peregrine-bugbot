@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/OptimalBits/bull/pulls/1332/commits",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T11:58:53.887Z",
+  "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/1332/commits?page=1&per_page=100",
+  "sha256": "d2405c0bb166cae0fa164f8c0905f8ac134916b71cd085e1c277e5d4fc3a1901",
+  "bytes": 3221
+}

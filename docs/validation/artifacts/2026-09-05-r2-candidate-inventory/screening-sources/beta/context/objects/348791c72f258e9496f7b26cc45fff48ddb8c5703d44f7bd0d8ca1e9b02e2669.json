@@ -1,0 +1,559 @@
+[
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627490898",
+    "pull_request_review_id": 653517213,
+    "id": 627490898,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDYyNzQ5MDg5OA==",
+    "diff_hunk": "@@ -33,6 +33,7 @@ export class ExplorerService implements IExplorerService {\n \tprivate readonly disposables = new DisposableStore();\n \tprivate editable: { stat: ExplorerItem, data: IEditableData } | undefined;\n \tprivate _sortOrder: SortOrder;\n+\tprivate _lexicographicOptions: LexicographicOptions;",
+    "path": "src/vs/workbench/contrib/files/browser/explorerService.ts",
+    "commit_id": "97a7fab6c23a76475178053f3c589f62ed838251",
+    "original_commit_id": "d4dd93f3291cc963705614450aeccbc58ee173c8",
+    "user": {
+      "login": "isidorn",
+      "id": 1926584,
+      "node_id": "MDQ6VXNlcjE5MjY1ODQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1926584?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/isidorn",
+      "html_url": "https://github.com/isidorn",
+      "followers_url": "https://api.github.com/users/isidorn/followers",
+      "following_url": "https://api.github.com/users/isidorn/following{/other_user}",
+      "gists_url": "https://api.github.com/users/isidorn/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/isidorn/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/isidorn/subscriptions",
+      "organizations_url": "https://api.github.com/users/isidorn/orgs",
+      "repos_url": "https://api.github.com/users/isidorn/repos",
+      "events_url": "https://api.github.com/users/isidorn/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/isidorn/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Does it make sense to instead have one attribute that merges `_sortOrder` and `_lexicographicOptions` into one",
+    "created_at": "2021-05-06T14:49:21Z",
+    "updated_at": "2021-05-06T20:24:58Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/97272#discussion_r627490898",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/97272",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627490898"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/97272#discussion_r627490898"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/97272"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627490898/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 36,
+    "original_line": 36,
+    "side": "RIGHT",
+    "author_association": "NONE",
+    "original_position": 13,
+    "position": 13,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627492406",
+    "pull_request_review_id": 653517213,
+    "id": 627492406,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDYyNzQ5MjQwNg==",
+    "diff_hunk": "@@ -669,7 +669,30 @@ export class FileSorter implements ITreeSorter<ExplorerItem> {\n \t\t\treturn 1;\n \t\t}\n \n-\t\tconst sortOrder = this.explorerService.sortOrder;\n+\t\tconst sortOrder = this.explorerService.sortOrderConfiguration.sortOrder;\n+\t\tconst lexicographicOptions = this.explorerService.sortOrderConfiguration.lexicographicOptions;\n+\n+\t\tlet compareFileNames;\n+\t\tlet compareFileExtensions;\n+\t\tswitch (lexicographicOptions) {\n+\t\t\tcase 'upper':\n+\t\t\t\tcompareFileNames = compareFileNamesUpper;\n+\t\t\t\tcompareFileExtensions = compareFileExtensionsUpper;\n+\t\t\t\tbreak;\n+\t\t\tcase 'lower':\n+\t\t\t\tcompareFileNames = compareFileNamesLower;\n+\t\t\t\tcompareFileExtensions = compareFileExtensionsLower;\n+\t\t\t\tbreak;\n+\t\t\tcase 'unicode':\n+\t\t\t\tcompareFileNames = compareFileNamesUnicode;\n+\t\t\t\tcompareFileExtensions = compareFileExtensionsUnicode;\n+\t\t\t\tbreak;\n+\t\t\tdefault:\n+\t\t\t\t// 'default'\n+\t\t\t\tcompareFileNames = compareFileNamesDefault;\n+\t\t\t\tcompareFileExtensions = compareFileExtensionsDefault;\n+",
+    "path": "src/vs/workbench/contrib/files/browser/views/explorerViewer.ts",
+    "commit_id": "97a7fab6c23a76475178053f3c589f62ed838251",
+    "original_commit_id": "d4dd93f3291cc963705614450aeccbc58ee173c8",
+    "user": {
+      "login": "isidorn",
+      "id": 1926584,
+      "node_id": "MDQ6VXNlcjE5MjY1ODQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1926584?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/isidorn",
+      "html_url": "https://github.com/isidorn",
+      "followers_url": "https://api.github.com/users/isidorn/followers",
+      "following_url": "https://api.github.com/users/isidorn/following{/other_user}",
+      "gists_url": "https://api.github.com/users/isidorn/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/isidorn/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/isidorn/subscriptions",
+      "organizations_url": "https://api.github.com/users/isidorn/orgs",
+      "repos_url": "https://api.github.com/users/isidorn/repos",
+      "events_url": "https://api.github.com/users/isidorn/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/isidorn/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Can you remove this empty newline please?",
+    "created_at": "2021-05-06T14:51:00Z",
+    "updated_at": "2021-05-06T20:24:58Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/97272#discussion_r627492406",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/97272",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627492406"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/97272#discussion_r627492406"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/97272"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627492406/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 694,
+    "side": "RIGHT",
+    "author_association": "NONE",
+    "original_position": 45,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627494607",
+    "pull_request_review_id": 653517213,
+    "id": 627494607,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDYyNzQ5NDYwNw==",
+    "diff_hunk": "@@ -162,6 +233,54 @@ function compareAndDisambiguateByLength(collator: Intl.Collator, one: string, ot\n \treturn 0;\n }\n \n+/** @returns `true` if the string is starts with a lowercase letter. Otherwise, `false`. */\n+function isLower(string: string) {\n+\tconst character = string.charAt(0);\n+\n+\treturn (character.toLocaleUpperCase() !== character) ? true : false;\n+}\n+\n+/** @returns `true` if the string starts with an uppercase letter. Otherwise, `false`. */\n+function isUpper(string: string) {",
+    "path": "src/vs/base/common/comparers.ts",
+    "commit_id": "97a7fab6c23a76475178053f3c589f62ed838251",
+    "original_commit_id": "d4dd93f3291cc963705614450aeccbc58ee173c8",
+    "user": {
+      "login": "isidorn",
+      "id": 1926584,
+      "node_id": "MDQ6VXNlcjE5MjY1ODQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1926584?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/isidorn",
+      "html_url": "https://github.com/isidorn",
+      "followers_url": "https://api.github.com/users/isidorn/followers",
+      "following_url": "https://api.github.com/users/isidorn/following{/other_user}",
+      "gists_url": "https://api.github.com/users/isidorn/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/isidorn/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/isidorn/subscriptions",
+      "organizations_url": "https://api.github.com/users/isidorn/orgs",
+      "repos_url": "https://api.github.com/users/isidorn/repos",
+      "events_url": "https://api.github.com/users/isidorn/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/isidorn/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I suggest to remove this util and instead use \r\n`isLowerAsciiLetter(s.charCodeAt(0))` and `isUpperAsciiLetter(s.charCodeAt(0))` from `strings.ts`",
+    "created_at": "2021-05-06T14:53:27Z",
+    "updated_at": "2021-05-06T20:24:58Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/97272#discussion_r627494607",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/97272",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627494607"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/97272#discussion_r627494607"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/97272"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627494607/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 244,
+    "side": "RIGHT",
+    "author_association": "NONE",
+    "original_position": 203,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627703468",
+    "pull_request_review_id": 653816120,
+    "id": 627703468,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDYyNzcwMzQ2OA==",
+    "diff_hunk": "@@ -162,6 +233,54 @@ function compareAndDisambiguateByLength(collator: Intl.Collator, one: string, ot\n \treturn 0;\n }\n \n+/** @returns `true` if the string is starts with a lowercase letter. Otherwise, `false`. */\n+function isLower(string: string) {\n+\tconst character = string.charAt(0);\n+\n+\treturn (character.toLocaleUpperCase() !== character) ? true : false;\n+}\n+\n+/** @returns `true` if the string starts with an uppercase letter. Otherwise, `false`. */\n+function isUpper(string: string) {",
+    "path": "src/vs/base/common/comparers.ts",
+    "commit_id": "97a7fab6c23a76475178053f3c589f62ed838251",
+    "original_commit_id": "d4dd93f3291cc963705614450aeccbc58ee173c8",
+    "user": {
+      "login": "leilapearson",
+      "id": 873990,
+      "node_id": "MDQ6VXNlcjg3Mzk5MA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/873990?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/leilapearson",
+      "html_url": "https://github.com/leilapearson",
+      "followers_url": "https://api.github.com/users/leilapearson/followers",
+      "following_url": "https://api.github.com/users/leilapearson/following{/other_user}",
+      "gists_url": "https://api.github.com/users/leilapearson/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/leilapearson/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/leilapearson/subscriptions",
+      "organizations_url": "https://api.github.com/users/leilapearson/orgs",
+      "repos_url": "https://api.github.com/users/leilapearson/repos",
+      "events_url": "https://api.github.com/users/leilapearson/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/leilapearson/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Thanks for pointing out these functions. I hadn't found them previously though I did do a quick search. On review though, I think this might not be the best idea. It looks like `isLowerAsciiLetter()` and `isUpperAsciiLetter()` would only work for latin characters A through Z and would not work as intended for non-latin letters and letters with accents or diacritics. The utility functions I provided should work for all unicode lowercase and uppercase characters.",
+    "created_at": "2021-05-06T19:22:58Z",
+    "updated_at": "2021-05-06T20:24:58Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/97272#discussion_r627703468",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/97272",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627703468"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/97272#discussion_r627703468"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/97272"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627703468/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 244,
+    "side": "RIGHT",
+    "in_reply_to_id": 627494607,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 203,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627721095",
+    "pull_request_review_id": 653838307,
+    "id": 627721095,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDYyNzcyMTA5NQ==",
+    "diff_hunk": "@@ -33,6 +33,7 @@ export class ExplorerService implements IExplorerService {\n \tprivate readonly disposables = new DisposableStore();\n \tprivate editable: { stat: ExplorerItem, data: IEditableData } | undefined;\n \tprivate _sortOrder: SortOrder;\n+\tprivate _lexicographicOptions: LexicographicOptions;",
+    "path": "src/vs/workbench/contrib/files/browser/explorerService.ts",
+    "commit_id": "97a7fab6c23a76475178053f3c589f62ed838251",
+    "original_commit_id": "d4dd93f3291cc963705614450aeccbc58ee173c8",
+    "user": {
+      "login": "leilapearson",
+      "id": 873990,
+      "node_id": "MDQ6VXNlcjg3Mzk5MA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/873990?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/leilapearson",
+      "html_url": "https://github.com/leilapearson",
+      "followers_url": "https://api.github.com/users/leilapearson/followers",
+      "following_url": "https://api.github.com/users/leilapearson/following{/other_user}",
+      "gists_url": "https://api.github.com/users/leilapearson/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/leilapearson/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/leilapearson/subscriptions",
+      "organizations_url": "https://api.github.com/users/leilapearson/orgs",
+      "repos_url": "https://api.github.com/users/leilapearson/repos",
+      "events_url": "https://api.github.com/users/leilapearson/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/leilapearson/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I'm having trouble seeing if the suggested change would make the code more readable or more maintainable. If I were to replace line 35 and 36 with  `private _sortOrderConfiguration: ISortOrderConfiguration;` (which is what I thin you're suggesting?) that would mean that a bunch of other places in the file I'd need to refer to `this._sortOrderConfiguration.sortOrder` and `this._sortOrderConfiguration.lexicographicOptions`... which makes the code longer and less readable I think. \r\n\r\nI guess you could argue that this change might encourage maintainers pay attention to both configuration settings when making changes related to file sort order - but also these are private attributes so that would only apply within this file. \r\n\r\nWould you be okay to leave this code as is? \r\n\r\nIf not, or if you are suggesting something different, let me know and I can go ahead and make the change.",
+    "created_at": "2021-05-06T19:52:14Z",
+    "updated_at": "2021-05-06T20:24:58Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/97272#discussion_r627721095",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/97272",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627721095"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/97272#discussion_r627721095"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/97272"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627721095/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 36,
+    "original_line": 36,
+    "side": "RIGHT",
+    "in_reply_to_id": 627490898,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 13,
+    "position": 13,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627726006",
+    "pull_request_review_id": 653845054,
+    "id": 627726006,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDYyNzcyNjAwNg==",
+    "diff_hunk": "@@ -33,6 +33,7 @@ export class ExplorerService implements IExplorerService {\n \tprivate readonly disposables = new DisposableStore();\n \tprivate editable: { stat: ExplorerItem, data: IEditableData } | undefined;\n \tprivate _sortOrder: SortOrder;\n+\tprivate _lexicographicOptions: LexicographicOptions;",
+    "path": "src/vs/workbench/contrib/files/browser/explorerService.ts",
+    "commit_id": "97a7fab6c23a76475178053f3c589f62ed838251",
+    "original_commit_id": "d4dd93f3291cc963705614450aeccbc58ee173c8",
+    "user": {
+      "login": "isidorn",
+      "id": 1926584,
+      "node_id": "MDQ6VXNlcjE5MjY1ODQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1926584?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/isidorn",
+      "html_url": "https://github.com/isidorn",
+      "followers_url": "https://api.github.com/users/isidorn/followers",
+      "following_url": "https://api.github.com/users/isidorn/following{/other_user}",
+      "gists_url": "https://api.github.com/users/isidorn/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/isidorn/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/isidorn/subscriptions",
+      "organizations_url": "https://api.github.com/users/isidorn/orgs",
+      "repos_url": "https://api.github.com/users/isidorn/repos",
+      "events_url": "https://api.github.com/users/isidorn/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/isidorn/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I am ok with leaving the code as it is, thanks for considering my suggestion.",
+    "created_at": "2021-05-06T20:00:53Z",
+    "updated_at": "2021-05-06T20:24:58Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/97272#discussion_r627726006",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/97272",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627726006"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/97272#discussion_r627726006"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/97272"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627726006/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 36,
+    "original_line": 36,
+    "side": "RIGHT",
+    "in_reply_to_id": 627490898,
+    "author_association": "NONE",
+    "original_position": 13,
+    "position": 13,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627726678",
+    "pull_request_review_id": 653845956,
+    "id": 627726678,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDYyNzcyNjY3OA==",
+    "diff_hunk": "@@ -162,6 +233,54 @@ function compareAndDisambiguateByLength(collator: Intl.Collator, one: string, ot\n \treturn 0;\n }\n \n+/** @returns `true` if the string is starts with a lowercase letter. Otherwise, `false`. */\n+function isLower(string: string) {\n+\tconst character = string.charAt(0);\n+\n+\treturn (character.toLocaleUpperCase() !== character) ? true : false;\n+}\n+\n+/** @returns `true` if the string starts with an uppercase letter. Otherwise, `false`. */\n+function isUpper(string: string) {",
+    "path": "src/vs/base/common/comparers.ts",
+    "commit_id": "97a7fab6c23a76475178053f3c589f62ed838251",
+    "original_commit_id": "d4dd93f3291cc963705614450aeccbc58ee173c8",
+    "user": {
+      "login": "isidorn",
+      "id": 1926584,
+      "node_id": "MDQ6VXNlcjE5MjY1ODQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1926584?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/isidorn",
+      "html_url": "https://github.com/isidorn",
+      "followers_url": "https://api.github.com/users/isidorn/followers",
+      "following_url": "https://api.github.com/users/isidorn/following{/other_user}",
+      "gists_url": "https://api.github.com/users/isidorn/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/isidorn/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/isidorn/subscriptions",
+      "organizations_url": "https://api.github.com/users/isidorn/orgs",
+      "repos_url": "https://api.github.com/users/isidorn/repos",
+      "events_url": "https://api.github.com/users/isidorn/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/isidorn/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "@leilapearson makes sense, in that case I suggest to rename to `startsWithUpper` and `startsWithLower`",
+    "created_at": "2021-05-06T20:02:00Z",
+    "updated_at": "2021-05-06T20:24:58Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/97272#discussion_r627726678",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/97272",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627726678"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/97272#discussion_r627726678"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/97272"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627726678/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 244,
+    "side": "RIGHT",
+    "in_reply_to_id": 627494607,
+    "author_association": "NONE",
+    "original_position": 203,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627740085",
+    "pull_request_review_id": 653863924,
+    "id": 627740085,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDYyNzc0MDA4NQ==",
+    "diff_hunk": "@@ -162,6 +233,54 @@ function compareAndDisambiguateByLength(collator: Intl.Collator, one: string, ot\n \treturn 0;\n }\n \n+/** @returns `true` if the string is starts with a lowercase letter. Otherwise, `false`. */\n+function isLower(string: string) {\n+\tconst character = string.charAt(0);\n+\n+\treturn (character.toLocaleUpperCase() !== character) ? true : false;\n+}\n+\n+/** @returns `true` if the string starts with an uppercase letter. Otherwise, `false`. */\n+function isUpper(string: string) {",
+    "path": "src/vs/base/common/comparers.ts",
+    "commit_id": "97a7fab6c23a76475178053f3c589f62ed838251",
+    "original_commit_id": "d4dd93f3291cc963705614450aeccbc58ee173c8",
+    "user": {
+      "login": "leilapearson",
+      "id": 873990,
+      "node_id": "MDQ6VXNlcjg3Mzk5MA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/873990?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/leilapearson",
+      "html_url": "https://github.com/leilapearson",
+      "followers_url": "https://api.github.com/users/leilapearson/followers",
+      "following_url": "https://api.github.com/users/leilapearson/following{/other_user}",
+      "gists_url": "https://api.github.com/users/leilapearson/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/leilapearson/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/leilapearson/subscriptions",
+      "organizations_url": "https://api.github.com/users/leilapearson/orgs",
+      "repos_url": "https://api.github.com/users/leilapearson/repos",
+      "events_url": "https://api.github.com/users/leilapearson/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/leilapearson/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Good idea. Thanks!",
+    "created_at": "2021-05-06T20:25:39Z",
+    "updated_at": "2021-05-06T20:25:39Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/97272#discussion_r627740085",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/97272",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627740085"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/97272#discussion_r627740085"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/97272"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/627740085/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 244,
+    "side": "RIGHT",
+    "in_reply_to_id": 627494607,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 203,
+    "position": 1,
+    "subject_type": "line"
+  }
+]

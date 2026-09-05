@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/webpack/webpack/pulls/10335/commits",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T13:08:06.790Z",
+  "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/10335/commits?page=1&per_page=100",
+  "sha256": "93ed777737e2f55790e7630f4de4b6bfe9d35e63bf3c9d3649d1a5b6a2fbac82",
+  "bytes": 32019
+}

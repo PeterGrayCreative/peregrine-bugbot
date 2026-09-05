@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/ReactiveX/rxjs/pulls/2505/files",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:57:09.543Z",
+  "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/2505/files?page=1&per_page=100",
+  "sha256": "a721dbad7237b2b5d1b25f9b4f9f5b1f53f74cf35b35f5446c6e9406073029f5",
+  "bytes": 3139
+}

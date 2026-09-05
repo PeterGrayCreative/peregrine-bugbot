@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/webpack/webpack/pulls/9679/comments",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:51:35.557Z",
+  "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/9679/comments?page=1&per_page=100",
+  "sha256": "abf3963ff0ad809c70c838eeb6213ff3c936023cbd64d5951c298c6e3e2f0da6",
+  "bytes": 56992
+}

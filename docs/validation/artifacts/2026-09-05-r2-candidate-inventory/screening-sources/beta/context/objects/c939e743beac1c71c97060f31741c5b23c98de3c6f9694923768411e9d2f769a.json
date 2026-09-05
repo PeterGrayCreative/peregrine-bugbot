@@ -1,0 +1,764 @@
+[
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/189574834",
+    "pull_request_review_id": 121778877,
+    "id": 189574834,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE4OTU3NDgzNA==",
+    "diff_hunk": "@@ -725,6 +739,9 @@ GEOGRAPHY.prototype.escape = false;\n GEOGRAPHY.prototype._stringify = function _stringify(value, options) {\n   return 'GeomFromText(' + options.escape(Wkt.convert(value)) + ')';\n };\n+GEOMETRY.prototype.bindParam = function bindParam(value, options) {",
+    "path": "lib/data-types.js",
+    "commit_id": "8fc477a10576c15f277f958e95603265b55ea213",
+    "original_commit_id": "99beccc3443cc6a68346bbf7d42d7c9831c782b9",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "`_bindParam` to match `_stringify` etc stuff",
+    "created_at": "2018-05-21T12:29:15Z",
+    "updated_at": "2018-05-30T08:55:43Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9431#discussion_r189574834",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9431",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/189574834"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9431#discussion_r189574834"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9431"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/189574834/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 742,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 32,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/189575079",
+    "pull_request_review_id": 121779190,
+    "id": 189575079,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE4OTU3NTA3OQ==",
+    "diff_hunk": "@@ -989,11 +989,18 @@ class QueryGenerator {\n     return SqlString.escape(value, this.options.timezone, this.dialect);\n   }\n \n+  bindParam(bind) {",
+    "path": "lib/dialects/abstract/query-generator.js",
+    "commit_id": "8fc477a10576c15f277f958e95603265b55ea213",
+    "original_commit_id": "99beccc3443cc6a68346bbf7d42d7c9831c782b9",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": ":+1: ",
+    "created_at": "2018-05-21T12:30:23Z",
+    "updated_at": "2018-05-30T08:55:43Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9431#discussion_r189575079",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9431",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/189575079"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9431#discussion_r189575079"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9431"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/189575079/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 1009,
+    "original_line": 1009,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 22,
+    "position": 73,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/189575507",
+    "pull_request_review_id": 121779728,
+    "id": 189575507,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE4OTU3NTUwNw==",
+    "diff_hunk": "@@ -56,14 +56,18 @@ describe(Support.getTestDialectTeaser('DataTypes'), () => {\n     });\n   });\n \n-  const testSuccess = function(Type, value) {\n+  const testSuccess = function(Type, value, useBindParam) {",
+    "path": "test/integration/data-types.test.js",
+    "commit_id": "8fc477a10576c15f277f958e95603265b55ea213",
+    "original_commit_id": "99beccc3443cc6a68346bbf7d42d7c9831c782b9",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Third argument should be options with arbitrary configuration possibilities ``{ useBindParam }`` ",
+    "created_at": "2018-05-21T12:32:23Z",
+    "updated_at": "2018-05-30T08:55:43Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9431#discussion_r189575507",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9431",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/189575507"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9431#discussion_r189575507"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9431"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/189575507/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 59,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 5,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191416018",
+    "pull_request_review_id": 123982671,
+    "id": 191416018,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE5MTQxNjAxOA==",
+    "diff_hunk": "@@ -364,50 +364,92 @@ if (dialect === 'sqlite') {\n       insertQuery: [\n         {\n           arguments: ['myTable', { name: 'foo' }],\n-          expectation: \"INSERT INTO `myTable` (`name`) VALUES ('foo');\"\n+          expectation: {\n+            query: 'INSERT INTO `myTable` (`name`) VALUES ($1);',\n+            bind: ['foo']\n+          }\n         }, {\n           arguments: ['myTable', { name: \"'bar'\" }],\n-          expectation: \"INSERT INTO `myTable` (`name`) VALUES ('''bar''');\"\n+          expectation: {\n+            query: 'INSERT INTO `myTable` (`name`) VALUES ($1);',\n+            bind: [\"'bar'\"]\n+          }\n         }, {\n           arguments: ['myTable', {data: new Buffer('Sequelize') }],\n-          expectation: \"INSERT INTO `myTable` (`data`) VALUES (X'53657175656c697a65');\"\n+          expectation: {\n+            query: 'INSERT INTO `myTable` (`data`) VALUES ($1);',\n+            bind: [new Buffer('Sequelize')]\n+          }\n         }, {\n           arguments: ['myTable', { name: 'bar', value: null }],\n-          expectation: \"INSERT INTO `myTable` (`name`,`value`) VALUES ('bar',NULL);\"\n+          expectation: {\n+            query: 'INSERT INTO `myTable` (`name`,`value`) VALUES ($1,$2);',\n+            bind: ['bar', null]\n+          }\n         }, {\n           arguments: ['myTable', { name: 'bar', value: undefined }],\n-          expectation: \"INSERT INTO `myTable` (`name`,`value`) VALUES ('bar',NULL);\"\n+          expectation: {\n+            query: 'INSERT INTO `myTable` (`name`,`value`) VALUES ($1,$2);',\n+            // TODO: Check\n+            bind: ['bar', undefined]\n+          }\n         }, {\n           arguments: ['myTable', {name: 'foo', birthday: moment('2011-03-27 10:01:55 +0000', 'YYYY-MM-DD HH:mm:ss Z').toDate()}],\n-          expectation: \"INSERT INTO `myTable` (`name`,`birthday`) VALUES ('foo','2011-03-27 10:01:55.000 +00:00');\"\n+          expectation: {\n+            query: 'INSERT INTO `myTable` (`name`,`birthday`) VALUES ($1,$2);',\n+            bind: ['foo', moment('2011-03-27 10:01:55 +0000', 'YYYY-MM-DD HH:mm:ss Z').toDate()]\n+          }\n         }, {\n           arguments: ['myTable', { name: 'foo', value: true }],\n-          expectation: \"INSERT INTO `myTable` (`name`,`value`) VALUES ('foo',1);\"\n+          expectation: {\n+            query: 'INSERT INTO `myTable` (`name`,`value`) VALUES ($1,$2);',\n+            // TODO: Check\n+            bind: ['foo', true]",
+    "path": "test/unit/dialects/sqlite/query-generator.test.js",
+    "commit_id": "8fc477a10576c15f277f958e95603265b55ea213",
+    "original_commit_id": "861487975181044a9823d4c38f5d6ae6318decc2",
+    "user": {
+      "login": "janmeier",
+      "id": 1210224,
+      "node_id": "MDQ6VXNlcjEyMTAyMjQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1210224?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/janmeier",
+      "html_url": "https://github.com/janmeier",
+      "followers_url": "https://api.github.com/users/janmeier/followers",
+      "following_url": "https://api.github.com/users/janmeier/following{/other_user}",
+      "gists_url": "https://api.github.com/users/janmeier/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/janmeier/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/janmeier/subscriptions",
+      "organizations_url": "https://api.github.com/users/janmeier/orgs",
+      "repos_url": "https://api.github.com/users/janmeier/repos",
+      "events_url": "https://api.github.com/users/janmeier/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/janmeier/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Should be fine (I'm pretty sure sqlite takes whatever you throw at it)",
+    "created_at": "2018-05-29T13:08:38Z",
+    "updated_at": "2018-05-30T08:55:43Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9431#discussion_r191416018",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9431",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191416018"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9431#discussion_r191416018"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9431"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191416018/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 405,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 51,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191416148",
+    "pull_request_review_id": 123982671,
+    "id": 191416148,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE5MTQxNjE0OA==",
+    "diff_hunk": "@@ -364,50 +364,92 @@ if (dialect === 'sqlite') {\n       insertQuery: [\n         {\n           arguments: ['myTable', { name: 'foo' }],\n-          expectation: \"INSERT INTO `myTable` (`name`) VALUES ('foo');\"\n+          expectation: {\n+            query: 'INSERT INTO `myTable` (`name`) VALUES ($1);',\n+            bind: ['foo']\n+          }\n         }, {\n           arguments: ['myTable', { name: \"'bar'\" }],\n-          expectation: \"INSERT INTO `myTable` (`name`) VALUES ('''bar''');\"\n+          expectation: {\n+            query: 'INSERT INTO `myTable` (`name`) VALUES ($1);',\n+            bind: [\"'bar'\"]\n+          }\n         }, {\n           arguments: ['myTable', {data: new Buffer('Sequelize') }],\n-          expectation: \"INSERT INTO `myTable` (`data`) VALUES (X'53657175656c697a65');\"\n+          expectation: {\n+            query: 'INSERT INTO `myTable` (`data`) VALUES ($1);',\n+            bind: [new Buffer('Sequelize')]\n+          }\n         }, {\n           arguments: ['myTable', { name: 'bar', value: null }],\n-          expectation: \"INSERT INTO `myTable` (`name`,`value`) VALUES ('bar',NULL);\"\n+          expectation: {\n+            query: 'INSERT INTO `myTable` (`name`,`value`) VALUES ($1,$2);',\n+            bind: ['bar', null]\n+          }\n         }, {\n           arguments: ['myTable', { name: 'bar', value: undefined }],\n-          expectation: \"INSERT INTO `myTable` (`name`,`value`) VALUES ('bar',NULL);\"\n+          expectation: {\n+            query: 'INSERT INTO `myTable` (`name`,`value`) VALUES ($1,$2);',\n+            // TODO: Check",
+    "path": "test/unit/dialects/sqlite/query-generator.test.js",
+    "commit_id": "8fc477a10576c15f277f958e95603265b55ea213",
+    "original_commit_id": "861487975181044a9823d4c38f5d6ae6318decc2",
+    "user": {
+      "login": "janmeier",
+      "id": 1210224,
+      "node_id": "MDQ6VXNlcjEyMTAyMjQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1210224?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/janmeier",
+      "html_url": "https://github.com/janmeier",
+      "followers_url": "https://api.github.com/users/janmeier/followers",
+      "following_url": "https://api.github.com/users/janmeier/following{/other_user}",
+      "gists_url": "https://api.github.com/users/janmeier/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/janmeier/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/janmeier/subscriptions",
+      "organizations_url": "https://api.github.com/users/janmeier/orgs",
+      "repos_url": "https://api.github.com/users/janmeier/repos",
+      "events_url": "https://api.github.com/users/janmeier/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/janmeier/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Hmm, not sure - There is another issue about ignoring undefined completely, but it should be fine for now",
+    "created_at": "2018-05-29T13:09:03Z",
+    "updated_at": "2018-05-30T08:55:43Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9431#discussion_r191416148",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9431",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191416148"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9431#discussion_r191416148"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9431"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191416148/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 393,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 35,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191636083",
+    "pull_request_review_id": 124242466,
+    "id": 191636083,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE5MTYzNjA4Mw==",
+    "diff_hunk": "@@ -234,7 +247,12 @@ class QueryGenerator {\n       ].join(' ');\n     }\n \n-    return _.template(query, this._templateSettings)(replacements);\n+    query = _.template(query, this._templateSettings)(replacements);\n+    // Used by Postgres upsertQuery and calls to here with options.exception set to true\n+    if (options.bindParam === false) {\n+      return query;",
+    "path": "lib/dialects/abstract/query-generator.js",
+    "commit_id": "8fc477a10576c15f277f958e95603265b55ea213",
+    "original_commit_id": "bf9eb5ee22537670ffcc9237fc2d1fb1d8ac7de3",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "return an object in both cases, so all calls can just use `.query`. In case `options.bindParam: false` return no bind parameters.",
+    "created_at": "2018-05-30T03:52:21Z",
+    "updated_at": "2018-05-30T08:55:43Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9431#discussion_r191636083",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9431",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191636083"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9431#discussion_r191636083"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9431"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191636083/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 253,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 45,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191636239",
+    "pull_request_review_id": 124242466,
+    "id": 191636239,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE5MTYzNjIzOQ==",
+    "diff_hunk": "@@ -169,7 +171,14 @@ class QueryGenerator {\n       }\n     }\n \n+    if (_.get(this, ['sequelize', 'options', 'dialectOptions', 'prependSearchPath']) || options.searchPath) {",
+    "path": "lib/dialects/abstract/query-generator.js",
+    "commit_id": "8fc477a10576c15f277f958e95603265b55ea213",
+    "original_commit_id": "bf9eb5ee22537670ffcc9237fc2d1fb1d8ac7de3",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Use full path `sequelize.options.dialectOptions.prependSearchPath` in `_.get`",
+    "created_at": "2018-05-30T03:54:12Z",
+    "updated_at": "2018-05-30T08:55:43Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9431#discussion_r191636239",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9431",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191636239"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9431#discussion_r191636239"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9431"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191636239/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 174,
+    "original_line": 174,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 13,
+    "position": 13,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191636650",
+    "pull_request_review_id": 124242466,
+    "id": 191636650,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE5MTYzNjY1MA==",
+    "diff_hunk": "@@ -597,12 +597,13 @@ if (dialect.match(/^postgres/)) {\n         return this.User.sync({ force: true });\n       });\n \n-      it('should use postgres \"TIMESTAMP WITH TIME ZONE\" instead of \"DATETIME\"', function() {\n+      it('should use bind params instead of \"TIMESTAMP WITH TIME ZONE\"', function() {\n         return this.User.create({\n           dates: []\n         }, {\n           logging(sql) {\n-            expect(sql.indexOf('TIMESTAMP WITH TIME ZONE')).to.be.greaterThan(0);\n+            expect(sql).not.to.contain('TIMESTAMP WITH TIME ZONE');\n+            expect(sql).not.to.contain('DATETIME');",
+    "path": "test/integration/dialects/postgres/dao.test.js",
+    "commit_id": "8fc477a10576c15f277f958e95603265b55ea213",
+    "original_commit_id": "bf9eb5ee22537670ffcc9237fc2d1fb1d8ac7de3",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "assert presence of bind param?",
+    "created_at": "2018-05-30T03:58:12Z",
+    "updated_at": "2018-05-30T08:55:43Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9431#discussion_r191636650",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9431",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191636650"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9431#discussion_r191636650"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9431"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191636650/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 606,
+    "original_line": 606,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 31,
+    "position": 31,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191690973",
+    "pull_request_review_id": 124308027,
+    "id": 191690973,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE5MTY5MDk3Mw==",
+    "diff_hunk": "@@ -234,7 +247,12 @@ class QueryGenerator {\n       ].join(' ');\n     }\n \n-    return _.template(query, this._templateSettings)(replacements);\n+    query = _.template(query, this._templateSettings)(replacements);\n+    // Used by Postgres upsertQuery and calls to here with options.exception set to true\n+    if (options.bindParam === false) {\n+      return query;",
+    "path": "lib/dialects/abstract/query-generator.js",
+    "commit_id": "8fc477a10576c15f277f958e95603265b55ea213",
+    "original_commit_id": "bf9eb5ee22537670ffcc9237fc2d1fb1d8ac7de3",
+    "user": {
+      "login": "gazoakley",
+      "id": 261262,
+      "node_id": "MDQ6VXNlcjI2MTI2Mg==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/261262?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/gazoakley",
+      "html_url": "https://github.com/gazoakley",
+      "followers_url": "https://api.github.com/users/gazoakley/followers",
+      "following_url": "https://api.github.com/users/gazoakley/following{/other_user}",
+      "gists_url": "https://api.github.com/users/gazoakley/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/gazoakley/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/gazoakley/subscriptions",
+      "organizations_url": "https://api.github.com/users/gazoakley/orgs",
+      "repos_url": "https://api.github.com/users/gazoakley/repos",
+      "events_url": "https://api.github.com/users/gazoakley/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/gazoakley/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Done",
+    "created_at": "2018-05-30T08:57:44Z",
+    "updated_at": "2018-05-30T08:57:44Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9431#discussion_r191690973",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9431",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191690973"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9431#discussion_r191690973"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9431"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191690973/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 253,
+    "side": "RIGHT",
+    "in_reply_to_id": 191636083,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 45,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191691022",
+    "pull_request_review_id": 124308091,
+    "id": 191691022,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE5MTY5MTAyMg==",
+    "diff_hunk": "@@ -169,7 +171,14 @@ class QueryGenerator {\n       }\n     }\n \n+    if (_.get(this, ['sequelize', 'options', 'dialectOptions', 'prependSearchPath']) || options.searchPath) {",
+    "path": "lib/dialects/abstract/query-generator.js",
+    "commit_id": "8fc477a10576c15f277f958e95603265b55ea213",
+    "original_commit_id": "bf9eb5ee22537670ffcc9237fc2d1fb1d8ac7de3",
+    "user": {
+      "login": "gazoakley",
+      "id": 261262,
+      "node_id": "MDQ6VXNlcjI2MTI2Mg==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/261262?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/gazoakley",
+      "html_url": "https://github.com/gazoakley",
+      "followers_url": "https://api.github.com/users/gazoakley/followers",
+      "following_url": "https://api.github.com/users/gazoakley/following{/other_user}",
+      "gists_url": "https://api.github.com/users/gazoakley/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/gazoakley/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/gazoakley/subscriptions",
+      "organizations_url": "https://api.github.com/users/gazoakley/orgs",
+      "repos_url": "https://api.github.com/users/gazoakley/repos",
+      "events_url": "https://api.github.com/users/gazoakley/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/gazoakley/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I can change it, but it's more efficient in Lodash to use the array path form. If you use the string path form (e.g. `_.get(this, 'sequelize.options.dialectOptions.prependSearchPath')`) Lodash first converts it back to the array path form which currently entails a bunch of regex operations to parse the path. For a single call like this it probably doesn't matter, but do it many times and there's a big difference in performance.",
+    "created_at": "2018-05-30T08:57:51Z",
+    "updated_at": "2018-05-30T08:57:51Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9431#discussion_r191691022",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9431",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191691022"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9431#discussion_r191691022"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9431"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191691022/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 174,
+    "original_line": 174,
+    "side": "RIGHT",
+    "in_reply_to_id": 191636239,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 13,
+    "position": 13,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191691536",
+    "pull_request_review_id": 124308713,
+    "id": 191691536,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE5MTY5MTUzNg==",
+    "diff_hunk": "@@ -169,7 +171,14 @@ class QueryGenerator {\n       }\n     }\n \n+    if (_.get(this, ['sequelize', 'options', 'dialectOptions', 'prependSearchPath']) || options.searchPath) {",
+    "path": "lib/dialects/abstract/query-generator.js",
+    "commit_id": "8fc477a10576c15f277f958e95603265b55ea213",
+    "original_commit_id": "bf9eb5ee22537670ffcc9237fc2d1fb1d8ac7de3",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "@gazoakley No need to change it then :)",
+    "created_at": "2018-05-30T08:59:32Z",
+    "updated_at": "2018-05-30T08:59:32Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9431#discussion_r191691536",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9431",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191691536"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9431#discussion_r191691536"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9431"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/191691536/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 174,
+    "original_line": 174,
+    "side": "RIGHT",
+    "in_reply_to_id": 191636239,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 13,
+    "position": 13,
+    "subject_type": "line"
+  }
+]

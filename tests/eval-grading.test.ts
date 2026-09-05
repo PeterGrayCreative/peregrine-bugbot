@@ -198,13 +198,36 @@ test("persisted behavioral classifications remain unresolved without a sealed ad
 });
 
 test("miss attribution is deterministic and presentation is not a detection miss", () => {
+  assert.equal(classifyMissStage({ matched: false }), "unattributed");
   assert.equal(classifyMissStage({ matched: true }), "none");
   assert.equal(classifyMissStage({ matched: true, presentationFiltered: true }), "presentation");
   assert.equal(classifyMissStage({ matched: false, laneActivated: false }), "routing");
   assert.equal(classifyMissStage({ matched: false, laneActivated: true, breadthCandidate: false }), "breadth");
   assert.equal(classifyMissStage({ matched: false, laneActivated: true, breadthCandidate: true, investigationBudgetExhausted: true }), "budget");
+  assert.equal(classifyMissStage({ matched: false }), "unattributed");
   assert.equal(classifyMissStage({ matched: false, laneActivated: true, breadthCandidate: true }), "investigation");
   assert.equal(classifyMissStage({ matched: false, infrastructureFailure: true }), "infrastructure");
+});
+
+test("completed empty reviews retain recall misses without inventing infrastructure failure", async () => {
+  const groundTruth = { bugs: [truth.bugs[0]!] };
+  const result = engineResult([]);
+  const graded = await gradeResult(result, groundTruth,
+    { kind: "codex", model: "fixed-model", configSha256: JUDGE_CONFIG_SHA256 },
+    async () => { throw new Error("empty output must not invoke the judge"); });
+  assert.equal(graded.matches["symptom-a"], null);
+  assert.equal(graded.grading.missStages["symptom-a"], "unattributed");
+  assert.doesNotThrow(() => assertGradingEvidenceConsistent(
+    groundTruth, result.findings, graded.matches, graded.grading, "v2", JUDGE_IDENTITY));
+  assert.throws(() => assertGradingEvidenceConsistent(groundTruth, result.findings, graded.matches,
+    { ...graded.grading, missStages: { "symptom-a": "infrastructure" } }, "v2", JUDGE_IDENTITY), /stage evidence/);
+
+  const legacy = { ...graded.grading, version: "root-cause-v1" as const,
+    missStages: { "symptom-a": "infrastructure" as const } };
+  assert.doesNotThrow(() => assertGradingEvidenceConsistent(
+    groundTruth, result.findings, graded.matches, legacy, "legacy", JUDGE_IDENTITY));
+  assert.throws(() => assertGradingEvidenceConsistent(groundTruth, result.findings, graded.matches,
+    { ...legacy, missStages: { "symptom-a": "unattributed" } }, "legacy", JUDGE_IDENTITY), /stage evidence/);
 });
 
 test("adjudication records are strict and reject duplicate evidence", () => {
@@ -235,7 +258,8 @@ test("semantic disagreements and judge failures remain explicit fail-closed evid
     ["failed", "timeout"],
     ["different-root-cause", undefined],
   ]);
-  assert.equal(graded.grading.missStages["symptom-a"], "infrastructure");
+  assert.equal(graded.grading.missStages["symptom-a"], "unattributed");
+  assert.equal(graded.grading.version, "root-cause-v2");
   assert.equal(graded.grading.unmatchedFindings.length, 2);
   assert.equal(graded.falsePositiveIndexes.length, 0);
   assert.doesNotThrow(() => assertGradingEvidenceConsistent(
@@ -330,6 +354,80 @@ test("behavioral reporting separates root-cause cost and blocking clean-control 
     costUnavailableAttempts: 2, inputTokens: 20, cachedInputTokens: 4,
     outputTokens: 2, reasoningTokens: 1, turns: 2, toolCalls: 0,
   }), /Semantic judge accounting[\s\S]*20 \/ 4 \/ 2 \/ 1/);
+});
+
+test("reporting excludes diagnostic-only findings and applies sealed adjudications", () => {
+  const digest = "a".repeat(64);
+  const unmatched = {
+    findingIndex: 0,
+    findingEvidenceSha256: digest,
+    classification: "unresolved" as const,
+  };
+  const completed = [
+    {
+      attemptId: "attempt-000001",
+      caseName: "validation/case-diagnostic",
+      outcome: { status: "completed" as const, result: engineResult([reviewFinding()]) },
+      matches: {},
+      falsePositiveIndexes: [],
+      grading: {
+        version: "root-cause-v2" as const,
+        judge: JUDGE_IDENTITY,
+        decisions: [],
+        rootCauseMatches: {},
+        missStages: {},
+        unmatchedFindings: [unmatched],
+      },
+    },
+    {
+      attemptId: "attempt-000002",
+      caseName: "development/case-clean",
+      outcome: { status: "completed" as const, result: engineResult([reviewFinding()]) },
+      matches: {},
+      falsePositiveIndexes: [],
+      grading: {
+        version: "root-cause-v2" as const,
+        judge: JUDGE_IDENTITY,
+        decisions: [],
+        rootCauseMatches: {},
+        missStages: {},
+        unmatchedFindings: [unmatched],
+      },
+    },
+  ];
+  const stats = calculateStats({
+    config: "route", runner: "codex", corpus: "development", benchmarkKind: "behavioral",
+    completeness: "tracked", expectedRuns: 2, completed, failed: [], missing: 0,
+    failureInclusiveRecalls: [], expectedRootCauseRuns: 0, structuralExpectedMarkers: null,
+    diagnosticOnlyCaseIds: new Set(["case-diagnostic"]),
+    adjudications: new Map([[`attempt-000002\0${0}\0${digest}`, "unsupported"]]),
+  });
+  assert.equal(stats.diagnosticExcludedRuns, 1);
+  assert.equal(stats.diagnosticExcludedFindings, 1);
+  assert.equal(stats.unresolvedFindings, 0);
+  assert.equal(stats.unsupportedFindings, 1);
+  assert.equal(stats.falseDiscoveryRate, 1);
+  assert.equal(stats.fpPerCaseMean, 1);
+});
+
+test("legacy automatic infrastructure misses report as unattributed", () => {
+  const stats = calculateStats({
+    config: "route", runner: "codex", corpus: "development", benchmarkKind: "behavioral",
+    completeness: "tracked", expectedRuns: 1,
+    completed: [{
+      caseName: "development/case-one",
+      outcome: { status: "completed", result: engineResult([]) },
+      matches: { "symptom-a": null }, falsePositiveIndexes: [],
+      grading: {
+        version: "root-cause-v1", judge: JUDGE_IDENTITY, decisions: [],
+        rootCauseMatches: { '["group","shared"]': false },
+        missStages: { "symptom-a": "infrastructure" }, unmatchedFindings: [],
+      },
+    }],
+    failed: [], missing: 0, failureInclusiveRecalls: [0], expectedRootCauseRuns: 1,
+    structuralExpectedMarkers: null,
+  });
+  assert.deepEqual(stats.missesByStage, { unattributed: 1 });
 });
 
 test("root-cause recall excludes clean controls and fails closed for incomplete bug attempts", () => {

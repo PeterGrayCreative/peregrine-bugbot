@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/axios/axios/pulls/874/comments",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:56:59.732Z",
+  "sourceUrl": "https://api.github.com/repos/axios/axios/pulls/874/comments?page=1&per_page=100",
+  "sha256": "5bfb4c08447454dcb4d1607618123b502db262fc75f2300789d1d947d45146c6",
+  "bytes": 2815
+}

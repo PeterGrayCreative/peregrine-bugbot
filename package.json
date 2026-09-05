@@ -8,10 +8,13 @@
     "node": ">=22"
   },
   "scripts": {
+    "test:methodology": "node --import tsx --test tests/eval-methodology-output.test.ts tests/eval-methodology-schedule.test.ts tests/eval-methodology-assets.test.ts tests/eval-methodology-materialization.test.ts tests/eval-methodology-prompts.test.ts tests/eval-methodology-prompt-isolation.test.ts tests/eval-methodology-invocations.test.ts tests/eval-methodology-runner.test.ts tests/eval-methodology-run-seal.test.ts tests/eval-methodology-lane-activation.test.ts tests/eval-historical-methodology-case.test.ts tests/eval-historical-methodology-integration.test.ts tests/eval-methodology-input-plan.test.ts tests/eval-methodology-attempt-lifecycle.test.ts tests/eval-methodology-grading-contract.test.ts tests/eval-methodology-grading-projection.test.ts",
+    "test:historical-truth": "node --import tsx --test tests/eval-historical-truth.test.ts tests/eval-historical-case-spec.test.ts tests/eval-scope-completeness.test.ts tests/eval-historical-curation.test.ts tests/eval-historical-metric-eligibility.test.ts tests/eval-historical-leakage.test.ts",
+    "test:evidence-capture": "node --import tsx --test tests/evidence-public-capture.test.mjs tests/evidence-human-review-packet.test.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/config.test.ts tests/review-result.test.ts tests/github.test.ts tests/engines.test.ts tests/manifest.test.ts tests/method-packet.test.ts tests/eval-accounting.test.ts tests/eval-isolation.test.ts tests/eval-history.test.ts tests/eval-benchmark-panels.test.ts tests/eval-funnel-decision.test.ts tests/eval-experiment-core.test.ts tests/eval-experiment.test.ts tests/eval-runtime-image.test.ts tests/eval-runtime-containment.test.ts tests/eval-grading.test.ts tests/eval-corpus.test.ts tests/eval-judge-ledger.test.ts tests/evidence-r1-curation.test.ts tests/telemetry.test.ts",
+    "test": "node --import tsx --test tests/config.test.ts tests/review-result.test.ts tests/github.test.ts tests/engines.test.ts tests/manifest.test.ts tests/method-packet.test.ts tests/eval-accounting.test.ts tests/eval-isolation.test.ts tests/eval-history.test.ts tests/eval-benchmark-panels.test.ts tests/eval-adjudication.test.ts tests/eval-funnel-decision.test.ts tests/eval-experiment-core.test.ts tests/eval-experiment.test.ts tests/eval-runtime-image.test.ts tests/eval-runtime-containment.test.ts tests/eval-grading.test.ts tests/eval-corpus.test.ts tests/eval-judge-ledger.test.ts tests/evidence-r1-curation.test.ts tests/telemetry.test.ts",
     "test:skills": "bash scripts/validate.sh",
-    "validate": "npm run typecheck && npm test && npm run eval:validate-corpus && npm run test:skills && npm run eval:smoke",
+    "validate": "npm run typecheck && npm test && npm run test:evidence-capture && npm run test:historical-truth && npm run test:methodology && npm run eval:validate-corpus && npm run test:skills && npm run eval:smoke",
     "review": "node --import tsx src/index.ts review",
     "post": "node --import tsx src/index.ts post",
     "doctor": "node --import tsx src/index.ts doctor",
@@ -19,6 +22,7 @@
     "eval:grade": "node --import tsx src/index.ts grade",
     "eval:judge": "node --import tsx src/index.ts judge",
     "eval:report": "node --import tsx src/index.ts report",
+    "eval:adjudicate": "node --import tsx src/index.ts adjudicate",
     "eval:funnel-decision": "node --import tsx src/index.ts funnel-decision",
     "eval:validate-corpus": "node --import tsx eval/validate-corpus.ts",
     "eval:admit-corpus": "node --import tsx eval/validate-corpus.ts --require-ready",

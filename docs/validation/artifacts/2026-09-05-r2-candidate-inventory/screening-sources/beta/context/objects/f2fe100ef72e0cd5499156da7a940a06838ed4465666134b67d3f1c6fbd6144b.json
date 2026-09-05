@@ -1,0 +1,417 @@
+[
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/161008243",
+    "pull_request_review_id": 88227029,
+    "id": 161008243,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE2MTAwODI0Mw==",
+    "diff_hunk": "@@ -24,8 +23,9 @@ class UseStrictPlugin {\n \t\t\t\t\t\t// @see https://github.com/webpack/webpack/issues/1970\n \t\t\t\t\t\tconst dep = new ConstDependency(\"\", firstNode.range);\n \t\t\t\t\t\tdep.loc = firstNode.loc;\n-\t\t\t\t\t\tparserInstance.state.current.addDependency(dep);\n-\t\t\t\t\t\tparserInstance.state.module.buildInfo.strict = true;\n+\t\t\t\t\t\tparser.state.current.addDependency(dep);\n+\t\t\t\t\t\tparser.state.module.buildInfo.strict = true;\n+\t\t\t\t\t\tparser.scope.isStrict = true;",
+    "path": "lib/UseStrictPlugin.js",
+    "commit_id": "2cf8660f11eae3a5a432c595ef38a489e963b846",
+    "original_commit_id": "48a1d4467a82c4798865afb04dca3bdc2fc8bc0d",
+    "user": {
+      "login": "sokra",
+      "id": 1365881,
+      "node_id": "MDQ6VXNlcjEzNjU4ODE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sokra",
+      "html_url": "https://github.com/sokra",
+      "followers_url": "https://api.github.com/users/sokra/followers",
+      "following_url": "https://api.github.com/users/sokra/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sokra/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sokra/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sokra/subscriptions",
+      "organizations_url": "https://api.github.com/users/sokra/orgs",
+      "repos_url": "https://api.github.com/users/sokra/repos",
+      "events_url": "https://api.github.com/users/sokra/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sokra/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This seem to be a bit missplaced here. All logic for detecting `parser.scope.isStrict` should be in Parser. Better remove this and add a call to `this.detectStrictMode(statement.body.body);` after `if(this.hooks.program.call(ast, comments) === undefined) {` in `Parser.parse`.",
+    "created_at": "2018-01-11T16:42:31Z",
+    "updated_at": "2018-01-12T08:23:14Z",
+    "html_url": "https://github.com/webpack/webpack/pull/6273#discussion_r161008243",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/6273",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/161008243"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/6273#discussion_r161008243"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/6273"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/161008243/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 28,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 16,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/161008591",
+    "pull_request_review_id": 88227029,
+    "id": 161008591,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE2MTAwODU5MQ==",
+    "diff_hunk": "@@ -1775,6 +1789,8 @@ class Parser extends Tapable {\n \t\tconst oldComments = this.comments;\n \t\tthis.scope = {\n \t\t\tinTry: false,\n+\t\t\tinShorthand: false,\n+\t\t\tisStrict: false,\n \t\t\tdefinitions: new StackedSetMap(),\n \t\t\trenames: new StackedSetMap()\n \t\t};",
+    "path": "lib/Parser.js",
+    "commit_id": "2cf8660f11eae3a5a432c595ef38a489e963b846",
+    "original_commit_id": "48a1d4467a82c4798865afb04dca3bdc2fc8bc0d",
+    "user": {
+      "login": "sokra",
+      "id": 1365881,
+      "node_id": "MDQ6VXNlcjEzNjU4ODE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sokra",
+      "html_url": "https://github.com/sokra",
+      "followers_url": "https://api.github.com/users/sokra/followers",
+      "following_url": "https://api.github.com/users/sokra/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sokra/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sokra/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sokra/subscriptions",
+      "organizations_url": "https://api.github.com/users/sokra/orgs",
+      "repos_url": "https://api.github.com/users/sokra/repos",
+      "events_url": "https://api.github.com/users/sokra/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sokra/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "In HarmonyDetectionsPlugin add a `parser.scope.isStrict = true`, because all ESM modules are in strict mode automatically.",
+    "created_at": "2018-01-11T16:43:37Z",
+    "updated_at": "2018-01-12T08:23:14Z",
+    "html_url": "https://github.com/webpack/webpack/pull/6273#discussion_r161008591",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/6273",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/161008591"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/6273#discussion_r161008591"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/6273"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/161008591/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 1796,
+    "original_line": 1796,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 57,
+    "position": 57,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/161039110",
+    "pull_request_review_id": 88263482,
+    "id": 161039110,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE2MTAzOTExMA==",
+    "diff_hunk": "@@ -1775,6 +1789,8 @@ class Parser extends Tapable {\n \t\tconst oldComments = this.comments;\n \t\tthis.scope = {\n \t\t\tinTry: false,\n+\t\t\tinShorthand: false,\n+\t\t\tisStrict: false,\n \t\t\tdefinitions: new StackedSetMap(),\n \t\t\trenames: new StackedSetMap()\n \t\t};",
+    "path": "lib/Parser.js",
+    "commit_id": "2cf8660f11eae3a5a432c595ef38a489e963b846",
+    "original_commit_id": "48a1d4467a82c4798865afb04dca3bdc2fc8bc0d",
+    "user": {
+      "login": "ooflorent",
+      "id": 168498,
+      "node_id": "MDQ6VXNlcjE2ODQ5OA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/168498?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/ooflorent",
+      "html_url": "https://github.com/ooflorent",
+      "followers_url": "https://api.github.com/users/ooflorent/followers",
+      "following_url": "https://api.github.com/users/ooflorent/following{/other_user}",
+      "gists_url": "https://api.github.com/users/ooflorent/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/ooflorent/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/ooflorent/subscriptions",
+      "organizations_url": "https://api.github.com/users/ooflorent/orgs",
+      "repos_url": "https://api.github.com/users/ooflorent/repos",
+      "events_url": "https://api.github.com/users/ooflorent/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/ooflorent/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "done",
+    "created_at": "2018-01-11T18:35:57Z",
+    "updated_at": "2018-01-12T08:23:14Z",
+    "html_url": "https://github.com/webpack/webpack/pull/6273#discussion_r161039110",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/6273",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/161039110"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/6273#discussion_r161039110"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/6273"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/161039110/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 1796,
+    "original_line": 1796,
+    "side": "RIGHT",
+    "in_reply_to_id": 161008591,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 57,
+    "position": 57,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/161160186",
+    "pull_request_review_id": 88402616,
+    "id": 161160186,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE2MTE2MDE4Ng==",
+    "diff_hunk": "@@ -12,6 +12,88 @@ const getQuery = (request) => {\n \treturn request.indexOf(\"?\") < 0 ? \"\" : request.substr(i);\n };\n \n+const collectDeclaration = (declarations, pattern) => {\n+\tconst stack = [pattern];\n+\twhile(stack.length > 0) {\n+\t\tconst node = stack.pop();\n+\t\tswitch(node.type) {\n+\t\t\tcase \"Identifier\":\n+\t\t\t\tdeclarations.add(node.name);\n+\t\t\t\tbreak;\n+\t\t\tcase \"ArrayPattern\":\n+\t\t\t\tfor(const element of node.elements)\n+\t\t\t\t\tif(element) stack.push(element);\n+\t\t\t\tbreak;\n+\t\t\tcase \"AssignmentPattern\":\n+\t\t\t\tstack.push(node.left);",
+    "path": "lib/ConstPlugin.js",
+    "commit_id": "2cf8660f11eae3a5a432c595ef38a489e963b846",
+    "original_commit_id": "c9ff97fa7eb37477d47c8e86c888610bab68cc87",
+    "user": {
+      "login": "sokra",
+      "id": 1365881,
+      "node_id": "MDQ6VXNlcjEzNjU4ODE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sokra",
+      "html_url": "https://github.com/sokra",
+      "followers_url": "https://api.github.com/users/sokra/followers",
+      "following_url": "https://api.github.com/users/sokra/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sokra/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sokra/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sokra/subscriptions",
+      "organizations_url": "https://api.github.com/users/sokra/orgs",
+      "repos_url": "https://api.github.com/users/sokra/repos",
+      "events_url": "https://api.github.com/users/sokra/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sokra/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Untested",
+    "created_at": "2018-01-12T08:10:35Z",
+    "updated_at": "2018-01-12T08:23:14Z",
+    "html_url": "https://github.com/webpack/webpack/pull/6273#discussion_r161160186",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/6273",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/161160186"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/6273#discussion_r161160186"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/6273"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/161160186/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 28,
+    "original_line": 28,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 17,
+    "position": 17,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/161160216",
+    "pull_request_review_id": 88402616,
+    "id": 161160216,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE2MTE2MDIxNg==",
+    "diff_hunk": "@@ -12,6 +12,88 @@ const getQuery = (request) => {\n \treturn request.indexOf(\"?\") < 0 ? \"\" : request.substr(i);\n };\n \n+const collectDeclaration = (declarations, pattern) => {\n+\tconst stack = [pattern];\n+\twhile(stack.length > 0) {\n+\t\tconst node = stack.pop();\n+\t\tswitch(node.type) {\n+\t\t\tcase \"Identifier\":\n+\t\t\t\tdeclarations.add(node.name);\n+\t\t\t\tbreak;\n+\t\t\tcase \"ArrayPattern\":\n+\t\t\t\tfor(const element of node.elements)\n+\t\t\t\t\tif(element) stack.push(element);\n+\t\t\t\tbreak;\n+\t\t\tcase \"AssignmentPattern\":\n+\t\t\t\tstack.push(node.left);\n+\t\t\t\tbreak;\n+\t\t\tcase \"ObjectPattern\":\n+\t\t\t\tfor(const property of node.properties)\n+\t\t\t\t\tstack.push(property.value);\n+\t\t\t\tbreak;\n+\t\t\tcase \"RestElement\":\n+\t\t\t\tstack.push(node.argument);\n+\t\t\t\tbreak;\n+\t\t}\n+\t}\n+};\n+\n+const getHoistedDeclarations = (branch, includeFunctionDeclarations) => {\n+\tconst declarations = new Set();\n+\tconst stack = [branch];\n+\twhile(stack.length > 0) {\n+\t\tconst node = stack.pop();\n+\t\t// Some node could be `null` or `undefined`.\n+\t\tif(!node)\n+\t\t\tcontinue;\n+\t\tswitch(node.type) {\n+\t\t\t// Walk through control statements to look for hoisted declarations.\n+\t\t\t// Some branches are skipped since they do not allow declarations.\n+\t\t\tcase \"BlockStatement\":\n+\t\t\t\tfor(const stmt of node.body)\n+\t\t\t\t\tstack.push(stmt);\n+\t\t\t\tbreak;\n+\t\t\tcase \"IfStatement\":\n+\t\t\t\tstack.push(node.consequent);\n+\t\t\t\tstack.push(node.alternate);\n+\t\t\t\tbreak;\n+\t\t\tcase \"ForStatement\":\n+\t\t\t\tstack.push(node.init);\n+\t\t\t\tstack.push(node.body);\n+\t\t\t\tbreak;\n+\t\t\tcase \"ForInStatement\":\n+\t\t\tcase \"ForOfStatement\":\n+\t\t\t\tstack.push(node.left);\n+\t\t\t\tstack.push(node.body);\n+\t\t\t\tbreak;\n+\t\t\tcase \"DoWhileStatement\":\n+\t\t\tcase \"WhileStatement\":\n+\t\t\tcase \"LabeledStatement\":\n+\t\t\t\tstack.push(node.body);\n+\t\t\t\tbreak;\n+\t\t\tcase \"SwitchStatement\":\n+\t\t\t\tfor(const cs of node.cases)",
+    "path": "lib/ConstPlugin.js",
+    "commit_id": "2cf8660f11eae3a5a432c595ef38a489e963b846",
+    "original_commit_id": "c9ff97fa7eb37477d47c8e86c888610bab68cc87",
+    "user": {
+      "login": "sokra",
+      "id": 1365881,
+      "node_id": "MDQ6VXNlcjEzNjU4ODE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sokra",
+      "html_url": "https://github.com/sokra",
+      "followers_url": "https://api.github.com/users/sokra/followers",
+      "following_url": "https://api.github.com/users/sokra/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sokra/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sokra/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sokra/subscriptions",
+      "organizations_url": "https://api.github.com/users/sokra/orgs",
+      "repos_url": "https://api.github.com/users/sokra/repos",
+      "events_url": "https://api.github.com/users/sokra/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sokra/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Untested",
+    "created_at": "2018-01-12T08:10:47Z",
+    "updated_at": "2018-01-12T08:23:14Z",
+    "html_url": "https://github.com/webpack/webpack/pull/6273#discussion_r161160216",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/6273",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/161160216"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/6273#discussion_r161160216"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/6273"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/161160216/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 75,
+    "original_line": 75,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 64,
+    "position": 64,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/161160241",
+    "pull_request_review_id": 88402616,
+    "id": 161160241,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE2MTE2MDI0MQ==",
+    "diff_hunk": "@@ -12,6 +12,88 @@ const getQuery = (request) => {\n \treturn request.indexOf(\"?\") < 0 ? \"\" : request.substr(i);\n };\n \n+const collectDeclaration = (declarations, pattern) => {\n+\tconst stack = [pattern];\n+\twhile(stack.length > 0) {\n+\t\tconst node = stack.pop();\n+\t\tswitch(node.type) {\n+\t\t\tcase \"Identifier\":\n+\t\t\t\tdeclarations.add(node.name);\n+\t\t\t\tbreak;\n+\t\t\tcase \"ArrayPattern\":\n+\t\t\t\tfor(const element of node.elements)\n+\t\t\t\t\tif(element) stack.push(element);\n+\t\t\t\tbreak;\n+\t\t\tcase \"AssignmentPattern\":\n+\t\t\t\tstack.push(node.left);\n+\t\t\t\tbreak;\n+\t\t\tcase \"ObjectPattern\":\n+\t\t\t\tfor(const property of node.properties)\n+\t\t\t\t\tstack.push(property.value);\n+\t\t\t\tbreak;\n+\t\t\tcase \"RestElement\":\n+\t\t\t\tstack.push(node.argument);\n+\t\t\t\tbreak;\n+\t\t}\n+\t}\n+};\n+\n+const getHoistedDeclarations = (branch, includeFunctionDeclarations) => {\n+\tconst declarations = new Set();\n+\tconst stack = [branch];\n+\twhile(stack.length > 0) {\n+\t\tconst node = stack.pop();\n+\t\t// Some node could be `null` or `undefined`.\n+\t\tif(!node)\n+\t\t\tcontinue;\n+\t\tswitch(node.type) {\n+\t\t\t// Walk through control statements to look for hoisted declarations.\n+\t\t\t// Some branches are skipped since they do not allow declarations.\n+\t\t\tcase \"BlockStatement\":\n+\t\t\t\tfor(const stmt of node.body)\n+\t\t\t\t\tstack.push(stmt);\n+\t\t\t\tbreak;\n+\t\t\tcase \"IfStatement\":\n+\t\t\t\tstack.push(node.consequent);\n+\t\t\t\tstack.push(node.alternate);\n+\t\t\t\tbreak;\n+\t\t\tcase \"ForStatement\":\n+\t\t\t\tstack.push(node.init);\n+\t\t\t\tstack.push(node.body);\n+\t\t\t\tbreak;\n+\t\t\tcase \"ForInStatement\":\n+\t\t\tcase \"ForOfStatement\":\n+\t\t\t\tstack.push(node.left);\n+\t\t\t\tstack.push(node.body);\n+\t\t\t\tbreak;\n+\t\t\tcase \"DoWhileStatement\":",
+    "path": "lib/ConstPlugin.js",
+    "commit_id": "2cf8660f11eae3a5a432c595ef38a489e963b846",
+    "original_commit_id": "c9ff97fa7eb37477d47c8e86c888610bab68cc87",
+    "user": {
+      "login": "sokra",
+      "id": 1365881,
+      "node_id": "MDQ6VXNlcjEzNjU4ODE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sokra",
+      "html_url": "https://github.com/sokra",
+      "followers_url": "https://api.github.com/users/sokra/followers",
+      "following_url": "https://api.github.com/users/sokra/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sokra/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sokra/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sokra/subscriptions",
+      "organizations_url": "https://api.github.com/users/sokra/orgs",
+      "repos_url": "https://api.github.com/users/sokra/repos",
+      "events_url": "https://api.github.com/users/sokra/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sokra/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "DoWhile -> Untested",
+    "created_at": "2018-01-12T08:10:57Z",
+    "updated_at": "2018-01-12T08:23:14Z",
+    "html_url": "https://github.com/webpack/webpack/pull/6273#discussion_r161160241",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/6273",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/161160241"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/6273#discussion_r161160241"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/6273"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/161160241/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 69,
+    "original_line": 69,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 58,
+    "position": 58,
+    "subject_type": "line"
+  }
+]

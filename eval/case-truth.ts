@@ -30,6 +30,12 @@ export function readCaseGroundTruth(casesDir: string, caseName: string): GroundT
 }
 
 export function parseGroundTruth(value: unknown, label = "ground truth"): GroundTruth {
+  // A partial historical comparison must not silently become a legacy clean
+  // case by dropping its protocol, scope, and metric restrictions.
+  if (value && typeof value === "object" &&
+    (Object.hasOwn(value, "schemaVersion") || Object.hasOwn(value, "scope"))) {
+    throw new Error(`${label} versioned truth requires its protocol-specific reader`);
+  }
   if (!value || typeof value !== "object" || !Array.isArray((value as { bugs?: unknown }).bugs)) {
     throw new Error(`${label} must contain a bugs array`);
   }

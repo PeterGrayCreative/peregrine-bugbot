@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/nestjs/nest/pulls/2402/commits",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T11:57:51.728Z",
+  "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2402/commits?page=1&per_page=100",
+  "sha256": "347e39c3a9b5b39610321258f81304eac1f0722d69747a3d47ebcc02e10a67f3",
+  "bytes": 4111
+}

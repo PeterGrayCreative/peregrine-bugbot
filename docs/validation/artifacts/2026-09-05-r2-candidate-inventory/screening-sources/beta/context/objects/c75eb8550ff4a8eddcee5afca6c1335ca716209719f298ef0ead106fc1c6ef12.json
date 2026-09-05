@@ -1,0 +1,1805 @@
+[
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/147534258",
+    "pull_request_review_id": 72650364,
+    "id": 147534258,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0NzUzNDI1OA==",
+    "diff_hunk": "@@ -8,6 +8,10 @@\n const ConcatSource = require(\"webpack-sources\").ConcatSource;\n const ModuleFilenameHelpers = require(\"./ModuleFilenameHelpers\");\n \n+const validateSchema = require(\"./validateSchema\");",
+    "path": "lib/BannerPlugin.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "6d514398e59fbdcb58bb4f4d646c400e1acada70",
+    "user": {
+      "login": "michael-ciniawsky",
+      "id": 5419992,
+      "node_id": "MDQ6VXNlcjU0MTk5OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5419992?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/michael-ciniawsky",
+      "html_url": "https://github.com/michael-ciniawsky",
+      "followers_url": "https://api.github.com/users/michael-ciniawsky/followers",
+      "following_url": "https://api.github.com/users/michael-ciniawsky/following{/other_user}",
+      "gists_url": "https://api.github.com/users/michael-ciniawsky/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/michael-ciniawsky/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/michael-ciniawsky/subscriptions",
+      "organizations_url": "https://api.github.com/users/michael-ciniawsky/orgs",
+      "repos_url": "https://api.github.com/users/michael-ciniawsky/repos",
+      "events_url": "https://api.github.com/users/michael-ciniawsky/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/michael-ciniawsky/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "@gribnoysup You could use [`schema-utils`](https://github.com/webpack-contrib/schema-utils) for that purpose as standardize way for plugins/loaders. If you need anything feel free to open an issue in `webpack-contrib/schema-utils`\r\n\r\n```js\r\nconst schema = require(\"../schemas/plugins/bannerPluginSchema.json\");\r\nconst validateOptions = require(\"schema-utils\");\r\n\r\nclass Plugin {\r\n  constructor (options) {\r\n     validateOptions(schema, options, `${name}` /* <= Banner Plugin */)\r\n  }\r\n}\r\n```\r\n\r\n### `ValidationError`\r\n\r\n![validationerror](https://user-images.githubusercontent.com/5419992/32128338-29cd12e8-bb7d-11e7-865b-87d89df12bbd.png)\r\n",
+    "created_at": "2017-10-27T23:13:18Z",
+    "updated_at": "2017-11-28T09:05:12Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r147534258",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/147534258"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r147534258"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/147534258/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 11,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/147534758",
+    "pull_request_review_id": 72650364,
+    "id": 147534758,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0NzUzNDc1OA==",
+    "diff_hunk": "@@ -0,0 +1,11 @@\n+\"use strict\";",
+    "path": "lib/util/indent.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "6d514398e59fbdcb58bb4f4d646c400e1acada70",
+    "user": {
+      "login": "michael-ciniawsky",
+      "id": 5419992,
+      "node_id": "MDQ6VXNlcjU0MTk5OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5419992?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/michael-ciniawsky",
+      "html_url": "https://github.com/michael-ciniawsky",
+      "followers_url": "https://api.github.com/users/michael-ciniawsky/followers",
+      "following_url": "https://api.github.com/users/michael-ciniawsky/following{/other_user}",
+      "gists_url": "https://api.github.com/users/michael-ciniawsky/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/michael-ciniawsky/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/michael-ciniawsky/subscriptions",
+      "organizations_url": "https://api.github.com/users/michael-ciniawsky/orgs",
+      "repos_url": "https://api.github.com/users/michael-ciniawsky/repos",
+      "events_url": "https://api.github.com/users/michael-ciniawsky/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/michael-ciniawsky/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This file shouldn't be necessary with `schema-utils`",
+    "created_at": "2017-10-27T23:18:12Z",
+    "updated_at": "2017-11-28T09:05:12Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r147534758",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/147534758"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r147534758"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/147534758/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 1,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/147534772",
+    "pull_request_review_id": 72650364,
+    "id": 147534772,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0NzUzNDc3Mg==",
+    "diff_hunk": "@@ -0,0 +1,20 @@\n+\"use strict\";",
+    "path": "lib/util/getSchemaPart.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "6d514398e59fbdcb58bb4f4d646c400e1acada70",
+    "user": {
+      "login": "michael-ciniawsky",
+      "id": 5419992,
+      "node_id": "MDQ6VXNlcjU0MTk5OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5419992?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/michael-ciniawsky",
+      "html_url": "https://github.com/michael-ciniawsky",
+      "followers_url": "https://api.github.com/users/michael-ciniawsky/followers",
+      "following_url": "https://api.github.com/users/michael-ciniawsky/following{/other_user}",
+      "gists_url": "https://api.github.com/users/michael-ciniawsky/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/michael-ciniawsky/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/michael-ciniawsky/subscriptions",
+      "organizations_url": "https://api.github.com/users/michael-ciniawsky/orgs",
+      "repos_url": "https://api.github.com/users/michael-ciniawsky/repos",
+      "events_url": "https://api.github.com/users/michael-ciniawsky/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/michael-ciniawsky/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This file shouldn't be necessary with `schema-utils`",
+    "created_at": "2017-10-27T23:18:23Z",
+    "updated_at": "2017-11-28T09:05:12Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r147534772",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/147534772"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r147534772"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/147534772/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 1,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/147534780",
+    "pull_request_review_id": 72650364,
+    "id": 147534780,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0NzUzNDc4MA==",
+    "diff_hunk": "@@ -0,0 +1,54 @@\n+\"use strict\";",
+    "path": "lib/util/formatSchema.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "6d514398e59fbdcb58bb4f4d646c400e1acada70",
+    "user": {
+      "login": "michael-ciniawsky",
+      "id": 5419992,
+      "node_id": "MDQ6VXNlcjU0MTk5OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5419992?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/michael-ciniawsky",
+      "html_url": "https://github.com/michael-ciniawsky",
+      "followers_url": "https://api.github.com/users/michael-ciniawsky/followers",
+      "following_url": "https://api.github.com/users/michael-ciniawsky/following{/other_user}",
+      "gists_url": "https://api.github.com/users/michael-ciniawsky/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/michael-ciniawsky/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/michael-ciniawsky/subscriptions",
+      "organizations_url": "https://api.github.com/users/michael-ciniawsky/orgs",
+      "repos_url": "https://api.github.com/users/michael-ciniawsky/repos",
+      "events_url": "https://api.github.com/users/michael-ciniawsky/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/michael-ciniawsky/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This file shouldn't be necessary with `schema-utils`",
+    "created_at": "2017-10-27T23:18:31Z",
+    "updated_at": "2017-11-28T09:05:12Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r147534780",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/147534780"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r147534780"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/147534780/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 1,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/147534804",
+    "pull_request_review_id": 72650364,
+    "id": 147534804,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0NzUzNDgwNA==",
+    "diff_hunk": "@@ -0,0 +1,21 @@\n+\"use strict\";",
+    "path": "lib/util/getSchemaPartText.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "6d514398e59fbdcb58bb4f4d646c400e1acada70",
+    "user": {
+      "login": "michael-ciniawsky",
+      "id": 5419992,
+      "node_id": "MDQ6VXNlcjU0MTk5OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5419992?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/michael-ciniawsky",
+      "html_url": "https://github.com/michael-ciniawsky",
+      "followers_url": "https://api.github.com/users/michael-ciniawsky/followers",
+      "following_url": "https://api.github.com/users/michael-ciniawsky/following{/other_user}",
+      "gists_url": "https://api.github.com/users/michael-ciniawsky/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/michael-ciniawsky/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/michael-ciniawsky/subscriptions",
+      "organizations_url": "https://api.github.com/users/michael-ciniawsky/orgs",
+      "repos_url": "https://api.github.com/users/michael-ciniawsky/repos",
+      "events_url": "https://api.github.com/users/michael-ciniawsky/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/michael-ciniawsky/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This file shouldn't be necessary with `schema-utils`",
+    "created_at": "2017-10-27T23:18:51Z",
+    "updated_at": "2017-11-28T09:05:12Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r147534804",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/147534804"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r147534804"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/147534804/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 1,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/147555819",
+    "pull_request_review_id": 72673279,
+    "id": 147555819,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0NzU1NTgxOQ==",
+    "diff_hunk": "@@ -8,6 +8,10 @@\n const ConcatSource = require(\"webpack-sources\").ConcatSource;\n const ModuleFilenameHelpers = require(\"./ModuleFilenameHelpers\");\n \n+const validateSchema = require(\"./validateSchema\");",
+    "path": "lib/BannerPlugin.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "6d514398e59fbdcb58bb4f4d646c400e1acada70",
+    "user": {
+      "login": "gribnoysup",
+      "id": 5036933,
+      "node_id": "MDQ6VXNlcjUwMzY5MzM=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5036933?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/gribnoysup",
+      "html_url": "https://github.com/gribnoysup",
+      "followers_url": "https://api.github.com/users/gribnoysup/followers",
+      "following_url": "https://api.github.com/users/gribnoysup/following{/other_user}",
+      "gists_url": "https://api.github.com/users/gribnoysup/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/gribnoysup/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/gribnoysup/subscriptions",
+      "organizations_url": "https://api.github.com/users/gribnoysup/orgs",
+      "repos_url": "https://api.github.com/users/gribnoysup/repos",
+      "events_url": "https://api.github.com/users/gribnoysup/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/gribnoysup/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "@michael-ciniawsky almost done with making requested changes, but I think I'm blocked by https://github.com/webpack-contrib/schema-utils/issues/3 at the moment 😿\r\n\r\nI made a PR with the possible solution!",
+    "created_at": "2017-10-28T14:38:15Z",
+    "updated_at": "2017-11-28T09:05:12Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r147555819",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/147555819"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r147555819"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/147555819/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 11,
+    "side": "RIGHT",
+    "in_reply_to_id": 147534258,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/147563890",
+    "pull_request_review_id": 72681010,
+    "id": 147563890,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0NzU2Mzg5MA==",
+    "diff_hunk": "@@ -8,6 +8,10 @@\n const ConcatSource = require(\"webpack-sources\").ConcatSource;\n const ModuleFilenameHelpers = require(\"./ModuleFilenameHelpers\");\n \n+const validateSchema = require(\"./validateSchema\");",
+    "path": "lib/BannerPlugin.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "6d514398e59fbdcb58bb4f4d646c400e1acada70",
+    "user": {
+      "login": "michael-ciniawsky",
+      "id": 5419992,
+      "node_id": "MDQ6VXNlcjU0MTk5OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5419992?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/michael-ciniawsky",
+      "html_url": "https://github.com/michael-ciniawsky",
+      "followers_url": "https://api.github.com/users/michael-ciniawsky/followers",
+      "following_url": "https://api.github.com/users/michael-ciniawsky/following{/other_user}",
+      "gists_url": "https://api.github.com/users/michael-ciniawsky/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/michael-ciniawsky/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/michael-ciniawsky/subscriptions",
+      "organizations_url": "https://api.github.com/users/michael-ciniawsky/orgs",
+      "repos_url": "https://api.github.com/users/michael-ciniawsky/repos",
+      "events_url": "https://api.github.com/users/michael-ciniawsky/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/michael-ciniawsky/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I will try to get your PR in as soon as possible 😛  thx again ",
+    "created_at": "2017-10-28T20:36:48Z",
+    "updated_at": "2017-11-28T09:05:12Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r147563890",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/147563890"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r147563890"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/147563890/reactions",
+      "total_count": 1,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 1,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 11,
+    "side": "RIGHT",
+    "in_reply_to_id": 147534258,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/148036515",
+    "pull_request_review_id": 73217520,
+    "id": 148036515,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0ODAzNjUxNQ==",
+    "diff_hunk": "@@ -116,6 +117,7 @@\n     \"cover:unit\": \"node --max-old-space-size=4096 --harmony --trace-deprecation ./node_modules/istanbul/lib/cli.js cover --report none node_modules/mocha/bin/_mocha -- test/*.unittest.js\",\n     \"cover:report\": \"istanbul report\",\n     \"cover:report-min\": \"istanbul report --report lcovonly\",\n-    \"publish-patch\": \"npm run lint && npm run beautify-lint && mocha && npm version patch && git push && git push --tags && npm publish\"\n+    \"publish-patch\": \"npm run lint && npm run beautify-lint && mocha && npm version patch && git push && git push --tags && npm publish\",\n+    \"webpack-defaults\": \"webpack-defaults\"",
+    "path": "package.json",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "9d535045ce422b8fdbdfcdbf517469c7052d8857",
+    "user": {
+      "login": "michael-ciniawsky",
+      "id": 5419992,
+      "node_id": "MDQ6VXNlcjU0MTk5OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5419992?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/michael-ciniawsky",
+      "html_url": "https://github.com/michael-ciniawsky",
+      "followers_url": "https://api.github.com/users/michael-ciniawsky/followers",
+      "following_url": "https://api.github.com/users/michael-ciniawsky/following{/other_user}",
+      "gists_url": "https://api.github.com/users/michael-ciniawsky/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/michael-ciniawsky/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/michael-ciniawsky/subscriptions",
+      "organizations_url": "https://api.github.com/users/michael-ciniawsky/orgs",
+      "repos_url": "https://api.github.com/users/michael-ciniawsky/repos",
+      "events_url": "https://api.github.com/users/michael-ciniawsky/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/michael-ciniawsky/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Why is this needed ?  That's the boilerplate for repos we use at `webpack-contrib` which doesn't apply here :)",
+    "created_at": "2017-10-31T15:41:50Z",
+    "updated_at": "2017-11-28T09:05:12Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r148036515",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/148036515"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r148036515"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/148036515/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 121,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 14,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/148040510",
+    "pull_request_review_id": 73222425,
+    "id": 148040510,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0ODA0MDUxMA==",
+    "diff_hunk": "@@ -116,6 +117,7 @@\n     \"cover:unit\": \"node --max-old-space-size=4096 --harmony --trace-deprecation ./node_modules/istanbul/lib/cli.js cover --report none node_modules/mocha/bin/_mocha -- test/*.unittest.js\",\n     \"cover:report\": \"istanbul report\",\n     \"cover:report-min\": \"istanbul report --report lcovonly\",\n-    \"publish-patch\": \"npm run lint && npm run beautify-lint && mocha && npm version patch && git push && git push --tags && npm publish\"\n+    \"publish-patch\": \"npm run lint && npm run beautify-lint && mocha && npm version patch && git push && git push --tags && npm publish\",\n+    \"webpack-defaults\": \"webpack-defaults\"",
+    "path": "package.json",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "9d535045ce422b8fdbdfcdbf517469c7052d8857",
+    "user": {
+      "login": "gribnoysup",
+      "id": 5036933,
+      "node_id": "MDQ6VXNlcjUwMzY5MzM=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5036933?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/gribnoysup",
+      "html_url": "https://github.com/gribnoysup",
+      "followers_url": "https://api.github.com/users/gribnoysup/followers",
+      "following_url": "https://api.github.com/users/gribnoysup/following{/other_user}",
+      "gists_url": "https://api.github.com/users/gribnoysup/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/gribnoysup/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/gribnoysup/subscriptions",
+      "organizations_url": "https://api.github.com/users/gribnoysup/orgs",
+      "repos_url": "https://api.github.com/users/gribnoysup/repos",
+      "events_url": "https://api.github.com/users/gribnoysup/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/gribnoysup/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "@michael-ciniawsky Sorry! Didn't notice this change at first. I removed it in the latest commit, this is no longer in the branch.\r\n\r\nWhen I was testing with the `schema-utils` installed from the git tag version, I had to build it manually inside of `node_modules` and somehow build step added this line to `package.json`, still don't really understand why this happened 😅",
+    "created_at": "2017-10-31T15:54:33Z",
+    "updated_at": "2017-11-28T09:05:12Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r148040510",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/148040510"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r148040510"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/148040510/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 121,
+    "side": "RIGHT",
+    "in_reply_to_id": 148036515,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 14,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/148355497",
+    "pull_request_review_id": 73583423,
+    "id": 148355497,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0ODM1NTQ5Nw==",
+    "diff_hunk": "@@ -53,12 +56,9 @@ class SourceMapDevToolPlugin {\n \tconstructor(options) {\n \t\tif(arguments.length > 1)\n \t\t\tthrow new Error(\"SourceMapDevToolPlugin only takes one argument (pass an options object)\");\n-\t\t// TODO: remove in webpack 3\n-\t\tif(typeof options === \"string\") {\n-\t\t\toptions = {\n-\t\t\t\tsourceMapFilename: options\n-\t\t\t};\n-\t\t}\n+\n+\t\tvalidateOptions(sourceMapDevToolPluginSchema, options || {}, \"Source Map Dev Tool Plugin\");",
+    "path": "lib/SourceMapDevToolPlugin.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "2a92bf7c581a1933d082f6a37572e3d6978a5fb6",
+    "user": {
+      "login": "michael-ciniawsky",
+      "id": 5419992,
+      "node_id": "MDQ6VXNlcjU0MTk5OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5419992?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/michael-ciniawsky",
+      "html_url": "https://github.com/michael-ciniawsky",
+      "followers_url": "https://api.github.com/users/michael-ciniawsky/followers",
+      "following_url": "https://api.github.com/users/michael-ciniawsky/following{/other_user}",
+      "gists_url": "https://api.github.com/users/michael-ciniawsky/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/michael-ciniawsky/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/michael-ciniawsky/subscriptions",
+      "organizations_url": "https://api.github.com/users/michael-ciniawsky/orgs",
+      "repos_url": "https://api.github.com/users/michael-ciniawsky/repos",
+      "events_url": "https://api.github.com/users/michael-ciniawsky/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/michael-ciniawsky/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "`SourceMap DevTool Plugin` ?",
+    "created_at": "2017-11-01T19:09:52Z",
+    "updated_at": "2017-11-28T09:05:12Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r148355497",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/148355497"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r148355497"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/148355497/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 60,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 21,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150086436",
+    "pull_request_review_id": 75586245,
+    "id": 150086436,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1MDA4NjQzNg==",
+    "diff_hunk": "@@ -0,0 +1,23 @@\n+{\n+\t\"id\": \"AggressiveSplittingPlugin\",",
+    "path": "schemas/plugins/optimize/aggressiveSplittingPluginSchema.json",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "2a92bf7c581a1933d082f6a37572e3d6978a5fb6",
+    "user": {
+      "login": "michael-ciniawsky",
+      "id": 5419992,
+      "node_id": "MDQ6VXNlcjU0MTk5OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5419992?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/michael-ciniawsky",
+      "html_url": "https://github.com/michael-ciniawsky",
+      "followers_url": "https://api.github.com/users/michael-ciniawsky/followers",
+      "following_url": "https://api.github.com/users/michael-ciniawsky/following{/other_user}",
+      "gists_url": "https://api.github.com/users/michael-ciniawsky/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/michael-ciniawsky/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/michael-ciniawsky/subscriptions",
+      "organizations_url": "https://api.github.com/users/michael-ciniawsky/orgs",
+      "repos_url": "https://api.github.com/users/michael-ciniawsky/repos",
+      "events_url": "https://api.github.com/users/michael-ciniawsky/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/michael-ciniawsky/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Please use just one tab for indent ",
+    "created_at": "2017-11-09T21:06:01Z",
+    "updated_at": "2017-11-28T09:05:12Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r150086436",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/150086436"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r150086436"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150086436/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 2,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 2,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150086821",
+    "pull_request_review_id": 75586675,
+    "id": 150086821,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1MDA4NjgyMQ==",
+    "diff_hunk": "@@ -0,0 +1,23 @@\n+{\n+\t\"id\": \"AggressiveSplittingPlugin\",",
+    "path": "schemas/plugins/optimize/aggressiveSplittingPluginSchema.json",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "2a92bf7c581a1933d082f6a37572e3d6978a5fb6",
+    "user": {
+      "login": "michael-ciniawsky",
+      "id": 5419992,
+      "node_id": "MDQ6VXNlcjU0MTk5OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5419992?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/michael-ciniawsky",
+      "html_url": "https://github.com/michael-ciniawsky",
+      "followers_url": "https://api.github.com/users/michael-ciniawsky/followers",
+      "following_url": "https://api.github.com/users/michael-ciniawsky/following{/other_user}",
+      "gists_url": "https://api.github.com/users/michael-ciniawsky/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/michael-ciniawsky/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/michael-ciniawsky/subscriptions",
+      "organizations_url": "https://api.github.com/users/michael-ciniawsky/orgs",
+      "repos_url": "https://api.github.com/users/michael-ciniawsky/repos",
+      "events_url": "https://api.github.com/users/michael-ciniawsky/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/michael-ciniawsky/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "If this is just github displaying tabs `\\t` weirdly forget what I said then 😛 ",
+    "created_at": "2017-11-09T21:07:33Z",
+    "updated_at": "2017-11-28T09:05:12Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r150086821",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/150086821"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r150086821"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150086821/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 2,
+    "side": "RIGHT",
+    "in_reply_to_id": 150086436,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 2,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150164701",
+    "pull_request_review_id": 75675070,
+    "id": 150164701,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1MDE2NDcwMQ==",
+    "diff_hunk": "@@ -0,0 +1,23 @@\n+{\n+\t\"id\": \"AggressiveSplittingPlugin\",",
+    "path": "schemas/plugins/optimize/aggressiveSplittingPluginSchema.json",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "2a92bf7c581a1933d082f6a37572e3d6978a5fb6",
+    "user": {
+      "login": "gribnoysup",
+      "id": 5036933,
+      "node_id": "MDQ6VXNlcjUwMzY5MzM=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5036933?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/gribnoysup",
+      "html_url": "https://github.com/gribnoysup",
+      "followers_url": "https://api.github.com/users/gribnoysup/followers",
+      "following_url": "https://api.github.com/users/gribnoysup/following{/other_user}",
+      "gists_url": "https://api.github.com/users/gribnoysup/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/gribnoysup/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/gribnoysup/subscriptions",
+      "organizations_url": "https://api.github.com/users/gribnoysup/orgs",
+      "repos_url": "https://api.github.com/users/gribnoysup/repos",
+      "events_url": "https://api.github.com/users/gribnoysup/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/gribnoysup/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I think this is just a github issue 😸 \r\n\r\n![image](https://user-images.githubusercontent.com/5036933/32646409-bc26b7ce-c5ec-11e7-95dc-0f7a94d3937a.png)\r\n",
+    "created_at": "2017-11-10T06:57:20Z",
+    "updated_at": "2017-11-28T09:05:13Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r150164701",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/150164701"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r150164701"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150164701/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 2,
+    "side": "RIGHT",
+    "in_reply_to_id": 150086436,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 2,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150397686",
+    "pull_request_review_id": 75946321,
+    "id": 150397686,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1MDM5NzY4Ng==",
+    "diff_hunk": "@@ -0,0 +1,13 @@\n+\"use strict\";\n+\n+module.exports = function testAssertions(code, stdout, stderr) {\n+\tcode.should.be.eql(1);\n+\tstdout.should.be.empty();\n+\n+\tstderr[1].should.containEql(\"Commons Chunk Plugin Invalid Options\");\n+\n+\tstderr[3].should.containEql(\"options should be string\");",
+    "path": "test/binCases/errors/plugin-options-validation/test.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "5948006a90ee04448367e3143f343414730b336a",
+    "user": {
+      "login": "michael-ciniawsky",
+      "id": 5419992,
+      "node_id": "MDQ6VXNlcjU0MTk5OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5419992?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/michael-ciniawsky",
+      "html_url": "https://github.com/michael-ciniawsky",
+      "followers_url": "https://api.github.com/users/michael-ciniawsky/followers",
+      "following_url": "https://api.github.com/users/michael-ciniawsky/following{/other_user}",
+      "gists_url": "https://api.github.com/users/michael-ciniawsky/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/michael-ciniawsky/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/michael-ciniawsky/subscriptions",
+      "organizations_url": "https://api.github.com/users/michael-ciniawsky/orgs",
+      "repos_url": "https://api.github.com/users/michael-ciniawsky/repos",
+      "events_url": "https://api.github.com/users/michael-ciniawsky/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/michael-ciniawsky/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Did you mean this messages by 'not good ' ? 😛 These are `defaults` ? Do we need them ? Based on the `webpack.config.js` I only expected `\"options['foo'] should NOT have additional properties\"` here, but that's up to sokra to decide",
+    "created_at": "2017-11-12T01:05:50Z",
+    "updated_at": "2017-11-28T09:05:13Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r150397686",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/150397686"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r150397686"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150397686/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 9,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 9,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150403698",
+    "pull_request_review_id": 75952767,
+    "id": 150403698,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1MDQwMzY5OA==",
+    "diff_hunk": "@@ -0,0 +1,13 @@\n+\"use strict\";\n+\n+module.exports = function testAssertions(code, stdout, stderr) {\n+\tcode.should.be.eql(1);\n+\tstdout.should.be.empty();\n+\n+\tstderr[1].should.containEql(\"Commons Chunk Plugin Invalid Options\");\n+\n+\tstderr[3].should.containEql(\"options should be string\");",
+    "path": "test/binCases/errors/plugin-options-validation/test.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "5948006a90ee04448367e3143f343414730b336a",
+    "user": {
+      "login": "gribnoysup",
+      "id": 5036933,
+      "node_id": "MDQ6VXNlcjUwMzY5MzM=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5036933?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/gribnoysup",
+      "html_url": "https://github.com/gribnoysup",
+      "followers_url": "https://api.github.com/users/gribnoysup/followers",
+      "following_url": "https://api.github.com/users/gribnoysup/following{/other_user}",
+      "gists_url": "https://api.github.com/users/gribnoysup/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/gribnoysup/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/gribnoysup/subscriptions",
+      "organizations_url": "https://api.github.com/users/gribnoysup/orgs",
+      "repos_url": "https://api.github.com/users/gribnoysup/repos",
+      "events_url": "https://api.github.com/users/gribnoysup/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/gribnoysup/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Yes, this and the actual error messaging format is not very good. \r\n\r\nIn this case, `oneOf` is the reason for these error messages: CommonsChunkPlugin options could be a string, array or object and AJV reports errors on every `oneOf` as if all of them failed. \r\n\r\nThis happens in the webpackOptionValidation too, but the [error messaging there is changed](https://github.com/webpack/webpack/blob/master/lib/WebpackOptionsValidationError.js#L144) in a way, that will print this error more nicely. It will look something like this:\r\n\r\n```\r\noptions has an unknown property 'foo'\r\n\r\noptions should be one of these:\r\n* string\r\n* array[string]\r\n* { <object schema> }\r\n```\r\n",
+    "created_at": "2017-11-12T08:46:42Z",
+    "updated_at": "2017-11-28T09:05:13Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r150403698",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/150403698"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r150403698"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150403698/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 9,
+    "side": "RIGHT",
+    "in_reply_to_id": 150397686,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 9,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150406730",
+    "pull_request_review_id": 75955604,
+    "id": 150406730,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1MDQwNjczMA==",
+    "diff_hunk": "@@ -41,115 +41,114 @@ function convertToArrayOfLines(outputArray) {\n \treturn outputArray.join(\"\").split(\"\\n\");\n }\n \n+function findTestsRecursive(readPath) {\n+\tconst entries = fs.readdirSync(readPath);\n+\tconst isAnyTests = entries.indexOf(\"test.js\") !== -1;\n+\n+\tconst folders = entries\n+\t\t.map(entry => path.join(readPath, entry))\n+\t\t.filter(entry => fs.statSync(entry).isDirectory());\n+\n+\tconst result = isAnyTests ? [readPath] : []\n+\n+\treturn result.concat(folders.map(findTestsRecursive).reduce((acc, list) => acc.concat(list), []));\n+}\n+\n const casesPath = path.join(__dirname, \"binCases\");\n const defaultArgs = loadOptsFile(path.join(casesPath, \"test.opts\"));\n \n describe(\"BinTestCases\", function() {\n-\tconst categoryDirectories = fs.readdirSync(casesPath).filter((folder) => {\n-\t\treturn fs.statSync(path.join(casesPath, folder)).isDirectory();\n-\t});\n+\tconst tests = findTestsRecursive(casesPath);\n+\n+\ttests.forEach(testDirectory => {\n+\t\tconst testName = testDirectory.replace(casesPath, \"\");\n+\t\tconst testArgs = getTestSpecificArguments(testDirectory) || defaultArgs;\n+\t\tconst testAssertions = require(path.join(testDirectory, \"test.js\"));\n+\t\tconst outputPath = path.join(path.resolve(casesPath, \"../js/bin\"), testName);\n+\n+\t\tconst cmd = `${path.resolve(process.cwd(), \"bin/webpack.js\")}`;\n+\t\tconst args = testArgs.concat([\"--output-path\", `${outputPath}`]);\n+\t\tconst opts = {\n+\t\t\tcwd: path.resolve(\"./\", testDirectory)\n+\t\t};\n+\n+\t\tconst asyncExists = fs.existsSync(path.join(testDirectory, \"async\"));\n \n-\tconst categories = categoryDirectories.map(function(categoryDirectory) {\n-\t\treturn {\n-\t\t\tname: categoryDirectory,\n-\t\t\ttests: fs.readdirSync(path.join(casesPath, categoryDirectory))\n+\t\tconst env = {\n+\t\t\tstdout: [],\n+\t\t\tstderr: [],\n+\t\t\terror: []\n \t\t};\n-\t});\n \n-\tcategories.forEach(function(category) {\n-\t\tdescribe(category.name, function() {\n-\n-\t\t\tcategory.tests.forEach(function(testName) {\n-\t\t\t\tconst testDirectory = path.join(casesPath, category.name, testName);\n-\t\t\t\tconst testArgs = getTestSpecificArguments(testDirectory) || defaultArgs;\n-\t\t\t\tconst testAssertions = require(path.join(testDirectory, \"test.js\"));\n-\t\t\t\tconst outputPath = path.join(path.resolve(casesPath, \"../js/bin\"), category.name, testName);\n-\n-\t\t\t\tconst cmd = `${path.resolve(process.cwd(), \"bin/webpack.js\")}`;\n-\t\t\t\tconst args = testArgs.concat([\"--output-path\", `${outputPath}`]);\n-\t\t\t\tconst opts = {\n-\t\t\t\t\tcwd: path.resolve(\"./\", testDirectory)\n-\t\t\t\t};\n-\n-\t\t\t\tconst asyncExists = fs.existsSync(path.join(testDirectory, \"async\"));\n-\n-\t\t\t\tconst env = {\n-\t\t\t\t\tstdout: [],\n-\t\t\t\t\tstderr: [],\n-\t\t\t\t\terror: []\n-\t\t\t\t};\n-\n-\t\t\t\tif(asyncExists) {\n-\t\t\t\t\tdescribe(testName, function() {\n-\t\t\t\t\t\tit(\"should run successfully\", function(done) {\n-\t\t\t\t\t\t\tthis.timeout(10000);\n-\t\t\t\t\t\t\tconst child = spawn([cmd].concat(args), opts);\n-\n-\t\t\t\t\t\t\tchild.on(\"close\", function(code) {\n-\t\t\t\t\t\t\t\tenv.code = code;\n-\t\t\t\t\t\t\t});\n-\n-\t\t\t\t\t\t\tchild.on(\"error\", function(error) {\n-\t\t\t\t\t\t\t\tenv.error.push(error);\n-\t\t\t\t\t\t\t});\n-\n-\t\t\t\t\t\t\tchild.stdout.on(\"data\", (data) => {\n-\t\t\t\t\t\t\t\tenv.stdout.push(data);\n-\t\t\t\t\t\t\t});\n-\n-\t\t\t\t\t\t\tchild.stderr.on(\"data\", (data) => {\n-\t\t\t\t\t\t\t\tenv.stderr.push(data);\n-\t\t\t\t\t\t\t});\n-\n-\t\t\t\t\t\t\tsetTimeout(() => {\n-\t\t\t\t\t\t\t\tif(env.code) {\n-\t\t\t\t\t\t\t\t\tdone(`Watch didn't run ${env.error}`);\n-\t\t\t\t\t\t\t\t}\n-\n-\t\t\t\t\t\t\t\tconst stdout = convertToArrayOfLines(env.stdout);\n-\t\t\t\t\t\t\t\tconst stderr = convertToArrayOfLines(env.stderr);\n-\t\t\t\t\t\t\t\ttestAssertions(stdout, stderr, done);\n-\t\t\t\t\t\t\t\tchild.kill();\n-\t\t\t\t\t\t\t}, 8000); // wait a little to get an output\n-\t\t\t\t\t\t});\n+\t\tif(asyncExists) {\n+\t\t\tdescribe(testName, function() {",
+    "path": "test/BinTestCases.test.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "c699c96ca7ead194f3840e0d71469d50c9692078",
+    "user": {
+      "login": "michael-ciniawsky",
+      "id": 5419992,
+      "node_id": "MDQ6VXNlcjU0MTk5OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5419992?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/michael-ciniawsky",
+      "html_url": "https://github.com/michael-ciniawsky",
+      "followers_url": "https://api.github.com/users/michael-ciniawsky/followers",
+      "following_url": "https://api.github.com/users/michael-ciniawsky/following{/other_user}",
+      "gists_url": "https://api.github.com/users/michael-ciniawsky/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/michael-ciniawsky/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/michael-ciniawsky/subscriptions",
+      "organizations_url": "https://api.github.com/users/michael-ciniawsky/orgs",
+      "repos_url": "https://api.github.com/users/michael-ciniawsky/repos",
+      "events_url": "https://api.github.com/users/michael-ciniawsky/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/michael-ciniawsky/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I think all `function()` could be refactored to an arrow, but that's entirely additional chore so feel free to ignore 😛 ",
+    "created_at": "2017-11-12T10:56:06Z",
+    "updated_at": "2017-11-28T09:05:13Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r150406730",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/150406730"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r150406730"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150406730/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 82,
+    "original_line": 84,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 108,
+    "position": 119,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150406752",
+    "pull_request_review_id": 75955604,
+    "id": 150406752,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1MDQwNjc1Mg==",
+    "diff_hunk": "@@ -0,0 +1,13 @@\n+\"use strict\";\n+\n+module.exports = function testAssertions(code, stdout, stderr) {",
+    "path": "test/binCases/errors/validation/plugins/test.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "c699c96ca7ead194f3840e0d71469d50c9692078",
+    "user": {
+      "login": "michael-ciniawsky",
+      "id": 5419992,
+      "node_id": "MDQ6VXNlcjU0MTk5OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5419992?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/michael-ciniawsky",
+      "html_url": "https://github.com/michael-ciniawsky",
+      "followers_url": "https://api.github.com/users/michael-ciniawsky/followers",
+      "following_url": "https://api.github.com/users/michael-ciniawsky/following{/other_user}",
+      "gists_url": "https://api.github.com/users/michael-ciniawsky/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/michael-ciniawsky/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/michael-ciniawsky/subscriptions",
+      "organizations_url": "https://api.github.com/users/michael-ciniawsky/orgs",
+      "repos_url": "https://api.github.com/users/michael-ciniawsky/repos",
+      "events_url": "https://api.github.com/users/michael-ciniawsky/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/michael-ciniawsky/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "```diff\r\n- function testAssertions(code, stdout, stderr) \r\n+ function(code, stdout, stderr) \r\n```",
+    "created_at": "2017-11-12T10:56:51Z",
+    "updated_at": "2017-11-28T09:05:13Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r150406752",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/150406752"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r150406752"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150406752/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 3,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 3,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150406809",
+    "pull_request_review_id": 75955677,
+    "id": 150406809,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1MDQwNjgwOQ==",
+    "diff_hunk": "@@ -0,0 +1,13 @@\n+\"use strict\";\n+\n+module.exports = function testAssertions(code, stdout, stderr) {\n+\tcode.should.be.eql(1);\n+\tstdout.should.be.empty();\n+\n+\tstderr[1].should.containEql(\"Commons Chunk Plugin Invalid Options\");\n+\n+\tstderr[3].should.containEql(\"options should be string\");",
+    "path": "test/binCases/errors/plugin-options-validation/test.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "5948006a90ee04448367e3143f343414730b336a",
+    "user": {
+      "login": "michael-ciniawsky",
+      "id": 5419992,
+      "node_id": "MDQ6VXNlcjU0MTk5OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5419992?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/michael-ciniawsky",
+      "html_url": "https://github.com/michael-ciniawsky",
+      "followers_url": "https://api.github.com/users/michael-ciniawsky/followers",
+      "following_url": "https://api.github.com/users/michael-ciniawsky/following{/other_user}",
+      "gists_url": "https://api.github.com/users/michael-ciniawsky/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/michael-ciniawsky/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/michael-ciniawsky/subscriptions",
+      "organizations_url": "https://api.github.com/users/michael-ciniawsky/orgs",
+      "repos_url": "https://api.github.com/users/michael-ciniawsky/repos",
+      "events_url": "https://api.github.com/users/michael-ciniawsky/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/michael-ciniawsky/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "We can definitely handle `anyOf, oneOf, default` etc in a better way with better messages, `schema-utils` does the minimum atm. If you have something in mind feel free to open an issue or PR if you have the time",
+    "created_at": "2017-11-12T10:59:49Z",
+    "updated_at": "2017-11-28T09:05:13Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r150406809",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/150406809"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r150406809"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150406809/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 9,
+    "side": "RIGHT",
+    "in_reply_to_id": 150397686,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 9,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150406849",
+    "pull_request_review_id": 75955726,
+    "id": 150406849,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1MDQwNjg0OQ==",
+    "diff_hunk": "@@ -0,0 +1,11 @@\n+var path = require(\"path\");",
+    "path": "test/binCases/errors/validation/plugins/webpack.config.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "c699c96ca7ead194f3840e0d71469d50c9692078",
+    "user": {
+      "login": "michael-ciniawsky",
+      "id": 5419992,
+      "node_id": "MDQ6VXNlcjU0MTk5OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5419992?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/michael-ciniawsky",
+      "html_url": "https://github.com/michael-ciniawsky",
+      "followers_url": "https://api.github.com/users/michael-ciniawsky/followers",
+      "following_url": "https://api.github.com/users/michael-ciniawsky/following{/other_user}",
+      "gists_url": "https://api.github.com/users/michael-ciniawsky/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/michael-ciniawsky/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/michael-ciniawsky/subscriptions",
+      "organizations_url": "https://api.github.com/users/michael-ciniawsky/orgs",
+      "repos_url": "https://api.github.com/users/michael-ciniawsky/repos",
+      "events_url": "https://api.github.com/users/michael-ciniawsky/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/michael-ciniawsky/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "`var` => `const`",
+    "created_at": "2017-11-12T11:02:10Z",
+    "updated_at": "2017-11-28T09:05:13Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r150406849",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/150406849"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r150406849"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/150406849/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 1,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/153119662",
+    "pull_request_review_id": 79078659,
+    "id": 153119662,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1MzExOTY2Mg==",
+    "diff_hunk": "@@ -168,7 +170,23 @@ yargs.parse(process.argv.slice(2), (err, argv, output) => {\n \t\targv[\"display\"] = \"verbose\";\n \t}\n \n-\tvar options = require(\"./convert-argv\")(yargs, argv);\n+\ttry {\n+\t\tError.stackTraceLimit = 30;\n+\t\tvar options = require(\"./convert-argv\")(yargs, argv);\n+\t} catch(err) {\n+\t\tvar stack = errorHelpers.cutOffAfterFlag(err.stack, \"webpack.config\");",
+    "path": "bin/webpack.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "b0fe0138eeae9e6a590c3de36eeaf4656f46eb06",
+    "user": {
+      "login": "sokra",
+      "id": 1365881,
+      "node_id": "MDQ6VXNlcjEzNjU4ODE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sokra",
+      "html_url": "https://github.com/sokra",
+      "followers_url": "https://api.github.com/users/sokra/followers",
+      "following_url": "https://api.github.com/users/sokra/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sokra/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sokra/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sokra/subscriptions",
+      "organizations_url": "https://api.github.com/users/sokra/orgs",
+      "repos_url": "https://api.github.com/users/sokra/repos",
+      "events_url": "https://api.github.com/users/sokra/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sokra/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "The user could provide any filename for the webpack.config.js via `--config asdf.js`",
+    "created_at": "2017-11-27T07:17:04Z",
+    "updated_at": "2017-11-28T09:05:13Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r153119662",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/153119662"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r153119662"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/153119662/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 177,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 18,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/153119682",
+    "pull_request_review_id": 79078659,
+    "id": 153119682,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1MzExOTY4Mg==",
+    "diff_hunk": "@@ -6,6 +6,8 @@\n */\n var path = require(\"path\");\n \n+var errorHelpers = require(\"../lib/ErrorHelpers\");",
+    "path": "bin/webpack.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "b0fe0138eeae9e6a590c3de36eeaf4656f46eb06",
+    "user": {
+      "login": "sokra",
+      "id": 1365881,
+      "node_id": "MDQ6VXNlcjEzNjU4ODE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sokra",
+      "html_url": "https://github.com/sokra",
+      "followers_url": "https://api.github.com/users/sokra/followers",
+      "following_url": "https://api.github.com/users/sokra/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sokra/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sokra/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sokra/subscriptions",
+      "organizations_url": "https://api.github.com/users/sokra/orgs",
+      "repos_url": "https://api.github.com/users/sokra/repos",
+      "events_url": "https://api.github.com/users/sokra/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sokra/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "`errorHelpers` -> `ErrorHelpers`",
+    "created_at": "2017-11-27T07:17:16Z",
+    "updated_at": "2017-11-28T09:05:13Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r153119682",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/153119682"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r153119682"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/153119682/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 9,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 4,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/153119784",
+    "pull_request_review_id": 79078659,
+    "id": 153119784,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1MzExOTc4NA==",
+    "diff_hunk": "@@ -168,7 +170,23 @@ yargs.parse(process.argv.slice(2), (err, argv, output) => {\n \t\targv[\"display\"] = \"verbose\";\n \t}\n \n-\tvar options = require(\"./convert-argv\")(yargs, argv);\n+\ttry {\n+\t\tError.stackTraceLimit = 30;",
+    "path": "bin/webpack.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "b0fe0138eeae9e6a590c3de36eeaf4656f46eb06",
+    "user": {
+      "login": "sokra",
+      "id": 1365881,
+      "node_id": "MDQ6VXNlcjEzNjU4ODE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sokra",
+      "html_url": "https://github.com/sokra",
+      "followers_url": "https://api.github.com/users/sokra/followers",
+      "following_url": "https://api.github.com/users/sokra/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sokra/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sokra/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sokra/subscriptions",
+      "organizations_url": "https://api.github.com/users/sokra/orgs",
+      "repos_url": "https://api.github.com/users/sokra/repos",
+      "events_url": "https://api.github.com/users/sokra/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sokra/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Not sure if it's a good idea to set this global variable here.",
+    "created_at": "2017-11-27T07:17:57Z",
+    "updated_at": "2017-11-28T09:05:13Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r153119784",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/153119784"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r153119784"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/153119784/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 174,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 15,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/153119822",
+    "pull_request_review_id": 79078659,
+    "id": 153119822,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1MzExOTgyMg==",
+    "diff_hunk": "@@ -168,7 +170,23 @@ yargs.parse(process.argv.slice(2), (err, argv, output) => {\n \t\targv[\"display\"] = \"verbose\";\n \t}\n \n-\tvar options = require(\"./convert-argv\")(yargs, argv);\n+\ttry {\n+\t\tError.stackTraceLimit = 30;\n+\t\tvar options = require(\"./convert-argv\")(yargs, argv);\n+\t} catch(err) {\n+\t\tvar stack = errorHelpers.cutOffAfterFlag(err.stack, \"webpack.config\");\n+\t\tvar message = err.message + \"\\n\" + errorHelpers.cutOffMultilineMessage(stack, err.message);\n+\n+\t\tif(argv.color)",
+    "path": "bin/webpack.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "b0fe0138eeae9e6a590c3de36eeaf4656f46eb06",
+    "user": {
+      "login": "sokra",
+      "id": 1365881,
+      "node_id": "MDQ6VXNlcjEzNjU4ODE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sokra",
+      "html_url": "https://github.com/sokra",
+      "followers_url": "https://api.github.com/users/sokra/followers",
+      "following_url": "https://api.github.com/users/sokra/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sokra/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sokra/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sokra/subscriptions",
+      "organizations_url": "https://api.github.com/users/sokra/orgs",
+      "repos_url": "https://api.github.com/users/sokra/repos",
+      "events_url": "https://api.github.com/users/sokra/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sokra/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "add `{` + `}` for better readability",
+    "created_at": "2017-11-27T07:18:19Z",
+    "updated_at": "2017-11-28T09:05:13Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r153119822",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/153119822"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r153119822"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/153119822/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 180,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 21,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/153120262",
+    "pull_request_review_id": 79079347,
+    "id": 153120262,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1MzEyMDI2Mg==",
+    "diff_hunk": "@@ -168,7 +170,23 @@ yargs.parse(process.argv.slice(2), (err, argv, output) => {\n \t\targv[\"display\"] = \"verbose\";\n \t}\n \n-\tvar options = require(\"./convert-argv\")(yargs, argv);\n+\ttry {\n+\t\tError.stackTraceLimit = 30;\n+\t\tvar options = require(\"./convert-argv\")(yargs, argv);\n+\t} catch(err) {",
+    "path": "bin/webpack.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "b0fe0138eeae9e6a590c3de36eeaf4656f46eb06",
+    "user": {
+      "login": "sokra",
+      "id": 1365881,
+      "node_id": "MDQ6VXNlcjEzNjU4ODE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sokra",
+      "html_url": "https://github.com/sokra",
+      "followers_url": "https://api.github.com/users/sokra/followers",
+      "following_url": "https://api.github.com/users/sokra/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sokra/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sokra/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sokra/subscriptions",
+      "organizations_url": "https://api.github.com/users/sokra/orgs",
+      "repos_url": "https://api.github.com/users/sokra/repos",
+      "events_url": "https://api.github.com/users/sokra/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sokra/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This catches all errors. \"Normal\" errors from configuration should not be affected by this code. Check error.",
+    "created_at": "2017-11-27T07:22:12Z",
+    "updated_at": "2017-11-28T09:05:13Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r153120262",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/153120262"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r153120262"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/153120262/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 176,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 17,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/153121042",
+    "pull_request_review_id": 79080210,
+    "id": 153121042,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1MzEyMTA0Mg==",
+    "diff_hunk": "@@ -168,7 +170,23 @@ yargs.parse(process.argv.slice(2), (err, argv, output) => {\n \t\targv[\"display\"] = \"verbose\";\n \t}\n \n-\tvar options = require(\"./convert-argv\")(yargs, argv);\n+\ttry {\n+\t\tError.stackTraceLimit = 30;",
+    "path": "bin/webpack.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "b0fe0138eeae9e6a590c3de36eeaf4656f46eb06",
+    "user": {
+      "login": "gribnoysup",
+      "id": 5036933,
+      "node_id": "MDQ6VXNlcjUwMzY5MzM=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5036933?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/gribnoysup",
+      "html_url": "https://github.com/gribnoysup",
+      "followers_url": "https://api.github.com/users/gribnoysup/followers",
+      "following_url": "https://api.github.com/users/gribnoysup/following{/other_user}",
+      "gists_url": "https://api.github.com/users/gribnoysup/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/gribnoysup/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/gribnoysup/subscriptions",
+      "organizations_url": "https://api.github.com/users/gribnoysup/orgs",
+      "repos_url": "https://api.github.com/users/gribnoysup/repos",
+      "events_url": "https://api.github.com/users/gribnoysup/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/gribnoysup/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "@sokra the same thing is happening near webpack compiler call lower in the file: \r\n\r\nhttps://github.com/webpack/webpack/blob/801a25392d99a8ee7f4371c88d7758169b1ac16f/bin/webpack.js#L331\r\n\r\nMaybe I can remove both of them and move it to the top of the file?",
+    "created_at": "2017-11-27T07:27:27Z",
+    "updated_at": "2017-11-28T09:05:13Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r153121042",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/153121042"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r153121042"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/153121042/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 174,
+    "side": "RIGHT",
+    "in_reply_to_id": 153119784,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 15,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/153121165",
+    "pull_request_review_id": 79080370,
+    "id": 153121165,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1MzEyMTE2NQ==",
+    "diff_hunk": "@@ -168,7 +170,23 @@ yargs.parse(process.argv.slice(2), (err, argv, output) => {\n \t\targv[\"display\"] = \"verbose\";\n \t}\n \n-\tvar options = require(\"./convert-argv\")(yargs, argv);\n+\ttry {\n+\t\tError.stackTraceLimit = 30;\n+\t\tvar options = require(\"./convert-argv\")(yargs, argv);\n+\t} catch(err) {\n+\t\tvar stack = errorHelpers.cutOffAfterFlag(err.stack, \"webpack.config\");",
+    "path": "bin/webpack.js",
+    "commit_id": "d7184b281ca0553d42cc9d62642e1a7b4962c8ef",
+    "original_commit_id": "b0fe0138eeae9e6a590c3de36eeaf4656f46eb06",
+    "user": {
+      "login": "gribnoysup",
+      "id": 5036933,
+      "node_id": "MDQ6VXNlcjUwMzY5MzM=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5036933?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/gribnoysup",
+      "html_url": "https://github.com/gribnoysup",
+      "followers_url": "https://api.github.com/users/gribnoysup/followers",
+      "following_url": "https://api.github.com/users/gribnoysup/following{/other_user}",
+      "gists_url": "https://api.github.com/users/gribnoysup/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/gribnoysup/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/gribnoysup/subscriptions",
+      "organizations_url": "https://api.github.com/users/gribnoysup/orgs",
+      "repos_url": "https://api.github.com/users/gribnoysup/repos",
+      "events_url": "https://api.github.com/users/gribnoysup/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/gribnoysup/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I'll go with the marker function approach for now then. It will include some traces from `Module` module but will work with any file name",
+    "created_at": "2017-11-27T07:28:32Z",
+    "updated_at": "2017-11-28T09:05:13Z",
+    "html_url": "https://github.com/webpack/webpack/pull/5892#discussion_r153121165",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/5892",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/153121165"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/5892#discussion_r153121165"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/5892"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/153121165/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 177,
+    "side": "RIGHT",
+    "in_reply_to_id": 153119662,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 18,
+    "position": 1,
+    "subject_type": "line"
+  }
+]
