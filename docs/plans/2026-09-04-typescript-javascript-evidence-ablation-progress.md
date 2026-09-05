@@ -116,6 +116,13 @@ slots yielded seven draft cards (four defect, three comparison) and one sampled
 loss. These are additional preparation records, not seven admissions. The next
 four fixed defect slots and four random slots are in progress.
 
+Comparison batch 3 finished with two more draft cards and two preserved sampled
+losses ([metadata and hashes](../validation/2026-09-05-r2-human-packet-comparison-batch3.md)).
+All four manifest file hashes were independently matched by the integrator;
+the preparer verified 59 receipts, 54 objects, and four offline diffs. Across
+completed new preparation batches, twelve attempted slots now yield nine draft
+cards and three losses; none is admitted. Fixed random slots 009–012 are next.
+
 Commit `f53ff59` adds schedule-order enforcement and neutral grading with 86/86
 focused methodology tests and passing typecheck. GitHub `check` and
 credential-free image build/smoke both passed for that exact head. See the
@@ -123,6 +130,14 @@ credential-free image build/smoke both passed for that exact head. See the
 The next reader must preserve exact model-completed output while classifying
 runner-unverified coverage as incomplete. It must not rewrite model output or
 infer scheduled missing attempts from absent files without a closure seal.
+
+That [execution-to-grading projection reader](../validation/2026-09-05-r3-authenticated-grading-projection.md)
+is now implemented with exact raw-output receipts, versioned status reasons,
+and captured-truth-byte binding. Independent review approved after corrections;
+final local typecheck, 40 historical-contract tests, and 88 methodology tests
+pass. Current runtime evidence still yields incomplete or failed projections,
+never an authenticated complete review. Neutral judge/adjudication/report
+consumers and stopped/missing closure remain unfinished.
 
 An [offline runtime probe](../validation/2026-09-05-r3-offline-codex-read-probe.md)
 found that the accepted image's direct file read works but the CLI's nested

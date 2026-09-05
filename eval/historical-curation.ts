@@ -99,6 +99,8 @@ export interface HistoricalCuration {
 export interface HistoricalCaseAdmission {
   truth: HistoricalGroundTruth;
   curation: HistoricalCuration;
+  /** Bundle derived with the digest of the exact bytes parsed into `truth`. */
+  caseBundleSha256: string;
   diffLines: number;
   /** Declared identities and caller-supplied roster were verified; source reconstruction and human independence remain external gates. */
   verificationBoundary: "declared-bundle-and-policy-only";
@@ -133,7 +135,11 @@ export function readHistoricalCaseAdmission(
   const rawCase = readJson(caseJsonPath, `${spec.id} case.json`);
   assertCaseSpecMatches(rawCase, spec);
   const truthPath = directFile(caseRoot, "ground_truth.json", `${spec.id} ground_truth.json`);
-  const truth = parseHistoricalGroundTruth(readJson(truthPath, `${spec.id} ground_truth.json`), `${spec.id} ground truth`);
+  const truthBytes = readFileSync(truthPath);
+  const truth = parseHistoricalGroundTruth(
+    parseJsonBytes(truthBytes, `${spec.id} ground_truth.json`),
+    `${spec.id} ground truth`,
+  );
   const curationPath = directFile(caseRoot, "curation.json", `${spec.id} curation.json`);
   const curation = parseHistoricalCuration(
     readJson(curationPath, `${spec.id} curation.json`), spec, truth, `${spec.id} curation`,
@@ -169,7 +175,12 @@ export function readHistoricalCaseAdmission(
     throw new Error(`${spec.id} large-diff shape does not match its ${diffLines}-line diff`);
   }
 
-  const bundleSha256 = historicalCaseBundleSha256(caseRoot, spec, curation);
+  const bundleSha256 = historicalCaseBundleSha256FromTruthDigest(
+    caseRoot,
+    spec,
+    curation,
+    createHash("sha256").update(truthBytes).digest("hex"),
+  );
   const trustedIdentities = new Set(policy.curatorIdentitySha256s);
   for (const [index, confirmation] of curation.confirmations.entries()) {
     if (!trustedIdentities.has(confirmation.curatorIdentitySha256)) {
@@ -186,7 +197,8 @@ export function readHistoricalCaseAdmission(
     curation.confirmations.length < policy.minimumIndependentConfirmations) {
     throw new Error(`${spec.id} does not meet the caller-supplied confirmation policy`);
   }
-  return { truth, curation, diffLines, verificationBoundary: "declared-bundle-and-policy-only" };
+  return { truth, curation, caseBundleSha256: bundleSha256, diffLines,
+    verificationBoundary: "declared-bundle-and-policy-only" };
 }
 
 export function historicalCaseBundleSha256(
@@ -195,9 +207,23 @@ export function historicalCaseBundleSha256(
   curation: HistoricalCuration,
 ): string {
   const caseRoot = realpathSync(resolve(caseDir));
+  return historicalCaseBundleSha256FromTruthDigest(
+    caseRoot,
+    spec,
+    curation,
+    fileSha256(directFile(caseRoot, "ground_truth.json", `${spec.id} ground_truth.json`)),
+  );
+}
+
+function historicalCaseBundleSha256FromTruthDigest(
+  caseRoot: string,
+  spec: HistoricalCaseSpec,
+  curation: HistoricalCuration,
+  groundTruthSha256: string,
+): string {
   const artifacts = {
     caseJsonSha256: fileSha256(directFile(caseRoot, "case.json", `${spec.id} case.json`)),
-    groundTruthSha256: fileSha256(directFile(caseRoot, "ground_truth.json", `${spec.id} ground_truth.json`)),
+    groundTruthSha256,
     diffSha256: fileSha256(directFile(caseRoot, spec.diffFile, `${spec.id} diff`)),
     proofSha256: fileSha256(directFile(caseRoot, curation.proof.artifact, `${spec.id} curation proof`)),
   };
@@ -217,6 +243,14 @@ export function historicalCaseBundleSha256(
       },
     }))
     .digest("hex");
+}
+
+function parseJsonBytes(bytes: Buffer, label: string): unknown {
+  try {
+    return JSON.parse(bytes.toString("utf8")) as unknown;
+  } catch (error) {
+    throw new Error(`${label} is invalid: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 export function parseHistoricalCuration(

@@ -68,7 +68,7 @@ function projection(
   review: unknown | null = completedReview,
 ): MethodologyGradingProjection {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     kind: "methodology-grading-projection",
     executionEvidenceSha256: digest("1"),
     inputPlanSha256: digest("2"),
@@ -78,6 +78,13 @@ function projection(
     attemptId: "attempt-000001",
     caseName: "development/case-1234abcd",
     status,
+    statusReason: status === "completed" ? "authenticated-complete" :
+      status === "incomplete" ? "model-unable-to-complete" :
+        status === "failed" ? "review-execution-failed" : "outer-run-missing",
+    lifecycleTerminalSha256: status === "missing" ? null : digest("4"),
+    reviewTerminalSha256: status === "missing" ? null :
+      status === "failed" || status === "completed" || status === "incomplete" ? digest("5") : null,
+    reviewRawOutputSha256: status === "completed" || status === "incomplete" ? digest("6") : null,
     reviewOutputSha256: review === null ? null : methodologyReviewOutputSha256(review),
   };
 }
@@ -205,6 +212,30 @@ test("incomplete attempts retain every emitted finding unresolved but never rece
     findingEvidenceSha256: methodologyFindingEvidenceSha256(finding), classification: "unresolved" }]);
   assert.equal(result.completion.incomplete, 1);
   assert.throws(() => grade(truth(), "incomplete", incompleteReview, verdicts(truth(), [finding])), /cannot receive pair verdicts/);
+});
+
+test("runner-scope incomplete preserves an exact model-completed review without granting credit", () => {
+  const historicalTruth = truth();
+  const gradingProjection = {
+    ...projection(historicalTruth, "incomplete", completedReview),
+    statusReason: "runner-scope-unverified" as const,
+  };
+  const result = gradeMethodologyAttempt({ projection: gradingProjection,
+    expectedProjectionSha256: methodologyGradingProjectionSha256(gradingProjection), truth: historicalTruth,
+    reviewOutput: completedReview, judgeConfigSha256, pairVerdicts: [] });
+  assert.equal(result.findings.length, 1);
+  assert.deepEqual(Object.values(result.rootCauseMatches), [false]);
+  assert.deepEqual(Object.values(result.rootMissAttribution), ["unattributed"]);
+  assert.equal(result.unmatchedFindings[0]?.classification, "unresolved");
+  const forged = { ...gradingProjection, status: "completed" as const };
+  assert.throws(() => methodologyGradingProjectionSha256(forged), /status reason/);
+  const unableReview = { status: "unable-to-complete" as const,
+    limitations: ["Required caller context was unavailable."], findings: [finding] };
+  const wrongReason = { ...projection(historicalTruth, "incomplete", unableReview),
+    statusReason: "runner-scope-unverified" as const };
+  assert.throws(() => gradeMethodologyAttempt({ projection: wrongReason,
+    expectedProjectionSha256: methodologyGradingProjectionSha256(wrongReason), truth: historicalTruth,
+    reviewOutput: unableReview, judgeConfigSha256, pairVerdicts: [] }), /runner-scope incomplete/);
 });
 
 test("partial reviewed comparisons keep every finding unresolved and never establish clean specificity", () => {

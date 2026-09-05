@@ -13,12 +13,11 @@ import {
 } from "./case-isolation.js";
 import { canonicalJson, canonicalJsonSha256 } from "./experiment.js";
 import {
-  historicalCaseBundleSha256,
   historicalTruthScopeSha256,
   readHistoricalCaseAdmission,
   type HistoricalCaseAdmission,
 } from "./historical-curation.js";
-import { HISTORICAL_EFFICACY_PROTOCOL } from "./historical-truth.js";
+import { HISTORICAL_EFFICACY_PROTOCOL, type HistoricalGroundTruth } from "./historical-truth.js";
 import {
   createMethodologyAssetPreparer,
   readMethodologyAssetManifest,
@@ -107,10 +106,39 @@ export interface MaterializedHistoricalMethodologyCase {
 
 type RunnableHistoricalCaseSpec = HistoricalCaseSpec & { corpus: "development" | "validation" };
 
+export interface AuthenticatedHistoricalMethodologyCase {
+  registration: HistoricalMethodologyCaseRegistration;
+  truth: HistoricalGroundTruth;
+}
+
 export function readHistoricalMethodologyCase(
   caseDir: string,
   trustedPolicy: CuratorPolicy,
 ): HistoricalMethodologyCaseRegistration {
+  return readHistoricalMethodologySnapshot(caseDir, trustedPolicy).registration;
+}
+
+/**
+ * Detect changes across two complete authenticated reads and return the latter.
+ * This is not a transactional filesystem snapshot: callers must keep the
+ * trusted corpus store stable while evidence is registered and graded.
+ */
+export function readAuthenticatedHistoricalMethodologyCase(
+  caseDir: string,
+  trustedPolicy: CuratorPolicy,
+): AuthenticatedHistoricalMethodologyCase {
+  const before = readHistoricalMethodologySnapshot(caseDir, trustedPolicy);
+  const after = readHistoricalMethodologySnapshot(caseDir, trustedPolicy);
+  if (canonicalJson(before) !== canonicalJson(after)) {
+    throw new Error("historical methodology case changed across authenticated reads");
+  }
+  return after;
+}
+
+function readHistoricalMethodologySnapshot(
+  caseDir: string,
+  trustedPolicy: CuratorPolicy,
+): AuthenticatedHistoricalMethodologyCase {
   const caseDirectory = realpathSync(resolve(caseDir));
   const spec = historicalSpec(caseDirectory);
   const policy = parseCuratorPolicy(trustedPolicy, "historical methodology trusted policy");
@@ -129,7 +157,7 @@ export function readHistoricalMethodologyCase(
     corpus: spec.corpus,
     caseSpecSha256: fileSha256(directFile(caseDirectory, "case.json", `${spec.id} case.json`)),
     curationSha256: fileSha256(directFile(caseDirectory, "curation.json", `${spec.id} curation.json`)),
-    caseBundleSha256: historicalCaseBundleSha256(caseDirectory, spec, admission.curation),
+    caseBundleSha256: admission.caseBundleSha256,
     trustedPolicySha256: canonicalJsonSha256(policy),
     truth: {
       scopeSha256: historicalTruthScopeSha256(admission.truth),
@@ -158,7 +186,10 @@ export function readHistoricalMethodologyCase(
     },
     activatedLanes: null,
   };
-  return { ...body, registrationSha256: registrationDigest(body) };
+  return {
+    registration: { ...body, registrationSha256: registrationDigest(body) },
+    truth: admission.truth,
+  };
 }
 
 export async function materializeHistoricalMethodologyCase(

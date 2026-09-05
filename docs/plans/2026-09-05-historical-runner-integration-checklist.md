@@ -18,8 +18,14 @@ It checks a caller-held projection digest, exact truth/finding pair verdicts,
 grouped-root credit, ambiguous cross-root reuse, and partial-truth metric
 eligibility. Failed/missing/incomplete attempts remain scheduled misses;
 unmatched findings remain unresolved and missed roots unattributed. This is
-not yet an authenticated execution-to-grade reader, judge ledger, append-only
-adjudication consumer, or reporting pipeline. Those integrations remain open.
+not a judge ledger, append-only adjudication consumer, or reporting pipeline.
+Those integrations remain open. The added execution-to-projection reader now
+authenticates all scheduled lifecycle outcomes and exact raw review receipts,
+using projection version 2. It preserves explicit model inability separately
+from unverified runner scope; neither obtains root credit. A stable trusted
+corpus store is required. See the
+[projection record](../validation/2026-09-05-r3-authenticated-grading-projection.md)
+for review corrections, tests, and the remaining runtime/closure gates.
 
 The new truth, curation, scope, metric-policy, and leakage contracts are tested
 building blocks, not an operational historical benchmark. `runMatrix` still

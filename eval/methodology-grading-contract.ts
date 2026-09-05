@@ -25,6 +25,7 @@ const ATTEMPT_ID = /^attempt-[0-9]{6}$/;
 const CASE_NAME = /^(?:development|validation)\/case-[a-f0-9]{8,32}$/;
 const PROJECTION_KEYS = ["schemaVersion", "kind", "executionEvidenceSha256", "inputPlanSha256",
   "caseRegistrationSha256", "truthSha256", "truthScopeSha256", "attemptId", "caseName", "status",
+  "statusReason", "lifecycleTerminalSha256", "reviewTerminalSha256", "reviewRawOutputSha256",
   "reviewOutputSha256"] as const;
 const VERDICT_KEYS = ["comparisonId", "bugId", "findingIndex", "findingEvidenceSha256", "verdict"] as const;
 
@@ -35,10 +36,13 @@ function historicalRootCauseKey(bug: HistoricalTruthBug): string {
 }
 
 export type MethodologyAttemptStatus = "completed" | "incomplete" | "failed" | "missing";
+export type MethodologyAttemptStatusReason = "authenticated-complete" | "runner-scope-unverified" |
+  "model-unable-to-complete" | "preflight-failed" | "interrupted" | "review-execution-failed" |
+  "outer-run-missing";
 export type MethodologyPairVerdict = "same-root-cause" | "different-root-cause" | "failed";
 
 export interface MethodologyGradingProjection {
-  schemaVersion: 1;
+  schemaVersion: 2;
   kind: "methodology-grading-projection";
   executionEvidenceSha256: string;
   inputPlanSha256: string;
@@ -48,6 +52,10 @@ export interface MethodologyGradingProjection {
   attemptId: string;
   caseName: string;
   status: MethodologyAttemptStatus;
+  statusReason: MethodologyAttemptStatusReason;
+  lifecycleTerminalSha256: string | null;
+  reviewTerminalSha256: string | null;
+  reviewRawOutputSha256: string | null;
   reviewOutputSha256: string | null;
 }
 
@@ -190,8 +198,17 @@ function parseReviewForStatus(projection: MethodologyGradingProjection, value: u
   }
   if (value === null || projection.reviewOutputSha256 === null) throw new Error(`${projection.status} attempt requires review output`);
   const review = parseMethodologyReviewOutput(value);
-  const expected = projection.status === "completed" ? "completed" : "unable-to-complete";
-  if (review.status !== expected) throw new Error(`${projection.status} attempt has inconsistent model completion status`);
+  if (projection.status === "completed" && review.status !== "completed") {
+    throw new Error("completed attempt has inconsistent model completion status");
+  }
+  if (projection.status === "incomplete" && projection.statusReason === "model-unable-to-complete" &&
+      review.status !== "unable-to-complete") {
+    throw new Error("model-unable incomplete attempt has inconsistent model completion status");
+  }
+  if (projection.status === "incomplete" && projection.statusReason === "runner-scope-unverified" &&
+      review.status !== "completed") {
+    throw new Error("runner-scope incomplete attempt has inconsistent model completion status");
+  }
   if (projection.reviewOutputSha256 !== methodologyReviewOutputSha256(review)) throw new Error("grading projection review output digest mismatch");
   return review;
 }
@@ -225,11 +242,30 @@ function parseNoVerdicts(value: unknown): MethodologyPairVerdictInput[] {
 
 function parseProjection(value: unknown): MethodologyGradingProjection {
   const item = strict(value, PROJECTION_KEYS, "grading projection");
-  if (item.schemaVersion !== 1 || item.kind !== "methodology-grading-projection") throw new Error("grading projection kind/version is invalid");
+  if (item.schemaVersion !== 2 || item.kind !== "methodology-grading-projection") throw new Error("grading projection kind/version is invalid");
   for (const key of ["executionEvidenceSha256", "inputPlanSha256", "caseRegistrationSha256", "truthSha256", "truthScopeSha256"] as const) hash(item[key], `grading projection.${key}`);
   if (typeof item.attemptId !== "string" || !ATTEMPT_ID.test(item.attemptId)) throw new Error("grading projection.attemptId is invalid");
   if (typeof item.caseName !== "string" || !CASE_NAME.test(item.caseName)) throw new Error("grading projection.caseName is invalid");
   if (item.status !== "completed" && item.status !== "incomplete" && item.status !== "failed" && item.status !== "missing") throw new Error("grading projection.status is invalid");
+  const validReason = (item.status === "completed" && item.statusReason === "authenticated-complete") ||
+    (item.status === "incomplete" && (item.statusReason === "runner-scope-unverified" || item.statusReason === "model-unable-to-complete")) ||
+    (item.status === "failed" && (item.statusReason === "preflight-failed" || item.statusReason === "interrupted" ||
+      item.statusReason === "review-execution-failed")) ||
+    (item.status === "missing" && item.statusReason === "outer-run-missing");
+  if (!validReason) throw new Error("grading projection status reason is inconsistent");
+  if (item.lifecycleTerminalSha256 !== null) hash(item.lifecycleTerminalSha256, "grading projection.lifecycleTerminalSha256");
+  if (item.reviewTerminalSha256 !== null) hash(item.reviewTerminalSha256, "grading projection.reviewTerminalSha256");
+  if (item.reviewRawOutputSha256 !== null) hash(item.reviewRawOutputSha256, "grading projection.reviewRawOutputSha256");
+  if (item.status === "missing" ? item.lifecycleTerminalSha256 !== null || item.reviewTerminalSha256 !== null :
+      item.lifecycleTerminalSha256 === null) throw new Error("grading projection lifecycle receipt is inconsistent");
+  const needsReviewTerminal = item.status === "completed" || item.status === "incomplete" ||
+    item.statusReason === "review-execution-failed";
+  if (needsReviewTerminal !== (item.reviewTerminalSha256 !== null)) {
+    throw new Error("grading projection review terminal receipt is inconsistent");
+  }
+  if ((item.status === "completed" || item.status === "incomplete") !== (item.reviewRawOutputSha256 !== null)) {
+    throw new Error("grading projection raw review output receipt is inconsistent");
+  }
   if (item.reviewOutputSha256 !== null) hash(item.reviewOutputSha256, "grading projection.reviewOutputSha256");
   return item as unknown as MethodologyGradingProjection;
 }
