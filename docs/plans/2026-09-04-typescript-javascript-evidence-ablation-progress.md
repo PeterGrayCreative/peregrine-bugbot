@@ -108,6 +108,14 @@ The frozen inventory integrity replay still verifies 772 receipts, 686 raw
 objects, exactly 100 attempted slots, and zero admitted cases. Comparison
 preparation continues through fixed slots 005–008; losses remain in the sample.
 
+Defect batch 2 also completed: [two additional draft dossiers](../validation/2026-09-05-r2-human-packet-defect-batch2.md),
+67 authenticated receipts (nine reused), no losses, and 80,777,777 acquired
+bytes within its cap. The integrator independently matched the aggregate
+manifest hash. Across these first two preparation batches per stratum, eight
+slots yielded seven draft cards (four defect, three comparison) and one sampled
+loss. These are additional preparation records, not seven admissions. The next
+four fixed defect slots and four random slots are in progress.
+
 Commit `f53ff59` adds schedule-order enforcement and neutral grading with 86/86
 focused methodology tests and passing typecheck. GitHub `check` and
 credential-free image build/smoke both passed for that exact head. See the
@@ -125,6 +133,11 @@ An alternate read-only backend subsequently passed an offline read and denied
 an inner write under unchanged container restrictions. It is not adopted:
 credential/history isolation, actual model tools, and provider egress remain
 unverified. The original default-backend failure remains preserved in the report.
+The subsequent synthetic credential-path probe **failed read isolation**:
+the alternate read-only backend printed a public canary mounted at the runner's
+`auth.json` destination. No real login file or credential was supplied. This
+rules out adopting the alternate backend alone as a credential-isolation fix;
+runtime scope cannot be upgraded on the strength of its positive read probe.
 
 - [Feasibility report](../validation/2026-09-04-r1-historical-reconstruction-feasibility.md)
 - [Machine-readable manifest](../validation/artifacts/2026-09-04-r1-historical-reconstructions/manifest.json)
