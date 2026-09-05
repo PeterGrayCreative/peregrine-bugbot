@@ -143,3 +143,47 @@ of the historical runner's required credential isolation. A credential-free
 tool boundary or independently enforced read-deny policy must be demonstrated
 before adopting it. No model call, real authentication material, source code,
 production configuration change, or security-policy relaxation was involved.
+
+## Credential-separated tool proposal: offline configuration checks
+
+The next candidate design separates the credential-bearing Codex client from
+a credential-free read/list/search MCP sidecar. HTTP transport requires an
+internal Docker network, **not** `--network none`; the sidecar would have only
+that internal connection. A provider-connected client would need a separately
+verified egress boundary. Neither topology has been implemented or accepted.
+
+Official [MCP documentation](https://learn.chatgpt.com/docs/extend/mcp?surface=cli)
+describes HTTP transport, required-server startup and tool allowlists.
+[Non-interactive documentation](https://learn.chatgpt.com/docs/non-interactive-mode)
+describes ignoring user configuration and execution rules. These are available
+controls, not proof of the proposed container boundary.
+
+Using the same pinned image and restrictive flags above, without any mounts,
+credentials, source trees or network, `codex exec --help` exited zero and
+confirmed `--ignore-user-config`, `--ignore-rules`, `--ephemeral` and
+`--strict-config`. Its help explicitly says ignoring configuration still uses
+`CODEX_HOME` for authentication.
+
+The following offline inventory invocation failed with exit 1:
+
+```text
+codex --strict-config --disable shell_tool --disable unified_exec
+  -c tools.web_search=false
+  -c 'mcp_servers.review.url="http://review-tools:3099/mcp"'
+  -c mcp_servers.review.required=true
+  -c 'mcp_servers.review.enabled_tools=["list_tree","read_file","search_text"]'
+  mcp list --json
+Error: `--strict-config` is not supported for `codex mcp`
+```
+
+Repeating without `--strict-config` exited zero and listed one enabled server,
+`review`, with streamable HTTP URL `http://review-tools:3099/mcp`, no configured
+bearer/header fields, null timeouts and unknown authentication status. The
+listing did **not** expose `required` or `enabled_tools`; it therefore cannot
+verify those controls or the actual model-visible tool catalog. The endpoint
+was deliberately nonexistent and no MCP initialization or model turn ran.
+
+Next proof needed: bounded synthetic sidecar read/search/list and rejection
+tests, internal-network containment, strict execution configuration, and then
+a separately authorized minimal model canary. This inventory check upgrades
+neither runner completeness nor provider-egress claims.
