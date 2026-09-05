@@ -31,10 +31,13 @@ The contract checkpoint at `2ff9961` is pushed; GitHub `check` and
 credential-free build/smoke both passed. These are implementation checks, not
 historical efficacy evidence.
 
-The next local slice adds the four-arm schedule compiler and neutral output
+The next slice adds the four-arm schedule compiler and neutral output
 contracts. Its synthetic test derives 96 review attempts and 144 model calls;
-33 combined focused/legacy tests and typechecking pass. Execution, mounted
-resource neutrality, stage seals, and consumer integration remain pending.
+33 combined focused/legacy tests and typechecking pass. Exact resource
+allowlists now integrate with the existing materializer: nine additional tests
+verify identical raw scope, generic asset isolation, and unchanged defaults.
+Prompt assembly, runtime mount/egress attestation, execution, stage seals, and
+consumer integration remain pending.
 
 - [Feasibility report](../validation/2026-09-04-r1-historical-reconstruction-feasibility.md)
 - [Machine-readable manifest](../validation/artifacts/2026-09-04-r1-historical-reconstructions/manifest.json)

@@ -37,6 +37,30 @@ legacy experiment-core tests pass under Node 22 (33 total); typechecking passes.
 Review corrected path whitespace, credential-like diagnostic keys, duplicate
 cross-corpus case IDs, and oversized schedule allocation risks.
 
+Asset preparation now uses the existing `materializeCase` callback with exact
+per-arm allowlists, without changing the default preparer:
+
+| Arm | Prepared resource files |
+| --- | --- |
+| A / B | Common experimental review schema only |
+| C | Common review schema and neutral discovery schema |
+| D | Common review schema, production breadth schema, and the exact breadth-worker packet |
+
+B/D investigator methodology will be compiled inline; the whole skill tree is
+not mounted as a substitute. Generic arms receive no installed skill, plugin
+manifest, profile, examples, or production finding schema. Manifests bind exact
+paths and copied bytes. Missing/extra files, unexpected empty directories,
+symlinks, and changed bytes reject against the retained manifest. Source bytes
+are leakage-checked and written from the same buffer to avoid a second-read
+race. Sealing that manifest and attesting the actual runtime mount remain
+consumer responsibilities.
+
+Nine focused tests, including real structural-fixture materialization across
+all four arms, pass under Node 22. Base/head/diff/head-tree identities remain
+identical across arms; default materialization retains its prior asset package.
+Independent review approved this bounded slice. These tests do not establish
+historical admission, prompt neutrality, network containment, or efficacy.
+
 - [ ] **Versioned four-arm scheduling.** Extend the existing experiment machinery
   (`src/types.ts`, `eval/experiment.ts`) without reinterpreting legacy
   control/treatment pairs. One case/repeat block contains A, B, C, and D with
