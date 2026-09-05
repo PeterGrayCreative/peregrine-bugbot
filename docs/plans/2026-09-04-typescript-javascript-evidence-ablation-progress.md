@@ -26,6 +26,11 @@ minimal reviewer. Production routing remains frozen.
 
 Active full-program goal: [goal and completion contract](2026-09-05-typescript-javascript-evidence-full-program-goal.md).
 
+Next R3 sequence: [historical runner integration checklist](2026-09-05-historical-runner-integration-checklist.md).
+The contract checkpoint at `2ff9961` is pushed; GitHub `check` and
+credential-free build/smoke both passed. These are implementation checks, not
+historical efficacy evidence.
+
 - [Feasibility report](../validation/2026-09-04-r1-historical-reconstruction-feasibility.md)
 - [Machine-readable manifest](../validation/artifacts/2026-09-04-r1-historical-reconstructions/manifest.json)
 - [Source response hashes](../validation/artifacts/2026-09-04-r1-historical-reconstructions/source-hashes.md)
