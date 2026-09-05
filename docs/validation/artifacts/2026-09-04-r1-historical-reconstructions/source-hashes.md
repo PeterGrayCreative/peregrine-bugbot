@@ -1,9 +1,11 @@
 # Source response hashes
 
 Retrieved at 2026-09-05T02:22:01Z with authenticated `gh api --paginate`.
-Hashes cover the exact CLI response bytes returned at retrieval time. The R2
-collector must archive the corresponding raw bytes in its content-addressed
-evidence store; hashes alone are not a substitute for that store.
+These hashes preserve the initial discovery responses. The later, committed
+raw capture is authoritative and is indexed by
+[`raw/capture-manifest.json`](raw/capture-manifest.json); it uses explicit
+`GET` requests with `per_page=100`, so its response hashes are expected to
+differ from this discovery table.
 
 | Request path | SHA-256 |
 | --- | --- |

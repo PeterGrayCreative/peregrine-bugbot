@@ -13,7 +13,7 @@ minimal reviewer. Production routing remains frozen.
 
 | Step | State | Evidence / remaining gate |
 | --- | --- | --- |
-| R1: collection feasibility | In review | Five exact public review opportunities reconstructed. Secondary curator confirmations and raw API response archival remain before admission. |
+| R1: collection feasibility | In review | Five exact public review opportunities and 20 raw source responses are archived. Secondary curator confirmations remain before admission. |
 | R2: gather and partition | Not started | Requires R1 admission gate. |
 | R3: neutral and truthful harness | Not started | May begin after R1; old artifacts/readers and production defaults must remain intact. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |

@@ -3,8 +3,8 @@
 Date: 2026-09-04 (America/New_York)
 Branch: `research/ts-js-evidence-r1`
 Base: `origin/main` at `fa1ff4dc501f869730f88947ec3ef3cc5fa42037`
-Status: feasibility demonstrated; secondary curation and raw-response archival
-remain before case admission
+Status: feasibility and source archival complete; secondary curation remains
+before case admission
 
 ## Result
 
@@ -51,12 +51,14 @@ tree IDs, binary diff SHA-256 values, source URLs, retrieval time, and API-outpu
 hashes are recorded. Historical source licenses are Apache-2.0 for TypeScript
 and MIT for VS Code, Karma, and Webpack.
 
-The response hashes in
+The initial discovery response hashes in
 [`source-hashes.md`](artifacts/2026-09-04-r1-historical-reconstructions/source-hashes.md)
-bind the bytes returned by the CLI, but R1 did not retain those raw response
-bytes. This is deliberately reported as a gap: R2 must write resumable,
-content-addressed raw responses to the separate curator store. Hashes alone do
-not satisfy the eventual case contract.
+are retained for provenance. The authoritative capture manifest and 20 raw
+public response bodies are committed under
+[`raw/`](artifacts/2026-09-04-r1-historical-reconstructions/raw/). The manifest
+records the exact GET endpoint and parameters, byte length, and SHA-256 for each
+body. The R1-specific capture script rejects a full 100-record response instead
+of silently truncating; a general resumable paginator remains R2 work.
 
 ## Verification strength
 
@@ -106,14 +108,10 @@ but curator time was not instrumented in this pass. R2 must record it.
 
 R1 has established that authentic TS/JS review opportunities can be recovered.
 It has not admitted benchmark cases. Each manifest entry remains `admitted:
-false` because:
+false` because a second accountable curator has not independently confirmed the
+exact review state, causal trace, severity, and truth boundary.
 
-1. a second accountable curator has not independently confirmed the exact
-   review state, causal trace, severity, and truth boundary; and
-2. the raw GitHub response bytes have not been retained in a content-addressed
-   curator store.
-
-The next bounded action is independent secondary curation of these five bundles
-and creation of the raw-response archival convention. If those checks pass, R1
-can close and R2 may begin. Prompt edits, provider calls, the 100-candidate
-inventory, and harness changes remain out of scope until that checkpoint.
+The next bounded action is independent secondary curation of these five
+bundles. If those checks pass, R1 can close and R2 may begin. Prompt edits,
+provider calls, the 100-candidate inventory, and harness changes remain out of
+scope until that checkpoint.
