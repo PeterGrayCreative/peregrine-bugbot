@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 3,
+  "packetVersion": "r1-case-evidence-v3",
+  "packetSha256": "d96904edf56c5b8dac970f59fa95a14c495cde5bd22d50a805e6874df098c2fe",
+  "caseId": "r1-karma-2846",
+  "evidenceBundleSha256": "b777827f70beececaa7d0949fe99e32aa9ac55856dc74f426582ef38fbc765d9",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_alpha",
+  "curatorIdentitySha256": "a2ef45b13113d050014b9cce96a10be569e2114629ceb52ea4668fffa5607cd7",
+  "reviewedAt": "2026-09-05T04:23:07Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": {
+    "sourceAuthenticity": true,
+    "exactHistoricalHead": true,
+    "provenance": true,
+    "causalTrace": true,
+    "reachability": true,
+    "consequence": true,
+    "repairBoundary": true,
+    "truthScope": true,
+    "license": true,
+    "limitations": true
+  },
+  "evidenceNotes": [
+    {
+      "source": "v3 metadata and diffs/r1-karma-2846.diff; canonical karma-runner/karma commits e79463b9 and eab78ff6",
+      "observation": "The reviewed head is a direct child of the base and both trees match. The canonical command produced 9492 bytes and SHA-256 6906187983eb2d3fb76b6b208f2f954fb92b8855c940e9b711347c36e3b79965, byte-identical to the five-section stored patch; logical stats are 5 files, 40 insertions, and 16 deletions."
+    },
+    {
+      "source": "eab78ff6 lib/config.js, lib/file-list.js, lib/file.js, and lib/middleware/karma.js",
+      "observation": "For the declared ordinary _refresh local-file path, Pattern.type is passed into File.type and reaches middleware. CSS and HTML inspect fileType, while script MIME still uses only path.extname and the text/javascript fallback, so extensionless Dart or module input and explicit script overrides are reachable failures."
+    },
+    {
+      "source": "raw/karma-pr-2846-comments.json discussion r147017055 and final head a59b83ef",
+      "observation": "The review is anchored to original commit eab78ff6 and requests the missing script override. Later commits prefer fileType, normalize extension lookup, add supported script values, and validate them, closing the scoped local-refresh middleware root."
+    },
+    {
+      "source": "v2 case document and v3 metadata priorEvidence/supersededDiffClaims",
+      "observation": "The bundle explicitly excludes and explains the absolute-URL UrlPattern/new Url type-loss seam, the watcher-added new File(path) seam, the motivating Google Fonts mismatch, lack of an explicit later script regression assertion, and lack of historical runtime execution. V3 binds the corrected v2 bundle and supersedes both abbreviated diff hashes."
+    },
+    {
+      "source": "eab78ff6 LICENSE",
+      "observation": "The historical repository license is MIT."
+    }
+  ],
+  "exceptions": []
+}

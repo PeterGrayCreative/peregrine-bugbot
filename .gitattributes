@@ -1,3 +1,7 @@
 # Canonical review patches encode unchanged blank context as a single space.
 # That is unified-diff syntax, not accidental trailing whitespace in source.
 eval/cases/**/diff.patch -text -whitespace
+
+# Historical evidence versions are content-addressed, including source-owned
+# whitespace and line endings in stored patches and already sealed prose.
+docs/validation/artifacts/2026-09-04-r1-historical-reconstructions/curation/versions/** -whitespace

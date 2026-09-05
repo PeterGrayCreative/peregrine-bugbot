@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 3,
+  "packetVersion": "r1-case-evidence-v3",
+  "packetSha256": "d96904edf56c5b8dac970f59fa95a14c495cde5bd22d50a805e6874df098c2fe",
+  "caseId": "r1-webpack-8233",
+  "evidenceBundleSha256": "0888b8132a3134e252e2fc722a3bff9a748a32228c6df11ef962fa02dfc8a977",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_alpha",
+  "curatorIdentitySha256": "a2ef45b13113d050014b9cce96a10be569e2114629ceb52ea4668fffa5607cd7",
+  "reviewedAt": "2026-09-05T04:23:07Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": {
+    "sourceAuthenticity": true,
+    "exactHistoricalHead": true,
+    "provenance": true,
+    "causalTrace": true,
+    "reachability": true,
+    "consequence": true,
+    "repairBoundary": true,
+    "truthScope": true,
+    "license": true,
+    "limitations": true
+  },
+  "evidenceNotes": [
+    {
+      "source": "v3 metadata and diffs/r1-webpack-8233.diff; canonical webpack/webpack commits 2228daff and dcd38348",
+      "observation": "The base is an ancestor of the reviewed head and trees match. The canonical command produced 4761 bytes and SHA-256 4313dd3d4567eb8c83fc64cbc2e0065de149a6680f06f3b052908ad00d610921, byte-identical to the three-section stored patch; logical stats are 3 files, 101 insertions, and 1 deletion."
+    },
+    {
+      "source": "dcd38348 lib/ConstPlugin.js, lib/Parser.js, and pre-existing lib/APIPlugin.js",
+      "observation": "The patch adds logical-expression evaluation and branch pruning. APIPlugin registers evaluateTypeof for every replacement key even though __non_webpack_require__ has no REPLACEMENT_TYPES entry, so its runtime-sensitive typeof comparison is incorrectly evaluated as a compile-time boolean and folded."
+    },
+    {
+      "source": "raw/webpack-issue-8829.json and repair commit ab517aa0",
+      "observation": "Issue 8829 records 4.21.0 working, 4.22.0 first broken, and the guard reducing to true. The repair registers evaluateTypeof only when a replacement type exists and adds a test that changes runtime require between a function and undefined, closing the same causal boundary."
+    },
+    {
+      "source": "cases/r1-webpack-8233.md, v3 metadata priorEvidence, and dcd38348 LICENSE",
+      "observation": "The evidence limits the root to logical folding of the runtime-sensitive alias, discloses that the linked PDF.js reproduction was not archived or rerun and that the historical harness was not executed, binds the confirmed v1 bundle, supersedes its abbreviated diff hash, and records the historical MIT license."
+    }
+  ],
+  "exceptions": []
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "packetVersion": "r1-case-evidence-v2",
+  "caseId": "r1-typescript-37467",
+  "evidenceBundleSha256": "4e364e0dde93bfe4a83f8ddb7d2dc859f5b891e82021d405457756dd5aa55e62",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_alpha",
+  "curatorIdentitySha256": "a2ef45b13113d050014b9cce96a10be569e2114629ceb52ea4668fffa5607cd7",
+  "reviewedAt": "2026-09-05T03:58:12Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": { "sourceAuthenticity": true, "exactHistoricalHead": true, "provenance": true, "causalTrace": true, "reachability": true, "consequence": true, "repairBoundary": true, "truthScope": true, "license": true, "limitations": true },
+  "evidenceNotes": [
+    { "source": "microsoft/TypeScript 933c2949..6cbbdbcc and raw/typescript-pr-37467.json", "observation": "The canonical merge base and trees match v2; the regenerated 10-file, 135-addition, 6-deletion binary diff has SHA-256 99d05fda5f0f3173eabf57a55fd41803abaa65cc957607b4d4d72f7a892a9acc and matches the PR API totals." },
+    { "source": "src/services/textChanges.ts, src/services/organizeImports.ts, issue #38507, and repair 428f5a19", "observation": "The generalized non-first-import trivia preservation reaches the pre-existing organize-import deletion path, produces repeated comment growth, and is closed by explicit configurable deletion." },
+    { "source": "superseded v1 packet and v2 limitations", "observation": "V2 accurately preserves and explains that ac3dc0c4 was a non-ancestor whose 15-file two-dot comparison reverse-included unrelated content; runtime non-reproduction and narrow truth scope are explicit." }
+  ],
+  "exceptions": []
+}

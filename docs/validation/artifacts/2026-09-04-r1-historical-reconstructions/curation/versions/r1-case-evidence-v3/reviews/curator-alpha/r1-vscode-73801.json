@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 3,
+  "packetVersion": "r1-case-evidence-v3",
+  "packetSha256": "d96904edf56c5b8dac970f59fa95a14c495cde5bd22d50a805e6874df098c2fe",
+  "caseId": "r1-vscode-73801",
+  "evidenceBundleSha256": "61620061e6bc56d84935001f37af7bb4633ca31dd629bc9d2455c523ce584304",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_alpha",
+  "curatorIdentitySha256": "a2ef45b13113d050014b9cce96a10be569e2114629ceb52ea4668fffa5607cd7",
+  "reviewedAt": "2026-09-05T04:23:07Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": {
+    "sourceAuthenticity": true,
+    "exactHistoricalHead": true,
+    "provenance": true,
+    "causalTrace": true,
+    "reachability": true,
+    "consequence": true,
+    "repairBoundary": true,
+    "truthScope": true,
+    "license": true,
+    "limitations": true
+  },
+  "evidenceNotes": [
+    {
+      "source": "v3 metadata and diffs/r1-vscode-73801.diff; canonical microsoft/vscode commits 0cfb9ad1 and b239497e",
+      "observation": "The base is the sole parent of the reviewed head; trees match. Re-running the packet-recorded full-index command under LC_ALL=C and LANG=C produced 6496 bytes with SHA-256 a558a94c131a9176bbf4ab728c9a5b02abae12ab56f364c52489e75ad7da2c94, byte-identical to the four-section stored patch; logical stats are 4 files, 60 insertions, and 3 deletions."
+    },
+    {
+      "source": "b239497e extensions/typescript-language-features/src/typescriptServiceClient.ts and src/utils/electron.ts",
+      "observation": "The patch adds rimraf of the memoized extension-wide root after serviceExited in the server exit callback. On an unexpected exit, serviceExited(true) starts a replacement server and obtains a cancellation path before the old callback removes that root, making the replacement path stale. The token guard means the manual Restart TS Server route is less direct, but the unexpected-exit restart path is statically reachable."
+    },
+    {
+      "source": "raw/vscode-pr-73801-comments.json, raw/vscode-pr-73801-commits.json, and accepted head e901d56e",
+      "observation": "Discussion r284499651 is anchored to original commit b239497e. The accepted correction removes cleanup from service exit, creates an extension-instance directory, and removes that directory from deactivate(), matching the lifecycle root rather than a merely similar symptom."
+    },
+    {
+      "source": "cases/r1-vscode-73801.md, v3 metadata priorEvidence, and b239497e LICENSE.txt",
+      "observation": "V3 binds the confirmed v1 bundle, explicitly supersedes its repository-dependent diff serialization, preserves the narrow lifecycle claim and no-runtime-reproduction limitation, and the historical license is MIT."
+    }
+  ],
+  "exceptions": []
+}

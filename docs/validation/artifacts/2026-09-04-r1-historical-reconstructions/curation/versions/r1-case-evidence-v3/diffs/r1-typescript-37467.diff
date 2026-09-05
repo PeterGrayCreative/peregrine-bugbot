@@ -1,0 +1,331 @@
+diff --git a/src/services/codefixes/convertFunctionToEs6Class.ts b/src/services/codefixes/convertFunctionToEs6Class.ts
+index 0769cb26162b762cdf5c079ad8094881cb55aca7..d9917596ff12c160ab8fb3b28349c5d103f6c697 100644
+--- a/src/services/codefixes/convertFunctionToEs6Class.ts
++++ b/src/services/codefixes/convertFunctionToEs6Class.ts
+@@ -48,7 +48,10 @@ namespace ts.codefix {
+             return undefined;
+         }
+ 
+-        copyLeadingComments(ctorDeclaration, newClassDeclaration, sourceFile);
++        // Deleting a declaration only deletes JSDoc style comments, so only copy those to the new node.
++        if (hasJSDocNodes(ctorDeclaration)) {
++            copyLeadingComments(ctorDeclaration, newClassDeclaration, sourceFile);
++        }
+ 
+         // Because the preceding node could be touched, we need to insert nodes before delete nodes.
+         changes.insertNodeAfter(sourceFile, precedingNode!, newClassDeclaration);
+diff --git a/src/services/textChanges.ts b/src/services/textChanges.ts
+index 006bc8031deae4e1c145c3ef8e6ac6ca18db711b..7d26f5e9cb6f207f7e34f3f5f11699f8cada704a 100644
+--- a/src/services/textChanges.ts
++++ b/src/services/textChanges.ts
+@@ -42,6 +42,15 @@ namespace ts.textChanges {
+          * include all trivia between the node and the previous token
+          */
+         IncludeAll,
++        /**
++         * Include attached JSDoc comments
++         */
++        JSDoc,
++        /**
++         * Only delete trivia on the same line as getStart().
++         * Used to avoid deleting leading comments
++         */
++        StartLine,
+     }
+ 
+     export enum TrailingTriviaOption {
+@@ -162,6 +171,15 @@ namespace ts.textChanges {
+         if (leadingTriviaOption === LeadingTriviaOption.Exclude) {
+             return node.getStart(sourceFile);
+         }
++        if (leadingTriviaOption === LeadingTriviaOption.StartLine) {
++            return getLineStartPositionForPosition(node.getStart(sourceFile), sourceFile);
++        }
++        if (leadingTriviaOption === LeadingTriviaOption.JSDoc) {
++            const JSDocComments = getJSDocCommentRanges(node, sourceFile.text);
++            if (JSDocComments?.length) {
++                return getLineStartPositionForPosition(JSDocComments[0].pos, sourceFile);
++            }
++        }
+         const fullStart = node.getFullStart();
+         const start = node.getStart(sourceFile);
+         if (fullStart === start) {
+@@ -1249,10 +1267,11 @@ namespace ts.textChanges {
+                 }
+ 
+                 case SyntaxKind.ImportDeclaration:
+-                    const isFirstImport = sourceFile.imports.length && node === first(sourceFile.imports).parent || node === find(sourceFile.statements, isImportDeclaration);
++                case SyntaxKind.ImportEqualsDeclaration:
++                    const isFirstImport = sourceFile.imports.length && node === first(sourceFile.imports).parent || node === find(sourceFile.statements, isAnyImportSyntax);
++                    // For first import, leave header comment in place, otherwise only delete JSDoc comments
+                     deleteNode(changes, sourceFile, node,
+-                        // For first import, leave header comment in place
+-                        isFirstImport ? { leadingTriviaOption: LeadingTriviaOption.Exclude } : undefined);
++                        { leadingTriviaOption: isFirstImport ? LeadingTriviaOption.Exclude : hasJSDocNodes(node) ? LeadingTriviaOption.JSDoc : LeadingTriviaOption.StartLine });
+                     break;
+ 
+                 case SyntaxKind.BindingElement:
+@@ -1296,6 +1315,11 @@ namespace ts.textChanges {
+                     deleteNode(changes, sourceFile, node, { leadingTriviaOption: LeadingTriviaOption.Exclude });
+                     break;
+ 
++                case SyntaxKind.ClassDeclaration:
++                case SyntaxKind.FunctionDeclaration:
++                    deleteNode(changes, sourceFile, node, { leadingTriviaOption: hasJSDocNodes(node) ? LeadingTriviaOption.JSDoc : LeadingTriviaOption.StartLine });
++                    break;
++
+                 default:
+                     if (isImportClause(node.parent) && node.parent.name === node) {
+                         deleteDefaultImport(changes, sourceFile, node.parent);
+@@ -1372,7 +1396,7 @@ namespace ts.textChanges {
+                     break;
+ 
+                 case SyntaxKind.VariableStatement:
+-                    deleteNode(changes, sourceFile, gp);
++                    deleteNode(changes, sourceFile, gp, { leadingTriviaOption: hasJSDocNodes(gp) ? LeadingTriviaOption.JSDoc : LeadingTriviaOption.StartLine });
+                     break;
+ 
+                 default:
+diff --git a/tests/cases/fourslash/server/convertFunctionToEs6Class-server.ts b/tests/cases/fourslash/server/convertFunctionToEs6Class-server.ts
+deleted file mode 100644
+index 24a7acbf8edc55e1a0dd79cb4c3de395b9f73227..0000000000000000000000000000000000000000
+--- a/tests/cases/fourslash/server/convertFunctionToEs6Class-server.ts
++++ /dev/null
+@@ -1,27 +0,0 @@
+-// @allowNonTsExtensions: true
+-// @Filename: test123.js
+-
+-/// <reference path="../fourslash.ts" />
+-
+-//// // Comment
+-//// function fn() {
+-////     this.baz = 10;
+-//// }
+-//// /*1*/fn.prototype.bar = function () {
+-////     console.log('hello world');
+-//// }
+-
+-verify.codeFix({
+-    description: "Convert function to an ES2015 class",
+-    newFileContent:
+-`// Comment\r
+-class fn {\r
+-    constructor() {\r
+-        this.baz = 10;\r
+-    }\r
+-    bar() {\r
+-        console.log('hello world');\r
+-    }\r
+-}\r
+-`,
+-});
+diff --git a/tests/cases/fourslash/server/convertFunctionToEs6Class-server1.ts b/tests/cases/fourslash/server/convertFunctionToEs6Class-server1.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..316572063a5eaa00a36b76efb47b6f616673bde4
+--- /dev/null
++++ b/tests/cases/fourslash/server/convertFunctionToEs6Class-server1.ts
+@@ -0,0 +1,27 @@
++// @allowNonTsExtensions: true
++// @Filename: test123.js
++
++/// <reference path="../fourslash.ts" />
++
++//// // Comment
++//// function fn() {
++////     this.baz = 10;
++//// }
++//// /*1*/fn.prototype.bar = function () {
++////     console.log('hello world');
++//// }
++
++verify.codeFix({
++    description: "Convert function to an ES2015 class",
++    newFileContent:
++`// Comment
++class fn {\r
++    constructor() {\r
++        this.baz = 10;\r
++    }\r
++    bar() {\r
++        console.log('hello world');\r
++    }\r
++}\r
++`,
++});
+diff --git a/tests/cases/fourslash/server/convertFunctionToEs6Class-server2.ts b/tests/cases/fourslash/server/convertFunctionToEs6Class-server2.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..2f9c1a88bdf7cd28b5d6a3a18cf93562b4c0e067
+--- /dev/null
++++ b/tests/cases/fourslash/server/convertFunctionToEs6Class-server2.ts
+@@ -0,0 +1,31 @@
++// @allowNonTsExtensions: true
++// @Filename: test123.js
++
++/// <reference path="../fourslash.ts" />
++
++//// /**
++////  * JSDoc Comment
++////  */
++//// function fn() {
++////     this.baz = 10;
++//// }
++//// /*1*/fn.prototype.bar = function () {
++////     console.log('hello world');
++//// }
++
++verify.codeFix({
++    description: "Convert function to an ES2015 class",
++    newFileContent:
++`/**\r
++ * JSDoc Comment\r
++ */\r
++class fn {\r
++    constructor() {\r
++        this.baz = 10;\r
++    }\r
++    bar() {\r
++        console.log('hello world');\r
++    }\r
++}\r
++`,
++});
+diff --git a/tests/cases/fourslash/unusedClassInNamespaceWithTrivia.ts b/tests/cases/fourslash/unusedClassInNamespaceWithTrivia.ts
+deleted file mode 100644
+index cae0c52ac79b61112515e696c36ec4fb25be62f4..0000000000000000000000000000000000000000
+--- a/tests/cases/fourslash/unusedClassInNamespaceWithTrivia.ts
++++ /dev/null
+@@ -1,11 +0,0 @@
+-/// <reference path='fourslash.ts' />
+-
+-// @noUnusedLocals: true
+-//// [| namespace greeter {
+-////   /* comment1 */
+-////   class /* comment2 */ class1 {
+-////   }
+-//// } |]
+-
+-verify.rangeAfterCodeFix(`namespace greeter {
+-}`);
+diff --git a/tests/cases/fourslash/unusedClassInNamespaceWithTrivia1.ts b/tests/cases/fourslash/unusedClassInNamespaceWithTrivia1.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..3298a3e0ab1114ce916d6892583ae3d157b1b65b
+--- /dev/null
++++ b/tests/cases/fourslash/unusedClassInNamespaceWithTrivia1.ts
+@@ -0,0 +1,12 @@
++/// <reference path='fourslash.ts' />
++
++// @noUnusedLocals: true
++//// [| namespace greeter {
++////   /* comment1 */
++////   class /* comment2 */ class1 {
++////   }
++//// } |]
++
++verify.rangeAfterCodeFix(`namespace greeter {
++   /* comment1 */
++}`);
+diff --git a/tests/cases/fourslash/unusedClassInNamespaceWithTrivia2.ts b/tests/cases/fourslash/unusedClassInNamespaceWithTrivia2.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..8578239756c1e8047cb0c4348ab42d4e113535d9
+--- /dev/null
++++ b/tests/cases/fourslash/unusedClassInNamespaceWithTrivia2.ts
+@@ -0,0 +1,16 @@
++/// <reference path='fourslash.ts' />
++
++// @noUnusedLocals: true
++//// [| namespace greeter {
++////   // Do not remove
++////   /**
++////    * JSDoc Comment
++////    */
++////   class /* comment2 */ class1 {
++////   }
++//// } |]
++
++verify.rangeAfterCodeFix(`namespace greeter {
++   // Do not remove
++}`);
++ 
+\ No newline at end of file
+diff --git a/tests/cases/fourslash/unusedFunctionInNamespace1.ts b/tests/cases/fourslash/unusedFunctionInNamespace1.ts
+index 7a63ff13caa92fc77a5be754d70c7618ee541b50..9c3a21c04dc1236f27f36a1767695a8b7ac912cd 100644
+--- a/tests/cases/fourslash/unusedFunctionInNamespace1.ts
++++ b/tests/cases/fourslash/unusedFunctionInNamespace1.ts
+@@ -8,4 +8,5 @@
+ //// } |]
+ 
+ verify.rangeAfterCodeFix(`namespace greeter {
++   // some legit comments
+ }`);
+diff --git a/tests/cases/fourslash/unusedFunctionInNamespaceWithTrivia.ts b/tests/cases/fourslash/unusedFunctionInNamespaceWithTrivia.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..bfcaa5852b0cf884e31218836c06df81d8047f6d
+--- /dev/null
++++ b/tests/cases/fourslash/unusedFunctionInNamespaceWithTrivia.ts
+@@ -0,0 +1,16 @@
++/// <reference path='fourslash.ts' />
++
++// @noUnusedLocals: true
++//// [| namespace greeter {
++////   // Do not remove
++////   /**
++////    * JSDoc Comment
++////    */
++////   function function1() {
++////   }/*1*/
++//// } |]
++
++verify.rangeAfterCodeFix(`namespace greeter {
++    // Do not remove
++ }`);
++ 
+\ No newline at end of file
+diff --git a/tests/cases/fourslash/unusedVariableWithTrivia1.ts b/tests/cases/fourslash/unusedVariableWithTrivia1.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..fb6d48e1265b6a02343821a6a8ea55c480e96832
+--- /dev/null
++++ b/tests/cases/fourslash/unusedVariableWithTrivia1.ts
+@@ -0,0 +1,20 @@
++/// <reference path='fourslash.ts' />
++
++// @noUnusedLocals: true
++////[|namespace greeter {
++////    // do not remove comment
++////    let a = 0;
++////    // comment
++////    let b = 0;
++////    b;
++////}|]
++
++verify.codeFix({
++    description: "Remove unused declaration for: 'a'",
++    newRangeContent: `namespace greeter {
++    // do not remove comment
++    // comment
++    let b = 0;
++    b;
++}`
++});
+diff --git a/tests/cases/fourslash/unusedVariableWithTrivia2.ts b/tests/cases/fourslash/unusedVariableWithTrivia2.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..c2ea84f3acbc53e422a9ae06a624e82ab59e8708
+--- /dev/null
++++ b/tests/cases/fourslash/unusedVariableWithTrivia2.ts
+@@ -0,0 +1,17 @@
++/// <reference path='fourslash.ts' />
++
++// @noUnusedLocals: true
++////[|namespace greeter {
++////    // Do not remove
++////    /**
++////     * JSDoc Comment
++////     */
++////    let a = 0;
++////}|]
++
++verify.codeFix({
++    description: "Remove unused declaration for: 'a'",
++    newRangeContent: `namespace greeter {
++    // Do not remove
++}`
++});
