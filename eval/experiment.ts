@@ -1577,7 +1577,7 @@ function canonicalValue(value: unknown, path: string, seen: Set<object>): string
   }
 }
 
-function seededRandom(seed: number): () => number {
+export function seededRandom(seed: number): () => number {
   let state = seed === 0 ? 0x9e37_79b9 : seed >>> 0;
   return () => {
     state ^= state << 13;
@@ -1587,7 +1587,7 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-function shuffle<T>(values: T[], random: () => number): void {
+export function shuffle<T>(values: T[], random: () => number): void {
   for (let index = values.length - 1; index > 0; index--) {
     const selected = Math.floor(random() * (index + 1));
     [values[index], values[selected]] = [values[selected]!, values[index]!];

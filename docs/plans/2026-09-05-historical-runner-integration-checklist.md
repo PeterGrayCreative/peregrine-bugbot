@@ -16,6 +16,27 @@ declared confirmations, not actual human independence or historical source trees
 
 ## Ordered integration
 
+Current implementation: `eval/methodology-schedule.ts` compiles and revalidates
+the explicit four-arm design using the existing experiment module's canonical
+serialization and seeded shuffle. It does not start providers or write an
+external immutable seal. A twelve-case/two-repeat synthetic test derives
+24 balanced blocks, 96 attempts, and 144 expected invocations. Legacy pair
+types and scheduling remain unchanged. Model/configuration identities are
+declared registration data; the runtime still must authenticate the effective
+configuration and actual invocation records. The declared model is constrained
+to `gpt-5.6-sol` with high effort; another model requires a new registered
+protocol decision, not regeneration of arm hashes to bypass this contract.
+
+`eval/methodology-output.ts` and the two `methodology-*.schema.json` files define
+minimal experimental review and discovery output. They require no lane,
+invariant, confidence, disposition, or fix plan. Incomplete responses retain
+findings and limitations; an empty completed response is model self-report,
+never proof of complete scope or a globally clean case. These contracts are
+not yet mounted or used by the engines. Fourteen focused tests and nineteen
+legacy experiment-core tests pass under Node 22 (33 total); typechecking passes.
+Review corrected path whitespace, credential-like diagnostic keys, duplicate
+cross-corpus case IDs, and oversized schedule allocation risks.
+
 - [ ] **Versioned four-arm scheduling.** Extend the existing experiment machinery
   (`src/types.ts`, `eval/experiment.ts`) without reinterpreting legacy
   control/treatment pairs. One case/repeat block contains A, B, C, and D with
