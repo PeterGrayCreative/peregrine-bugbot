@@ -23,10 +23,11 @@ original decision and ledger.
 ## Operational proof
 
 The previously sealed Luna-max/Terra-xhigh paired smoke contains one unresolved
-control finding. After the implementation commit is clean, an independently
-blinded reviewer will produce a committed curator source and the CLI will run
-against that archive to prove the committed-source, sealed-grade, ledger,
-derived-decision, and report path end to end. The route remains
+control finding. Independent curator `Quartz Heron`, shown only the fixture and
+finding, classified it as unsupported. The committed source is
+`docs/validation/artifacts/2026-09-04-luna-max-terra-xhigh-screen/paired-smoke-adjudication-source.json`.
+The CLI runs against that archive to prove the committed-source, sealed-grade,
+ledger, derived-decision, and report path end to end. The route remains
 operator-rejected because its wall-time regression was unacceptable; resolving
 the finding does not authorize fast-screen advancement.
 
@@ -35,8 +36,9 @@ the finding does not authorize fast-screen advancement.
 - Node: repository-pinned Node 22 (`v22.22.1` locally).
 - Focused typecheck and 27 adjudication/funnel/grading tests: passed.
 - Initial full suite: 250/253 passed; the three expected provider-enabled
-  integration tests refused the dirty implementation worktree. The full suite
-  is rerun from the clean implementation commit.
-- Full `npm run validate`: pending clean-commit verification.
+  integration tests refused the dirty implementation worktree.
+- Full `npm run validate` from clean commit `d504664`: passed, including
+  253/253 Node tests, corpus validation, 26 skill tests, nine package/install
+  tests, four plugin-manager tests, and 8/8 zero-cost structural smoke attempts.
 - Independent exact-head review: pending.
 - Remote CI and merge verification: pending.
