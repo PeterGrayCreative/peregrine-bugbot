@@ -119,9 +119,57 @@ test("an admitted synthetic historical case reaches a terminal-complete four-arm
     let mockedStages = 0;
     const modelVisibleBytes: string[] = [];
 
-    for (const armId of ["A", "B", "C", "D"] as const) {
-      const attempt = schedule.attempts.find((candidate) =>
-        candidate.caseName === registration.caseName && candidate.armId === armId)!;
+    let skippedAttachCalled = false;
+    await assert.rejects(() => runRegisteredHistoricalMethodologyAttempt({
+      evidenceRoot,
+      invocationRegistrationSha256: registrationSha256,
+      inputPlanSha256,
+      attemptId: schedule.attempts[1]!.id,
+      priorLifecycleReceipts: [],
+      trustedCuratorPolicy: TRUSTED_POLICY,
+      config: config(),
+      attachProvider: () => {
+        skippedAttachCalled = true;
+        throw new Error("must not attach");
+      },
+    }), /exact preceding schedule prefix/);
+    assert.equal(skippedAttachCalled, false);
+    assert.equal(existsSync(join(evidenceRoot,
+      `${schedule.attempts[1]!.id}.methodology-start.json`)), false);
+
+    for (const attempt of schedule.attempts) {
+      const armId = attempt.armId;
+      const scheduleIndex = schedule.attempts.indexOf(attempt);
+      if (scheduleIndex === 1) {
+        const stalePrefix = structuredClone(lifecycleReceipts);
+        stalePrefix[0]!.lifecycleTerminalSha256 = "f".repeat(64);
+        await assert.rejects(() => runRegisteredHistoricalMethodologyAttempt({
+          evidenceRoot,
+          invocationRegistrationSha256: registrationSha256,
+          inputPlanSha256,
+          attemptId: attempt.id,
+          priorLifecycleReceipts: stalePrefix,
+          trustedCuratorPolicy: TRUSTED_POLICY,
+          config: config(),
+          attachProvider: () => { throw new Error("must not attach"); },
+        }), /digest mismatch/);
+        assert.equal(existsSync(join(evidenceRoot,
+          `${attempt.id}.methodology-start.json`)), false);
+      }
+      if (scheduleIndex === 2) {
+        await assert.rejects(() => runRegisteredHistoricalMethodologyAttempt({
+          evidenceRoot,
+          invocationRegistrationSha256: registrationSha256,
+          inputPlanSha256,
+          attemptId: attempt.id,
+          priorLifecycleReceipts: [...lifecycleReceipts].reverse(),
+          trustedCuratorPolicy: TRUSTED_POLICY,
+          config: config(),
+          attachProvider: () => { throw new Error("must not attach"); },
+        }), /reordered or stale/);
+        assert.equal(existsSync(join(evidenceRoot,
+          `${attempt.id}.methodology-start.json`)), false);
+      }
       const calls: string[][] = [];
       const outputs = new Map<string, string>();
       let attachedRepoPath = "";
@@ -130,6 +178,7 @@ test("an admitted synthetic historical case reaches a terminal-complete four-arm
         invocationRegistrationSha256: registrationSha256,
         inputPlanSha256,
         attemptId: attempt.id,
+        priorLifecycleReceipts: [...lifecycleReceipts],
         trustedCuratorPolicy: TRUSTED_POLICY,
         config: config(),
         attachProvider: (request) => {
@@ -184,12 +233,8 @@ test("an admitted synthetic historical case reaches a terminal-complete four-arm
         lifecycleTerminalSha256: lifecycle.lifecycleTerminalSha256 });
     }
 
-    terminalReceipts.sort((left, right) =>
-      schedule.attempts.findIndex((attempt) => attempt.id === left.attemptId) -
-      schedule.attempts.findIndex((attempt) => attempt.id === right.attemptId));
-    lifecycleReceipts.sort((left, right) =>
-      schedule.attempts.findIndex((attempt) => attempt.id === left.attemptId) -
-      schedule.attempts.findIndex((attempt) => attempt.id === right.attemptId));
+    assert.deepEqual(lifecycleReceipts.map((receipt) => receipt.attemptId),
+      schedule.attempts.map((attempt) => attempt.id));
     assert.equal(mockedStages, 6);
     const sealSha256 = writeMethodologyRunSeal(evidenceRoot, registrationSha256, terminalReceipts);
     const seal = readMethodologyRunSeal(evidenceRoot, registrationSha256, sealSha256);

@@ -70,3 +70,41 @@ network-disabled diagnostic does not establish safe provider-connected egress.
 The inspected kernel/CLI outputs and command are retained here as an authored
 diagnostic record, not a signed runtime attestation. No review-model calls,
 historical source execution, provider cost, or efficacy result occurred.
+
+## Follow-up: alternate read-only backend diagnostic
+
+The original default-backend failure above remains unchanged. A subsequent
+credential-free probe used the same image and every container flag above,
+selecting only the CLI's alternate read-only backend:
+
+```sh
+codex --sandbox read-only --enable use_legacy_landlock sandbox -- /bin/cat /etc/os-release
+```
+
+This command exited 0 and printed Debian 12 metadata. A negative-write check
+then distinguished the writable outer temporary filesystem from the nested
+read-only policy:
+
+```sh
+/bin/sh -c 'touch /tmp/direct-write-ok && codex --sandbox read-only --enable use_legacy_landlock sandbox -- /usr/bin/touch /tmp/inner-write-denied'
+```
+
+The outer write succeeded; the nested command exited 1 with:
+
+```text
+/usr/bin/touch: cannot touch '/tmp/inner-write-denied': Permission denied
+```
+
+OpenAI's [Linux sandbox documentation](https://github.com/openai/codex/blob/main/codex-rs/linux-sandbox/README.md)
+describes this legacy fallback as restricted to equivalent supported filesystem
+policies; it is not a replacement for every split read/deny policy. The exact
+installed CLI behavior above is the evidence for this diagnostic, not a claim
+that mutable upstream documentation pins this release.
+
+No runner setting was changed. Read success and one denied write do not prove
+credential isolation, history/sibling-case denial, working model read/search
+tools, or provider-connected egress. In particular, a broad read-only policy
+may expose readable provider credentials. The backend remains a candidate for
+further isolated probes, not an approved historical execution profile. No
+container capability, seccomp policy, network policy, or production default
+was relaxed; no provider call or historical code execution occurred.

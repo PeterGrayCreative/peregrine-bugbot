@@ -8,6 +8,7 @@ import {
   type MaterializedHistoricalMethodologyCase,
 } from "./historical-methodology-case.js";
 import {
+  readMethodologyAttemptLifecycleTerminal,
   runMethodologyAttemptLifecycle,
   type MethodologyAttemptLifecycleReceipt,
 } from "./methodology-attempt-lifecycle.js";
@@ -39,6 +40,11 @@ export interface RegisteredHistoricalMethodologyAttemptInput {
   invocationRegistrationSha256: string;
   inputPlanSha256: string;
   attemptId: string;
+  /** Caller-held terminal receipts for exactly the preceding schedule prefix. */
+  priorLifecycleReceipts: ReadonlyArray<{
+    attemptId: string;
+    lifecycleTerminalSha256: string;
+  }>;
   trustedCuratorPolicy: CuratorPolicy;
   config: PeregrineConfig;
   /** Trusted runtime adapter only; this module never chooses or launches a provider. */
@@ -70,6 +76,13 @@ export async function runRegisteredHistoricalMethodologyAttempt(
   );
   const attempt = invocationRegistration.schedule.attempts.find((candidate) => candidate.id === input.attemptId);
   if (!attempt) throw new Error("registered historical methodology attempt is not scheduled");
+  authenticateSchedulePrefix(
+    input.evidenceRoot,
+    input.invocationRegistrationSha256,
+    invocationRegistration.schedule.attempts.map((candidate) => candidate.id),
+    input.attemptId,
+    input.priorLifecycleReceipts,
+  );
   const plannedCase = plan.cases.find((candidate) => candidate.caseName === attempt.caseName);
   if (!plannedCase) throw new Error("registered historical methodology attempt lacks a planned case");
   if (typeof input.attachProvider !== "function") {
@@ -161,6 +174,39 @@ export async function runRegisteredHistoricalMethodologyAttempt(
     });
   } finally {
     holder.materialized?.cleanup();
+  }
+}
+
+function authenticateSchedulePrefix(
+  root: string,
+  registrationSha256: string,
+  scheduledAttemptIds: string[],
+  attemptId: string,
+  value: unknown,
+): void {
+  const index = scheduledAttemptIds.indexOf(attemptId);
+  if (!Array.isArray(value) || value.length !== index) {
+    throw new Error("registered historical methodology attempt requires the exact preceding schedule prefix");
+  }
+  for (let position = 0; position < value.length; position++) {
+    const entry = value[position];
+    if (!entry || typeof entry !== "object" || Array.isArray(entry) ||
+        Object.keys(entry).sort(compareText).join("\0") !==
+          ["attemptId", "lifecycleTerminalSha256"].sort(compareText).join("\0")) {
+      throw new Error("registered historical methodology schedule prefix receipt is invalid");
+    }
+    const receipt = entry as { attemptId: unknown; lifecycleTerminalSha256: unknown };
+    if (typeof receipt.attemptId !== "string" || receipt.attemptId !== scheduledAttemptIds[position] ||
+        typeof receipt.lifecycleTerminalSha256 !== "string" ||
+        !/^[a-f0-9]{64}$/.test(receipt.lifecycleTerminalSha256)) {
+      throw new Error("registered historical methodology schedule prefix is reordered or stale");
+    }
+    readMethodologyAttemptLifecycleTerminal(
+      root,
+      registrationSha256,
+      receipt.attemptId,
+      receipt.lifecycleTerminalSha256,
+    );
   }
 }
 

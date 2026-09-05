@@ -8,6 +8,19 @@ The full-program goal and R2 human-curation/partition gates remain unchanged.
 
 ## Current boundary
 
+The registered historical runner now authenticates the exact preceding
+schedule prefix before starting an attempt. Skipped, reordered, and stale
+lifecycle receipts reject before provider attachment; integration tests run
+the actual frozen order rather than sorting receipts after arbitrary execution.
+
+`eval/methodology-grading-contract.ts` adds a pure neutral grading boundary.
+It checks a caller-held projection digest, exact truth/finding pair verdicts,
+grouped-root credit, ambiguous cross-root reuse, and partial-truth metric
+eligibility. Failed/missing/incomplete attempts remain scheduled misses;
+unmatched findings remain unresolved and missed roots unattributed. This is
+not yet an authenticated execution-to-grade reader, judge ledger, append-only
+adjudication consumer, or reporting pipeline. Those integrations remain open.
+
 The new truth, curation, scope, metric-policy, and leakage contracts are tested
 building blocks, not an operational historical benchmark. `runMatrix` still
 rejects `historical-efficacy-v1` before scheduling. Production and legacy seeded
