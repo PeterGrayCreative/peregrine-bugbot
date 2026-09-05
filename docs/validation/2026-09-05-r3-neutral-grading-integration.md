@@ -43,6 +43,17 @@ Result: Node v22.22.1, no-emit typecheck passed; methodology suite passed
 bounded code review approved the grading contract and schedule-order guard.
 This is focused local verification, not a new full-repository or remote-CI claim.
 
+Follow-up verification: the full `npm run validate` completed successfully
+under Node v22.22.1 for the `f53ff59` implementation. It included typechecking,
+legacy tests, evidence-capture tests, historical-truth tests, all 86 methodology
+tests, legacy corpus validation, package/install checks, and 8/8 mock structural
+smoke attempts (5/5 expected markers, zero unexpected). Progress documentation
+was updated during the later validation stages; no implementation change was
+included in that result. GitHub `check` and credential-free image build/smoke
+also passed for exact head `f53ff5935d9b19906f47d081b9c6b1c9fe155653`.
+The corpus validator's 36 admitted cases are the existing **seeded** corpus,
+not 36 newly admitted historical cases. No provider experiment occurred.
+
 `test:methodology` includes the new grading tests, so the existing `validate`
 command and CI require them. Tests use synthetic truth and injected review
 outputs only. They cannot prove human independence, source validity, provider
