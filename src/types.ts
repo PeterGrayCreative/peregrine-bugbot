@@ -584,7 +584,7 @@ export interface GradedRun extends Omit<RunRecord, "outcome"> {
   grading?: GradingEvidence;
 }
 
-export type MissStage = "none" | "routing" | "breadth" | "investigation" | "budget" | "presentation" | "infrastructure";
+export type MissStage = "none" | "routing" | "breadth" | "investigation" | "budget" | "presentation" | "infrastructure" | "unattributed";
 export type UnmatchedFindingClassification = "confirmed-new" | "unsupported" | "unresolved";
 
 export interface SemanticJudgeDecision {
@@ -607,7 +607,7 @@ export interface UnmatchedFindingAdjudication {
 }
 
 export interface GradingEvidence {
-  version: "root-cause-v1";
+  version: "root-cause-v1" | "root-cause-v2";
   judge: { kind: ExperimentJudge; version: string; configSha256?: string };
   decisions: SemanticJudgeDecision[];
   rootCauseMatches: Record<string, boolean>;

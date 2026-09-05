@@ -198,6 +198,7 @@ test("persisted behavioral classifications remain unresolved without a sealed ad
 });
 
 test("miss attribution is deterministic and presentation is not a detection miss", () => {
+  assert.equal(classifyMissStage({ matched: false }), "unattributed");
   assert.equal(classifyMissStage({ matched: true }), "none");
   assert.equal(classifyMissStage({ matched: true, presentationFiltered: true }), "presentation");
   assert.equal(classifyMissStage({ matched: false, laneActivated: false }), "routing");
@@ -205,6 +206,27 @@ test("miss attribution is deterministic and presentation is not a detection miss
   assert.equal(classifyMissStage({ matched: false, laneActivated: true, breadthCandidate: true, investigationBudgetExhausted: true }), "budget");
   assert.equal(classifyMissStage({ matched: false, laneActivated: true, breadthCandidate: true }), "investigation");
   assert.equal(classifyMissStage({ matched: false, infrastructureFailure: true }), "infrastructure");
+});
+
+test("completed empty reviews retain recall misses without inventing infrastructure failure", async () => {
+  const groundTruth = { bugs: [truth.bugs[0]!] };
+  const result = engineResult([]);
+  const graded = await gradeResult(result, groundTruth,
+    { kind: "codex", model: "fixed-model", configSha256: JUDGE_CONFIG_SHA256 },
+    async () => { throw new Error("empty output must not invoke the judge"); });
+  assert.equal(graded.matches["symptom-a"], null);
+  assert.equal(graded.grading.missStages["symptom-a"], "unattributed");
+  assert.doesNotThrow(() => assertGradingEvidenceConsistent(
+    groundTruth, result.findings, graded.matches, graded.grading, "v2", JUDGE_IDENTITY));
+  assert.throws(() => assertGradingEvidenceConsistent(groundTruth, result.findings, graded.matches,
+    { ...graded.grading, missStages: { "symptom-a": "infrastructure" } }, "v2", JUDGE_IDENTITY), /stage evidence/);
+
+  const legacy = { ...graded.grading, version: "root-cause-v1" as const,
+    missStages: { "symptom-a": "infrastructure" as const } };
+  assert.doesNotThrow(() => assertGradingEvidenceConsistent(
+    groundTruth, result.findings, graded.matches, legacy, "legacy", JUDGE_IDENTITY));
+  assert.throws(() => assertGradingEvidenceConsistent(groundTruth, result.findings, graded.matches,
+    { ...legacy, missStages: { "symptom-a": "unattributed" } }, "legacy", JUDGE_IDENTITY), /stage evidence/);
 });
 
 test("adjudication records are strict and reject duplicate evidence", () => {
@@ -235,7 +257,8 @@ test("semantic disagreements and judge failures remain explicit fail-closed evid
     ["failed", "timeout"],
     ["different-root-cause", undefined],
   ]);
-  assert.equal(graded.grading.missStages["symptom-a"], "infrastructure");
+  assert.equal(graded.grading.missStages["symptom-a"], "unattributed");
+  assert.equal(graded.grading.version, "root-cause-v2");
   assert.equal(graded.grading.unmatchedFindings.length, 2);
   assert.equal(graded.falsePositiveIndexes.length, 0);
   assert.doesNotThrow(() => assertGradingEvidenceConsistent(

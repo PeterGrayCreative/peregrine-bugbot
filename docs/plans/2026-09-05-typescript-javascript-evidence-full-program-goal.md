@@ -1,0 +1,18 @@
+# Full evidence-program goal
+
+Status: active. User resumed the full program on 2026-09-05.
+
+Plan: [TypeScript and JavaScript evidence and ablation plan](2026-09-04-typescript-javascript-evidence-ablation-plan.md).
+
+## Objective
+
+Complete the full TypeScript and JavaScript evidence-gathering and Peregrine ablation plan at docs/plans/2026-09-04-typescript-javascript-evidence-ablation-plan.md, continuing from verified R1 and the first 25 unadmitted R2 candidates on research/ts-js-evidence-r2. Work persistently through R2-R8, verifying and pushing reviewable changes and preserving progress and handoff records. R2: build the bounded 100-candidate inventory across at least six repository families, reconstruct and independently curate the initial 36 historical cases (24 bug-bearing and 12 scoped comparisons), retain losses, exact provenance, partial truth, duplicate-family controls, and protected development/selection partitions. R3: reuse the existing harness to implement and test neutral historical/source/truth contracts, durable sealed adjudication, honest completion and miss attribution, consistent metric eligibility, neutral experimental arms, isolation/leak probes, and prompt/resource hashes while preserving old artifacts/readers and production behavior. R4: freeze and review a zero-provider four-arm comparison at fixed Sol-high settings and equal total resource allowances, including exact corpus, prompts, model/runtime identifiers, caps, seeds, schedule, analysis, and accountable curator roles. Proceed through authorized R5 methodology and component experiments, R6 reserved selection and independently powered confirmation, R7 deployment bridge and prospective discovery, and R8 a reproducible component decision report. Preserve the plan's separate execution authorizations and resource ceilings; obtain missing concrete provider-batch approvals, human curator or external steward arrangements, and private-source scope only when needed after completing all independent preparation. Report all attempted comparisons, failures, unresolved findings, high-severity losses, discovered roots, precision limits, costs/work, clustering, and uncertainty without tuning truth or thresholds to favor Peregrine. Accept retain, simplify/remove, not-tested or inconclusive outcomes when valid evidence warrants them. Preserve the original optimization plan/checklist, every prior experiment, immutable attempts and truth versions, production two-worker contract, prompts, routing, models, defaults and posting behavior. No automatic posting, source-repository mutations, training, fine-tuning, database/retrieval platform, answer leakage, fabricated human independence or sealed holdout, or efficacy claims from structural/seeded proof. Completion means the plan's evidence-backed final component decisions, required verification and artifacts are complete and pushed, or a plan-defined scientifically valid termination is documented; do not equate an intermediate implementation checkpoint with completing the whole program.
+
+## Starting evidence
+
+- R1 is complete; its authoritative v3 packet and rejected earlier versions remain preserved in PR #31.
+- R2 first slice is pushed in PR #32: 25 comment-independent candidates, unknown truth, no admissions, with 167 source-response receipts. CI passed for commit `83120ff`.
+- R2 curation and partitioning, R3-R8, and final efficacy conclusions remain incomplete.
+- The former instruction to stop after R1 is superseded by the user's explicit resumption.
+
+The full goal remains active across implementation checkpoints. Provider batch registration, independent curation, private data authorization, and final holdout requirements retain their original gates.

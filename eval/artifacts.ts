@@ -1359,7 +1359,7 @@ function parseGradingEvidence(
 ): GradingEvidence {
   const root = object(value, `${source}.grading`);
   onlyKeys(root, new Set(["version", "judge", "decisions", "rootCauseMatches", "missStages", "unmatchedFindings"]), `${source}.grading`);
-  if (root.version !== "root-cause-v1") throw new Error(`${source}.grading.version is invalid`);
+  if (root.version !== "root-cause-v1" && root.version !== "root-cause-v2") throw new Error(`${source}.grading.version is invalid`);
   const judge = object(root.judge, `${source}.grading.judge`);
   onlyKeys(judge, new Set(["kind", "version", "configSha256"]), `${source}.grading.judge`);
   if (judge.kind !== "exact" && judge.kind !== "claude" && judge.kind !== "codex") throw new Error(`${source}.grading.judge.kind is invalid`);
@@ -1401,6 +1401,7 @@ function parseGradingEvidence(
   }));
   const missRaw = object(root.missStages, `${source}.grading.missStages`);
   const stages = new Set(["none", "routing", "breadth", "investigation", "budget", "presentation", "infrastructure"]);
+  if (root.version === "root-cause-v2") stages.add("unattributed");
   const missStages = Object.fromEntries(Object.entries(missRaw).map(([bugId, stage]) => {
     if (!(bugId in matches) || !stages.has(String(stage))) throw new Error(`${source}.grading.missStages.${bugId} is invalid`);
     return [bugId, stage];
@@ -1419,7 +1420,7 @@ function parseGradingEvidence(
     if (item.classification !== "confirmed-new" && item.classification !== "unsupported" && item.classification !== "unresolved") throw new Error(`${source}.grading.unmatchedFindings[${index}].classification is invalid`);
     return { findingIndex, findingEvidenceSha256, classification: item.classification as GradingEvidence["unmatchedFindings"][number]["classification"] };
   });
-  return { version: "root-cause-v1", judge: { kind: judge.kind, version, ...(configSha256 ? { configSha256 } : {}) }, decisions, rootCauseMatches, missStages, unmatchedFindings };
+  return { version: root.version, judge: { kind: judge.kind, version, ...(configSha256 ? { configSha256 } : {}) }, decisions, rootCauseMatches, missStages, unmatchedFindings };
 }
 
 function parseOutcome(value: unknown, source: string, strictCurrentUsage: boolean): RunRecord["outcome"] {

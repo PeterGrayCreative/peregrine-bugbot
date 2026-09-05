@@ -365,9 +365,8 @@ export async function gradeResult(
         bug.id,
         classifyMissStage({
           matched: matches[bug.id] !== null,
-          // Until runner-owned routing/breadth/budget/presentation evidence is
-          // present, fail closed instead of guessing a behavioral miss stage.
-          infrastructureFailure: matches[bug.id] === null,
+          // The review completed. Without authenticated stage evidence the
+          // miss is unattributed; judge failures remain in decisions above.
         }),
       ])),
       unmatchedFindings,

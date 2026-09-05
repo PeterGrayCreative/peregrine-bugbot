@@ -10,7 +10,7 @@ import type {
   UnmatchedFindingAdjudication,
 } from "../src/types.js";
 
-export const GRADING_VERSION = "root-cause-v1" as const;
+export const GRADING_VERSION = "root-cause-v2" as const;
 export const SEMANTIC_JUDGE_VERSION = "semantic-v1" as const;
 
 export interface MatchCandidate {
@@ -120,6 +120,9 @@ export function assertGradingEvidenceConsistent(
   expectedJudge?: GradingEvidence["judge"],
 ): void {
   assertMatchReuseMatchesRootCause(truth, matches, source);
+  if (evidence.version !== "root-cause-v1" && evidence.version !== "root-cause-v2") {
+    throw new Error(`${source}.grading.version is invalid`);
+  }
   const bugs = new Map(truth.bugs.map((bug) => [bug.id, bug]));
   const decisions = new Set<string>();
   const candidates: MatchCandidate[] = [];
@@ -205,7 +208,11 @@ export function assertGradingEvidenceConsistent(
     throw new Error(`${source}.grading.rootCauseMatches is inconsistent`);
   }
   for (const bug of truth.bugs) {
-    const expectedStage = matches[bug.id] === null ? "infrastructure" : "none";
+    // Preserve the interpretation of sealed v1 artifacts. V2 does not infer
+    // review infrastructure failure from an unmatched root or a judge failure.
+    const expectedStage = matches[bug.id] === null
+      ? evidence.version === "root-cause-v1" ? "infrastructure" : "unattributed"
+      : "none";
     if (evidence.missStages[bug.id] !== expectedStage) {
       throw new Error(`${source}.grading.missStages.${bug.id} lacks authenticated stage evidence`);
     }
@@ -255,7 +262,7 @@ export function classifyMissStage(args: {
   if (args.laneActivated === false) return "routing";
   if (args.breadthCandidate === false) return "breadth";
   if (args.investigationBudgetExhausted) return "budget";
-  return "investigation";
+  return args.laneActivated === true && args.breadthCandidate === true ? "investigation" : "unattributed";
 }
 
 export function judgeDecisionId(input: {
