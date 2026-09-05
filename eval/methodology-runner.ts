@@ -492,6 +492,8 @@ async function assertMaterializedScope(context: ReviewContext, scope: Methodolog
   }
 }
 
+export { assertMaterializedScope as assertMethodologyMaterializedScope };
+
 class MethodologyStageFailure extends RunFailureError {
   readonly trace: MethodologyStageTrace;
 

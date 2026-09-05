@@ -76,8 +76,12 @@ and previous output. Returned digests must be retained outside those mutable
 files. Terminal records bind those receipts, observed stage traces, exact raw
 outputs, aggregate usage, and rederived model limitations. Stage two must use
 the first stage's actual output. An intent is not proof of provider contact or
-served model identity. The outer run seal, stop/retry handling, and registered
-runtime/tool-policy authentication still need integration.
+served model identity. A complete-only outer run seal now binds every scheduled
+terminal receipt, including failures, and the raw bytes of the registration,
+intents, and terminals. Missing, duplicate, cross-run, orphaned, or symlinked
+evidence rejects. This is terminal accounting, not behavioral success.
+Stop/retry handling and registered runtime/tool-policy authentication still
+need integration.
 
 The executor authenticates the materialized two-commit comparison with Git,
 rechecks assets at dispatch, charges preparation/sealing time to the attempt
@@ -89,6 +93,20 @@ See the [structural integration report](../validation/2026-09-05-r3-methodology-
 for tests, corrections, and remaining boundaries. No historical case admission,
 actual model inference, container leak probe, or efficacy claim follows from
 the injected test provider.
+
+The historical case join now binds an admitted declaration, trusted curator
+policy, partial truth scope, sanitized task metadata, and original source
+identity to the existing materializer. It rechecks those inputs before and
+after materialization, verifies reproduced source commits/trees/diff, and
+returns only raw comparison data as model input. It preserves the complete
+ancestry requirement; shallow local captures do not qualify. Synthetic
+curator declarations in tests are not independent human admission.
+
+Method arms derive lanes from the actual sanitized code through the existing
+trusted manifest script, with no profile or custom-lane argument. B/D use the
+same source-hashed activation. Curator truth labels are not an input; generic
+A/C arms reject lane activation. Freezing and consuming those activation and
+admission digests in a whole-run preregistration is still required.
 
 - [x] **Versioned four-arm scheduling.** Extend the existing experiment machinery
   (`src/types.ts`, `eval/experiment.ts`) without reinterpreting legacy

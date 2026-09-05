@@ -42,7 +42,7 @@ binding stage outputs and handoffs. Its tests inject deterministic provider
 outputs: four attempts, six dispatches, no real model calls. Results keep scope
 unverified and never claim `clean`. See the
 [structural integration report](../validation/2026-09-05-r3-methodology-runner-structural.md).
-Outer run sealing/stop/retry, historical consumer integration, authenticated
+Stop/retry handling, full historical consumer integration, authenticated
 scope availability, runtime/tool-policy and egress probes remain unfinished.
 R2 human curation, protected partitions, and R4 authorization gates also remain.
 
@@ -57,6 +57,17 @@ are tracked; binaries remain local-only. All four retain shallow history and
 therefore remain rejected by the historical materializer's complete-ancestry
 gate. Bull, Next.js, NestJS, and Axios also lack required unchanged blobs.
 No newly admitted cases or protected partitions were created.
+
+The next R3 slice adds an independently reviewed historical case/source join,
+code-only B/D lane activation, and a complete-only outer run seal. The join
+keeps hidden truth out of reviewer inputs and verifies the original source
+family, commits, trees, and diff. The seal retains failed attempts and refuses
+to declare terminal completeness when scheduled evidence is missing. The
+expanded methodology suite passes 62/62, with typechecking passing. These are
+structural results, not historical inference or human admission. End-to-end
+synthetic integration now exercises four arms through the complete seal.
+Preregistered admission/lane provenance and stop/missing lifecycle handling
+remain in progress.
 
 - [Feasibility report](../validation/2026-09-04-r1-historical-reconstruction-feasibility.md)
 - [Machine-readable manifest](../validation/artifacts/2026-09-04-r1-historical-reconstructions/manifest.json)

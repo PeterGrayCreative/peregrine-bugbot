@@ -61,7 +61,36 @@ aggregates are normalized before serialization. These were plumbing defects,
 not model-quality outcomes. Existing benchmark artifacts and decisions were
 not rewritten.
 
-## Not established / next work
+## Case/source and terminal-seal integration follow-up
+
+The next structural slice adds:
+
+- A historical-case join that authenticates declared admission, caller-trusted
+  policy, partial truth scope, metadata bytes, original repository family,
+  commits, reproduced trees/diff, and scheduled distinct-root count. Hidden
+  truth remains runner-side; no truth-derived lanes enter model inputs.
+- Code-only B/D lane activation using the source-hashed existing manifest
+  implementation, without profiles or custom lanes. A/C reject this operation.
+  Both method arms derive identical activation for the same comparison.
+- A complete-only outer seal over the exact scheduled terminal receipts and
+  raw registration/input/terminal bytes. Failed reviews remain accounted for.
+  Missing, duplicate, cross-run, orphaned, rewritten, or symlinked evidence
+  rejects. A caller must retain the seal digest outside the mutable files.
+
+Independent review approved these bounded changes. The expanded methodology
+suite passes 62/62 and typechecking passes. A subsequent focused lane test also
+passes with hostile ambient Node loader options, demonstrating the child
+manifest process does not inherit those options. No historical code or live
+review model was executed by these tests. Complete-ancestry rejection remains
+unchanged; local shallow snapshot captures do not qualify for materialization.
+
+The additional synthetic historical integration test joins declared admission,
+actual Git materialization, code-only lanes, six mocked stage dispatches, and
+all four terminal records through the complete outer seal. It does not yet bind
+the historical admission or lane-activation provenance in the invocation
+registration; that explicit prerequisite is being added before R4.
+
+## Remaining integration boundary
 
 This slice is not R3 completion or R4 readiness. Invocation intents prove input
 capture, not provider contact; terminal records are runner evidence bound to
