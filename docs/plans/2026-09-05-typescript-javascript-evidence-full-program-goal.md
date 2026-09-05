@@ -16,3 +16,12 @@ Complete the full TypeScript and JavaScript evidence-gathering and Peregrine abl
 - The former instruction to stop after R1 is superseded by the user's explicit resumption.
 
 The full goal remains active across implementation checkpoints. Provider batch registration, independent curation, private data authorization, and final holdout requirements retain their original gates.
+
+## User review arrangement
+
+On 2026-09-05 the user offered to perform curation and verification, requesting
+one complete review packet rather than case-by-case interruptions. Prepare that
+batch while continuing safe source/harness work. Record one accountable human,
+not two independent human reviewers. Any adjusted sole-human development
+evidence class requires an explicit versioned policy; it cannot establish
+independent confirmation or a sealed holdout. The full program is not complete.

@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-09-05T16:58:26Z",
+  "evidenceClass": "visible-historical-development-complete-source-replay",
+  "caseId": "r2-dev-sequelize-8430-cls",
+  "sourceRepository": "https://github.com/sequelize/sequelize.git",
+  "localOnly": true,
+  "sourceClone": {
+    "path": "/private/tmp/peregrine-r2-replay-sources/sequelize-8430-complete-v1.git",
+    "diskKiB": 85516,
+    "shallow": false,
+    "objectFormat": "sha1",
+    "alternatesAbsent": true,
+    "promisorConfigurationAbsent": true,
+    "promisorPackMarkersAbsent": true,
+    "replacementRefsAbsent": true,
+    "graftsAbsent": true,
+    "fsckPassed": true
+  },
+  "artifact": {
+    "format": "git-bundle-v2-complete-history",
+    "path": "/private/tmp/peregrine-r2-replay-sources/sequelize-8430-complete-v1.bundle",
+    "bytes": 73954380,
+    "sha256": "9d9a441c1983cb732a43e7f9a87dbf76b82c1f383d6a7804bcd7c6c82af80af6",
+    "bundleVerifyPassed": true,
+    "bundleReportsCompleteHistory": true
+  },
+  "history": {
+    "reviewBase": "a056b5aa36c7598f5cbb3aaee0165bda53e9c65a",
+    "reviewBaseTree": "0547c8a3712081add3675782b200e4e0e272e557",
+    "reviewHead": "bda0df47ebcca4ad06f9eec006d35537ce6deb43",
+    "reviewHeadTree": "0c9ada3aa6305bbd2e70b71d487beaf00c02d3b3",
+    "finalBase": "2a3b3dba6bc257e19378bd18f56017fd66bfe6e6",
+    "finalBaseTree": "00c003917abff84efc8bf6000e66b05b63bb790d",
+    "finalHead": "a2d0c10a38083958361ff8218a015adcc21e7764",
+    "finalHeadTree": "e3a6afdf22b5e4137769e0a17c6ad59b3de4c49a",
+    "rootCommitOids": [
+      "fee92083a75c15f5b6cd2d0c2f3bb043ae155e68"
+    ],
+    "reviewHeadAncestryCommitCount": 7749,
+    "repositoryFamilyIdentitySha256": "ecbb11132c5f78baa9f763a604e2631220a6512bb6320590200cc5aa6b8df3e3"
+  },
+  "canonicalDiffs": {
+    "review": {
+      "bytes": 2219,
+      "sha256": "b0141b612d654f0b32b9a7eac61d54febf319feb0114e6775fab187e659f01ce",
+      "files": 3,
+      "insertions": 18,
+      "deletions": 3
+    },
+    "final": {
+      "bytes": 2219,
+      "sha256": "b0141b612d654f0b32b9a7eac61d54febf319feb0114e6775fab187e659f01ce"
+    },
+    "commentHeadToFinal": {
+      "bytes": 516,
+      "sha256": "1e995caac443af908c84a874094710862da6f0dc193424344c79ae4699f90998"
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "path": "LICENSE",
+    "blob": "1a7101a7f57e21531f6c0cba50a0ab725782f511",
+    "contentSha256": "367eeae92316a2485489ffbb05f9c3bc90b439c0e0b026d81d23a6453bdc4aa8"
+  },
+  "offlineValidation": {
+    "path": "/private/tmp/peregrine-r2-replay-sources/sequelize-8430-complete-v1-offline-check.git",
+    "diskKiB": 85336,
+    "freshCloneFromBundle": true,
+    "lazyFetchDisabledForObjectChecks": true,
+    "transportDisabledForObjectChecks": true,
+    "fsckPassed": true,
+    "shallow": false,
+    "alternatesAbsent": true,
+    "promisorPackMarkersAbsent": true,
+    "mergeBaseMatches": true,
+    "rootIdentityMatches": true,
+    "canonicalReviewDiffMatches": true
+  },
+  "limits": {
+    "baselineEvidenceStoreKiB": 45344,
+    "aggregateNewDataKiB": 243076,
+    "aggregateNewDataMiB": 237.379,
+    "dataCapMiB": 250,
+    "timeCapMinutes": 20,
+    "recordedCreationPhaseSeconds": 10,
+    "capExceeded": false
+  },
+  "limitations": [
+    "This is exposed development source preparation, not case admission, partition selection, human confirmation, or provider evidence.",
+    "No historical code or dependencies were executed.",
+    "No case-specific materialization or leakage-policy run was performed; this artifact clears the source ancestry gate only.",
+    "The artifact is local-only under /private/tmp and is not durable or checked into Git."
+  ]
+}

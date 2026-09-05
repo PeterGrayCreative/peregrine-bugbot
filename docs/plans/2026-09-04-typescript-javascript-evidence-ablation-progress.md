@@ -58,6 +58,12 @@ therefore remain rejected by the historical materializer's complete-ancestry
 gate. Bull, Next.js, NestJS, and Axios also lack required unchanged blobs.
 No newly admitted cases or protected partitions were created.
 
+Follow-up: Sequelize #8430 now also has a separate complete-history bundle.
+Independent offline source checks confirm the exact review objects, root-family
+identity, canonical diffs, and license. This clears its ancestry/source
+availability issue, not admission. The bundle remains local-only; see the
+[complete-history report](../validation/2026-09-05-r2-complete-history-feasibility.md).
+
 The next R3 slice adds an independently reviewed historical case/source join,
 code-only B/D lane activation, and a complete-only outer run seal. The join
 keeps hidden truth out of reviewer inputs and verifies the original source
@@ -66,8 +72,26 @@ to declare terminal completeness when scheduled evidence is missing. The
 expanded methodology suite passes 62/62, with typechecking passing. These are
 structural results, not historical inference or human admission. End-to-end
 synthetic integration now exercises four arms through the complete seal.
-Preregistered admission/lane provenance and stop/missing lifecycle handling
-remain in progress.
+The subsequent input-plan and trusted-runner join now binds fresh historical
+admission/source/activation, frozen prompts, dispatch/preflight records, and
+complete composite evidence. Its expanded suite passes 78/78 with typechecking.
+Missing/stopped schedules, retry lineage, historical grading/report consumers,
+and authenticated runtime availability remain unfinished. Commit `15cb7d1`
+passed both GitHub `check` and credential-free image build/smoke.
+
+The user has offered to perform human curation and verification as one
+consolidated review, not serial case requests. The
+[packet specification](2026-09-05-r2-human-review-packet-spec.md) targets enough
+proposals and explicit losses to make one batch useful. One person is one
+human reviewer; no independent-human or sealed-selection claim is created.
+Any sole-human development policy must be explicit and versioned rather than
+silently weakening the current two-confirmation gate.
+
+An [offline runtime probe](../validation/2026-09-05-r3-offline-codex-read-probe.md)
+found that the accepted image's direct file read works but the CLI's nested
+read-only sandbox fails at namespace creation under the tested restrictions.
+No credentials, model calls, historical code, or security relaxation were used.
+Usable read/search tools and provider-connected egress remain R4 blockers.
 
 - [Feasibility report](../validation/2026-09-04-r1-historical-reconstruction-feasibility.md)
 - [Machine-readable manifest](../validation/artifacts/2026-09-04-r1-historical-reconstructions/manifest.json)
