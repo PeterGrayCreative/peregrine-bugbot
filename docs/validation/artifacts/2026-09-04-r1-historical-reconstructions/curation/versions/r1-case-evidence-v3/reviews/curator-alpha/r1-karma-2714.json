@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 3,
+  "packetVersion": "r1-case-evidence-v3",
+  "packetSha256": "d96904edf56c5b8dac970f59fa95a14c495cde5bd22d50a805e6874df098c2fe",
+  "caseId": "r1-karma-2714",
+  "evidenceBundleSha256": "8d94f19ccfb5ef792008036e60d06daf12af290465fb3e1c0142c68c6b7a8cb5",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_alpha",
+  "curatorIdentitySha256": "a2ef45b13113d050014b9cce96a10be569e2114629ceb52ea4668fffa5607cd7",
+  "reviewedAt": "2026-09-05T04:23:07Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": {
+    "sourceAuthenticity": true,
+    "exactHistoricalHead": true,
+    "provenance": true,
+    "causalTrace": true,
+    "reachability": true,
+    "consequence": true,
+    "repairBoundary": true,
+    "truthScope": true,
+    "license": true,
+    "limitations": true
+  },
+  "evidenceNotes": [
+    {
+      "source": "v3 metadata and diffs/r1-karma-2714.diff; canonical karma-runner/karma commits 2a847c25 and 2789bf57",
+      "observation": "The base is an ancestor of the reviewed head and trees match. The recorded canonical command produced 3107 bytes and SHA-256 6a53f7ffc241801032e21dae011a3e1c6502446827b7e82c7fbcbaec3562ce9a, byte-identical to the two-section stored patch; logical stats are 2 files, 62 insertions, and 4 deletions."
+    },
+    {
+      "source": "2789bf57 lib/preprocessor.js and test/unit/preprocessor.spec.js",
+      "observation": "handleFile is the asynchronous callback receiving the fresh error and buffer. Each retry must call fs.readFile(file.originalPath, handleFile); invoking handleFile directly would neither retry I/O nor supply a buffer and would make the later buffer.length path invalid."
+    },
+    {
+      "source": "raw/karma-pr-2714-comments.json discussion r118850978 and commit 92a8c81f",
+      "observation": "The reviewer raised the callback-selection concern on original commit 2789bf57. The author clarified it by renaming handleFile to readFileCallback without changing control flow, supporting the protected-pattern comparison rather than a defect label."
+    },
+    {
+      "source": "cases/r1-karma-2714.md, v3 metadata priorEvidence, and 2789bf57 LICENSE",
+      "observation": "The comparison is expressly limited to retry callback selection and discloses asynchronous throwing, the weak terminal-retry test, and absence of runtime reconstruction. V3 binds the confirmed v1 evidence, supersedes only its abbreviated diff serialization, and the historical license is MIT."
+    }
+  ],
+  "exceptions": []
+}

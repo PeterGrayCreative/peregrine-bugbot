@@ -2,13 +2,14 @@ import { createHash } from "node:crypto";
 import { lstatSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { validateR1V2 } from "./r1-curation-v2.mjs";
+import { validateR1V3 } from "./r1-curation-v3.mjs";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(scriptDir, "../..");
-const evidenceRoot = resolve(
-  repositoryRoot,
-  "docs/validation/artifacts/2026-09-04-r1-historical-reconstructions",
-);
+const evidenceRoot = process.env.R1_EVIDENCE_ROOT
+  ? resolve(process.env.R1_EVIDENCE_ROOT)
+  : resolve(repositoryRoot, "docs/validation/artifacts/2026-09-04-r1-historical-reconstructions");
 const reviewRoot = resolve(evidenceRoot, "curation/reviews");
 const requireComplete = process.argv.includes("--require-complete");
 const declaration = "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.";
@@ -152,11 +153,15 @@ for (const curatorName of readdirSync(reviewRoot).filter((name) => name !== "REA
 }
 
 let ready = true;
+let hasBlocker = false;
 for (const [caseId, entry] of cases) {
   const confirmed = [...entry.confirmations.values()].filter((value) => value === "confirm").length;
   const caseReady = confirmed >= 2 && entry.blocked.length === 0;
   ready &&= caseReady;
+  hasBlocker ||= entry.blocked.length > 0;
   console.log(`${caseId}: ${confirmed}/2 confirmations${entry.blocked.length ? `; ${entry.blocked.join(", ")}` : ""}`);
 }
-console.log(`R1 curator readiness: ${ready ? "ready" : "not-ready"}`);
-if (requireComplete && !ready) process.exitCode = 1;
+console.log(`R1 v1 curator readiness: ${ready ? "ready" : hasBlocker ? "failed" : "not-ready"}`);
+const v2 = validateR1V2(evidenceRoot, { log: true });
+const v3 = validateR1V3(evidenceRoot, { log: true });
+if (requireComplete && !v3.ready) process.exitCode = 1;

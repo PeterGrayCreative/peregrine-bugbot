@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "packetVersion": "r1-case-evidence-v1",
+  "caseId": "r1-typescript-37467",
+  "evidenceBundleSha256": "81115874e4586dec0b1a9b37cae2f143e901d2dd89724ec9b3e0b716733fcefe",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_alpha",
+  "curatorIdentitySha256": "a2ef45b13113d050014b9cce96a10be569e2114629ceb52ea4668fffa5607cd7",
+  "reviewedAt": "2026-09-05T03:38:34Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "reject",
+  "checks": { "sourceAuthenticity": true, "exactHistoricalHead": false, "provenance": true, "causalTrace": true, "reachability": true, "consequence": true, "repairBoundary": true, "truthScope": true, "license": true, "limitations": false },
+  "evidenceNotes": [
+    { "source": "microsoft/TypeScript canonical history and raw/typescript-pr-37467.json", "observation": "Recorded base ac3dc0c4 is not an ancestor of head 6cbbdbcc; merge base 933c2949 yields the authentic 10-file, 135-addition, 6-deletion PR patch." },
+    { "source": "src/services/organizeImports.ts and repair 428f5a19", "observation": "The comment-duplication causal root is supported, but the frozen 15-file comparison reverse-includes unrelated target-branch content and is not the historical review surface." }
+  ],
+  "exceptions": [
+    "Bind a new evidence version to merge base 933c2949236f38e1255a0aa4564246a3fef1518c and diff SHA-256 99d05fda5f0f3173eabf57a55fd41803abaa65cc957607b4d4d72f7a892a9acc.",
+    "Disclose the non-ancestor comparison and unrelated reverse-diff content in the superseded version's limitations."
+  ]
+}

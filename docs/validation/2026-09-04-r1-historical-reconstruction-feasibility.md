@@ -3,8 +3,7 @@
 Date: 2026-09-04 (America/New_York)
 Branch: `research/ts-js-evidence-r1`
 Base: `origin/main` at `fa1ff4dc501f869730f88947ec3ef3cc5fa42037`
-Status: feasibility and source archival complete; independent curation remains
-before case admission
+Status: complete after append-only correction and independent curation
 
 ## Result
 
@@ -13,7 +12,8 @@ historical commits. The batch covers TypeScript and JavaScript, review-caught
 and post-merge defects, and a plausible reviewed comparison. Four roots have a
 complete static causal trace plus contemporaneous review or later fix evidence.
 The comparison has a bounded static disconfirmation trace and is explicitly not
-called globally clean.
+called globally clean. Two independent curators confirmed every authoritative
+v3 bundle.
 
 No reviewer, judge, or other provider experiment was run. No production prompt,
 route, skill, or benchmark result was changed.
@@ -21,14 +21,16 @@ route, skill, or benchmark result was changed.
 | Case | Language | Role | Exact review state | Primary result |
 | --- | --- | --- | --- | --- |
 | `r1-vscode-73801` | TS | Review-caught | Parent -> original reviewed commit | Cleanup attached to server exit also runs on restart; review moves it to extension-instance deactivation. |
-| `r1-typescript-37467` | TS | Post-merge | PR base -> final reviewed head | General comment preservation interacts with organize-import deletion and duplicates comments on each save. |
-| `r1-karma-2846` | JS | Review-caught | PR base -> original reviewed head | Manual file type reaches files but is omitted from script MIME/type selection. |
+| `r1-typescript-37467` | TS | Post-merge | Authentic merge base -> final reviewed head | General comment preservation interacts with organize-import deletion and duplicates comments on each save. |
+| `r1-karma-2846` | JS | Review-caught | PR base -> original reviewed head | For ordinary refresh-loaded local files, manual type reaches `File.type` but is omitted from script MIME selection. URL and watcher seams are separate and disclosed. |
 | `r1-karma-2714` | JS | Reviewed comparison | PR base -> reviewed head | Reissuing `fs.readFile` is the intended retry; direct callback recursion lacks a fresh result. No global clean claim. |
 | `r1-webpack-8233` | JS | Post-merge | PR base -> approved head | Logical folding turns an unknown runtime `typeof` guard into a constant; later issue and fix bind the root. |
 
-The machine-readable identities and diff hashes are in
-[`manifest.json`](artifacts/2026-09-04-r1-historical-reconstructions/manifest.json).
-Each case file records the truth boundary and limitations.
+The original machine-readable identities and diff hashes remain in the immutable
+v1 [`manifest.json`](artifacts/2026-09-04-r1-historical-reconstructions/manifest.json).
+The authoritative identities, canonical stored patches, corrected truth
+boundaries, and supersession records are bound by the v3 packet under
+[`curation/versions/r1-case-evidence-v3/`](artifacts/2026-09-04-r1-historical-reconstructions/curation/versions/r1-case-evidence-v3/).
 
 ## Why these are review opportunities
 
@@ -86,6 +88,13 @@ from 100 candidates.
   commit. VS Code #73801 would appear as a noisy 112-file diff using the drifted
   API base; the reviewed commit's parent reconstructs the actual four-file
   opportunity.
+- A recorded target tip is not necessarily an ancestor of the reviewed head.
+  TypeScript #37467 initially used a non-ancestor base and produced a reverse
+  diff containing unrelated changes. Independent curation forced replacement
+  with the authentic merge-base-to-head patch.
+- Raw patch hashes depend on Git's abbreviated blob IDs unless the diff command
+  fixes them. V3 stores the actual patch bytes and uses a fully specified
+  `--full-index`, no-renames, no-textconv, deterministic diff command.
 - Release-regression reports can identify authentic introducing PRs. Webpack's
   4.21-to-4.22 boundary isolated PR #8233 before the later fix was inspected as
   repair evidence.
@@ -104,20 +113,20 @@ from 100 candidates.
 No individual reconstruction exceeded the proposed two-hour deferral boundary,
 but curator time was not instrumented in this pass. R2 must record it.
 
-## Admission blockers and next decision
+## Admission outcome and stop point
 
-R1 has established that authentic TS/JS review opportunities can be recovered.
-It has not admitted benchmark cases. Each manifest entry remains `admitted:
-false` because no formal confirmation exists yet. Two accountable curators must
-independently confirm the exact review state, causal trace, severity, and truth
-boundary. The primary analysis author is not automatically counted.
+R1 establishes that authentic TS/JS review opportunities can be recovered and
+defensibly curated. The original v1 packet is preserved as failed evidence:
+both curators rejected two cases. V2 records the substantive corrections. V3
+then canonicalizes all five patch artifacts, binds an exact curator roster, and
+requires confirmations to name both the exact packet and case bundle.
 
-The next bounded action is two independent confirmations of these five bundles.
-If those checks pass, R1 can close and R2 may begin. Prompt edits,
-provider calls, the 100-candidate inventory, and harness changes remain out of
-scope until that checkpoint.
+Both rostered curators directly authored five v3 confirmations. The strict
+zero-provider validator reports 2/2 confirmations for every case and `R1 v3
+curator readiness: ready`. This closes the R1 feasibility gate; it does not yet
+convert these cases into the future R2 historical benchmark schema or claim
+Peregrine efficacy.
 
-The immutable review packet, confirmation schema, and instructions are under
-[`curation/`](artifacts/2026-09-04-r1-historical-reconstructions/curation/).
-The zero-provider validator currently reports 0/2 confirmations for all five
-cases and fails closed when invoked with `--require-complete`.
+Work stops here by request. R2 candidate collection, R3 harness work, prompt
+changes, and all provider calls remain unstarted. Resume from the dedicated
+[handoff](../plans/2026-09-05-typescript-javascript-evidence-ablation-r1-handoff.md).

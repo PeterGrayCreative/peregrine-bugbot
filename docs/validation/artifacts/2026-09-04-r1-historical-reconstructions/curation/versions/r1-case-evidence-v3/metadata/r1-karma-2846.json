@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 3,
+  "caseId": "r1-karma-2846",
+  "repository": "karma-runner/karma",
+  "reviewBase": "e79463b94ff6d3ad87526b3c68b38b90e924ea42",
+  "reviewHead": "eab78ff696f3de8ae226f930e08b93d20ffbdb66",
+  "baseTree": "8c42372cca4b0be9f0d2f75833a3abfba7fe904a",
+  "headTree": "72fcd0063020977f14c2c15bdd8d9233e78c4a28",
+  "logicalDiffStats": { "files": 5, "insertions": 40, "deletions": 16 },
+  "canonicalDiff": {
+    "environment": { "LC_ALL": "C", "LANG": "C" },
+    "gitVersion": "git version 2.50.1 (Apple Git-155)",
+    "command": "git -c core.quotePath=true -c color.ui=false -c diff.renames=false diff --binary --full-index --no-ext-diff --no-textconv --no-renames --no-color --diff-algorithm=myers --src-prefix=a/ --dst-prefix=b/ --unified=3 e79463b94ff6d3ad87526b3c68b38b90e924ea42 eab78ff696f3de8ae226f930e08b93d20ffbdb66 --",
+    "storedFile": "curation/versions/r1-case-evidence-v3/diffs/r1-karma-2846.diff",
+    "bytes": 9492,
+    "sha256": "6906187983eb2d3fb76b6b208f2f954fb92b8855c940e9b711347c36e3b79965",
+    "fileSections": 5
+  },
+  "supersededDiffClaims": [
+    { "packetVersion": "r1-case-evidence-v1", "sha256": "7a23b80d43201932ab7a95c876ee99f205c295ea43ffb79acf5d932a46044dfb", "reason": "Generated without full object IDs and fully pinned diff behavior." },
+    { "packetVersion": "r1-case-evidence-v2", "sha256": "7a23b80d43201932ab7a95c876ee99f205c295ea43ffb79acf5d932a46044dfb", "reason": "Corrected the root scope but retained the noncanonical diff hash." }
+  ],
+  "priorEvidence": { "packetVersion": "r1-case-evidence-v2", "evidenceVersion": "r1-case-evidence-v2", "evidenceBundleSha256": "945f79640801089a79910f6db309f80be5e1cba87b607538f76bc791e974d618" },
+  "authority": "The packet-bound stored diff bytes and their SHA-256 are authoritative; superseded hashes in reused prose are provenance only."
+}

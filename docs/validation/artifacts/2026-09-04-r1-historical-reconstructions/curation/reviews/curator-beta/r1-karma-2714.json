@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "packetVersion": "r1-case-evidence-v1",
+  "caseId": "r1-karma-2714",
+  "evidenceBundleSha256": "c547ca1fb0b4f32fd2e60c087b00b230da3351b8ffa028d61a2ea82028fda438",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_beta",
+  "curatorIdentitySha256": "d5685cd85a563032fdf19dadfd2e023a8c2b54f6153c85279b9704c1c2f5fe59",
+  "reviewedAt": "2026-09-05T03:38:34Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": { "sourceAuthenticity": true, "exactHistoricalHead": true, "provenance": true, "causalTrace": true, "reachability": true, "consequence": true, "repairBoundary": true, "truthScope": true, "license": true, "limitations": true },
+  "evidenceNotes": [
+    { "source": "karma-runner/karma 2789bf57 lib/preprocessor.js and raw review r118850978", "observation": "The exact review patch is authentic; retrying through fs.readFile with the callback is necessary, while directly invoking the callback cannot obtain a fresh result." },
+    { "source": "commit 92a8c81f and declared comparison scope", "observation": "The rename preserves behavior, and the case expressly limits truth to callback selection while retaining the asynchronous-throw and test-quality concerns." }
+  ],
+  "exceptions": []
+}

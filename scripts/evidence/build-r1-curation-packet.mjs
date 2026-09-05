@@ -1,14 +1,13 @@
 import { createHash } from "node:crypto";
-import { lstatSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(scriptDir, "../..");
-const evidenceRoot = resolve(
-  repositoryRoot,
-  "docs/validation/artifacts/2026-09-04-r1-historical-reconstructions",
-);
+const evidenceRoot = process.env.R1_EVIDENCE_ROOT
+  ? resolve(process.env.R1_EVIDENCE_ROOT)
+  : resolve(repositoryRoot, "docs/validation/artifacts/2026-09-04-r1-historical-reconstructions");
 
 const caseSources = {
   "r1-vscode-73801": [
@@ -90,8 +89,13 @@ packet.packetSha256 = sha256(Buffer.from(JSON.stringify({
   cases: packet.cases,
 })));
 
-writeFileSync(
-  resolve(evidenceRoot, "curation/packet-manifest.json"),
-  `${JSON.stringify(packet, null, 2)}\n`,
-);
+const packetPath = resolve(evidenceRoot, "curation/packet-manifest.json");
+const encodedPacket = `${JSON.stringify(packet, null, 2)}\n`;
+if (existsSync(packetPath)) {
+  if (!readFileSync(packetPath).equals(Buffer.from(encodedPacket))) {
+    throw new Error("refusing to overwrite drifted frozen v1 curator packet");
+  }
+} else {
+  writeFileSync(packetPath, encodedPacket);
+}
 console.log(`Bound ${cases.length} cases in curator packet ${packet.packetSha256}`);

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "packetVersion": "r1-case-evidence-v1",
+  "caseId": "r1-karma-2846",
+  "evidenceBundleSha256": "65f288926e8deee9a45c6b8f44af5a772036e1ea342bcaff78183469ea1072ed",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_alpha",
+  "curatorIdentitySha256": "a2ef45b13113d050014b9cce96a10be569e2114629ceb52ea4668fffa5607cd7",
+  "reviewedAt": "2026-09-05T03:38:34Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "reject",
+  "checks": { "sourceAuthenticity": true, "exactHistoricalHead": true, "provenance": true, "causalTrace": false, "reachability": true, "consequence": true, "repairBoundary": false, "truthScope": false, "license": true, "limitations": false },
+  "evidenceNotes": [
+    { "source": "karma-runner/karma eab78ff6 lib/config.js, lib/file-list.js, lib/file.js, and lib/middleware/karma.js", "observation": "Local refresh-loaded files carry Pattern.type to File.type, but absolute UrlPattern and watcher-added paths discard it; the primary trace incorrectly says the type reaches each file." },
+    { "source": "PR #2846 final head a59b83ef and tests", "observation": "The accepted changes repair local script selection but do not close URL or watcher propagation, and no explicit script-type regression test was added." }
+  ],
+  "exceptions": [
+    "Narrow the root and trace to ordinary refresh-loaded local file patterns.",
+    "Disclose absolute-URL and watcher-added-file type-loss seams, including the motivating Google Fonts URL, and correct the test claim."
+  ]
+}

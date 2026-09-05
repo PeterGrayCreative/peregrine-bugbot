@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 3,
+  "caseId": "r1-webpack-8233",
+  "repository": "webpack/webpack",
+  "reviewBase": "2228daff027113a10790c75f2901c0b804d60a25",
+  "reviewHead": "dcd38348e5a74e250a6dbfa22e743fc7da0964ff",
+  "baseTree": "6fc6ac847bc62e49f5f2ab9f7774b1f234b75267",
+  "headTree": "70f9720cdb1e9641bc5e87a2a80822b9c20dc9d7",
+  "logicalDiffStats": { "files": 3, "insertions": 101, "deletions": 1 },
+  "canonicalDiff": {
+    "environment": { "LC_ALL": "C", "LANG": "C" },
+    "gitVersion": "git version 2.50.1 (Apple Git-155)",
+    "command": "git -c core.quotePath=true -c color.ui=false -c diff.renames=false diff --binary --full-index --no-ext-diff --no-textconv --no-renames --no-color --diff-algorithm=myers --src-prefix=a/ --dst-prefix=b/ --unified=3 2228daff027113a10790c75f2901c0b804d60a25 dcd38348e5a74e250a6dbfa22e743fc7da0964ff --",
+    "storedFile": "curation/versions/r1-case-evidence-v3/diffs/r1-webpack-8233.diff",
+    "bytes": 4761,
+    "sha256": "4313dd3d4567eb8c83fc64cbc2e0065de149a6680f06f3b052908ad00d610921",
+    "fileSections": 3
+  },
+  "supersededDiffClaims": [{ "packetVersion": "r1-case-evidence-v1", "sha256": "6b161ba2086b471a6b96502fc68cfd6cc05f0d0760d194757aaafccd974b2687", "reason": "Generated without full object IDs and fully pinned diff behavior." }],
+  "priorEvidence": { "packetVersion": "r1-case-evidence-v2", "evidenceVersion": "r1-case-evidence-v1", "evidenceBundleSha256": "a04b5d8076b6baf21bd0411e55bc3cda4304d62167bd73c81bd3edee71996708" },
+  "authority": "The packet-bound stored diff bytes and their SHA-256 are authoritative; superseded hashes in reused prose are provenance only."
+}

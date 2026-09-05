@@ -1,6 +1,6 @@
 # TypeScript and JavaScript evidence and ablation progress
 
-Updated: 2026-09-04
+Updated: 2026-09-05
 Active branch: `research/ts-js-evidence-r1`
 
 ## Active objective
@@ -13,8 +13,8 @@ minimal reviewer. Production routing remains frozen.
 
 | Step | State | Evidence / remaining gate |
 | --- | --- | --- |
-| R1: collection feasibility | In review | Five exact public review opportunities and 20 raw source responses are archived. Zero formal confirmations exist; two accountable independent confirmations remain before admission. |
-| R2: gather and partition | Not started | Requires R1 admission gate. |
+| R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
+| R2: gather and partition | Paused at checkpoint | R1 is ready. Per the requested stop point, the 100-candidate inventory and 36-case curation have not started. |
 | R3: neutral and truthful harness | Not started | May begin after R1; old artifacts/readers and production defaults must remain intact. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |
@@ -30,8 +30,28 @@ minimal reviewer. Production routing remains frozen.
 - Per-case proof bundles under
   `docs/validation/artifacts/2026-09-04-r1-historical-reconstructions/cases/`
 - [Independent curation protocol](../validation/artifacts/2026-09-04-r1-historical-reconstructions/curation/review-protocol.md)
-- Curator packet SHA-256:
-  `f477b8038770c94ca6b76f1a753411c01109bdfd5df6a96b61b41f1cfc167c44`
+- [R1 completion status](../validation/2026-09-05-r1-historical-reconstruction-status.md)
+- [Resume handoff](2026-09-05-typescript-javascript-evidence-ablation-r1-handoff.md)
+- Authoritative v3 curator packet SHA-256:
+  `d96904edf56c5b8dac970f59fa95a14c495cde5bd22d50a805e6874df098c2fe`
+
+## R1 correction and verification history
+
+- V1 remains immutable and failed. Two curators independently rejected the
+  TypeScript base/diff and the breadth of the Karma #2846 claim while
+  confirming the other three cases.
+- V2 corrected the TypeScript merge base and narrowed the Karma claim. It is
+  retained as ready intermediate evidence, including the original rejections.
+- A separate integrity review found that the old raw patch hashes depended on
+  repository-specific abbreviated blob IDs. V3 stores canonical full-index
+  diff bytes for all five cases and supersedes every old diff-hash claim.
+- V3 confirmations bind the exact packet hash, case bundle, rostered curator
+  identity, directory, and filename. Both curators authored their own five
+  confirmation files. The validator reports 2/2 for every case and `ready`.
+- Focused integrity tests, TypeScript checking, and the strict zero-provider
+  gate pass under Node 22. The full suite passes 249/252 while the worktree is
+  dirty; its three provider-enabled fixture tests deliberately require a clean
+  worktree and must be rerun after commit.
 
 ## Frozen constraints
 
