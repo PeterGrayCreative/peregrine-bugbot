@@ -43,7 +43,7 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | Checkpoint 2 full comparison | Legacy/full versus accepted method-packet/full stack | PR 8, visible protocol | Complete; visible cost gates passed, corpus correction required before Checkpoint 3 measurement | [results](../validation/2026-09-04-stage2-checkpoint2-visible-results.md) |
 | Shortened benchmark funnel | Frozen smoke, fast-screen, confirmation, and full-checkpoint panels with fail-closed decisions | Checkpoint 2 adjudication | Merged | [#28](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/28) |
 | Luna-max / Terra-xhigh route screen | Paired smoke against accepted Luna-high / Sol-high route | Shortened benchmark funnel | Stopped before fast-screen; wall time unacceptable | [results](../validation/2026-09-04-luna-max-terra-xhigh-smoke-results.md) |
-| Benchmark semantics remediation | Append-only adjudication, diagnostic quarantine, truthful miss attribution | Shortened benchmark funnel | In progress | This branch |
+| Benchmark semantics remediation | Append-only adjudication, diagnostic quarantine, truthful miss attribution | Shortened benchmark funnel | Implemented and locally validated; PR pending | [validation](../validation/2026-09-05-benchmark-semantics-remediation.md) |
 | Plan PR 10 | Activated-lane counterexamples and seam checklist | PR 8 and Checkpoint 2 | Not started | - |
 | Plan PR 11 | Investigation coverage and runner-owned completeness | PR 10 | Not started | - |
 | Plan PR 12 | Bounded risk-sensitive candidate budgets | PR 11 | Not started | - |

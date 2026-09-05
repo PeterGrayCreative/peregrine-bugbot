@@ -1,0 +1,101 @@
+{
+  "schemaVersion": 2,
+  "experimentId": "251f82be481b224856534e5fe61c185789c591adc7fddc7b44616da2ba983185",
+  "benchmarkCategory": {
+    "name": "smoke",
+    "definitionSha256": "53f8b0d142430666b76f0d621afda59a7df0a10d8adc1a606971ea8b153b7e48",
+    "evidenceUse": "paired-acceptance",
+    "definition": {
+      "mode": "screening",
+      "repeats": 1,
+      "corpora": [
+        "development"
+      ],
+      "caseIds": [
+        "case-13f0a2c1",
+        "case-17ac84e2",
+        "case-1ab7d3c9",
+        "case-5ea42d18",
+        "case-6c19f4ab",
+        "case-a1c4e90d"
+      ],
+      "roles": {
+        "highRiskSentinels": [
+          "case-13f0a2c1",
+          "case-6c19f4ab",
+          "case-a1c4e90d"
+        ],
+        "variableCases": [
+          "case-17ac84e2"
+        ],
+        "cleanControls": [
+          "case-1ab7d3c9",
+          "case-5ea42d18"
+        ],
+        "compatibilityProxies": [
+          "case-17ac84e2"
+        ],
+        "largeDiffCases": [],
+        "diagnosticOnlyCases": []
+      },
+      "gate": {
+        "nextCategory": "fast-screen",
+        "efficiencyMetric": "paired-median-wall-time",
+        "targetImprovementPercent": null,
+        "requireConfidenceIntervalAboveZero": false,
+        "reliableDetectionMinimum": 1,
+        "bootstrapSamples": 10000,
+        "bootstrapSeed": 17011,
+        "mayComplete": false
+      }
+    },
+    "restrictedCasePolicies": []
+  },
+  "terminalSealSha256": "dd34c7732ff04b5856dcd62b1255734dceea8fb06a67546752805d49c1a553a7",
+  "terminal": "completed",
+  "gradingSealSha256": "89a84e087c00ddcd1b70702060cad5dd4283923c130c4788ab9b392f342228e2",
+  "completion": {
+    "control": {
+      "scheduled": 6,
+      "completed": 6,
+      "failed": 0
+    },
+    "treatment": {
+      "scheduled": 6,
+      "completed": 6,
+      "failed": 0
+    }
+  },
+  "metrics": {
+    "reliableHighSeverityRegressions": [],
+    "reliableOtherRegressions": [],
+    "blockingUnsupportedFindings": {
+      "control": 1,
+      "treatment": 0
+    },
+    "confirmedNewFindingsOnCleanControls": 0,
+    "unresolvedRequiredAdjudications": 0,
+    "diagnosticExcludedFindingCount": 0,
+    "efficiency": {
+      "metric": "paired-median-wall-time",
+      "targetImprovementPercent": null,
+      "observedImprovementPercent": -82.72593597658164,
+      "confidenceIntervalPercent": {
+        "lower": -177.71327798731303,
+        "upper": -59.427523604956875
+      },
+      "pairedAttempts": 6,
+      "resamplingUnit": "case"
+    }
+  },
+  "result": {
+    "status": "advance",
+    "nextCategory": "fast-screen",
+    "reasons": [
+      "Safety and completion gates passed; efficiency is not a behavioral smoke gate."
+    ]
+  },
+  "previousDecisionSha256": "8a185ce091016d19fc26ed53bc66fc950168e042efd5ff8e16fdf442be411f81",
+  "adjudicationLedgerSha256": "fae699f5972e14d6276681923d01e19af34c75581b0157ab07506def397062f4",
+  "decisionSha256": "38497561d7b3eae3cac5e9ca5aca9a578ba70640d33fa0cba4611f63f2916305"
+}

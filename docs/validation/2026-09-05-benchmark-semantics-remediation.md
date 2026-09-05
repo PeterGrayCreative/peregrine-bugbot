@@ -31,6 +31,17 @@ ledger, derived-decision, and report path end to end. The route remains
 operator-rejected because its wall-time regression was unacceptable; resolving
 the finding does not authorize fast-screen advancement.
 
+Operational results:
+
+- ledger SHA-256: `fae699f5972e14d6276681923d01e19af34c75581b0157ab07506def397062f4`;
+- the original version-1 inconclusive decision remains unchanged;
+- the linked version-2 decision resolves required adjudications and returns the
+  smoke gate's mechanical `advance` result;
+- the refreshed report records control precision 0.8/FDR 0.2 with one blocking
+  unsupported finding, and treatment precision 1/FDR 0;
+- the operator's independent wall-time stop remains controlling, so no
+  fast-screen follows.
+
 ## Verification record
 
 - Node: repository-pinned Node 22 (`v22.22.1` locally).
