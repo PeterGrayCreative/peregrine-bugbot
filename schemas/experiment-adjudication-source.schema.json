@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Peregrine Experiment Adjudication Source",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "kind": { "const": "unmatched-finding-adjudication-source" },
+    "experimentId": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "curatorIdentitySha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "reviewProtocol": { "const": "blind-to-engine-route-variant-v1" },
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "attemptId": { "type": "string", "pattern": "^attempt-[0-9]{6}$" },
+          "findingIndex": { "type": "integer", "minimum": 0 },
+          "findingEvidenceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "classification": { "enum": ["confirmed-new", "unsupported"] },
+          "rationale": { "type": "string", "minLength": 1, "maxLength": 4000 },
+          "evidence": { "type": "string", "minLength": 1, "maxLength": 4000 }
+        },
+        "required": ["attemptId", "findingIndex", "findingEvidenceSha256", "classification", "rationale", "evidence"]
+      }
+    }
+  },
+  "required": ["schemaVersion", "kind", "experimentId", "curatorIdentitySha256", "reviewProtocol", "records"]
+}

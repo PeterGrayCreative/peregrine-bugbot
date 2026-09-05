@@ -393,6 +393,9 @@ function experimentMetadataFiles(includeExperiment: boolean): ReadonlySet<string
           EXPERIMENT_METADATA_FILENAMES.experimentStop,
           EXPERIMENT_TERMINAL_SEAL_FILENAME,
           EXPERIMENT_GRADING_SEAL_FILENAME,
+          "experiment-adjudication.json",
+          "funnel-decision.json",
+          "funnel-decision-adjudicated.json",
         ]
       : []),
   ]);

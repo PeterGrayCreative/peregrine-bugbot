@@ -1360,6 +1360,7 @@ function parseGradingEvidence(
   const root = object(value, `${source}.grading`);
   onlyKeys(root, new Set(["version", "judge", "decisions", "rootCauseMatches", "missStages", "unmatchedFindings"]), `${source}.grading`);
   if (root.version !== "root-cause-v1" && root.version !== "root-cause-v2") throw new Error(`${source}.grading.version is invalid`);
+  const gradingVersion = root.version;
   const judge = object(root.judge, `${source}.grading.judge`);
   onlyKeys(judge, new Set(["kind", "version", "configSha256"]), `${source}.grading.judge`);
   if (judge.kind !== "exact" && judge.kind !== "claude" && judge.kind !== "codex") throw new Error(`${source}.grading.judge.kind is invalid`);
@@ -1400,10 +1401,10 @@ function parseGradingEvidence(
     return [key, matched];
   }));
   const missRaw = object(root.missStages, `${source}.grading.missStages`);
-  const stages = new Set(["none", "routing", "breadth", "investigation", "budget", "presentation", "infrastructure"]);
-  if (root.version === "root-cause-v2") stages.add("unattributed");
+  const stages = new Set(["none", "unattributed", "routing", "breadth", "investigation", "budget", "presentation", "infrastructure"]);
   const missStages = Object.fromEntries(Object.entries(missRaw).map(([bugId, stage]) => {
     if (!(bugId in matches) || !stages.has(String(stage))) throw new Error(`${source}.grading.missStages.${bugId} is invalid`);
+    if (gradingVersion === "root-cause-v1" && stage === "unattributed") throw new Error(`${source}.grading.missStages.${bugId} is invalid for root-cause-v1`);
     return [bugId, stage];
   })) as GradingEvidence["missStages"];
   if (Object.keys(matches).some((bugId) => !(bugId in missStages))) throw new Error(`${source}.grading.missStages must cover every bug`);
@@ -1420,7 +1421,7 @@ function parseGradingEvidence(
     if (item.classification !== "confirmed-new" && item.classification !== "unsupported" && item.classification !== "unresolved") throw new Error(`${source}.grading.unmatchedFindings[${index}].classification is invalid`);
     return { findingIndex, findingEvidenceSha256, classification: item.classification as GradingEvidence["unmatchedFindings"][number]["classification"] };
   });
-  return { version: root.version, judge: { kind: judge.kind, version, ...(configSha256 ? { configSha256 } : {}) }, decisions, rootCauseMatches, missStages, unmatchedFindings };
+  return { version: gradingVersion, judge: { kind: judge.kind, version, ...(configSha256 ? { configSha256 } : {}) }, decisions, rootCauseMatches, missStages, unmatchedFindings };
 }
 
 function parseOutcome(value: unknown, source: string, strictCurrentUsage: boolean): RunRecord["outcome"] {

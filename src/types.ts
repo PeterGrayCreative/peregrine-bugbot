@@ -584,7 +584,7 @@ export interface GradedRun extends Omit<RunRecord, "outcome"> {
   grading?: GradingEvidence;
 }
 
-export type MissStage = "none" | "routing" | "breadth" | "investigation" | "budget" | "presentation" | "infrastructure" | "unattributed";
+export type MissStage = "none" | "unattributed" | "routing" | "breadth" | "investigation" | "budget" | "presentation" | "infrastructure";
 export type UnmatchedFindingClassification = "confirmed-new" | "unsupported" | "unresolved";
 
 export interface SemanticJudgeDecision {

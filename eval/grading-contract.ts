@@ -10,6 +10,7 @@ import type {
   UnmatchedFindingAdjudication,
 } from "../src/types.js";
 
+export const LEGACY_GRADING_VERSION = "root-cause-v1" as const;
 export const GRADING_VERSION = "root-cause-v2" as const;
 export const SEMANTIC_JUDGE_VERSION = "semantic-v1" as const;
 
@@ -211,7 +212,7 @@ export function assertGradingEvidenceConsistent(
     // Preserve the interpretation of sealed v1 artifacts. V2 does not infer
     // review infrastructure failure from an unmatched root or a judge failure.
     const expectedStage = matches[bug.id] === null
-      ? evidence.version === "root-cause-v1" ? "infrastructure" : "unattributed"
+      ? evidence.version === LEGACY_GRADING_VERSION ? "infrastructure" : "unattributed"
       : "none";
     if (evidence.missStages[bug.id] !== expectedStage) {
       throw new Error(`${source}.grading.missStages.${bug.id} lacks authenticated stage evidence`);
@@ -262,7 +263,8 @@ export function classifyMissStage(args: {
   if (args.laneActivated === false) return "routing";
   if (args.breadthCandidate === false) return "breadth";
   if (args.investigationBudgetExhausted) return "budget";
-  return args.laneActivated === true && args.breadthCandidate === true ? "investigation" : "unattributed";
+  if (args.laneActivated === true && args.breadthCandidate === true) return "investigation";
+  return "unattributed";
 }
 
 export function judgeDecisionId(input: {
