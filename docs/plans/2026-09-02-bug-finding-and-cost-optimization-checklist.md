@@ -315,6 +315,8 @@ Must stay untouched: the breadth/investigation authority split.
 - [ ] Track deterministic transport coverage for every changed hunk.
 - [ ] Validate ledger coverage for every reviewable file and activated lane.
 - [ ] Add bounded diagnostic analysis coverage for candidates and lanes inspected.
+- [ ] Report model-stage misses as unattributed until authenticated routing,
+  breadth, investigation, budget, or infrastructure evidence supports a stage.
 - [ ] Keep model-attested analysis coverage from authorizing `clean` or cheaper routing.
 - [ ] Add versioned `completed`, `clean`, `incomplete`, `skipped`, and `failed` states.
 - [ ] Require successful stages, complete transport/ledger coverage, no unresolved unavailable surface, and zero confirmed findings before `clean`.
@@ -483,6 +485,8 @@ not authorize historical-gold, holdout, routing, or final non-inferiority claims
   unresolved finding can be classified without rewriting its semantic grade or
   original funnel decision. The first paired smoke exposed this follow-up; it
   is not required to reject that route on the operator's wall-time constraint.
+- [ ] Apply diagnostic-only case restrictions consistently to aggregate reports
+  as well as funnel decisions so quarantined findings cannot null precision/FDR.
 
 Rollback boundary: revert this funnel slice. Existing full visible experiment
 artifacts and earlier matrix configurations remain readable and unchanged.
@@ -512,6 +516,8 @@ artifacts and earlier matrix configurations remain readable and unchanged.
 - [ ] Standard-risk non-inferiority is supported by enough cases.
 - [ ] Provider-correct cost improves by the pre-registered material threshold.
 - [ ] The one-time sealed-holdout gate passes.
+- [ ] Bind the frozen analysis implementation to the experiment snapshot before
+  the final holdout decision, rather than trusting whichever reader is current.
 - [ ] The opened holdout is retired and replacement holdout planning is recorded.
 
 ## Decisions and budgets

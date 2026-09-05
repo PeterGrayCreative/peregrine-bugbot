@@ -1,13 +1,15 @@
 # Stage 2 PR 9 Decision Record
 
 Plan PR 9 was implemented and tested as two separate preregistered diagnostic
-interventions. Both preserved the measured quality constraints and both failed
+interventions. Both preserved registered recall and completion and both failed
 the mandatory efficiency gate. Neither implementation is accepted or merged.
+Unresolved findings prevent either run from establishing general precision or
+false-positive preservation.
 
 | Design | Quality | Median paired wall time | Decision |
 | --- | --- | ---: | --- |
-| Structural compact | recall, root-cause recall, completion, and blocking false positives preserved | +12.85% slower | reject |
-| Adaptive structural compact | same quality preserved; activation gate passed | +8.85% slower | reject |
+| Structural compact | registered recall and completion preserved; 3 unresolved findings per arm | +12.85% slower | reject |
+| Adaptive structural compact | registered recall and completion preserved; 28 control and 30 treatment findings unresolved | +8.85% slower | reject |
 
 The first design increased the transmitted representation on the small panel.
 The adaptive revision selected compact output only when it was smaller, but

@@ -102,6 +102,12 @@ does not explain or invalidate the observed treatment wall-time regression.
    adjudication path. That harness gap should be tracked separately; it is not
    necessary to spend more provider attempts on this rejected route.
 
+An independent read-only audit reproduced the registered recall and paired
+wall-time results, confirmed that all six timing pairs favored the control, and
+agreed that this experiment should not advance. It also identified the
+adjudication, diagnostic-report quarantine, and miss-attribution gaps now
+recorded as open checklist prerequisites.
+
 ## Evidence
 
 The complete sanitized artifacts are stored under
