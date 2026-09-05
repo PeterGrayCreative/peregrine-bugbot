@@ -8,7 +8,7 @@
     "end": "2020-12-31T23:59:59Z"
   },
   "providerRuns": 0,
-  "admissionStatus": "primary-curation-and-source-archive-complete-secondary-curation-pending",
+  "admissionStatus": "primary-analysis-and-source-archive-complete-independent-confirmations-pending",
   "sourceArchive": "raw/capture-manifest.json",
   "cases": [
     {
@@ -27,8 +27,8 @@
       "deletions": 3,
       "proofLevel": "complete-static-trace",
       "license": "MIT",
-      "primaryCurator": "Codex root",
-      "secondaryCurator": null,
+      "primaryAnalysisAuthor": "Codex root",
+      "curatorConfirmations": [],
       "admitted": false
     },
     {
@@ -49,8 +49,8 @@
       "deletions": 49,
       "proofLevel": "complete-static-trace",
       "license": "Apache-2.0",
-      "primaryCurator": "Codex root",
-      "secondaryCurator": null,
+      "primaryAnalysisAuthor": "Codex root",
+      "curatorConfirmations": [],
       "admitted": false
     },
     {
@@ -69,8 +69,8 @@
       "deletions": 16,
       "proofLevel": "complete-static-trace",
       "license": "MIT",
-      "primaryCurator": "Codex root",
-      "secondaryCurator": null,
+      "primaryAnalysisAuthor": "Codex root",
+      "curatorConfirmations": [],
       "admitted": false
     },
     {
@@ -90,8 +90,8 @@
       "proofLevel": "complete-static-trace",
       "license": "MIT",
       "truthScope": "retry callback selection only; no global clean assertion",
-      "primaryCurator": "Codex root",
-      "secondaryCurator": null,
+      "primaryAnalysisAuthor": "Codex root",
+      "curatorConfirmations": [],
       "admitted": false
     },
     {
@@ -112,8 +112,8 @@
       "deletions": 1,
       "proofLevel": "complete-static-trace",
       "license": "MIT",
-      "primaryCurator": "Codex root",
-      "secondaryCurator": null,
+      "primaryAnalysisAuthor": "Codex root",
+      "curatorConfirmations": [],
       "admitted": false
     }
   ]

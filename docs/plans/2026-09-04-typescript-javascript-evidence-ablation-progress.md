@@ -13,7 +13,7 @@ minimal reviewer. Production routing remains frozen.
 
 | Step | State | Evidence / remaining gate |
 | --- | --- | --- |
-| R1: collection feasibility | In review | Five exact public review opportunities and 20 raw source responses are archived. Secondary curator confirmations remain before admission. |
+| R1: collection feasibility | In review | Five exact public review opportunities and 20 raw source responses are archived. Zero formal confirmations exist; two accountable independent confirmations remain before admission. |
 | R2: gather and partition | Not started | Requires R1 admission gate. |
 | R3: neutral and truthful harness | Not started | May begin after R1; old artifacts/readers and production defaults must remain intact. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
@@ -29,6 +29,9 @@ minimal reviewer. Production routing remains frozen.
 - [Source response hashes](../validation/artifacts/2026-09-04-r1-historical-reconstructions/source-hashes.md)
 - Per-case proof bundles under
   `docs/validation/artifacts/2026-09-04-r1-historical-reconstructions/cases/`
+- [Independent curation protocol](../validation/artifacts/2026-09-04-r1-historical-reconstructions/curation/review-protocol.md)
+- Curator packet SHA-256:
+  `f477b8038770c94ca6b76f1a753411c01109bdfd5df6a96b61b41f1cfc167c44`
 
 ## Frozen constraints
 

@@ -1,6 +1,6 @@
 # r1-webpack-8233: unsafe folding of runtime require detection
 
-Status: primary static curation complete; independent secondary curation pending
+Status: primary static analysis complete; independent curator confirmations pending
 Class: JavaScript, post-merge defect
 License: MIT
 
@@ -60,4 +60,5 @@ by static trace; it did not execute Webpack 4's historical test environment.
 The root is the interaction between logical folding and an undefined static
 type for a deliberately runtime-sensitive alias. It is not a claim about all
 logical folding. The linked PDF.js reproduction was not independently archived
-or rerun in R1. Secondary curator confirmation remains required.
+or rerun in R1. Two accountable curator confirmations remain required; the
+analysis author is not a formal confirmation.

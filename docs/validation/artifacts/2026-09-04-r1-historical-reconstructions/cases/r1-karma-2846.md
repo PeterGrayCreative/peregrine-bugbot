@@ -1,6 +1,6 @@
 # r1-karma-2846: manual file type ignored for scripts
 
-Status: primary static curation complete; independent secondary curation pending
+Status: primary static analysis complete; independent curator confirmations pending
 Class: JavaScript, review-caught defect
 License: MIT
 
@@ -49,6 +49,7 @@ correction. No historical Node environment was executed.
 
 The root is incomplete propagation of the manual type into script-tag
 selection. The original PR description emphasizes an extensionless CSS example,
-so severity and intended script scope must be reconfirmed during secondary
-curation; the reviewer and final implementation provide strong scope evidence.
-No global-clean assertion is made.
+so severity and intended script scope must be reconfirmed by independent
+curators; the reviewer and final implementation provide strong scope evidence.
+No global-clean assertion is made, and the analysis author is not a formal
+confirmation.

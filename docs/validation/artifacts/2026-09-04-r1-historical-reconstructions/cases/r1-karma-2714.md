@@ -1,6 +1,6 @@
 # r1-karma-2714: reviewed retry callback comparison
 
-Status: primary static curation complete; independent secondary curation pending
+Status: primary static analysis complete; independent curator confirmations pending
 Class: JavaScript, reviewed comparison
 License: MIT
 
@@ -40,4 +40,5 @@ Label only as “reviewed comparison case; no confirmed defect in the retry
 callback-selection scope.” The PR contains other debatable behavior, including
 throwing from an asynchronous callback and a weak terminal-retry test. Those
 surfaces are outside this comparison label and prevent any global clean claim.
-Secondary curation remains an admission blocker.
+Two independent accountable confirmations remain an admission blocker; the
+analysis author is not a formal confirmation.

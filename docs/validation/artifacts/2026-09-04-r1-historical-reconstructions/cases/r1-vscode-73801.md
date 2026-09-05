@@ -1,6 +1,6 @@
 # r1-vscode-73801: cleanup on service exit
 
-Status: primary static curation complete; independent secondary curation pending
+Status: primary static analysis complete; independent curator confirmations pending
 Class: TypeScript, review-caught defect
 License: MIT
 
@@ -60,4 +60,5 @@ The frozen known root is cleanup at the wrong lifecycle boundary. The case does
 not assert that the rest of the PR or repository is defect-free. The historical
 VS Code toolchain was not reconstructed, so exact runtime reproduction remains
 future optional evidence. A second accountable curator must independently
-verify the trace before admission.
+verify the trace before admission. The analysis author is not counted as a
+formal curator confirmation.

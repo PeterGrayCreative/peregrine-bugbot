@@ -1,6 +1,6 @@
 # r1-typescript-37467: organize imports duplicates comments
 
-Status: primary static curation complete; independent secondary curation pending
+Status: primary static analysis complete; independent curator confirmations pending
 Class: TypeScript, post-merge defect
 License: Apache-2.0
 
@@ -57,4 +57,5 @@ the 2020 TypeScript test harness.
 
 The root is the interaction between generalized comment preservation and
 organize-import deletion. It is not a claim about every comment transformation
-or every defect in the PR. A second accountable curator must confirm admission.
+or every defect in the PR. Two accountable curator confirmations are required
+for admission; the analysis author is not automatically one of them.

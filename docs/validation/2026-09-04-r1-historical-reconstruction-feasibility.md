@@ -3,7 +3,7 @@
 Date: 2026-09-04 (America/New_York)
 Branch: `research/ts-js-evidence-r1`
 Base: `origin/main` at `fa1ff4dc501f869730f88947ec3ef3cc5fa42037`
-Status: feasibility and source archival complete; secondary curation remains
+Status: feasibility and source archival complete; independent curation remains
 before case admission
 
 ## Result
@@ -108,10 +108,16 @@ but curator time was not instrumented in this pass. R2 must record it.
 
 R1 has established that authentic TS/JS review opportunities can be recovered.
 It has not admitted benchmark cases. Each manifest entry remains `admitted:
-false` because a second accountable curator has not independently confirmed the
-exact review state, causal trace, severity, and truth boundary.
+false` because no formal confirmation exists yet. Two accountable curators must
+independently confirm the exact review state, causal trace, severity, and truth
+boundary. The primary analysis author is not automatically counted.
 
-The next bounded action is independent secondary curation of these five
-bundles. If those checks pass, R1 can close and R2 may begin. Prompt edits,
+The next bounded action is two independent confirmations of these five bundles.
+If those checks pass, R1 can close and R2 may begin. Prompt edits,
 provider calls, the 100-candidate inventory, and harness changes remain out of
 scope until that checkpoint.
+
+The immutable review packet, confirmation schema, and instructions are under
+[`curation/`](artifacts/2026-09-04-r1-historical-reconstructions/curation/).
+The zero-provider validator currently reports 0/2 confirmations for all five
+cases and fails closed when invoked with `--require-complete`.
