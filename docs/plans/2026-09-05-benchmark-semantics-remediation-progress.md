@@ -1,9 +1,15 @@
 # Benchmark semantics remediation: goal and progress
 
-**Status:** Implementation complete and pushed; pull request pending  
-**Branch:** `fix/benchmark-semantics`  
-**Base:** `fa1ff4dc501f869730f88947ec3ef3cc5fa42037` (`origin/main` when work began)  
-**Current head:** `c6b338a7e835de1b1644a3df1342b369d483d554`  
+**Status:** Pull request open; CI and review pending
+
+**Branch:** `fix/benchmark-semantics`
+
+**Base:** `fa1ff4dc501f869730f88947ec3ef3cc5fa42037` (`origin/main` when work began)
+
+**Pre-PR progress head:** `08cc4a0`
+
+**Pull request:** [#30](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/30)
+
 **Validation record:** [2026-09-05-benchmark-semantics-remediation.md](../validation/2026-09-05-benchmark-semantics-remediation.md)
 
 ## Goal
@@ -72,11 +78,10 @@ run new live-model experiments as part of this checkpoint.
 3. `982d4bf` — record adjudicated smoke evidence.
 4. `4e8df10` — fix adjudication completeness and reporting consistency.
 5. `c6b338a` — record validation and checklist state.
+6. `08cc4a0` — add this goal and progress record.
 
 ## Remaining delivery work
 
-- Open the pull request against `main`.
-- Record the PR URL and exact head in the checklist and this progress file.
 - Drive all required CI checks to a terminal passing state.
 - Triage and resolve every actionable in-scope review comment.
 - Merge the pull request and verify that remote `main` contains the merge.
