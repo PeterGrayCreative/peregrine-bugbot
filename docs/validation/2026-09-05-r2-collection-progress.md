@@ -172,8 +172,32 @@ immutable schedule; that runner integration is still pending. Combined
 truth/source/scope tests pass 21/21 under Node 22, with typechecking and an
 independent bounded code review. Production behavior is unchanged.
 
+The versioned historical curation reader now binds exact case, truth, diff,
+proof, partial scope, and normalized metadata. An admitted declaration needs
+two distinct identities from the caller's trusted roster, confirming the exact
+bundle and scope. This authenticates declared records, not genuine human
+independence or reconstructed source history. No real case has been admitted.
+Independent review caught impossible change-shape claims and proof-path aliases;
+regression tests now reject them. Explicit singleton root groups remain valid
+without inventing extra observations; multi-observation derives from actual
+distinct locations within one root.
+
+Historical metric policy excludes total recall and global-clean specificity.
+Scoped comparisons cannot enter registered recall. Root denominators count
+distinct causal groups, not observations, and no scheduled reviews means recall
+is unavailable. Partial truth alone does not prohibit precision assessment of
+independently adjudicated emitted findings. Authentication of counts, unresolved
+bounds, repeat aggregation, and report/decision integration remain required.
+
+The existing leakage reader now recognizes opted-in historical truth without
+discarding its scope. Curator scope and mechanism labels are forbidden even
+when short; legacy parsing remains unchanged. This is a content-leakage check,
+not proof of a network boundary or neutral mounted resources. Combined contract
+tests pass 40/40; curation plus legacy isolation/history/corpus regression tests
+pass 66/66 under Node 22. Typechecking passes. None ran a historical reviewer.
+
 GitHub Actions `check` and credential-free build/smoke also passed at pushed
-head `940ff7b`. Later changes need their own current-head verification.
+heads `940ff7b` and `3d0b620`. Later changes need their own current-head verification.
 
 At pushed head `68bfefc`, GitHub Actions `check` and credential-free build/smoke
 both passed. Local full validation initially reached 256/259 unit tests because

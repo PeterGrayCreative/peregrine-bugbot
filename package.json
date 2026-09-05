@@ -8,7 +8,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "test:historical-truth": "node --import tsx --test tests/eval-historical-truth.test.ts tests/eval-historical-case-spec.test.ts tests/eval-scope-completeness.test.ts",
+    "test:historical-truth": "node --import tsx --test tests/eval-historical-truth.test.ts tests/eval-historical-case-spec.test.ts tests/eval-scope-completeness.test.ts tests/eval-historical-curation.test.ts tests/eval-historical-metric-eligibility.test.ts tests/eval-historical-leakage.test.ts",
     "test:evidence-capture": "node --test tests/evidence-public-capture.test.mjs",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test tests/config.test.ts tests/review-result.test.ts tests/github.test.ts tests/engines.test.ts tests/manifest.test.ts tests/method-packet.test.ts tests/eval-accounting.test.ts tests/eval-isolation.test.ts tests/eval-history.test.ts tests/eval-benchmark-panels.test.ts tests/eval-adjudication.test.ts tests/eval-funnel-decision.test.ts tests/eval-experiment-core.test.ts tests/eval-experiment.test.ts tests/eval-runtime-image.test.ts tests/eval-runtime-containment.test.ts tests/eval-grading.test.ts tests/eval-corpus.test.ts tests/eval-judge-ledger.test.ts tests/evidence-r1-curation.test.ts tests/telemetry.test.ts",
