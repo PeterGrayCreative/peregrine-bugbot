@@ -15,7 +15,7 @@ minimal reviewer. Production routing remains frozen.
 | --- | --- | --- |
 | R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
 | R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. Twelve exposed leads checked: twelve recoverable opportunities from eleven PRs, plus one unrecoverable lead. Two heads from one PR are not independent cases. Zero new admitted cases. Human curation and protected partitioning remain open. |
-| R3: neutral and truthful harness | In progress | Integrated audited PR30 adjudication/reporting and attribution. Partial truth, source, scope, curation, metric policy, and leakage contracts have 40 passing tests. Historical admission binds declared curator confirmations but does not prove human independence. New protocol scheduling still fails closed; runner/report integration, neutral arms, and runtime boundary probes remain open. |
+| R3: neutral and truthful harness | In progress | Four-arm scheduling, prompts, source materialization, input plans, lifecycle seals, schedule-order enforcement, and a pure neutral grading contract have structural proof (86 methodology tests). Legacy historical CLI admission still fails closed. Authenticated grading/report consumers, complete runtime availability, stopped schedules, and human admission remain open. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |
 | R6: select and confirm | Not started | Requires frozen candidate and new powered confirmation corpus. |
@@ -87,11 +87,32 @@ human reviewer; no independent-human or sealed-selection claim is created.
 Any sole-human development policy must be explicit and versioned rather than
 silently weakening the current two-confirmation gate.
 
+Four additional source-bound decision drafts are prepared for that consolidated
+packet: [two defect proposals](../validation/2026-09-05-r2-human-packet-defect-batch1.md)
+and [two scoped comparison proposals](../validation/2026-09-05-r2-human-packet-comparison-batch1.md).
+They are not human-approved or admitted. Source captures remain local-only and
+shallow/partial. The comparison summary exposed scoped hypotheses to the
+instruction author, so those slots are visible development preparation, not
+protected validation. The next two defect and two random-comparison slots are
+being prepared without changing the frozen 100-slot inventory.
+
+Commit `f53ff59` adds schedule-order enforcement and neutral grading with 86/86
+focused methodology tests and passing typecheck. GitHub `check` and
+credential-free image build/smoke both passed for that exact head. See the
+[grading integration record](../validation/2026-09-05-r3-neutral-grading-integration.md).
+The next reader must preserve exact model-completed output while classifying
+runner-unverified coverage as incomplete. It must not rewrite model output or
+infer scheduled missing attempts from absent files without a closure seal.
+
 An [offline runtime probe](../validation/2026-09-05-r3-offline-codex-read-probe.md)
 found that the accepted image's direct file read works but the CLI's nested
 read-only sandbox fails at namespace creation under the tested restrictions.
 No credentials, model calls, historical code, or security relaxation were used.
 Usable read/search tools and provider-connected egress remain R4 blockers.
+An alternate read-only backend subsequently passed an offline read and denied
+an inner write under unchanged container restrictions. It is not adopted:
+credential/history isolation, actual model tools, and provider egress remain
+unverified. The original default-backend failure remains preserved in the report.
 
 - [Feasibility report](../validation/2026-09-04-r1-historical-reconstruction-feasibility.md)
 - [Machine-readable manifest](../validation/artifacts/2026-09-04-r1-historical-reconstructions/manifest.json)
