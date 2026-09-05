@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "search/issues",
+    "parameters": {
+      "order": "asc",
+      "page": 2,
+      "per_page": 100,
+      "q": "repo:microsoft/vscode is:pr is:merged merged:2019-06-01..2019-06-30",
+      "sort": "created"
+    }
+  },
+  "retrievedAt": "2026-09-05T11:56:39.705Z",
+  "sourceUrl": "https://api.github.com/search/issues?order=asc&page=2&per_page=100&q=repo%3Amicrosoft%2Fvscode+is%3Apr+is%3Amerged+merged%3A2019-06-01..2019-06-30&sort=created",
+  "sha256": "215f31ef71c6f60e6d877169429c71a01071dcad7874633a9e28abbf253a6311",
+  "bytes": 99730
+}

@@ -1,0 +1,2756 @@
+{
+  "schemaVersion": 1,
+  "inventorySha256": "6651ccb6762edfdb03d07a7cc3620b51f3a38c8152bb15953558dcb50ba3ad91",
+  "records": [
+    {
+      "candidateId": "r2-random-001",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/76187",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:57:40.686Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/76187?",
+          "sha256": "ea471670675b9c100debfb42eb20fb1ff6d83df2943a0d6b0aa9912f3871a5bb",
+          "bytes": 19899
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/76187/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:41.263Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/76187/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/76187/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:42.113Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/76187/reviews?page=1&per_page=100",
+          "sha256": "78c2ac8ad2c89b34ad1d25b407e77b7a89b02af5c6fd321a369d0f0ea6ab2e5f",
+          "bytes": 4705
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/issues/76187/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:42.713Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/issues/76187/comments?page=1&per_page=100",
+          "sha256": "9595f50893220d0623ac0eac8aec9c87b9345331a8c01bb34e0d5b1bb83a1a94",
+          "bytes": 1817
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/76187/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:43.406Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/76187/commits?page=1&per_page=100",
+          "sha256": "dfced82675e049555ce56050db34f70d899407f6b01ffe32da87766c0988bfb7",
+          "bytes": 3301
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/76187/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:44.099Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/76187/files?page=1&per_page=100",
+          "sha256": "601d3ccdd2b44ecec80902a46d48ecaf101988f8d053b7a1e68cf55e33a100e1",
+          "bytes": 10083
+        }
+      ],
+      "currentApiBase": "d0cee50fba19c6c8b3531a86898916c2819bbae1",
+      "currentApiHead": "d6c5e387dd1e1532e98e89c58c523f2741dc6628",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-26T15:46:02Z",
+      "updatedAt": "2020-03-27T23:24:14Z",
+      "mergedAt": "2019-06-30T18:24:13Z",
+      "changedFiles": 8,
+      "additions": 16,
+      "deletions": 16,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-002",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7669",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:57:45.050Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7669?",
+          "sha256": "d4d279b681fbc0338ef46a610ccb57cce26fd1ee3ae61dd2eef647b36b833fba",
+          "bytes": 19083
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7669/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:45.795Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7669/comments?page=1&per_page=100",
+          "sha256": "8d006fbb00ba9df403a156d2129ac4f2cc394cdca004ab3fff52174a58f81ec2",
+          "bytes": 16367
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7669/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:46.575Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7669/reviews?page=1&per_page=100",
+          "sha256": "870c501df81da5882fabfad06e872e4128cc5cba50083363616f0dba55e14c2e",
+          "bytes": 9179
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/issues/7669/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:47.175Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/issues/7669/comments?page=1&per_page=100",
+          "sha256": "f4688051ef403bb662a440b08430f97d77183c273f529fb558be00157238b3c1",
+          "bytes": 42250
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7669/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:47.941Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7669/commits?page=1&per_page=100",
+          "sha256": "b96c6b16987922f361822ffeaff64c9fdf9e70c2acfcbbb129fbd654b18d137e",
+          "bytes": 32632
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7669/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:48.604Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7669/files?page=1&per_page=100",
+          "sha256": "58e375283bf5dbe8662f23f3b2cf31faeddd917369bab20f0c2dba2977bf7f81",
+          "bytes": 22115
+        }
+      ],
+      "currentApiBase": "44d8c624f4a178275f8432570ebd203ff63b93b9",
+      "currentApiHead": "8b9e16e1041793bd4cbeb5a9a6645449f3290968",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-25T21:36:18Z",
+      "updatedAt": "2022-02-01T12:06:40Z",
+      "mergedAt": "2019-06-27T14:22:25Z",
+      "changedFiles": 10,
+      "additions": 87,
+      "deletions": 91,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-003",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2402",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:57:49.467Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2402?",
+          "sha256": "64b822aea8383398caa13ed3c042c3baebd2dfb82582395c644b87e83ac3189d",
+          "bytes": 17903
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2402/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:49.997Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2402/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2402/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:50.574Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2402/reviews?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/issues/2402/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:51.113Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/issues/2402/comments?page=1&per_page=100",
+          "sha256": "46969a79bd8d5beb9e9b32914bce32e41c93d7eaf4b286e06f4aa17b99e25357",
+          "bytes": 6178
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2402/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:51.728Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2402/commits?page=1&per_page=100",
+          "sha256": "347e39c3a9b5b39610321258f81304eac1f0722d69747a3d47ebcc02e10a67f3",
+          "bytes": 4111
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2402/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:52.417Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2402/files?page=1&per_page=100",
+          "sha256": "032ed80e94ca7e504baf4a19e5ac920e6c734880a614075e4c868a03ad9bf7fc",
+          "bytes": 52502
+        }
+      ],
+      "currentApiBase": "56071d0765e19963b95ae8de8de78d306d11e14f",
+      "currentApiHead": "d60d17163375a235caac6ee677d0a1c968748095",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-15T01:05:36Z",
+      "updatedAt": "2019-09-23T15:13:38Z",
+      "mergedAt": "2019-06-21T07:55:18Z",
+      "changedFiles": 55,
+      "additions": 99,
+      "deletions": 99,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-004",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11086",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:57:53.206Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11086?",
+          "sha256": "5b1ac5edb9058fe40bc913cfdae365226102fc53055e86a23a5276fbfe68fecc",
+          "bytes": 12525
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11086/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:53.703Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11086/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11086/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:54.276Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11086/reviews?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/issues/11086/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:54.830Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/issues/11086/comments?page=1&per_page=100",
+          "sha256": "631c14d73663626d6ca5b8fb31a9f3283e17a440747eaac56b3a1e0ce3b24e35",
+          "bytes": 4068
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11086/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:55.404Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11086/commits?page=1&per_page=100",
+          "sha256": "f3ae9c195e184e9caacdcf9b5db634bc4503855771388aa3db50ef5b7466fd20",
+          "bytes": 4075
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11086/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:56.071Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11086/files?page=1&per_page=100",
+          "sha256": "80bf7a4fd41a8c405271efcc0860ad4f4a8f87dcb1edc46a2c8b2de182ed234e",
+          "bytes": 833
+        }
+      ],
+      "currentApiBase": "cd8ee56612f08b8fa60833b15c19d6a2b88866de",
+      "currentApiHead": "19e0e02c787170091d07d9699df1eed26f06425e",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-19T21:46:45Z",
+      "updatedAt": "2019-07-26T19:41:42Z",
+      "mergedAt": "2019-06-21T04:53:54Z",
+      "changedFiles": 1,
+      "additions": 1,
+      "deletions": 1,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-005",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/pulls/1331",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:57:56.912Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/1331?",
+          "sha256": "91a42a6758eb98fd65b34b433fa4e16f1c33d5d51e9c0bd8ff5f741e007fed53",
+          "bytes": 16805
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/pulls/1331/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:57.414Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/1331/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/pulls/1331/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:58.000Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/1331/reviews?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/issues/1331/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:58.612Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/issues/1331/comments?page=1&per_page=100",
+          "sha256": "5971d2c15f3c3a0e03a0f4af87ee7fed119654170e4b30bb7bf2237bc134aa8b",
+          "bytes": 5746
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/pulls/1331/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:59.226Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/1331/commits?page=1&per_page=100",
+          "sha256": "4eec0c4a0f1d88331db3e5a684da2569b6d57b85f6e3fe8934809472196abfd6",
+          "bytes": 6433
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/pulls/1331/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:57:59.977Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/1331/files?page=1&per_page=100",
+          "sha256": "9d41d12f9fe803d9cdf1a66abe83caf5a02f791f3adaaeb6d061b2af397e1cf5",
+          "bytes": 66449
+        }
+      ],
+      "currentApiBase": "3232381c4d2da33fdb8325353ed9d33e7b13b759",
+      "currentApiHead": "2e7755f252672a32600e31365380a487caad820a",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-01T09:17:48Z",
+      "updatedAt": "2019-06-01T09:34:25Z",
+      "mergedAt": "2019-06-01T09:34:13Z",
+      "changedFiles": 8,
+      "additions": 663,
+      "deletions": 258,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-006",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/pulls/9321",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:58:00.864Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/9321?",
+          "sha256": "f89c8c686defe64b36bb8ca6dc4724b5e7c7ec5d4b6a846c18d4ed8b3689ab25",
+          "bytes": 21545
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/pulls/9321/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:01.369Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/9321/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/pulls/9321/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:01.966Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/9321/reviews?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/issues/9321/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:02.502Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/issues/9321/comments?page=1&per_page=100",
+          "sha256": "9fdbcd190bc936cfa862a7955b300733c01f92d798ed8cc30cbd0b56115c873e",
+          "bytes": 5600
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/pulls/9321/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:03.096Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/9321/commits?page=1&per_page=100",
+          "sha256": "cc55acbde43398f5ed8636edaa2677f239f25888dbb3bfba850aab25e42df9c7",
+          "bytes": 5219
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/pulls/9321/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:03.747Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/9321/files?page=1&per_page=100",
+          "sha256": "4c17e803e5417daf0e48c9b3863465a9a519d736cb5faeca0339e2b06aeba7ee",
+          "bytes": 1178
+        }
+      ],
+      "currentApiBase": "58bd580da7ed4fb07c76c9e0e94450aae12f5a73",
+      "currentApiHead": "f8bb7a5ce770f16f2540eb33b3309900556523e9",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-24T02:15:49Z",
+      "updatedAt": "2019-06-24T02:33:54Z",
+      "mergedAt": "2019-06-24T02:33:41Z",
+      "changedFiles": 1,
+      "additions": 3,
+      "deletions": 3,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-007",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/pulls/4832",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:58:04.865Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/4832?",
+          "sha256": "f13fcc253874c63a4305cdc26e179808c16a5b2fa8ed1fb76f4cafcf21039310",
+          "bytes": 17207
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/pulls/4832/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:05.400Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/4832/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/pulls/4832/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:06.061Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/4832/reviews?page=1&per_page=100",
+          "sha256": "ee522e3ff6ee8cc4a69d399fdcc7311bd8aacc0c2c8b3a8599b83039781d394f",
+          "bytes": 1565
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/issues/4832/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:06.568Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/issues/4832/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/pulls/4832/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:07.202Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/4832/commits?page=1&per_page=100",
+          "sha256": "e091c0ac91c67ce0b4fd631e1c93c6fb312f8421355822404ac883813705611b",
+          "bytes": 3208
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/pulls/4832/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:07.809Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/4832/files?page=1&per_page=100",
+          "sha256": "ba88c5b280fcfa73d0069c651b07e0301fe102d32d3cffb44b89c5b68d36861b",
+          "bytes": 1350
+        }
+      ],
+      "currentApiBase": "f07d349da8c2e0dbddca17d33a9b4a1ceaf59354",
+      "currentApiHead": "4d2f3ceb583310c33cbba2151c33ed4e2d8c4b97",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-04T21:48:52Z",
+      "updatedAt": "2019-07-05T00:43:32Z",
+      "mergedAt": "2019-06-04T22:16:18Z",
+      "changedFiles": 1,
+      "additions": 2,
+      "deletions": 1,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-008",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/76054",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:58:08.584Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/76054?",
+          "sha256": "0bda949c1d5624a9f66979aff214264f8986132d06083e88b8aea84cf4fae484",
+          "bytes": 19885
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/76054/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:09.146Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/76054/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/76054/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:09.733Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/76054/reviews?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/issues/76054/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:10.298Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/issues/76054/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/76054/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:10.903Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/76054/commits?page=1&per_page=100",
+          "sha256": "b137a5a51b16c05c520953639ab13e8bc81b9c3731bfcc468821c9c7f56a7c0f",
+          "bytes": 3227
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/76054/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:11.581Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/76054/files?page=1&per_page=100",
+          "sha256": "b382ce44a47c77d61b532a91052702daff41eed8916f2c50113c8e72657309f3",
+          "bytes": 1184
+        }
+      ],
+      "currentApiBase": "a77402669cb9d5192974e7cc2da828c52e39fba2",
+      "currentApiHead": "b6d467429b04344678b4e93dcc1beecc04fe69b2",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-25T00:50:13Z",
+      "updatedAt": "2020-03-27T23:24:14Z",
+      "mergedAt": "2019-06-26T17:59:05Z",
+      "changedFiles": 1,
+      "additions": 1,
+      "deletions": 1,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-009",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7604",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:58:12.481Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7604?",
+          "sha256": "7b17d04e4cb3eebdd5e044d8e063a0733a3af3d18528d55aae3191eef90fd2fc",
+          "bytes": 17415
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7604/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:13.219Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7604/comments?page=1&per_page=100",
+          "sha256": "4c19eb7612eb200a8f064585f7f96d56c605c09512b8cfab7f0b905fd6e22ce2",
+          "bytes": 5164
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7604/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:13.958Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7604/reviews?page=1&per_page=100",
+          "sha256": "2a7d5fd74ed44f72c73d5e4125699816d3fb44b80c8fbb330833bc108ef9cfc1",
+          "bytes": 6136
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/issues/7604/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:14.548Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/issues/7604/comments?page=1&per_page=100",
+          "sha256": "89250525e620cfab37bb0f6b3d4a33ef04f5f45bd6e1736b77334e392dd71285",
+          "bytes": 13225
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7604/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:15.255Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7604/commits?page=1&per_page=100",
+          "sha256": "39f2713e3b908ad0eea5b4d65b60960c2e781565d8da1c7bbe53f8db88433a40",
+          "bytes": 12742
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7604/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:15.893Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7604/files?page=1&per_page=100",
+          "sha256": "de75f9a2d63783279c36024808ac5e3181a973e837812208c1bb3f5073543197",
+          "bytes": 984
+        }
+      ],
+      "currentApiBase": "0c8f97b9d617102e741599819d4f5571db58d772",
+      "currentApiHead": "212c38893cb16eb82dc5e4b7be2d308eba714fca",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-18T23:54:34Z",
+      "updatedAt": "2020-06-24T20:17:12Z",
+      "mergedAt": "2019-06-19T00:58:23Z",
+      "changedFiles": 1,
+      "additions": 8,
+      "deletions": 0,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-010",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2325",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:58:16.749Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2325?",
+          "sha256": "c74ad3cd8af97f485f9b15140d8909a56b1fe78bcfda6566bc165af0fb0bcab0",
+          "bytes": 22128
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2325/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:17.264Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2325/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2325/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:17.862Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2325/reviews?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/issues/2325/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:18.399Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/issues/2325/comments?page=1&per_page=100",
+          "sha256": "d5efe1d90f7c6e89b9ad4afa001a9aec950bc6dc8017ec7fa1279eab9cbc89c6",
+          "bytes": 3977
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2325/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:19.004Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2325/commits?page=1&per_page=100",
+          "sha256": "605dd0b7a67c4d38656037b05e6fbfc1b3b6096ea8b35665275e23ce1bb32db6",
+          "bytes": 4135
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2325/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:19.686Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2325/files?page=1&per_page=100",
+          "sha256": "b2e91771cc11ab5fcae1bc1632843901197f4e47c215758d4849fbd2370ff65f",
+          "bytes": 58934
+        }
+      ],
+      "currentApiBase": "343fb310ce77a2bd7623f2249f78d266711bb8dd",
+      "currentApiHead": "f94d3a43c9a857839dcf4eea22256b9e299896b2",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-05-31T18:07:07Z",
+      "updatedAt": "2019-09-23T16:13:19Z",
+      "mergedAt": "2019-06-03T20:26:19Z",
+      "changedFiles": 11,
+      "additions": 257,
+      "deletions": 343,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-011",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11097",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:58:20.585Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11097?",
+          "sha256": "a92d9183d473264b1f95ebedd24864d18b4f510ff437be302c2e29e670193fc0",
+          "bytes": 17856
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11097/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:21.067Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11097/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11097/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:21.667Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11097/reviews?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/issues/11097/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:22.242Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/issues/11097/comments?page=1&per_page=100",
+          "sha256": "1e4aa45843db5c003b79952063df61bf1e391cb22ef76c07bcbcc16100196d0a",
+          "bytes": 4068
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11097/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:22.827Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11097/commits?page=1&per_page=100",
+          "sha256": "0d9827247fdca818e11faf7a222d2919b90d60b74bab70c40059584804e0de13",
+          "bytes": 3421
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11097/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:23.457Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11097/files?page=1&per_page=100",
+          "sha256": "78843ce9f4479a1459df50d9cb17a603b845430bbaa5bbcaba8911e9205edc06",
+          "bytes": 1564
+        }
+      ],
+      "currentApiBase": "a72a3f50bad7772ce96fc62d80f64b109fb2893f",
+      "currentApiHead": "3861171a15907dabc23bccf631f6ee410a7163f4",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-21T18:07:11Z",
+      "updatedAt": "2019-07-26T19:41:27Z",
+      "mergedAt": "2019-06-22T04:03:04Z",
+      "changedFiles": 1,
+      "additions": 33,
+      "deletions": 0,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-012",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/pulls/1333",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:58:24.263Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/1333?",
+          "sha256": "63b6b286c8efc82f5ed52b3fc28ec064e1f80c59e937d033c1ff9cdd91c372ee",
+          "bytes": 11580
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/pulls/1333/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:24.805Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/1333/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/pulls/1333/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:25.420Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/1333/reviews?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/issues/1333/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:25.938Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/issues/1333/comments?page=1&per_page=100",
+          "sha256": "3755c4d31bfc6df731ffd5eadd8d5087e1c0c465d4a7ea28b0cb4be7e5bfb372",
+          "bytes": 5407
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/pulls/1333/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:26.612Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/1333/commits?page=1&per_page=100",
+          "sha256": "a04df4ac32d1e46bada49208620e60ecf82c199d30021f17ebd19d4bcfff4107",
+          "bytes": 4006
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/pulls/1333/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:27.324Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/1333/files?page=1&per_page=100",
+          "sha256": "9f7504cea688b59d9fc68519921fa12f4b633bbf443ef90c93d77ff56b84b1b4",
+          "bytes": 791
+        }
+      ],
+      "currentApiBase": "4d11352c1ed0be6e2968351c6d9dfd5671155dff",
+      "currentApiHead": "43385dcdeabb7241a6b900a700b2728f2067b04f",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-03T13:47:31Z",
+      "updatedAt": "2019-06-03T18:29:27Z",
+      "mergedAt": "2019-06-03T18:29:27Z",
+      "changedFiles": 1,
+      "additions": 1,
+      "deletions": 1,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-013",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/pulls/9238",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:58:28.165Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/9238?",
+          "sha256": "55f6181f953676bd88de8ade3636d67aa277e669e6f32cd378fc80360e974814",
+          "bytes": 23087
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/pulls/9238/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:28.673Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/9238/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/pulls/9238/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:29.278Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/9238/reviews?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/issues/9238/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:29.840Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/issues/9238/comments?page=1&per_page=100",
+          "sha256": "eedd4622aed83ba0fb8f4d0ca247536b703120eaa8e2aa17413670205fb157f7",
+          "bytes": 5720
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/pulls/9238/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:30.478Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/9238/commits?page=1&per_page=100",
+          "sha256": "fcc6516da5c7c54475018b08f0b1dedbe7428ff8f476a013e9e7c187e1e79b39",
+          "bytes": 8201
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/pulls/9238/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:31.151Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/9238/files?page=1&per_page=100",
+          "sha256": "afcd7a31ddaf8f87669a4e22666202bdb961434d7746894c4968c2c2ffae9e11",
+          "bytes": 26719
+        }
+      ],
+      "currentApiBase": "4e1063f527e4ea212df6735d353d18287d5a1d20",
+      "currentApiHead": "fd4b3c503a832b5d86bc347bdd41c5d460dbf929",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-07T02:17:44Z",
+      "updatedAt": "2019-06-09T12:16:48Z",
+      "mergedAt": "2019-06-09T12:16:43Z",
+      "changedFiles": 18,
+      "additions": 36,
+      "deletions": 98,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-014",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/pulls/4775",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:58:32.008Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/4775?",
+          "sha256": "a041051ec8a7f0f3283e4a6481e3ab25de414db2a1b1cdd920127b8d2a2e2a3a",
+          "bytes": 16824
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/pulls/4775/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:32.527Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/4775/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/pulls/4775/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:33.222Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/4775/reviews?page=1&per_page=100",
+          "sha256": "e7b1826076605c811abe1a695ac83069772fc4474b3f074df12a86b5aa84e99b",
+          "bytes": 1536
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/issues/4775/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:33.769Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/issues/4775/comments?page=1&per_page=100",
+          "sha256": "23e8c7a64b6b7752ef931cdfb20ab19339807f8c3dce8aa951f26bd113f65dfc",
+          "bytes": 1604
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/pulls/4775/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:34.363Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/4775/commits?page=1&per_page=100",
+          "sha256": "8f79dc82a7e1a9e1bbc7a29f30496986734984517696e3a2ea8b1f70707267c3",
+          "bytes": 3396
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/pulls/4775/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:34.981Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/4775/files?page=1&per_page=100",
+          "sha256": "6c32c64b8be81ae6bca8c6e2d192a5b02947605582a4b14481b5682b66085023",
+          "bytes": 1689
+        }
+      ],
+      "currentApiBase": "26e16d7e82379cd09fc87ed1315ebd36b82d6f33",
+      "currentApiHead": "e9722484906b7f03349b6cffa9603c04ce72dc4a",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-05-12T00:08:13Z",
+      "updatedAt": "2019-07-06T01:40:04Z",
+      "mergedAt": "2019-06-05T16:29:32Z",
+      "changedFiles": 1,
+      "additions": 31,
+      "deletions": 0,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-015",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/75286",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:58:35.856Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/75286?",
+          "sha256": "e3de85c66ce04f98a285f397d6d25ff745be478ef699afa89e0391c590bd7dfd",
+          "bytes": 18469
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/75286/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:36.424Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/75286/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/75286/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:37.200Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/75286/reviews?page=1&per_page=100",
+          "sha256": "2593e767b159b4f4eb3e95f08e3854b0e9aa1cf26bc0bfe3de16aeb8867e0e8e",
+          "bytes": 1605
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/issues/75286/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:37.760Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/issues/75286/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/75286/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:38.436Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/75286/commits?page=1&per_page=100",
+          "sha256": "a2e66466de5a39e24049141faaf40ac541e9d48ebb6cc143bbd4f1757850da09",
+          "bytes": 1783
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/75286/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:39.099Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/75286/files?page=1&per_page=100",
+          "sha256": "a86e6c41ac1a4f693a46b4e9e91345d9e3dd89d8e1ead5c322e68edb844f635a",
+          "bytes": 3106
+        }
+      ],
+      "currentApiBase": "27c448d0326288ccf8e97b801570469a8ee8e7a2",
+      "currentApiHead": "15f6609e3f971932ea941feb5d602c5f44dc711a",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-11T17:28:39Z",
+      "updatedAt": "2020-03-28T23:24:03Z",
+      "mergedAt": "2019-06-12T08:01:49Z",
+      "changedFiles": 1,
+      "additions": 5,
+      "deletions": 6,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-016",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7646",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:58:40.040Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7646?",
+          "sha256": "1ff00e8f8c4939c70183fd79bd5ba24a651137d63445f78c7c52b748c99f7744",
+          "bytes": 18932
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7646/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:40.588Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7646/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7646/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:41.331Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7646/reviews?page=1&per_page=100",
+          "sha256": "5e3e6e2b577ba64dc1c629e7338c6e50dbc835a3cb742035cf25d15fd61c6c9f",
+          "bytes": 1589
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/issues/7646/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:41.878Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/issues/7646/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7646/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:42.591Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7646/commits?page=1&per_page=100",
+          "sha256": "1ec05681dc291eb7197b11a3242985f12ba44f315e8141f4683df8a7a15db0c1",
+          "bytes": 8714
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7646/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:43.301Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7646/files?page=1&per_page=100",
+          "sha256": "5c81480d6dab476a74f365092cf33f3a35171c37e49db1bbd4aa31c3f1fdbb06",
+          "bytes": 1311
+        }
+      ],
+      "currentApiBase": "8ddb4a6a95f9c68098ce5dd9dbe25aba11b8a9ca",
+      "currentApiHead": "647af6497dade2b6a6d42d2aab31cd4f13a4f4eb",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-24T14:18:33Z",
+      "updatedAt": "2020-06-24T19:58:07Z",
+      "mergedAt": "2019-06-24T15:45:37Z",
+      "changedFiles": 1,
+      "additions": 3,
+      "deletions": 1,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-017",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2321",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:58:44.086Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2321?",
+          "sha256": "625848fddc34262c06b7cb4a63f3de3d6472912fcab796d4e9de5fdb0d434323",
+          "bytes": 18127
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2321/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:44.577Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2321/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2321/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:45.143Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2321/reviews?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/issues/2321/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:45.707Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/issues/2321/comments?page=1&per_page=100",
+          "sha256": "cc79c70f9593f9e3201bbbec9b9c4ecfa585999df68977e712f9e0645d114596",
+          "bytes": 3977
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2321/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:46.301Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2321/commits?page=1&per_page=100",
+          "sha256": "4af8fa0990d6079d95cdd3e34f13e2d8b1747dc67f53c807705fa5ea9995aad7",
+          "bytes": 4115
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2321/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:46.943Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2321/files?page=1&per_page=100",
+          "sha256": "dcf08dbc808ebaa46a0d3e8a59e1a1ab6b158bc76a0391a91945e68ea7bee6ec",
+          "bytes": 3544
+        }
+      ],
+      "currentApiBase": "343fb310ce77a2bd7623f2249f78d266711bb8dd",
+      "currentApiHead": "61e0b272002d0b6a76beabf9cac5c6489b28109c",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-05-31T04:45:46Z",
+      "updatedAt": "2019-09-23T16:13:13Z",
+      "mergedAt": "2019-06-03T20:26:46Z",
+      "changedFiles": 3,
+      "additions": 8,
+      "deletions": 8,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-018",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11015",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:58:47.823Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11015?",
+          "sha256": "7b8f292a7625c8f7e36ace08839142d13959008ffe4ad95f07b988e49e2dc961",
+          "bytes": 19163
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11015/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:48.329Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11015/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11015/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:49.047Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11015/reviews?page=1&per_page=100",
+          "sha256": "895cde5283b2e1fcc4fbf083a8809ad77456354bde8154e0ca04ddbe01de8bdf",
+          "bytes": 1570
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/issues/11015/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:49.589Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/issues/11015/comments?page=1&per_page=100",
+          "sha256": "4e9e86b2d1b394df02f1dea73d1d3013056d994fc4993e108851ab8036f68cfe",
+          "bytes": 5292
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11015/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:50.194Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11015/commits?page=1&per_page=100",
+          "sha256": "3497641b05732718ec6c42334d2ca41e38b2e1c7f24d0fb69028dc4dcdea1ef0",
+          "bytes": 1476
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11015/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:50.804Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11015/files?page=1&per_page=100",
+          "sha256": "76e836b72e9973ba623e6381ecdb417ca84c16025d02138a15397a61ed63a3bb",
+          "bytes": 1498
+        }
+      ],
+      "currentApiBase": "c15d9a5f68c8e4b6e17a38ec21c0e16decf0e23f",
+      "currentApiHead": "aa777d0b99ca08ab6fd550ecec04a1ee086e735e",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-05-29T13:55:58Z",
+      "updatedAt": "2019-06-10T01:23:38Z",
+      "mergedAt": "2019-06-10T01:11:31Z",
+      "changedFiles": 2,
+      "additions": 3,
+      "deletions": 3,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-019",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/pulls/1332",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:58:51.602Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/1332?",
+          "sha256": "1e263cc63f4eff3d3174df995598502a820adf2ab56394aaff2cb5c7a0bc2901",
+          "bytes": 16797
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/pulls/1332/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:52.131Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/1332/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/pulls/1332/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:52.792Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/1332/reviews?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/issues/1332/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:53.321Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/issues/1332/comments?page=1&per_page=100",
+          "sha256": "bf949fcc8b2f5030d0108e4ea6e1b642d9d6ea12fbbf23a0603d5c7b9a0d0ac0",
+          "bytes": 1916
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/pulls/1332/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:53.887Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/1332/commits?page=1&per_page=100",
+          "sha256": "d2405c0bb166cae0fa164f8c0905f8ac134916b71cd085e1c277e5d4fc3a1901",
+          "bytes": 3221
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/OptimalBits/bull/pulls/1332/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:54.509Z",
+          "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/1332/files?page=1&per_page=100",
+          "sha256": "4a650a192eb6b162f22aeb48d4a35270a9e5898634255ebffdd8a9f32fec4fd1",
+          "bytes": 2788
+        }
+      ],
+      "currentApiBase": "0207f9616a729fd0d0a2aa0e0cf776baa468d3ef",
+      "currentApiHead": "8522bfaa13da28379cd143d368a5184b81efa303",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-01T10:24:32Z",
+      "updatedAt": "2019-06-01T10:32:45Z",
+      "mergedAt": "2019-06-01T10:32:33Z",
+      "changedFiles": 2,
+      "additions": 10,
+      "deletions": 4,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-020",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/pulls/9260",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:58:55.345Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/9260?",
+          "sha256": "7c1c229ba184ca40035010d2207a7a1ad4df8430a95d08cb7d2789caeb536f46",
+          "bytes": 18250
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/pulls/9260/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:55.840Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/9260/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/pulls/9260/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:56.402Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/9260/reviews?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/issues/9260/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:56.937Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/issues/9260/comments?page=1&per_page=100",
+          "sha256": "0814711a4698718fb29f463618e1ad8c43abcd0cc79d77029f7678023758678f",
+          "bytes": 5175
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/pulls/9260/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:57.532Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/9260/commits?page=1&per_page=100",
+          "sha256": "ceeeff7c62ab50868ee9cf3b9a8ca2dfd8c676d2685d89ca1540a6d5289e5287",
+          "bytes": 6485
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/webpack/webpack/pulls/9260/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:58.131Z",
+          "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/9260/files?page=1&per_page=100",
+          "sha256": "a70cc8ba04de5ec87eb88bdbaf3b5d1eb3dc95812b1d413b7b146c538c365026",
+          "bytes": 4366
+        }
+      ],
+      "currentApiBase": "acf2c2d4b19117aa6562ea6885da2dbfade369fc",
+      "currentApiHead": "8d5ad83b3274029e37386dbd5d0c64d8102bcd6f",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-12T12:52:58Z",
+      "updatedAt": "2019-06-12T13:55:28Z",
+      "mergedAt": "2019-06-12T13:55:14Z",
+      "changedFiles": 3,
+      "additions": 4,
+      "deletions": 17,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-021",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/pulls/4774",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:58:58.975Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/4774?",
+          "sha256": "9b236a64bbcf04b6d0ed241e22c8cb361c90cf628c57c376fbc437642674a375",
+          "bytes": 16413
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/pulls/4774/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:58:59.517Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/4774/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/pulls/4774/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:00.184Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/4774/reviews?page=1&per_page=100",
+          "sha256": "c4f1e681e88f8214d0eedf52e69ddf410c0b4ef640e2a1ba0d1294bab2b20964",
+          "bytes": 1536
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/issues/4774/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:00.705Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/issues/4774/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/pulls/4774/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:01.308Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/4774/commits?page=1&per_page=100",
+          "sha256": "5519ba3ee94cdda58b6f94e2fca28d64e0172141c9afb2d94325cb1bc8212d5f",
+          "bytes": 3353
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/ReactiveX/rxjs/pulls/4774/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:01.953Z",
+          "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/4774/files?page=1&per_page=100",
+          "sha256": "fe4fc6cbc15b9fcc42d05c4d4e2510b6c3cd30f3c3715de0aa474bda403d402e",
+          "bytes": 2060
+        }
+      ],
+      "currentApiBase": "26e16d7e82379cd09fc87ed1315ebd36b82d6f33",
+      "currentApiHead": "fdebb6ce550d80427964519a53e19fc1a189afae",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-05-11T22:32:23Z",
+      "updatedAt": "2019-07-06T01:39:54Z",
+      "mergedAt": "2019-06-05T16:34:30Z",
+      "changedFiles": 1,
+      "additions": 2,
+      "deletions": 2,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-022",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/75982",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:59:02.864Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/75982?",
+          "sha256": "b9a628a29cd34011f514370444efbb290a683dcdd16c3172b1a62107d3832652",
+          "bytes": 19780
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/75982/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:03.410Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/75982/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/75982/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:04.133Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/75982/reviews?page=1&per_page=100",
+          "sha256": "99cc4809cd075cc669cb6429bd57b93c67afebaa66bbc0e9626e417d0d7590fd",
+          "bytes": 1559
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/issues/75982/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:04.685Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/issues/75982/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/75982/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:05.339Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/75982/commits?page=1&per_page=100",
+          "sha256": "aa7949c9c7e03cfa2d22f5e73a14b5b3111003feaafef53f78eda64c099ecca2",
+          "bytes": 3230
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/microsoft/vscode/pulls/75982/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:05.974Z",
+          "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/75982/files?page=1&per_page=100",
+          "sha256": "8093590deabf504e815e5e0cdfa676554be807ba7d431ff132e1588b5d3d8412",
+          "bytes": 1072
+        }
+      ],
+      "currentApiBase": "6a7020dd4a11e0f33b157b3df4baeec90d85701b",
+      "currentApiHead": "cc9f0b00d6f790d92ee8d338ce145ed11a852813",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-24T07:17:44Z",
+      "updatedAt": "2020-03-27T23:24:14Z",
+      "mergedAt": "2019-06-28T14:30:46Z",
+      "changedFiles": 1,
+      "additions": 2,
+      "deletions": 1,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-023",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7597",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:59:06.886Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7597?",
+          "sha256": "0056814f9c3488a5416be6d7f682a422369ece5a9b3293b2f810f8b51b2cba06",
+          "bytes": 17797
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7597/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:07.362Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7597/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7597/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:08.036Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7597/reviews?page=1&per_page=100",
+          "sha256": "50ce8312024271bef6818d417356800b7322d4d871390dba87ff9ebfe78f99ea",
+          "bytes": 1589
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/issues/7597/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:08.541Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/issues/7597/comments?page=1&per_page=100",
+          "sha256": "f9f399e8450f4bc0e739afbbdeddfb219a9f070fb90ab032897d5bc726913829",
+          "bytes": 5469
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7597/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:09.257Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7597/commits?page=1&per_page=100",
+          "sha256": "065e98bdb34f50c7e08c79eb703b24f79b9b059fa1258e99b0154747ff39cd5e",
+          "bytes": 4018
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/vercel/next.js/pulls/7597/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:09.898Z",
+          "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/7597/files?page=1&per_page=100",
+          "sha256": "767c2de132cc6e932aa2fbe356c9b4b348f617289e6435869ac8321d25f637bb",
+          "bytes": 915
+        }
+      ],
+      "currentApiBase": "5f269d7c88f2cf52de7f7d3f437b7369b45e105c",
+      "currentApiHead": "1abd112bf5336119526acea747f859da46522f81",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-18T13:51:54Z",
+      "updatedAt": "2020-06-24T22:38:06Z",
+      "mergedAt": "2019-06-18T23:21:36Z",
+      "changedFiles": 1,
+      "additions": 1,
+      "deletions": 1,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-024",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2370",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:59:10.691Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2370?",
+          "sha256": "f434b972be88680ea246557969967e3422be263cd20207068b642e440bac14a6",
+          "bytes": 24297
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2370/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:11.218Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2370/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2370/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:12.112Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2370/reviews?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/issues/2370/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:12.629Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/issues/2370/comments?page=1&per_page=100",
+          "sha256": "61d44e4b7d950e306f6d9eaf992a16a200aba1e37488cdb65b0793bc1260336d",
+          "bytes": 3977
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2370/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:13.269Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2370/commits?page=1&per_page=100",
+          "sha256": "d699320e0df5f0e1ba5007f7039ca1d694f9360e3a7176826c67a99966e26427",
+          "bytes": 4109
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/nestjs/nest/pulls/2370/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:13.990Z",
+          "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2370/files?page=1&per_page=100",
+          "sha256": "61d23c27b6ac7b7c5b3a1cb374dacc1b379b497f41b22cbeabd667f25b650316",
+          "bytes": 15032
+        }
+      ],
+      "currentApiBase": "56071d0765e19963b95ae8de8de78d306d11e14f",
+      "currentApiHead": "1dcf047474f10f1e497784fe32a6cfa6644e780a",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-08T17:51:52Z",
+      "updatedAt": "2019-09-23T15:13:14Z",
+      "mergedAt": "2019-06-21T07:58:14Z",
+      "changedFiles": 5,
+      "additions": 62,
+      "deletions": 62,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    },
+    {
+      "candidateId": "r2-random-025",
+      "requests": [
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11122",
+            "parameters": {}
+          },
+          "retrievedAt": "2026-09-05T11:59:14.895Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11122?",
+          "sha256": "b94eb107d44e581a8146ff01a5a13db32afdc02add45d1085bae6c5a203fe011",
+          "bytes": 19058
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11122/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:15.529Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11122/comments?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11122/reviews",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:16.148Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11122/reviews?page=1&per_page=100",
+          "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+          "bytes": 2
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/issues/11122/comments",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:16.722Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/issues/11122/comments?page=1&per_page=100",
+          "sha256": "7028d6d400fbbbb0cced856f96180af849629ecf7fbe472c95010508b5a2ec7d",
+          "bytes": 9409
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11122/commits",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:17.391Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11122/commits?page=1&per_page=100",
+          "sha256": "c6c18daf46750deb88e484c37e0e6529e8410cc5abebf0b9e4445496b18f5bfc",
+          "bytes": 1437
+        },
+        {
+          "schemaVersion": 1,
+          "request": {
+            "host": "api.github.com",
+            "method": "GET",
+            "endpoint": "repos/sequelize/sequelize/pulls/11122/files",
+            "parameters": {
+              "page": 1,
+              "per_page": 100
+            }
+          },
+          "retrievedAt": "2026-09-05T11:59:18.110Z",
+          "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/11122/files?page=1&per_page=100",
+          "sha256": "6599ccf923aa4fa49dd49d94af16125ac1e3f32dac58f2a7e5f2afcf992e5ded",
+          "bytes": 5970
+        }
+      ],
+      "currentApiBase": "89802e0e75a1aeb3795d3f473ae3711c7d199018",
+      "currentApiHead": "a984f393baf6840fd7b4eaca02389d37fc99a1e8",
+      "historicalRevisionStatus": "unverified-current-api-values-are-only-leads",
+      "createdAt": "2019-06-27T18:07:04Z",
+      "updatedAt": "2019-07-26T19:41:18Z",
+      "mergedAt": "2019-06-28T04:40:05Z",
+      "changedFiles": 1,
+      "additions": 28,
+      "deletions": 23,
+      "sourceLicenseStatus": "requires-license-at-historical-revision",
+      "linkedFixStatus": "requires-curator-review",
+      "truthStatus": "unknown"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "search/issues",
+    "parameters": {
+      "order": "asc",
+      "page": 1,
+      "per_page": 100,
+      "q": "repo:ReactiveX/rxjs is:pr is:merged merged:2019-06-01..2019-06-30",
+      "sort": "created"
+    }
+  },
+  "retrievedAt": "2026-09-05T11:56:51.134Z",
+  "sourceUrl": "https://api.github.com/search/issues?order=asc&page=1&per_page=100&q=repo%3AReactiveX%2Frxjs+is%3Apr+is%3Amerged+merged%3A2019-06-01..2019-06-30&sort=created",
+  "sha256": "e7a84ce67836516bd6aa8a34e180344d37c29e8e0567146a0b66804e7fb5a06b",
+  "bytes": 68924
+}
