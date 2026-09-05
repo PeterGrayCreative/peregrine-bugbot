@@ -535,14 +535,15 @@ If an intervention fails its registered gate, retain the negative evidence and
 exclude that implementation from the accepted stack. The full visible
 development/validation comparison tests the accepted Stage 2 stack against a
 contemporaneous control. Effective cost or median wall time is at least 20%
-lower without material recall regression.
+lower without a regression in registered visible roots. Corpus contamination
+and incomplete truth prevent broader recall, precision, or FDR claims.
 
 The first structural-compaction implementation and its adaptive revision both
-preserved measured quality but worsened median paired wall time. They are
-rejected and remain unmerged. The accepted Checkpoint 2 treatment is therefore
-PR 8's stable method packet with the existing full breadth ledger. PR 10 may
-proceed from PR 8 after Checkpoint 2 passes; it does not depend on accepting a
-failed compaction representation.
+preserved registered recall and completion but retained unresolved findings and
+worsened median paired wall time. They are rejected and remain unmerged. The
+accepted Checkpoint 2 treatment is therefore PR 8's stable method packet with
+the existing full breadth ledger. PR 10 may proceed from PR 8 after Checkpoint
+2 passes; it does not depend on accepting a failed compaction representation.
 
 A later Luna-max breadth / Terra-xhigh investigation smoke also preserved all
 registered roots but increased paired median wall time by approximately 82.7%.

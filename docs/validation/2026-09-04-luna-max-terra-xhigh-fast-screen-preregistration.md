@@ -1,7 +1,9 @@
 # Luna Max / Terra Xhigh Shortened-Funnel Preregistration
 
-**Date:** 2026-09-04  
-**Base:** `origin/main` at merge `0f98cb81002ba7e98a8b75c2393fcd3720c5994c`  
+**Date:** 2026-09-04
+
+**Base:** `origin/main` at merge `0f98cb81002ba7e98a8b75c2393fcd3720c5994c`
+
 **Configuration:**
 [`eval/matrix.codex.luna-max-terra-xhigh-fast-screen.json`](../../eval/matrix.codex.luna-max-terra-xhigh-fast-screen.json)
 
