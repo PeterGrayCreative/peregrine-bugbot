@@ -348,6 +348,8 @@ export interface FixtureCaseSpec extends CaseSpecBase {
 
 export interface HistoricalCaseSpec extends CaseSpecBase {
   kind: "historical";
+  /** Opt-in neutral research contract. Omitted preserves the legacy historical case contract. */
+  evaluationProtocol?: "historical-efficacy-v1";
   repoSource: string;
   baseCommit: string;
   headCommit: string;
