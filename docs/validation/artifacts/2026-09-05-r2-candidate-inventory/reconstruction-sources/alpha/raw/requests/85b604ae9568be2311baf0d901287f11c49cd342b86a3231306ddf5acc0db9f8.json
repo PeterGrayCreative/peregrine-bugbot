@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/microsoft/vscode/pulls/112133/reviews",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T13:08:22.138Z",
+  "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/112133/reviews?page=1&per_page=100",
+  "sha256": "e062e56f86cf8a13f34a038f6fa954e5b0a1aacba8911f0f9feb820d445aa64e",
+  "bytes": 1557
+}

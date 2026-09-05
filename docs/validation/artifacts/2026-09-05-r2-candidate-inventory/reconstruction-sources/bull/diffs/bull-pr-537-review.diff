@@ -1,0 +1,43 @@
+diff --git a/lib/job.js b/lib/job.js
+index 663d6dc410411e97eca8a1f9c8c43976e27ab028..3e961ecd9e64e0bc03c698f6b1e85f5c0e869dd0 100644
+--- a/lib/job.js
++++ b/lib/job.js
+@@ -185,6 +185,8 @@ Job.prototype.moveToFailed = function(err, ignoreLock){
+       // If not, move to failed
+       var args = scripts.moveToFailedArgs(_this, err.message, _this.opts.removeOnFail, ignoreLock);
+       multi.moveToFinished(args);
++      // Note that we are ignoring that moveToFinished could return -1 or -2 if the key or the lock
++      // are missing. This could be improved in the future.
+     }
+     return multi.exec().then(resolve, reject);
+   });
+diff --git a/lib/queue.js b/lib/queue.js
+index a74b9490ca144b84d72a8c608a24eb736d2e6203..0fe3d2fbe4cb40dd93ad9694ed09bbad7f0d2ab0 100644
+--- a/lib/queue.js
++++ b/lib/queue.js
+@@ -776,7 +776,6 @@ Queue.prototype.processJob = function(job){
+   function handleFailed(err){
+     var error = err.cause || err; //Handle explicit rejection
+ 
+-    // See https://github.com/OptimalBits/bull/pull/415#issuecomment-269744735
+     return job.moveToFailed(err).then(function(){
+       _this.emit('failed', job, error, 'active');
+     });
+diff --git a/lib/scripts.js b/lib/scripts.js
+index 09b5b3a3d5b4d22d0eef325a1c8f7de52b42b528..017f4eaeed6bb8a6d99d47df2a57f37fd50e93c8 100644
+--- a/lib/scripts.js
++++ b/lib/scripts.js
+@@ -124,7 +124,12 @@ var scripts = {
+ 
+   moveToFinished: function(job, val, propVal, shouldRemove, target, ignoreLock){
+     var args = scripts.moveToFinishedArgs(job, val, propVal, shouldRemove, target, ignoreLock);
+-    return job.queue.client.moveToFinished(args);
++    return job.queue.client.moveToFinished(args).then(function(result){
++      switch(result){
++        case -1: throw Error('Missing key for job ' + job.id);
++        case -2: throw Error('Missing lock for job ' + job.id);
++      }
++    });
+   },
+  
+   // TODO: add a retention argument for completed and finished jobs (in time).

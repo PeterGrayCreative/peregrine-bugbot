@@ -94,10 +94,22 @@ node scripts/evidence/assemble-r2-inventory.mjs
 node scripts/evidence/verify-r2-captures.mjs
 ```
 
-Six exposed development reconstructions have started: Bull #537/#556,
+Six exposed development reconstructions have completed primary and independent
+AI static checks: Bull #537/#556,
 webpack issue #10966, VS Code issue #112124, and Next.js #7363/#16126.
 They include bug and scoped-comparison leads and cannot later be represented
-as reserved validation. The final 12/24 split is not frozen. Selection control,
+as reserved validation. `development-reconstruction-bundle-v1.json` binds their
+reports, independent checks, raw responses, and canonical diffs. No repository
+code was executed. Source clones remain in scratch: this is not yet a
+self-contained replay bundle. Independent checking narrowed Bull #537 to the
+final-attempt multi-result path; the repair test exercises a different retry
+branch. It also separated webpack's timestamp-deletion and time-boundary
+defects into distinct candidate roots. The two comparisons are narrowly scoped;
+the VS Code hover defect is low-impact presentation evidence only.
+
+`development-exposure-v1.json` records 12 exposed reconstruction opportunities,
+including six additional attempts now underway. This is not an admitted
+12-case development set. The final 12/24 split is not frozen. Selection control,
 36-case admission, and independent human curation remain open.
 
 ## R3 measurement prerequisites
@@ -117,3 +129,22 @@ code review caught and verified a correction to schema path bounds; the schema
 explicitly requires the parser for duplicate IDs and cross-field line order. The contract
 is not yet wired into historical admission, scheduling, grading, or reporting;
 those consumers must preserve its restrictions before any provider run.
+
+Historical source specs now accept the explicit `historical-efficacy-v1`
+opt-in while legacy specs remain unchanged. A pre-scheduling barrier rejects
+the new protocol until versioned curation and metric eligibility are integrated.
+The barrier does not pre-validate legacy cases: malformed legacy inputs still
+produce scheduled configuration-failure artifacts. Combined truth/source tests
+pass 13/13; history-plus-source tests pass 16/16; accounting tests pass 17/17.
+
+At pushed head `68bfefc`, GitHub Actions `check` and credential-free build/smoke
+both passed. Local full validation initially reached 256/259 unit tests because
+the validation clone's dependency symlink appeared untracked and triggered the
+clean-worktree guard in three experiment tests. Replacing that local symlink
+with an ignored dependency directory restored the complete experiment suite
+to 12/12. No production guard or test was weakened. Later commits require their
+own current-head CI assessment; these results belong to the stated source.
+The remaining local validation steps also passed on that snapshot: capture
+tests, historical truth tests, corpus validation, skill/package validation, and
+the provider-denied 8/8 structural mock smoke. This is staged local validation,
+not a claim that the original failed full command passed.

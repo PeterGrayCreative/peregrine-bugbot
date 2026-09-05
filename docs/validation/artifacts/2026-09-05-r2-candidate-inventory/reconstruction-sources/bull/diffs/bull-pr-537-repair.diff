@@ -1,0 +1,112 @@
+diff --git a/lib/job.js b/lib/job.js
+index 3e961ecd9e64e0bc03c698f6b1e85f5c0e869dd0..773acf83cbe06326dec482ff047a4b512c1b4b3e 100644
+--- a/lib/job.js
++++ b/lib/job.js
+@@ -158,6 +158,7 @@ Job.prototype.discard = function(){
+ Job.prototype.moveToFailed = function(err, ignoreLock){
+   var _this = this;
+   return new Promise(function(resolve, reject){
++    var checkFinishedResult = false;
+     var multi = _this.queue.client.multi();
+     _this._saveAttempt(multi, err);
+ 
+@@ -185,10 +186,18 @@ Job.prototype.moveToFailed = function(err, ignoreLock){
+       // If not, move to failed
+       var args = scripts.moveToFailedArgs(_this, err.message, _this.opts.removeOnFail, ignoreLock);
+       multi.moveToFinished(args);
+-      // Note that we are ignoring that moveToFinished could return -1 or -2 if the key or the lock
+-      // are missing. This could be improved in the future.
++      checkFinishedResult = true;
+     }
+-    return multi.exec().then(resolve, reject);
++    return multi.exec().then(function(results){
++      if(checkFinishedResult){
++        var code = _.last(results)[1];
++        if (code < 0){
++          reject(scripts.finishedErrors(code, _this.id));
++          return;
++        }
++      }
++      resolve();
++    }, reject);
+   });
+ };
+ 
+diff --git a/lib/queue.js b/lib/queue.js
+index 0fe3d2fbe4cb40dd93ad9694ed09bbad7f0d2ab0..836c9d835279f15681b020c4f61f327907cee45c 100644
+--- a/lib/queue.js
++++ b/lib/queue.js
+@@ -707,7 +707,10 @@ Queue.prototype.processJobs = function(index, resolve){
+       (_this.paused || Promise.resolve()).then(function(){
+         return _this.processing[index] = _this.getNextJob()
+           .then(_this.processJob)
+-          .then(processJobs, function(/*err*/){
++          .then(processJobs, function(err){
++
++            _this.emit('error', err, 'Error processing job');
++
+             //
+             // Wait before trying to process again.
+             //
+diff --git a/lib/scripts.js b/lib/scripts.js
+index 017f4eaeed6bb8a6d99d47df2a57f37fd50e93c8..4ba72309770d45ae765f01ffed6aff1dd86592f7 100644
+--- a/lib/scripts.js
++++ b/lib/scripts.js
+@@ -125,12 +125,18 @@ var scripts = {
+   moveToFinished: function(job, val, propVal, shouldRemove, target, ignoreLock){
+     var args = scripts.moveToFinishedArgs(job, val, propVal, shouldRemove, target, ignoreLock);
+     return job.queue.client.moveToFinished(args).then(function(result){
+-      switch(result){
+-        case -1: throw Error('Missing key for job ' + job.id);
+-        case -2: throw Error('Missing lock for job ' + job.id);
++      if(result < 0){
++        throw scripts.finishedErrors(result, job.id);
+       }
+     });
+   },
++
++  finishedErrors: function(code, jobId){
++    switch(code){
++      case -1: return new Error('Missing key for job ' + jobId);
++      case -2: return new Error('Missing lock for job ' + jobId);
++    }
++  },
+  
+   // TODO: add a retention argument for completed and finished jobs (in time).
+   moveToCompleted: function(job, returnvalue, removeOnComplete, ignoreLock){
+diff --git a/test/test_queue.js b/test/test_queue.js
+index 00a4d9c5ef2e0ced318ff33cb48c6990bfb59e86..735c51c7a1479bb5a090578f2cec2319c9d563ad 100644
+--- a/test/test_queue.js
++++ b/test/test_queue.js
+@@ -1857,6 +1857,31 @@ describe('Queue', function () {
+       });
+       queue.add({ foo: 'bar' }).then(addedHandler);
+     });
++
++    it('an unlocked job should not be moved to failed', function(done) {
++      queue = utils.buildQueue('test unlocked failed');
++
++      queue.process(function(job, callback) {
++        // Release the lock to simulate the event loop stalling (so failure to renew the lock).
++        job.releaseLock().then(function() {
++          // Once it's failed, it should NOT be moved to failed since this worker lost the lock.
++          callback(new Error('retry this job'));
++        });
++      });
++
++      queue.on('failed', function(job) {
++        job.isFailed().then(function(isFailed) {
++          expect(isFailed).to.be.equal(false);
++        });
++      });
++
++      queue.on('error', function(err){
++        queue.close().then(done, done);
++      });
++
++      // Note that backoff:0 should immediately retry the job upon failure (ie put it in 'waiting')
++      queue.add({ foo: 'bar' }, { backoff: 0, attempts: 2 });
++    });
+   });
+ 
+   describe('Jobs getters', function () {

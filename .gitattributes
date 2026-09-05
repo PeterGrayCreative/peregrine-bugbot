@@ -11,3 +11,7 @@ docs/validation/artifacts/2026-09-05-r2-candidate-inventory/raw/objects/** -text
 docs/validation/artifacts/2026-09-05-r2-candidate-inventory/screening-sources/**/objects/** -text -whitespace
 # Screening reports are bound by the frozen inventory, including Markdown breaks.
 docs/validation/artifacts/2026-09-05-r2-candidate-inventory/screening/*.md -text -whitespace
+docs/validation/artifacts/2026-09-05-r2-candidate-inventory/reconstruction-sources/**/raw/** -text -whitespace
+docs/validation/artifacts/2026-09-05-r2-candidate-inventory/reconstruction-sources/**/api/** -text -whitespace
+docs/validation/artifacts/2026-09-05-r2-candidate-inventory/reconstruction-sources/**/diffs/** -text -whitespace
+docs/validation/artifacts/2026-09-05-r2-candidate-inventory/reconstructions/*.md -text -whitespace

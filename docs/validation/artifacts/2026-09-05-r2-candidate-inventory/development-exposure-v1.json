@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-05",
+  "status": "reconstruction-exposure-register",
+  "admittedCases": 0,
+  "limitation": "These 12 opportunities are selected for visible development reconstruction before provider outcomes. They cannot later count as reserved selection, confirmation, or holdout. This is not the final 12-case admission or a protected 12/24 split. Rejected or deferred opportunities retain their exposure and slot; no automatic replacements.",
+  "opportunities": [
+    { "repository": "OptimalBits/bull", "number": 537, "purpose": "defect-hypothesis" },
+    { "repository": "OptimalBits/bull", "number": 556, "purpose": "scoped-comparison-hypothesis" },
+    { "repository": "webpack/webpack", "number": 10335, "sourceIssue": 10966, "purpose": "defect-hypothesis" },
+    { "repository": "microsoft/vscode", "number": 112075, "sourceIssue": 112124, "purpose": "low-impact-defect-hypothesis" },
+    { "repository": "vercel/next.js", "number": 7363, "purpose": "defect-hypothesis" },
+    { "repository": "vercel/next.js", "number": 16126, "purpose": "scoped-comparison-hypothesis" },
+    { "repository": "sequelize/sequelize", "number": 8430, "purpose": "defect-hypothesis" },
+    { "repository": "ReactiveX/rxjs", "number": 2397, "purpose": "defect-hypothesis" },
+    { "repository": "nestjs/nest", "number": 5710, "purpose": "scoped-comparison-hypothesis" },
+    { "repository": "axios/axios", "number": 874, "purpose": "scoped-comparison-hypothesis" },
+    { "repository": "microsoft/vscode", "number": 98988, "purpose": "defect-hypothesis" },
+    { "repository": "nestjs/nest", "number": 383, "purpose": "defect-hypothesis" }
+  ]
+}
