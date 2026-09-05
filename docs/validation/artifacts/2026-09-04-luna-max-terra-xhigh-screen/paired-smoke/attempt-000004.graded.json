@@ -1,0 +1,339 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "251f82be481b224856534e5fe61c185789c591adc7fddc7b44616da2ba983185",
+  "experimentManifestSha256": "d8989d01741f424e9119d4c79cfefcd58a5983be95d67cb171b61e17c6741d50",
+  "attemptId": "attempt-000004",
+  "caseName": "development/case-a1c4e90d",
+  "caseKind": "seeded",
+  "configName": "candidate-luna-max-terra-xhigh",
+  "repeat": 1,
+  "caseCorpus": "development",
+  "runner": "codex",
+  "startedAt": "2026-09-04T23:53:43.165Z",
+  "finishedAt": "2026-09-04T23:56:13.978Z",
+  "attemptDurationMs": 150813,
+  "evaluationProvenance": {
+    "history": {
+      "schemaVersion": 1,
+      "materialization": "fixture-patch",
+      "objectFormat": "sha1",
+      "baseRef": "06fbcc80855026987374c4ed0afc920efb767c32",
+      "headRef": "ce610905c3dd376121efafcf9e274edc1a33ea48",
+      "mergeBase": "06fbcc80855026987374c4ed0afc920efb767c32",
+      "baseTree": "7c7816172d3d9f1d9a7d00c7decc8ba81d7b8200",
+      "headTree": "297f36a009327748bd982dc3b60a83aedaf2e2c4",
+      "commitCount": 2,
+      "baseIsMergeBase": true,
+      "checkedOutTreeMatchesHead": true,
+      "treeReproductionVerified": true,
+      "diffNormalization": "identity-v1",
+      "diffSha256": "2aa26cb9fd1135d64e0fa751a7682a3be536a8491193ea92586c75af9f8fbfa7"
+    },
+    "manifest": {
+      "entryPoint": "prepareReviewManifest",
+      "skillName": "invariant-first-pr-review",
+      "baseRef": "06fbcc80855026987374c4ed0afc920efb767c32",
+      "headRef": "ce610905c3dd376121efafcf9e274edc1a33ea48",
+      "mergeBase": "06fbcc80855026987374c4ed0afc920efb767c32",
+      "outputSha256": "7491daf71aac4ea38b777e06eed0d1e66766faffc109875642caa02467fca815",
+      "output": "Invariant-first review manifest\nbase: 06fbcc80855026987374c4ed0afc920efb767c32 (argument)\nhead: ce610905c3dd376121efafcf9e274edc1a33ea48\nmerge-base: 06fbcc80855026987374c4ed0afc920efb767c32\n\nChanged files\nM\torder_store.py\n\nDiff summary\n order_store.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n(none detected)\n\nIdentifier normalization and uniqueness [lane: identifiers]\n(none detected)\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n(none detected)\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- order_store.py\n\nError Handling and Recovery [lane: error-handling]\n(none detected)\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n(none detected)\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+      "typed": {
+        "schemaVersion": 1,
+        "available": true,
+        "base": {
+          "ref": "06fbcc80855026987374c4ed0afc920efb767c32",
+          "commit": "06fbcc80855026987374c4ed0afc920efb767c32",
+          "source": "argument"
+        },
+        "head": {
+          "ref": "ce610905c3dd376121efafcf9e274edc1a33ea48",
+          "commit": "ce610905c3dd376121efafcf9e274edc1a33ea48"
+        },
+        "mergeBase": "06fbcc80855026987374c4ed0afc920efb767c32",
+        "profile": {
+          "source": "none",
+          "requestedPath": null,
+          "changedAtHead": false
+        },
+        "changedFiles": [
+          {
+            "path": "order_store.py",
+            "status": "M",
+            "additions": 1,
+            "deletions": 1,
+            "binary": false,
+            "activatedLanes": [
+              {
+                "id": "logic-correctness",
+                "reason": "content"
+              },
+              {
+                "id": "logic-correctness",
+                "reason": "path"
+              }
+            ]
+          }
+        ],
+        "activatedLanes": [
+          "logic-correctness"
+        ],
+        "customLanes": [],
+        "largeFiles": [],
+        "warnings": []
+      },
+      "typedSha256": "8bcff28d888ca6973dffa81a706fb9f828600d408eece9689ff2786345dec1da",
+      "profileSource": "none",
+      "headProfileChanged": false
+    }
+  },
+  "outcome": {
+    "status": "completed",
+    "result": {
+      "engine": "codex",
+      "status": "completed",
+      "modelConfig": "gpt-5.6-luna/max->gpt-5.6-terra/xhigh",
+      "reviewedBaseRef": "06fbcc80855026987374c4ed0afc920efb767c32",
+      "reviewedHeadRef": "ce610905c3dd376121efafcf9e274edc1a33ea48",
+      "findings": [
+        {
+          "file": "order_store.py",
+          "startLine": 19,
+          "endLine": 19,
+          "severity": "high",
+          "disposition": "fix-in-pr",
+          "category": "persistence",
+          "invariant": "order-and-inventory-atomicity",
+          "title": "Order is committed before inventory allocation succeeds",
+          "explanation": "For an out-of-stock SKU, the new commit persists the inserted order before the conditional inventory UPDATE returns zero rows and raises ValueError. The exception handler's rollback cannot remove that already committed order, leaving an order for inventory that was never allocated. This is a direct regression in the changed transaction boundary.",
+          "failurePath": "apply_order begins a transaction, inserts the order, and commits at line 19. The inventory UPDATE then returns rowcount 0 for an unavailable SKU; the function raises, calls rollback, and re-raises, but the committed order remains.",
+          "confidence": 0.99
+        }
+      ],
+      "usage": {
+        "provider": "openai",
+        "aggregation": "stage-sum",
+        "inputTokens": 183283,
+        "uncachedInputTokens": 70643,
+        "cachedInputTokens": 112640,
+        "cacheReadInputTokens": 112640,
+        "outputTokens": 6935,
+        "reasoningOutputTokens": 5554,
+        "turns": 2,
+        "toolCalls": 4,
+        "toolOutputBytes": 829,
+        "promptBytes": 33435,
+        "toolCallsByType": {
+          "command_execution": 4
+        },
+        "unavailable": [
+          "baseInputTokens",
+          "cacheWriteInputTokens",
+          "costUsd"
+        ]
+      },
+      "durationMs": 147219,
+      "raw": {
+        "manifest": "Invariant-first review manifest\nbase: 06fbcc80855026987374c4ed0afc920efb767c32 (argument)\nhead: ce610905c3dd376121efafcf9e274edc1a33ea48\nmerge-base: 06fbcc80855026987374c4ed0afc920efb767c32\n\nChanged files\nM\torder_store.py\n\nDiff summary\n order_store.py | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n(none detected)\n\nIdentifier normalization and uniqueness [lane: identifiers]\n(none detected)\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n(none detected)\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- order_store.py\n\nError Handling and Recovery [lane: error-handling]\n(none detected)\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n(none detected)\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+        "breadth": {
+          "output": {
+            "model": "gpt-5",
+            "candidates": [
+              {
+                "id": "order-store-non-atomic-commit",
+                "lane": "logic-correctness",
+                "file": "order_store.py",
+                "line": 19,
+                "invariant": "Creating the order and decrementing inventory must be one atomic operation: failed inventory allocation must not persist the order, and successful allocation must persist both changes together.",
+                "counterexample": "When inventory is unavailable, the INSERT is committed before UPDATE raises, so rollback cannot remove the order. When inventory is available, UPDATE occurs after the commit and may remain uncommitted, allowing the inventory decrement to be lost independently of the committed order.",
+                "evidenceNeeded": "Confirm caller/test expectations for atomic order-plus-inventory behavior and the connection's transaction/commit ownership."
+              }
+            ],
+            "clear": [
+              {
+                "lane": "authorization",
+                "file": "order_store.py",
+                "reason": "No identity, authorization, or tenant-isolation behavior changed."
+              },
+              {
+                "lane": "identifiers",
+                "file": "order_store.py",
+                "reason": "No identifier normalization or uniqueness logic changed."
+              },
+              {
+                "lane": "data-integrity",
+                "file": "order_store.py",
+                "reason": "No separate validation, lifecycle, or limit change beyond the nominated atomicity candidate."
+              },
+              {
+                "lane": "persistence",
+                "file": "order_store.py",
+                "reason": "No separate schema or migration change beyond the nominated atomicity candidate."
+              },
+              {
+                "lane": "runtime-config",
+                "file": "order_store.py",
+                "reason": "No runtime configuration, container, or harness behavior changed."
+              },
+              {
+                "lane": "contracts",
+                "file": "order_store.py",
+                "reason": "No response, transport, logging, or observability contract changed."
+              },
+              {
+                "lane": "concurrency",
+                "file": "order_store.py",
+                "reason": "No independent concurrency, performance, or resource-use change identified."
+              },
+              {
+                "lane": "test-quality",
+                "file": "order_store.py",
+                "reason": "No test or maintainability change identified."
+              },
+              {
+                "lane": "error-handling",
+                "file": "order_store.py",
+                "reason": "No independent error-propagation or recovery issue beyond the nominated transaction candidate."
+              },
+              {
+                "lane": "frontend-state",
+                "file": "order_store.py",
+                "reason": "No frontend state or effect behavior is present."
+              },
+              {
+                "lane": "boundaries-pagination",
+                "file": "order_store.py",
+                "reason": "No pagination, ordering, or boundary calculation changed."
+              }
+            ],
+            "escalations": [
+              {
+                "target": "packet",
+                "reason": "The required packet path could not be read because the read-only shell was blocked by an environment namespace-creation failure."
+              }
+            ],
+            "coverage": {
+              "coveredFiles": [
+                "order_store.py"
+              ],
+              "unavailable": []
+            }
+          },
+          "model": "gpt-5.6-luna",
+          "promptSha256": "7b20dcfda5a97f7bd8f855e412c6f478d9c378480cb2c6fc65d4b7b8668316cd",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 142818,
+            "uncachedInputTokens": 59362,
+            "cachedInputTokens": 83456,
+            "cacheReadInputTokens": 83456,
+            "outputTokens": 6087,
+            "reasoningOutputTokens": 5025,
+            "turns": 1,
+            "toolCalls": 3,
+            "toolCallsByType": {
+              "command_execution": 3
+            },
+            "toolOutputBytes": 622,
+            "promptBytes": 3499,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 122709,
+          "malformedEventLines": 0
+        },
+        "investigation": {
+          "output": {
+            "findings": [
+              {
+                "file": "order_store.py",
+                "startLine": 19,
+                "endLine": 19,
+                "severity": "high",
+                "disposition": "fix-in-pr",
+                "category": "persistence",
+                "invariant": "order-and-inventory-atomicity",
+                "title": "Order is committed before inventory allocation succeeds",
+                "explanation": "For an out-of-stock SKU, the new commit persists the inserted order before the conditional inventory UPDATE returns zero rows and raises ValueError. The exception handler's rollback cannot remove that already committed order, leaving an order for inventory that was never allocated. This is a direct regression in the changed transaction boundary.",
+                "failurePath": "apply_order begins a transaction, inserts the order, and commits at line 19. The inventory UPDATE then returns rowcount 0 for an unavailable SKU; the function raises, calls rollback, and re-raises, but the committed order remains.",
+                "confidence": 0.99
+              }
+            ]
+          },
+          "model": "gpt-5.6-terra",
+          "promptSha256": "1794d47cce7ffe272c370c33819a3eb822e85ab32b8e39544c9acc51ce3fb51b",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 40465,
+            "uncachedInputTokens": 11281,
+            "cachedInputTokens": 29184,
+            "cacheReadInputTokens": 29184,
+            "outputTokens": 848,
+            "reasoningOutputTokens": 529,
+            "turns": 1,
+            "toolCalls": 1,
+            "toolCallsByType": {
+              "command_execution": 1
+            },
+            "toolOutputBytes": 207,
+            "promptBytes": 29936,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 22910,
+          "malformedEventLines": 0,
+          "methodCoreSha256": "4ebaf0b75a9afcf06b5396499b8c9b653ced97cd93cc73dab335465751b20899",
+          "methodSourceSha256": "a2525e27ffcad95f8efbf8bb74052ce7b97079ffe6150a89bd54a5e6af1d3db5"
+        }
+      }
+    }
+  },
+  "matches": {
+    "bug-a11e04c1": 0,
+    "bug-72bca830": 0
+  },
+  "falsePositiveIndexes": [],
+  "grading": {
+    "version": "root-cause-v1",
+    "judge": {
+      "kind": "codex",
+      "version": "semantic-v1",
+      "configSha256": "8c91468ab1300e1875c0aafb597b5ad5e680337b4069c1cc9476393f337fff66"
+    },
+    "decisions": [
+      {
+        "decisionId": "f971272cf836c89db027c98a6b4f6c6e8edf2e7ecbb165f346f3a5b3baf0cb7b",
+        "judgeVersion": "semantic-v1",
+        "judgeConfigSha256": "8c91468ab1300e1875c0aafb597b5ad5e680337b4069c1cc9476393f337fff66",
+        "bugId": "bug-a11e04c1",
+        "findingIndex": 0,
+        "findingEvidenceSha256": "81c6bc458eb0b1b393d0413d023a0f4fece2076e23c5d026e1ea69ed3c59f8d4",
+        "verdict": "same-root-cause"
+      },
+      {
+        "decisionId": "e3093f5c40a8c0da045b72f95ea7d383db3a9b9d6a1cd0ed708400ca056a1a15",
+        "judgeVersion": "semantic-v1",
+        "judgeConfigSha256": "8c91468ab1300e1875c0aafb597b5ad5e680337b4069c1cc9476393f337fff66",
+        "bugId": "bug-72bca830",
+        "findingIndex": 0,
+        "findingEvidenceSha256": "81c6bc458eb0b1b393d0413d023a0f4fece2076e23c5d026e1ea69ed3c59f8d4",
+        "verdict": "same-root-cause"
+      }
+    ],
+    "rootCauseMatches": {
+      "[\"group\",\"root-117cf208\"]": true
+    },
+    "missStages": {
+      "bug-a11e04c1": "none",
+      "bug-72bca830": "none"
+    },
+    "unmatchedFindings": []
+  }
+}

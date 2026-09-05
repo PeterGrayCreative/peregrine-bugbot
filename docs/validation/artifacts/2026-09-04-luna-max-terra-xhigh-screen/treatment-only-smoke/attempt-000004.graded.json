@@ -1,0 +1,274 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "f468e08f304b9562209ad6680b6dde7c5c0b63ab0a9d6191e01f37c405bbecbe",
+  "experimentManifestSha256": "b69f27df8871b8e43285e0a674f4ccad35277d470248d8b2c4354ff2f29cb0e9",
+  "attemptId": "attempt-000004",
+  "caseName": "development/case-13f0a2c1",
+  "caseKind": "seeded",
+  "configName": "candidate-luna-max-terra-xhigh",
+  "repeat": 1,
+  "caseCorpus": "development",
+  "runner": "codex",
+  "startedAt": "2026-09-04T23:36:21.395Z",
+  "finishedAt": "2026-09-04T23:38:48.837Z",
+  "attemptDurationMs": 147442,
+  "evaluationProvenance": {
+    "history": {
+      "schemaVersion": 1,
+      "materialization": "fixture-patch",
+      "objectFormat": "sha1",
+      "baseRef": "55996118a207352b68bac961c2a881fbebe4670e",
+      "headRef": "9384da5ad9cc58362cba39e57fce7caee86fc426",
+      "mergeBase": "55996118a207352b68bac961c2a881fbebe4670e",
+      "baseTree": "71e81c22a01bc56fee5bfae2a3b5198057c8f1ae",
+      "headTree": "1cf22b041256283bfc32b91db20833eef28d734f",
+      "commitCount": 2,
+      "baseIsMergeBase": true,
+      "checkedOutTreeMatchesHead": true,
+      "treeReproductionVerified": true,
+      "diffNormalization": "identity-v1",
+      "diffSha256": "d320390d062e862068b7df7f72647ece8802fd2a214967926c9e5b4b86a49078"
+    },
+    "manifest": {
+      "entryPoint": "prepareReviewManifest",
+      "skillName": "invariant-first-pr-review",
+      "baseRef": "55996118a207352b68bac961c2a881fbebe4670e",
+      "headRef": "9384da5ad9cc58362cba39e57fce7caee86fc426",
+      "mergeBase": "55996118a207352b68bac961c2a881fbebe4670e",
+      "outputSha256": "a45ad008a2ce091fb8a7933c8da8df5a4fda8ef654084c1b10cd8cb02529e104",
+      "output": "Invariant-first review manifest\nbase: 55996118a207352b68bac961c2a881fbebe4670e (argument)\nhead: 9384da5ad9cc58362cba39e57fce7caee86fc426\nmerge-base: 55996118a207352b68bac961c2a881fbebe4670e\n\nChanged files\nM\tsrc/invoice-service.ts\n\nDiff summary\n src/invoice-service.ts | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n- src/invoice-service.ts\n\nIdentifier normalization and uniqueness [lane: identifiers]\n(none detected)\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n(none detected)\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- src/invoice-service.ts\n\nError Handling and Recovery [lane: error-handling]\n(none detected)\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n(none detected)\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+      "typed": {
+        "schemaVersion": 1,
+        "available": true,
+        "base": {
+          "ref": "55996118a207352b68bac961c2a881fbebe4670e",
+          "commit": "55996118a207352b68bac961c2a881fbebe4670e",
+          "source": "argument"
+        },
+        "head": {
+          "ref": "9384da5ad9cc58362cba39e57fce7caee86fc426",
+          "commit": "9384da5ad9cc58362cba39e57fce7caee86fc426"
+        },
+        "mergeBase": "55996118a207352b68bac961c2a881fbebe4670e",
+        "profile": {
+          "source": "none",
+          "requestedPath": null,
+          "changedAtHead": false
+        },
+        "changedFiles": [
+          {
+            "path": "src/invoice-service.ts",
+            "status": "M",
+            "additions": 1,
+            "deletions": 1,
+            "binary": false,
+            "activatedLanes": [
+              {
+                "id": "authorization",
+                "reason": "content"
+              },
+              {
+                "id": "logic-correctness",
+                "reason": "content"
+              },
+              {
+                "id": "logic-correctness",
+                "reason": "path"
+              }
+            ]
+          }
+        ],
+        "activatedLanes": [
+          "authorization",
+          "logic-correctness"
+        ],
+        "customLanes": [],
+        "largeFiles": [],
+        "warnings": []
+      },
+      "typedSha256": "47318bdef96bfc95202b9f7a7f54bf6cf242fbfd01f0ba1d7d545f0de53e3aff",
+      "profileSource": "none",
+      "headProfileChanged": false
+    }
+  },
+  "outcome": {
+    "status": "completed",
+    "result": {
+      "engine": "codex",
+      "status": "completed",
+      "modelConfig": "gpt-5.6-luna/max->gpt-5.6-terra/xhigh",
+      "reviewedBaseRef": "55996118a207352b68bac961c2a881fbebe4670e",
+      "reviewedHeadRef": "9384da5ad9cc58362cba39e57fce7caee86fc426",
+      "findings": [
+        {
+          "file": "src/invoice-service.ts",
+          "startLine": 13,
+          "endLine": 13,
+          "severity": "high",
+          "disposition": "fix-in-pr",
+          "category": "authorization",
+          "invariant": "tenant-scoped-invoice-approval",
+          "title": "Restore tenant verification before approving invoices",
+          "explanation": "The changed predicate authorizes any session with the `billing-approver` role without comparing `session.tenantId` to `invoice.tenantId`. Consequently, an approver authenticated for tenant A can be authorized to approve an invoice belonging to tenant B. Restore the tenant equality check alongside the role check, with a regression test covering a cross-tenant approver denial.",
+          "failurePath": "A tenant-A session with `roles` containing `billing-approver` and a tenant-B invoice reaches `canApproveInvoice`; the new expression returns true solely from the role membership, allowing the approval path to proceed across the tenant boundary.",
+          "confidence": 0.99
+        }
+      ],
+      "usage": {
+        "provider": "openai",
+        "aggregation": "stage-sum",
+        "inputTokens": 321944,
+        "uncachedInputTokens": 55704,
+        "cachedInputTokens": 266240,
+        "cacheReadInputTokens": 266240,
+        "outputTokens": 6054,
+        "reasoningOutputTokens": 4829,
+        "turns": 2,
+        "toolCalls": 6,
+        "toolOutputBytes": 2563,
+        "promptBytes": 33695,
+        "toolCallsByType": {
+          "command_execution": 4,
+          "mcp_tool_call": 2
+        },
+        "unavailable": [
+          "baseInputTokens",
+          "cacheWriteInputTokens",
+          "costUsd"
+        ]
+      },
+      "durationMs": 143829,
+      "raw": {
+        "manifest": "Invariant-first review manifest\nbase: 55996118a207352b68bac961c2a881fbebe4670e (argument)\nhead: 9384da5ad9cc58362cba39e57fce7caee86fc426\nmerge-base: 55996118a207352b68bac961c2a881fbebe4670e\n\nChanged files\nM\tsrc/invoice-service.ts\n\nDiff summary\n src/invoice-service.ts | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n- src/invoice-service.ts\n\nIdentifier normalization and uniqueness [lane: identifiers]\n(none detected)\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n(none detected)\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- src/invoice-service.ts\n\nError Handling and Recovery [lane: error-handling]\n(none detected)\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n(none detected)\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+        "breadth": {
+          "output": {
+            "model": "gpt-5",
+            "candidates": [
+              {
+                "id": "invoice-approval-tenant-isolation",
+                "lane": "authorization",
+                "file": "src/invoice-service.ts",
+                "line": 13,
+                "invariant": "Invoice approval must require both the billing-approver role and a session tenant matching the invoice tenant.",
+                "counterexample": "A billing approver from tenant A can approve tenant B's invoice because the predicate now ignores invoice.tenantId.",
+                "evidenceNeeded": "Confirm approval entry points rely on canApproveInvoice and verify the authorization contract or tests require cross-tenant approval to be rejected."
+              }
+            ],
+            "clear": [],
+            "escalations": [],
+            "coverage": {
+              "coveredFiles": [
+                "src/invoice-service.ts"
+              ],
+              "unavailable": []
+            }
+          },
+          "model": "gpt-5.6-luna",
+          "promptSha256": "5d64b501ad710e4a84732dc496d3963295f0c8e727c4671f6820a0a843e6b9e6",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 115234,
+            "uncachedInputTokens": 29474,
+            "cachedInputTokens": 85760,
+            "cacheReadInputTokens": 85760,
+            "outputTokens": 4519,
+            "reasoningOutputTokens": 3975,
+            "turns": 1,
+            "toolCalls": 3,
+            "toolCallsByType": {
+              "command_execution": 3
+            },
+            "toolOutputBytes": 622,
+            "promptBytes": 3227,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 95294,
+          "malformedEventLines": 0
+        },
+        "investigation": {
+          "output": {
+            "findings": [
+              {
+                "file": "src/invoice-service.ts",
+                "startLine": 13,
+                "endLine": 13,
+                "severity": "high",
+                "disposition": "fix-in-pr",
+                "category": "authorization",
+                "invariant": "tenant-scoped-invoice-approval",
+                "title": "Restore tenant verification before approving invoices",
+                "explanation": "The changed predicate authorizes any session with the `billing-approver` role without comparing `session.tenantId` to `invoice.tenantId`. Consequently, an approver authenticated for tenant A can be authorized to approve an invoice belonging to tenant B. Restore the tenant equality check alongside the role check, with a regression test covering a cross-tenant approver denial.",
+                "failurePath": "A tenant-A session with `roles` containing `billing-approver` and a tenant-B invoice reaches `canApproveInvoice`; the new expression returns true solely from the role membership, allowing the approval path to proceed across the tenant boundary.",
+                "confidence": 0.99
+              }
+            ]
+          },
+          "model": "gpt-5.6-terra",
+          "promptSha256": "3abfe8619045104ecffed7fbe4914ec04cb6b64bfa23334304284a185cb47d9c",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 206710,
+            "uncachedInputTokens": 26230,
+            "cachedInputTokens": 180480,
+            "cacheReadInputTokens": 180480,
+            "outputTokens": 1535,
+            "reasoningOutputTokens": 854,
+            "turns": 1,
+            "toolCalls": 3,
+            "toolCallsByType": {
+              "command_execution": 1,
+              "mcp_tool_call": 2
+            },
+            "toolOutputBytes": 1941,
+            "promptBytes": 30468,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 46920,
+          "malformedEventLines": 0,
+          "methodCoreSha256": "4ebaf0b75a9afcf06b5396499b8c9b653ced97cd93cc73dab335465751b20899",
+          "methodSourceSha256": "a2525e27ffcad95f8efbf8bb74052ce7b97079ffe6150a89bd54a5e6af1d3db5"
+        }
+      }
+    }
+  },
+  "matches": {
+    "bug-a1f04c2e": 0
+  },
+  "falsePositiveIndexes": [],
+  "grading": {
+    "version": "root-cause-v1",
+    "judge": {
+      "kind": "codex",
+      "version": "semantic-v1",
+      "configSha256": "8c91468ab1300e1875c0aafb597b5ad5e680337b4069c1cc9476393f337fff66"
+    },
+    "decisions": [
+      {
+        "decisionId": "93a24206b5fe9aa2cbd4768b0b5fc6f265613dc22cb92681a6157101a72049e5",
+        "judgeVersion": "semantic-v1",
+        "judgeConfigSha256": "8c91468ab1300e1875c0aafb597b5ad5e680337b4069c1cc9476393f337fff66",
+        "bugId": "bug-a1f04c2e",
+        "findingIndex": 0,
+        "findingEvidenceSha256": "8de8fe9554d9e1bc22022f1357449daf5b8e133af83a672954d96a8fd55b4e28",
+        "verdict": "same-root-cause"
+      }
+    ],
+    "rootCauseMatches": {
+      "[\"bug\",\"bug-a1f04c2e\"]": true
+    },
+    "missStages": {
+      "bug-a1f04c2e": "none"
+    },
+    "unmatchedFindings": []
+  }
+}

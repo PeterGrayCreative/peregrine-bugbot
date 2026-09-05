@@ -1,0 +1,22 @@
+<!doctype html><html><head><meta charset="utf-8"><title>peregrine-bugbot benchmark</title>
+<style>body{font-family:system-ui;margin:2rem;max-width:1050px}table{border-collapse:collapse;width:100%}
+td,th{border:1px solid #ddd;padding:6px 10px;text-align:left;font-size:14px}th{background:#f5f5f5}</style></head>
+<body><h1>peregrine-bugbot · evaluation report</h1>
+<table><tr><th>config</th><th>class</th><th>completion</th><th>bug-instance recall</th><th>failure-inclusive recall</th><th>root-cause recall</th><th>precision</th><th>FDR</th><th>adjudication</th><th>blocking clean FP</th><th>miss stages</th><th>FP/case</th><th>cost/case</th><th>cost/reliably found root cause</th><th>time mean / median / p95</th><th>usage / work</th><th>telemetry observed</th><th>incurred cost lower bound</th><th>structural markers</th><th>breadth / investigation</th></tr>
+<tr><td>candidate-luna-max-terra-xhigh</td><td>behavioral (development)</td><td>6/6 (100%); 0 failed; 0 missing</td>
+<td>100% ± 0%</td><td>100%</td>
+<td>100%</td><td>100%</td><td>0%</td><td>0 confirmed new; 0 unsupported; 0 unresolved</td><td>0</td><td>none</td>
+<td>0.0</td><td>n/a</td>
+<td>n/a</td>
+<td>wall 191s / 184s / n/a · engine 188s</td><td>base n/a · uncached 63877 · cached 216448 · write n/a · read 216448 · out 8767 · reasoning 7402 · 2.0 turns · 6.0 tools · 8310 tool B · 34284 prompt B</td><td>costUsd 0/6 · durationMs 6/6 · engineDurationMs 6/6 · breadthDurationMs 6/6 · investigationDurationMs 6/6 · breadthInputTokens 6/6 · investigationInputTokens 6/6 · toolCallsByType 6/6 · breadthBaseInputTokens 0/6 · breadthUncachedInputTokens 6/6 · breadthCachedInputTokens 6/6 · breadthCacheWriteInputTokens 0/6 · breadthCacheReadInputTokens 6/6 · breadthTurns 6/6 · breadthToolCalls 6/6 · breadthToolOutputBytes 6/6 · breadthPromptBytes 6/6 · breadthToolCallsByType 6/6 · investigationBaseInputTokens 0/6 · investigationUncachedInputTokens 6/6 · investigationCachedInputTokens 6/6 · investigationCacheWriteInputTokens 0/6 · investigationCacheReadInputTokens 6/6 · investigationTurns 6/6 · investigationToolCalls 6/6 · investigationToolOutputBytes 6/6 · investigationPromptBytes 6/6 · investigationToolCallsByType 6/6 · inputTokens 6/6 · baseInputTokens 0/6 · uncachedInputTokens 6/6 · cachedInputTokens 6/6 · cacheWriteInputTokens 0/6 · cacheReadInputTokens 6/6 · outputTokens 6/6 · reasoningOutputTokens 6/6 · turns 6/6 · toolCalls 6/6 · toolOutputBytes 6/6 · promptBytes 6/6</td><td>n/a</td><td>n/a</td><td>B: 156s; input 211769 (base n/a, uncached 45924, cached 165845, write n/a, read 165845); turns 1; tools 5 {"command_execution":3.3333333333333335,"mcp_tool_call":1.3333333333333333}; tool B 7814; prompt B 3289<br>I: 30s; input 68557 (base n/a, uncached 17954, cached 50603, write n/a, read 50603); turns 1; tools 1 {"command_execution":1,"mcp_tool_call":0.3333333333333333}; tool B 496; prompt B 30995</td></tr></table>
+<h2>Semantic judge accounting</h2>
+<table><tr><th>provider attempts</th><th>failures</th><th>wall time</th><th>known cost</th><th>cost unavailable</th><th>input / cached / output / reasoning tokens</th><th>turns / tool calls</th></tr>
+<tr><td>5</td><td>0</td><td>32.7s</td><td>$0.000</td><td>5</td><td>n/a / n/a / n/a / n/a</td><td>n/a / n/a</td></tr></table>
+<h2>Behavioral cost vs recall — pick the knee</h2>
+<svg viewBox="0 0 600 360" width="600" style="border:1px solid #eee">
+<line x1="60" y1="320" x2="560" y2="320" stroke="#999"/><line x1="60" y1="320" x2="60" y2="20" stroke="#999"/>
+<text x="300" y="350" font-size="12" text-anchor="middle">cost per case ($, max $0.01)</text>
+<text x="20" y="170" font-size="12" transform="rotate(-90 20 170)">conditional recall</text>
+</svg>
+<p style="color:#666;font-size:13px">Behavioral conditional recall includes completed bug-bearing attempts. Failure-inclusive recall counts failed or missing bug-bearing attempts as misses. Structural mock rows validate transport, accounting, and expected markers only; they are excluded from recall, cost, efficiency, and this plot. Comparison time and usage are n/a unless every expected attempt has the required telemetry; wall time includes failed attempts. P95 requires at least 20 attempts. Incurred cost is a lower bound that retains known spend from failed attempts. Legacy folders are explicitly incomplete.</p>
+</body></html>

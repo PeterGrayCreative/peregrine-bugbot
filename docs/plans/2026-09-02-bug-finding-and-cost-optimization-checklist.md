@@ -41,7 +41,8 @@ This checklist tracks delivery of the plan without replacing its rationale, risk
 | Visible checkpoint protocol | Admit full visible seeded development/validation comparisons without gold claims | Benchmark checkpoint | Merged | [#25](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/25) |
 | Plan PR 9 | Structural breadth compaction and schema bounds | PR 8 | Two implementations benchmarked and rejected; unmerged | [decision](../validation/2026-09-04-stage2-pr9-decision.md) |
 | Checkpoint 2 full comparison | Legacy/full versus accepted method-packet/full stack | PR 8, visible protocol | Complete; visible cost gates passed, corpus correction required before Checkpoint 3 measurement | [results](../validation/2026-09-04-stage2-checkpoint2-visible-results.md) |
-| Shortened benchmark funnel | Frozen smoke, fast-screen, confirmation, and full-checkpoint panels with fail-closed decisions | Checkpoint 2 adjudication | Implemented and locally validated; review pending | - |
+| Shortened benchmark funnel | Frozen smoke, fast-screen, confirmation, and full-checkpoint panels with fail-closed decisions | Checkpoint 2 adjudication | Merged | [#28](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/28) |
+| Luna-max / Terra-xhigh route screen | Paired smoke against accepted Luna-high / Sol-high route | Shortened benchmark funnel | Stopped before fast-screen; wall time unacceptable | [results](../validation/2026-09-04-luna-max-terra-xhigh-smoke-results.md) |
 | Plan PR 10 | Activated-lane counterexamples and seam checklist | PR 8 and Checkpoint 2 | Not started | - |
 | Plan PR 11 | Investigation coverage and runner-owned completeness | PR 10 | Not started | - |
 | Plan PR 12 | Bounded risk-sensitive candidate budgets | PR 11 | Not started | - |
@@ -314,6 +315,8 @@ Must stay untouched: the breadth/investigation authority split.
 - [ ] Track deterministic transport coverage for every changed hunk.
 - [ ] Validate ledger coverage for every reviewable file and activated lane.
 - [ ] Add bounded diagnostic analysis coverage for candidates and lanes inspected.
+- [ ] Report model-stage misses as unattributed until authenticated routing,
+  breadth, investigation, budget, or infrastructure evidence supports a stage.
 - [ ] Keep model-attested analysis coverage from authorizing `clean` or cheaper routing.
 - [ ] Add versioned `completed`, `clean`, `incomplete`, `skipped`, and `failed` states.
 - [ ] Require successful stages, complete transport/ledger coverage, no unresolved unavailable surface, and zero confirmed findings before `clean`.
@@ -435,6 +438,9 @@ families, a steward-controlled holdout, and the full unmodified baseline exist.
 - [x] Blocking false positives and completion do not regress.
 - [x] Effective cost or median wall time improves by at least 20%.
 - [x] Paired case-level deltas and uncertainty support the aggregate result.
+- [x] Stop the Luna-max breadth / Terra-xhigh investigation route after paired
+  smoke preserved registered recall but worsened the paired median wall time by
+  approximately 82.7%; keep Luna high / Sol high as the experiment route.
 
 Evidence: [Checkpoint 2 visible results](../validation/2026-09-04-stage2-checkpoint2-visible-results.md)
 and its [complete experiment archive](../validation/artifacts/2026-09-04-stage2-checkpoint2-visible/README.md).
@@ -475,6 +481,12 @@ not authorize historical-gold, holdout, routing, or final non-inferiority claims
   [PR #28](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/28)
   passed CI, CodeQL/review analysis, review posting, and credential-free
   build/smoke; this checklist commit merged with the implementation.
+- [ ] Add a separately sealed, run-bound curator-adjudication ledger so an exact
+  unresolved finding can be classified without rewriting its semantic grade or
+  original funnel decision. The first paired smoke exposed this follow-up; it
+  is not required to reject that route on the operator's wall-time constraint.
+- [ ] Apply diagnostic-only case restrictions consistently to aggregate reports
+  as well as funnel decisions so quarantined findings cannot null precision/FDR.
 
 Rollback boundary: revert this funnel slice. Existing full visible experiment
 artifacts and earlier matrix configurations remain readable and unchanged.
@@ -504,6 +516,8 @@ artifacts and earlier matrix configurations remain readable and unchanged.
 - [ ] Standard-risk non-inferiority is supported by enough cases.
 - [ ] Provider-correct cost improves by the pre-registered material threshold.
 - [ ] The one-time sealed-holdout gate passes.
+- [ ] Bind the frozen analysis implementation to the experiment snapshot before
+  the final holdout decision, rather than trusting whichever reader is current.
 - [ ] The opened holdout is retired and replacement holdout planning is recorded.
 
 ## Decisions and budgets

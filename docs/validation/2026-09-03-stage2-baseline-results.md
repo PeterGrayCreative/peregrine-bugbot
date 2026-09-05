@@ -19,7 +19,8 @@ three rule.
 | Completed attempts | 36/36 | 36/36 | no change |
 | Attempt-level root-cause recall | 100% | 87.5% | -12.5 points |
 | Reliably detected seeded bug cases | 8/8 | 7/8 | -1 case |
-| Blocking false positives on clean cases | 0 | 0 | no change |
+| Confirmed blocking false positives on clean cases | 0 | 0 | no change |
+| Unresolved unmatched findings | 3 | 3 | precision/FDR unavailable |
 | Median wall time | 83.289 s | 63.066 s | -24.3% marginal |
 | Median paired wall-time change | - | - | -25.7% |
 | Median input tokens | 237,939 | 83,287 | -65.0% marginal |
@@ -51,8 +52,9 @@ than a reliability-rule regression.
 
 - Review attempts: 72/72 completed; zero failed or missing.
 - Semantic judge: blinded Luna medium using `semantic-v1`; completed.
-- Clean controls: 4 cases x 3 repeats x 2 configurations; zero blocking false
-  positives.
+- Clean controls: 4 cases x 3 repeats x 2 configurations; zero confirmed
+  blocking false positives. Each arm retained three unresolved unmatched
+  findings, so this run does not establish precision or FDR.
 - Review runtime: accepted private GHCR image by immutable digest, sanitized
   Codex CLI session, read-only checkout, ephemeral contained invocations.
 - Monetary cost: unavailable; no dollar estimate is inferred from subscription

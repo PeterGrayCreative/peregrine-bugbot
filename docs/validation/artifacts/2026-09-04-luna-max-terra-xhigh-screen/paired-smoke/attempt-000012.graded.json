@@ -1,0 +1,332 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "251f82be481b224856534e5fe61c185789c591adc7fddc7b44616da2ba983185",
+  "experimentManifestSha256": "d8989d01741f424e9119d4c79cfefcd58a5983be95d67cb171b61e17c6741d50",
+  "attemptId": "attempt-000012",
+  "caseName": "development/case-6c19f4ab",
+  "caseKind": "seeded",
+  "configName": "candidate-luna-max-terra-xhigh",
+  "repeat": 1,
+  "caseCorpus": "development",
+  "runner": "codex",
+  "startedAt": "2026-09-05T00:11:55.146Z",
+  "finishedAt": "2026-09-05T00:15:32.443Z",
+  "attemptDurationMs": 217297,
+  "evaluationProvenance": {
+    "history": {
+      "schemaVersion": 1,
+      "materialization": "fixture-patch",
+      "objectFormat": "sha1",
+      "baseRef": "eb61111159d8d83bb9647dbf3c2b9b53a98a83ab",
+      "headRef": "24fd2c58a913dd2330b4d706a514c9f40e51fcb7",
+      "mergeBase": "eb61111159d8d83bb9647dbf3c2b9b53a98a83ab",
+      "baseTree": "c5865b33acd9cfb86a24ae4d68f6481ca5fdbfc6",
+      "headTree": "e5888af5d2f3155626d90901dc63d2c25e2d6f7f",
+      "commitCount": 2,
+      "baseIsMergeBase": true,
+      "checkedOutTreeMatchesHead": true,
+      "treeReproductionVerified": true,
+      "diffNormalization": "identity-v1",
+      "diffSha256": "dcc4e7e857634483e2fa94939554b46a8723bb19df5c2cf5cc8d7815e9ecbb08"
+    },
+    "manifest": {
+      "entryPoint": "prepareReviewManifest",
+      "skillName": "invariant-first-pr-review",
+      "baseRef": "eb61111159d8d83bb9647dbf3c2b9b53a98a83ab",
+      "headRef": "24fd2c58a913dd2330b4d706a514c9f40e51fcb7",
+      "mergeBase": "eb61111159d8d83bb9647dbf3c2b9b53a98a83ab",
+      "outputSha256": "63be6f1d67cc0ffb1ad17273e9338fcbfe3ee8103ec78eb1f97bc3516c793b97",
+      "output": "Invariant-first review manifest\nbase: eb61111159d8d83bb9647dbf3c2b9b53a98a83ab (argument)\nhead: 24fd2c58a913dd2330b4d706a514c9f40e51fcb7\nmerge-base: eb61111159d8d83bb9647dbf3c2b9b53a98a83ab\n\nChanged files\nM\tsrc/ledger-service.ts\n\nDiff summary\n src/ledger-service.ts | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n(none detected)\n\nIdentifier normalization and uniqueness [lane: identifiers]\n(none detected)\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n(none detected)\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- src/ledger-service.ts\n\nError Handling and Recovery [lane: error-handling]\n- src/ledger-service.ts\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n(none detected)\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+      "typed": {
+        "schemaVersion": 1,
+        "available": true,
+        "base": {
+          "ref": "eb61111159d8d83bb9647dbf3c2b9b53a98a83ab",
+          "commit": "eb61111159d8d83bb9647dbf3c2b9b53a98a83ab",
+          "source": "argument"
+        },
+        "head": {
+          "ref": "24fd2c58a913dd2330b4d706a514c9f40e51fcb7",
+          "commit": "24fd2c58a913dd2330b4d706a514c9f40e51fcb7"
+        },
+        "mergeBase": "eb61111159d8d83bb9647dbf3c2b9b53a98a83ab",
+        "profile": {
+          "source": "none",
+          "requestedPath": null,
+          "changedAtHead": false
+        },
+        "changedFiles": [
+          {
+            "path": "src/ledger-service.ts",
+            "status": "M",
+            "additions": 1,
+            "deletions": 1,
+            "binary": false,
+            "activatedLanes": [
+              {
+                "id": "error-handling",
+                "reason": "content"
+              },
+              {
+                "id": "logic-correctness",
+                "reason": "content"
+              },
+              {
+                "id": "logic-correctness",
+                "reason": "path"
+              }
+            ]
+          }
+        ],
+        "activatedLanes": [
+          "error-handling",
+          "logic-correctness"
+        ],
+        "customLanes": [],
+        "largeFiles": [],
+        "warnings": []
+      },
+      "typedSha256": "ef0b598aa5e654a7f75365c739f50fb8d8b52f36b2b958a40fd16f248044421c",
+      "profileSource": "none",
+      "headProfileChanged": false
+    }
+  },
+  "outcome": {
+    "status": "completed",
+    "result": {
+      "engine": "codex",
+      "status": "completed",
+      "modelConfig": "gpt-5.6-luna/max->gpt-5.6-terra/xhigh",
+      "reviewedBaseRef": "eb61111159d8d83bb9647dbf3c2b9b53a98a83ab",
+      "reviewedHeadRef": "24fd2c58a913dd2330b4d706a514c9f40e51fcb7",
+      "findings": [
+        {
+          "file": "src/ledger-service.ts",
+          "startLine": 15,
+          "endLine": 15,
+          "severity": "high",
+          "disposition": "fix-in-pr",
+          "category": "data-integrity",
+          "invariant": "failed-transfers-are-atomic",
+          "title": "Do not debit before rejecting a locked destination",
+          "explanation": "The new placement of the destination-lock validation makes a transfer mutate the sender before a documented failure is thrown. For a funded source and a destination whose account ID starts with `locked-`, `transfer` throws `destination locked` after decrementing the source, while never crediting the destination. This is a current-head, PR-introduced violation of failed-transfer atomicity; the two breadth candidates are the same root cause.",
+          "failurePath": "`transfer(accounts, fundedSourceId, lockedDestinationId, cents)` passes the existence and funds checks, executes `from.balanceCents -= cents`, then throws at the locked-destination check. The caller observes failure but the in-memory ledger retains the debit. Restore validation before either balance mutation (or make the mutations atomic) and add a behavior test asserting both balances are unchanged after this error.",
+          "confidence": 0.99
+        }
+      ],
+      "usage": {
+        "provider": "openai",
+        "aggregation": "stage-sum",
+        "inputTokens": 175885,
+        "uncachedInputTokens": 50701,
+        "cachedInputTokens": 125184,
+        "cacheReadInputTokens": 125184,
+        "outputTokens": 10570,
+        "reasoningOutputTokens": 9152,
+        "turns": 2,
+        "toolCalls": 4,
+        "toolOutputBytes": 829,
+        "promptBytes": 34865,
+        "toolCallsByType": {
+          "command_execution": 4
+        },
+        "unavailable": [
+          "baseInputTokens",
+          "cacheWriteInputTokens",
+          "costUsd"
+        ]
+      },
+      "durationMs": 213756,
+      "raw": {
+        "manifest": "Invariant-first review manifest\nbase: eb61111159d8d83bb9647dbf3c2b9b53a98a83ab (argument)\nhead: 24fd2c58a913dd2330b4d706a514c9f40e51fcb7\nmerge-base: eb61111159d8d83bb9647dbf3c2b9b53a98a83ab\n\nChanged files\nM\tsrc/ledger-service.ts\n\nDiff summary\n src/ledger-service.ts | 2 +-\n 1 file changed, 1 insertion(+), 1 deletion(-)\n\nIdentity, authorization, and tenant isolation [lane: authorization]\n(none detected)\n\nIdentifier normalization and uniqueness [lane: identifiers]\n(none detected)\n\nData integrity, lifecycle, validation, and limits [lane: data-integrity]\n(none detected)\n\nSchema, persistence, migration, and transactions [lane: persistence]\n(none detected)\n\nRuntime configuration, containers, and harnesses [lane: runtime-config]\n(none detected)\n\nResponse, error, transport, and observability contracts [lane: contracts]\n(none detected)\n\nConcurrency, performance, and resource use [lane: concurrency]\n(none detected)\n\nTest honesty, maintainability, and scope drift [lane: test-quality]\n(none detected)\n\nLogic Correctness [lane: logic-correctness]\n- src/ledger-service.ts\n\nError Handling and Recovery [lane: error-handling]\n- src/ledger-service.ts\n\nFrontend State and Effects [lane: frontend-state]\n(none detected)\n\nBoundaries, Pagination, and Ordering [lane: boundaries-pagination]\n(none detected)\n\nLarge changed files at head\n(none at or above 400 lines)\n\nNext step\nUse this manifest to select review lanes; verify every candidate against code and contract evidence before reporting it.\n",
+        "breadth": {
+          "output": {
+            "model": "gpt-5",
+            "candidates": [
+              {
+                "id": "transfer-validation-order-regression",
+                "lane": "logic-correctness",
+                "file": "src/ledger-service.ts",
+                "line": 16,
+                "invariant": "All transfer preconditions must pass before either account balance changes.",
+                "counterexample": "With sufficient funds and a destination ID of `locked-x`, the sender is debited on line 15, then the lock check throws, leaving balances inconsistent.",
+                "evidenceNeeded": "Confirm the transfer contract or tests require validation-before-mutation semantics."
+              },
+              {
+                "id": "transfer-partial-debit-on-error",
+                "lane": "error-handling",
+                "file": "src/ledger-service.ts",
+                "line": 16,
+                "invariant": "A failed transfer must not partially mutate account state.",
+                "counterexample": "A locked destination causes `destination locked` after the sender debit; catching the error leaves the sender short while the destination is unchanged.",
+                "evidenceNeeded": "Check whether callers or tests provide rollback/atomicity guarantees after transfer errors."
+              }
+            ],
+            "clear": [
+              {
+                "lane": "authorization",
+                "file": "src/ledger-service.ts",
+                "reason": "The hunk contains no authorization or tenant-selection behavior."
+              },
+              {
+                "lane": "identifiers",
+                "file": "src/ledger-service.ts",
+                "reason": "No identifier creation, normalization, or uniqueness logic changes."
+              },
+              {
+                "lane": "persistence",
+                "file": "src/ledger-service.ts",
+                "reason": "No persistence, migration, or storage transaction APIs are touched."
+              },
+              {
+                "lane": "runtime-config",
+                "file": "src/ledger-service.ts",
+                "reason": "No runtime configuration, container, or harness behavior changes."
+              },
+              {
+                "lane": "contracts",
+                "file": "src/ledger-service.ts",
+                "reason": "No response, transport, or observability contract changes are visible."
+              },
+              {
+                "lane": "concurrency",
+                "file": "src/ledger-service.ts",
+                "reason": "No scheduling, locking, or resource-management behavior changes."
+              },
+              {
+                "lane": "test-quality",
+                "file": "src/ledger-service.ts",
+                "reason": "No test or test-harness files are changed."
+              },
+              {
+                "lane": "frontend-state",
+                "file": "src/ledger-service.ts",
+                "reason": "This is a backend ledger service hunk with no frontend state/effect behavior."
+              },
+              {
+                "lane": "boundaries-pagination",
+                "file": "src/ledger-service.ts",
+                "reason": "No pagination, collection-boundary, or ordering-of-results behavior changes."
+              }
+            ],
+            "escalations": [
+              {
+                "target": "strong-investigator",
+                "reason": "Verify the transfer atomicity contract and whether any caller compensates for the post-debit destination-lock exception."
+              }
+            ],
+            "coverage": {
+              "coveredFiles": [
+                "src/ledger-service.ts"
+              ],
+              "unavailable": []
+            }
+          },
+          "model": "gpt-5.6-luna",
+          "promptSha256": "389b98f3f40eb935a90f2ed3cdaa6232db68533b18de5f38d2793af46672a45f",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 134669,
+            "uncachedInputTokens": 28685,
+            "cachedInputTokens": 105984,
+            "cacheReadInputTokens": 105984,
+            "outputTokens": 9293,
+            "reasoningOutputTokens": 8323,
+            "turns": 1,
+            "toolCalls": 3,
+            "toolCallsByType": {
+              "command_execution": 3
+            },
+            "toolOutputBytes": 622,
+            "promptBytes": 3333,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 180291,
+          "malformedEventLines": 0
+        },
+        "investigation": {
+          "output": {
+            "findings": [
+              {
+                "file": "src/ledger-service.ts",
+                "startLine": 15,
+                "endLine": 15,
+                "severity": "high",
+                "disposition": "fix-in-pr",
+                "category": "data-integrity",
+                "invariant": "failed-transfers-are-atomic",
+                "title": "Do not debit before rejecting a locked destination",
+                "explanation": "The new placement of the destination-lock validation makes a transfer mutate the sender before a documented failure is thrown. For a funded source and a destination whose account ID starts with `locked-`, `transfer` throws `destination locked` after decrementing the source, while never crediting the destination. This is a current-head, PR-introduced violation of failed-transfer atomicity; the two breadth candidates are the same root cause.",
+                "failurePath": "`transfer(accounts, fundedSourceId, lockedDestinationId, cents)` passes the existence and funds checks, executes `from.balanceCents -= cents`, then throws at the locked-destination check. The caller observes failure but the in-memory ledger retains the debit. Restore validation before either balance mutation (or make the mutations atomic) and add a behavior test asserting both balances are unchanged after this error.",
+                "confidence": 0.99
+              }
+            ]
+          },
+          "model": "gpt-5.6-terra",
+          "promptSha256": "29d84d2556d5056a2e397e5971e0beb5505346305c0695936d10d1536e008fa6",
+          "usage": {
+            "provider": "openai",
+            "aggregation": "single-snapshot",
+            "inputTokens": 41216,
+            "uncachedInputTokens": 22016,
+            "cachedInputTokens": 19200,
+            "cacheReadInputTokens": 19200,
+            "outputTokens": 1277,
+            "reasoningOutputTokens": 829,
+            "turns": 1,
+            "toolCalls": 1,
+            "toolCallsByType": {
+              "command_execution": 1
+            },
+            "toolOutputBytes": 207,
+            "promptBytes": 31532,
+            "unavailable": [
+              "baseInputTokens",
+              "cacheWriteInputTokens",
+              "costUsd"
+            ]
+          },
+          "durationMs": 31880,
+          "malformedEventLines": 0,
+          "methodCoreSha256": "4ebaf0b75a9afcf06b5396499b8c9b653ced97cd93cc73dab335465751b20899",
+          "methodSourceSha256": "a2525e27ffcad95f8efbf8bb74052ce7b97079ffe6150a89bd54a5e6af1d3db5"
+        }
+      }
+    }
+  },
+  "matches": {
+    "bug-c134ae70": 0
+  },
+  "falsePositiveIndexes": [],
+  "grading": {
+    "version": "root-cause-v1",
+    "judge": {
+      "kind": "codex",
+      "version": "semantic-v1",
+      "configSha256": "8c91468ab1300e1875c0aafb597b5ad5e680337b4069c1cc9476393f337fff66"
+    },
+    "decisions": [
+      {
+        "decisionId": "bd8b9ec76671fc4a0b62a67dd7811b613a0d2e6f1d09505fd1a1858cda9cb662",
+        "judgeVersion": "semantic-v1",
+        "judgeConfigSha256": "8c91468ab1300e1875c0aafb597b5ad5e680337b4069c1cc9476393f337fff66",
+        "bugId": "bug-c134ae70",
+        "findingIndex": 0,
+        "findingEvidenceSha256": "2464d94b88707c1037f53833a0065cbf4bf49a97e84b9629d2ef5b0f249924f0",
+        "verdict": "same-root-cause"
+      }
+    ],
+    "rootCauseMatches": {
+      "[\"bug\",\"bug-c134ae70\"]": true
+    },
+    "missStages": {
+      "bug-c134ae70": "none"
+    },
+    "unmatchedFindings": []
+  }
+}

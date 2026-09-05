@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "experimentId": "f468e08f304b9562209ad6680b6dde7c5c0b63ab0a9d6191e01f37c405bbecbe",
+  "experimentManifestSha256": "b69f27df8871b8e43285e0a674f4ccad35277d470248d8b2c4354ff2f29cb0e9",
+  "experimentTerminalSealSha256": "4c1bff45a4ebb85af9c97b30a1d509675427e4cbf5409764973b5ab6f0e18d76",
+  "corpusSha256": "50403abd51ac7e84186efbaa9523a17406addca4aec2bde79801d48f41aae1d1",
+  "judgeImplementationSha256": "8c86bd3d3ce18ac25a0c582ab0be7c2a459385504d78a88c49143c71a8236197",
+  "judgeConfigSha256": "8c91468ab1300e1875c0aafb597b5ad5e680337b4069c1cc9476393f337fff66",
+  "judge": {
+    "kind": "codex",
+    "model": "gpt-5.6-luna",
+    "effort": "medium",
+    "version": "semantic-v1"
+  },
+  "providerAccess": "cli-session",
+  "limits": {
+    "maxProviderCostUsd": null,
+    "maxProviderAttempts": 192,
+    "maxWallTimeMs": 21600000,
+    "maxFailureRate": 0.2,
+    "minAttemptsForFailureRate": 12,
+    "maxConsecutiveFailures": 3
+  },
+  "schedule": [
+    {
+      "id": "2c946ef35d7c2489376d47633423da38d9df35c2708d80c1ded00fbf0dc2cdd0",
+      "groundTruthSha256": "353fbe666cd08b1a4a25fc75edd8f843fd1bbb077d68a1372a7a890f264958d1",
+      "findingEvidenceSha256": "7063683439892e9cc9c8930505cb50a49fe32cd29d4fc22bdc51e67e4e2aa7c7",
+      "promptSha256": "73e2da2d4ba0651460b63e3ac27d1088ced3bb4c6d5cfbda4fbf48eea72ca086",
+      "file": "judge/attempt-2c946ef35d7c2489376d47633423da38d9df35c2708d80c1ded00fbf0dc2cdd0.json",
+      "sequence": 1
+    },
+    {
+      "id": "90e850fb830540f032b2921475792905b8bc2a2e729549d818c0c9aec0d9a14e",
+      "groundTruthSha256": "e8ae28905be7149643f058227a96e7514f12817588c4ad35461108bb6110c5cf",
+      "findingEvidenceSha256": "9d16d97e0da2c5f07e4d50181828d45f7bde9c6b209de08120c5e4d5f82110f0",
+      "promptSha256": "61d5e2176c23aeab039ade3100a3df283fb9c99b757235a95612d0ed14f4aa89",
+      "file": "judge/attempt-90e850fb830540f032b2921475792905b8bc2a2e729549d818c0c9aec0d9a14e.json",
+      "sequence": 2
+    },
+    {
+      "id": "b9f226a5e702da2c1c71e4e43647303d37f8ee073adf8c652a594d3340bc5a21",
+      "groundTruthSha256": "171138d1b65fc1e3f72f7f4f6320c4c7c398f345d2996dd7fbec5fd748439f91",
+      "findingEvidenceSha256": "7063683439892e9cc9c8930505cb50a49fe32cd29d4fc22bdc51e67e4e2aa7c7",
+      "promptSha256": "cdaf02e7d1072e9c8a5890344a945ffa5c0f07890783b13a089705420e9ed284",
+      "file": "judge/attempt-b9f226a5e702da2c1c71e4e43647303d37f8ee073adf8c652a594d3340bc5a21.json",
+      "sequence": 3
+    },
+    {
+      "id": "ba635315d1611113a80ee181b02871838ee1e59bec6fead2f67fea27b08aac6a",
+      "groundTruthSha256": "66430d3e5e9c529f71df04a450088d49af586bed781e30474f9912ea5bef3a39",
+      "findingEvidenceSha256": "b25cc3368ee8c92cec38a51a766f724a49a4e60ec9efdb2fa85345f935ccf310",
+      "promptSha256": "9d6001a4462dcbc7caba9634cf6cfb177b0d1d33f7b92dc4b84098914405961c",
+      "file": "judge/attempt-ba635315d1611113a80ee181b02871838ee1e59bec6fead2f67fea27b08aac6a.json",
+      "sequence": 4
+    },
+    {
+      "id": "d95cdf30f1da2c8eda8f116e3e22e42482ba1542b2e9fadc57e59c4577e7dfa4",
+      "groundTruthSha256": "ed3d0a68feb88e1f7a1d0b4d29d76399989678b6b33aa4ad681e1eaff10105c0",
+      "findingEvidenceSha256": "8de8fe9554d9e1bc22022f1357449daf5b8e133af83a672954d96a8fd55b4e28",
+      "promptSha256": "41216cfb607eb1ec64b7fac5e387abd69126df3b9b173cfc70b108432730d231",
+      "file": "judge/attempt-d95cdf30f1da2c8eda8f116e3e22e42482ba1542b2e9fadc57e59c4577e7dfa4.json",
+      "sequence": 5
+    }
+  ],
+  "manifestSha256": "9d942018b6b60200d2e7945d2a986e7baaa742f94ecfd2b0535ffb3861085326"
+}

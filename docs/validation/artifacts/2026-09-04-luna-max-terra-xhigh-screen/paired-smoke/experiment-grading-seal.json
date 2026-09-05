@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "kind": "experiment-grading",
+  "experimentId": "251f82be481b224856534e5fe61c185789c591adc7fddc7b44616da2ba983185",
+  "experimentManifestSha256": "d8989d01741f424e9119d4c79cfefcd58a5983be95d67cb171b61e17c6741d50",
+  "terminalSealSha256": "6d7e11cb0d2340a2668d043c647efaca21c36460ef6e2aba6e39899aaf38588d",
+  "sealedAt": "2026-09-05T00:18:06.488Z",
+  "artifacts": [
+    {
+      "path": "attempt-000001.graded.json",
+      "sha256": "77b99fdfb56cd3983eb4d97b39d022715d35369abfe758f1e5e6b0a0e0b8467f"
+    },
+    {
+      "path": "attempt-000002.graded.json",
+      "sha256": "ac831719ea1e451b0ad18cdd6d387c97634eab7c42a7bff6252ac4b6b9d05d08"
+    },
+    {
+      "path": "attempt-000003.graded.json",
+      "sha256": "ac0dce7006dcb8ba21e4fcee75c5bd15058e155d8c1547e37fc1759a6a4e3a43"
+    },
+    {
+      "path": "attempt-000004.graded.json",
+      "sha256": "ce2c61c7a58ee9c0747446b3d6dd338982f6c51df4bb9a42ca6ca288ca5499f5"
+    },
+    {
+      "path": "attempt-000005.graded.json",
+      "sha256": "55fce695802c83b18875bdb9d20b5aef2722e5cf98d94605c608e01b71da9c4d"
+    },
+    {
+      "path": "attempt-000006.graded.json",
+      "sha256": "c4fbc6a8d5617f542b4b34a011b5e0b3c034521ac77664ca34c55edfe0f5b130"
+    },
+    {
+      "path": "attempt-000007.graded.json",
+      "sha256": "bf646e76155076e21b71f4fbc2d92b0ee98a95c437733f3ad10a249e845541ed"
+    },
+    {
+      "path": "attempt-000008.graded.json",
+      "sha256": "ac74c8ecc39b42997449c0bb582f36f3b4948a3244b73185bb8d263094335719"
+    },
+    {
+      "path": "attempt-000009.graded.json",
+      "sha256": "de14cd9277ccef3b283fd0f5605f0281db486a479fa02619c8d600355a96c09b"
+    },
+    {
+      "path": "attempt-000010.graded.json",
+      "sha256": "0dbda761c987ddb4a198da09941f5d93b7bec9110a03c67381066aef7424442e"
+    },
+    {
+      "path": "attempt-000011.graded.json",
+      "sha256": "a55a298b9a14576571198f416bacdfe7c11722bab23f72416bd0f187057a632b"
+    },
+    {
+      "path": "attempt-000012.graded.json",
+      "sha256": "52155826ace45e0b3d223800c629c050db3674d0fbff67441fa7e3440db809b9"
+    },
+    {
+      "path": "judge/manifest.json",
+      "sha256": "e18aa41d56f4a04d866166d141996a8518663e16d25a1d7d536f5f4c82d32a1e"
+    },
+    {
+      "path": "judge/terminal-seal.json",
+      "sha256": "b5dd48055114d40a834ee012d08d283a5cf79a67a21be12d857d6a2adaeaf076"
+    }
+  ],
+  "sealSha256": "89a84e087c00ddcd1b70702060cad5dd4283923c130c4788ab9b392f342228e2"
+}
