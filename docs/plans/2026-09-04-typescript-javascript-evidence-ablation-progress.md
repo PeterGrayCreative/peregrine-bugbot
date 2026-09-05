@@ -121,7 +121,35 @@ losses ([metadata and hashes](../validation/2026-09-05-r2-human-packet-compariso
 All four manifest file hashes were independently matched by the integrator;
 the preparer verified 59 receipts, 54 objects, and four offline diffs. Across
 completed new preparation batches, twelve attempted slots now yield nine draft
-cards and three losses; none is admitted. Fixed random slots 009–012 are next.
+cards and three losses; none is admitted.
+
+Defect batch 3 added four draft cards with no losses
+([aggregate bindings](../validation/2026-09-05-r2-human-packet-defect-batch3.md)).
+The integrator independently checked all 216 bound files for exact bytes,
+SHA-256, regular-file paths, duplicate paths, and symlinks; all passed. An
+initial verifier invocation used the wrong directory (omitting `cases/`) and
+failed before reading a manifest; the corrected invocation passed without
+changing source artifacts. The preparer reports 85 authenticated GET receipts,
+four corrected license-path capture failures retained, and no historical-code
+execution. The shallow/promisor source store is not a replay-ready bundle.
+
+Comparison batch 4 added one draft card and three explicit sampled losses
+([aggregate bindings](../validation/2026-09-05-r2-human-packet-comparison-batch4.md)).
+All four manifest file hashes independently match the report. The preparer
+verified 54 receipts, 51 objects, and four canonical diffs offline; this is
+source-integrity evidence, not human verification or a clean-label claim.
+
+Across these completed new batches: **20 attempted slots, 14 draft cards
+(eight defect, six comparison), and six retained losses; zero admissions**.
+These totals exclude the earlier 12 exposed reconstruction opportunities.
+The next fixed batches are defect slots alpha-008/013/014/015 and random
+slots 013–016. Shared-family relationships remain explicit.
+
+The user's sole-human curator/verifier arrangement is confirmed. Preparation
+continues toward one consolidated review request, not serial approvals. A
+portable packet assembler is being developed against synthetic fixtures only;
+it must preserve original proof bundles and blank decisions. Neither packet
+assembly nor one person's approval can satisfy two independent-human claims.
 
 Commit `f53ff59` adds schedule-order enforcement and neutral grading with 86/86
 focused methodology tests and passing typecheck. GitHub `check` and
@@ -138,6 +166,11 @@ final local typecheck, 40 historical-contract tests, and 88 methodology tests
 pass. Current runtime evidence still yields incomplete or failed projections,
 never an authenticated complete review. Neutral judge/adjudication/report
 consumers and stopped/missing closure remain unfinished.
+
+GitHub CI `check` and credential-free image build/smoke both passed on the
+exact pushed projection-reader head `ece9acd8226fc8262d9ec712f5a34b8003a949f3`.
+Draft-only analyze, posting, and publishing jobs were skipped. This verifies
+that head's repository checks, not usable historical model tools or efficacy.
 
 An [offline runtime probe](../validation/2026-09-05-r3-offline-codex-read-probe.md)
 found that the accepted image's direct file read works but the CLI's nested
