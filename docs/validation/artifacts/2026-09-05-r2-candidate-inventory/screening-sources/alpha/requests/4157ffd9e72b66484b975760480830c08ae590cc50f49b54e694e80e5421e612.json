@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/microsoft/vscode/issues/99825",
+    "parameters": {}
+  },
+  "retrievedAt": "2026-09-05T12:49:54.161Z",
+  "sourceUrl": "https://api.github.com/repos/microsoft/vscode/issues/99825?",
+  "sha256": "4bcec64f5df6fdf28dc17db519152eca792e33d06fde2d9f753a5d6a96c12419",
+  "bytes": 8208
+}

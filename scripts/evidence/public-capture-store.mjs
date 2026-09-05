@@ -63,7 +63,16 @@ export function capturePages(store, endpoint, parameters = {}, transport = githu
   throw new Error("pagination ceiling reached; captured pages retained for resume");
 }
 
+let lastSearchRequestAt = 0;
 function githubGet(endpoint, parameters) {
+  // GitHub search has a separate 30-request/minute budget. Pace only new
+  // requests; cached pages remain instant. Other collectors share this budget
+  // and must coordinate their search work rather than retrying 403 responses.
+  if (endpoint === "search/issues") {
+    const delay = Math.max(0, 2300 - (Date.now() - lastSearchRequestAt));
+    if (delay) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, delay);
+    lastSearchRequestAt = Date.now();
+  }
   return execFileSync("gh", ["api", "--hostname", "github.com", "--method", "GET", endpoint,
     "-H", "Accept: application/vnd.github+json", "-H", "X-GitHub-Api-Version: 2022-11-28",
     ...Object.entries(parameters).flatMap(([key, value]) => ["-f", `${key}=${value}`])],

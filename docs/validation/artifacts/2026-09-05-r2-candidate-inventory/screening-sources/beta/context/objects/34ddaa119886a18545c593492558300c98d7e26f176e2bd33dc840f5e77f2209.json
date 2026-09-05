@@ -1,0 +1,350 @@
+[
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/221446676",
+    "pull_request_review_id": 160101074,
+    "id": 221446676,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDIyMTQ0NjY3Ng==",
+    "diff_hunk": "@@ -310,15 +305,15 @@ describe(Support.getTestDialectTeaser('Model'), () => {\n \n     it('allows me to override a default scope', () => {\n       Company.addScope('defaultScope', {\n-        include: [Project]\n+        include: [{ model: Project }]\n       }, { override: true });\n \n       expect(Company._scope).to.deep.equal({\n         include: [{ model: Project }]\n       });\n     });\n \n-    it('works with exclude and include attributes', () => {\n+    it('should not work with exclude and include attributes', () => {",
+    "path": "test/unit/model/scope.test.js",
+    "commit_id": "df69b870fa13bcfc05270b422338efd5c09ed658",
+    "original_commit_id": "b86d684790823061b69e2851150c99aea6b71d0f",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "`should keep exclude and include attributes`",
+    "created_at": "2018-09-30T03:47:11Z",
+    "updated_at": "2018-10-26T06:16:05Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9735#discussion_r221446676",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9735",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/221446676"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9735#discussion_r221446676"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9735"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/221446676/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 316,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 78,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/221446765",
+    "pull_request_review_id": 160101074,
+    "id": 221446765,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDIyMTQ0Njc2NQ==",
+    "diff_hunk": "@@ -3052,35 +3052,19 @@ class Model {\n     }\n   }\n \n-  // Inject _scope into options. Includes should have been conformed (conformOptions) before calling this\n+  // Inject _scope into options.\n   static _injectScope(options) {\n     const scope = Utils.cloneDeep(this._scope);\n \n-    const filteredScope = _.omit(scope, 'include'); // Includes need special treatment\n-\n-    Utils.defaults(options, filteredScope);\n-    Utils.defaults(options.where, filteredScope.where);\n+    Utils.defaults(options, scope);\n+    Utils.defaults(options.where, scope.where);\n \n+    // Includes need special treatment\n     if (scope.include) {\n-      options.include = options.include || [];\n-\n-      // Reverse so we consider the latest include first.\n-      // This is used if several scopes specify the same include - the last scope should take precedence\n-      for (const scopeInclude of scope.include.reverse()) {",
+    "path": "lib/model.js",
+    "commit_id": "df69b870fa13bcfc05270b422338efd5c09ed658",
+    "original_commit_id": "b86d684790823061b69e2851150c99aea6b71d0f",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "What is the new merge strategy now (wrt https://github.com/sequelize/sequelize/blob/master/docs/scopes.md#merging), as far as I can tell it is still the same?",
+    "created_at": "2018-09-30T03:54:14Z",
+    "updated_at": "2018-10-26T06:16:05Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9735#discussion_r221446765",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9735",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/221446765"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9735#discussion_r221446765"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9735"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/221446765/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 3075,
+    "original_line": 3075,
+    "side": "LEFT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 113,
+    "position": 147,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/228072931",
+    "pull_request_review_id": 168255206,
+    "id": 228072931,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDIyODA3MjkzMQ==",
+    "diff_hunk": "@@ -3052,35 +3052,19 @@ class Model {\n     }\n   }\n \n-  // Inject _scope into options. Includes should have been conformed (conformOptions) before calling this\n+  // Inject _scope into options.\n   static _injectScope(options) {\n     const scope = Utils.cloneDeep(this._scope);\n \n-    const filteredScope = _.omit(scope, 'include'); // Includes need special treatment\n-\n-    Utils.defaults(options, filteredScope);\n-    Utils.defaults(options.where, filteredScope.where);\n+    Utils.defaults(options, scope);\n+    Utils.defaults(options.where, scope.where);\n \n+    // Includes need special treatment\n     if (scope.include) {\n-      options.include = options.include || [];\n-\n-      // Reverse so we consider the latest include first.\n-      // This is used if several scopes specify the same include - the last scope should take precedence\n-      for (const scopeInclude of scope.include.reverse()) {",
+    "path": "lib/model.js",
+    "commit_id": "df69b870fa13bcfc05270b422338efd5c09ed658",
+    "original_commit_id": "b86d684790823061b69e2851150c99aea6b71d0f",
+    "user": {
+      "login": "u9r52sld",
+      "id": 10955856,
+      "node_id": "MDQ6VXNlcjEwOTU1ODU2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10955856?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/u9r52sld",
+      "html_url": "https://github.com/u9r52sld",
+      "followers_url": "https://api.github.com/users/u9r52sld/followers",
+      "following_url": "https://api.github.com/users/u9r52sld/following{/other_user}",
+      "gists_url": "https://api.github.com/users/u9r52sld/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/u9r52sld/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/u9r52sld/subscriptions",
+      "organizations_url": "https://api.github.com/users/u9r52sld/orgs",
+      "repos_url": "https://api.github.com/users/u9r52sld/repos",
+      "events_url": "https://api.github.com/users/u9r52sld/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/u9r52sld/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Yeah, it's almost the same. I just updated for issues #9087,#6245\r\n\r\nFor example, current merge strategy is as follows.\r\n\r\n```\r\nCompany.addScope('scopeA', {\r\n  where: { name: 'A', something: true },\r\n  attributes: {\r\n    include: ['name']\r\n  },\r\n  include: [\r\n    {\r\n      model: Project,\r\n      where: { name: 'A', something: true },\r\n    },\r\n    Project\r\n  ],\r\n  limit: 5,\r\n  order: [\r\n    ['name', 'DESC'],\r\n  ]\r\n})\r\n\r\nCompany.addScope('scopeB', {\r\n  where: { name: 'B' },\r\n  attributes: {\r\n    exclude: ['something']\r\n  },\r\n  include: [\r\n    {\r\n      model: Project,\r\n      as: 'Pj'\r\n    },\r\n    {\r\n      model: Project,\r\n      where: { name: 'B' }\r\n    },\r\n  ],\r\n  limit: 10,\r\n  order: [\r\n    ['something', 'ASC'],\r\n  ]\r\n})\r\n\r\nexpect(Company.scope(['scopeA', 'scopeB'])._scope).to.deep.equal({\r\n  where: { name: 'B', something: true }, // 'where' is shallowly merged\r\n  attributes: { // just override\r\n    exclude: ['something']\r\n  },\r\n  include: [ // 'include' is shallowly merged with the same model and alias(as)\r\n    {\r\n      model: Project,\r\n      where: { name: 'B', something: true },\r\n    },\r\n    {\r\n      model: Project,\r\n      as: 'Pj'\r\n    },\r\n  ],\r\n  limit: 10, // just override\r\n  order: [ // Array is united\r\n    ['name', 'DESC'],\r\n    ['something', 'ASC']\r\n  ]\r\n})\r\n```\r\n",
+    "created_at": "2018-10-25T08:12:02Z",
+    "updated_at": "2018-10-26T06:16:05Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9735#discussion_r228072931",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9735",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/228072931"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9735#discussion_r228072931"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9735"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/228072931/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 3075,
+    "original_line": 3075,
+    "side": "LEFT",
+    "in_reply_to_id": 221446765,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 113,
+    "position": 147,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/228074506",
+    "pull_request_review_id": 168257288,
+    "id": 228074506,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDIyODA3NDUwNg==",
+    "diff_hunk": "@@ -3052,35 +3052,19 @@ class Model {\n     }\n   }\n \n-  // Inject _scope into options. Includes should have been conformed (conformOptions) before calling this\n+  // Inject _scope into options.\n   static _injectScope(options) {\n     const scope = Utils.cloneDeep(this._scope);\n \n-    const filteredScope = _.omit(scope, 'include'); // Includes need special treatment\n-\n-    Utils.defaults(options, filteredScope);\n-    Utils.defaults(options.where, filteredScope.where);\n+    Utils.defaults(options, scope);\n+    Utils.defaults(options.where, scope.where);\n \n+    // Includes need special treatment\n     if (scope.include) {\n-      options.include = options.include || [];\n-\n-      // Reverse so we consider the latest include first.\n-      // This is used if several scopes specify the same include - the last scope should take precedence\n-      for (const scopeInclude of scope.include.reverse()) {",
+    "path": "lib/model.js",
+    "commit_id": "df69b870fa13bcfc05270b422338efd5c09ed658",
+    "original_commit_id": "b86d684790823061b69e2851150c99aea6b71d0f",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Hmm I thought we discussed to have `attributes.include / exclude` merge https://github.com/sequelize/sequelize/pull/9735#issuecomment-413088477",
+    "created_at": "2018-10-25T08:17:24Z",
+    "updated_at": "2018-10-26T06:16:05Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9735#discussion_r228074506",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9735",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/228074506"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9735#discussion_r228074506"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9735"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/228074506/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 3075,
+    "original_line": 3075,
+    "side": "LEFT",
+    "in_reply_to_id": 221446765,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 113,
+    "position": 147,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/228106457",
+    "pull_request_review_id": 168296500,
+    "id": 228106457,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDIyODEwNjQ1Nw==",
+    "diff_hunk": "@@ -3052,35 +3052,19 @@ class Model {\n     }\n   }\n \n-  // Inject _scope into options. Includes should have been conformed (conformOptions) before calling this\n+  // Inject _scope into options.\n   static _injectScope(options) {\n     const scope = Utils.cloneDeep(this._scope);\n \n-    const filteredScope = _.omit(scope, 'include'); // Includes need special treatment\n-\n-    Utils.defaults(options, filteredScope);\n-    Utils.defaults(options.where, filteredScope.where);\n+    Utils.defaults(options, scope);\n+    Utils.defaults(options.where, scope.where);\n \n+    // Includes need special treatment\n     if (scope.include) {\n-      options.include = options.include || [];\n-\n-      // Reverse so we consider the latest include first.\n-      // This is used if several scopes specify the same include - the last scope should take precedence\n-      for (const scopeInclude of scope.include.reverse()) {",
+    "path": "lib/model.js",
+    "commit_id": "df69b870fa13bcfc05270b422338efd5c09ed658",
+    "original_commit_id": "b86d684790823061b69e2851150c99aea6b71d0f",
+    "user": {
+      "login": "u9r52sld",
+      "id": 10955856,
+      "node_id": "MDQ6VXNlcjEwOTU1ODU2",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10955856?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/u9r52sld",
+      "html_url": "https://github.com/u9r52sld",
+      "followers_url": "https://api.github.com/users/u9r52sld/followers",
+      "following_url": "https://api.github.com/users/u9r52sld/following{/other_user}",
+      "gists_url": "https://api.github.com/users/u9r52sld/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/u9r52sld/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/u9r52sld/subscriptions",
+      "organizations_url": "https://api.github.com/users/u9r52sld/orgs",
+      "repos_url": "https://api.github.com/users/u9r52sld/repos",
+      "events_url": "https://api.github.com/users/u9r52sld/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/u9r52sld/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Oh, i'm sorry. I fixed it. e31be36\r\n\r\n```\r\nCompany.addScope('scopeA', {\r\n  attributes: {\r\n    include: ['name']\r\n  }\r\n})\r\n\r\nCompany.addScope('scopeB', {\r\n  attributes: {\r\n    include: ['something'],\r\n    exclude: ['password']\r\n  }\r\n})\r\n\r\nexpect(Company.scope(['scopeA', 'scopeB'])._scope).to.deep.equal({\r\n  attributes: { // merged\r\n    include: ['name', 'something'],\r\n    exclude: ['password']\r\n  }\r\n})\r\n```",
+    "created_at": "2018-10-25T09:49:05Z",
+    "updated_at": "2018-10-26T06:16:05Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9735#discussion_r228106457",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9735",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/228106457"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9735#discussion_r228106457"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9735"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/228106457/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 3075,
+    "original_line": 3075,
+    "side": "LEFT",
+    "in_reply_to_id": 221446765,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 113,
+    "position": 147,
+    "subject_type": "line"
+  }
+]

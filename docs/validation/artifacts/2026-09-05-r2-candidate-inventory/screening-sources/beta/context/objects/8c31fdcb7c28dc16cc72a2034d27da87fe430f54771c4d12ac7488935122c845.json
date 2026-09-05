@@ -1,0 +1,418 @@
+[
+  {
+    "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117637858",
+    "pull_request_review_id": 39361133,
+    "id": 117637858,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDExNzYzNzg1OA==",
+    "diff_hunk": "@@ -8,25 +8,28 @@\n ",
+    "path": "lib/commands/moveToDelayed-3.lua",
+    "commit_id": "620b2b932091adf4c56ae4431277b581cfcce77a",
+    "original_commit_id": "9b12e9e47059ae1acb600350c4cae73c5ba3cb13",
+    "user": {
+      "login": "bradvogel",
+      "id": 821706,
+      "node_id": "MDQ6VXNlcjgyMTcwNg==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/821706?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/bradvogel",
+      "html_url": "https://github.com/bradvogel",
+      "followers_url": "https://api.github.com/users/bradvogel/followers",
+      "following_url": "https://api.github.com/users/bradvogel/following{/other_user}",
+      "gists_url": "https://api.github.com/users/bradvogel/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/bradvogel/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/bradvogel/subscriptions",
+      "organizations_url": "https://api.github.com/users/bradvogel/orgs",
+      "repos_url": "https://api.github.com/users/bradvogel/repos",
+      "events_url": "https://api.github.com/users/bradvogel/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/bradvogel/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "retryJob also needs a lock check",
+    "created_at": "2017-05-21T17:24:54Z",
+    "updated_at": "2017-05-23T10:53:12Z",
+    "html_url": "https://github.com/OptimalBits/bull/pull/539#discussion_r117637858",
+    "pull_request_url": "https://api.github.com/repos/OptimalBits/bull/pulls/539",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117637858"
+      },
+      "html": {
+        "href": "https://github.com/OptimalBits/bull/pull/539#discussion_r117637858"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/539"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117637858/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 8,
+    "original_line": 8,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 1,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117638014",
+    "pull_request_review_id": 39361133,
+    "id": 117638014,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDExNzYzODAxNA==",
+    "diff_hunk": "@@ -8,25 +8,28 @@\n \n     ARGV[1] delayedTimestamp\n     ARGV[2] the id of the job\n-    ARGV[3] timestamp\n+    ARGV[3] queue token\n \n   Output:\n     0 - OK\n-    -1 - Missing job.\n+   -1 - Missing job.\n+   -2 - Job is locked.\n \n   Events:\n     - delayed key.\n ]]\n if redis.call(\"EXISTS\", KEYS[3]) == 1 then\n-  local score = tonumber(ARGV[1])\n-  if score ~= 0 then\n+  local lockKey = KEYS[3] .. ':lock'\n+  local lock = redis.call(\"GET\", lockKey)\n+  if (not lock) or (lock == ARGV[3]) then ",
+    "path": "lib/commands/moveToDelayed-3.lua",
+    "commit_id": "620b2b932091adf4c56ae4431277b581cfcce77a",
+    "original_commit_id": "9b12e9e47059ae1acb600350c4cae73c5ba3cb13",
+    "user": {
+      "login": "bradvogel",
+      "id": 821706,
+      "node_id": "MDQ6VXNlcjgyMTcwNg==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/821706?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/bradvogel",
+      "html_url": "https://github.com/bradvogel",
+      "followers_url": "https://api.github.com/users/bradvogel/followers",
+      "following_url": "https://api.github.com/users/bradvogel/following{/other_user}",
+      "gists_url": "https://api.github.com/users/bradvogel/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/bradvogel/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/bradvogel/subscriptions",
+      "organizations_url": "https://api.github.com/users/bradvogel/orgs",
+      "repos_url": "https://api.github.com/users/bradvogel/repos",
+      "events_url": "https://api.github.com/users/bradvogel/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/bradvogel/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "`not lock` should be removed since another worker might have already completed the job and deleted the lock. When I was trying to fix this locally, I realized that a bunch of unit tests broke when enforcing that a lock exists in this script. I fixed this by having `Job.prototype.moveToDelayed` take an `ignoreLock` parameter that passed in `0` as the token to the script, and checked it inside the script using:\r\n\r\n```\r\n  if ARGV[4] ~= \"0\" then\r\n    local lockKey = KEYS[3] .. ':lock'\r\n    if redis.call(\"GET\", lockKey) ~= ARGV[4] then\r\n      return -2\r\n    end\r\n  end\r\n```\r\n\r\n(this is how it's done in moveToFinished). That way the unit tests could use the special moveToDelayed() function that can ignore the lock.",
+    "created_at": "2017-05-21T17:34:14Z",
+    "updated_at": "2017-05-23T10:53:12Z",
+    "html_url": "https://github.com/OptimalBits/bull/pull/539#discussion_r117638014",
+    "pull_request_url": "https://api.github.com/repos/OptimalBits/bull/pulls/539",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117638014"
+      },
+      "html": {
+        "href": "https://github.com/OptimalBits/bull/pull/539#discussion_r117638014"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/539"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117638014/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 24,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 21,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117638278",
+    "pull_request_review_id": 39361558,
+    "id": 117638278,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDExNzYzODI3OA==",
+    "diff_hunk": "@@ -149,30 +149,30 @@ var scripts = {\n     return job.queue.client.isFinished(keys.concat([job.id]));\n   },\n \n-  moveToDelayedArgs: function(queue, jobId, context){\n+  moveToDelayedArgs: function(queue, jobId, timestamp){\n     //\n     // Bake in the job id first 12 bits into the timestamp\n     // to guarantee correct execution order of delayed jobs\n     // (up to 4096 jobs per given timestamp or 4096 jobs apart per timestamp)\n     //\n     // WARNING: Jobs that are so far apart that they wrap around will cause FIFO to fail\n     //\n-    context = _.isUndefined(context) ? 0 : context;\n+    timestamp = _.isUndefined(timestamp) ? 0 : timestamp;\n \n-    context = +context || 0;\n-    context = context < 0 ? 0 : context;\n-    if(context > 0){\n-      context = context * 0x1000 + (jobId & 0xfff);\n+    timestamp = +timestamp || 0;\n+    timestamp = timestamp < 0 ? 0 : timestamp;\n+    if(timestamp > 0){\n+      timestamp = timestamp * 0x1000 + (jobId & 0xfff);\n     }\n \n     var keys = _.map(['active', 'delayed', jobId], function(name){\n       return queue.toKey(name);\n     });\n-    return keys.concat([JSON.stringify(context), jobId]);\n+    return keys.concat([JSON.stringify(timestamp), jobId, queue.token]);\n   },\n \n-  moveToDelayed: function(queue, jobId, context){\n-    var args = scripts.moveToDelayedArgs(queue, jobId, context);\n+  moveToDelayed: function(queue, jobId, timestamp){\n+    var args = scripts.moveToDelayedArgs(queue, jobId, timestamp);\n     return queue.client.moveToDelayed(args).then(function(result){\n       if(result === -1){",
+    "path": "lib/scripts.js",
+    "commit_id": "620b2b932091adf4c56ae4431277b581cfcce77a",
+    "original_commit_id": "9b12e9e47059ae1acb600350c4cae73c5ba3cb13",
+    "user": {
+      "login": "bradvogel",
+      "id": 821706,
+      "node_id": "MDQ6VXNlcjgyMTcwNg==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/821706?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/bradvogel",
+      "html_url": "https://github.com/bradvogel",
+      "followers_url": "https://api.github.com/users/bradvogel/followers",
+      "following_url": "https://api.github.com/users/bradvogel/following{/other_user}",
+      "gists_url": "https://api.github.com/users/bradvogel/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/bradvogel/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/bradvogel/subscriptions",
+      "organizations_url": "https://api.github.com/users/bradvogel/orgs",
+      "repos_url": "https://api.github.com/users/bradvogel/repos",
+      "events_url": "https://api.github.com/users/bradvogel/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/bradvogel/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "check `-2` error code here?",
+    "created_at": "2017-05-21T17:48:14Z",
+    "updated_at": "2017-05-23T10:53:12Z",
+    "html_url": "https://github.com/OptimalBits/bull/pull/539#discussion_r117638278",
+    "pull_request_url": "https://api.github.com/repos/OptimalBits/bull/pulls/539",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117638278"
+      },
+      "html": {
+        "href": "https://github.com/OptimalBits/bull/pull/539#discussion_r117638278"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/539"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117638278/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 177,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 38,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117638325",
+    "pull_request_review_id": 39361607,
+    "id": 117638325,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDExNzYzODMyNQ==",
+    "diff_hunk": "@@ -8,25 +8,28 @@\n \n     ARGV[1] delayedTimestamp\n     ARGV[2] the id of the job\n-    ARGV[3] timestamp\n+    ARGV[3] queue token\n \n   Output:\n     0 - OK\n-    -1 - Missing job.\n+   -1 - Missing job.\n+   -2 - Job is locked.\n \n   Events:\n     - delayed key.\n ]]\n if redis.call(\"EXISTS\", KEYS[3]) == 1 then\n-  local score = tonumber(ARGV[1])\n-  if score ~= 0 then\n+  local lockKey = KEYS[3] .. ':lock'\n+  local lock = redis.call(\"GET\", lockKey)\n+  if (not lock) or (lock == ARGV[3]) then ",
+    "path": "lib/commands/moveToDelayed-3.lua",
+    "commit_id": "620b2b932091adf4c56ae4431277b581cfcce77a",
+    "original_commit_id": "9b12e9e47059ae1acb600350c4cae73c5ba3cb13",
+    "user": {
+      "login": "manast",
+      "id": 95200,
+      "node_id": "MDQ6VXNlcjk1MjAw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/95200?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/manast",
+      "html_url": "https://github.com/manast",
+      "followers_url": "https://api.github.com/users/manast/followers",
+      "following_url": "https://api.github.com/users/manast/following{/other_user}",
+      "gists_url": "https://api.github.com/users/manast/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/manast/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/manast/subscriptions",
+      "organizations_url": "https://api.github.com/users/manast/orgs",
+      "repos_url": "https://api.github.com/users/manast/repos",
+      "events_url": "https://api.github.com/users/manast/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/manast/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "ok. Will do that, thanks for the insight.",
+    "created_at": "2017-05-21T17:52:34Z",
+    "updated_at": "2017-05-23T10:53:12Z",
+    "html_url": "https://github.com/OptimalBits/bull/pull/539#discussion_r117638325",
+    "pull_request_url": "https://api.github.com/repos/OptimalBits/bull/pulls/539",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117638325"
+      },
+      "html": {
+        "href": "https://github.com/OptimalBits/bull/pull/539#discussion_r117638325"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/539"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117638325/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 24,
+    "side": "RIGHT",
+    "in_reply_to_id": 117638014,
+    "author_association": "MEMBER",
+    "original_position": 21,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117913536",
+    "pull_request_review_id": 39657189,
+    "id": 117913536,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDExNzkxMzUzNg==",
+    "diff_hunk": "@@ -1492,6 +1492,50 @@ describe('Queue', function () {\n         });\n       });\n     });\n+\n+    it.skip('an unlocked job should not be moved to delayed', function(done) {",
+    "path": "test/test_queue.js",
+    "commit_id": "620b2b932091adf4c56ae4431277b581cfcce77a",
+    "original_commit_id": "764bfc0d36bae687af5377f89fa6f1023b45a883",
+    "user": {
+      "login": "bradvogel",
+      "id": 821706,
+      "node_id": "MDQ6VXNlcjgyMTcwNg==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/821706?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/bradvogel",
+      "html_url": "https://github.com/bradvogel",
+      "followers_url": "https://api.github.com/users/bradvogel/followers",
+      "following_url": "https://api.github.com/users/bradvogel/following{/other_user}",
+      "gists_url": "https://api.github.com/users/bradvogel/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/bradvogel/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/bradvogel/subscriptions",
+      "organizations_url": "https://api.github.com/users/bradvogel/orgs",
+      "repos_url": "https://api.github.com/users/bradvogel/repos",
+      "events_url": "https://api.github.com/users/bradvogel/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/bradvogel/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Here are better test cases :)\r\n\r\n```js\r\n    it('an unlocked job should not be moved to delayed', function(done) {\r\n      var queue = new Queue('delayed queue');\r\n\r\n      queue.process(function(job, callback) {\r\n        // Release the lock to simulate the event loop stalling (so failure to renew the lock).\r\n        job.releaseLock().then(function() {\r\n          // Once it's failed, it should NOT be moved to delayed since this worker lost the lock.\r\n          callback(new Error('retry this job'));\r\n        });\r\n      });\r\n\r\n      queue.on('failed', function(job) {\r\n        job.isDelayed().then(function(isDelayed) {\r\n          expect(isDelayed).to.be.equal(false);\r\n          queue.close().finally(done);\r\n        });\r\n      });\r\n\r\n      queue.add({ foo: 'bar' }, { backoff: 1000, attempts: 2 });\r\n    });\r\n\r\n    it('an unlocked job should not be moved to waiting', function(done) {\r\n      var queue = new Queue('delayed queue');\r\n\r\n      queue.process(function(job, callback) {\r\n        // Release the lock to simulate the event loop stalling (so failure to renew the lock).\r\n        job.releaseLock().then(function() {\r\n          // Once it's failed, it should NOT be moved to waiting since this worker lost the lock.\r\n          callback(new Error('retry this job'));\r\n        });\r\n      });\r\n\r\n      queue.on('failed', function(job) {\r\n        job.isWaiting().then(function(isWaiting) {\r\n          expect(isWaiting).to.be.equal(false);\r\n          queue.close().then(done, done);\r\n        });\r\n      });\r\n\r\n      // Note that backoff:0 should immediately retry the job upon failure (ie put it in 'waiting')\r\n      queue.add({ foo: 'bar' }, { backoff: 0, attempts: 2 });\r\n    });\r\n```",
+    "created_at": "2017-05-23T07:06:18Z",
+    "updated_at": "2017-05-23T10:53:12Z",
+    "html_url": "https://github.com/OptimalBits/bull/pull/539#discussion_r117913536",
+    "pull_request_url": "https://api.github.com/repos/OptimalBits/bull/pulls/539",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117913536"
+      },
+      "html": {
+        "href": "https://github.com/OptimalBits/bull/pull/539#discussion_r117913536"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/539"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117913536/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1496,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 5,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117921204",
+    "pull_request_review_id": 39665297,
+    "id": 117921204,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDExNzkyMTIwNA==",
+    "diff_hunk": "@@ -1492,6 +1492,50 @@ describe('Queue', function () {\n         });\n       });\n     });\n+\n+    it.skip('an unlocked job should not be moved to delayed', function(done) {",
+    "path": "test/test_queue.js",
+    "commit_id": "620b2b932091adf4c56ae4431277b581cfcce77a",
+    "original_commit_id": "764bfc0d36bae687af5377f89fa6f1023b45a883",
+    "user": {
+      "login": "manast",
+      "id": 95200,
+      "node_id": "MDQ6VXNlcjk1MjAw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/95200?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/manast",
+      "html_url": "https://github.com/manast",
+      "followers_url": "https://api.github.com/users/manast/followers",
+      "following_url": "https://api.github.com/users/manast/following{/other_user}",
+      "gists_url": "https://api.github.com/users/manast/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/manast/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/manast/subscriptions",
+      "organizations_url": "https://api.github.com/users/manast/orgs",
+      "repos_url": "https://api.github.com/users/manast/repos",
+      "events_url": "https://api.github.com/users/manast/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/manast/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "ok, they are passing now. Btw I moved back this ```queue.close().finally(done);``` to ```queue.close().then(done, done);``` The problem with finally is that it does not catch errors, it will always call done without arguments.",
+    "created_at": "2017-05-23T07:49:05Z",
+    "updated_at": "2017-05-23T10:53:12Z",
+    "html_url": "https://github.com/OptimalBits/bull/pull/539#discussion_r117921204",
+    "pull_request_url": "https://api.github.com/repos/OptimalBits/bull/pulls/539",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117921204"
+      },
+      "html": {
+        "href": "https://github.com/OptimalBits/bull/pull/539#discussion_r117921204"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/539"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/117921204/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1496,
+    "side": "RIGHT",
+    "in_reply_to_id": 117913536,
+    "author_association": "MEMBER",
+    "original_position": 5,
+    "position": 1,
+    "subject_type": "line"
+  }
+]

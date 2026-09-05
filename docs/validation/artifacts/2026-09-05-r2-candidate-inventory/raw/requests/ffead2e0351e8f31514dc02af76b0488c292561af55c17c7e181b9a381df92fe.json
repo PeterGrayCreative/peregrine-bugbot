@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "search/issues",
+    "parameters": {
+      "order": "asc",
+      "page": 1,
+      "per_page": 100,
+      "q": "repo:ReactiveX/rxjs is:issue is:closed created:2017-01-01..2020-12-31 regression in:title",
+      "sort": "created"
+    }
+  },
+  "retrievedAt": "2026-09-05T12:53:38.811Z",
+  "sourceUrl": "https://api.github.com/search/issues?order=asc&page=1&per_page=100&q=repo%3AReactiveX%2Frxjs+is%3Aissue+is%3Aclosed+created%3A2017-01-01..2020-12-31+regression+in%3Atitle&sort=created",
+  "sha256": "1c76b2e43f402ef959bf3406a69c70b24ddc4e4e0e1ca9de7be4f802b76d708d",
+  "bytes": 13158
+}

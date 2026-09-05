@@ -1,0 +1,768 @@
+[
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165802324",
+    "pull_request_review_id": 93804426,
+    "id": 165802324,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE2NTgwMjMyNA==",
+    "diff_hunk": "@@ -5,19 +5,36 @@ import { ArgumentMetadata, BadRequestException } from '../index';\n import { isNil } from '../utils/shared.utils';\n import { Pipe } from './../decorators/core/component.decorator';\n \n+export interface ValidationPipeOptions {\n+  transform?: boolean;\n+  strip?: boolean;\n+  reject?: boolean;\n+}\n+\n @Pipe()\n export class ValidationPipe implements PipeTransform<any> {\n+\n+  private shouldTransform: boolean;\n+  private shouldStrip: boolean;\n+  private shouldReject: boolean;\n+\n+  constructor(options?: ValidationPipeOptions) {\n+    this.shouldTransform = options && (options.transform || options.strip || options.reject);",
+    "path": "src/common/pipes/validation.pipe.ts",
+    "commit_id": "27c083985cf5c319de700344b431bbff54e3d7e9",
+    "original_commit_id": "ba00ce65a68190c093c183adf2f9f67948332a95",
+    "user": {
+      "login": "ShadowManu",
+      "id": 5491749,
+      "node_id": "MDQ6VXNlcjU0OTE3NDk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5491749?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/ShadowManu",
+      "html_url": "https://github.com/ShadowManu",
+      "followers_url": "https://api.github.com/users/ShadowManu/followers",
+      "following_url": "https://api.github.com/users/ShadowManu/following{/other_user}",
+      "gists_url": "https://api.github.com/users/ShadowManu/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/ShadowManu/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/ShadowManu/subscriptions",
+      "organizations_url": "https://api.github.com/users/ShadowManu/orgs",
+      "repos_url": "https://api.github.com/users/ShadowManu/repos",
+      "events_url": "https://api.github.com/users/ShadowManu/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/ShadowManu/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "these `||` are too opinionated. If I want stripping but not transforming, I can't. ~~Same between strip and reject~~.\r\nThere is not an issue at all to let them be independent of each other.",
+    "created_at": "2018-02-03T02:45:23Z",
+    "updated_at": "2018-02-05T19:36:05Z",
+    "html_url": "https://github.com/nestjs/nest/pull/383#discussion_r165802324",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/383",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/165802324"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/383#discussion_r165802324"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/383"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165802324/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 22,
+    "side": "RIGHT",
+    "author_association": "NONE",
+    "original_position": 18,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165802521",
+    "pull_request_review_id": 93804426,
+    "id": 165802521,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE2NTgwMjUyMQ==",
+    "diff_hunk": "@@ -5,19 +5,36 @@ import { ArgumentMetadata, BadRequestException } from '../index';\n import { isNil } from '../utils/shared.utils';\n import { Pipe } from './../decorators/core/component.decorator';\n \n+export interface ValidationPipeOptions {\n+  transform?: boolean;\n+  strip?: boolean;\n+  reject?: boolean;\n+}\n+\n @Pipe()\n export class ValidationPipe implements PipeTransform<any> {\n+\n+  private shouldTransform: boolean;",
+    "path": "src/common/pipes/validation.pipe.ts",
+    "commit_id": "27c083985cf5c319de700344b431bbff54e3d7e9",
+    "original_commit_id": "ba00ce65a68190c093c183adf2f9f67948332a95",
+    "user": {
+      "login": "ShadowManu",
+      "id": 5491749,
+      "node_id": "MDQ6VXNlcjU0OTE3NDk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5491749?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/ShadowManu",
+      "html_url": "https://github.com/ShadowManu",
+      "followers_url": "https://api.github.com/users/ShadowManu/followers",
+      "following_url": "https://api.github.com/users/ShadowManu/following{/other_user}",
+      "gists_url": "https://api.github.com/users/ShadowManu/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/ShadowManu/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/ShadowManu/subscriptions",
+      "organizations_url": "https://api.github.com/users/ShadowManu/orgs",
+      "repos_url": "https://api.github.com/users/ShadowManu/repos",
+      "events_url": "https://api.github.com/users/ShadowManu/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/ShadowManu/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "You're using a different naming scheme from `class-validator`.\r\nWhy rename `whitelist -> shouldStrip` and `forbidNonWhitelisted -> shouldReject`. You should use same names and not change the mnemonics without a hard reason. You end up loosing the original `class-validator` documentation references as a user.",
+    "created_at": "2018-02-03T02:51:03Z",
+    "updated_at": "2018-02-05T19:36:05Z",
+    "html_url": "https://github.com/nestjs/nest/pull/383#discussion_r165802521",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/383",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/165802521"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/383#discussion_r165802521"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/383"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165802521/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 17,
+    "side": "RIGHT",
+    "author_association": "NONE",
+    "original_position": 13,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165828337",
+    "pull_request_review_id": 93830178,
+    "id": 165828337,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE2NTgyODMzNw==",
+    "diff_hunk": "@@ -5,19 +5,36 @@ import { ArgumentMetadata, BadRequestException } from '../index';\n import { isNil } from '../utils/shared.utils';\n import { Pipe } from './../decorators/core/component.decorator';\n \n+export interface ValidationPipeOptions {\n+  transform?: boolean;\n+  strip?: boolean;\n+  reject?: boolean;\n+}\n+\n @Pipe()\n export class ValidationPipe implements PipeTransform<any> {\n+\n+  private shouldTransform: boolean;\n+  private shouldStrip: boolean;\n+  private shouldReject: boolean;\n+\n+  constructor(options?: ValidationPipeOptions) {\n+    this.shouldTransform = options && (options.transform || options.strip || options.reject);",
+    "path": "src/common/pipes/validation.pipe.ts",
+    "commit_id": "27c083985cf5c319de700344b431bbff54e3d7e9",
+    "original_commit_id": "ba00ce65a68190c093c183adf2f9f67948332a95",
+    "user": {
+      "login": "fwoelffel",
+      "id": 5467696,
+      "node_id": "MDQ6VXNlcjU0Njc2OTY=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5467696?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/fwoelffel",
+      "html_url": "https://github.com/fwoelffel",
+      "followers_url": "https://api.github.com/users/fwoelffel/followers",
+      "following_url": "https://api.github.com/users/fwoelffel/following{/other_user}",
+      "gists_url": "https://api.github.com/users/fwoelffel/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/fwoelffel/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/fwoelffel/subscriptions",
+      "organizations_url": "https://api.github.com/users/fwoelffel/orgs",
+      "repos_url": "https://api.github.com/users/fwoelffel/repos",
+      "events_url": "https://api.github.com/users/fwoelffel/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/fwoelffel/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "You're right, people might want to strip and don't get the transformed value. However, I this represents the more common usecase. I'm setting `transform = true` by default.",
+    "created_at": "2018-02-03T23:19:00Z",
+    "updated_at": "2018-02-05T19:36:05Z",
+    "html_url": "https://github.com/nestjs/nest/pull/383#discussion_r165828337",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/383",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/165828337"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/383#discussion_r165828337"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/383"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165828337/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 22,
+    "side": "RIGHT",
+    "in_reply_to_id": 165802324,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 18,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165833857",
+    "pull_request_review_id": 93835435,
+    "id": 165833857,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE2NTgzMzg1Nw==",
+    "diff_hunk": "@@ -1,27 +1,25 @@\n-import { validate } from 'class-validator';\n-import { plainToClass } from 'class-transformer';\n+import { validate, ValidatorOptions } from 'class-validator';\n+import { classToPlain, plainToClass } from 'class-transformer';\n import { PipeTransform } from '../interfaces/pipe-transform.interface';\n import { ArgumentMetadata, BadRequestException } from '../index';\n import { isNil } from '../utils/shared.utils';\n import { Pipe } from './../decorators/core/component.decorator';\n \n-export interface ValidationPipeOptions {\n+export interface ValidationPipeOptions extends ValidatorOptions {\n   transform?: boolean;\n-  strip?: boolean;\n-  reject?: boolean;\n }\n \n @Pipe()\n export class ValidationPipe implements PipeTransform<any> {\n \n-  private shouldTransform: boolean;\n-  private shouldStrip: boolean;\n-  private shouldReject: boolean;\n+  private returnTransformed: boolean;\n+\n+  private validatorOptions: ValidatorOptions = {};\n \n   constructor(options?: ValidationPipeOptions) {\n-    this.shouldTransform = options && (options.transform || options.strip || options.reject);\n-    this.shouldStrip = options && (options.strip || options.reject);\n-    this.shouldReject = options && options.reject;\n+    this.returnTransformed = (options && 'transform' in options) ? options.transform : true;",
+    "path": "src/common/pipes/validation.pipe.ts",
+    "commit_id": "27c083985cf5c319de700344b431bbff54e3d7e9",
+    "original_commit_id": "ff229b522f8812cbb362cbafc5d67ab2662e2238",
+    "user": {
+      "login": "ShadowManu",
+      "id": 5491749,
+      "node_id": "MDQ6VXNlcjU0OTE3NDk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5491749?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/ShadowManu",
+      "html_url": "https://github.com/ShadowManu",
+      "followers_url": "https://api.github.com/users/ShadowManu/followers",
+      "following_url": "https://api.github.com/users/ShadowManu/following{/other_user}",
+      "gists_url": "https://api.github.com/users/ShadowManu/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/ShadowManu/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/ShadowManu/subscriptions",
+      "organizations_url": "https://api.github.com/users/ShadowManu/orgs",
+      "repos_url": "https://api.github.com/users/ShadowManu/repos",
+      "events_url": "https://api.github.com/users/ShadowManu/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/ShadowManu/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Its not particularly good to use the `delete` thing (specially if that object doesn't start from your code. A recommendation for this body:\r\n```\r\nconst { transform, ...validatorOptions } = options;\r\nthis.returnTransformed = transform != null ? transform : true; // I don't agree with a default true value, as I said\r\nthis.validatorOptions = options;\r\n```",
+    "created_at": "2018-02-04T05:06:09Z",
+    "updated_at": "2018-02-05T19:36:05Z",
+    "html_url": "https://github.com/nestjs/nest/pull/383#discussion_r165833857",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/383",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/165833857"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/383#discussion_r165833857"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/383"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165833857/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 20,
+    "side": "RIGHT",
+    "author_association": "NONE",
+    "original_position": 31,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165833882",
+    "pull_request_review_id": 93835454,
+    "id": 165833882,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE2NTgzMzg4Mg==",
+    "diff_hunk": "@@ -30,11 +28,13 @@ export class ValidationPipe implements PipeTransform<any> {\n       return value;\n     }\n     const entity = plainToClass(metatype, value);\n-    const errors = await validate(entity, { whitelist: this.shouldStrip, forbidNonWhitelisted: this.shouldReject });\n+    const errors = await validate(entity, this.validatorOptions);\n     if (errors.length > 0) {\n       throw new BadRequestException(errors);\n     }\n-    return this.shouldTransform ? entity : value;\n+    return this.returnTransformed ? entity",
+    "path": "src/common/pipes/validation.pipe.ts",
+    "commit_id": "27c083985cf5c319de700344b431bbff54e3d7e9",
+    "original_commit_id": "ff229b522f8812cbb362cbafc5d67ab2662e2238",
+    "user": {
+      "login": "ShadowManu",
+      "id": 5491749,
+      "node_id": "MDQ6VXNlcjU0OTE3NDk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5491749?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/ShadowManu",
+      "html_url": "https://github.com/ShadowManu",
+      "followers_url": "https://api.github.com/users/ShadowManu/followers",
+      "following_url": "https://api.github.com/users/ShadowManu/following{/other_user}",
+      "gists_url": "https://api.github.com/users/ShadowManu/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/ShadowManu/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/ShadowManu/subscriptions",
+      "organizations_url": "https://api.github.com/users/ShadowManu/orgs",
+      "repos_url": "https://api.github.com/users/ShadowManu/repos",
+      "events_url": "https://api.github.com/users/ShadowManu/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/ShadowManu/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I believe not a lot of people are keen on using nested ternary operators.",
+    "created_at": "2018-02-04T05:08:35Z",
+    "updated_at": "2018-02-05T19:36:05Z",
+    "html_url": "https://github.com/nestjs/nest/pull/383#discussion_r165833882",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/383",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/165833882"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/383#discussion_r165833882"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/383"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165833882/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 35,
+    "side": "RIGHT",
+    "author_association": "NONE",
+    "original_position": 47,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165833918",
+    "pull_request_review_id": 93835486,
+    "id": 165833918,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE2NTgzMzkxOA==",
+    "diff_hunk": "@@ -30,11 +28,13 @@ export class ValidationPipe implements PipeTransform<any> {\n       return value;\n     }\n     const entity = plainToClass(metatype, value);\n-    const errors = await validate(entity, { whitelist: this.shouldStrip, forbidNonWhitelisted: this.shouldReject });\n+    const errors = await validate(entity, this.validatorOptions);\n     if (errors.length > 0) {\n       throw new BadRequestException(errors);\n     }\n-    return this.shouldTransform ? entity : value;\n+    return this.returnTransformed ? entity",
+    "path": "src/common/pipes/validation.pipe.ts",
+    "commit_id": "27c083985cf5c319de700344b431bbff54e3d7e9",
+    "original_commit_id": "ff229b522f8812cbb362cbafc5d67ab2662e2238",
+    "user": {
+      "login": "ShadowManu",
+      "id": 5491749,
+      "node_id": "MDQ6VXNlcjU0OTE3NDk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5491749?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/ShadowManu",
+      "html_url": "https://github.com/ShadowManu",
+      "followers_url": "https://api.github.com/users/ShadowManu/followers",
+      "following_url": "https://api.github.com/users/ShadowManu/following{/other_user}",
+      "gists_url": "https://api.github.com/users/ShadowManu/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/ShadowManu/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/ShadowManu/subscriptions",
+      "organizations_url": "https://api.github.com/users/ShadowManu/orgs",
+      "repos_url": "https://api.github.com/users/ShadowManu/repos",
+      "events_url": "https://api.github.com/users/ShadowManu/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/ShadowManu/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "More so, why do you need the second one? The `classToPlain(entity)` part. And I don't get too much requiring `Object.keys`.",
+    "created_at": "2018-02-04T05:11:42Z",
+    "updated_at": "2018-02-05T19:36:05Z",
+    "html_url": "https://github.com/nestjs/nest/pull/383#discussion_r165833918",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/383",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/165833918"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/383#discussion_r165833918"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/383"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165833918/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 35,
+    "side": "RIGHT",
+    "in_reply_to_id": 165833882,
+    "author_association": "NONE",
+    "original_position": 47,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165837929",
+    "pull_request_review_id": 93839233,
+    "id": 165837929,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE2NTgzNzkyOQ==",
+    "diff_hunk": "@@ -30,11 +28,13 @@ export class ValidationPipe implements PipeTransform<any> {\n       return value;\n     }\n     const entity = plainToClass(metatype, value);\n-    const errors = await validate(entity, { whitelist: this.shouldStrip, forbidNonWhitelisted: this.shouldReject });\n+    const errors = await validate(entity, this.validatorOptions);\n     if (errors.length > 0) {\n       throw new BadRequestException(errors);\n     }\n-    return this.shouldTransform ? entity : value;\n+    return this.returnTransformed ? entity",
+    "path": "src/common/pipes/validation.pipe.ts",
+    "commit_id": "27c083985cf5c319de700344b431bbff54e3d7e9",
+    "original_commit_id": "ff229b522f8812cbb362cbafc5d67ab2662e2238",
+    "user": {
+      "login": "fwoelffel",
+      "id": 5467696,
+      "node_id": "MDQ6VXNlcjU0Njc2OTY=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5467696?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/fwoelffel",
+      "html_url": "https://github.com/fwoelffel",
+      "followers_url": "https://api.github.com/users/fwoelffel/followers",
+      "following_url": "https://api.github.com/users/fwoelffel/following{/other_user}",
+      "gists_url": "https://api.github.com/users/fwoelffel/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/fwoelffel/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/fwoelffel/subscriptions",
+      "organizations_url": "https://api.github.com/users/fwoelffel/orgs",
+      "repos_url": "https://api.github.com/users/fwoelffel/repos",
+      "events_url": "https://api.github.com/users/fwoelffel/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/fwoelffel/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "- I like nested ternaries.\r\n- The second one is needed when you want to get the non-transformed stripped value. (basically, you get the stripped entity as a plain object)\r\n- `Object.keys` is used to check if the user has provided some `class-validator` options which means the returned object is a mutated version of `value` (stripped properties, etc.)",
+    "created_at": "2018-02-04T09:08:17Z",
+    "updated_at": "2018-02-05T19:36:05Z",
+    "html_url": "https://github.com/nestjs/nest/pull/383#discussion_r165837929",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/383",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/165837929"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/383#discussion_r165837929"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/383"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165837929/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 35,
+    "side": "RIGHT",
+    "in_reply_to_id": 165833882,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 47,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165838004",
+    "pull_request_review_id": 93839299,
+    "id": 165838004,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE2NTgzODAwNA==",
+    "diff_hunk": "@@ -1,27 +1,25 @@\n-import { validate } from 'class-validator';\n-import { plainToClass } from 'class-transformer';\n+import { validate, ValidatorOptions } from 'class-validator';\n+import { classToPlain, plainToClass } from 'class-transformer';\n import { PipeTransform } from '../interfaces/pipe-transform.interface';\n import { ArgumentMetadata, BadRequestException } from '../index';\n import { isNil } from '../utils/shared.utils';\n import { Pipe } from './../decorators/core/component.decorator';\n \n-export interface ValidationPipeOptions {\n+export interface ValidationPipeOptions extends ValidatorOptions {\n   transform?: boolean;\n-  strip?: boolean;\n-  reject?: boolean;\n }\n \n @Pipe()\n export class ValidationPipe implements PipeTransform<any> {\n \n-  private shouldTransform: boolean;\n-  private shouldStrip: boolean;\n-  private shouldReject: boolean;\n+  private returnTransformed: boolean;\n+\n+  private validatorOptions: ValidatorOptions = {};\n \n   constructor(options?: ValidationPipeOptions) {\n-    this.shouldTransform = options && (options.transform || options.strip || options.reject);\n-    this.shouldStrip = options && (options.strip || options.reject);\n-    this.shouldReject = options && options.reject;\n+    this.returnTransformed = (options && 'transform' in options) ? options.transform : true;",
+    "path": "src/common/pipes/validation.pipe.ts",
+    "commit_id": "27c083985cf5c319de700344b431bbff54e3d7e9",
+    "original_commit_id": "ff229b522f8812cbb362cbafc5d67ab2662e2238",
+    "user": {
+      "login": "fwoelffel",
+      "id": 5467696,
+      "node_id": "MDQ6VXNlcjU0Njc2OTY=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5467696?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/fwoelffel",
+      "html_url": "https://github.com/fwoelffel",
+      "followers_url": "https://api.github.com/users/fwoelffel/followers",
+      "following_url": "https://api.github.com/users/fwoelffel/following{/other_user}",
+      "gists_url": "https://api.github.com/users/fwoelffel/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/fwoelffel/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/fwoelffel/subscriptions",
+      "organizations_url": "https://api.github.com/users/fwoelffel/orgs",
+      "repos_url": "https://api.github.com/users/fwoelffel/repos",
+      "events_url": "https://api.github.com/users/fwoelffel/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/fwoelffel/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I don't want the `transform` property to get passed to the `validate` function. What harm could this `delete` do? If you have a more elegant solution to remove it from the `options` object let me know.",
+    "created_at": "2018-02-04T09:11:49Z",
+    "updated_at": "2018-02-05T19:36:05Z",
+    "html_url": "https://github.com/nestjs/nest/pull/383#discussion_r165838004",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/383",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/165838004"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/383#discussion_r165838004"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/383"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165838004/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 20,
+    "side": "RIGHT",
+    "in_reply_to_id": 165833857,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 31,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165838071",
+    "pull_request_review_id": 93839360,
+    "id": 165838071,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE2NTgzODA3MQ==",
+    "diff_hunk": "@@ -1,27 +1,25 @@\n-import { validate } from 'class-validator';\n-import { plainToClass } from 'class-transformer';\n+import { validate, ValidatorOptions } from 'class-validator';\n+import { classToPlain, plainToClass } from 'class-transformer';\n import { PipeTransform } from '../interfaces/pipe-transform.interface';\n import { ArgumentMetadata, BadRequestException } from '../index';\n import { isNil } from '../utils/shared.utils';\n import { Pipe } from './../decorators/core/component.decorator';\n \n-export interface ValidationPipeOptions {\n+export interface ValidationPipeOptions extends ValidatorOptions {\n   transform?: boolean;\n-  strip?: boolean;\n-  reject?: boolean;\n }\n \n @Pipe()\n export class ValidationPipe implements PipeTransform<any> {\n \n-  private shouldTransform: boolean;\n-  private shouldStrip: boolean;\n-  private shouldReject: boolean;\n+  private returnTransformed: boolean;\n+\n+  private validatorOptions: ValidatorOptions = {};\n \n   constructor(options?: ValidationPipeOptions) {\n-    this.shouldTransform = options && (options.transform || options.strip || options.reject);\n-    this.shouldStrip = options && (options.strip || options.reject);\n-    this.shouldReject = options && options.reject;\n+    this.returnTransformed = (options && 'transform' in options) ? options.transform : true;",
+    "path": "src/common/pipes/validation.pipe.ts",
+    "commit_id": "27c083985cf5c319de700344b431bbff54e3d7e9",
+    "original_commit_id": "ff229b522f8812cbb362cbafc5d67ab2662e2238",
+    "user": {
+      "login": "fwoelffel",
+      "id": 5467696,
+      "node_id": "MDQ6VXNlcjU0Njc2OTY=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5467696?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/fwoelffel",
+      "html_url": "https://github.com/fwoelffel",
+      "followers_url": "https://api.github.com/users/fwoelffel/followers",
+      "following_url": "https://api.github.com/users/fwoelffel/following{/other_user}",
+      "gists_url": "https://api.github.com/users/fwoelffel/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/fwoelffel/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/fwoelffel/subscriptions",
+      "organizations_url": "https://api.github.com/users/fwoelffel/orgs",
+      "repos_url": "https://api.github.com/users/fwoelffel/repos",
+      "events_url": "https://api.github.com/users/fwoelffel/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/fwoelffel/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "As for the `transform` default value, I think we should wait for more reviews. You wanted to be able to get the plain object value and with `transform: false` you are :wink:\r\nIf I set this default value to `false` we're getting back to `@Query(new ValidationPipe()) pagination?: PaginationOptionsDto` not being an actual `PaginationOptionsDto` which is not the expected behavior.",
+    "created_at": "2018-02-04T09:14:45Z",
+    "updated_at": "2018-02-05T19:36:05Z",
+    "html_url": "https://github.com/nestjs/nest/pull/383#discussion_r165838071",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/383",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/165838071"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/383#discussion_r165838071"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/383"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165838071/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 20,
+    "side": "RIGHT",
+    "in_reply_to_id": 165833857,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 31,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165839334",
+    "pull_request_review_id": 93840587,
+    "id": 165839334,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE2NTgzOTMzNA==",
+    "diff_hunk": "@@ -1,27 +1,25 @@\n-import { validate } from 'class-validator';\n-import { plainToClass } from 'class-transformer';\n+import { validate, ValidatorOptions } from 'class-validator';\n+import { classToPlain, plainToClass } from 'class-transformer';\n import { PipeTransform } from '../interfaces/pipe-transform.interface';\n import { ArgumentMetadata, BadRequestException } from '../index';\n import { isNil } from '../utils/shared.utils';\n import { Pipe } from './../decorators/core/component.decorator';\n \n-export interface ValidationPipeOptions {\n+export interface ValidationPipeOptions extends ValidatorOptions {\n   transform?: boolean;\n-  strip?: boolean;\n-  reject?: boolean;\n }\n \n @Pipe()\n export class ValidationPipe implements PipeTransform<any> {\n \n-  private shouldTransform: boolean;\n-  private shouldStrip: boolean;\n-  private shouldReject: boolean;\n+  private returnTransformed: boolean;\n+\n+  private validatorOptions: ValidatorOptions = {};\n \n   constructor(options?: ValidationPipeOptions) {\n-    this.shouldTransform = options && (options.transform || options.strip || options.reject);\n-    this.shouldStrip = options && (options.strip || options.reject);\n-    this.shouldReject = options && options.reject;\n+    this.returnTransformed = (options && 'transform' in options) ? options.transform : true;",
+    "path": "src/common/pipes/validation.pipe.ts",
+    "commit_id": "27c083985cf5c319de700344b431bbff54e3d7e9",
+    "original_commit_id": "ff229b522f8812cbb362cbafc5d67ab2662e2238",
+    "user": {
+      "login": "ShadowManu",
+      "id": 5491749,
+      "node_id": "MDQ6VXNlcjU0OTE3NDk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5491749?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/ShadowManu",
+      "html_url": "https://github.com/ShadowManu",
+      "followers_url": "https://api.github.com/users/ShadowManu/followers",
+      "following_url": "https://api.github.com/users/ShadowManu/following{/other_user}",
+      "gists_url": "https://api.github.com/users/ShadowManu/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/ShadowManu/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/ShadowManu/subscriptions",
+      "organizations_url": "https://api.github.com/users/ShadowManu/orgs",
+      "repos_url": "https://api.github.com/users/ShadowManu/repos",
+      "events_url": "https://api.github.com/users/ShadowManu/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/ShadowManu/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "The first line of my snippet separates the `transform` property from the `validatorOptions` (it doesnt have `transform`.\r\n\r\nAbout the typing disparity, while I prefer pojo objects, you are right: the typescript compiler will let you call methods on the object and the default implementation should comply with that.",
+    "created_at": "2018-02-04T10:08:49Z",
+    "updated_at": "2018-02-05T19:36:05Z",
+    "html_url": "https://github.com/nestjs/nest/pull/383#discussion_r165839334",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/383",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/165839334"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/383#discussion_r165839334"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/383"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165839334/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 20,
+    "side": "RIGHT",
+    "in_reply_to_id": 165833857,
+    "author_association": "NONE",
+    "original_position": 31,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165842306",
+    "pull_request_review_id": 93843059,
+    "id": 165842306,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE2NTg0MjMwNg==",
+    "diff_hunk": "@@ -1,27 +1,25 @@\n-import { validate } from 'class-validator';\n-import { plainToClass } from 'class-transformer';\n+import { validate, ValidatorOptions } from 'class-validator';\n+import { classToPlain, plainToClass } from 'class-transformer';\n import { PipeTransform } from '../interfaces/pipe-transform.interface';\n import { ArgumentMetadata, BadRequestException } from '../index';\n import { isNil } from '../utils/shared.utils';\n import { Pipe } from './../decorators/core/component.decorator';\n \n-export interface ValidationPipeOptions {\n+export interface ValidationPipeOptions extends ValidatorOptions {\n   transform?: boolean;\n-  strip?: boolean;\n-  reject?: boolean;\n }\n \n @Pipe()\n export class ValidationPipe implements PipeTransform<any> {\n \n-  private shouldTransform: boolean;\n-  private shouldStrip: boolean;\n-  private shouldReject: boolean;\n+  private returnTransformed: boolean;\n+\n+  private validatorOptions: ValidatorOptions = {};\n \n   constructor(options?: ValidationPipeOptions) {\n-    this.shouldTransform = options && (options.transform || options.strip || options.reject);\n-    this.shouldStrip = options && (options.strip || options.reject);\n-    this.shouldReject = options && options.reject;\n+    this.returnTransformed = (options && 'transform' in options) ? options.transform : true;",
+    "path": "src/common/pipes/validation.pipe.ts",
+    "commit_id": "27c083985cf5c319de700344b431bbff54e3d7e9",
+    "original_commit_id": "ff229b522f8812cbb362cbafc5d67ab2662e2238",
+    "user": {
+      "login": "fwoelffel",
+      "id": 5467696,
+      "node_id": "MDQ6VXNlcjU0Njc2OTY=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5467696?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/fwoelffel",
+      "html_url": "https://github.com/fwoelffel",
+      "followers_url": "https://api.github.com/users/fwoelffel/followers",
+      "following_url": "https://api.github.com/users/fwoelffel/following{/other_user}",
+      "gists_url": "https://api.github.com/users/fwoelffel/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/fwoelffel/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/fwoelffel/subscriptions",
+      "organizations_url": "https://api.github.com/users/fwoelffel/orgs",
+      "repos_url": "https://api.github.com/users/fwoelffel/repos",
+      "events_url": "https://api.github.com/users/fwoelffel/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/fwoelffel/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Well, I didn't know about this use of the spread operator and I must say it looks really nice :D",
+    "created_at": "2018-02-04T12:05:23Z",
+    "updated_at": "2018-02-05T19:36:05Z",
+    "html_url": "https://github.com/nestjs/nest/pull/383#discussion_r165842306",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/383",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/165842306"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/383#discussion_r165842306"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/383"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/165842306/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 20,
+    "side": "RIGHT",
+    "in_reply_to_id": 165833857,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 31,
+    "position": 1,
+    "subject_type": "line"
+  }
+]

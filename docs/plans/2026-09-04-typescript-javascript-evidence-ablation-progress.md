@@ -14,8 +14,8 @@ minimal reviewer. Production routing remains frozen.
 | Step | State | Evidence / remaining gate |
 | --- | --- | --- |
 | R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
-| R2: gather and partition | In progress | Resumed by user. Registered eight-repository sampling frame; first 25 comment-independent candidates captured with unknown truth. Remaining 75 candidates, reconstruction, independent curation and partitioning remain open. |
-| R3: neutral and truthful harness | In progress | Versioned unattributed-miss semantics implemented with focused tests; existing PR30 adjudication/reporting work identified for reuse. Neutral historical contracts, completeness and experimental arms remain open. |
+| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families; archived source screening and losses. Zero new admitted cases; six exposed development reconstructions underway. Independent curation and protected partitioning remain open. |
+| R3: neutral and truthful harness | In progress | Integrated audited PR30 adjudication/reporting and versioned attribution. Strict partial historical truth contract has 9 passing tests; legacy readers reject scope erasure. Admission/schedule/report integration, completeness, isolation and neutral arms remain open. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |
 | R6: select and confirm | Not started | Requires frozen candidate and new powered confirmation corpus. |

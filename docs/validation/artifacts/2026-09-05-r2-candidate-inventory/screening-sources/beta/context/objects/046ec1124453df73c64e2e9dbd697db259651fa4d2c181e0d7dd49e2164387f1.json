@@ -1,0 +1,554 @@
+[
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545001",
+    "pull_request_review_id": 112200469,
+    "id": 181545001,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE4MTU0NTAwMQ==",
+    "diff_hunk": "@@ -22,6 +22,7 @@ class Transaction {\n   constructor(sequelize, options) {\n     this.sequelize = sequelize;\n     this.savepoints = [];\n+    this.afterCommitHooks = [];",
+    "path": "lib/transaction.js",
+    "commit_id": "ca3025a5db3ad8f8dbfbcc333b91637a91f7938f",
+    "original_commit_id": "7b43f4151ed523a1dcced3dd0bd379b24c508ed7",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "`_afterCommitHooks`",
+    "created_at": "2018-04-14T07:39:56Z",
+    "updated_at": "2018-04-18T18:44:04Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9287#discussion_r181545001",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9287",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545001"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9287#discussion_r181545001"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9287"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545001/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 25,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545006",
+    "pull_request_review_id": 112200469,
+    "id": 181545006,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE4MTU0NTAwNg==",
+    "diff_hunk": "@@ -71,7 +72,11 @@ class Transaction {\n           return this.cleanup();\n         }\n         return null;\n-      });\n+      }).tap(\n+        () => this.sequelize.Promise.each(\n+          this.afterCommitHooks,",
+    "path": "lib/transaction.js",
+    "commit_id": "ca3025a5db3ad8f8dbfbcc333b91637a91f7938f",
+    "original_commit_id": "7b43f4151ed523a1dcced3dd0bd379b24c508ed7",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Use `const Promise = require('./promise');`",
+    "created_at": "2018-04-14T07:40:16Z",
+    "updated_at": "2018-04-18T18:44:04Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9287#discussion_r181545006",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9287",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545006"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9287#discussion_r181545006"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9287"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545006/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 77,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 15,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545015",
+    "pull_request_review_id": 112200469,
+    "id": 181545015,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE4MTU0NTAxNQ==",
+    "diff_hunk": "@@ -184,6 +189,16 @@ class Transaction {\n     }\n   }\n \n+  /**\n+  * A hook that is run after a transaction is committed\n+  * @param {Function} fn   A callback function that is called with the committed transaction\n+  * @name afterCommit\n+  * @memberOf Sequelize.Transaction\n+  */\n+  afterCommit(fn) {",
+    "path": "lib/transaction.js",
+    "commit_id": "ca3025a5db3ad8f8dbfbcc333b91637a91f7938f",
+    "original_commit_id": "7b43f4151ed523a1dcced3dd0bd379b24c508ed7",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "assert for `fn` being a function + test",
+    "created_at": "2018-04-14T07:40:38Z",
+    "updated_at": "2018-04-18T18:44:04Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9287#discussion_r181545015",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9287",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545015"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9287#discussion_r181545015"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9287"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545015/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 198,
+    "original_line": 198,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 31,
+    "position": 31,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545022",
+    "pull_request_review_id": 112200469,
+    "id": 181545022,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE4MTU0NTAyMg==",
+    "diff_hunk": "@@ -79,6 +79,32 @@ if (current.dialect.supports.transactions) {\n         });\n       });\n \n+      it('supports running hooks when a transaction is commited', function() {\n+        const self = this;",
+    "path": "test/integration/transaction.test.js",
+    "commit_id": "ca3025a5db3ad8f8dbfbcc333b91637a91f7938f",
+    "original_commit_id": "7b43f4151ed523a1dcced3dd0bd379b24c508ed7",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "No `self = this`",
+    "created_at": "2018-04-14T07:41:28Z",
+    "updated_at": "2018-04-18T18:44:04Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9287#discussion_r181545022",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9287",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545022"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9287#discussion_r181545022"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9287"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545022/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 83,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 5,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545062",
+    "pull_request_review_id": 112200469,
+    "id": 181545062,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE4MTU0NTA2Mg==",
+    "diff_hunk": "@@ -79,6 +79,32 @@ if (current.dialect.supports.transactions) {\n         });\n       });\n \n+      it('supports running hooks when a transaction is commited', function() {\n+        const self = this;\n+        const hook = sinon.spy();\n+        let t;",
+    "path": "test/integration/transaction.test.js",
+    "commit_id": "ca3025a5db3ad8f8dbfbcc333b91637a91f7938f",
+    "original_commit_id": "7b43f4151ed523a1dcced3dd0bd379b24c508ed7",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "`let transaction;`",
+    "created_at": "2018-04-14T07:43:28Z",
+    "updated_at": "2018-04-18T18:44:04Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9287#discussion_r181545062",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9287",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545062"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9287#discussion_r181545062"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9287"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545062/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 85,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 7,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545065",
+    "pull_request_review_id": 112200469,
+    "id": 181545065,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE4MTU0NTA2NQ==",
+    "diff_hunk": "@@ -79,6 +79,32 @@ if (current.dialect.supports.transactions) {\n         });\n       });\n \n+      it('supports running hooks when a transaction is commited', function() {\n+        const self = this;\n+        const hook = sinon.spy();\n+        let t;\n+        return expect(this.sequelize.transaction(transaction => {",
+    "path": "test/integration/transaction.test.js",
+    "commit_id": "ca3025a5db3ad8f8dbfbcc333b91637a91f7938f",
+    "original_commit_id": "7b43f4151ed523a1dcced3dd0bd379b24c508ed7",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Call this `t`",
+    "created_at": "2018-04-14T07:43:42Z",
+    "updated_at": "2018-04-18T18:44:04Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9287#discussion_r181545065",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9287",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545065"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9287#discussion_r181545065"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9287"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545065/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 86,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 8,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545087",
+    "pull_request_review_id": 112200469,
+    "id": 181545087,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE4MTU0NTA4Nw==",
+    "diff_hunk": "@@ -79,6 +79,32 @@ if (current.dialect.supports.transactions) {\n         });\n       });\n \n+      it('supports running hooks when a transaction is commited', function() {\n+        const self = this;\n+        const hook = sinon.spy();\n+        let t;\n+        return expect(this.sequelize.transaction(transaction => {\n+          t = transaction;\n+          transaction.afterCommit(hook);\n+          return self.sequelize.query('SELECT 1+1', {transaction, raw: true});",
+    "path": "test/integration/transaction.test.js",
+    "commit_id": "ca3025a5db3ad8f8dbfbcc333b91637a91f7938f",
+    "original_commit_id": "7b43f4151ed523a1dcced3dd0bd379b24c508ed7",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "No need to pass ``{ raw: true }``, its not required. Instead pass `type: QueryType.SELECT`",
+    "created_at": "2018-04-14T07:45:02Z",
+    "updated_at": "2018-04-18T18:44:04Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9287#discussion_r181545087",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9287",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545087"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9287#discussion_r181545087"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9287"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/181545087/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 89,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 11,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/182308841",
+    "pull_request_review_id": 113076913,
+    "id": 182308841,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE4MjMwODg0MQ==",
+    "diff_hunk": "@@ -189,6 +215,107 @@ if (current.dialect.supports.transactions) {\n       ).to.be.rejectedWith('Transaction cannot be committed because it has been finished with state: commit');\n     });\n \n+    it('should run hooks if a non-auto callback transaction is committed', function() {\n+      const self = this;",
+    "path": "test/integration/transaction.test.js",
+    "commit_id": "ca3025a5db3ad8f8dbfbcc333b91637a91f7938f",
+    "original_commit_id": "8f6aa846f13bac899ce7f36e7eaa2a9b007788a9",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This test is still using `self`, next one too",
+    "created_at": "2018-04-18T04:56:40Z",
+    "updated_at": "2018-04-18T18:44:04Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9287#discussion_r182308841",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9287",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/182308841"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9287#discussion_r182308841"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9287"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/182308841/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 219,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 45,
+    "position": 1,
+    "subject_type": "line"
+  }
+]

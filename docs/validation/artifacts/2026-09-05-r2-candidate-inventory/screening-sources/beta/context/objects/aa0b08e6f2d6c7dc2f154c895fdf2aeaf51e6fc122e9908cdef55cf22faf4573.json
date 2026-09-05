@@ -1,0 +1,766 @@
+[
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/408407107",
+    "pull_request_review_id": 393261112,
+    "id": 408407107,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQwODQwNzEwNw==",
+    "diff_hunk": "@@ -1397,6 +1397,19 @@ export class CommandCenter {\n \t\t\topts.signoff = true;\n \t\t}\n \n+\t\tif (config.get<boolean>('useEditorToCommit')) {\n+\t\t\topts.useEditor = true;\n+\t\t}\n+\n+\t\tif (config.get<boolean>('verboseCommit')) {\n+\t\t\topts.verbose = true;\n+\t\t\tif (!opts.useEditor) {\n+\t\t\t\twindow.showInformationMessage(\n+\t\t\t\t\tlocalize('useless verbose commit', \"Verbose committing has no effect. The setting 'git.useEditorToCommit' is not enabled.\")\n+\t\t\t\t);",
+    "path": "extensions/git/src/commands.ts",
+    "commit_id": "264d5ed34cc5ac7f0e1fa9a575814d04e9363655",
+    "original_commit_id": "a47817e8a7daf7fb00635d41180fd5bd4e3479f1",
+    "user": {
+      "login": "JohnnyCrazy",
+      "id": 3109892,
+      "node_id": "MDQ6VXNlcjMxMDk4OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3109892?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/JohnnyCrazy",
+      "html_url": "https://github.com/JohnnyCrazy",
+      "followers_url": "https://api.github.com/users/JohnnyCrazy/followers",
+      "following_url": "https://api.github.com/users/JohnnyCrazy/following{/other_user}",
+      "gists_url": "https://api.github.com/users/JohnnyCrazy/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/JohnnyCrazy/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/JohnnyCrazy/subscriptions",
+      "organizations_url": "https://api.github.com/users/JohnnyCrazy/orgs",
+      "repos_url": "https://api.github.com/users/JohnnyCrazy/repos",
+      "events_url": "https://api.github.com/users/JohnnyCrazy/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/JohnnyCrazy/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I was not sure whether to include this warning or not. Up to you guys :)",
+    "created_at": "2020-04-14T20:14:18Z",
+    "updated_at": "2020-07-27T10:14:57Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/95266#discussion_r408407107",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/95266",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/408407107"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/95266#discussion_r408407107"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/95266"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/408407107/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": 1407,
+    "start_side": "RIGHT",
+    "line": null,
+    "original_line": 1429,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 13,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/408408361",
+    "pull_request_review_id": 393262740,
+    "id": 408408361,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQwODQwODM2MQ==",
+    "diff_hunk": "@@ -1300,8 +1302,16 @@ export class Repository {\n \t\t}\n \t}\n \n-\tasync commit(message: string, opts: CommitOptions = Object.create(null)): Promise<void> {\n-\t\tconst args = ['commit', '--quiet', '--allow-empty-message', '--file', '-'];\n+\tasync commit(message?: string, opts: CommitOptions = Object.create(null)): Promise<void> {\n+\t\tconst args = ['commit', '--quiet'];\n+\t\tconst options: SpawnOptions = {};\n+\n+\t\tif (!opts.useEditor || message) {",
+    "path": "extensions/git/src/git.ts",
+    "commit_id": "264d5ed34cc5ac7f0e1fa9a575814d04e9363655",
+    "original_commit_id": "a47817e8a7daf7fb00635d41180fd5bd4e3479f1",
+    "user": {
+      "login": "JohnnyCrazy",
+      "id": 3109892,
+      "node_id": "MDQ6VXNlcjMxMDk4OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3109892?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/JohnnyCrazy",
+      "html_url": "https://github.com/JohnnyCrazy",
+      "followers_url": "https://api.github.com/users/JohnnyCrazy/followers",
+      "following_url": "https://api.github.com/users/JohnnyCrazy/following{/other_user}",
+      "gists_url": "https://api.github.com/users/JohnnyCrazy/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/JohnnyCrazy/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/JohnnyCrazy/subscriptions",
+      "organizations_url": "https://api.github.com/users/JohnnyCrazy/orgs",
+      "repos_url": "https://api.github.com/users/JohnnyCrazy/repos",
+      "events_url": "https://api.github.com/users/JohnnyCrazy/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/JohnnyCrazy/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "If a message is supplied, it should still be used for the commit. This allows to use the input box for quick commits, although `git.useEditorToCommit` is enabled.",
+    "created_at": "2020-04-14T20:16:41Z",
+    "updated_at": "2020-07-27T10:14:57Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/95266#discussion_r408408361",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/95266",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/408408361"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/95266#discussion_r408408361"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/95266"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/408408361/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1348,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 19,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/408409451",
+    "pull_request_review_id": 393264085,
+    "id": 408409451,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQwODQwOTQ1MQ==",
+    "diff_hunk": "@@ -0,0 +1,75 @@\n+/*---------------------------------------------------------------------------------------------\n+ *  Copyright (c) Microsoft Corporation. All rights reserved.\n+ *  Licensed under the MIT License. See License.txt in the project root for license information.\n+ *--------------------------------------------------------------------------------------------*/\n+import * as path from 'path';\n+import { workspace, window, Uri, Position, Selection } from 'vscode';\n+\n+import { IIPCHandler, IIPCServer } from './ipc/ipcServer';\n+import { IDisposable } from './util';\n+\n+export interface GitEditorEnvironment {\n+\tGIT_EDITOR: string;\n+\tELECTRON_RUN_AS_NODE?: string;\n+\tVSCODE_GIT_EDITOR_NODE?: string;\n+\tVSCODE_GIT_EDITOR_MAIN?: string;\n+}\n+\n+interface GitEditorRequest {\n+\tcommitMessagePath?: string;\n+}\n+\n+export class GitEditor implements IIPCHandler {\n+\tprivate disposable: IDisposable;\n+\n+\tstatic getDisabledEnv(): GitEditorEnvironment {\n+\t\tconst fileType = process.platform === 'win32' ? 'bat' : 'sh';\n+\t\tconst gitEditor = path.join(__dirname, `scripts/git-editor-empty.${fileType}`);\n+\n+\t\treturn {\n+\t\t\tGIT_EDITOR: `'${gitEditor}'`,\n+\t\t};\n+\t}\n+\n+\tconstructor(ipc: IIPCServer) {\n+\t\tthis.disposable = ipc.registerHandler('git-editor', this);\n+\t}\n+\n+\tasync handle({ commitMessagePath }: GitEditorRequest): Promise<any> {\n+\t\tif (commitMessagePath) {\n+\t\t\tconst file = Uri.file(commitMessagePath);\n+\t\t\tconst doc = await workspace.openTextDocument(file);\n+\t\t\tconst editor = await window.showTextDocument(doc);\n+\n+\t\t\t// We don't want to remember the cursor position.\n+\t\t\t// One should be able to start writing the message immediately.\n+\t\t\tconst position = new Position(0, 0);\n+\t\t\teditor.selection = new Selection(position, position);",
+    "path": "extensions/git/src/gitEditor.ts",
+    "commit_id": "264d5ed34cc5ac7f0e1fa9a575814d04e9363655",
+    "original_commit_id": "a47817e8a7daf7fb00635d41180fd5bd4e3479f1",
+    "user": {
+      "login": "JohnnyCrazy",
+      "id": 3109892,
+      "node_id": "MDQ6VXNlcjMxMDk4OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3109892?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/JohnnyCrazy",
+      "html_url": "https://github.com/JohnnyCrazy",
+      "followers_url": "https://api.github.com/users/JohnnyCrazy/followers",
+      "following_url": "https://api.github.com/users/JohnnyCrazy/following{/other_user}",
+      "gists_url": "https://api.github.com/users/JohnnyCrazy/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/JohnnyCrazy/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/JohnnyCrazy/subscriptions",
+      "organizations_url": "https://api.github.com/users/JohnnyCrazy/orgs",
+      "repos_url": "https://api.github.com/users/JohnnyCrazy/repos",
+      "events_url": "https://api.github.com/users/JohnnyCrazy/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/JohnnyCrazy/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "vscode seems to remember where my cursor was in an older file. This was quite annoying since I couldn't start writing the commit message immediately.",
+    "created_at": "2020-04-14T20:18:40Z",
+    "updated_at": "2020-07-27T10:14:57Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/95266#discussion_r408409451",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/95266",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/408409451"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/95266#discussion_r408409451"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/95266"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/408409451/reactions",
+      "total_count": 2,
+      "+1": 2,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 47,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 47,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/408410218",
+    "pull_request_review_id": 393264975,
+    "id": 408410218,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQwODQxMDIxOA==",
+    "diff_hunk": "@@ -0,0 +1,75 @@\n+/*---------------------------------------------------------------------------------------------\n+ *  Copyright (c) Microsoft Corporation. All rights reserved.\n+ *  Licensed under the MIT License. See License.txt in the project root for license information.\n+ *--------------------------------------------------------------------------------------------*/\n+import * as path from 'path';\n+import { workspace, window, Uri, Position, Selection } from 'vscode';\n+\n+import { IIPCHandler, IIPCServer } from './ipc/ipcServer';\n+import { IDisposable } from './util';\n+\n+export interface GitEditorEnvironment {\n+\tGIT_EDITOR: string;\n+\tELECTRON_RUN_AS_NODE?: string;\n+\tVSCODE_GIT_EDITOR_NODE?: string;\n+\tVSCODE_GIT_EDITOR_MAIN?: string;\n+}\n+\n+interface GitEditorRequest {\n+\tcommitMessagePath?: string;\n+}\n+\n+export class GitEditor implements IIPCHandler {\n+\tprivate disposable: IDisposable;\n+\n+\tstatic getDisabledEnv(): GitEditorEnvironment {\n+\t\tconst fileType = process.platform === 'win32' ? 'bat' : 'sh';\n+\t\tconst gitEditor = path.join(__dirname, `scripts/git-editor-empty.${fileType}`);\n+\n+\t\treturn {\n+\t\t\tGIT_EDITOR: `'${gitEditor}'`,\n+\t\t};\n+\t}\n+\n+\tconstructor(ipc: IIPCServer) {\n+\t\tthis.disposable = ipc.registerHandler('git-editor', this);\n+\t}\n+\n+\tasync handle({ commitMessagePath }: GitEditorRequest): Promise<any> {\n+\t\tif (commitMessagePath) {\n+\t\t\tconst file = Uri.file(commitMessagePath);\n+\t\t\tconst doc = await workspace.openTextDocument(file);\n+\t\t\tconst editor = await window.showTextDocument(doc);\n+\n+\t\t\t// We don't want to remember the cursor position.\n+\t\t\t// One should be able to start writing the message immediately.\n+\t\t\tconst position = new Position(0, 0);\n+\t\t\teditor.selection = new Selection(position, position);\n+\n+\t\t\treturn new Promise((c, e) => {\n+\t\t\t\tconst onDidChange = window.onDidChangeVisibleTextEditors((editors) => {\n+\t\t\t\t\tif (editors.indexOf(editor) < 0) {\n+\t\t\t\t\t\tonDidChange.dispose();\n+\t\t\t\t\t\treturn c(true);\n+\t\t\t\t\t}\n+\t\t\t\t});\n+\t\t\t});",
+    "path": "extensions/git/src/gitEditor.ts",
+    "commit_id": "264d5ed34cc5ac7f0e1fa9a575814d04e9363655",
+    "original_commit_id": "a47817e8a7daf7fb00635d41180fd5bd4e3479f1",
+    "user": {
+      "login": "JohnnyCrazy",
+      "id": 3109892,
+      "node_id": "MDQ6VXNlcjMxMDk4OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3109892?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/JohnnyCrazy",
+      "html_url": "https://github.com/JohnnyCrazy",
+      "followers_url": "https://api.github.com/users/JohnnyCrazy/followers",
+      "following_url": "https://api.github.com/users/JohnnyCrazy/following{/other_user}",
+      "gists_url": "https://api.github.com/users/JohnnyCrazy/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/JohnnyCrazy/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/JohnnyCrazy/subscriptions",
+      "organizations_url": "https://api.github.com/users/JohnnyCrazy/orgs",
+      "repos_url": "https://api.github.com/users/JohnnyCrazy/repos",
+      "events_url": "https://api.github.com/users/JohnnyCrazy/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/JohnnyCrazy/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I'm not 100% sure about this part. Could be, that I missed some edge cases where this fails?",
+    "created_at": "2020-04-14T20:19:58Z",
+    "updated_at": "2020-07-27T10:14:57Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/95266#discussion_r408410218",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/95266",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/408410218"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/95266#discussion_r408410218"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/95266"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/408410218/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": 49,
+    "start_side": "RIGHT",
+    "line": null,
+    "original_line": 45,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 56,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/420838610",
+    "pull_request_review_id": 406672661,
+    "id": 420838610,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQyMDgzODYxMA==",
+    "diff_hunk": "@@ -0,0 +1,75 @@\n+/*---------------------------------------------------------------------------------------------\n+ *  Copyright (c) Microsoft Corporation. All rights reserved.\n+ *  Licensed under the MIT License. See License.txt in the project root for license information.\n+ *--------------------------------------------------------------------------------------------*/\n+import * as path from 'path';\n+import { workspace, window, Uri, Position, Selection } from 'vscode';\n+\n+import { IIPCHandler, IIPCServer } from './ipc/ipcServer';\n+import { IDisposable } from './util';\n+\n+export interface GitEditorEnvironment {\n+\tGIT_EDITOR: string;\n+\tELECTRON_RUN_AS_NODE?: string;\n+\tVSCODE_GIT_EDITOR_NODE?: string;\n+\tVSCODE_GIT_EDITOR_MAIN?: string;\n+}\n+\n+interface GitEditorRequest {\n+\tcommitMessagePath?: string;\n+}\n+\n+export class GitEditor implements IIPCHandler {\n+\tprivate disposable: IDisposable;\n+\n+\tstatic getDisabledEnv(): GitEditorEnvironment {\n+\t\tconst fileType = process.platform === 'win32' ? 'bat' : 'sh';\n+\t\tconst gitEditor = path.join(__dirname, `scripts/git-editor-empty.${fileType}`);\n+\n+\t\treturn {\n+\t\t\tGIT_EDITOR: `'${gitEditor}'`,\n+\t\t};\n+\t}\n+\n+\tconstructor(ipc: IIPCServer) {\n+\t\tthis.disposable = ipc.registerHandler('git-editor', this);\n+\t}\n+\n+\tasync handle({ commitMessagePath }: GitEditorRequest): Promise<any> {\n+\t\tif (commitMessagePath) {\n+\t\t\tconst file = Uri.file(commitMessagePath);\n+\t\t\tconst doc = await workspace.openTextDocument(file);\n+\t\t\tconst editor = await window.showTextDocument(doc);\n+\n+\t\t\t// We don't want to remember the cursor position.\n+\t\t\t// One should be able to start writing the message immediately.\n+\t\t\tconst position = new Position(0, 0);\n+\t\t\teditor.selection = new Selection(position, position);",
+    "path": "extensions/git/src/gitEditor.ts",
+    "commit_id": "264d5ed34cc5ac7f0e1fa9a575814d04e9363655",
+    "original_commit_id": "a47817e8a7daf7fb00635d41180fd5bd4e3479f1",
+    "user": {
+      "login": "joshk0",
+      "id": 5368926,
+      "node_id": "MDQ6VXNlcjUzNjg5MjY=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5368926?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/joshk0",
+      "html_url": "https://github.com/joshk0",
+      "followers_url": "https://api.github.com/users/joshk0/followers",
+      "following_url": "https://api.github.com/users/joshk0/following{/other_user}",
+      "gists_url": "https://api.github.com/users/joshk0/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/joshk0/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/joshk0/subscriptions",
+      "organizations_url": "https://api.github.com/users/joshk0/orgs",
+      "repos_url": "https://api.github.com/users/joshk0/repos",
+      "events_url": "https://api.github.com/users/joshk0/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/joshk0/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This is probably because the path to the git-commit is always `.git/COMMIT_EDITMSG` or something. If you change how vscode calls git commit, you can make this a randomly named temp file. The downside is that you will lose the automated report that git commit gives you (especially when using `--verbose`) but then again, you have a whole IDE that can provide this information so maybe that's a good future path.",
+    "created_at": "2020-05-06T14:31:48Z",
+    "updated_at": "2020-07-27T10:14:57Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/95266#discussion_r420838610",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/95266",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/420838610"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/95266#discussion_r420838610"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/95266"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/420838610/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 47,
+    "side": "RIGHT",
+    "in_reply_to_id": 408409451,
+    "author_association": "NONE",
+    "original_position": 47,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/422035459",
+    "pull_request_review_id": 408107964,
+    "id": 422035459,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQyMjAzNTQ1OQ==",
+    "diff_hunk": "@@ -0,0 +1,75 @@\n+/*---------------------------------------------------------------------------------------------\n+ *  Copyright (c) Microsoft Corporation. All rights reserved.\n+ *  Licensed under the MIT License. See License.txt in the project root for license information.\n+ *--------------------------------------------------------------------------------------------*/\n+import * as path from 'path';\n+import { workspace, window, Uri, Position, Selection } from 'vscode';\n+\n+import { IIPCHandler, IIPCServer } from './ipc/ipcServer';\n+import { IDisposable } from './util';\n+\n+export interface GitEditorEnvironment {\n+\tGIT_EDITOR: string;\n+\tELECTRON_RUN_AS_NODE?: string;\n+\tVSCODE_GIT_EDITOR_NODE?: string;\n+\tVSCODE_GIT_EDITOR_MAIN?: string;\n+}\n+\n+interface GitEditorRequest {\n+\tcommitMessagePath?: string;\n+}\n+\n+export class GitEditor implements IIPCHandler {\n+\tprivate disposable: IDisposable;\n+\n+\tstatic getDisabledEnv(): GitEditorEnvironment {\n+\t\tconst fileType = process.platform === 'win32' ? 'bat' : 'sh';\n+\t\tconst gitEditor = path.join(__dirname, `scripts/git-editor-empty.${fileType}`);\n+\n+\t\treturn {\n+\t\t\tGIT_EDITOR: `'${gitEditor}'`,\n+\t\t};\n+\t}\n+\n+\tconstructor(ipc: IIPCServer) {\n+\t\tthis.disposable = ipc.registerHandler('git-editor', this);\n+\t}\n+\n+\tasync handle({ commitMessagePath }: GitEditorRequest): Promise<any> {\n+\t\tif (commitMessagePath) {\n+\t\t\tconst file = Uri.file(commitMessagePath);\n+\t\t\tconst doc = await workspace.openTextDocument(file);\n+\t\t\tconst editor = await window.showTextDocument(doc);\n+\n+\t\t\t// We don't want to remember the cursor position.\n+\t\t\t// One should be able to start writing the message immediately.\n+\t\t\tconst position = new Position(0, 0);\n+\t\t\teditor.selection = new Selection(position, position);",
+    "path": "extensions/git/src/gitEditor.ts",
+    "commit_id": "264d5ed34cc5ac7f0e1fa9a575814d04e9363655",
+    "original_commit_id": "a47817e8a7daf7fb00635d41180fd5bd4e3479f1",
+    "user": {
+      "login": "Khady",
+      "id": 974142,
+      "node_id": "MDQ6VXNlcjk3NDE0Mg==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/974142?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Khady",
+      "html_url": "https://github.com/Khady",
+      "followers_url": "https://api.github.com/users/Khady/followers",
+      "following_url": "https://api.github.com/users/Khady/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Khady/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Khady/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Khady/subscriptions",
+      "organizations_url": "https://api.github.com/users/Khady/orgs",
+      "repos_url": "https://api.github.com/users/Khady/repos",
+      "events_url": "https://api.github.com/users/Khady/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Khady/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "> This is probably because the path to the git-commit is always .git/COMMIT_EDITMSG or something. If you change how vscode calls git commit, you can make this a randomly named temp file. \r\n\r\ndoes not using .git/COMMIT_EDITMSG mean no proper integration with prepare-commit-msg hook? it would be nice to preserve this",
+    "created_at": "2020-05-08T09:10:36Z",
+    "updated_at": "2020-07-27T10:14:57Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/95266#discussion_r422035459",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/95266",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/422035459"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/95266#discussion_r422035459"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/95266"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/422035459/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 47,
+    "side": "RIGHT",
+    "in_reply_to_id": 408409451,
+    "author_association": "NONE",
+    "original_position": 47,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/422037511",
+    "pull_request_review_id": 408110367,
+    "id": 422037511,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQyMjAzNzUxMQ==",
+    "diff_hunk": "@@ -0,0 +1,75 @@\n+/*---------------------------------------------------------------------------------------------\n+ *  Copyright (c) Microsoft Corporation. All rights reserved.\n+ *  Licensed under the MIT License. See License.txt in the project root for license information.\n+ *--------------------------------------------------------------------------------------------*/\n+import * as path from 'path';\n+import { workspace, window, Uri, Position, Selection } from 'vscode';\n+\n+import { IIPCHandler, IIPCServer } from './ipc/ipcServer';\n+import { IDisposable } from './util';\n+\n+export interface GitEditorEnvironment {\n+\tGIT_EDITOR: string;\n+\tELECTRON_RUN_AS_NODE?: string;\n+\tVSCODE_GIT_EDITOR_NODE?: string;\n+\tVSCODE_GIT_EDITOR_MAIN?: string;\n+}\n+\n+interface GitEditorRequest {\n+\tcommitMessagePath?: string;\n+}\n+\n+export class GitEditor implements IIPCHandler {\n+\tprivate disposable: IDisposable;\n+\n+\tstatic getDisabledEnv(): GitEditorEnvironment {\n+\t\tconst fileType = process.platform === 'win32' ? 'bat' : 'sh';\n+\t\tconst gitEditor = path.join(__dirname, `scripts/git-editor-empty.${fileType}`);\n+\n+\t\treturn {\n+\t\t\tGIT_EDITOR: `'${gitEditor}'`,\n+\t\t};\n+\t}\n+\n+\tconstructor(ipc: IIPCServer) {\n+\t\tthis.disposable = ipc.registerHandler('git-editor', this);\n+\t}\n+\n+\tasync handle({ commitMessagePath }: GitEditorRequest): Promise<any> {\n+\t\tif (commitMessagePath) {\n+\t\t\tconst file = Uri.file(commitMessagePath);\n+\t\t\tconst doc = await workspace.openTextDocument(file);\n+\t\t\tconst editor = await window.showTextDocument(doc);\n+\n+\t\t\t// We don't want to remember the cursor position.\n+\t\t\t// One should be able to start writing the message immediately.\n+\t\t\tconst position = new Position(0, 0);\n+\t\t\teditor.selection = new Selection(position, position);",
+    "path": "extensions/git/src/gitEditor.ts",
+    "commit_id": "264d5ed34cc5ac7f0e1fa9a575814d04e9363655",
+    "original_commit_id": "a47817e8a7daf7fb00635d41180fd5bd4e3479f1",
+    "user": {
+      "login": "JohnnyCrazy",
+      "id": 3109892,
+      "node_id": "MDQ6VXNlcjMxMDk4OTI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3109892?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/JohnnyCrazy",
+      "html_url": "https://github.com/JohnnyCrazy",
+      "followers_url": "https://api.github.com/users/JohnnyCrazy/followers",
+      "following_url": "https://api.github.com/users/JohnnyCrazy/following{/other_user}",
+      "gists_url": "https://api.github.com/users/JohnnyCrazy/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/JohnnyCrazy/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/JohnnyCrazy/subscriptions",
+      "organizations_url": "https://api.github.com/users/JohnnyCrazy/orgs",
+      "repos_url": "https://api.github.com/users/JohnnyCrazy/repos",
+      "events_url": "https://api.github.com/users/JohnnyCrazy/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/JohnnyCrazy/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Yes, that's why I refrained from using a custom/tmp file. I think the overall experience is still the best when the original file is used.",
+    "created_at": "2020-05-08T09:15:08Z",
+    "updated_at": "2020-07-27T10:14:57Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/95266#discussion_r422037511",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/95266",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/422037511"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/95266#discussion_r422037511"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/95266"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/422037511/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 47,
+    "side": "RIGHT",
+    "in_reply_to_id": 408409451,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 47,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/881609906",
+    "pull_request_review_id": 984749207,
+    "id": 881609906,
+    "node_id": "PRRC_kwDOAn8RLM40jEyy",
+    "diff_hunk": "@@ -0,0 +1,64 @@\n+/*---------------------------------------------------------------------------------------------\n+ *  Copyright (c) Microsoft Corporation. All rights reserved.\n+ *  Licensed under the MIT License. See License.txt in the project root for license information.\n+ *--------------------------------------------------------------------------------------------*/\n+import * as path from 'path';\n+import { TabInputText, Uri, window, workspace } from 'vscode';\n+import { IIPCHandler, IIPCServer } from '../ipc/ipcServer';\n+import { EmptyDisposable, IDisposable } from '../util';\n+\n+interface GitEditorRequest {\n+\tcommitMessagePath?: string;\n+}\n+\n+export class GitEditor implements IIPCHandler {\n+\n+\tprivate disposable: IDisposable = EmptyDisposable;\n+\n+\tconstructor(private ipc?: IIPCServer) {\n+\t\tif (ipc) {\n+\t\t\tthis.disposable = ipc.registerHandler('git-editor', this);\n+\t\t}\n+\t}\n+\n+\tasync handle({ commitMessagePath }: GitEditorRequest): Promise<any> {",
+    "path": "extensions/git/src/gitEditor/gitEditor.ts",
+    "commit_id": "264d5ed34cc5ac7f0e1fa9a575814d04e9363655",
+    "original_commit_id": "264d5ed34cc5ac7f0e1fa9a575814d04e9363655",
+    "user": {
+      "login": "joaomoreno",
+      "id": 22350,
+      "node_id": "MDQ6VXNlcjIyMzUw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22350?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/joaomoreno",
+      "html_url": "https://github.com/joaomoreno",
+      "followers_url": "https://api.github.com/users/joaomoreno/followers",
+      "following_url": "https://api.github.com/users/joaomoreno/following{/other_user}",
+      "gists_url": "https://api.github.com/users/joaomoreno/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/joaomoreno/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/joaomoreno/subscriptions",
+      "organizations_url": "https://api.github.com/users/joaomoreno/orgs",
+      "repos_url": "https://api.github.com/users/joaomoreno/repos",
+      "events_url": "https://api.github.com/users/joaomoreno/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/joaomoreno/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Maybe we shouldn't deconstruct the object here but rather have `(arg: any)` and then carefully see if `arg` is an object and has a `commitMessagePath` string property.",
+    "created_at": "2022-05-25T12:47:07Z",
+    "updated_at": "2022-05-25T12:51:14Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/95266#discussion_r881609906",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/95266",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/881609906"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/95266#discussion_r881609906"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/95266"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/881609906/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 24,
+    "original_line": 24,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 24,
+    "position": 24,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/881613920",
+    "pull_request_review_id": 984749207,
+    "id": 881613920,
+    "node_id": "PRRC_kwDOAn8RLM40jFxg",
+    "diff_hunk": "@@ -37,7 +37,7 @@ export function isSCMResource(element: any): element is ISCMResource {\n \treturn !!(element as ISCMResource).sourceUri && isSCMResourceGroup((element as ISCMResource).resourceGroup);\n }\n \n-const compareActions = (a: IAction, b: IAction) => a.id === b.id;\n+const compareActions = (a: IAction, b: IAction) => a.id === b.id && a.enabled === b.enabled;",
+    "path": "src/vs/workbench/contrib/scm/browser/util.ts",
+    "commit_id": "264d5ed34cc5ac7f0e1fa9a575814d04e9363655",
+    "original_commit_id": "264d5ed34cc5ac7f0e1fa9a575814d04e9363655",
+    "user": {
+      "login": "joaomoreno",
+      "id": 22350,
+      "node_id": "MDQ6VXNlcjIyMzUw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22350?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/joaomoreno",
+      "html_url": "https://github.com/joaomoreno",
+      "followers_url": "https://api.github.com/users/joaomoreno/followers",
+      "following_url": "https://api.github.com/users/joaomoreno/following{/other_user}",
+      "gists_url": "https://api.github.com/users/joaomoreno/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/joaomoreno/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/joaomoreno/subscriptions",
+      "organizations_url": "https://api.github.com/users/joaomoreno/orgs",
+      "repos_url": "https://api.github.com/users/joaomoreno/repos",
+      "events_url": "https://api.github.com/users/joaomoreno/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/joaomoreno/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Interesting!",
+    "created_at": "2022-05-25T12:51:04Z",
+    "updated_at": "2022-05-25T12:51:14Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/95266#discussion_r881613920",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/95266",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/881613920"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/95266#discussion_r881613920"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/95266"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/881613920/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 40,
+    "original_line": 40,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 5,
+    "position": 5,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/881782496",
+    "pull_request_review_id": 985008247,
+    "id": 881782496,
+    "node_id": "PRRC_kwDOAn8RLM40ju7g",
+    "diff_hunk": "@@ -37,7 +37,7 @@ export function isSCMResource(element: any): element is ISCMResource {\n \treturn !!(element as ISCMResource).sourceUri && isSCMResourceGroup((element as ISCMResource).resourceGroup);\n }\n \n-const compareActions = (a: IAction, b: IAction) => a.id === b.id;\n+const compareActions = (a: IAction, b: IAction) => a.id === b.id && a.enabled === b.enabled;",
+    "path": "src/vs/workbench/contrib/scm/browser/util.ts",
+    "commit_id": "264d5ed34cc5ac7f0e1fa9a575814d04e9363655",
+    "original_commit_id": "264d5ed34cc5ac7f0e1fa9a575814d04e9363655",
+    "user": {
+      "login": "lszomoru",
+      "id": 3372902,
+      "node_id": "MDQ6VXNlcjMzNzI5MDI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3372902?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/lszomoru",
+      "html_url": "https://github.com/lszomoru",
+      "followers_url": "https://api.github.com/users/lszomoru/followers",
+      "following_url": "https://api.github.com/users/lszomoru/following{/other_user}",
+      "gists_url": "https://api.github.com/users/lszomoru/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/lszomoru/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/lszomoru/subscriptions",
+      "organizations_url": "https://api.github.com/users/lszomoru/orgs",
+      "repos_url": "https://api.github.com/users/lszomoru/repos",
+      "events_url": "https://api.github.com/users/lszomoru/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/lszomoru/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": true
+    },
+    "body": "As discussed, this is necessary in order for the enablement to be refreshed in the repository toolbar.",
+    "created_at": "2022-05-25T15:14:56Z",
+    "updated_at": "2022-05-25T15:14:56Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/95266#discussion_r881782496",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/95266",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/881782496"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/95266#discussion_r881782496"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/95266"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/881782496/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 40,
+    "original_line": 40,
+    "side": "RIGHT",
+    "in_reply_to_id": 881613920,
+    "author_association": "MEMBER",
+    "original_position": 5,
+    "position": 5,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/881783262",
+    "pull_request_review_id": 985009274,
+    "id": 881783262,
+    "node_id": "PRRC_kwDOAn8RLM40jvHe",
+    "diff_hunk": "@@ -0,0 +1,64 @@\n+/*---------------------------------------------------------------------------------------------\n+ *  Copyright (c) Microsoft Corporation. All rights reserved.\n+ *  Licensed under the MIT License. See License.txt in the project root for license information.\n+ *--------------------------------------------------------------------------------------------*/\n+import * as path from 'path';\n+import { TabInputText, Uri, window, workspace } from 'vscode';\n+import { IIPCHandler, IIPCServer } from '../ipc/ipcServer';\n+import { EmptyDisposable, IDisposable } from '../util';\n+\n+interface GitEditorRequest {\n+\tcommitMessagePath?: string;\n+}\n+\n+export class GitEditor implements IIPCHandler {\n+\n+\tprivate disposable: IDisposable = EmptyDisposable;\n+\n+\tconstructor(private ipc?: IIPCServer) {\n+\t\tif (ipc) {\n+\t\t\tthis.disposable = ipc.registerHandler('git-editor', this);\n+\t\t}\n+\t}\n+\n+\tasync handle({ commitMessagePath }: GitEditorRequest): Promise<any> {",
+    "path": "extensions/git/src/gitEditor/gitEditor.ts",
+    "commit_id": "264d5ed34cc5ac7f0e1fa9a575814d04e9363655",
+    "original_commit_id": "264d5ed34cc5ac7f0e1fa9a575814d04e9363655",
+    "user": {
+      "login": "lszomoru",
+      "id": 3372902,
+      "node_id": "MDQ6VXNlcjMzNzI5MDI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3372902?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/lszomoru",
+      "html_url": "https://github.com/lszomoru",
+      "followers_url": "https://api.github.com/users/lszomoru/followers",
+      "following_url": "https://api.github.com/users/lszomoru/following{/other_user}",
+      "gists_url": "https://api.github.com/users/lszomoru/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/lszomoru/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/lszomoru/subscriptions",
+      "organizations_url": "https://api.github.com/users/lszomoru/orgs",
+      "repos_url": "https://api.github.com/users/lszomoru/repos",
+      "events_url": "https://api.github.com/users/lszomoru/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/lszomoru/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": true
+    },
+    "body": "Makes sense. I will follow up with a commit to fix that.",
+    "created_at": "2022-05-25T15:15:34Z",
+    "updated_at": "2022-05-25T15:15:34Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/95266#discussion_r881783262",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/95266",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/881783262"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/95266#discussion_r881783262"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/95266"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/881783262/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 24,
+    "original_line": 24,
+    "side": "RIGHT",
+    "in_reply_to_id": 881609906,
+    "author_association": "MEMBER",
+    "original_position": 24,
+    "position": 24,
+    "subject_type": "line"
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/axios/axios/issues/2297/events",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:50:31.057Z",
+  "sourceUrl": "https://api.github.com/repos/axios/axios/issues/2297/events?page=1&per_page=100",
+  "sha256": "8f599cb656be9cb102d856d029c5c34653efe58742bac15013e04d28252a168f",
+  "bytes": 3873
+}

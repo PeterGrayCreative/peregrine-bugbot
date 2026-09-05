@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/vercel/next.js/issues/7889/events",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:50:02.514Z",
+  "sourceUrl": "https://api.github.com/repos/vercel/next.js/issues/7889/events?page=1&per_page=100",
+  "sha256": "1da8992c4e74c544aaaa69351a87717aae71a78e0e861493b0080da8543b0e5a",
+  "bytes": 30890
+}

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/ReactiveX/rxjs/pulls/2397/reviews",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:57:19.412Z",
+  "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/pulls/2397/reviews?page=1&per_page=100",
+  "sha256": "997e2073b25dfeae3da093dff75e0b4cd2e631d41ad63048c422f3d20955ca90",
+  "bytes": 6116
+}

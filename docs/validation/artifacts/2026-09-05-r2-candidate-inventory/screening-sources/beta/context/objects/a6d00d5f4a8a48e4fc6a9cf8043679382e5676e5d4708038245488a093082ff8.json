@@ -1,0 +1,281 @@
+[
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/486816548",
+    "pull_request_review_id": 486525575,
+    "id": 486816548,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ4NjgxNjU0OA==",
+    "diff_hunk": "@@ -1,10 +1,19 @@\n import { getLocationOrigin } from '../../utils'\n import { searchParamsToUrlQuery } from './querystring'\n \n-const DUMMY_BASE = new URL(\n+let DUMMY_BASE = new URL(\n   typeof window === 'undefined' ? 'http://n' : getLocationOrigin()\n )\n \n+/**\n+ * Refresh DUMMY_BASE for unit test\n+ */\n+export function refreshDummyBase() {",
+    "path": "packages/next/next-server/lib/router/utils/parse-relative-url.ts",
+    "commit_id": "f37519ffe6c3a7a017e7bacdd3e158c613c75d49",
+    "original_commit_id": "cf4d53c722a3303271b411e69e214cf52e945569",
+    "user": {
+      "login": "Janpot",
+      "id": 2109932,
+      "node_id": "MDQ6VXNlcjIxMDk5MzI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2109932?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Janpot",
+      "html_url": "https://github.com/Janpot",
+      "followers_url": "https://api.github.com/users/Janpot/followers",
+      "following_url": "https://api.github.com/users/Janpot/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Janpot/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Janpot/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Janpot/subscriptions",
+      "organizations_url": "https://api.github.com/users/Janpot/orgs",
+      "repos_url": "https://api.github.com/users/Janpot/repos",
+      "events_url": "https://api.github.com/users/Janpot/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Janpot/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "can't you just move it into `parseRelativeUrl`?\r\n\r\n```js\r\nexport function parseRelativeUrl(url: string, base?: string) {\r\n  const globalBase = new URL(typeof window === 'undefined' ? 'http://n' : getLocationOrigin())\r\n  const resolvedBase = base ? new URL(base, globalBase) : globalBase\r\n  // ...\r\n  if (origin !== globalBase.origin) {\r\n  // ...\r\n```",
+    "created_at": "2020-09-11T07:06:28Z",
+    "updated_at": "2020-11-03T21:01:19Z",
+    "html_url": "https://github.com/vercel/next.js/pull/16650#discussion_r486816548",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/16650",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/486816548"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/16650#discussion_r486816548"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/16650"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/486816548/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 11,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/486822740",
+    "pull_request_review_id": 486533440,
+    "id": 486822740,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ4NjgyMjc0MA==",
+    "diff_hunk": "@@ -1,10 +1,19 @@\n import { getLocationOrigin } from '../../utils'\n import { searchParamsToUrlQuery } from './querystring'\n \n-const DUMMY_BASE = new URL(\n+let DUMMY_BASE = new URL(\n   typeof window === 'undefined' ? 'http://n' : getLocationOrigin()\n )\n \n+/**\n+ * Refresh DUMMY_BASE for unit test\n+ */\n+export function refreshDummyBase() {",
+    "path": "packages/next/next-server/lib/router/utils/parse-relative-url.ts",
+    "commit_id": "f37519ffe6c3a7a017e7bacdd3e158c613c75d49",
+    "original_commit_id": "cf4d53c722a3303271b411e69e214cf52e945569",
+    "user": {
+      "login": "Cow258",
+      "id": 14261588,
+      "node_id": "MDQ6VXNlcjE0MjYxNTg4",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14261588?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Cow258",
+      "html_url": "https://github.com/Cow258",
+      "followers_url": "https://api.github.com/users/Cow258/followers",
+      "following_url": "https://api.github.com/users/Cow258/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Cow258/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Cow258/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Cow258/subscriptions",
+      "organizations_url": "https://api.github.com/users/Cow258/orgs",
+      "repos_url": "https://api.github.com/users/Cow258/repos",
+      "events_url": "https://api.github.com/users/Cow258/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Cow258/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "We can't just move it into `parseRelativeUrl`,\r\nbecause `DUMMY_BASE` assigned once when the app init,\r\nalso `DUMMY_BASE` required to be updated when under unit testing.\r\n\r\nIf move it into `parseRelativeUrl`,\r\nthe base will be dynamic,\r\nalso run the condition every time.\r\n",
+    "created_at": "2020-09-11T07:20:23Z",
+    "updated_at": "2020-11-03T21:01:19Z",
+    "html_url": "https://github.com/vercel/next.js/pull/16650#discussion_r486822740",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/16650",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/486822740"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/16650#discussion_r486822740"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/16650"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/486822740/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 11,
+    "side": "RIGHT",
+    "in_reply_to_id": 486816548,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/486833277",
+    "pull_request_review_id": 486546846,
+    "id": 486833277,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ4NjgzMzI3Nw==",
+    "diff_hunk": "@@ -1,10 +1,19 @@\n import { getLocationOrigin } from '../../utils'\n import { searchParamsToUrlQuery } from './querystring'\n \n-const DUMMY_BASE = new URL(\n+let DUMMY_BASE = new URL(\n   typeof window === 'undefined' ? 'http://n' : getLocationOrigin()\n )\n \n+/**\n+ * Refresh DUMMY_BASE for unit test\n+ */\n+export function refreshDummyBase() {",
+    "path": "packages/next/next-server/lib/router/utils/parse-relative-url.ts",
+    "commit_id": "f37519ffe6c3a7a017e7bacdd3e158c613c75d49",
+    "original_commit_id": "cf4d53c722a3303271b411e69e214cf52e945569",
+    "user": {
+      "login": "Janpot",
+      "id": 2109932,
+      "node_id": "MDQ6VXNlcjIxMDk5MzI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2109932?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Janpot",
+      "html_url": "https://github.com/Janpot",
+      "followers_url": "https://api.github.com/users/Janpot/followers",
+      "following_url": "https://api.github.com/users/Janpot/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Janpot/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Janpot/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Janpot/subscriptions",
+      "organizations_url": "https://api.github.com/users/Janpot/orgs",
+      "repos_url": "https://api.github.com/users/Janpot/repos",
+      "events_url": "https://api.github.com/users/Janpot/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Janpot/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "`refreshDummyBase` will get included in the production bundle. As it is code that is only intended to be used for unit testing, having it in the production bundle is not an option I'm afraid. The change I propose in my comment before should make those tests work. Alternatively, now that you have electron in place, maybe these unit tests can be replaced with some integration tests?",
+    "created_at": "2020-09-11T07:42:14Z",
+    "updated_at": "2020-11-03T21:01:19Z",
+    "html_url": "https://github.com/vercel/next.js/pull/16650#discussion_r486833277",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/16650",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/486833277"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/16650#discussion_r486833277"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/16650"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/486833277/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 11,
+    "side": "RIGHT",
+    "in_reply_to_id": 486816548,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/486923308",
+    "pull_request_review_id": 486662145,
+    "id": 486923308,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ4NjkyMzMwOA==",
+    "diff_hunk": "@@ -1,10 +1,19 @@\n import { getLocationOrigin } from '../../utils'\n import { searchParamsToUrlQuery } from './querystring'\n \n-const DUMMY_BASE = new URL(\n+let DUMMY_BASE = new URL(\n   typeof window === 'undefined' ? 'http://n' : getLocationOrigin()\n )\n \n+/**\n+ * Refresh DUMMY_BASE for unit test\n+ */\n+export function refreshDummyBase() {",
+    "path": "packages/next/next-server/lib/router/utils/parse-relative-url.ts",
+    "commit_id": "f37519ffe6c3a7a017e7bacdd3e158c613c75d49",
+    "original_commit_id": "cf4d53c722a3303271b411e69e214cf52e945569",
+    "user": {
+      "login": "Cow258",
+      "id": 14261588,
+      "node_id": "MDQ6VXNlcjE0MjYxNTg4",
+      "avatar_url": "https://avatars.githubusercontent.com/u/14261588?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Cow258",
+      "html_url": "https://github.com/Cow258",
+      "followers_url": "https://api.github.com/users/Cow258/followers",
+      "following_url": "https://api.github.com/users/Cow258/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Cow258/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Cow258/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Cow258/subscriptions",
+      "organizations_url": "https://api.github.com/users/Cow258/orgs",
+      "repos_url": "https://api.github.com/users/Cow258/repos",
+      "events_url": "https://api.github.com/users/Cow258/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Cow258/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Agree, production bundle should not bundle `refreshDummyBase`,\r\nCurrently, here are conflict between Spectron and ChromeDriver on CI server,\r\nThe integration test pass on local but CI server.",
+    "created_at": "2020-09-11T09:44:47Z",
+    "updated_at": "2020-11-03T21:01:19Z",
+    "html_url": "https://github.com/vercel/next.js/pull/16650#discussion_r486923308",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/16650",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/486923308"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/16650#discussion_r486923308"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/16650"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/486923308/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 11,
+    "side": "RIGHT",
+    "in_reply_to_id": 486816548,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 1,
+    "subject_type": "line"
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/vercel/next.js/issues/7889",
+    "parameters": {}
+  },
+  "retrievedAt": "2026-09-05T12:50:01.320Z",
+  "sourceUrl": "https://api.github.com/repos/vercel/next.js/issues/7889?",
+  "sha256": "c5519c3d88b39a492bb7e67843f2a3a4131d0cebccdf7931b0ff5d2bdad44a36",
+  "bytes": 9778
+}

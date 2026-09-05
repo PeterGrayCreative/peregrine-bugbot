@@ -1,0 +1,209 @@
+[
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/174997967",
+    "pull_request_review_id": 104455028,
+    "id": 174997967,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE3NDk5Nzk2Nw==",
+    "diff_hunk": "@@ -1249,7 +1249,7 @@ const QueryGenerator = {\n           ? this.quoteIdentifiers(attr)\n           : this.escape(attr);\n       }\n-      if (options.include && attr.indexOf('.') === -1 && addTable) {\n+      if (options.include && !_.isEmpty(options.include) && attr.indexOf('.') === -1 && addTable) {",
+    "path": "lib/dialects/abstract/query-generator.js",
+    "commit_id": "d28135c807414eb353fb84b944068151c315f9f1",
+    "original_commit_id": "8549a89f5525aee96a9a984c88a14ea506d09b05",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "just use `!_.isEmpty(options.include)` instead of `options.include && !_.isEmpty(options.include)`",
+    "created_at": "2018-03-16T04:57:05Z",
+    "updated_at": "2018-03-22T09:50:58Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9188#discussion_r174997967",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9188",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/174997967"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9188#discussion_r174997967"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9188"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/174997967/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1252,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 5,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/175984346",
+    "pull_request_review_id": 104455028,
+    "id": 175984346,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE3NTk4NDM0Ng==",
+    "diff_hunk": "@@ -1682,6 +1584,123 @@ const QueryGenerator = {\n     };\n   },\n \n+  /*\n+   * Generates subQueryFilter - a select nested in the where clause of the subQuery.\n+   * For a given include a query is generated that contains all the way from the subQuery\n+   * table to the include table plus everything that's in required transitive closure of the\n+   * given include.\n+   */\n+  generateSubQueryFilter(include, includeAs, topLevelInfo) {",
+    "path": "lib/dialects/abstract/query-generator.js",
+    "commit_id": "d28135c807414eb353fb84b944068151c315f9f1",
+    "original_commit_id": "8549a89f5525aee96a9a984c88a14ea506d09b05",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "rename to `_generateSubQueryFilter`",
+    "created_at": "2018-03-21T04:48:45Z",
+    "updated_at": "2018-03-22T09:50:58Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9188#discussion_r175984346",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9188",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/175984346"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9188#discussion_r175984346"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9188"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/175984346/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1593,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 146,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/175984882",
+    "pull_request_review_id": 104455028,
+    "id": 175984882,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE3NTk4NDg4Mg==",
+    "diff_hunk": "@@ -1682,6 +1584,123 @@ const QueryGenerator = {\n     };\n   },\n \n+  /*\n+   * Generates subQueryFilter - a select nested in the where clause of the subQuery.\n+   * For a given include a query is generated that contains all the way from the subQuery\n+   * table to the include table plus everything that's in required transitive closure of the\n+   * given include.\n+   */\n+  generateSubQueryFilter(include, includeAs, topLevelInfo) {\n+    if (!topLevelInfo.subQuery || !include.subQueryFilter) {\n+      return;\n+    }\n+\n+    if (!topLevelInfo.options.where) {\n+      topLevelInfo.options.where = {};\n+    }\n+    let parent = include;\n+    let child = include;\n+    let nestedIncludes = this.getRequiredClosure(include).include;\n+    let query;\n+\n+    while ((parent = parent.parent)) { // eslint-disable-line\n+      if (parent.parent && !parent.required) {\n+        return; // only generate subQueryFilter if all the parents of this include are required\n+      }\n+\n+      if (parent.subQueryFilter) {\n+        // the include is already handled as this parent has the include on its required closure\n+        // skip to prevent duplicate subQueryFilter\n+        return;\n+      }\n+\n+      nestedIncludes = [_.extend({}, child, { include: nestedIncludes, attributes: [] })];\n+      child = parent;\n+    }\n+\n+    const topInclude = nestedIncludes[0];\n+    const topParent = topInclude.parent;\n+    const topAssociation = topInclude.association;\n+    topInclude.association = undefined;\n+\n+    if (topInclude.through && Object(topInclude.through.model) === topInclude.through.model) {\n+      query = this.selectQuery(topInclude.through.model.getTableName(), {\n+        attributes: [topInclude.through.model.primaryKeyField],\n+        include: Model._validateIncludedElements({\n+          model: topInclude.through.model,\n+          include: [{\n+            association: topAssociation.toTarget,\n+            required: true,\n+            where: topInclude.where,\n+            include: topInclude.include\n+          }]\n+        }).include,\n+        model: topInclude.through.model,\n+        where: {\n+          [Op.and]: [\n+            this.sequelize.asIs([\n+              this.quoteTable(topParent.model.name) + '.' + this.quoteIdentifier(topParent.model.primaryKeyField),\n+              this.quoteIdentifier(topInclude.through.model.name) + '.' + this.quoteIdentifier(topAssociation.identifierField)\n+            ].join(' = ')),\n+            topInclude.through.where\n+          ]\n+        },\n+        limit: 1,\n+        includeIgnoreAttributes: false\n+      }, topInclude.through.model);\n+    } else {\n+      const isBelongsTo = topAssociation.associationType === 'BelongsTo';\n+      const sourceField = isBelongsTo ? topAssociation.identifierField : (topAssociation.sourceKeyField || topParent.model.primaryKeyField);\n+      const targetField = isBelongsTo ? (topAssociation.sourceKeyField || topInclude.model.primaryKeyField) : topAssociation.identifierField;\n+\n+      const join = [\n+        this.quoteIdentifier(topInclude.as) + '.' + this.quoteIdentifier(targetField),\n+        this.quoteTable(topParent.as || topParent.model.name) + '.' + this.quoteIdentifier(sourceField)\n+      ].join(' = ');\n+\n+      query = this.selectQuery(topInclude.model.getTableName(), {\n+        attributes: [targetField],\n+        include: Model._validateIncludedElements(topInclude).include,\n+        model: topInclude.model,\n+        where: {\n+          [Op.and]: [{\n+            [Op.join]: this.sequelize.asIs(join)\n+          }]\n+        },\n+        limit: 1,\n+        tableAs: topInclude.as,\n+        includeIgnoreAttributes: false\n+      }, topInclude.model);\n+    }\n+\n+    if (!topLevelInfo.options.where[Op.and]) {\n+      topLevelInfo.options.where[Op.and] = [];\n+    }\n+\n+    topLevelInfo.options.where[`__${includeAs.internalAs}`] = this.sequelize.asIs([\n+      '(',\n+      query.replace(/\\;$/, ''),\n+      ')',\n+      'IS NOT NULL'\n+    ].join(' '));\n+  },\n+\n+  /*\n+   * For a given include hierarchy creates a copy of it where only the required includes\n+   * are preserved.\n+   */\n+  getRequiredClosure(include) {",
+    "path": "lib/dialects/abstract/query-generator.js",
+    "commit_id": "d28135c807414eb353fb84b944068151c315f9f1",
+    "original_commit_id": "8549a89f5525aee96a9a984c88a14ea506d09b05",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "prefix this one with `_` as well",
+    "created_at": "2018-03-21T04:54:32Z",
+    "updated_at": "2018-03-22T09:50:58Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/9188#discussion_r175984882",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/9188",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/175984882"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/9188#discussion_r175984882"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/9188"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/175984882/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1692,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 245,
+    "position": 1,
+    "subject_type": "line"
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/sequelize/sequelize/issues/10896/timeline",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:59:32.857Z",
+  "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/issues/10896/timeline?page=1&per_page=100",
+  "sha256": "aa58e3b075d7e5e05a73203cf84a2264b452865f0c230ff8ffdd7bd6ec2834ae",
+  "bytes": 15883
+}

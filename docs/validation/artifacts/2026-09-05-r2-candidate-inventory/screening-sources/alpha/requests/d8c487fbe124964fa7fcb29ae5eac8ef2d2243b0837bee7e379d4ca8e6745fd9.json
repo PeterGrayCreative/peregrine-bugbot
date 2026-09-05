@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/webpack/webpack/issues/4113",
+    "parameters": {}
+  },
+  "retrievedAt": "2026-09-05T12:59:33.434Z",
+  "sourceUrl": "https://api.github.com/repos/webpack/webpack/issues/4113?",
+  "sha256": "4920ceb2c5cd9c456653ba0841a50ccfca0c2ef6c1d309e7bacd90f0fed0a711",
+  "bytes": 7410
+}

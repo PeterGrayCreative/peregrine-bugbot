@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/microsoft/vscode/issues/91709/comments",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:49:50.884Z",
+  "sourceUrl": "https://api.github.com/repos/microsoft/vscode/issues/91709/comments?page=1&per_page=100",
+  "sha256": "1de99e013913cb2e7c469c120e6b3ce39d71cd323981243dcd104f59db332a0c",
+  "bytes": 5853
+}

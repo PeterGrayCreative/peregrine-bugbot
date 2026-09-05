@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/ReactiveX/rxjs/issues/3165/events",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:50:34.184Z",
+  "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/issues/3165/events?page=1&per_page=100",
+  "sha256": "ea07ddb2d0528dd604f1466682481f3802e7bff83da3a6aa5e8ad2948703bfb0",
+  "bytes": 3859
+}

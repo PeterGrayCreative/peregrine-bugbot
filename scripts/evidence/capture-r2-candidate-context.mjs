@@ -3,7 +3,10 @@ import { resolve, join } from "node:path";
 import { capture, capturePages, digest } from "./public-capture-store.mjs";
 
 const root = resolve("docs/validation/artifacts/2026-09-05-r2-candidate-inventory");
-const inventoryBytes = readFileSync(join(root, "random-sample-v1.json"));
+const inventoryName = process.argv[2] ?? "random-sample-v1.json";
+const outputs = { "random-sample-v1.json": "random-context-v1.json", "main-review-candidates-v1.json": "main-review-context-v1.json" };
+if (!Object.hasOwn(outputs, inventoryName)) throw new Error("unsupported registered candidate inventory");
+const inventoryBytes = readFileSync(join(root, inventoryName));
 const inventory = JSON.parse(inventoryBytes);
 const store = join(root, "raw");
 const records = [];
@@ -32,7 +35,7 @@ for (const candidate of inventory.candidates) {
   console.log(`${candidate.candidateId}: captured ${receipts.length} source pages`);
 }
 const output = `${JSON.stringify({ schemaVersion: 1, inventorySha256: digest(inventoryBytes), records }, null, 2)}\n`;
-const target = join(root, "random-context-v1.json");
+const target = join(root, outputs[inventoryName]);
 if (existsSync(target)) {
   if (readFileSync(target, "utf8") !== output) throw new Error("immutable context conflict");
 } else writeFileSync(target, output, { flag: "wx" });

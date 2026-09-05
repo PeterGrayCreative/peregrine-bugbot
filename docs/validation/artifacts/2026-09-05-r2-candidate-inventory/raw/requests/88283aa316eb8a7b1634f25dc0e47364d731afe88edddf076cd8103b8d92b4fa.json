@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/axios/axios/pulls/2689",
+    "parameters": {}
+  },
+  "retrievedAt": "2026-09-05T12:56:55.447Z",
+  "sourceUrl": "https://api.github.com/repos/axios/axios/pulls/2689?",
+  "sha256": "be9c6687afa39a6e3e034feb8af8c152df0fcd0fe30e8832cdff845540c9d279",
+  "bytes": 18275
+}

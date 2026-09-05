@@ -1,0 +1,211 @@
+[
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/191336027",
+    "pull_request_review_id": 123885987,
+    "id": 191336027,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE5MTMzNjAyNw==",
+    "diff_hunk": "@@ -168,12 +169,7 @@ class JsonpMainTemplatePlugin {\n \t\t\t\t\t),\n \t\t\t\t\t\"}\",\n \t\t\t\t\t\"script.src = jsonpScriptSrc(chunkId);\",\n-\t\t\t\t\t\"var timeout = setTimeout(function(){\",\n-\t\t\t\t\tTemplate.indent([\n-\t\t\t\t\t\t\"onScriptComplete({ type: 'timeout', target: script });\"\n-\t\t\t\t\t]),\n-\t\t\t\t\t`}, ${chunkLoadTimeout});`,\n-\t\t\t\t\t\"function onScriptComplete(event) {\",\n+\t\t\t\t\t\"onScriptComplete = function (event) {\",",
+    "path": "lib/web/JsonpMainTemplatePlugin.js",
+    "commit_id": "24072ab652e8206f02d52316a22ce2c885c5b820",
+    "original_commit_id": "24072ab652e8206f02d52316a22ce2c885c5b820",
+    "user": {
+      "login": "ooflorent",
+      "id": 168498,
+      "node_id": "MDQ6VXNlcjE2ODQ5OA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/168498?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/ooflorent",
+      "html_url": "https://github.com/ooflorent",
+      "followers_url": "https://api.github.com/users/ooflorent/followers",
+      "following_url": "https://api.github.com/users/ooflorent/following{/other_user}",
+      "gists_url": "https://api.github.com/users/ooflorent/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/ooflorent/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/ooflorent/subscriptions",
+      "organizations_url": "https://api.github.com/users/ooflorent/orgs",
+      "repos_url": "https://api.github.com/users/ooflorent/repos",
+      "events_url": "https://api.github.com/users/ooflorent/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/ooflorent/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "`function onScriptComplete(event) {` was fine",
+    "created_at": "2018-05-29T08:11:04Z",
+    "updated_at": "2018-05-29T08:11:04Z",
+    "html_url": "https://github.com/webpack/webpack/pull/7411#discussion_r191336027",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/7411",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/191336027"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/7411#discussion_r191336027"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/7411"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/191336027/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 172,
+    "original_line": 172,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 18,
+    "position": 18,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/191340734",
+    "pull_request_review_id": 123891619,
+    "id": 191340734,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE5MTM0MDczNA==",
+    "diff_hunk": "@@ -168,12 +169,7 @@ class JsonpMainTemplatePlugin {\n \t\t\t\t\t),\n \t\t\t\t\t\"}\",\n \t\t\t\t\t\"script.src = jsonpScriptSrc(chunkId);\",\n-\t\t\t\t\t\"var timeout = setTimeout(function(){\",\n-\t\t\t\t\tTemplate.indent([\n-\t\t\t\t\t\t\"onScriptComplete({ type: 'timeout', target: script });\"\n-\t\t\t\t\t]),\n-\t\t\t\t\t`}, ${chunkLoadTimeout});`,\n-\t\t\t\t\t\"function onScriptComplete(event) {\",\n+\t\t\t\t\t\"onScriptComplete = function (event) {\",",
+    "path": "lib/web/JsonpMainTemplatePlugin.js",
+    "commit_id": "24072ab652e8206f02d52316a22ce2c885c5b820",
+    "original_commit_id": "24072ab652e8206f02d52316a22ce2c885c5b820",
+    "user": {
+      "login": "aleen42",
+      "id": 9573300,
+      "node_id": "MDQ6VXNlcjk1NzMzMDA=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9573300?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/aleen42",
+      "html_url": "https://github.com/aleen42",
+      "followers_url": "https://api.github.com/users/aleen42/followers",
+      "following_url": "https://api.github.com/users/aleen42/following{/other_user}",
+      "gists_url": "https://api.github.com/users/aleen42/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/aleen42/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/aleen42/subscriptions",
+      "organizations_url": "https://api.github.com/users/aleen42/orgs",
+      "repos_url": "https://api.github.com/users/aleen42/repos",
+      "events_url": "https://api.github.com/users/aleen42/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/aleen42/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "As an inner declaration, it was not fine to some extends.",
+    "created_at": "2018-05-29T08:28:02Z",
+    "updated_at": "2018-05-29T08:28:02Z",
+    "html_url": "https://github.com/webpack/webpack/pull/7411#discussion_r191340734",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/7411",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/191340734"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/7411#discussion_r191340734"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/7411"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/191340734/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 172,
+    "original_line": 172,
+    "side": "RIGHT",
+    "in_reply_to_id": 191336027,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 18,
+    "position": 18,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/191341339",
+    "pull_request_review_id": 123892317,
+    "id": 191341339,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE5MTM0MTMzOQ==",
+    "diff_hunk": "@@ -168,12 +169,7 @@ class JsonpMainTemplatePlugin {\n \t\t\t\t\t),\n \t\t\t\t\t\"}\",\n \t\t\t\t\t\"script.src = jsonpScriptSrc(chunkId);\",\n-\t\t\t\t\t\"var timeout = setTimeout(function(){\",\n-\t\t\t\t\tTemplate.indent([\n-\t\t\t\t\t\t\"onScriptComplete({ type: 'timeout', target: script });\"\n-\t\t\t\t\t]),\n-\t\t\t\t\t`}, ${chunkLoadTimeout});`,\n-\t\t\t\t\t\"function onScriptComplete(event) {\",\n+\t\t\t\t\t\"onScriptComplete = function (event) {\",",
+    "path": "lib/web/JsonpMainTemplatePlugin.js",
+    "commit_id": "24072ab652e8206f02d52316a22ce2c885c5b820",
+    "original_commit_id": "24072ab652e8206f02d52316a22ce2c885c5b820",
+    "user": {
+      "login": "aleen42",
+      "id": 9573300,
+      "node_id": "MDQ6VXNlcjk1NzMzMDA=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9573300?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/aleen42",
+      "html_url": "https://github.com/aleen42",
+      "followers_url": "https://api.github.com/users/aleen42/followers",
+      "following_url": "https://api.github.com/users/aleen42/following{/other_user}",
+      "gists_url": "https://api.github.com/users/aleen42/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/aleen42/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/aleen42/subscriptions",
+      "organizations_url": "https://api.github.com/users/aleen42/orgs",
+      "repos_url": "https://api.github.com/users/aleen42/repos",
+      "events_url": "https://api.github.com/users/aleen42/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/aleen42/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "https://eslint.org/docs/rules/no-inner-declarations",
+    "created_at": "2018-05-29T08:29:56Z",
+    "updated_at": "2018-05-29T08:29:56Z",
+    "html_url": "https://github.com/webpack/webpack/pull/7411#discussion_r191341339",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/7411",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/191341339"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/7411#discussion_r191341339"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/7411"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/191341339/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 172,
+    "original_line": 172,
+    "side": "RIGHT",
+    "in_reply_to_id": 191336027,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 18,
+    "position": 18,
+    "subject_type": "line"
+  }
+]

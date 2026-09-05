@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/webpack/webpack/issues/3730/comments",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:56:41.578Z",
+  "sourceUrl": "https://api.github.com/repos/webpack/webpack/issues/3730/comments?page=1&per_page=100",
+  "sha256": "85878cfa19d3092f510f5a65c54309501dc504d434e25e85085f0b0c4cf3de11",
+  "bytes": 3787
+}
