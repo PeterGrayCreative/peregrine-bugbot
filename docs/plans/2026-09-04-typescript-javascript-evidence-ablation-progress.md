@@ -147,8 +147,12 @@ slots 013–016. Shared-family relationships remain explicit.
 
 The user's sole-human curator/verifier arrangement is confirmed. Preparation
 continues toward one consolidated review request, not serial approvals. A
-portable packet assembler is being developed against synthetic fixtures only;
-it must preserve original proof bundles and blank decisions. Neither packet
+portable [packet assembler](../validation/2026-09-05-r2-human-packet-assembler.md)
+is implemented and independently reviewed against synthetic fixtures only;
+eight evidence tests and typecheck pass. It preserves original proof bytes and
+blank decisions, but authenticating a complete input file list and reference
+closure remains the preparer's responsibility. No real packet has been assembled.
+Neither packet
 assembly nor one person's approval can satisfy two independent-human claims.
 
 Commit `f53ff59` adds schedule-order enforcement and neutral grading with 86/86
