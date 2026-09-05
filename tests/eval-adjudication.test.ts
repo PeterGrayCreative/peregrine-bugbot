@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   adjudicationKey,
+  assertRequiredAdjudicationsComplete,
   parseExperimentAdjudicationLedger,
   parseExperimentAdjudicationSource,
 } from "../eval/adjudication-ledger.js";
@@ -34,6 +35,16 @@ test("adjudication sources require final decisions bound to exact finding occurr
     ...source,
     records: [record(0, "unsupported"), record(0, "confirmed-new")],
   }), /duplicate finding decision/);
+});
+
+test("one-shot ledgers reject partial required adjudication", () => {
+  const first = record(0, "unsupported");
+  const second = record(1, "confirmed-new");
+  assert.throws(
+    () => assertRequiredAdjudicationsComplete([first], [first, second]),
+    /omits 1 required non-diagnostic unresolved finding/,
+  );
+  assert.doesNotThrow(() => assertRequiredAdjudicationsComplete([first, second], [first, second]));
 });
 
 test("adjudication ledgers authenticate their contents and reject unsafe source paths", () => {

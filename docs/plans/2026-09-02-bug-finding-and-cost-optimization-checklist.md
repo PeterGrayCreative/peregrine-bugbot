@@ -485,8 +485,10 @@ not authorize historical-gold, holdout, routing, or final non-inferiority claims
   build/smoke; this checklist commit merged with the implementation.
 - [x] Add a separately sealed, run-bound curator-adjudication ledger so an exact
   unresolved finding can be classified without rewriting its semantic grade or
-  original funnel decision. The first paired smoke exposed this follow-up; it
-  is not required to reject that route on the operator's wall-time constraint.
+  original funnel decision. Require the one-shot source to cover every required
+  non-diagnostic unresolved finding so a partial ledger cannot strand a run.
+  The first paired smoke exposed this follow-up; it is not required to reject
+  that route on the operator's wall-time constraint.
 - [x] Apply diagnostic-only case restrictions consistently to aggregate reports
   as well as funnel decisions so quarantined findings cannot null precision/FDR.
 - [x] Report legacy automatically inferred infrastructure misses as

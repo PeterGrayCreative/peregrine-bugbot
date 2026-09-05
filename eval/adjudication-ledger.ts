@@ -76,7 +76,13 @@ export function writeExperimentAdjudication(
     throw new Error("adjudication source does not match the experiment");
   }
   requireDescendant(repository, evidence.experiment.repositoryCommit, commit);
-  validateRecordsAgainstSealedGrades(root, source.records, evidence.records, evidence.experiment.schedule);
+  validateRecordsAgainstSealedGrades(
+    root,
+    source.records,
+    evidence.records,
+    evidence.experiment.schedule,
+    new Set(evidence.experiment.benchmarkCategory?.definition.roles.diagnosticOnlyCases ?? []),
+  );
   const timestamp = canonicalTimestamp(recordedAt, "adjudication recordedAt");
   if (Date.parse(timestamp) < Date.parse(gradingSeal.sealedAt)) {
     throw new Error("adjudication predates the sealed grading evidence");
@@ -132,7 +138,13 @@ export function readExperimentAdjudication(runDirectory: string): ExperimentAdju
     canonicalJson(source.records) !== canonicalJson(ledger.records)) {
     throw new Error("experiment adjudication ledger records do not match committed Git evidence");
   }
-  validateRecordsAgainstSealedGrades(root, ledger.records, evidence.records, evidence.experiment.schedule);
+  validateRecordsAgainstSealedGrades(
+    root,
+    ledger.records,
+    evidence.records,
+    evidence.experiment.schedule,
+    new Set(evidence.experiment.benchmarkCategory?.definition.roles.diagnosticOnlyCases ?? []),
+  );
   return ledger;
 }
 
@@ -240,20 +252,57 @@ function validateRecordsAgainstSealedGrades(
   records: readonly ExperimentAdjudicationRecord[],
   runRecords: readonly import("../src/types.js").RunRecord[],
   schedule: readonly import("./experiment.js").ExperimentScheduledAttempt[],
+  diagnosticOnlyCaseIds: ReadonlySet<string>,
 ): void {
   const runs = new Map(runRecords.map((record) => [record.attemptId, record]));
   const attempts = new Map(schedule.map((attempt) => [attempt.id, attempt]));
+  const grades = new Map<string, GradedRun>();
+  const required: AdjudicationIdentity[] = [];
+  for (const attempt of schedule) {
+    const run = runs.get(attempt.id);
+    if (!run || run.outcome.status !== "completed") continue;
+    const gradePath = resolve(root, attempt.file.replace(/\.json$/, ".graded.json"));
+    const grade = parseGradedRun(readExperimentJson(gradePath), gradePath, attempt) as GradedRun;
+    assertGradedMatchesRun(grade, run, gradePath);
+    grades.set(attempt.id, grade);
+    if (diagnosticOnlyCaseIds.has(caseIdOf(attempt.caseName))) continue;
+    for (const item of grade.grading?.unmatchedFindings ?? []) {
+      if (item.classification !== "unresolved") continue;
+      required.push({
+        attemptId: attempt.id,
+        findingIndex: item.findingIndex,
+        findingEvidenceSha256: item.findingEvidenceSha256,
+      });
+    }
+  }
   for (const record of records) {
     const attempt = attempts.get(record.attemptId);
     const run = runs.get(record.attemptId);
     if (!attempt || !run || run.outcome.status !== "completed") throw new Error(`${record.attemptId} is not a completed sealed attempt`);
-    const gradePath = resolve(root, attempt.file.replace(/\.json$/, ".graded.json"));
-    const grade = parseGradedRun(readExperimentJson(gradePath), gradePath, attempt) as GradedRun;
-    assertGradedMatchesRun(grade, run, gradePath);
+    const grade = grades.get(record.attemptId);
+    if (!grade) throw new Error(`${record.attemptId} has no authenticated sealed grade`);
     const unresolved = grade.grading?.unmatchedFindings.find((item) => item.findingIndex === record.findingIndex && item.findingEvidenceSha256 === record.findingEvidenceSha256);
     if (!unresolved || unresolved.classification !== "unresolved") throw new Error(`${record.attemptId} adjudication does not identify an unresolved sealed finding`);
   }
+  assertRequiredAdjudicationsComplete(records, required);
 }
+
+type AdjudicationIdentity = Pick<ExperimentAdjudicationRecord, "attemptId" | "findingIndex" | "findingEvidenceSha256">;
+
+export function assertRequiredAdjudicationsComplete(
+  records: readonly AdjudicationIdentity[],
+  required: readonly AdjudicationIdentity[],
+): void {
+  const supplied = new Set(records.map((record) =>
+    adjudicationKey(record.attemptId, record.findingIndex, record.findingEvidenceSha256)));
+  const missing = required.filter((record) =>
+    !supplied.has(adjudicationKey(record.attemptId, record.findingIndex, record.findingEvidenceSha256)));
+  if (missing.length > 0) {
+    throw new Error(`adjudication source omits ${missing.length} required non-diagnostic unresolved finding(s)`);
+  }
+}
+
+function caseIdOf(caseName: string): string { return caseName.split("/").at(-1)!; }
 
 function trackedSourcePath(repository: string, sourcePath: string, commit: string): string {
   const absolute = realpathSync(resolve(sourcePath));

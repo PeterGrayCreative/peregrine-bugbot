@@ -237,7 +237,10 @@ decision content.
 Unmatched findings are finalized only through a committed curator source and a
 separate append-only ledger. The source must be reviewed, committed on a clean
 descendant of the experiment's repository commit, and bind each decision to the
-experiment ID, attempt ID, finding index, and finding digest. Then run:
+experiment ID, attempt ID, finding index, and finding digest. Because the ledger
+is write-once, the source must classify every unresolved finding required by the
+registered panel in one pass. Diagnostic-only cases are quarantined and do not
+need classification for a decision. Then run:
 
 ```sh
 npm run eval:adjudicate -- --runs eval/runs/<dir> \

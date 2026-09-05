@@ -347,7 +347,7 @@ test("reporting excludes diagnostic-only findings and applies sealed adjudicatio
       caseName: "validation/case-diagnostic",
       outcome: { status: "completed" as const, result: engineResult([reviewFinding()]) },
       matches: {},
-      falsePositiveIndexes: [0],
+      falsePositiveIndexes: [],
       grading: {
         version: "root-cause-v2" as const,
         judge: JUDGE_IDENTITY,
@@ -362,7 +362,7 @@ test("reporting excludes diagnostic-only findings and applies sealed adjudicatio
       caseName: "development/case-clean",
       outcome: { status: "completed" as const, result: engineResult([reviewFinding()]) },
       matches: {},
-      falsePositiveIndexes: [0],
+      falsePositiveIndexes: [],
       grading: {
         version: "root-cause-v2" as const,
         judge: JUDGE_IDENTITY,

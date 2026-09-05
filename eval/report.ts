@@ -743,17 +743,23 @@ export function calculateStats(args: {
     .filter((run) => diagnosticOnlyCaseIds.has(caseIdOf(run.caseName)))
     .reduce((sum, run) => sum + run.outcome.result.findings.length, 0);
   const recalls = args.completed.map(runRecall).filter((value): value is number => value !== null);
-  const fps = findingMetricRuns.map((run) => run.falsePositiveIndexes.length);
+  const classificationFor = (
+    run: ScoredRun,
+    item: NonNullable<GradedRun["grading"]>["unmatchedFindings"][number],
+  ) => run.attemptId === undefined
+    ? item.classification
+    : args.adjudications?.get(adjudicationKey(run.attemptId, item.findingIndex, item.findingEvidenceSha256))
+      ?? item.classification;
+  const fps = findingMetricRuns.map((run) => run.grading
+    ? run.grading.unmatchedFindings.filter((item) => classificationFor(run, item) === "unsupported").length
+    : run.falsePositiveIndexes.length);
   const rootCauseRecalls = args.completed.flatMap((run) => {
     const groups = run.grading ? Object.values(run.grading.rootCauseMatches) : [];
     return groups.length === 0 ? [] : [groups.filter(Boolean).length / groups.length];
   });
   const unmatched = findingMetricRuns.flatMap((run) => (run.grading?.unmatchedFindings ?? []).map((item) => ({
     ...item,
-    classification: run.attemptId === undefined
-      ? item.classification
-      : args.adjudications?.get(adjudicationKey(run.attemptId, item.findingIndex, item.findingEvidenceSha256))
-        ?? item.classification,
+    classification: classificationFor(run, item),
   })));
   const confirmedNewFindings = unmatched.filter((item) => item.classification === "confirmed-new").length;
   const unsupportedFindings = unmatched.filter((item) => item.classification === "unsupported").length;
@@ -761,11 +767,7 @@ export function calculateStats(args: {
   const blockingFalsePositivesOnCleanCases = findingMetricRuns.reduce((sum, run) =>
     Object.keys(run.matches).length === 0
       ? sum + (run.grading?.unmatchedFindings.filter((item) => {
-          const classification = run.attemptId === undefined
-            ? item.classification
-            : args.adjudications?.get(adjudicationKey(run.attemptId, item.findingIndex, item.findingEvidenceSha256))
-              ?? item.classification;
-          return classification === "unsupported";
+          return classificationFor(run, item) === "unsupported";
         }).length ?? 0)
       : sum,
   0);
