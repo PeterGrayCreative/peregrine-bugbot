@@ -53,7 +53,12 @@ Operational results:
 - Full `npm run validate` from clean commit `d504664`: passed, including
   253/253 Node tests, corpus validation, 26 skill tests, nine package/install
   tests, four plugin-manager tests, and 8/8 zero-cost structural smoke attempts.
+- Full `npm run validate` from clean exact implementation head `4e8df10`:
+  passed, including 254/254 Node tests, corpus validation, 26 skill tests, nine
+  package/install tests, four plugin-manager tests, and 8/8 zero-cost structural
+  smoke attempts.
 - The first independent exact-head review caught a false-positive-per-case
   overlay inconsistency and a partial-ledger dead end. Both were corrected;
-  follow-up exact-head review is pending.
+  follow-up review approved exact implementation head `4e8df10` with no new
+  blocker.
 - Remote CI and merge verification: pending.
