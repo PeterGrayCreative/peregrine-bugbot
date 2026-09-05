@@ -49,9 +49,11 @@ minimal reviewer. Production routing remains frozen.
   identity, directory, and filename. Both curators authored their own five
   confirmation files. The validator reports 2/2 for every case and `ready`.
 - Focused integrity tests, TypeScript checking, and the strict zero-provider
-  gate pass under Node 22. The full suite passes 249/252 while the worktree is
-  dirty; its three provider-enabled fixture tests deliberately require a clean
-  worktree and must be rerun after commit.
+  gate pass under Node 22. The full suite reached 249/252 while the worktree was
+  dirty because three provider-enabled fixtures enforce a clean-worktree guard.
+  After the R1 implementation commit, the exact `tests/eval-experiment.test.ts`
+  suite passed 12/12 from a clean worktree, confirming those failures were guard
+  state rather than behavioral regressions.
 
 ## Frozen constraints
 

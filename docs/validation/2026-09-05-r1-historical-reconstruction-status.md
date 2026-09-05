@@ -63,9 +63,10 @@ npm run typecheck
 
 The full repository suite completed 249/252 while the branch had uncommitted
 evidence. The three failures are existing clean-worktree guards in
-`tests/eval-experiment.test.ts`, not behavioral failures. Those exact tests must
-be rerun after committing, when the worktree is clean, before push is treated as
-verified.
+`tests/eval-experiment.test.ts`, not behavioral failures. After committing the
+R1 implementation, that exact suite passed 12/12 under Node 22 from a clean
+worktree. The earlier three failures were therefore confirmed as guard-state
+artifacts rather than behavioral regressions.
 
 Independent final review approved the v3 evidence and validation path with no
 blocking findings. Its remaining hardening note was implemented: symlinked

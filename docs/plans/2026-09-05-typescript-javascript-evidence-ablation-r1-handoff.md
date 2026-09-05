@@ -56,6 +56,10 @@ Expected readiness is: v1 `failed`, v2 `ready`, v3 `ready`, and 2/2 v3
 confirmations for every case. Any other state is an integrity failure to resolve
 before R2.
 
+The final post-implementation clean-worktree check also passed all 12 tests in
+`tests/eval-experiment.test.ts` under Node 22. This resolves the three expected
+clean-worktree guard failures observed during the earlier dirty full-suite run.
+
 ## Next authorized planning boundary
 
 The next plan step is R2, not a provider experiment:
