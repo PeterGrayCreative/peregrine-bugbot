@@ -36,3 +36,10 @@ This recovery covers only the earlier exposed opportunities. It neither recovers
 A deterministic [archive and metadata](artifacts/2026-09-07-exposed-development-recovery/archive-manifest.json) now preserve the complete recovery tree in the implementation repository artifact directory. The `exposed-development-recovery-v1.tar.gz` archive is 505,644 bytes, SHA-256 `6d239304eed00622fe950ae5f92617a5db940d575674797916a47e6395ad43f4`. Its 317 regular files contain 2,979,824 uncompressed file bytes, including the recovery manifest and all 316 files it binds.
 
 Two archive constructions produced the same SHA-256. A fresh extraction passed complete file-set reconciliation and every one of the 316 byte-count/hash bindings, with no symlinks; the original persistent tree was reverified unchanged. Metadata normalization occurred only in a disposable copy. This archive contains existing exposed development material and blank draft cards, not any separate supplementary curator store, credentials, historical source clone, or replay archive. It is never reserved selection or holdout evidence. Remote durability remains unclaimed until the containing commit and push are verified.
+
+Publication verification: archive commit `c2652af90b16d80af61595e5d9c7ec46daa28240`
+was pushed to `origin/research/ts-js-evidence-r2`, with matching remote SHA.
+Its GitHub check and credential-free build/smoke passed. Main independently
+restored the archive and verified all 316 bindings and the exact 317-file
+inventory. The archive metadata retains its original pre-publication status;
+this subsequent record establishes publication without rewriting those bytes.

@@ -28,7 +28,13 @@ Both slots now have exact historical revision/tree metadata, full-index review a
 | Artifact | Readiness | SHA-256 |
 | --- | --- | --- |
 | `batch-manifest.json` | aggregate recovery record | `db04c9834bae910a2bddfe814f6c411b9313e07e00975c5cbc77376e1e1e0235` |
-| `r2-post-merge-alpha-002/bundle-manifest.json` | unresolved recovery gap; draft | `e350bff114d66bb871428b1aae1d93c7d412e100bc5effe5fe3891dae0411c56` |
-| `r2-post-merge-alpha-004/bundle-manifest.json` | ready for human review; draft | `0a013273b2e2e349d015b97eaafc309423bfb6f1cf2c000efb0768bf3a438b38` |
+| `dossiers/r2-post-merge-alpha-002/bundle-manifest.json` | unresolved recovery gap; draft | `e350bff114d66bb871428b1aae1d93c7d412e100bc5effe5fe3891dae0411c56` |
+| `dossiers/r2-post-merge-alpha-004/bundle-manifest.json` | prepared draft for future consolidated packet | `0a013273b2e2e349d015b97eaafc309423bfb6f1cf2c000efb0768bf3a438b38` |
 
 The object store is partial, not a complete replay bundle or materializer input. No human card has been completed. The consolidated human-review packet is not declared ready by this recovery batch.
+
+Main independently verified the batch and source-manifest hashes, both dossier
+manifests, all 53 dossier-file bindings, 33 source-object/pack bindings, and
+28 source-receipt bindings without reading causal proof content. This verifies
+byte integrity, not the historical or causal claims. Supplementary evidence
+remains outside the implementation checkout and has no remote backup claim.
