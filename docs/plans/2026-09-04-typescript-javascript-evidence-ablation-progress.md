@@ -16,6 +16,21 @@ has occurred. See the [recovery boundary and protocol](../validation/2026-09-07-
 
 ## Active objective
 
+Recovery update: twelve earlier exposed development cards now have a
+restore-tested 505,644-byte repository archive binding all 316 evidence files.
+They remain unresolved draft preparation, not admitted cases. Two supplementary
+slots have new recovery versions: one draft satisfies its preparation gate,
+one retains a recovery proof gap. Neither matches the lost original bundle
+bytes, and neither is a partial human-review request. See the
+[exposed recovery record](../validation/2026-09-07-exposed-dossier-recovery.md)
+and [supplementary recovery batch 1](../validation/2026-09-07-supplementary-recovery-batch1.md).
+
+R3 now has a separately authenticated stopped-run closure and missing-outcome
+projection, with full methodology/historical-truth tests and independent review
+passing. This supersedes the missing-closure status in earlier snapshots below;
+runtime, final grading consumers, retry lineage, and admission remain open.
+See the [closure record](../validation/2026-09-07-r3-stopped-run-closure.md).
+
 Determine whether any Peregrine component improves consequential TS/JS bug
 finding, unsupported-finding behavior, or measured work relative to a competent
 minimal reviewer. Production routing remains frozen.
