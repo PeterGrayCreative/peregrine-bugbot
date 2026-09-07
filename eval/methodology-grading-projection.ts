@@ -6,7 +6,8 @@ import {
   type HistoricalMethodologyCaseRegistration,
 } from "./historical-methodology-case.js";
 import { readMethodologyAttemptLifecycleTerminal } from "./methodology-attempt-lifecycle.js";
-import { readMethodologyExecutionEvidence } from "./methodology-execution-evidence.js";
+import { readMethodologyExecutionEvidence, readMethodologyStoppedRunClosure,
+  type MethodologyExecutionEvidence, type MethodologyStoppedRunClosure } from "./methodology-execution-evidence.js";
 import {
   methodologyGradingProjectionSha256,
   methodologyReviewOutputSha256,
@@ -47,6 +48,22 @@ export function readMethodologyGradingProjections(input: {
   trustedCuratorPolicy: CuratorPolicy;
 }): AuthenticatedMethodologyGradingProjectionSet {
   const execution = readMethodologyExecutionEvidence(input.root, input.expectedExecutionEvidenceSha256);
+  return projectAuthenticatedExecution(input, execution);
+}
+
+/** Missing is available only through an explicitly caller-authenticated stopped
+ * closure. Both unstarted and started-without-terminal attempts remain misses. */
+export function readStoppedMethodologyGradingProjections(input: {
+  root: string;
+  expectedStoppedRunClosureSha256: string;
+  trustedCuratorPolicy: CuratorPolicy;
+}): AuthenticatedMethodologyGradingProjectionSet {
+  const closure = readMethodologyStoppedRunClosure(input.root, input.expectedStoppedRunClosureSha256);
+  return projectAuthenticatedExecution(input, closure);
+}
+
+function projectAuthenticatedExecution(input: { root: string; trustedCuratorPolicy: CuratorPolicy },
+  execution: MethodologyExecutionEvidence | MethodologyStoppedRunClosure): AuthenticatedMethodologyGradingProjectionSet {
   const registration = readMethodologyInvocationRegistration(
     input.root,
     execution.invocationRegistrationSha256,
@@ -75,13 +92,13 @@ export function readMethodologyGradingProjections(input: {
 
   const projections = registration.schedule.attempts.map((attempt): AuthenticatedMethodologyGradingProjection => {
     const receipt = receipts.get(attempt.id);
-    if (!receipt) throw new Error("methodology grading projection is missing a scheduled lifecycle receipt");
-    const lifecycle = readMethodologyAttemptLifecycleTerminal(
+    if (!receipt && execution.kind !== "methodology-stopped-run-closure") throw new Error("methodology grading projection is missing a scheduled lifecycle receipt");
+    const lifecycle = receipt ? readMethodologyAttemptLifecycleTerminal(
       input.root,
       execution.invocationRegistrationSha256,
       attempt.id,
       receipt.lifecycleTerminalSha256,
-    );
+    ) : null;
     const historicalCase = cases.get(attempt.caseName);
     if (!historicalCase) throw new Error("methodology grading projection lacks an authenticated scheduled case");
 
@@ -89,7 +106,10 @@ export function readMethodologyGradingProjections(input: {
     let statusReason: MethodologyGradingProjection["statusReason"];
     let reviewOutput: MethodologyReviewOutput | null = null;
     let reviewRawOutput: string | null = null;
-    if (lifecycle.status === "preflight-failed") {
+    if (lifecycle === null) {
+      status = "missing";
+      statusReason = "outer-run-missing";
+    } else if (lifecycle.status === "preflight-failed") {
       statusReason = "preflight-failed";
     } else if (lifecycle.status === "interrupted") {
       statusReason = "interrupted";
@@ -126,8 +146,8 @@ export function readMethodologyGradingProjections(input: {
       caseName: attempt.caseName,
       status,
       statusReason,
-      lifecycleTerminalSha256: receipt.lifecycleTerminalSha256,
-      reviewTerminalSha256: lifecycle.reviewTerminalSha256,
+      lifecycleTerminalSha256: receipt?.lifecycleTerminalSha256 ?? null,
+      reviewTerminalSha256: lifecycle?.reviewTerminalSha256 ?? null,
       reviewRawOutputSha256: reviewRawOutput === null ? null : terminalRawOutputSha256(reviewRawOutput),
       reviewOutputSha256: reviewOutput === null ? null : methodologyReviewOutputSha256(reviewOutput),
     };

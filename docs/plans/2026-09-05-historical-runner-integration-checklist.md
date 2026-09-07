@@ -1,12 +1,21 @@
 # Historical runner integration checklist
 
-Status: partial integration, updated 2026-09-05. No historical
+Status: partial integration, updated 2026-09-07. No historical
 reviewer invocation is authorized or enabled by this checklist.
 
 Binding plan: [TS/JS evidence and ablation](2026-09-04-typescript-javascript-evidence-ablation-plan.md).
 The full-program goal and R2 human-curation/partition gates remain unchanged.
 
 ## Current boundary
+
+A separate schema-v2 stopped-run closure now authenticates a terminal prefix,
+an optional started/nonterminal attempt, and the exact unstarted suffix.
+Missing projections require this caller-authenticated closure; absent files
+alone still reject. Reopening a closed runner rejects before preparation.
+Complete-only v1 seals remain unchanged. Worker termination is a caller
+declaration, not process proof; retry lineage, runtime availability, and final
+grading/report integration remain open. See the
+[stopped-run verification record](../validation/2026-09-07-r3-stopped-run-closure.md).
 
 The registered historical runner now authenticates the exact preceding
 schedule prefix before starting an attempt. Skipped, reordered, and stale

@@ -1,4 +1,4 @@
-import { realpathSync } from "node:fs";
+import { readdirSync, realpathSync } from "node:fs";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import type { PeregrineConfig, ProviderExec, ReviewContext } from "../src/types.js";
 import { leakagePolicyForCase } from "./case-isolation.js";
@@ -20,6 +20,7 @@ import {
 import { createMethodologyInvocationRecorder, readMethodologyInvocationRegistration } from "./methodology-invocations.js";
 import { prepareMethodologyLaneActivation } from "./methodology-lane-activation.js";
 import { loadCaseSpec } from "./run-matrix.js";
+import { METHODOLOGY_STOPPED_RUN_CLOSURE_FILE } from "./methodology-execution-evidence.js";
 
 export interface HistoricalMethodologyProviderAttachmentRequest {
   attemptId: string;
@@ -63,6 +64,11 @@ export interface RegisteredHistoricalMethodologyAttemptInput {
 export async function runRegisteredHistoricalMethodologyAttempt(
   input: RegisteredHistoricalMethodologyAttemptInput,
 ): Promise<MethodologyAttemptLifecycleReceipt> {
+  // Presence alone prevents reopening, even when the closure was subsequently
+  // corrupted. Authentication is required by readers, never to bypass this gate.
+  if (readdirSync(input.evidenceRoot).includes(METHODOLOGY_STOPPED_RUN_CLOSURE_FILE)) {
+    throw new Error("registered historical methodology evidence store is closed");
+  }
   // Required before the lifecycle start artifact: no attempt may begin from an
   // unreadable, stale, cross-registration, or locally rewritten input plan.
   const plan = readMethodologyInputPlan(

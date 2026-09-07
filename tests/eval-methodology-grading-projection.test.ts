@@ -17,9 +17,11 @@ import {
 import { materializeHistoricalMethodologyCase, readHistoricalMethodologyCase,
   type MaterializedHistoricalMethodologyCase } from "../eval/historical-methodology-case.js";
 import { runRegisteredHistoricalMethodologyAttempt } from "../eval/historical-methodology-runner.js";
-import { writeMethodologyExecutionEvidence, type MethodologyLifecycleSealReceipt } from "../eval/methodology-execution-evidence.js";
+import { writeMethodologyExecutionEvidence, writeMethodologyStoppedRunClosure, readMethodologyStoppedRunClosure,
+  METHODOLOGY_STOPPED_RUN_CLOSURE_FILE, type MethodologyStoppedRunClosureInput,
+  type MethodologyLifecycleSealReceipt } from "../eval/methodology-execution-evidence.js";
 import { gradeMethodologyAttempt } from "../eval/methodology-grading-contract.js";
-import { readMethodologyGradingProjections,
+import { readMethodologyGradingProjections, readStoppedMethodologyGradingProjections,
   METHODOLOGY_GRADING_PROJECTION_READER_BOUNDARY } from "../eval/methodology-grading-projection.js";
 import { registerMethodologyInputPlan } from "../eval/methodology-input-plan.js";
 import { registerMethodologyInvocations } from "../eval/methodology-invocations.js";
@@ -77,6 +79,54 @@ test("authenticated projection preserves all scheduled outcomes and never upgrad
     });
 
     const lifecycleReceipts: MethodologyLifecycleSealReceipt[] = [];
+    const stoppedInput: MethodologyStoppedRunClosureInput = {
+      invocationRegistrationSha256: registrationSha256, inputPlanSha256, lifecycleReceipts: [],
+      startedNonterminal: null, unstartedAttemptIds: schedule.attempts.map((attempt) => attempt.id),
+      stoppedAt: new Date().toISOString(), stopReason: "Synthetic caller stopped before starting work.",
+      workerStopped: "established-by-caller",
+    };
+    assert.throws(() => readStoppedMethodologyGradingProjections({ root: evidenceRoot,
+      expectedStoppedRunClosureSha256: "a".repeat(64), trustedCuratorPolicy: POLICY }), /ENOENT|no such file/i);
+    assert.throws(() => writeMethodologyStoppedRunClosure(evidenceRoot,
+      { ...stoppedInput, unstartedAttemptIds: stoppedInput.unstartedAttemptIds.slice(1) }), /exact unstarted/);
+    const stoppedDigest = writeMethodologyStoppedRunClosure(evidenceRoot, stoppedInput);
+    const stopped = readStoppedMethodologyGradingProjections({ root: evidenceRoot,
+      expectedStoppedRunClosureSha256: stoppedDigest, trustedCuratorPolicy: POLICY });
+    assert.equal(stopped.projections.length, schedule.attempts.length);
+    assert.ok(stopped.projections.every(({ projection, reviewOutput }) =>
+      projection.status === "missing" && projection.statusReason === "outer-run-missing" &&
+      projection.lifecycleTerminalSha256 === null && reviewOutput === null));
+    const missing = stopped.projections[0]!;
+    const missingGrade = gradeMethodologyAttempt({ projection: missing.projection,
+      expectedProjectionSha256: missing.projectionSha256, truth: missing.truth, reviewOutput: null,
+      judgeConfigSha256: "a".repeat(64), pairVerdicts: [] });
+    assert.equal(missingGrade.completion.missing, 1);
+    assert.deepEqual(Object.values(missingGrade.rootCauseMatches), [false]);
+    assert.throws(() => readMethodologyStoppedRunClosure(evidenceRoot, "f".repeat(64)), /digest mismatch/);
+    const closurePath = join(evidenceRoot, METHODOLOGY_STOPPED_RUN_CLOSURE_FILE);
+    const closureBytes = readFileSync(closurePath);
+    const forgedClosure = JSON.parse(closureBytes.toString());
+    forgedClosure.stopReason = "Locally rewritten stop declaration.";
+    const { recordSha256: _oldDigest, ...forgedBody } = forgedClosure;
+    forgedClosure.recordSha256 = canonicalJsonSha256(forgedBody);
+    writeFileSync(closurePath, JSON.stringify(forgedClosure));
+    assert.throws(() => readMethodologyStoppedRunClosure(evidenceRoot, stoppedDigest), /digest mismatch/);
+    writeFileSync(closurePath, closureBytes);
+    assert.throws(() => writeMethodologyExecutionEvidence(evidenceRoot, {
+      invocationRegistrationSha256: registrationSha256, inputPlanSha256,
+      lifecycleReceipts: [], terminalRunSealSha256: null }), /every scheduled/);
+    let attachments = 0;
+    await assert.rejects(runRegisteredHistoricalMethodologyAttempt({ evidenceRoot,
+      invocationRegistrationSha256: registrationSha256, inputPlanSha256,
+      attemptId: schedule.attempts[0]!.id, priorLifecycleReceipts: [], trustedCuratorPolicy: POLICY,
+      config: config(), attachProvider: () => { attachments++; throw new Error("must not attach"); } }), /store is closed/);
+    assert.equal(attachments, 0);
+    const orphan = join(evidenceRoot, "late-artifact.json");
+    writeFileSync(orphan, "{}");
+    assert.throws(() => readMethodologyStoppedRunClosure(evidenceRoot, stoppedDigest), /orphaned/);
+    rmSync(orphan);
+    rmSync(join(evidenceRoot, METHODOLOGY_STOPPED_RUN_CLOSURE_FILE));
+    let testedTwoStageCrash = false;
     for (const attempt of schedule.attempts) {
       const outputs = new Map<string, string>();
       const lifecycle = await runRegisteredHistoricalMethodologyAttempt({
@@ -108,7 +158,89 @@ test("authenticated projection preserves all scheduled outcomes and never upgrad
       if (attempt.armId === "D") rmSync(join(evidenceRoot, `${attempt.id}.methodology-terminal.json`), { force: true });
       lifecycleReceipts.push({ attemptId: attempt.id,
         lifecycleTerminalSha256: lifecycle.lifecycleTerminalSha256 });
+      if (lifecycleReceipts.length === 1 ||
+          (!testedTwoStageCrash && attempt.expectedStages === 2 && lifecycle.status === "review-terminal")) {
+        // A stopped worker may have persisted intents/dispatches but no terminal.
+        // Construct that crash snapshot only after the synthetic worker returned.
+        const lifecyclePath = join(evidenceRoot, `${attempt.id}.methodology-lifecycle-terminal.json`);
+        const terminalPath = join(evidenceRoot, `${attempt.id}.methodology-terminal.json`);
+        const lifecycleBytes = readFileSync(lifecyclePath);
+        const terminalBytes = existsSync(terminalPath) ? readFileSync(terminalPath) : null;
+        const terminal = terminalBytes === null ? null : JSON.parse(terminalBytes.toString());
+        rmSync(lifecyclePath);
+        if (terminalBytes !== null) rmSync(terminalPath);
+        const pendingInput: MethodologyStoppedRunClosureInput = { ...stoppedInput,
+          lifecycleReceipts: lifecycleReceipts.slice(0, -1),
+          stoppedAt: new Date().toISOString(),
+          startedNonterminal: { attemptId: attempt.id, startSha256: lifecycle.startSha256,
+            intentReceipts: terminal?.result.intentReceipts ?? [], dispatchReceipts: lifecycle.dispatchReceipts },
+          unstartedAttemptIds: schedule.attempts.slice(lifecycleReceipts.length).map((item) => item.id) };
+        if (attempt.expectedStages === 2 && terminal?.result.intentReceipts.length === 2 && lifecycle.dispatchReceipts.length === 2) {
+          testedTwoStageCrash = true;
+          assert.equal(pendingInput.startedNonterminal!.intentReceipts.length, 2);
+          assert.equal(pendingInput.startedNonterminal!.dispatchReceipts.length, 2);
+          const stageArtifacts = [1, 2].flatMap((stage) => [
+            `${attempt.id}.stage-${stage}.input.json`, `${attempt.id}.stage-${stage}.dispatch-started.json`,
+          ]).map((name) => ({ name, bytes: readFileSync(join(evidenceRoot, name)) }));
+          for (const [intents, dispatches] of [[0, 0], [1, 0], [1, 1], [2, 1], [2, 2]] as const) {
+            for (const artifact of stageArtifacts) {
+              const stage = artifact.name.includes("stage-1") ? 1 : 2;
+              if (stage > (artifact.name.endsWith("input.json") ? intents : dispatches)) rmSync(join(evidenceRoot, artifact.name));
+            }
+            const snapshot = { ...pendingInput, startedNonterminal: {
+              ...pendingInput.startedNonterminal!,
+              intentReceipts: pendingInput.startedNonterminal!.intentReceipts.slice(0, intents),
+              dispatchReceipts: pendingInput.startedNonterminal!.dispatchReceipts.slice(0, dispatches),
+            } };
+            const snapshotDigest = writeMethodologyStoppedRunClosure(evidenceRoot, snapshot);
+            assert.equal(readMethodologyStoppedRunClosure(evidenceRoot, snapshotDigest).accounting.startedNonterminal, 1);
+            rmSync(join(evidenceRoot, METHODOLOGY_STOPPED_RUN_CLOSURE_FILE));
+            for (const artifact of stageArtifacts) writeFileSync(join(evidenceRoot, artifact.name), artifact.bytes);
+          }
+          assert.throws(() => writeMethodologyStoppedRunClosure(evidenceRoot, { ...pendingInput,
+            startedNonterminal: { ...pendingInput.startedNonterminal!,
+              dispatchReceipts: [...pendingInput.startedNonterminal!.dispatchReceipts].reverse() } }), /dispatch sequence/);
+          assert.throws(() => writeMethodologyStoppedRunClosure(evidenceRoot, { ...pendingInput,
+            startedNonterminal: { ...pendingInput.startedNonterminal!,
+              intentReceipts: [...pendingInput.startedNonterminal!.intentReceipts].reverse() } }), /intent sequence/);
+          assert.throws(() => writeMethodologyStoppedRunClosure(evidenceRoot, { ...pendingInput,
+            startedNonterminal: { ...pendingInput.startedNonterminal!, dispatchReceipts: [
+              { stageIndex: 1, dispatchSha256: "a".repeat(64) }, pendingInput.startedNonterminal!.dispatchReceipts[1]!,
+            ] } }), /digest mismatch/);
+        }
+        assert.throws(() => writeMethodologyStoppedRunClosure(evidenceRoot,
+          { ...pendingInput, stoppedAt: "2000-01-01T00:00:00.000Z" }), /timestamp|follows stopped/);
+        const pendingDigest = writeMethodologyStoppedRunClosure(evidenceRoot, pendingInput);
+        const pendingClosure = readMethodologyStoppedRunClosure(evidenceRoot, pendingDigest);
+        assert.equal(pendingClosure.accounting.startedNonterminal, 1);
+        assert.equal(pendingClosure.accounting.missing, schedule.attempts.length - lifecycleReceipts.length + 1);
+        assert.equal(pendingClosure.claims.providerContact, "not-established");
+        const pendingProjection = readStoppedMethodologyGradingProjections({ root: evidenceRoot,
+          expectedStoppedRunClosureSha256: pendingDigest, trustedCuratorPolicy: POLICY });
+        assert.equal(pendingProjection.projections[lifecycleReceipts.length - 1]!.projection.status, "missing");
+        writeFileSync(lifecyclePath, lifecycleBytes);
+        assert.throws(() => readMethodologyStoppedRunClosure(evidenceRoot, pendingDigest), /orphaned/);
+        rmSync(join(evidenceRoot, METHODOLOGY_STOPPED_RUN_CLOSURE_FILE));
+        if (terminalBytes !== null) writeFileSync(terminalPath, terminalBytes);
+        const prefixInput = { ...stoppedInput, lifecycleReceipts: [...lifecycleReceipts],
+          stoppedAt: new Date().toISOString(), unstartedAttemptIds: schedule.attempts.slice(lifecycleReceipts.length).map((item) => item.id) };
+        assert.throws(() => writeMethodologyStoppedRunClosure(evidenceRoot, { ...prefixInput,
+          lifecycleReceipts: [{ ...lifecycleReceipts[0]!, attemptId: schedule.attempts[1]!.id }] }), /schedule order/);
+        assert.throws(() => writeMethodologyStoppedRunClosure(evidenceRoot, { ...prefixInput,
+          lifecycleReceipts: lifecycleReceipts.map((receipt, index) => index === 0
+            ? { ...receipt, lifecycleTerminalSha256: "a".repeat(64) } : receipt) }), /digest mismatch/);
+        const prefixDigest = writeMethodologyStoppedRunClosure(evidenceRoot, prefixInput);
+        const prefixProjection = readStoppedMethodologyGradingProjections({ root: evidenceRoot,
+          expectedStoppedRunClosureSha256: prefixDigest, trustedCuratorPolicy: POLICY });
+        assert.notEqual(prefixProjection.projections[0]!.projection.status, "missing");
+        assert.ok(prefixProjection.projections.slice(lifecycleReceipts.length).every((item) => item.projection.status === "missing"));
+        rmSync(join(evidenceRoot, METHODOLOGY_STOPPED_RUN_CLOSURE_FILE));
+      }
     }
+
+    assert.equal(testedTwoStageCrash, true, "the crash-prefix checks must exercise two dispatched stages");
+    assert.throws(() => writeMethodologyStoppedRunClosure(evidenceRoot, { ...stoppedInput,
+      lifecycleReceipts, unstartedAttemptIds: [], stoppedAt: new Date().toISOString() }), /requires missing/);
 
     const executionEvidenceSha256 = writeMethodologyExecutionEvidence(evidenceRoot, {
       invocationRegistrationSha256: registrationSha256,
