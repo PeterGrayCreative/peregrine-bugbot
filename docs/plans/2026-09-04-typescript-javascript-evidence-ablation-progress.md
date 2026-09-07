@@ -5,11 +5,22 @@ Active branch: `research/ts-js-evidence-r2`
 
 ## Current recovery notice
 
-Newest recovery: six supplementary slots now have versioned replacement
-evidence across batches 1–3, with qualifications retained and no admissions.
-Main verified batch 3's 155 bindings without reading causal proofs.
-[Batch 3](../validation/2026-09-07-supplementary-recovery-batch3.md) adds two
-drafts; it does not declare the consolidated human packet ready.
+Persistent worktree: `/Users/petergray/Documents/peregrine-bugbot/.worktrees/ts-js-evidence-r2`.
+The missing temporary stores are documented in the
+[interruption record](../validation/2026-09-07-interruption-recovery.md).
+The frozen 100-candidate archive survives: 772 receipts / 686 objects reverified.
+
+Six of the 19 supplementary draft slots now have versioned replacement
+evidence across [batch 1](../validation/2026-09-07-supplementary-recovery-batch1.md),
+[batch 2](../validation/2026-09-07-supplementary-recovery-batch2.md), and
+[batch 3](../validation/2026-09-07-supplementary-recovery-batch3.md).
+Qualifications remain explicit; none is admitted. The other 13 prior draft
+slots and nine original sampled-loss bundles still need recovery/reconciliation.
+The consolidated human packet is not ready; no partial review is requested.
+
+Twelve earlier exposed development cards have a restore-tested repository
+archive binding all 316 evidence files; they remain unresolved draft
+preparation. See the [exposed recovery record](../validation/2026-09-07-exposed-dossier-recovery.md).
 
 The exposed Sequelize #8430 complete replay history is also restored in a
 20,773,571-byte exact-ref bundle, with original trees/roots/diffs/license
@@ -22,43 +33,13 @@ not-implemented statements in earlier snapshots below, but no Codex/provider
 connection or historical efficacy was tested. See the
 [runtime probe record](../validation/2026-09-07-r3-read-mcp-runtime.md).
 
-Latest completed recovery: four supplementary slots have new replacement
-bundles across batches 1 and 2. Three retain explicit unresolved proof or
-review-record qualifications; one meets draft preparation criteria. None is
-admitted or an individual human-review request. Main independently verified
-batch 2's 160 manifest checks with no mismatches. Remaining slots and the
-single consolidated packet are unfinished. See [batch 2](../validation/2026-09-07-supplementary-recovery-batch2.md).
-
-R3's bounded read/list/search core is implemented, reviewed, and tested, but
-has no provider/MCP transport or credential-containment proof. The earlier
-credential-path probe failure is not resolved by this code. See the
-[read-tool record](../validation/2026-09-07-r3-read-tool-foundation.md).
-
-The former temporary worktree, supplementary curator store and replay bundles
-were found missing on resumption. Pushed code and the 100-candidate archive
-survive; the archive revalidated at 772 receipts / 686 objects. The restored
-worktree is `/Users/petergray/Documents/peregrine-bugbot/.worktrees/ts-js-evidence-r2`.
-The historical batch counts below describe earlier preparation, **not current
-availability**: all 19 newer draft dossiers and nine loss-record bundles need
-their missing local bytes recovered. No admission or historical provider run
-has occurred. See the [recovery boundary and protocol](../validation/2026-09-07-interruption-recovery.md).
-
-## Active objective
-
-Recovery update: twelve earlier exposed development cards now have a
-restore-tested 505,644-byte repository archive binding all 316 evidence files.
-They remain unresolved draft preparation, not admitted cases. Two supplementary
-slots have new recovery versions: one draft satisfies its preparation gate,
-one retains a recovery proof gap. Neither matches the lost original bundle
-bytes, and neither is a partial human-review request. See the
-[exposed recovery record](../validation/2026-09-07-exposed-dossier-recovery.md)
-and [supplementary recovery batch 1](../validation/2026-09-07-supplementary-recovery-batch1.md).
-
 R3 now has a separately authenticated stopped-run closure and missing-outcome
 projection, with full methodology/historical-truth tests and independent review
 passing. This supersedes the missing-closure status in earlier snapshots below;
 runtime, final grading consumers, retry lineage, and admission remain open.
 See the [closure record](../validation/2026-09-07-r3-stopped-run-closure.md).
+
+## Active objective
 
 Determine whether any Peregrine component improves consequential TS/JS bug
 finding, unsupported-finding behavior, or measured work relative to a competent
@@ -70,7 +51,7 @@ minimal reviewer. Production routing remains frozen.
 | --- | --- | --- |
 | R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
 | R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. Twelve exposed leads checked: twelve recoverable opportunities from eleven PRs, plus one unrecoverable lead. Two heads from one PR are not independent cases. Zero new admitted cases. Human curation and protected partitioning remain open. |
-| R3: neutral and truthful harness | In progress | Four-arm scheduling, prompts, source materialization, input plans, lifecycle seals, schedule-order enforcement, and a pure neutral grading contract have structural proof (86 methodology tests). Legacy historical CLI admission still fails closed. Authenticated grading/report consumers, complete runtime availability, stopped schedules, and human admission remain open. |
+| R3: neutral and truthful harness | In progress | Four-arm scheduling, prompts, materialization, input/lifecycle seals, stopped-run closure, grading projections, and bounded HTTP read tools have structural proof. Synthetic two-container protocol checks pass. Neutral judge/adjudication/report integration, actual Codex/runtime availability, provider-connected egress, retry lineage, and human admission remain open. Legacy historical CLI admission still fails closed. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |
 | R6: select and confirm | Not started | Requires frozen candidate and new powered confirmation corpus. |
@@ -78,6 +59,10 @@ minimal reviewer. Production routing remains frozen.
 | R8: component decision | Not started | Positive, negative, simplified, or inconclusive outcomes are all valid. |
 
 ## R1 artifacts
+
+The narrative below preserves historical progress snapshots; old local paths
+and preparation counts are not current availability claims. Use the current
+recovery notice and progress table above for the latest state.
 
 Active full-program goal: [goal and completion contract](2026-09-05-typescript-javascript-evidence-full-program-goal.md).
 

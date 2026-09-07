@@ -74,3 +74,9 @@ credential-bearing client isolation, runner-owned scope observations, and
 grading/report consumers. A minimal model canary and historical experiments
 retain separate authorization gates. The earlier broad read-only credential
 canary failure remains valid; production/default launch behavior is unchanged.
+
+Publication: implementation, probe bytes and report are pushed in
+`2f5a919c82f38fb72a3d60634e6391c3238f02b6` on PR #32. The remote SHA matched;
+GitHub `check` and credential-free build/smoke passed for that head. Independent
+artifact review verified all fourteen file hashes, three source bindings, and
+the exact manifest inventory against the captured configuration and outputs.

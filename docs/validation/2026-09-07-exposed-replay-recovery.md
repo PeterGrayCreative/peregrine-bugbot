@@ -50,3 +50,10 @@ the log hash matches the initial manifest. Recovery script SHA-256:
 `a394772ded22e21aa2956d9472ed3eae319293eb39d08a468f00b12d2d2f2c15`.
 These exposed-development files passed the repository's secret-pattern check;
 that check is not a guarantee that arbitrary public history contains no secrets.
+
+Publication: bundle and recovery records were pushed in
+`089b72aba9ef833a4e99326f01bcabeeed059a69`; its remote branch SHA was verified.
+The subsequent implementation head `2f5a919c82f38fb72a3d60634e6391c3238f02b6`
+contains that commit and passed GitHub check/build-smoke. Earlier manifest
+pre-publication fields remain immutable historical snapshots, not current
+storage-availability claims.

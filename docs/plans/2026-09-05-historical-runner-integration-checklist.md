@@ -15,10 +15,10 @@ prove a Codex model session, provider-connected egress, credential-bearing
 client isolation, or historical scope completeness. See the
 [HTTP/runtime record](../validation/2026-09-07-r3-read-mcp-runtime.md).
 
-The proposed credential-free sidecar now has a bounded read/list/literal-search
-function core with deterministic tests. It is not a runtime or MCP integration;
-credential containment, network policy, and actual model tool availability
-remain open. See the [read-tool foundation record](../validation/2026-09-07-r3-read-tool-foundation.md).
+The underlying bounded read/list/literal-search core has deterministic tests;
+its initial [foundation record](../validation/2026-09-07-r3-read-tool-foundation.md)
+predates the HTTP integration above. Credential-bearing runtime containment,
+provider-connected network policy, and actual model tool availability remain open.
 
 A separate schema-v2 stopped-run closure now authenticates a terminal prefix,
 an optional started/nonterminal attempt, and the exact unstarted suffix.
