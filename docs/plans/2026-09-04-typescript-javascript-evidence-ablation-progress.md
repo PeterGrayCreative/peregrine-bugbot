@@ -5,6 +5,23 @@ Active branch: `research/ts-js-evidence-r2`
 
 ## Current recovery notice
 
+Newest recovery: six supplementary slots now have versioned replacement
+evidence across batches 1–3, with qualifications retained and no admissions.
+Main verified batch 3's 155 bindings without reading causal proofs.
+[Batch 3](../validation/2026-09-07-supplementary-recovery-batch3.md) adds two
+drafts; it does not declare the consolidated human packet ready.
+
+The exposed Sequelize #8430 complete replay history is also restored in a
+20,773,571-byte exact-ref bundle, with original trees/roots/diffs/license
+matching. It is a new source capture, not the lost original bytes; see the
+[replay recovery record](../validation/2026-09-07-exposed-replay-recovery.md).
+
+The experimental HTTP tool path passed fourteen focused tests and a real
+credential-free two-container protocol probe. This supersedes the transport
+not-implemented statements in earlier snapshots below, but no Codex/provider
+connection or historical efficacy was tested. See the
+[runtime probe record](../validation/2026-09-07-r3-read-mcp-runtime.md).
+
 Latest completed recovery: four supplementary slots have new replacement
 bundles across batches 1 and 2. Three retain explicit unresolved proof or
 review-record qualifications; one meets draft preparation criteria. None is

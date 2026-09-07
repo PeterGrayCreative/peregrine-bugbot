@@ -1,0 +1,86 @@
+[
+    {
+        "Id": "sha256:0ad23c12cc2172a54b2b298ebde4096d3e4924efc3d3bf5c2c4f616c7d00e6b3",
+        "RepoTags": [
+            "ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:0ad23c12cc2172a54b2b298ebde4096d3e4924efc3d3bf5c2c4f616c7d00e6b3"
+        ],
+        "RepoDigests": [
+            "ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:0ad23c12cc2172a54b2b298ebde4096d3e4924efc3d3bf5c2c4f616c7d00e6b3"
+        ],
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-09-03T17:53:10.197334368Z",
+        "Config": {
+            "User": "node",
+            "Env": [
+                "PATH=/opt/peregrine-provider/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "NODE_VERSION=22.22.1",
+                "YARN_VERSION=1.22.22",
+                "NODE_ENV=production",
+                "HOME=/home/peregrine",
+                "XDG_CONFIG_HOME=/home/peregrine/xdg-config",
+                "XDG_CACHE_HOME=/home/peregrine/xdg-cache",
+                "XDG_DATA_HOME=/home/peregrine/xdg-data",
+                "TMPDIR=/tmp",
+                "GIT_CONFIG_NOSYSTEM=1",
+                "GIT_CONFIG_GLOBAL=/dev/null",
+                "GIT_TERMINAL_PROMPT=0",
+                "DISABLE_AUTOUPDATER=1",
+                "DISABLE_UPDATES=1",
+                "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1"
+            ],
+            "Entrypoint": [
+                "docker-entrypoint.sh"
+            ],
+            "Cmd": [
+                "peregrine-containment-probe",
+                "--check"
+            ],
+            "WorkingDir": "/workspace",
+            "Labels": {
+                "io.peregrine.claude-code.version": "2.1.252",
+                "io.peregrine.codex.version": "0.152.0",
+                "io.peregrine.node.version": "22.22.1",
+                "org.opencontainers.image.description": "Provider CLIs for externally contained Peregrine evaluation attempts",
+                "org.opencontainers.image.revision": "511a687c2aecf484bd28f9f9e32420a3985a69ab",
+                "org.opencontainers.image.source": "https://github.com/PeterGrayCreative/peregrine-bugbot",
+                "org.opencontainers.image.title": "Peregrine evaluation runtime"
+            },
+            "ArgsEscaped": true
+        },
+        "Architecture": "arm64",
+        "Os": "linux",
+        "Size": 428642811,
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:6ef58325ba0a417962b349e6810a7177443d67fed7462c1d19da22af8b7197e0",
+                "sha256:1528eeb4ff438df23f424563519160362d99b0036d4a29c9f786ea01c1eb474a",
+                "sha256:6c62ef386a5aa5f28c2f32c8f97923861c45c929dca607c12acd73584e6bbe2d",
+                "sha256:31216ebc043d0073ddd4d97951a82b28cbb0895f0c52e3c4cc0b27a1d671be1d",
+                "sha256:e207fe1e80df99f81d36902ecb6c1dbe1808bdaaf1e6000c16c82e10da197234",
+                "sha256:bdd755019e1518959ddc544b48df28f1f213802c4d51140315492de9eb6d0377",
+                "sha256:33b2333d7bd825ab95a290df535714ae1c74a343c1baa507f3b113e59461b483",
+                "sha256:18d42b6fb8266e0ef43928942632ae50e5acac509617eaceca8418b9f019aa53",
+                "sha256:536fd454a1b56ab30da1ccc3d7d8e91390739922bbcb0a2df4c50fa31ac40ee1",
+                "sha256:3c371eb2e58ebe611452d01b9245bef91855f1931d88f87ee9c67d20c377a838",
+                "sha256:905ec0c9ba21ec915662606f2208f003ff60027df391873b0d8aee95509e73f4",
+                "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2026-09-03T17:56:05.267172216Z"
+        },
+        "Descriptor": {
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "digest": "sha256:0ad23c12cc2172a54b2b298ebde4096d3e4924efc3d3bf5c2c4f616c7d00e6b3",
+            "size": 647
+        },
+        "Identity": {
+            "Pull": [
+                {
+                    "Repository": "ghcr.io/petergraycreative/peregrine-eval-runtime"
+                }
+            ]
+        }
+    }
+]

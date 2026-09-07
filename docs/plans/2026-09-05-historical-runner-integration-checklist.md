@@ -8,6 +8,13 @@ The full-program goal and R2 human-curation/partition gates remain unchanged.
 
 ## Current boundary
 
+The experimental HTTP adapter and a real two-container, credential-free
+synthetic protocol probe now pass. Source and dummy credential mounts were
+separate; read/list/search worked with bounded rejection paths. This does not
+prove a Codex model session, provider-connected egress, credential-bearing
+client isolation, or historical scope completeness. See the
+[HTTP/runtime record](../validation/2026-09-07-r3-read-mcp-runtime.md).
+
 The proposed credential-free sidecar now has a bounded read/list/literal-search
 function core with deterministic tests. It is not a runtime or MCP integration;
 credential containment, network policy, and actual model tool availability
