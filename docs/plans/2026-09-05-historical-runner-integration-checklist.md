@@ -8,6 +8,11 @@ The full-program goal and R2 human-curation/partition gates remain unchanged.
 
 ## Current boundary
 
+The proposed credential-free sidecar now has a bounded read/list/literal-search
+function core with deterministic tests. It is not a runtime or MCP integration;
+credential containment, network policy, and actual model tool availability
+remain open. See the [read-tool foundation record](../validation/2026-09-07-r3-read-tool-foundation.md).
+
 A separate schema-v2 stopped-run closure now authenticates a terminal prefix,
 an optional started/nonterminal attempt, and the exact unstarted suffix.
 Missing projections require this caller-authenticated closure; absent files
