@@ -2,6 +2,11 @@
 
 Status: active. User resumed the full program on 2026-09-05.
 
+Resumed again on 2026-09-07 after sign-out. The full objective is unchanged.
+Work continues from the restored persistent worktree; missing temporary
+artifacts are tracked in the [recovery record](../validation/2026-09-07-interruption-recovery.md),
+not treated as available evidence or a completed checkpoint.
+
 Plan: [TypeScript and JavaScript evidence and ablation plan](2026-09-04-typescript-javascript-evidence-ablation-plan.md).
 
 ## Objective

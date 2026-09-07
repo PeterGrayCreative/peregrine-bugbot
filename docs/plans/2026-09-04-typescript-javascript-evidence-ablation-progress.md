@@ -1,7 +1,18 @@
 # TypeScript and JavaScript evidence and ablation progress
 
-Updated: 2026-09-05
+Updated: 2026-09-07
 Active branch: `research/ts-js-evidence-r2`
+
+## Current recovery notice
+
+The former temporary worktree, supplementary curator store and replay bundles
+were found missing on resumption. Pushed code and the 100-candidate archive
+survive; the archive revalidated at 772 receipts / 686 objects. The restored
+worktree is `/Users/petergray/Documents/peregrine-bugbot/.worktrees/ts-js-evidence-r2`.
+The historical batch counts below describe earlier preparation, **not current
+availability**: all 19 newer draft dossiers and nine loss-record bundles need
+their missing local bytes recovered. No admission or historical provider run
+has occurred. See the [recovery boundary and protocol](../validation/2026-09-07-interruption-recovery.md).
 
 ## Active objective
 
