@@ -5,6 +5,18 @@ Active branch: `research/ts-js-evidence-r2`
 
 ## Current recovery notice
 
+Latest completed recovery: four supplementary slots have new replacement
+bundles across batches 1 and 2. Three retain explicit unresolved proof or
+review-record qualifications; one meets draft preparation criteria. None is
+admitted or an individual human-review request. Main independently verified
+batch 2's 160 manifest checks with no mismatches. Remaining slots and the
+single consolidated packet are unfinished. See [batch 2](../validation/2026-09-07-supplementary-recovery-batch2.md).
+
+R3's bounded read/list/search core is implemented, reviewed, and tested, but
+has no provider/MCP transport or credential-containment proof. The earlier
+credential-path probe failure is not resolved by this code. See the
+[read-tool record](../validation/2026-09-07-r3-read-tool-foundation.md).
+
 The former temporary worktree, supplementary curator store and replay bundles
 were found missing on resumption. Pushed code and the 100-candidate archive
 survive; the archive revalidated at 772 receipts / 686 objects. The restored
