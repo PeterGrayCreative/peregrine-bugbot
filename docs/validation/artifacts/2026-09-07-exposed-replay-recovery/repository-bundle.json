@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "evidenceClass": "exposed-public-development-history-only",
+  "status": "repository-copy-pending-commit-and-push",
+  "artifact": {
+    "path": "sequelize-8430-complete-v2.bundle",
+    "bytes": 20773571,
+    "sha256": "29b45847bf8c13ea38acbc7743c420e36c3f890e7babc9b17a1de36da45518cc",
+    "format": "git-bundle-complete-history-sha1",
+    "refs": 4
+  },
+  "sourceRecoveryManifest": {
+    "path": "manifest.json",
+    "sha256": "061dbd7d864bb0714f102a137ef3d6a090b14f15c10488e75386026b960d4384",
+    "note": "Immutable initial local recovery snapshot; its localPersistentOnly field predates this repository copy."
+  },
+  "verification": {
+    "exactByteCopyHashMatched": true,
+    "copiedBundleVerifiedOffline": true,
+    "bundleReportsCompleteHistory": true,
+    "originalPersistentBundleRetained": true
+  },
+  "oldBundle": {
+    "sha256": "9d9a441c1983cb732a43e7f9a87dbf76b82c1f383d6a7804bcd7c6c82af80af6",
+    "bytes": 73954380,
+    "sameBytes": false,
+    "explanation": "The recovered bundle contains only four historical evidence refs and their complete ancestry, excluding the prior capture's default branch. Original declared trees, roots, ancestry count, canonical diffs and license identities all match. Old byte identity is not expected or claimed."
+  },
+  "limitations": [
+    "Not yet committed, pushed, or verified remotely.",
+    "Visible development only; never protected selection or holdout.",
+    "No supplementary curator data or private credentials included.",
+    "Source availability does not establish admission, human confirmation, materializer readiness, or runtime reproduction."
+  ]
+}
