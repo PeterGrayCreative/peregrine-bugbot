@@ -5,18 +5,34 @@ Active branch: `research/ts-js-evidence-r2`
 
 ## Current recovery notice
 
+User requested a stop after this recovery checkpoint. No further collection,
+implementation or provider batch should begin until explicit resumption.
+See the [checkpoint handoff](../validation/2026-09-07-recovery-checkpoint-handoff.md).
+
 Persistent worktree: `/Users/petergray/Documents/peregrine-bugbot/.worktrees/ts-js-evidence-r2`.
 The missing temporary stores are documented in the
 [interruption record](../validation/2026-09-07-interruption-recovery.md).
 The frozen 100-candidate archive survives: 772 receipts / 686 objects reverified.
 
-Six of the 19 supplementary draft slots now have versioned replacement
-evidence across [batch 1](../validation/2026-09-07-supplementary-recovery-batch1.md),
-[batch 2](../validation/2026-09-07-supplementary-recovery-batch2.md), and
-[batch 3](../validation/2026-09-07-supplementary-recovery-batch3.md).
-Qualifications remain explicit; none is admitted. The other 13 prior draft
-slots and nine original sampled-loss bundles still need recovery/reconciliation.
-The consolidated human packet is not ready; no partial review is requested.
+All 19 prior supplementary draft slots now have versioned replacement records
+across [batch 1](../validation/2026-09-07-supplementary-recovery-batch1.md),
+[batch 2](../validation/2026-09-07-supplementary-recovery-batch2.md),
+[batch 3](../validation/2026-09-07-supplementary-recovery-batch3.md),
+[batch 4](../validation/2026-09-07-supplementary-recovery-batch4.md),
+the [linked family](../validation/2026-09-07-linked-defect-recovery.md), and
+[comparison batch 1](../validation/2026-09-07-comparison-recovery-batch1.md) /
+[batch 2](../validation/2026-09-07-comparison-recovery-batch2.md).
+They yield 18 draft proposals, not 19 independent cases: two linked slots
+form one proposed case. Source/proof qualifications remain explicit; none is
+admitted. Nine [sampled-loss records](../validation/2026-09-07-sampled-loss-recovery.md)
+are reconciled with surviving evidence, but their original detailed rationales,
+dossier bytes and diff bytes remain unavailable. The consolidated human packet
+is not ready; no partial review is requested. New curator files remain
+local-only; pushed metadata reports do not back up their bytes remotely.
+
+The [role-separation disclosure](../validation/2026-09-07-recovery-role-separation.md)
+records implementation-side source exposure for the nine loss slots. Fresh
+curator reassignment does not restore an unexposed-validation claim.
 
 Twelve earlier exposed development cards have a restore-tested repository
 archive binding all 316 evidence files; they remain unresolved draft

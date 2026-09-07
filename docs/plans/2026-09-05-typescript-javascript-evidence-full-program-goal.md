@@ -1,6 +1,13 @@
 # Full evidence-program goal
 
-Status: active. User resumed the full program on 2026-09-05.
+Status: full objective incomplete; execution stops at the requested recovery
+checkpoint. User previously resumed the full program on 2026-09-05.
+
+Execution instruction updated on 2026-09-07: finish the in-flight sign-out
+recovery checkpoint, verify and push its reports/status, then stop. Do not
+start another collection, implementation, or provider batch until the user
+resumes. The full-program objective remains incomplete; this requested stop
+does not mark R2–R8 complete or a scientific termination.
 
 Resumed again on 2026-09-07 after sign-out. The full objective is unchanged.
 Work continues from the restored persistent worktree; missing temporary

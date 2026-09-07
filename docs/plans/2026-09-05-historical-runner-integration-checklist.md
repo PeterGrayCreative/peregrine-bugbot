@@ -8,6 +8,11 @@ The full-program goal and R2 human-curation/partition gates remain unchanged.
 
 ## Current boundary
 
+User requested a stop after the 2026-09-07 recovery checkpoint. Do not begin
+another R3 implementation or runtime probe while that stop is in effect.
+Existing structural passes below remain evidence of their stated scope, not
+authorization for historical model runs.
+
 The experimental HTTP adapter and a real two-container, credential-free
 synthetic protocol probe now pass. Source and dummy credential mounts were
 separate; read/list/search worked with bounded rejection paths. This does not
