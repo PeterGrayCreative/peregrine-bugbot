@@ -1,8 +1,11 @@
-import { createHash } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 import { assertNoSecrets } from "../src/security/secrets.js";
 import {
   canonicalJson,
+  canonicalJsonSha256,
   readExperimentJson,
   writeExclusiveJson,
 } from "./experiment.js";
@@ -18,6 +21,10 @@ import {
   readMethodologySealedJudgeGradeSet,
 } from "./methodology-sealed-grade-artifact.js";
 import {
+  readMethodologySealedAnalysisBinding,
+  type MethodologySealedAnalysisBindingReadInputs,
+} from "./methodology-sealed-analysis-binding.js";
+import {
   METHODOLOGY_ARM_IDS,
   parseMethodologySchedule,
   type MethodologyArmId,
@@ -32,10 +39,11 @@ export const METHODOLOGY_DISCOVERY_ROOT_LEDGER_FILE =
   "methodology-discovery-root-ledger.json";
 
 const SHA256 = /^[a-f0-9]{64}$/;
-const RUN_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const CASE_NAME = /^(?:development|validation)\/case-[a-f0-9]{8,32}$/;
 const OCCURRENCE_ID = /^occurrence-[a-f0-9]{64}$/;
 const ROOT_ID = /^root-[a-f0-9]{64}$/;
+const BLINDING_KEY_BRAND: unique symbol = Symbol("methodology-discovery-blinding-key");
+const BLINDING_KEYS = new WeakMap<object, Buffer>();
 const PACKET_ITEM_KEYS = [
   "occurrenceId", "caseName", "file", "startLine", "endLine", "severity",
   "explanation", "impact",
@@ -43,16 +51,37 @@ const PACKET_ITEM_KEYS = [
 const ROOT_INPUT_KEYS = ["rootId", "occurrenceIds", "causalMechanism", "evidence"] as const;
 const LEDGER_KEYS = [
   "schemaVersion", "protocol", "runId", "sealedGradeSetArtifactSha256",
-  "legacyGradeSetArtifactSha256", "adjudicationLedgerSha256", "packetSha256",
+  "sealedAnalysisBindingSha256", "legacyGradeSetArtifactSha256",
+  "adjudicationLedgerSha256", "discoveryImplementationSha256", "packetSha256",
   "curatorIdentitySha256", "reviewProtocol", "recordedAt", "roots", "counts",
+  "claims",
   "ledgerSha256",
 ] as const;
 
-export interface MethodologyDiscoveryArtifactInputs {
+export type MethodologyDiscoveryBlindingKey = {
+  readonly [BLINDING_KEY_BRAND]: true;
+};
+
+/** Create an opaque in-memory key for one operator-mediated curator packet. */
+export function createMethodologyDiscoveryBlindingKey(): MethodologyDiscoveryBlindingKey {
+  const token = Object.freeze({ [BLINDING_KEY_BRAND]: true as const });
+  BLINDING_KEYS.set(token, randomBytes(32));
+  return token;
+}
+
+/** Bind discovery packet/grouping behavior to the exact implementation bytes. */
+export function methodologyDiscoveryImplementationSha256(): string {
+  return createHash("sha256").update(readFileSync(fileURLToPath(import.meta.url))).digest("hex");
+}
+
+export interface MethodologyDiscoveryArtifactInputs extends
+  Omit<MethodologySealedAnalysisBindingReadInputs, "expectedBindingSha256"> {
   schedule: unknown;
-  expectedSealedGradeSetArtifactSha256: string;
+  expectedSealedAnalysisBindingSha256: string;
   expectedLegacyGradeSetArtifactSha256: string;
   expectedAdjudicationLedgerSha256: string;
+  /** Operator-held opaque key. Give the curator only the derived packet. */
+  blindingKey: MethodologyDiscoveryBlindingKey;
 }
 
 export interface MethodologyDiscoveryCuratorPacketItem {
@@ -70,9 +99,12 @@ export interface MethodologyDiscoveryCuratorPacket {
   schemaVersion: 1;
   protocol: typeof METHODOLOGY_DISCOVERY_CURATOR_PACKET_PROTOCOL;
   runId: string;
+  sealedAnalysisBindingSha256: string;
   sealedGradeSetArtifactSha256: string;
   legacyGradeSetArtifactSha256: string;
   adjudicationLedgerSha256: string;
+  discoveryImplementationSha256: string;
+  blindingKeySha256: string;
   seed: number;
   items: MethodologyDiscoveryCuratorPacketItem[];
   counts: { confirmedNewOccurrences: number };
@@ -90,15 +122,21 @@ export interface MethodologyDiscoveryRootLedger {
   schemaVersion: 1;
   protocol: typeof METHODOLOGY_DISCOVERY_ROOT_PROTOCOL;
   runId: string;
+  sealedAnalysisBindingSha256: string;
   sealedGradeSetArtifactSha256: string;
   legacyGradeSetArtifactSha256: string;
   adjudicationLedgerSha256: string;
+  discoveryImplementationSha256: string;
   packetSha256: string;
   curatorIdentitySha256: string;
-  reviewProtocol: "blind-to-arm-route-timing-v1";
+  reviewProtocol: "curator-packet-omits-arm-route-timing-v1";
   recordedAt: string;
   roots: MethodologyDiscoveryRootInput[];
   counts: { confirmedNewOccurrences: number; discoveryRoots: number };
+  claims: {
+    curatorPacket: "arm-route-timing-omitted";
+    curatorBlindness: "operator-mediated-not-independently-attested";
+  };
   ledgerSha256: string;
 }
 
@@ -157,7 +195,7 @@ export function writeMethodologyDiscoveryRootLedger(analysisRoot: string, input:
   source: MethodologyDiscoveryArtifactInputs;
   expectedPacketSha256: string;
   curatorIdentitySha256: string;
-  reviewProtocol: "blind-to-arm-route-timing-v1";
+  reviewProtocol: "curator-packet-omits-arm-route-timing-v1";
   recordedAt: string;
   roots: readonly MethodologyDiscoveryRootInput[];
 }): MethodologyDiscoveryRootLedger {
@@ -258,18 +296,41 @@ export function deriveMethodologyDiscoveryRootSummary(analysisRoot: string, inpu
 }
 
 function loadDiscoverySource(analysisRoot: string, input: MethodologyDiscoveryArtifactInputs): DiscoverySource {
+  const blindingKey = readBlindingKey(input.blindingKey);
+  const blindingKeySha256 = domainSha("peregrine-methodology-discovery-blinding-key-v1",
+    blindingKey.toString("hex"));
+  const discoveryImplementationSha256 = methodologyDiscoveryImplementationSha256();
+  const expectedBinding = digest(input.expectedSealedAnalysisBindingSha256,
+    "expectedSealedAnalysisBindingSha256");
+  const {
+    schedule: scheduleValue,
+    expectedSealedAnalysisBindingSha256: _expectedBinding,
+    expectedLegacyGradeSetArtifactSha256: _expectedLegacy,
+    expectedAdjudicationLedgerSha256: _expectedAdjudication,
+    blindingKey: _blindingKey,
+    ...bindingReadInputs
+  } = input;
+  const binding = readMethodologySealedAnalysisBinding(analysisRoot, {
+    ...bindingReadInputs,
+    expectedBindingSha256: expectedBinding,
+  });
   const expectedSealed = digest(input.expectedSealedGradeSetArtifactSha256,
     "expectedSealedGradeSetArtifactSha256");
   const expectedLegacy = digest(input.expectedLegacyGradeSetArtifactSha256,
     "expectedLegacyGradeSetArtifactSha256");
   const expectedAdjudication = digest(input.expectedAdjudicationLedgerSha256,
     "expectedAdjudicationLedgerSha256");
-  const schedule = parseMethodologySchedule(input.schedule, "methodology discovery schedule");
+  const schedule = parseMethodologySchedule(scheduleValue, "methodology discovery schedule");
   const sealed = readMethodologySealedJudgeGradeSet(analysisRoot, expectedSealed);
   const gradeSet = readMethodologyGradeSet(analysisRoot, expectedLegacy);
   assertLegacyMethodologyGradeSetMatchesSealed(gradeSet, sealed);
-  if (sealed.runId !== gradeSet.runId || canonicalJson(schedule) !== canonicalJson(gradeSet.schedule)) {
-    throw new Error("methodology discovery artifacts belong to a different schedule or run");
+  if (binding.bindingSha256 !== expectedBinding ||
+      binding.sealedGradeSetArtifactSha256 !== expectedSealed ||
+      binding.legacyGradeSetArtifactSha256 !== expectedLegacy ||
+      binding.runId !== sealed.runId || sealed.runId !== gradeSet.runId ||
+      binding.scheduleSha256 !== canonicalJsonSha256(schedule) ||
+      canonicalJson(schedule) !== canonicalJson(gradeSet.schedule)) {
+    throw new Error("methodology discovery artifacts do not match the sealed analysis binding, schedule, or run");
   }
   const adjudication = readMethodologyAdjudicationArtifact(analysisRoot, {
     expectedLedgerSha256: expectedAdjudication,
@@ -290,7 +351,8 @@ function loadDiscoverySource(analysisRoot: string, input: MethodologyDiscoveryAr
         grade.projection.caseName !== attempt.caseName) {
       throw new Error("methodology discovery confirmed-new occurrence is not bound to its grade and schedule");
     }
-    const occurrenceId = `occurrence-${domainSha("peregrine-methodology-discovery-occurrence-v1", {
+    const occurrenceId = `occurrence-${keyedDomainSha(blindingKey,
+      "peregrine-methodology-discovery-occurrence-v1", {
       runId: sealed.runId,
       attemptId: record.attemptId,
       findingIndex: record.findingIndex,
@@ -307,9 +369,12 @@ function loadDiscoverySource(analysisRoot: string, input: MethodologyDiscoveryAr
   const seed = Number.parseInt(domainSha("peregrine-methodology-discovery-order-seed-v1", {
     scheduleSeed: schedule.design.seed,
     runId: sealed.runId,
+    sealedAnalysisBindingSha256: expectedBinding,
     sealedGradeSetArtifactSha256: expectedSealed,
     legacyGradeSetArtifactSha256: expectedLegacy,
     adjudicationLedgerSha256: expectedAdjudication,
+    discoveryImplementationSha256,
+    blindingKeySha256,
   }).slice(0, 8), 16);
   materialized.sort((left, right) =>
     discoveryOrder(seed, left.item.occurrenceId).localeCompare(discoveryOrder(seed, right.item.occurrenceId)) ||
@@ -319,9 +384,12 @@ function loadDiscoverySource(analysisRoot: string, input: MethodologyDiscoveryAr
     schemaVersion: 1 as const,
     protocol: METHODOLOGY_DISCOVERY_CURATOR_PACKET_PROTOCOL,
     runId: sealed.runId,
+    sealedAnalysisBindingSha256: expectedBinding,
     sealedGradeSetArtifactSha256: expectedSealed,
     legacyGradeSetArtifactSha256: expectedLegacy,
     adjudicationLedgerSha256: expectedAdjudication,
+    discoveryImplementationSha256,
+    blindingKeySha256,
     seed,
     items,
     counts: { confirmedNewOccurrences: items.length },
@@ -345,8 +413,8 @@ function buildRootLedger(input: {
   roots: readonly MethodologyDiscoveryRootInput[];
 }): MethodologyDiscoveryRootLedger {
   const curatorIdentitySha256 = digest(input.curatorIdentitySha256, "curatorIdentitySha256");
-  if (input.reviewProtocol !== "blind-to-arm-route-timing-v1") {
-    throw new Error("methodology discovery root curation must remain blind to arm, route, and timing");
+  if (input.reviewProtocol !== "curator-packet-omits-arm-route-timing-v1") {
+    throw new Error("methodology discovery root curation requires the arm/route/timing-omitting packet");
   }
   if (!Array.isArray(input.roots)) throw new Error("methodology discovery roots must be an array");
   const roots = input.roots.map((root, index) => parseRoot(root, index))
@@ -366,15 +434,21 @@ function buildRootLedger(input: {
     schemaVersion: 1 as const,
     protocol: METHODOLOGY_DISCOVERY_ROOT_PROTOCOL,
     runId: input.packet.runId,
+    sealedAnalysisBindingSha256: input.packet.sealedAnalysisBindingSha256,
     sealedGradeSetArtifactSha256: input.packet.sealedGradeSetArtifactSha256,
     legacyGradeSetArtifactSha256: input.packet.legacyGradeSetArtifactSha256,
     adjudicationLedgerSha256: input.packet.adjudicationLedgerSha256,
+    discoveryImplementationSha256: input.packet.discoveryImplementationSha256,
     packetSha256: input.packet.packetSha256,
     curatorIdentitySha256,
-    reviewProtocol: "blind-to-arm-route-timing-v1" as const,
+    reviewProtocol: "curator-packet-omits-arm-route-timing-v1" as const,
     recordedAt: canonicalTimestamp(input.recordedAt),
     roots,
     counts: { confirmedNewOccurrences: expected.length, discoveryRoots: roots.length },
+    claims: {
+      curatorPacket: "arm-route-timing-omitted" as const,
+      curatorBlindness: "operator-mediated-not-independently-attested" as const,
+    },
   };
   return { ...body, ledgerSha256: domainSha("peregrine-methodology-discovery-root-ledger-v1", body) };
 }
@@ -445,6 +519,15 @@ function digest(value: unknown, label: string): string {
   return value;
 }
 
+function readBlindingKey(value: unknown): Buffer {
+  if (!value || typeof value !== "object" || !(BLINDING_KEY_BRAND in value)) {
+    throw new Error("blindingKey must be created by createMethodologyDiscoveryBlindingKey");
+  }
+  const key = BLINDING_KEYS.get(value);
+  if (!key) throw new Error("blindingKey is unavailable outside its operator process");
+  return key;
+}
+
 function canonicalTimestamp(value: unknown): string {
   if (typeof value !== "string" || !Number.isFinite(Date.parse(value)) || new Date(value).toISOString() !== value) {
     throw new Error("methodology discovery recordedAt must be a canonical timestamp");
@@ -458,4 +541,12 @@ function discoveryOrder(seed: number, occurrenceId: string): string {
 
 function domainSha(domain: string, value: unknown): string {
   return createHash("sha256").update(domain).update("\0").update(canonicalJson(value)).digest("hex");
+}
+
+function keyedDomainSha(key: Buffer, domain: string, value: unknown): string {
+  return createHmac("sha256", key)
+    .update(domain)
+    .update("\0")
+    .update(canonicalJson(value))
+    .digest("hex");
 }
