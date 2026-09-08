@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "kind": "unmatched-finding-adjudication-source",
+  "experimentId": "251f82be481b224856534e5fe61c185789c591adc7fddc7b44616da2ba983185",
+  "curatorIdentitySha256": "d444d48d6a04c8a9f88747a05832635ce20f4356e3283f8a9372242c2ac9556d",
+  "reviewProtocol": "blind-to-engine-route-variant-v1",
+  "records": [
+    {
+      "attemptId": "attempt-000006",
+      "findingIndex": 0,
+      "findingEvidenceSha256": "da00f331f7472d4c99d4e9986c03c3a3d56a9f65289966b79303a422a5ecf54d",
+      "classification": "unsupported",
+      "rationale": "The finding assumes backward-compatible acceptance of arbitrary string callers, but that behavior is not part of the fixture contract. The change deliberately makes memberCacheKey accept only identifiers produced as MemberId while preserving runtime behavior.",
+      "evidence": "The fixture contains no direct plain-string caller. parseMemberId still normalizes the canonical example, cache-key construction is unchanged, and proof.mjs applies the same canonical-ID and unambiguous-key invariants to base and head. No fixture evidence establishes external source compatibility for plain-string calls."
+    }
+  ]
+}

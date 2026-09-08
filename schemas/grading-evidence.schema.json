@@ -4,7 +4,7 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "version": { "const": "root-cause-v1" },
+    "version": { "enum": ["root-cause-v1", "root-cause-v2"] },
     "judge": {
       "type": "object",
       "additionalProperties": false,
@@ -47,7 +47,7 @@
       }
     },
     "rootCauseMatches": { "type": "object", "additionalProperties": { "type": "boolean" } },
-    "missStages": { "type": "object", "additionalProperties": { "enum": ["none", "routing", "breadth", "investigation", "budget", "presentation", "infrastructure"] } },
+    "missStages": { "type": "object", "additionalProperties": { "enum": ["none", "unattributed", "routing", "breadth", "investigation", "budget", "presentation", "infrastructure"] } },
     "unmatchedFindings": {
       "type": "array",
       "items": {
