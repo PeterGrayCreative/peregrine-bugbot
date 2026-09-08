@@ -42,9 +42,10 @@ Final rereview reported no remaining actionable finding in this slice.
 - Node 22 focused tests: 17 passed, 0 failed.
 - `npm run typecheck`: passed.
 - `git diff --check`: passed.
+- Full `npm run validate`: passed on code commit `277ad42`, including the
+  CI-facing methodology test list and 8/8 structural smoke attempts.
 
-The full repository validation and remote CI status are recorded after the
-commit is sealed and pushed.
+Remote CI is recorded after the documentation commit is pushed.
 
 ## Remaining boundary
 

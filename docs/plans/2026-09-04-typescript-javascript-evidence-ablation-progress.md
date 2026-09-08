@@ -77,7 +77,8 @@ descriptive interaction from cross-bound grade, adjudication, and resource
 artifacts. The contrast is persisted separately and joined to the existing v1
 analysis seal through a new source-bound derived seal, so older analysis
 artifacts are not reinterpreted. This is deterministic measurement plumbing,
-not an inferential decision or provider result.
+not an inferential decision or provider result. See the
+[validation record](../validation/2026-09-08-r3-contrasts-and-zero-retry.md).
 
 R3 now has a separately authenticated stopped-run closure and missing-outcome
 projection, with full methodology/historical-truth tests and independent review
