@@ -213,6 +213,12 @@ methodology suite passes 78/78.
   manifest preflight. The seeded paired funnel must reject this design, not
   apply its panel sizes or promotion rules. Only then replace the execution gate.
 
+  Current structural slice: the dedicated methodology adjudication contract
+  binds every scheduled grade and every unmatched finding occurrence, retains
+  unresolved outcomes, and rejects missing/extra/stale/cross-run decisions.
+  Durable ledger persistence and report consumption remain open. See the
+  [adjudication record](../validation/2026-09-08-r3-methodology-adjudication.md).
+
 ## Zero-provider acceptance sequence
 
 1. Scheduler/compiler test: synthetic case descriptors, all four arms, balanced

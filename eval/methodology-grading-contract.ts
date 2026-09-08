@@ -85,6 +85,10 @@ export interface MethodologyAttemptGrade {
   gradeSha256: string;
 }
 
+export function methodologyAttemptGradeSha256(value: Omit<MethodologyAttemptGrade, "gradeSha256">): string {
+  return domainSha("peregrine-methodology-neutral-grade-v1", value);
+}
+
 export function methodologyFindingEvidenceSha256(value: unknown): string {
   const finding = parseMethodologyReviewOutput({ status: "completed", limitations: [], findings: [value] }).findings[0]!;
   return domainSha("peregrine-methodology-neutral-finding-v1", finding);
@@ -188,7 +192,7 @@ export function gradeMethodologyAttempt(input: {
     claims: { globalCleanliness: "not-established" as const, providerContact: "not-established" as const,
       independentCuration: "not-established" as const },
   };
-  return { ...body, gradeSha256: domainSha("peregrine-methodology-neutral-grade-v1", body) };
+  return { ...body, gradeSha256: methodologyAttemptGradeSha256(body) };
 }
 
 function parseReviewForStatus(projection: MethodologyGradingProjection, value: unknown | null): MethodologyReviewOutput | null {
