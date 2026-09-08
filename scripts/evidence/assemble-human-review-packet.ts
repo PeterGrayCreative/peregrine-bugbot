@@ -11,8 +11,14 @@ import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "nod
 import { fileURLToPath } from "node:url";
 
 const SHA256 = /^[a-f0-9]{64}$/;
-const PORTABLE_SEGMENT = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
-const READY_CARD_NAMES = new Set(["human-evidence-card.md", "human-review-card.md"]);
+const PORTABLE_SEGMENT = /^[A-Za-z0-9._-]+$/;
+const READY_CARD_NAMES = new Set([
+  "dossier.json",
+  "human-evidence-card.md",
+  "human-review-card.json",
+  "human-review-card.md",
+  "review-card.md",
+]);
 const LOSS_CARD_NAMES = new Set(["sampled-loss.md"]);
 const CLASSIFICATIONS = new Set(["ready-for-human-review", "reconstruction-loss"]);
 
@@ -282,12 +288,9 @@ export function assembleHumanReviewPacket(rawRequest: unknown, destinationPath: 
     destination = join(canonicalParent, basename(requestedDestination));
   }
 
-  const seenManifests = new Set<string>();
   const dossiers: CapturedDossier[] = request.dossiers.map((input) => {
     const root = directRoot(input.sourceRoot, `${input.dossierId}.sourceRoot`);
     const manifest = capture(root, input.manifest, `dossiers/${input.dossierId}/${input.manifest.path}`, `${input.dossierId}.manifest`);
-    if (seenManifests.has(manifest.sourcePath)) throw new Error(`duplicate dossier manifest source: ${input.dossierId}`);
-    seenManifests.add(manifest.sourcePath);
     const files = input.files.map((file) =>
       capture(root, file, `dossiers/${input.dossierId}/${file.path}`, `${input.dossierId}.${file.path}`));
     const bindings = [manifest, ...files].map((file) => ({

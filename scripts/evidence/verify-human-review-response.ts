@@ -4,6 +4,7 @@ import { join, resolve, sep } from "node:path";
 
 const SHA256 = /^[a-f0-9]{64}$/;
 const DOSSIER_ID = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const PORTABLE_SEGMENT = /^[A-Za-z0-9._-]+$/;
 
 export type HumanReviewDecision = "approve" | "reject" | "unresolved";
 
@@ -39,6 +40,25 @@ interface PacketManifest {
   packetId: string;
   packetSha256: string;
   dossiers: PacketDossier[];
+}
+
+export interface VerifiedHumanReviewPacket {
+  packetId: string;
+  packetSha256: string;
+  proposals: number;
+  retainedLosses: number;
+  dossierIds: string[];
+}
+
+export function verifyHumanReviewPacket(packetDirectory: string): VerifiedHumanReviewPacket {
+  const packet = readPacketManifest(directDirectory(packetDirectory, "packet directory"));
+  return {
+    packetId: packet.packetId,
+    packetSha256: packet.packetSha256,
+    proposals: packet.dossiers.filter((item) => item.classification === "ready-for-human-review").length,
+    retainedLosses: packet.dossiers.filter((item) => item.classification === "reconstruction-loss").length,
+    dossierIds: packet.dossiers.map((item) => item.dossierId),
+  };
 }
 
 interface BoundFile {
@@ -254,7 +274,7 @@ function readPacketManifest(root: string): PacketManifest {
 function verifyBoundFile(root: string, value: unknown, label: string): BoundFile {
   const file = exactObject(value, label, ["path", "bytes", "sha256"]);
   if (typeof file.path !== "string" || file.path.startsWith("/") || file.path.includes("\\") ||
-      file.path.split("/").some((part) => !DOSSIER_ID.test(part) || part === "." || part === "..")) {
+      file.path.split("/").some((part) => !PORTABLE_SEGMENT.test(part) || part === "." || part === "..")) {
     throw new Error(`${label}.path is unsafe`);
   }
   if (!Number.isSafeInteger(file.bytes) || Number(file.bytes) < 0) throw new Error(`${label}.bytes is invalid`);

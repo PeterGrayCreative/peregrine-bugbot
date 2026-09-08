@@ -16,8 +16,12 @@ import {
   assembleHumanReviewPacket,
   type HumanPacketAssemblyRequest,
 } from "../scripts/evidence/assemble-human-review-packet.js";
-import { verifyHumanReviewResponse } from "../scripts/evidence/verify-human-review-response.js";
+import {
+  verifyHumanReviewPacket,
+  verifyHumanReviewResponse,
+} from "../scripts/evidence/verify-human-review-response.js";
 import { buildSoleHumanAdmissionFromResponse } from "../scripts/evidence/build-sole-human-admission.js";
+import { buildRecoveredHumanReviewRequest } from "../scripts/evidence/build-recovered-human-review-request.js";
 
 const hash = (value: string | Buffer) => createHash("sha256").update(value).digest("hex");
 
@@ -380,7 +384,7 @@ test("rejects manifest and included-file tampering without leaving a packet", ()
   }
 });
 
-test("rejects traversal, unsafe cards, duplicate dossiers, duplicate paths, and duplicate manifests", () => {
+test("rejects traversal, unsafe cards, duplicate dossiers, and duplicate paths", () => {
   const paths = fixture();
   try {
     const traversal = structuredClone(paths.request);
@@ -399,15 +403,92 @@ test("rejects traversal, unsafe cards, duplicate dossiers, duplicate paths, and 
     duplicatePath.dossiers[0]!.files.push(duplicatePath.dossiers[0]!.files[0]!);
     assert.throws(() => assembleHumanReviewPacket(duplicatePath, paths.output), /duplicate file path/);
 
-    const duplicateManifest = structuredClone(paths.request);
-    duplicateManifest.dossiers[1]!.sourceRoot = duplicateManifest.dossiers[0]!.sourceRoot;
-    duplicateManifest.dossiers[1]!.classification = "ready-for-human-review";
-    duplicateManifest.dossiers[1]!.manifest = { ...duplicateManifest.dossiers[0]!.manifest };
-    duplicateManifest.dossiers[1]!.files = [{ ...duplicateManifest.dossiers[0]!.files[0]! }];
-    duplicateManifest.dossiers[1]!.cardPath = "human-evidence-card.md";
-    assert.throws(() => assembleHumanReviewPacket(duplicateManifest, paths.output), /duplicate dossier manifest source/);
   } finally {
     paths.cleanup();
+  }
+});
+
+test("accepts shared batch manifests, JSON review cards, and source filenames used by recovered repositories", () => {
+  const data = fixture();
+  try {
+    writeFileSync(join(data.request.dossiers[0]!.sourceRoot, ".babelrc"), "{}\n");
+    writeFileSync(join(data.request.dossiers[0]!.sourceRoot, "_error.tsx"), "export default null;\n");
+    writeFileSync(join(data.request.dossiers[0]!.sourceRoot, "human-review-card.json"), "{}\n");
+    const request = structuredClone(data.request);
+    request.dossiers[0]!.cardPath = "human-review-card.json";
+    request.dossiers[0]!.files = [
+      { path: "human-review-card.json", sha256: hash("{}\n") },
+      { path: ".babelrc", sha256: hash("{}\n") },
+      { path: "_error.tsx", sha256: hash("export default null;\n") },
+    ];
+    request.dossiers[1]!.sourceRoot = request.dossiers[0]!.sourceRoot;
+    request.dossiers[1]!.classification = "ready-for-human-review";
+    request.dossiers[1]!.manifest = { ...request.dossiers[0]!.manifest };
+    request.dossiers[1]!.cardPath = "human-review-card.json";
+    request.dossiers[1]!.files = [{ ...request.dossiers[0]!.files[0]! }];
+    const result = assembleHumanReviewPacket(request, data.output);
+    assert.match(result.packetSha256, /^[a-f0-9]{64}$/);
+    assert.equal(verifyHumanReviewPacket(data.output).packetSha256, result.packetSha256);
+  } finally {
+    data.cleanup();
+  }
+});
+
+test("builds the exact recovered checkpoint inventory without interpreting card content", () => {
+  const root = mkdtempSync(join(realpathSync(tmpdir()), "peregrine-recovered-request-"));
+  const stores = join(root, "source-copy", "curator-stores");
+  const make = (path: string, files: Record<string, string>): void => {
+    for (const [name, bytes] of Object.entries(files)) {
+      const output = join(path, ...name.split("/"));
+      mkdirSync(dirname(output), { recursive: true });
+      writeFileSync(output, bytes);
+    }
+  };
+  try {
+    const exposed = join(stores, "exposed-development-recovery-v1");
+    make(exposed, { "recovery-manifest.json": "{}\n" });
+    for (let index = 1; index <= 12; index += 1) {
+      make(exposed, { [`dossiers/exposed-${String(index).padStart(2, "0")}/human-review-card.md`]: "# Review\n" });
+    }
+    make(exposed, { "losses/exposed-vscode-98988/sampled-loss.md": "# Loss\n" });
+    const supplementaryIds = [
+      ["v1", "r2-post-merge-alpha-002"], ["v1", "r2-post-merge-alpha-004"],
+      ["v2", "r2-post-merge-alpha-003"], ["v2", "r2-post-merge-alpha-005"],
+      ["v3", "r2-post-merge-alpha-007"], ["v3", "r2-post-merge-alpha-009"],
+      ["v4", "r2-post-merge-alpha-008"], ["v4", "r2-post-merge-alpha-011"],
+      ["v4", "r2-post-merge-alpha-012"], ["v4", "r2-post-merge-alpha-013"],
+    ];
+    for (const [version, id] of supplementaryIds) {
+      make(join(stores, `supplementary-recovery-${version}`, "dossiers", id!), {
+        "bundle-manifest.json": "{}\n", "human-review-card.json": "{}\n",
+      });
+    }
+    make(join(stores, "linked-defect-recovery-v1"), {
+      "bundle-manifest.json": "{}\n", "review-card.md": "# Review\n",
+    });
+    for (const id of ["001", "002", "004", "007"]) {
+      make(join(stores, "comparison-recovery-v1", `r2-random-${id}`), {
+        "case-manifest.json": "{}\n", "human-review-card.md": "# Review\n",
+      });
+    }
+    for (const id of ["008", "012", "014"]) {
+      make(join(stores, "comparison-recovery-v2", `r2-random-${id}`), {
+        "bundle-manifest.json": "{}\n", "dossier.json": "{}\n",
+      });
+    }
+    for (const id of ["003", "005", "006", "009", "010", "011", "013", "015", "016"]) {
+      make(join(stores, "sampled-loss-recovery-v1", "losses", `r2-random-${id}`), {
+        "loss.json": "{}\n", "sampled-loss.md": "# Loss\n",
+      });
+    }
+    const request = buildRecoveredHumanReviewRequest(root);
+    assert.equal(request.dossiers.filter((item) => item.classification === "ready-for-human-review").length, 30);
+    assert.equal(request.dossiers.filter((item) => item.classification === "reconstruction-loss").length, 10);
+    assert.equal(new Set(request.dossiers.map((item) => item.dossierId)).size, 40);
+    assert.equal(request.dossiers.find((item) => item.dossierId === "r2-random-008")?.cardPath, "dossier.json");
+    assert.equal(request.dossiers.find((item) => item.dossierId === "exposed-01")?.manifest.path, "recovery-manifest.json");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
   }
 });
 

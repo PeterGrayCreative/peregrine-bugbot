@@ -15,7 +15,8 @@ authorize historical model runs.
 The later recovery-only resumption produced a verified local archive. The
 implementation repository was public, so the user approved a separate private
 backup repository. Its exact remote commit passed a fresh remote-origin restore.
-This did not resume R3 or authorize historical providers.
+That repository now also contains the consolidated 30-proposal, 10-loss packet.
+R3 structural work resumed; historical providers remain unauthorized.
 
 The experimental HTTP adapter and a real two-container, credential-free
 synthetic protocol probe now pass. Source and dummy credential mounts were

@@ -30,8 +30,9 @@ Complete the full TypeScript and JavaScript evidence-gathering and Peregrine abl
 ## Starting evidence
 
 - R1 is complete; its authoritative v3 packet and rejected earlier versions remain preserved in PR #31.
-- R2 first slice is pushed in PR #32: 25 comment-independent candidates, unknown truth, no admissions, with 167 source-response receipts. CI passed for commit `83120ff`.
-- R2 curation and partitioning, R3-R8, and final efficacy conclusions remain incomplete.
+- R2 has a frozen 100-candidate inventory and a restore-tested private packet containing 30 recovered draft proposals and 10 losses. It has zero human decisions or admissions and remains below the 36-case target.
+- R3 structural integration is advanced through authenticated grading, adjudication, resource reporting, and registration-to-analysis/source binding. Runtime/provider gates remain open.
+- R2 admission/partitioning, remaining R3 gates, R4-R8, and final efficacy conclusions remain incomplete.
 - The former instruction to stop after R1 is superseded by the user's explicit resumption.
 
 The full goal remains active across implementation checkpoints. Provider batch registration, independent curation, private data authorization, and final holdout requirements retain their original gates.

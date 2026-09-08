@@ -87,7 +87,7 @@ minimal reviewer. Production routing remains frozen.
 | Step | State | Evidence / remaining gate |
 | --- | --- | --- |
 | R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
-| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. Thirty recovered draft proposals and nine retained losses remain unadmitted. Sole-human v3 governance, complete packet-response verification, and non-mutating response-to-admission derivation now pass structural tests without weakening R1/v2. Full packet preparation, human decisions, durable admission import, and protected partitioning remain open. |
+| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. A restore-tested one-shot packet now binds 30 recovered draft proposals and 10 retained losses in the private evidence repository. Sole-human v3 governance, packet verification, and non-mutating response-to-admission derivation pass structural tests without weakening R1/v2. Human decisions, sufficient admission yield/headroom, durable admission import, and partitioning remain open. |
 | R3: neutral and truthful harness | In progress | Four-arm scheduling, prompts, materialization, input/lifecycle seals, stopped-run closure, grading projections, bounded HTTP read tools, both historical curator-policy versions, arm-blind all-findings adjudication, descriptive reporting, append-only analysis artifacts, authenticated terminal resource sets/reports, and a final registration-to-analysis/source-snapshot binding have structural proof. Missing durations/tokens/cost remain unknown rather than zero; old report artifacts remain unchanged. Inferential decision seals, actual Codex/runtime availability, provider-connected egress, retry lineage, and real human admission remain open. Legacy historical CLI admission still fails closed. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |
@@ -254,14 +254,14 @@ opportunities remain separate. Further fixed-queue collection, existing-dossier
 packaging, stopped/missing-run closure and credential-free read-tool work are
 in progress. None authorizes a model run or satisfies the human review gate.
 
-The user's sole-human curator/verifier arrangement is confirmed. Preparation
-continues toward one consolidated review request, not serial approvals. A
+The user's sole-human curator/verifier arrangement is confirmed. A
 portable [packet assembler](../validation/2026-09-05-r2-human-packet-assembler.md)
-is implemented and independently reviewed against synthetic fixtures only;
-eight evidence tests and typecheck pass. It preserves original proof bytes and
-blank decisions, but authenticating a complete input file list and reference
-closure remains the preparer's responsibility. No real packet has been assembled.
-Neither packet
+now accepts the recovered Markdown and JSON card formats, shared batch
+manifests, and ordinary repository filenames. The recovery-specific builder
+rejects any inventory other than the checkpoint's exact 30 proposals and 10
+losses, hashes every copied file, and produced the [durable one-shot packet](../validation/2026-09-08-r2-recovered-human-review-packet.md).
+The generic packet still does not claim semantic source completeness or
+reference closure. Neither packet
 assembly nor one person's approval can satisfy two independent-human claims.
 
 The exact assembler commit `fdae0689509d3bf59fbcb05fd94f8ecb350d9b1c` passed
