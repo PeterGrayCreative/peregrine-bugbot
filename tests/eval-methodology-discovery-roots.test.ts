@@ -1,17 +1,21 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { lstatSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join, resolve } from "node:path";
 import test from "node:test";
 import { canonicalJson } from "../eval/experiment.js";
 import { readMethodologyAdjudicationArtifact } from "../eval/methodology-analysis-artifacts.js";
 import {
+  METHODOLOGY_DISCOVERY_BLINDING_KEY_FILE,
   METHODOLOGY_DISCOVERY_ROOT_LEDGER_FILE,
   buildMethodologyDiscoveryCuratorPacket,
-  createMethodologyDiscoveryBlindingKey,
   deriveMethodologyDiscoveryRootSummary,
   methodologyDiscoveryImplementationSha256,
+  readMethodologyDiscoveryBlindingKey,
   readMethodologyDiscoveryRootLedger,
+  writeMethodologyDiscoveryBlindingKey,
   writeMethodologyDiscoveryRootLedger,
   type MethodologyDiscoveryArtifactInputs,
   type MethodologyDiscoveryRootInput,
@@ -33,8 +37,11 @@ const rootId = (value: string): string => `root-${digest(value)}`;
 const recordedAt = "2026-09-08T18:00:00.000Z";
 
 interface Fixture extends MethodologySealedAnalysisFixture {
+  operatorRoot: string;
   source: MethodologyDiscoveryArtifactInputs;
   bindingSha256: string;
+  blindingKeyArtifactSha256: string;
+  blindingReceipt: ReturnType<typeof writeMethodologyDiscoveryBlindingKey>["receipt"];
 }
 
 async function createFixture(
@@ -52,25 +59,35 @@ async function createFixture(
     },
   });
   const binding = writeMethodologySealedAnalysisBinding(value.analysisRoot, value.writeInput);
+  const operatorRoot = mkdtempSync(join(tmpdir(), "methodology-discovery-operator-"));
+  const blinding = writeMethodologyDiscoveryBlindingKey(operatorRoot, {
+    runId: value.sealed.runId,
+    recordedAt: "2026-09-08T17:59:00.000Z",
+  });
   const { expectedBindingSha256: _binding, ...bindingInputs } = sealedAnalysisReadInput(
     value,
     binding.bindingSha256,
   );
   return {
     ...value,
+    operatorRoot,
     bindingSha256: binding.bindingSha256,
+    blindingKeyArtifactSha256: blinding.receipt.artifactSha256,
+    blindingReceipt: blinding.receipt,
     source: {
       ...bindingInputs,
       schedule: value.schedule,
       expectedSealedAnalysisBindingSha256: binding.bindingSha256,
       expectedLegacyGradeSetArtifactSha256: value.legacy.artifactSha256,
       expectedAdjudicationLedgerSha256: value.adjudication.ledgerSha256,
-      blindingKey: createMethodologyDiscoveryBlindingKey(),
+      expectedBlindingKeyArtifactSha256: blinding.receipt.artifactSha256,
+      blindingKey: blinding.key,
     },
   };
 }
 
 function cleanup(value: Fixture): void {
+  rmSync(value.operatorRoot, { recursive: true, force: true });
   cleanupMethodologySealedAnalysisFixture(value);
 }
 
@@ -135,6 +152,17 @@ test("requires the composite binding and emits keyed, arm-blind occurrence ident
     assert.equal(data.adjudication.counts.unsupported, 2);
     assert.equal(data.adjudication.counts.unresolved, 2);
     assert.equal(packet.discoveryImplementationSha256, methodologyDiscoveryImplementationSha256());
+    assert.equal(Object.isFrozen(data.blindingReceipt), true);
+    assert.throws(() => {
+      (data.blindingReceipt as { runId: string }).runId = "mutated-run";
+    }, /read only|readonly|Cannot assign/i);
+    assert.equal(buildMethodologyDiscoveryCuratorPacket(data.analysisRoot, data.source).packetSha256,
+      packet.packetSha256);
+    assert.equal(lstatSync(join(data.operatorRoot, METHODOLOGY_DISCOVERY_BLINDING_KEY_FILE)).mode & 0o077, 0);
+    assert.throws(() => writeMethodologyDiscoveryBlindingKey(data.operatorRoot, {
+      runId: data.sealed.runId,
+      recordedAt: "2026-09-08T17:59:00.000Z",
+    }), /exist|EEXIST/i);
 
     const confirmed = data.adjudication.records.filter((record) =>
       record.classification === "confirmed-new");
@@ -211,6 +239,36 @@ test("groups complete occurrences into shared and arm-only roots", async () => {
       totalRecall: "not-established",
       independentCuration: "not-established",
     });
+
+    const { blindingKey: _blindingKey, ...serializedSource } = data.source;
+    const childPayload = {
+      analysisRoot: data.analysisRoot,
+      operatorRoot: data.operatorRoot,
+      runId: data.sealed.runId,
+      expectedBlindingKeyArtifactSha256: data.blindingKeyArtifactSha256,
+      source: serializedSource,
+      expectedPacketSha256: packet.packetSha256,
+      expectedLedgerSha256: ledger.ledgerSha256,
+    };
+    const childScript = `
+      import { readMethodologyDiscoveryBlindingKey, deriveMethodologyDiscoveryRootSummary }
+        from "./eval/methodology-discovery-roots.ts";
+      const input = JSON.parse(process.argv[1]);
+      const reopened = readMethodologyDiscoveryBlindingKey(input.operatorRoot, {
+        runId: input.runId,
+        expectedArtifactSha256: input.expectedBlindingKeyArtifactSha256,
+      });
+      const value = deriveMethodologyDiscoveryRootSummary(input.analysisRoot, {
+        source: { ...input.source, blindingKey: reopened.key },
+        expectedPacketSha256: input.expectedPacketSha256,
+        expectedLedgerSha256: input.expectedLedgerSha256,
+      });
+      process.stdout.write(JSON.stringify(value));
+    `;
+    const reopenedSummary = JSON.parse(execFileSync(process.execPath, [
+      "--import", "tsx", "--input-type=module", "-e", childScript, JSON.stringify(childPayload),
+    ], { cwd: resolve("."), encoding: "utf8" }));
+    assert.deepEqual(reopenedSummary, summary);
 
     const original = readMethodologyAdjudicationArtifact(data.analysisRoot, {
       expectedLedgerSha256: data.adjudication.ledgerSha256,
@@ -290,10 +348,16 @@ test("rejects cross-run bindings and the wrong blinding nonce after sealing", as
       roots: curatorRoots(packet),
     });
     assert.throws(() => readMethodologyDiscoveryRootLedger(data.analysisRoot, {
-      source: { ...data.source, blindingKey: createMethodologyDiscoveryBlindingKey() },
+      source: {
+        ...data.source,
+        blindingKey: readMethodologyDiscoveryBlindingKey(other.operatorRoot, {
+          runId: other.sealed.runId,
+          expectedArtifactSha256: other.blindingKeyArtifactSha256,
+        }).key,
+      },
       expectedPacketSha256: packet.packetSha256,
       expectedLedgerSha256: ledger.ledgerSha256,
-    }), /packet does not match its caller-held digest/i);
+    }), /different run or artifact|packet does not match its caller-held digest/i);
   } finally {
     cleanup(data);
     cleanup(other);
