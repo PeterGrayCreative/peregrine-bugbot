@@ -219,8 +219,12 @@ methodology suite passes 78/78.
   A descriptive four-arm report now consumes and revalidates this contract,
   and a separate append-only analysis store retains grade-set, adjudication,
   and report artifacts behind caller-held digests. Authenticated registration-
-  to-analysis joining, inferential comparisons, and decision seals remain
-  open. A separate versioned resource artifact now derives every scheduled
+  Inferential comparisons and decision seals remain open. A final versioned
+  analysis binding now authenticates the invocation registration's run ID and
+  schedule against every grade projection, adjudication/report artifact,
+  terminal resource artifact, and the exact runtime analysis-source bytes.
+  Cross-run, caller-invented run identity, altered projection, mixed execution,
+  and source drift reject. A separate versioned resource artifact derives every scheduled
   attempt's lifecycle wall duration, runner duration, stage count, and
   provider-reported usage from authenticated terminal evidence. Its report
   preserves observed subtotals but leaves totals null whenever any attempt is
@@ -228,6 +232,8 @@ methodology suite passes 78/78.
   report artifacts and readers remain unchanged. See the
   [adjudication record](../validation/2026-09-08-r3-methodology-adjudication.md).
   See also the [resource record](../validation/2026-09-08-r3-methodology-resource-evidence.md).
+  The [analysis-binding record](../validation/2026-09-08-r3-methodology-analysis-binding.md)
+  describes the final structural join and its limits.
 
 ## Zero-provider acceptance sequence
 

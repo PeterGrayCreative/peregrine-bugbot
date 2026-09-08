@@ -25,6 +25,14 @@ import { readMethodologyGradingProjections, readStoppedMethodologyGradingProject
   METHODOLOGY_GRADING_PROJECTION_READER_BOUNDARY } from "../eval/methodology-grading-projection.js";
 import { readMethodologyResourceSet, writeMethodologyResourceSet } from "../eval/methodology-resource-artifact.js";
 import { readMethodologyResourceReport, writeMethodologyResourceReport } from "../eval/methodology-resource-report.js";
+import {
+  writeMethodologyAdjudicationArtifact,
+  writeMethodologyGradeSet,
+  writeMethodologyReportArtifact,
+} from "../eval/methodology-analysis-artifacts.js";
+import type { MethodologyAdjudicationRecord } from "../eval/methodology-adjudication.js";
+import { readMethodologyAnalysisBinding, verifyMethodologyAnalysisSource,
+  writeMethodologyAnalysisBinding } from "../eval/methodology-analysis-binding.js";
 import { registerMethodologyInputPlan } from "../eval/methodology-input-plan.js";
 import { registerMethodologyInvocations } from "../eval/methodology-invocations.js";
 import { prepareMethodologyLaneActivation } from "../eval/methodology-lane-activation.js";
@@ -293,6 +301,37 @@ test("authenticated projection preserves all scheduled outcomes and never upgrad
 
     const analysisRoot = mkdtempSync(join(tmpdir(), "peregrine-methodology-resource-set-"));
     try {
+      const grades = result.projections.map((item) => gradeMethodologyAttempt({
+        projection: item.projection,
+        expectedProjectionSha256: item.projectionSha256,
+        truth: item.truth,
+        reviewOutput: item.reviewOutput,
+        judgeConfigSha256: "a".repeat(64),
+        pairVerdicts: [],
+      }));
+      const gradeSet = writeMethodologyGradeSet(analysisRoot, {
+        runId: "projection-reader-mixed-outcomes",
+        schedule,
+        executionEvidenceSha256,
+        inputPlanSha256,
+        grades,
+        recordedAt: "2026-09-08T02:58:00.000Z",
+      });
+      const records = grades.flatMap((grade) => grade.unmatchedFindings.map((finding): MethodologyAdjudicationRecord => ({
+        attemptId: grade.projection.attemptId,
+        findingIndex: finding.findingIndex,
+        findingEvidenceSha256: finding.findingEvidenceSha256,
+        classification: "unresolved",
+        rationale: "Synthetic structural output has no independent finding adjudication.",
+        evidence: "This test authenticates analysis joins only.",
+      })));
+      const adjudication = writeMethodologyAdjudicationArtifact(analysisRoot, {
+        gradeSet,
+        curatorIdentitySha256: "b".repeat(64),
+        records,
+        recordedAt: "2026-09-08T02:59:00.000Z",
+      });
+      const report = writeMethodologyReportArtifact(analysisRoot, { schedule, gradeSet, adjudication });
       const resourceSet = writeMethodologyResourceSet(analysisRoot, {
         executionRoot: evidenceRoot,
         runId: "projection-reader-mixed-outcomes",
@@ -316,6 +355,24 @@ test("authenticated projection preserves all scheduled outcomes and never upgrad
         schedule,
         resources: resourceSet,
       }), resourceReport);
+      const binding = writeMethodologyAnalysisBinding(analysisRoot, {
+        executionRoot: evidenceRoot,
+        repositoryRoot: resolve("."),
+        expectedExecutionEvidenceSha256: executionEvidenceSha256,
+        trustedCuratorPolicy: POLICY,
+        expectedGradeSetArtifactSha256: gradeSet.artifactSha256,
+        expectedAdjudicationLedgerSha256: adjudication.ledgerSha256,
+        expectedReportSha256: report.reportSha256,
+        expectedResourceSetArtifactSha256: resourceSet.artifactSha256,
+        expectedResourceReportSha256: resourceReport.reportSha256,
+        boundAt: "2026-09-08T03:01:00.000Z",
+      });
+      assert.equal(binding.runId, "projection-reader-mixed-outcomes");
+      assert.equal(binding.analysisSource.some((item) => item.path === "eval/methodology-analysis-binding.ts"), true);
+      assert.deepEqual(readMethodologyAnalysisBinding(analysisRoot, binding.bindingSha256), binding);
+      verifyMethodologyAnalysisSource(binding, resolve("."));
+      assert.throws(() => verifyMethodologyAnalysisSource(binding, fixture.root), /not loaded from repositoryRoot|ENOENT/);
+      assert.throws(() => readMethodologyAnalysisBinding(analysisRoot, "e".repeat(64)), /digest mismatch/);
       assert.throws(() => readMethodologyResourceSet(analysisRoot, {
         expectedArtifactSha256: "f".repeat(64), schedule,
       }), /digest mismatch/);
