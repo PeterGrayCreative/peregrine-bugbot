@@ -79,12 +79,16 @@ while Terra-xhigh and Sol-high investigation means were nearly equal. This is
 an attribution clue, not an isolated-model causal claim, because both model
 route changes were bundled in one treatment.
 
-One control-only finding on clean case `development/case-5ea42d18` remained
-unresolved. It claimed that narrowing an exported cache-key helper to a branded
-identifier broke existing callers. Its sealed finding-evidence digest is
+One control-only finding on clean case `development/case-5ea42d18` was
+initially unresolved. It claimed that narrowing an exported cache-key helper to
+a branded identifier broke existing callers. Its sealed finding-evidence digest is
 `da00f331f7472d4c99d4e9986c03c3a3d56a9f65289966b79303a422a5ecf54d`.
-This prevents a definitive precision/FDR claim from the paired smoke, but it
-does not explain or invalidate the observed treatment wall-time regression.
+A later blinded curator classified it as unsupported because the fixture
+contains no direct plain-string caller or compatibility contract. The separate
+ledger reports control precision 0.8/FDR 0.2 and treatment precision 1/FDR 0.
+The linked version-2 smoke decision mechanically says `advance` because smoke
+has no efficiency gate; the operator's wall-time rejection remains controlling,
+and no fast-screen is authorized.
 
 ## Conclusions
 
@@ -98,9 +102,9 @@ does not explain or invalidate the observed treatment wall-time regression.
 4. Future behavioral experiments return to Luna high breadth and Sol high
    investigation on both arms unless model routing is itself the isolated,
    preregistered intervention.
-5. The unresolved control finding exposed a missing durable curator-
-   adjudication path. That harness gap should be tracked separately; it is not
-   necessary to spend more provider attempts on this rejected route.
+5. The formerly unresolved control finding is retained through the durable
+   curator-adjudication path. Resolving it does not justify more provider
+   attempts on this rejected route.
 
 An independent read-only audit reproduced the registered recall and paired
 wall-time results, confirmed that all six timing pairs favored the control, and

@@ -365,9 +365,8 @@ export async function gradeResult(
         bug.id,
         classifyMissStage({
           matched: matches[bug.id] !== null,
-          // Until runner-owned routing/breadth/budget/presentation evidence is
-          // present, fail closed instead of guessing a behavioral miss stage.
-          infrastructureFailure: matches[bug.id] === null,
+          // Until runner-owned stage evidence exists, do not guess why a
+          // completed model review missed a registered bug.
         }),
       ])),
       unmatchedFindings,
@@ -394,6 +393,9 @@ function experimentMetadataFiles(includeExperiment: boolean): ReadonlySet<string
           EXPERIMENT_METADATA_FILENAMES.experimentStop,
           EXPERIMENT_TERMINAL_SEAL_FILENAME,
           EXPERIMENT_GRADING_SEAL_FILENAME,
+          "experiment-adjudication.json",
+          "funnel-decision.json",
+          "funnel-decision-adjudicated.json",
         ]
       : []),
   ]);

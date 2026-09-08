@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "kind": "experiment-adjudication",
+  "experimentId": "251f82be481b224856534e5fe61c185789c591adc7fddc7b44616da2ba983185",
+  "experimentManifestSha256": "d8989d01741f424e9119d4c79cfefcd58a5983be95d67cb171b61e17c6741d50",
+  "terminalSealSha256": "6d7e11cb0d2340a2668d043c647efaca21c36460ef6e2aba6e39899aaf38588d",
+  "gradingSealSha256": "89a84e087c00ddcd1b70702060cad5dd4283923c130c4788ab9b392f342228e2",
+  "source": {
+    "repositoryCommit": "420337049ec797826a640ebb22d6bd5d13528e66",
+    "path": "docs/validation/artifacts/2026-09-04-luna-max-terra-xhigh-screen/paired-smoke-adjudication-source.json",
+    "sha256": "6e5291dac211a5fc7a2453954738e13f4c91e204346e806d33dcb70a3dbe5ef5",
+    "curatorIdentitySha256": "d444d48d6a04c8a9f88747a05832635ce20f4356e3283f8a9372242c2ac9556d",
+    "reviewProtocol": "blind-to-engine-route-variant-v1"
+  },
+  "records": [
+    {
+      "attemptId": "attempt-000006",
+      "findingIndex": 0,
+      "findingEvidenceSha256": "da00f331f7472d4c99d4e9986c03c3a3d56a9f65289966b79303a422a5ecf54d",
+      "classification": "unsupported",
+      "rationale": "The finding assumes backward-compatible acceptance of arbitrary string callers, but that behavior is not part of the fixture contract. The change deliberately makes memberCacheKey accept only identifiers produced as MemberId while preserving runtime behavior.",
+      "evidence": "The fixture contains no direct plain-string caller. parseMemberId still normalizes the canonical example, cache-key construction is unchanged, and proof.mjs applies the same canonical-ID and unambiguous-key invariants to base and head. No fixture evidence establishes external source compatibility for plain-string calls."
+    }
+  ],
+  "recordedAt": "2026-09-05T01:24:37.857Z",
+  "ledgerSha256": "fae699f5972e14d6276681923d01e19af34c75581b0157ab07506def397062f4"
+}

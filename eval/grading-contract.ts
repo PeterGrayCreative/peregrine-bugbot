@@ -10,7 +10,8 @@ import type {
   UnmatchedFindingAdjudication,
 } from "../src/types.js";
 
-export const GRADING_VERSION = "root-cause-v1" as const;
+export const LEGACY_GRADING_VERSION = "root-cause-v1" as const;
+export const GRADING_VERSION = "root-cause-v2" as const;
 export const SEMANTIC_JUDGE_VERSION = "semantic-v1" as const;
 
 export interface MatchCandidate {
@@ -205,7 +206,9 @@ export function assertGradingEvidenceConsistent(
     throw new Error(`${source}.grading.rootCauseMatches is inconsistent`);
   }
   for (const bug of truth.bugs) {
-    const expectedStage = matches[bug.id] === null ? "infrastructure" : "none";
+    const expectedStage = matches[bug.id] === null
+      ? evidence.version === LEGACY_GRADING_VERSION ? "infrastructure" : "unattributed"
+      : "none";
     if (evidence.missStages[bug.id] !== expectedStage) {
       throw new Error(`${source}.grading.missStages.${bug.id} lacks authenticated stage evidence`);
     }
@@ -255,7 +258,8 @@ export function classifyMissStage(args: {
   if (args.laneActivated === false) return "routing";
   if (args.breadthCandidate === false) return "breadth";
   if (args.investigationBudgetExhausted) return "budget";
-  return "investigation";
+  if (args.laneActivated === true && args.breadthCandidate === true) return "investigation";
+  return "unattributed";
 }
 
 export function judgeDecisionId(input: {

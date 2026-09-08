@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Peregrine Experiment Adjudication Ledger",
+  "$comment": "Structural schema only. The strict reader is authoritative for committed-Git source binding and exact sealed-finding identity.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "kind": { "const": "experiment-adjudication" },
+    "experimentId": { "$ref": "#/$defs/sha256" },
+    "experimentManifestSha256": { "$ref": "#/$defs/sha256" },
+    "terminalSealSha256": { "$ref": "#/$defs/sha256" },
+    "gradingSealSha256": { "$ref": "#/$defs/sha256" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repositoryCommit": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "curatorIdentitySha256": { "$ref": "#/$defs/sha256" },
+        "reviewProtocol": { "const": "blind-to-engine-route-variant-v1" }
+      },
+      "required": ["repositoryCommit", "path", "sha256", "curatorIdentitySha256", "reviewProtocol"]
+    },
+    "records": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/record" }
+    },
+    "recordedAt": { "type": "string", "format": "date-time" },
+    "ledgerSha256": { "$ref": "#/$defs/sha256" }
+  },
+  "required": [
+    "schemaVersion", "kind", "experimentId", "experimentManifestSha256",
+    "terminalSealSha256", "gradingSealSha256", "source", "records",
+    "recordedAt", "ledgerSha256"
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "attemptId": { "type": "string", "pattern": "^attempt-[0-9]{6}$" },
+        "findingIndex": { "type": "integer", "minimum": 0 },
+        "findingEvidenceSha256": { "$ref": "#/$defs/sha256" },
+        "classification": { "enum": ["confirmed-new", "unsupported"] },
+        "rationale": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "evidence": { "type": "string", "minLength": 1, "maxLength": 4000 }
+      },
+      "required": ["attemptId", "findingIndex", "findingEvidenceSha256", "classification", "rationale", "evidence"]
+    }
+  }
+}
