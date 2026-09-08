@@ -1,15 +1,17 @@
 # Sol: minimal evidence recovery and durable handoff
 
-Date: 2026-09-07. Status: local verification/archive/restore complete; remote
-durability paused because the selected repository is public.
+Date: 2026-09-07. Status: complete. Private remote backup and remote-origin
+restore verified.
 
-Storage decision: the user approved the existing GitHub repository for evidence
-backup. A live check on 2026-09-07 returned `visibility: PUBLIC` and
-`isPrivate: false` for `PeterGrayCreative/peregrine-bugbot`. No evidence backup
-branch or upload existed when checked. Upload is therefore blocked until the
-user makes this repository private, selects a separate private repository, or
-explicitly chooses encrypted public storage with a separately preserved key.
-Branch separation alone does not protect benchmark answers.
+Storage decision history: the user first approved the existing GitHub
+repository, but a live check returned `visibility: PUBLIC` and
+`isPrivate: false` for `PeterGrayCreative/peregrine-bugbot`. No evidence was
+uploaded there. The user then approved a separate private repository.
+`PeterGrayCreative/peregrine-evidence-backup` was created private and rechecked
+private after upload. Its dedicated branch is
+`evidence-backup/2026-09-07-recovery`, commit
+`c571d88d99dee7c07805c1d820cc405bdb21f46d`. Branch/repository separation is
+durable storage, not a sealed holdout or independent curator access boundary.
 
 Local execution results are recorded in the
 [Sol recovery report](../validation/2026-09-07-sol-minimal-recovery-results.md).
@@ -104,8 +106,8 @@ before extraction. Keep originals untouched throughout.
 
 First create a second persistent copy outside the source tree. This protects
 against accidental source-folder deletion but **not disk failure**. Then push
-the archive and its file/hash inventory to the approved existing remote,
-`https://github.com/PeterGrayCreative/peregrine-bugbot.git`, on the dedicated
+the archive and its file/hash inventory to the approved private remote,
+`https://github.com/PeterGrayCreative/peregrine-evidence-backup.git`, on the dedicated
 backup branch above. Use a separate persistent staging directory; keep causal
 files out of the implementation checkout and PR. Inspect any existing backup
 branch before writing; never overwrite history or force-push. Do not merge
@@ -218,10 +220,11 @@ Expected initial pass: approximately 1–2 hours if stored bytes verify, plus
 backup transfer time. Two capped repairs can add roughly 40 minutes before
 verification. These are estimates, not a promise of full R2/R3 readiness.
 
-Resolved decision: the existing GitHub repository is the off-device backup
-destination. Its private status, successful remote push and fresh restore must
-be verified. Curator access isolation remains unresolved; this backup does not
-satisfy a protected-validation or external-holdout gate.
+Resolved decision: `PeterGrayCreative/peregrine-evidence-backup` is the private
+off-device backup destination. Its private status, exact remote commit and
+fresh remote-origin restore are verified. Curator access isolation remains
+unresolved; this backup does not satisfy a protected-validation or external-
+holdout gate.
 
 ## Prompt to give Sol
 
@@ -232,6 +235,6 @@ satisfy a protected-validation or external-holdout gate.
 > preserve unresolved gaps and old hashes. No provider experiments, production
 > edits or partial human review. Return one metadata-only recovery report with
 > tested restore evidence and explicit backup limitations, then stop. Use the
-> approved existing GitHub repo on `evidence-backup/2026-09-07-recovery`; keep
+> approved private GitHub backup repo on `evidence-backup/2026-09-07-recovery`; keep
 > evidence out of the implementation PR. Verify private visibility and restore
 > from the pushed commit. Do not claim that branch separation seals the answers.

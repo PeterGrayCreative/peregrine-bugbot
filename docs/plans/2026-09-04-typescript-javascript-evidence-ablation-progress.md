@@ -14,10 +14,13 @@ current recovery stores, created an immutable 147,065,638-byte archive and
 full file inventory under persistent `.worktrees/evidence-curation`, and
 successfully restored and reverified it from a second local copy. See the
 [local recovery report](../validation/2026-09-07-sol-minimal-recovery-results.md).
-No missing dossier was synthetically rebuilt. The selected GitHub repository
-is publicly visible, so causal evidence was not uploaded. Remote/off-device
-durability remains incomplete; R2 collection, R3 implementation and provider
-runs did not resume.
+No missing dossier was synthetically rebuilt. The existing implementation
+repository is publicly visible, so causal evidence was not uploaded there.
+The user approved a separate private repository; the split archive was pushed
+to exact commit `c571d88d99dee7c07805c1d820cc405bdb21f46d` and a fresh
+remote-origin clone passed full reassembly and offline verification. Remote
+durability is complete for this recovery closure. Curator isolation, R2
+collection, R3 implementation and provider runs did not resume.
 
 Persistent worktree: `/Users/petergray/Documents/peregrine-bugbot/.worktrees/ts-js-evidence-r2`.
 The missing temporary stores are documented in the

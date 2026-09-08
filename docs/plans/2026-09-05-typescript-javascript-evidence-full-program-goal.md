@@ -11,9 +11,10 @@ does not mark R2–R8 complete or a scientific termination.
 
 The user later resumed recovery only and selected GitHub storage. Local archive
 and restore verification completed without restarting collection, R3, or any
-provider work. Live repository metadata reports the selected repository is
-public, so evidence upload remains paused pending a non-public or explicitly
-encrypted destination. See the [Sol recovery report](../validation/2026-09-07-sol-minimal-recovery-results.md).
+provider work. The existing implementation repository was public, so the user
+approved a separate private backup repository. Exact remote commit
+`c571d88d99dee7c07805c1d820cc405bdb21f46d` passed a fresh remote-origin
+restore. See the [Sol recovery report](../validation/2026-09-07-sol-minimal-recovery-results.md).
 
 Resumed again on 2026-09-07 after sign-out. The full objective is unchanged.
 Work continues from the restored persistent worktree; missing temporary

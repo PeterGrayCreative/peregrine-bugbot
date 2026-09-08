@@ -2,7 +2,7 @@
 
 Date: 2026-09-07
 
-Status: local recovery checkpoint complete; off-device durability incomplete.
+Status: private off-device backup and remote-origin restore complete.
 No historical reviewer experiment, case admission, production change, or
 partial human review occurred.
 
@@ -76,25 +76,51 @@ environment, original-byte, license, ancestry, exposure and packet-reference
 gaps remain recorded in `recovery-inventory-v1.json`; archive completeness does
 not resolve scientific truth.
 
-The archive and restore are on the same computer and disk. This protects
-against accidental deletion of one working directory, but not disk loss. The
-approved existing GitHub repository was checked live and returned
-`visibility: PUBLIC`, `isPrivate: false`. No evidence branch, commit, push or
-upload was created. A public branch would expose benchmark answers and would
-not be a protected partition or sealed holdout.
+The first approved destination, the existing implementation repository, was
+checked live and returned `visibility: PUBLIC`, `isPrivate: false`. No evidence
+was uploaded there. The user then approved a separate private repository:
+[PeterGrayCreative/peregrine-evidence-backup](https://github.com/PeterGrayCreative/peregrine-evidence-backup).
+It was created private and rechecked as `PRIVATE`, `isPrivate: true` after the
+backup completed.
 
-The archive also exceeds GitHub's
-[100 MiB regular Git-object limit](https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits#activity). A future
-approved private destination therefore needs bounded archive volumes or an
-appropriate private large-file mechanism. Splitting files solves transport
-size, not public exposure. The next safe action is to select a private GitHub
-repository or make the existing repository private, then split, upload, fetch
-the exact remote commit into a fresh directory, and repeat the restore checks.
+The 147,065,638-byte archive exceeds GitHub's
+[100 MiB regular Git-object limit](https://docs.github.com/en/repositories/creating-and-managing-repositories/repository-limits#activity),
+so it was split into three ordered, read-only volumes:
+
+| Part | Bytes | SHA-256 |
+| --- | ---: | --- |
+| 001 | 50,331,648 | `c6f78dbf3bd28d7cce2a01dcf4c63c019eaa364b898a209907356e5e2a5a3e33` |
+| 002 | 50,331,648 | `ffe55586c90d0f1b13f85446820f18fb7bfddabf11917665f90c326772a59325` |
+| 003 | 46,402,342 | `7c578386e3660f5239e6e8859cc2217d921b263a48228b39bd1b8c064e400d12` |
+
+Volume-manifest SHA-256:
+`84b7fc658cc378d6e821d03b772a96595c943a23bf83ee30f0d0eceedb2369cc`.
+It binds the exact part order, total bytes and whole-archive hash.
+
+The private repository's default branch is
+`evidence-backup/2026-09-07-recovery`; exact remote commit:
+`c571d88d99dee7c07805c1d820cc405bdb21f46d`. It contains exactly nine
+authorized blobs, zero blobs at or above 100 MiB, no unrelated files and no
+pull request. Main independently verified the private visibility, exact remote
+ref, nine-blob tree and zero oversized blobs.
+
+A fresh clone from that remote used no alternates, shallow boundary, partial-
+clone setting or promisor packs; `git fsck` passed. The clone reassembled the
+archive to the exact 147,065,638-byte whole hash, passed all 4,442 archive-
+member safety checks, reproduced the 3,725-file inventory and reran every
+offline verifier listed above. This establishes off-device recoverability for
+the current closure.
+
+Private GitHub storage is still readable by repository administrators and any
+granted collaborators. It is durable backup, not curator isolation, a protected
+selection partition, independent human verification or a sealed holdout.
 
 ## Scope accounting
 
 No source candidate was substituted or newly collected. No missing rationale
 was invented. No repository source, historical code, dependency, test, build,
 provider, judge, production route, prompt, posting API, or benchmark was run or
-changed. No evidence Git branch or remote mutation occurred. Only this
-metadata report and status references belong in the implementation PR.
+changed. The only evidence remote mutation was the authorized private backup
+repository/branch and its single exact commit. Causal evidence remains absent
+from the implementation repository and PR; only this metadata report and
+status references belong there.
