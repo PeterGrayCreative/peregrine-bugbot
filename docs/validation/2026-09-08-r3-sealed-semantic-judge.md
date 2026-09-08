@@ -26,6 +26,10 @@ the exact sealed root summary.
   correction.
 - Focused corrected discovery tests passed, including cross-process reopen.
 - Diff checking passed.
+- A clean-worktree `npm run validate` passed end to end: 260/260 base tests,
+  13/13 evidence-capture tests, 44/44 historical-truth tests, 155/155
+  methodology tests, 9/9 methodology HTTP tests, corpus validation, skill and
+  package validation, and the 8/8 structural smoke.
 - Independent review found and verified corrections for cross-run projection
   reuse, forged persisted grades, unauthenticated discovery derivation,
   reversible occurrence IDs, missing source binding, non-durable blinding
