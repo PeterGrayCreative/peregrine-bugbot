@@ -31,7 +31,7 @@ Complete the full TypeScript and JavaScript evidence-gathering and Peregrine abl
 
 - R1 is complete; its authoritative v3 packet and rejected earlier versions remain preserved in PR #31.
 - R2 has a frozen 100-candidate inventory and a restore-tested private packet containing 30 recovered draft proposals and 10 losses. It has zero human decisions or admissions and remains below the 36-case target.
-- R3 structural integration is advanced through authenticated grading, adjudication, resource reporting, and registration-to-analysis/source binding. Runtime/provider gates remain open.
+- R3 structural integration is advanced through authenticated grading, adjudication, resource reporting, registration-to-analysis/source binding, and an exact neutral Sol-high Codex launch/tool-policy contract. Provider contact, effective model tools, and destination-restricted egress remain open.
 - R2 admission/partitioning, remaining R3 gates, R4-R8, and final efficacy conclusions remain incomplete.
 - The former instruction to stop after R1 is superseded by the user's explicit resumption.
 

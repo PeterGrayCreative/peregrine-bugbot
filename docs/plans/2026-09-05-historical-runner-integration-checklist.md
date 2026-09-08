@@ -30,6 +30,16 @@ its initial [foundation record](../validation/2026-09-07-r3-read-tool-foundation
 predates the HTTP integration above. Credential-bearing runtime containment,
 provider-connected network policy, and actual model tool availability remain open.
 
+The methodology runner now has an exact Codex launch profile: Sol high,
+read-only sandbox, no ambient config/rules, built-in shell tools disabled, and
+only the three neutral read tools registered through the bounded MCP adapter.
+The exact tool policy is retained in invocation intents. The accepted image was
+observed as Codex CLI 0.152.0 and parsed the MCP configuration without credentials
+or network access. Two-worker attempts may use two distinct MCP sessions; the
+default remains one. This is structural/runtime-configuration evidence, not a
+provider/model canary or an egress allowlist. See the
+[neutral launch record](../validation/2026-09-08-r3-neutral-codex-launch.md).
+
 A separate schema-v2 stopped-run closure now authenticates a terminal prefix,
 an optional started/nonterminal attempt, and the exact unstarted suffix.
 Missing projections require this caller-authenticated closure; absent files
@@ -207,6 +217,10 @@ methodology suite passes 78/78.
   hashes are not exact assembled prompt hashes, and the once-per-attempt start
   marker does not count both model calls. Retain both attempt and invocation
   accounting, including failed/stopped/retried work and missing telemetry.
+
+  Current slice: prompt, schema, mount, model, effort, stage/attempt deadlines,
+  prior output, and the exact neutral tool policy are sealed. Retry lineage and
+  effective served-model/provider evidence remain open.
 - [ ] **Historical consumer integration.** Wire caller-trusted curation,
   materialized source identity, input authentication, scope evidence, shared
   metric eligibility, and arm-blinded adjudication into scheduling, grading,

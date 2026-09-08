@@ -44,6 +44,7 @@ export interface MethodologyBeforeInvocationInput {
   schemaText: string;
   model: typeof METHODOLOGY_MODEL;
   effort: "high";
+  toolPolicy?: NonNullable<ReviewContext["evaluationIsolation"]>["neutralReadMcp"];
   /** Registered maximum for this stage, not necessarily the applied child timeout. */
   stageMaximumMs: number;
   /** Absolute attempt deadline; callback time is charged before provider dispatch. */
@@ -338,6 +339,9 @@ async function invoke(args: {
     schemaText,
     model: METHODOLOGY_MODEL,
     effort: "high",
+    ...(isolation.neutralReadMcp
+      ? { toolPolicy: structuredClone(isolation.neutralReadMcp) }
+      : {}),
     stageMaximumMs: args.stageMaximumMs,
     attemptDeadlineAt: new Date(args.attemptDeadline).toISOString(),
     previousOutput: args.previousOutput,

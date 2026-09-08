@@ -93,6 +93,20 @@ test("initialization negotiates the pinned version and tool execution requires t
   assert.equal(duplicate.status, 409);
 }));
 
+test("two-worker attempts may use two isolated sessions and freeze Docker host authorization", async () => fixture(async (service) => {
+  const port = new URL(service.url).port;
+  service.authorizeHost(`host.docker.internal:${port}`);
+  const first = await ready(service);
+  const second = await ready(service);
+  assert.notEqual(first["Mcp-Session-Id"], second["Mcp-Session-Id"]);
+  assert.equal((await call(service.url, rpc("tools/list"), first)).status, 200);
+  assert.equal((await call(service.url, rpc("tools/list"), second)).status, 200);
+  const third = await call(service.url, rpc("initialize", { protocolVersion: REVIEW_READ_MCP_PROTOCOL,
+    capabilities: {}, clientInfo: { name: "third", version: "1" } }));
+  assert.equal(third.status, 409);
+  assert.throws(() => service.authorizeHost(`other.invalid:${port}`), /frozen/);
+}, { maxSessions: 2 }));
+
 test("Host, Origin and capability endpoint checks precede every protocol method", async () => fixture(async (service) => {
   const message = rpc("initialize", { protocolVersion: REVIEW_READ_MCP_PROTOCOL, capabilities: {}, clientInfo: { name: "x", version: "1" } });
   assert.equal((await call(service.url, message, { Host: "attacker.invalid" })).status, 403);

@@ -164,7 +164,16 @@ test("authenticated projection preserves all scheduled outcomes and never upgrad
             return { stdout: "", stderr: "",
               code: attempt.armId === "C" && attempt.repeat === 2 ? 1 : 0, timedOut: false };
           };
-          return { runProvider, readProviderOutput: (path: string) => outputs.get(path)! };
+          return {
+            runProvider,
+            readProviderOutput: (path: string) => outputs.get(path)!,
+            neutralReadMcp: {
+              protocol: "neutral-read-mcp-v1" as const,
+              url: "http://host.docker.internal:43123/mcp/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              serverName: "source_read" as const,
+              enabledTools: ["list_tree", "read_file", "search_text"] as const,
+            },
+          };
         },
       });
       if (attempt.armId === "D") rmSync(join(evidenceRoot, `${attempt.id}.methodology-terminal.json`), { force: true });

@@ -7,6 +7,7 @@ import { parseMethodologyAssetManifest, type MethodologyAssetManifest } from "./
 import { parseMethodologyDiscoveryOutput } from "./methodology-output.js";
 import type { CompiledMethodologyPrompt } from "./methodology-prompts.js";
 import { parseMethodologySchedule, type MethodologySchedule } from "./methodology-schedule.js";
+import type { EvaluationIsolation } from "../src/types.js";
 
 export interface MethodologyInvocationInput {
   attemptId: string;
@@ -16,6 +17,8 @@ export interface MethodologyInvocationInput {
   schemaText: string;
   model: "gpt-5.6-sol";
   effort: "high";
+  /** Absent only in pre-tool-policy structural artifacts. */
+  toolPolicy?: NonNullable<EvaluationIsolation["neutralReadMcp"]>;
   stageMaximumMs: number;
   attemptDeadlineAt: string;
   previousOutput: string | null;
@@ -106,7 +109,7 @@ export function readMethodologyInvocation(root: string, registrationSha256: stri
 function validateInput(input: MethodologyInvocationInput, registration: InvocationRegistration,
   previous: MethodologyInvocationRecord | null): void {
   keys(input, ["attemptId", "stageIndex", "compiled", "assets", "schemaText", "model", "effort",
-    "stageMaximumMs", "attemptDeadlineAt", "previousOutput", "requestedAt"]);
+    "stageMaximumMs", "attemptDeadlineAt", "previousOutput", "requestedAt"], ["toolPolicy"]);
   const attempt = registration.schedule.attempts.find((item) => item.id === input.attemptId);
   if (!attempt || ![1, 2].includes(input.stageIndex) || input.stageIndex > attempt.expectedStages) {
     throw new Error("methodology invocation is not scheduled");
@@ -138,6 +141,7 @@ function validateInput(input: MethodologyInvocationInput, registration: Invocati
       input.stageMaximumMs !== attempt.stageDeadlineMs[input.stageIndex - 1]) {
     throw new Error("methodology invocation route or ceiling mismatch");
   }
+  if (input.toolPolicy !== undefined) validateToolPolicy(input.toolPolicy);
   const requestedAt = timestamp(input.requestedAt);
   const deadline = timestamp(input.attemptDeadlineAt);
   if (deadline <= requestedAt || deadline - requestedAt > registration.schedule.design.totalDeadlineMs) {
@@ -158,6 +162,22 @@ function validateInput(input: MethodologyInvocationInput, registration: Invocati
     }
   } else if (input.previousOutput !== null || compiled.handoffSha256 !== null) {
     throw new Error("methodology initial invocation cannot have a handoff");
+  }
+}
+
+function validateToolPolicy(value: NonNullable<EvaluationIsolation["neutralReadMcp"]>): void {
+  keys(value, ["protocol", "url", "serverName", "enabledTools"]);
+  if (value.protocol !== "neutral-read-mcp-v1" || value.serverName !== "source_read" ||
+      canonicalJson(value.enabledTools) !== canonicalJson(["list_tree", "read_file", "search_text"])) {
+    throw new Error("methodology invocation tool policy is invalid");
+  }
+  let url: URL;
+  try { url = new URL(value.url); }
+  catch { throw new Error("methodology invocation tool policy URL is invalid"); }
+  if (url.protocol !== "http:" || url.hostname !== "host.docker.internal" ||
+      !/^[1-9][0-9]{0,4}$/.test(url.port) || Number(url.port) > 65535 ||
+      !/^\/mcp\/[a-f0-9]{64}$/.test(url.pathname) || url.search || url.hash || url.username || url.password) {
+    throw new Error("methodology invocation tool policy URL is outside the allowed shape");
   }
 }
 
@@ -189,9 +209,10 @@ function filename(attemptId: string, stageIndex: 1 | 2): string {
   if (!/^attempt-[0-9]{6}$/.test(attemptId) || ![1, 2].includes(stageIndex)) throw new Error("invalid invocation path");
   return `${attemptId}.stage-${stageIndex}.input.json`;
 }
-function keys(value: unknown, expected: string[]): void {
+function keys(value: unknown, expected: string[], optional: string[] = []): void {
   if (!value || typeof value !== "object" || Array.isArray(value) ||
-      Object.keys(value).sort().join("\0") !== [...expected].sort().join("\0")) {
+      Object.keys(value).some((key) => !expected.includes(key) && !optional.includes(key)) ||
+      expected.some((key) => !Object.hasOwn(value, key))) {
     throw new Error("methodology invocation artifact has invalid fields");
   }
 }

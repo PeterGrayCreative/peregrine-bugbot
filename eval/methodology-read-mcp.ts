@@ -21,6 +21,8 @@ export interface ReviewReadMcpOptions {
   requestTimeoutMs: number;
   maxConnections: number;
   maxRequests: number;
+  /** Distinct initialized reviewer sessions allowed before shutdown. Defaults to one. */
+  maxSessions?: number;
 }
 type RpcId = string | number;
 type RpcMessage = { jsonrpc: "2.0"; id?: RpcId; method: string; params?: Record<string, unknown> };
@@ -38,12 +40,14 @@ const TOOL_DEFINITIONS = [
 /** One initialization per server lifetime. Close and create a fresh service for
  * another client/run. No SSE, outgoing requests, resources, prompts, or shell. */
 export async function startReviewReadMcpServer(exportRoot: string, readLimits: ReviewReadToolLimits,
-  options: ReviewReadMcpOptions): Promise<{ url: string; close(): Promise<void> }> {
+  options: ReviewReadMcpOptions): Promise<{ url: string; authorizeHost(authority: string): void; close(): Promise<void> }> {
   if (!fields(options, ["maxRequestBytes", "maxResponseBytes", "requestTimeoutMs", "maxConnections", "maxRequests"],
-    ["host", "port", "allowedHosts", "allowedOrigins"])) throw new Error("invalid MCP configuration");
+    ["host", "port", "allowedHosts", "allowedOrigins", "maxSessions"])) throw new Error("invalid MCP configuration");
   for (const key of ["maxRequestBytes", "maxResponseBytes", "requestTimeoutMs", "maxConnections", "maxRequests"] as const) {
     if (!Number.isSafeInteger(options[key]) || options[key] < 1 || options[key] > 100_000_000) throw new Error("invalid MCP limit");
   }
+  const maxSessions = options.maxSessions ?? 1;
+  if (!Number.isSafeInteger(maxSessions) || maxSessions < 1 || maxSessions > 2) throw new Error("invalid MCP session limit");
   if (options.maxResponseBytes < 4096) throw new Error("MCP response limit must be at least 4096 bytes");
   const host = options.host ?? "127.0.0.1";
   const port = options.port ?? 0;
@@ -63,12 +67,12 @@ export async function startReviewReadMcpServer(exportRoot: string, readLimits: R
   const limits = { ...options };
   const tools = createReviewReadTools(exportRoot, readLimits);
   const endpoint = `/mcp/${randomBytes(32).toString("hex")}`;
-  const sessionId = randomBytes(32).toString("hex");
-  let state: "new" | "initializing" | "ready" | "closed" = "new";
+  const sessions = new Map<string, "initializing" | "ready">();
+  let closed = false;
   let requests = 0;
   const sockets = new Set<Socket>();
 
-  function send(res: ServerResponse, status: number, body?: unknown, session = false) {
+  function send(res: ServerResponse, status: number, body?: unknown, sessionId?: string) {
     if (res.writableEnded || res.destroyed) return;
     let encoded = body === undefined ? "" : JSON.stringify(body);
     if (Buffer.byteLength(encoded) > limits.maxResponseBytes) {
@@ -77,7 +81,7 @@ export async function startReviewReadMcpServer(exportRoot: string, readLimits: R
     }
     res.writeHead(status, { "Connection": "close", "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
       ...(encoded ? { "Content-Type": "application/json" } : {}), "Content-Length": Buffer.byteLength(encoded),
-      ...(session ? { "Mcp-Session-Id": sessionId } : {}) });
+      ...(sessionId ? { "Mcp-Session-Id": sessionId } : {}) });
     res.end(encoded);
   }
   function transportError(res: ServerResponse, status: number, message: string) {
@@ -114,9 +118,9 @@ export async function startReviewReadMcpServer(exportRoot: string, readLimits: R
       transportError(res, 403, "Origin is not allowed"); return;
     }
     if (req.url !== endpoint) { transportError(res, 404, "Endpoint not found"); return; }
-    if (state === "closed") { transportError(res, 404, "Session not found"); return; }
+    if (closed) { transportError(res, 404, "Session not found"); return; }
     const suppliedSession = req.headers["mcp-session-id"];
-    if (suppliedSession !== undefined && (state === "new" || suppliedSession !== sessionId)) {
+    if (suppliedSession !== undefined && (typeof suppliedSession !== "string" || !sessions.has(suppliedSession))) {
       transportError(res, 404, "Session not found"); return;
     }
     const version = req.headers["mcp-protocol-version"];
@@ -149,23 +153,26 @@ export async function startReviewReadMcpServer(exportRoot: string, readLimits: R
     const params = message.params ?? {};
     const id = message.id;
     if (message.method === "initialize" && id !== undefined) {
-      if (state !== "new" || suppliedSession !== undefined) { send(res, 409, rpcError(id, -32600, "Session already initialized")); return; }
+      if (suppliedSession !== undefined || sessions.size >= maxSessions) { send(res, 409, rpcError(id, -32600, "Session already initialized")); return; }
       if (!fields(params, ["protocolVersion", "capabilities", "clientInfo"], ["_meta"]) ||
           typeof params.protocolVersion !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(params.protocolVersion) ||
           !object(params.capabilities) || !object(params.clientInfo) ||
           typeof params.clientInfo.name !== "string" || typeof params.clientInfo.version !== "string") {
         send(res, 200, rpcError(id, -32602, "Invalid initialization parameters")); return;
       }
-      state = "initializing";
+      const sessionId = randomBytes(32).toString("hex");
+      sessions.set(sessionId, "initializing");
       send(res, 200, { jsonrpc: "2.0", id, result: { protocolVersion: REVIEW_READ_MCP_PROTOCOL,
-        capabilities: { tools: {} }, serverInfo: { name: "source-read-tools", version: "0.1.0" } } }, true);
+        capabilities: { tools: {} }, serverInfo: { name: "source-read-tools", version: "0.1.0" } } }, sessionId);
       return;
     }
-    if (state === "new" || suppliedSession === undefined) { transportError(res, 400, "Initialized session is required"); return; }
+    if (suppliedSession === undefined) { transportError(res, 400, "Initialized session is required"); return; }
     if (version !== REVIEW_READ_MCP_PROTOCOL) { transportError(res, 400, "Negotiated protocol header is required"); return; }
+    const state = sessions.get(suppliedSession)!;
     if (id === undefined) {
       if (message.method === "notifications/initialized" && fields(params, [], ["_meta"])) {
-        state = "ready"; send(res, 202); return;
+        if (state !== "initializing") { transportError(res, 409, "Session already initialized"); return; }
+        sessions.set(suppliedSession, "ready"); send(res, 202); return;
       }
       if (state === "ready" && message.method === "notifications/cancelled" &&
           fields(params, ["requestId"], ["reason", "_meta"]) && validId(params.requestId) &&
@@ -209,8 +216,12 @@ export async function startReviewReadMcpServer(exportRoot: string, readLimits: R
   if (!address || typeof address === "string") throw new Error("MCP listener has no TCP address");
   const authority = `${host.includes(":") ? `[${host}]` : host}:${address.port}`;
   if (options.allowedHosts === undefined) allowedHosts.add(authority.toLowerCase());
-  return { url: `http://${authority}${endpoint}`, close: async () => {
-    state = "closed";
+  return { url: `http://${authority}${endpoint}`, authorizeHost: (candidate) => {
+    if (closed || sessions.size > 0) throw new Error("MCP host authorization is frozen after first initialization");
+    for (const value of authorities([candidate])) allowedHosts.add(value);
+  }, close: async () => {
+    closed = true;
+    sessions.clear();
     await new Promise<void>((resolveClose) => { server.close(() => resolveClose()); for (const socket of sockets) socket.destroy(); });
   } };
 }

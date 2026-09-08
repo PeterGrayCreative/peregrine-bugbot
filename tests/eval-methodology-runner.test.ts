@@ -152,6 +152,7 @@ test("all four arms execute six mocked Codex dispatches with Sol-high arguments 
         ));
         assert.equal(record.input.model, "gpt-5.6-sol");
         assert.equal(record.input.effort, "high");
+        assert.deepEqual(record.input.toolPolicy, setup.context.evaluationIsolation!.neutralReadMcp);
         assert.equal(result.stages[stageOffset]!.invocationSha256, receipt.invocationSha256);
         if (stageIndex === 2) {
           assert.equal(record.input.previousOutput, result.stages[0]!.rawOutput);
@@ -196,6 +197,29 @@ test("a second-stage provider failure retains the completed first stage and fail
     assert.equal(result.stages[1]!.telemetry.completed, false);
     assert.equal(result.stages[1]!.rawOutput, null);
     assert.equal(result.stages[1]!.rawOutputSha256, null);
+  } finally {
+    setup.materialized.cleanup();
+  }
+});
+
+test("neutral methodology tool policy disables built-in shell and configures only bounded read tools", async () => {
+  const schedule = scheduleForOneCase();
+  const setup = await setupArm("A");
+  setup.context.evaluationIsolation!.neutralReadMcp = {
+    protocol: "neutral-read-mcp-v1",
+    url: "http://host.docker.internal:43123/mcp/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    serverName: "source_read",
+    enabledTools: ["list_tree", "read_file", "search_text"],
+  };
+  try {
+    const result = await run(setup, schedule, syntheticReceipt);
+    assert.equal(result.outcome.status, "completed");
+    const args = setup.calls[0]!.args;
+    assert.deepEqual(args.flatMap((value, index) => value === "--disable" ? [args[index + 1]] : []), [
+      "shell_tool", "unified_exec",
+    ]);
+    assert.ok(args.includes('mcp_servers.source_read.enabled_tools=["list_tree","read_file","search_text"]'));
+    assert.ok(args.includes('mcp_servers.source_read.url="http://host.docker.internal:43123/mcp/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"'));
   } finally {
     setup.materialized.cleanup();
   }
@@ -476,6 +500,12 @@ async function setupArm(armId: MethodologyArmId): Promise<ArmSetup> {
       ...materialized.evaluationIsolation,
       runProvider: async () => ({ stdout: "", stderr: "", code: 0, timedOut: false }),
       readProviderOutput: (path) => outputs.get(path)!,
+      neutralReadMcp: {
+        protocol: "neutral-read-mcp-v1",
+        url: "http://host.docker.internal:43123/mcp/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        serverName: "source_read",
+        enabledTools: ["list_tree", "read_file", "search_text"],
+      },
     },
   };
   const setup = {

@@ -506,7 +506,7 @@ function parseInvocation(value: unknown): MethodologyInvocationInput {
   const root = exactObject(value, "methodology planned invocation", [
     "attemptId", "stageIndex", "compiled", "assets", "schemaText", "model", "effort",
     "stageMaximumMs", "attemptDeadlineAt", "previousOutput", "requestedAt",
-  ]);
+  ], ["toolPolicy"]);
   if (typeof root.attemptId !== "string" || (root.stageIndex !== 1 && root.stageIndex !== 2) ||
       typeof root.schemaText !== "string" || root.model !== "gpt-5.6-sol" || root.effort !== "high" ||
       !Number.isSafeInteger(root.stageMaximumMs) || Number(root.stageMaximumMs) <= 0 ||
@@ -519,7 +519,8 @@ function parseInvocation(value: unknown): MethodologyInvocationInput {
     assets: parseMethodologyAssetManifest(root.assets), schemaText: root.schemaText,
     model: "gpt-5.6-sol", effort: "high", stageMaximumMs: Number(root.stageMaximumMs),
     attemptDeadlineAt: root.attemptDeadlineAt, previousOutput: root.previousOutput,
-    requestedAt: root.requestedAt };
+    requestedAt: root.requestedAt,
+    ...(root.toolPolicy === undefined ? {} : { toolPolicy: root.toolPolicy }) };
 }
 
 function canonicalHandoff(armId: "C" | "D", raw: string): { text: string; sha256: string } {

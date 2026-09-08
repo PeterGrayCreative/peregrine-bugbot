@@ -201,7 +201,16 @@ test("an admitted synthetic historical case reaches a terminal-complete four-arm
               : schema === "breadth-result.schema.json" ? BREADTH_OUTPUT : REVIEW_OUTPUT);
             return { stdout: "", stderr: "", code: 0, timedOut: false };
           };
-          return { runProvider, readProviderOutput: (path: string) => outputs.get(path)! };
+          return {
+            runProvider,
+            readProviderOutput: (path: string) => outputs.get(path)!,
+            neutralReadMcp: {
+              protocol: "neutral-read-mcp-v1" as const,
+              url: "http://host.docker.internal:43123/mcp/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              serverName: "source_read" as const,
+              enabledTools: ["list_tree", "read_file", "search_text"] as const,
+            },
+          };
         },
       });
       assert.ok(attachedRepoPath);

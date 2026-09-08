@@ -34,6 +34,7 @@ export interface HistoricalMethodologyProviderAttachmentRequest {
 export interface HistoricalMethodologyProviderAttachment {
   runProvider: ProviderExec;
   readProviderOutput(path: string): string;
+  neutralReadMcp: NonNullable<ReviewContext["evaluationIsolation"]>["neutralReadMcp"];
 }
 
 export interface RegisteredHistoricalMethodologyAttemptInput {
@@ -172,6 +173,7 @@ export async function runRegisteredHistoricalMethodologyAttempt(
               ...isolation,
               runProvider: attachment.runProvider,
               readProviderOutput: attachment.readProviderOutput,
+              neutralReadMcp: attachment.neutralReadMcp,
             },
           },
         };
@@ -240,9 +242,10 @@ function leakagePolicyForMaterialized(caseDirectory: string) {
 
 function assertProviderAttachment(value: unknown): asserts value is HistoricalMethodologyProviderAttachment {
   if (!value || typeof value !== "object" || Array.isArray(value) ||
-      Object.keys(value).sort(compareText).join("\0") !== ["readProviderOutput", "runProvider"].sort(compareText).join("\0") ||
+      Object.keys(value).sort(compareText).join("\0") !== ["neutralReadMcp", "readProviderOutput", "runProvider"].sort(compareText).join("\0") ||
       typeof (value as HistoricalMethodologyProviderAttachment).runProvider !== "function" ||
-      typeof (value as HistoricalMethodologyProviderAttachment).readProviderOutput !== "function") {
+      typeof (value as HistoricalMethodologyProviderAttachment).readProviderOutput !== "function" ||
+      !(value as HistoricalMethodologyProviderAttachment).neutralReadMcp) {
     throw new Error("trusted methodology provider attachment is invalid");
   }
 }
