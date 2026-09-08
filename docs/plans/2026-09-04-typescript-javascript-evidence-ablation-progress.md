@@ -1,6 +1,6 @@
 # TypeScript and JavaScript evidence and ablation progress
 
-Updated: 2026-09-07
+Updated: 2026-09-08
 Active branch: `research/ts-js-evidence-r2`
 
 ## Current recovery notice
@@ -70,10 +70,20 @@ not-implemented statements in earlier snapshots below, but no Codex/provider
 connection or historical efficacy was tested. See the
 [runtime probe record](../validation/2026-09-07-r3-read-mcp-runtime.md).
 
+The latest R3 slice registers an exact zero-retry policy for new methodology
+runs while retaining legacy registration read compatibility. It also derives
+the registered D-versus-C, B-versus-A, and D-versus-A contrasts plus the
+descriptive interaction from cross-bound grade, adjudication, and resource
+artifacts. The contrast is persisted separately and joined to the existing v1
+analysis seal through a new source-bound derived seal, so older analysis
+artifacts are not reinterpreted. This is deterministic measurement plumbing,
+not an inferential decision or provider result.
+
 R3 now has a separately authenticated stopped-run closure and missing-outcome
 projection, with full methodology/historical-truth tests and independent review
 passing. This supersedes the missing-closure status in earlier snapshots below;
-runtime, final grading consumers, retry lineage, and admission remain open.
+provider runtime, inferential decisions, a future diagnostic-retry protocol,
+and real admission remain open.
 See the [closure record](../validation/2026-09-07-r3-stopped-run-closure.md).
 
 ## Active objective
@@ -88,7 +98,7 @@ minimal reviewer. Production routing remains frozen.
 | --- | --- | --- |
 | R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
 | R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. A restore-tested one-shot packet now binds 30 recovered draft proposals and 10 retained losses in the private evidence repository. Sole-human v3 governance, packet verification, and non-mutating response-to-admission derivation pass structural tests without weakening R1/v2. Human decisions, sufficient admission yield/headroom, durable admission import, and partitioning remain open. |
-| R3: neutral and truthful harness | In progress | Four-arm scheduling, prompts, materialization, input/lifecycle seals, stopped-run closure, grading projections, bounded HTTP read tools, exact Sol-high/no-shell/three-tool Codex launch policy, both historical curator-policy versions, arm-blind all-findings adjudication, descriptive reporting, append-only analysis artifacts, authenticated terminal resource sets/reports, and a final registration-to-analysis/source-snapshot binding have structural proof. The accepted image reports Codex CLI 0.152.0 and parses the MCP config without credentials. Missing durations/tokens/cost remain unknown rather than zero; old report artifacts remain unchanged. Inferential decision seals, a credential-bearing model/tool canary, provider-connected destination restrictions, retry lineage, and real human admission remain open. Legacy historical CLI admission still fails closed. |
+| R3: neutral and truthful harness | In progress | Four-arm scheduling, prompts, materialization, input/lifecycle seals, stopped-run closure, grading projections, bounded HTTP read tools, exact Sol-high/no-shell/three-tool Codex launch policy, both historical curator-policy versions, arm-blind all-findings adjudication, descriptive reporting and registered contrasts, append-only analysis artifacts, authenticated terminal resource sets/reports, explicit zero retries, and source-bound base/derived analysis seals have structural proof. The accepted image reports Codex CLI 0.152.0 and parses the MCP config without credentials. Missing durations/tokens/cost remain unknown rather than zero; old report artifacts remain unchanged. A sealed arm-blind semantic-judge path, inferential decision seals, root-level discovery deduplication, a credential-bearing model/tool canary, provider-connected destination restrictions, and real human admission remain open. Diagnostic child retries are outside methodology v1. Legacy historical CLI admission still fails closed. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |
 | R6: select and confirm | Not started | Requires frozen candidate and new powered confirmation corpus. |

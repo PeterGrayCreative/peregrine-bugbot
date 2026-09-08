@@ -25,14 +25,29 @@ export interface MethodologyInvocationInput {
   requestedAt: string;
 }
 
-interface InvocationRegistration {
-  schemaVersion: 1;
+interface InvocationRegistrationBase {
   kind: "methodology-invocation-registration";
   runId: string;
   schedule: MethodologySchedule;
   scopeSha256ByCase: Record<string, string>;
   assetsByArm: MethodologyAssetManifest[];
 }
+
+interface LegacyInvocationRegistration extends InvocationRegistrationBase {
+  schemaVersion: 1;
+}
+
+interface NoRetryPolicy {
+  mode: "none";
+  maxDiagnosticChildren: 0;
+}
+
+interface CurrentInvocationRegistration extends InvocationRegistrationBase {
+  schemaVersion: 2;
+  retryPolicy: NoRetryPolicy;
+}
+
+type InvocationRegistration = LegacyInvocationRegistration | CurrentInvocationRegistration;
 
 export interface MethodologyInvocationRecord {
   schemaVersion: 1;
@@ -57,7 +72,8 @@ export function registerMethodologyInvocations(root: string, input: {
   scopeSha256ByCase: Record<string, string>;
   assetsByArm: MethodologyAssetManifest[];
 }): string {
-  const registration = parseRegistration({ schemaVersion: 1, kind: "methodology-invocation-registration", ...input });
+  const registration = parseRegistration({ schemaVersion: 2, kind: "methodology-invocation-registration",
+    ...input, retryPolicy: { mode: "none", maxDiagnosticChildren: 0 } });
   assertNoSecrets(registration, "methodology invocation registration");
   writeExclusiveJson(root, join(root, REGISTRATION), registration);
   return canonicalJsonSha256(registration);
@@ -69,6 +85,9 @@ export function createMethodologyInvocationRecorder(root: string, registrationSh
   const receipts = new Map<string, string>();
   return (input: MethodologyInvocationInput): string => {
     const registration = readRegistration(root, registrationSha256);
+    if (registration.schemaVersion !== 2) {
+      throw new Error("legacy methodology invocation registration is read-only");
+    }
     const previous = input.stageIndex === 2
       ? readMethodologyInvocation(root, registrationSha256, input.attemptId, 1,
         receipts.get(filename(input.attemptId, 1)) ?? "") : null;
@@ -182,20 +201,38 @@ function validateToolPolicy(value: NonNullable<EvaluationIsolation["neutralReadM
 }
 
 function parseRegistration(value: unknown): InvocationRegistration {
-  const input = value as InvocationRegistration;
-  keys(input, ["schemaVersion", "kind", "runId", "schedule", "scopeSha256ByCase", "assetsByArm"]);
-  if (input.schemaVersion !== 1 || input.kind !== "methodology-invocation-registration" ||
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("methodology invocation registration identity is invalid");
+  }
+  const input = value as Record<string, unknown>;
+  if (input.schemaVersion !== 1 && input.schemaVersion !== 2) {
+    throw new Error("methodology invocation registration identity is invalid");
+  }
+  keys(input, ["schemaVersion", "kind", "runId", "schedule", "scopeSha256ByCase", "assetsByArm",
+    ...(input.schemaVersion === 2 ? ["retryPolicy"] : [])]);
+  if (input.kind !== "methodology-invocation-registration" ||
       typeof input.runId !== "string" || !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}$/.test(input.runId)) {
     throw new Error("methodology invocation registration identity is invalid");
   }
   const schedule = parseMethodologySchedule(input.schedule);
-  keys(input.scopeSha256ByCase, schedule.cases.map((item) => item.caseName));
-  if (Object.values(input.scopeSha256ByCase).some((value) => !isHash(value))) throw new Error("invalid registered scope digest");
+  const scopeSha256ByCase = input.scopeSha256ByCase;
+  if (!scopeSha256ByCase || typeof scopeSha256ByCase !== "object" || Array.isArray(scopeSha256ByCase)) {
+    throw new Error("invalid registered scope digest");
+  }
+  keys(scopeSha256ByCase, schedule.cases.map((item) => item.caseName));
+  if (Object.values(scopeSha256ByCase).some((value) => !isHash(value))) throw new Error("invalid registered scope digest");
   if (!Array.isArray(input.assetsByArm)) throw new Error("invalid registered assets");
   const assetsByArm = input.assetsByArm.map(parseMethodologyAssetManifest).sort((a, b) => a.armId.localeCompare(b.armId));
   if (assetsByArm.map((item) => item.armId).join("") !== "ABCD") throw new Error("registration requires each arm's assets");
-  return { schemaVersion: 1, kind: "methodology-invocation-registration", runId: input.runId,
-    schedule, scopeSha256ByCase: { ...input.scopeSha256ByCase }, assetsByArm };
+  const base = { kind: "methodology-invocation-registration" as const, runId: input.runId,
+    schedule, scopeSha256ByCase: { ...scopeSha256ByCase }, assetsByArm };
+  if (input.schemaVersion === 1) return { schemaVersion: 1, ...base };
+  const retryPolicy = input.retryPolicy as Record<string, unknown>;
+  keys(retryPolicy, ["mode", "maxDiagnosticChildren"]);
+  if (retryPolicy.mode !== "none" || retryPolicy.maxDiagnosticChildren !== 0) {
+    throw new Error("methodology invocation registration retry policy is invalid");
+  }
+  return { schemaVersion: 2, ...base, retryPolicy: { mode: "none", maxDiagnosticChildren: 0 } };
 }
 
 export function readMethodologyInvocationRegistration(root: string, expected: string): InvocationRegistration {

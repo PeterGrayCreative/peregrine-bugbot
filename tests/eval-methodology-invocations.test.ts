@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -7,7 +7,7 @@ import { createMethodologyAssetPreparer, readMethodologyAssetManifest } from "..
 import { buildMethodologySchedule, methodologyArmConfigIdentitySha256, type MethodologyDesign } from "../eval/methodology-schedule.js";
 import { compileMethodologyDiscoveryPrompt, compileMethodologyReviewPrompt } from "../eval/methodology-prompts.js";
 import { createMethodologyInvocationRecorder, readMethodologyInvocation, registerMethodologyInvocations,
-  type MethodologyInvocationInput } from "../eval/methodology-invocations.js";
+  readMethodologyInvocationRegistration, type MethodologyInvocationInput } from "../eval/methodology-invocations.js";
 import { canonicalJsonSha256 } from "../eval/experiment.js";
 
 const scope = { baseRef: "a".repeat(40), headRef: "b".repeat(40), diff: "+const x = 1;",
@@ -61,7 +61,58 @@ test("exclusive pre-dispatch input records retain exact bytes and immutable pred
     assert.deepEqual(r1.input, first);
     assert.deepEqual(r2.input, second);
     assert.equal(r2.previousInvocationSha256, r1.recordSha256);
+    assert.equal(r1.schemaVersion, 1);
+    assert.equal(r2.schemaVersion, 1);
     assert.equal(r2.kind, "methodology-invocation-intent");
+  } finally { f.cleanup(); }
+});
+
+test("registrations bind zero retries while preserving legacy registration digests", async () => {
+  const f = await fixture();
+  try {
+    const path = join(f.root, "methodology-invocation-registration.json");
+    const current = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
+    assert.equal(current.schemaVersion, 2);
+    assert.deepEqual(current.retryPolicy, { mode: "none", maxDiagnosticChildren: 0 });
+    assert.equal(f.registrationSha256, canonicalJsonSha256(current));
+
+    const legacy: Record<string, unknown> = { ...current, schemaVersion: 1 };
+    delete legacy.retryPolicy;
+    writeFileSync(path, JSON.stringify(legacy));
+    const legacySha256 = canonicalJsonSha256(legacy);
+    const parsed = readMethodologyInvocationRegistration(f.root, legacySha256);
+    assert.equal(parsed.schemaVersion, 1);
+    assert.equal("retryPolicy" in parsed, false);
+    assert.equal(canonicalJsonSha256(parsed), legacySha256);
+    const legacyInput = await f.input("A");
+    assert.throws(
+      () => createMethodologyInvocationRecorder(f.root, legacySha256)(legacyInput),
+      /read-only/,
+    );
+    assert.equal(existsSync(join(f.root, `${legacyInput.attemptId}.stage-1.input.json`)), false);
+  } finally { f.cleanup(); }
+});
+
+test("v2 registrations reject omitted, malformed, or expanded retry policies", async () => {
+  const f = await fixture();
+  try {
+    const path = join(f.root, "methodology-invocation-registration.json");
+    const original = JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
+    const policies: unknown[] = [
+      undefined,
+      null,
+      { mode: "none", maxDiagnosticChildren: 0, extra: false },
+      { mode: "diagnostic", maxDiagnosticChildren: 0 },
+      { mode: "none", maxDiagnosticChildren: 1 },
+    ];
+    for (const retryPolicy of policies) {
+      const candidate = { ...original };
+      if (retryPolicy === undefined) delete candidate.retryPolicy;
+      else candidate.retryPolicy = retryPolicy;
+      writeFileSync(path, JSON.stringify(candidate));
+      assert.throws(() => readMethodologyInvocationRegistration(f.root, canonicalJsonSha256(candidate)),
+        /fields|retry policy/);
+    }
   } finally { f.cleanup(); }
 });
 

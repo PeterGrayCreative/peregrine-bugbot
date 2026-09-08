@@ -1,6 +1,6 @@
 # Historical runner integration checklist
 
-Status: partial integration, updated 2026-09-07. No historical
+Status: partial integration, updated 2026-09-08. No historical
 reviewer invocation is authorized or enabled by this checklist.
 
 Binding plan: [TS/JS evidence and ablation](2026-09-04-typescript-javascript-evidence-ablation-plan.md).
@@ -45,8 +45,11 @@ an optional started/nonterminal attempt, and the exact unstarted suffix.
 Missing projections require this caller-authenticated closure; absent files
 alone still reject. Reopening a closed runner rejects before preparation.
 Complete-only v1 seals remain unchanged. Worker termination is a caller
-declaration, not process proof; retry lineage, runtime availability, and final
-grading/report integration remain open. See the
+declaration, not process proof; runtime availability remains open. New
+methodology registrations now bind an exact zero-retry policy; legacy v1
+registrations remain readable but cannot launch new invocations. Diagnostic
+child retries require a future, separately versioned non-promotional protocol.
+See the
 [stopped-run verification record](../validation/2026-09-07-r3-stopped-run-closure.md).
 
 The registered historical runner now authenticates the exact preceding
@@ -60,7 +63,8 @@ grouped-root credit, ambiguous cross-root reuse, and partial-truth metric
 eligibility. Failed/missing/incomplete attempts remain scheduled misses;
 unmatched findings remain unresolved and missed roots unattributed. This is
 not a judge ledger, append-only adjudication consumer, or reporting pipeline.
-Those integrations remain open. The added execution-to-projection reader now
+Those functions now exist as separately sealed consumers; this pure primitive
+still does not provide them by itself. The execution-to-projection reader now
 authenticates all scheduled lifecycle outcomes and exact raw review receipts,
 using projection version 2. It preserves explicit model inability separately
 from unverified runner scope; neither obtains root credit. A stable trusted
@@ -219,8 +223,8 @@ methodology suite passes 78/78.
   accounting, including failed/stopped/retried work and missing telemetry.
 
   Current slice: prompt, schema, mount, model, effort, stage/attempt deadlines,
-  prior output, and the exact neutral tool policy are sealed. Retry lineage and
-  effective served-model/provider evidence remain open.
+  prior output, the exact neutral tool policy, and a zero-retry registration
+  policy are sealed. Effective served-model/provider evidence remains open.
 - [ ] **Historical consumer integration.** Wire caller-trusted curation,
   materialized source identity, input authentication, scope evidence, shared
   metric eligibility, and arm-blinded adjudication into scheduling, grading,
@@ -233,11 +237,17 @@ methodology suite passes 78/78.
   unresolved outcomes, and rejects missing/extra/stale/cross-run decisions.
   A descriptive four-arm report now consumes and revalidates this contract,
   and a separate append-only analysis store retains grade-set, adjudication,
-  and report artifacts behind caller-held digests. Authenticated registration-
-  Inferential comparisons and decision seals remain open. A final versioned
-  analysis binding now authenticates the invocation registration's run ID and
-  schedule against every grade projection, adjudication/report artifact,
-  terminal resource artifact, and the exact runtime analysis-source bytes.
+  and report artifacts behind caller-held digests.
+  A final versioned analysis binding authenticates the invocation
+  registration's run ID and schedule against every grade projection,
+  adjudication/report artifact, terminal resource artifact, and the exact
+  runtime analysis-source bytes.
+  Registered descriptive contrasts now cross-bind grade status, terminal
+  receipts, resource outcomes, frozen case truth/catalog identities, and
+  strictly positive paired wall time. Their append-only artifact is joined to
+  the unchanged v1 analysis binding by a separate source-bound derived seal.
+  Root-level discovery deduplication, sealed semantic-judge provenance,
+  inferential intervals, and decision seals remain open.
   Cross-run, caller-invented run identity, altered projection, mixed execution,
   and source drift reject. A separate versioned resource artifact derives every scheduled
   attempt's lifecycle wall duration, runner duration, stage count, and
