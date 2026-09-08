@@ -14,6 +14,12 @@ import {
 import { canonicalJsonSha256 } from "../eval/experiment.js";
 import { historicalTruthScopeSha256 } from "../eval/historical-curation.js";
 import { historicalPermittedMetrics, parseHistoricalGroundTruth } from "../eval/historical-truth.js";
+import { buildMethodologyReport } from "../eval/methodology-report.js";
+import {
+  buildMethodologySchedule,
+  methodologyArmConfigIdentitySha256,
+  type MethodologyDesign,
+} from "../eval/methodology-schedule.js";
 
 const digest = (character: string): string => character.repeat(64);
 
@@ -87,7 +93,7 @@ function fixture() {
     records: [record],
     recordedAt: "2026-09-08T02:00:00.000Z",
   };
-  return { grade, record, input };
+  return { truth, review, projection, grade, record, input };
 }
 
 test("adjudication binds the run and decides every unmatched finding while retaining unresolved", () => {
@@ -122,4 +128,82 @@ test("adjudication rejects missing, extra, duplicate, stale, and cross-run decis
     ...input,
     executionEvidenceSha256: digest("8"),
   }), /do not belong/);
+});
+
+test("report applies partial-truth eligibility and unresolved bounds per arm", () => {
+  const base = fixture();
+  const designWithoutArms: Omit<MethodologyDesign, "arms"> = {
+    schemaVersion: 1,
+    protocol: "historical-methodology-v1",
+    seed: 17,
+    repeats: 1,
+    callerConfig: { runner: "codex", model: "gpt-5.6-sol", effort: "high", identitySha256: digest("3") },
+    totalDeadlineMs: 60_000,
+    twoWorkerStageSplit: { discoveryDeadlineMs: 20_000, reviewerDeadlineMs: 40_000 },
+  };
+  const design: MethodologyDesign = {
+    ...designWithoutArms,
+    arms: (["A", "B", "C", "D"] as const).map((armId) => ({
+      armId,
+      configName: `arm-${armId.toLowerCase()}`,
+      configIdentitySha256: methodologyArmConfigIdentitySha256({
+        design: designWithoutArms,
+        armId,
+        configName: `arm-${armId.toLowerCase()}`,
+      }),
+    })),
+  };
+  const schedule = buildMethodologySchedule({
+    design,
+    cases: [{
+      caseName: base.projection.caseName,
+      corpus: "development",
+      expectedBugCount: 0,
+    }],
+  });
+  const grades = schedule.attempts.map((attempt) => {
+    const projection = { ...base.projection, attemptId: attempt.id };
+    return gradeMethodologyAttempt({
+      projection,
+      expectedProjectionSha256: canonicalJsonSha256(projection),
+      truth: base.truth,
+      reviewOutput: base.review,
+      judgeConfigSha256: digest("1"),
+      pairVerdicts: [],
+    });
+  });
+  const records = grades.map((grade): MethodologyAdjudicationRecord => ({
+    attemptId: grade.projection.attemptId,
+    findingIndex: grade.unmatchedFindings[0]!.findingIndex,
+    findingEvidenceSha256: grade.unmatchedFindings[0]!.findingEvidenceSha256,
+    classification: "unresolved",
+    rationale: "The narrow comparison scope does not settle this claim.",
+    evidence: "No independent evidence is available yet.",
+  }));
+  const ledger = buildMethodologyAdjudicationLedger({
+    ...base.input,
+    expectedAttemptIds: schedule.attempts.map((attempt) => attempt.id),
+    grades,
+    records,
+  });
+  const report = buildMethodologyReport({
+    runId: base.input.runId,
+    schedule,
+    executionEvidenceSha256: base.input.executionEvidenceSha256,
+    inputPlanSha256: base.input.inputPlanSha256,
+    grades,
+    adjudication: ledger,
+  });
+  assert.deepEqual(report.arms.map((arm) => arm.completion.scheduled), [1, 1, 1, 1]);
+  assert.ok(report.arms.every((arm) => arm.registeredKnownRootRecall.micro === null));
+  assert.ok(report.arms.every((arm) => arm.findings.precisionLower === 0 && arm.findings.precisionUpper === 1));
+  assert.ok(report.arms.every((arm) => !arm.promotionalEligibility.eligible));
+  assert.throws(() => buildMethodologyReport({
+    runId: base.input.runId,
+    schedule,
+    executionEvidenceSha256: base.input.executionEvidenceSha256,
+    inputPlanSha256: base.input.inputPlanSha256,
+    grades,
+    adjudication: { ...ledger, ledgerSha256: digest("9") },
+  }), /ledger is invalid/);
 });

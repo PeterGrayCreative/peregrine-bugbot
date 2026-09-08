@@ -216,7 +216,9 @@ methodology suite passes 78/78.
   Current structural slice: the dedicated methodology adjudication contract
   binds every scheduled grade and every unmatched finding occurrence, retains
   unresolved outcomes, and rejects missing/extra/stale/cross-run decisions.
-  Durable ledger persistence and report consumption remain open. See the
+  A descriptive four-arm report now consumes and revalidates this contract,
+  but durable persistence, terminal resource metrics, inferential comparisons,
+  and decision seals remain open. See the
   [adjudication record](../validation/2026-09-08-r3-methodology-adjudication.md).
 
 ## Zero-provider acceptance sequence

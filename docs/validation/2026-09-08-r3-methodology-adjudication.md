@@ -23,6 +23,12 @@ extra, duplicate, stale, cross-run, or locally modified grade/decision inputs
 reject. Unresolved evidence remains visible and will block later promotional
 claims.
 
+A descriptive four-arm report now revalidates the schedule, complete grade set,
+and adjudication ledger. It applies case-level historical eligibility, keeps
+failure-inclusive completion, separates registered-root and newly confirmed
+findings, reports precision bounds with unresolved findings, and refuses a
+promotional state while resource integration remains absent.
+
 ## Verification
 
 Node `v22.22.1`:
@@ -31,11 +37,11 @@ Node `v22.22.1`:
 | --- | --- |
 | `npm run typecheck` | pass |
 | focused grading + adjudication tests | 11/11 pass |
-| adjudication tests alone | 2/2 pass |
+| adjudication/report tests alone | 3/3 pass |
 
 ## Boundary
 
 This is a pure structural contract. Durable file writing/reading, external
-caller-held seals, report consumption, human calibration, and provider-backed
-results remain open. It neither proves reviewer blindness nor establishes that
-an adjudication is factually correct.
+caller-held seals, terminal resource ingestion, human calibration, statistical
+comparisons, and provider-backed results remain open. It neither proves
+reviewer blindness nor establishes that an adjudication is factually correct.
