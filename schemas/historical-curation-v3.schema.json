@@ -5,7 +5,7 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schemaVersion", "protocol", "caseId", "status", "curatorPolicyId", "reviewMode",
+    "schemaVersion", "protocol", "caseId", "status", "curatorPolicyId", "reviewMode", "reviewDossierId",
     "truth", "source", "strata", "proof", "preparationEvidence", "humanDecision"
   ],
   "properties": {
@@ -15,6 +15,7 @@
     "status": { "enum": ["draft", "admitted"] },
     "curatorPolicyId": { "const": "sole-human-historical-v1" },
     "reviewMode": { "const": "sole-human-v1" },
+    "reviewDossierId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{1,63}$" },
     "truth": {
       "type": "object",
       "additionalProperties": false,

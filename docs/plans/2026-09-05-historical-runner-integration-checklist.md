@@ -69,8 +69,11 @@ to packet, dossier, truth-scope, and case-bundle hashes while keeping AI
 preparation evidence non-confirming. Historical schema v2 and its
 two-confirmation policy remain unchanged. Complete packet-response verification
 rejects missing/extra decisions, packet drift, false independence claims, and
-unbound files. This is structural governance, not a real human decision or case
-admission. See the [verification record](../validation/2026-09-07-r2-sole-human-governance.md).
+unbound files. A non-mutating importer derives an admitted curation document
+only from the v3-bound dossier's authenticated approval; the caller must write
+it to a new append-only destination and re-read it through admission. This is
+structural governance, not a real human decision or case admission. See the
+[verification record](../validation/2026-09-07-r2-sole-human-governance.md).
 
 ## Ordered integration
 

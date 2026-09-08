@@ -5,10 +5,19 @@ import { tmpdir } from "node:os";
 import { basename, dirname, join } from "node:path";
 import test from "node:test";
 import {
+  historicalTruthScopeSha256,
+  parseHistoricalCuration,
+  readHistoricalCaseAdmission,
+} from "../eval/historical-curation.js";
+import { historicalPermittedMetrics, parseHistoricalGroundTruth } from "../eval/historical-truth.js";
+import type { SoleHumanHistoricalCuratorPolicy } from "../eval/historical-curator-policy.js";
+import type { HistoricalCaseSpec } from "../src/types.js";
+import {
   assembleHumanReviewPacket,
   type HumanPacketAssemblyRequest,
 } from "../scripts/evidence/assemble-human-review-packet.js";
 import { verifyHumanReviewResponse } from "../scripts/evidence/verify-human-review-response.js";
+import { buildSoleHumanAdmissionFromResponse } from "../scripts/evidence/build-sole-human-admission.js";
 
 const hash = (value: string | Buffer) => createHash("sha256").update(value).digest("hex");
 
@@ -169,6 +178,106 @@ function writeCompletedResponse(packet: string, response: string, humanIdentity:
   writeFileSync(join(response, "packet-decision.json"), `${JSON.stringify(packetDecision, null, 2)}\n`);
 }
 
+function historicalDraft(root: string, humanIdentity: string): {
+  caseDirectory: string;
+  caseSpec: HistoricalCaseSpec;
+  policy: SoleHumanHistoricalCuratorPolicy;
+} {
+  const caseDirectory = join(root, "development", "case-alpha");
+  mkdirSync(caseDirectory, { recursive: true });
+  const caseSpec: HistoricalCaseSpec = {
+    id: "case-alpha",
+    corpus: "development",
+    kind: "historical",
+    evaluationProtocol: "historical-efficacy-v1",
+    repoSource: "/curator/source.git",
+    baseCommit: "a".repeat(40),
+    headCommit: "b".repeat(40),
+    diffFile: "diff.patch",
+  };
+  const diff = "diff --git a/src/retry.ts b/src/retry.ts\n+retry();\n";
+  const proof = "Complete static trace of one historical callback-loss root.\n";
+  const truthValue = {
+    schemaVersion: 2,
+    scope: {
+      protocol: "historical-efficacy-v1",
+      truthVersion: "truth-v1",
+      status: "known-roots",
+      completeness: "partial",
+      reviewedScope: "The exact review change and one independently supported callback-loss root.",
+      permittedMetrics: historicalPermittedMetrics("known-roots"),
+    },
+    bugs: [{
+      id: "bug-aaaaaaaa",
+      lane: "other-unclassified",
+      mechanismFamily: "callback-loss",
+      proofLevel: "complete-static-trace",
+      expectedDisposition: "fix-in-pr",
+      expectedSeverity: "high",
+      file: "src/retry.ts",
+      startLine: 8,
+      endLine: 10,
+      description: "The retry path omits the completion callback.",
+      reachablePreconditions: "A request takes the retry branch.",
+      observableImpact: "The request remains pending.",
+      provenance: "The historical head and later repair support this root.",
+    }],
+  };
+  const truth = parseHistoricalGroundTruth(truthValue);
+  writeFileSync(join(caseDirectory, "case.json"), `${JSON.stringify(caseSpec, null, 2)}\n`);
+  writeFileSync(join(caseDirectory, "ground_truth.json"), `${JSON.stringify(truthValue, null, 2)}\n`);
+  writeFileSync(join(caseDirectory, "diff.patch"), diff);
+  writeFileSync(join(caseDirectory, "proof.md"), proof);
+  const curation = {
+    schemaVersion: 3,
+    protocol: "historical-efficacy-v1",
+    caseId: "case-alpha",
+    status: "draft",
+    curatorPolicyId: "sole-human-historical-v1",
+    reviewMode: "sole-human-v1",
+    reviewDossierId: "case-alpha",
+    truth: {
+      truthVersion: "truth-v1",
+      status: "known-roots",
+      completeness: "partial",
+      scopeSha256: historicalTruthScopeSha256(truth),
+    },
+    source: {
+      kind: "historical",
+      repositoryAlias: "public-history",
+      repositoryIdentitySha256: hash("repository-family"),
+      changeIdentitySha256: hash(diff),
+      access: "public",
+    },
+    strata: {
+      languageFamily: "typescript",
+      architectureFamily: "library",
+      size: "small",
+      changeShapes: ["seam"],
+      secondarySurfaceLanes: [],
+      mechanismFamilies: ["callback-loss"],
+    },
+    proof: { kind: "reasoned-analysis", artifact: "proof.md", sha256: hash(proof) },
+    preparationEvidence: [],
+    humanDecision: null,
+  };
+  parseHistoricalCuration(curation, caseSpec, truth);
+  writeFileSync(join(caseDirectory, "curation.json"), `${JSON.stringify(curation, null, 2)}\n`);
+  return {
+    caseDirectory,
+    caseSpec,
+    policy: {
+      schemaVersion: 2,
+      policyId: "sole-human-historical-v1",
+      trustRoot: "accountable-human-review",
+      reviewMode: "sole-human-v1",
+      minimumHumanDecisions: 1,
+      registeredHumanIdentitySha256: humanIdentity,
+      aiPreparationCanSatisfyHumanGate: false,
+    },
+  };
+}
+
 test("authenticates one complete sole-human response against exact packet bytes", () => {
   const data = fixture();
   const humanIdentity = "9".repeat(64);
@@ -183,6 +292,39 @@ test("authenticates one complete sole-human response against exact packet bytes"
     assert.equal(verified.decisions[0]?.dossierId, "case-alpha");
     assert.equal(verified.verificationBoundary, "caller-registered-identity-and-byte-binding-only");
     assert.match(verified.responseSha256, /^[a-f0-9]{64}$/);
+  } finally {
+    data.cleanup();
+  }
+});
+
+test("derives an append-only admission from an authenticated approval without mutating the draft", () => {
+  const data = fixture();
+  const humanIdentity = "9".repeat(64);
+  try {
+    assembleHumanReviewPacket(data.request, data.output);
+    const response = join(data.root, "response");
+    writeCompletedResponse(data.output, response, humanIdentity);
+    const historical = historicalDraft(data.root, humanIdentity);
+    const result = buildSoleHumanAdmissionFromResponse({
+      caseDirectory: historical.caseDirectory,
+      caseSpec: historical.caseSpec,
+      trustedPolicy: historical.policy,
+      packetDirectory: data.output,
+      responseDirectory: response,
+    });
+    assert.equal(result.status, "admitted");
+    if (result.status !== "admitted") assert.fail("expected admitted result");
+    assert.equal(result.curation.humanDecision?.responseSha256, result.responseSha256);
+    assert.equal(result.curation.humanDecision?.caseBundleSha256, result.caseBundleSha256);
+    assert.equal(JSON.parse(readFileSync(join(historical.caseDirectory, "curation.json"), "utf8")).status, "draft");
+
+    writeFileSync(join(historical.caseDirectory, "curation.json"), result.curationBytes);
+    const admission = readHistoricalCaseAdmission(
+      historical.caseDirectory,
+      historical.caseSpec,
+      historical.policy,
+    );
+    assert.equal(admission.caseBundleSha256, result.caseBundleSha256);
   } finally {
     data.cleanup();
   }

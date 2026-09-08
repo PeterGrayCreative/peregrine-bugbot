@@ -26,8 +26,9 @@ resume curator isolation, R2 collection, R3 implementation, or provider runs.
 After explicit resumption, the first new slice implemented
 [sole-human governance and packet-response verification](../validation/2026-09-07-r2-sole-human-governance.md).
 It preserves two-curator v2, adds a separate v3 path for one accountable human,
-and authenticates complete packet responses. No real packet response,
-admission, partition, or provider run occurred.
+authenticates complete packet responses, and derives a byte-bound admission
+without mutating the reviewed draft. No real packet response, admission,
+partition, or provider run occurred.
 
 Persistent worktree: `/Users/petergray/Documents/peregrine-bugbot/.worktrees/ts-js-evidence-r2`.
 The missing temporary stores are documented in the
@@ -86,7 +87,7 @@ minimal reviewer. Production routing remains frozen.
 | Step | State | Evidence / remaining gate |
 | --- | --- | --- |
 | R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
-| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. Thirty recovered draft proposals and nine retained losses remain unadmitted. Sole-human v3 governance and complete packet-response verification now pass structural tests without weakening R1/v2. Full packet preparation, human decisions, admission, and protected partitioning remain open. |
+| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. Thirty recovered draft proposals and nine retained losses remain unadmitted. Sole-human v3 governance, complete packet-response verification, and non-mutating response-to-admission derivation now pass structural tests without weakening R1/v2. Full packet preparation, human decisions, durable admission import, and protected partitioning remain open. |
 | R3: neutral and truthful harness | In progress | Four-arm scheduling, prompts, materialization, input/lifecycle seals, stopped-run closure, grading projections, bounded HTTP read tools, and both historical curator-policy versions have structural proof. Synthetic two-container protocol checks pass. Neutral judge/adjudication/report integration, actual Codex/runtime availability, provider-connected egress, retry lineage, and real human admission remain open. Legacy historical CLI admission still fails closed. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |

@@ -177,6 +177,7 @@ function createSoleHumanCase(status: "draft" | "admitted" = "admitted"): SoleHum
     status,
     curatorPolicyId: "sole-human-historical-v1",
     reviewMode: "sole-human-v1",
+    reviewDossierId: "case-aaaaaaaa",
     truth: previous.truth,
     source: previous.source,
     strata: previous.strata,

@@ -105,6 +105,7 @@ export interface HistoricalCurationV3 extends HistoricalCurationCore {
   schemaVersion: 3;
   curatorPolicyId: "sole-human-historical-v1";
   reviewMode: "sole-human-v1";
+  reviewDossierId: string;
   preparationEvidence: Array<{
     kind: "integrity-check" | "reconstruction" | "source-authentication";
     preparerIdentitySha256: string;
@@ -252,6 +253,7 @@ function historicalCaseBundleSha256FromTruthDigest(
         curatorPolicyId: curation.curatorPolicyId,
         ...(curation.schemaVersion === 3 ? {
           reviewMode: curation.reviewMode,
+          reviewDossierId: curation.reviewDossierId,
           preparationEvidence: curation.preparationEvidence,
         } : {}),
         truth: curation.truth,
@@ -333,7 +335,7 @@ export function parseHistoricalCuration(
     : undefined;
   const root = strictObject(value, label, version === 3 ? [
     "schemaVersion", "protocol", "caseId", "status", "curatorPolicyId", "reviewMode",
-    "truth", "source", "strata", "proof", "preparationEvidence", "humanDecision",
+    "reviewDossierId", "truth", "source", "strata", "proof", "preparationEvidence", "humanDecision",
   ] : [
     "schemaVersion", "protocol", "caseId", "status", "curatorPolicyId",
     "truth", "source", "strata", "proof", "confirmations",
@@ -481,6 +483,7 @@ export function parseHistoricalCuration(
   }
 
   if (root.reviewMode !== "sole-human-v1") throw new Error(`${label}.reviewMode is invalid`);
+  const reviewDossierId = slug(root.reviewDossierId, `${label}.reviewDossierId`);
   if (!Array.isArray(root.preparationEvidence)) throw new Error(`${label}.preparationEvidence must be an array`);
   const preparationKeys = new Set<string>();
   const preparationEvidence = root.preparationEvidence.map((value, index) => {
@@ -535,6 +538,7 @@ export function parseHistoricalCuration(
     status: root.status,
     curatorPolicyId: "sole-human-historical-v1",
     reviewMode: "sole-human-v1",
+    reviewDossierId,
     truth: {
       truthVersion: truth.scope.truthVersion,
       status: truth.scope.status,
