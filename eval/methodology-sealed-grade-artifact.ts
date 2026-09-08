@@ -21,8 +21,14 @@ import {
 } from "./methodology-grading-contract.js";
 import {
   METHODOLOGY_SEALED_JUDGE_GRADING_PROTOCOL,
+  gradeMethodologySealedJudge,
   type MethodologySealedJudgeGradeSet,
 } from "./methodology-judge-grading.js";
+import {
+  readMethodologyJudgeBinding,
+  type MethodologyJudgeBinding,
+  type MethodologyJudgeBindingReadInputs,
+} from "./methodology-judge-binding.js";
 import { parseMethodologyReviewOutput } from "./methodology-output.js";
 import { parseMethodologySchedule } from "./methodology-schedule.js";
 
@@ -66,18 +72,30 @@ const PROJECTION_KEYS = [
   "reviewTerminalSha256", "reviewRawOutputSha256", "reviewOutputSha256",
 ] as const;
 
-/** Persist the canonical sealed semantic-judge grade set without rewriting it. */
+export interface MethodologySealedJudgeDerivationInputs extends
+  Omit<MethodologyJudgeBindingReadInputs, "expectedBindingSha256"> {
+  expectedJudgeBindingSha256: string;
+}
+
+/**
+ * Persist only grades rederived from a caller-anchored judge binding and its
+ * definitive ledger. No caller-supplied grade set is accepted.
+ */
 export function writeMethodologySealedJudgeGradeSet(
-  root: string,
-  gradeSet: unknown,
+  analysisRoot: string,
+  input: MethodologySealedJudgeDerivationInputs,
 ): MethodologySealedJudgeGradeSet {
-  const validated = validateSealedGradeSet(gradeSet);
+  const validated = deriveBoundSealedGradeSet(analysisRoot, input);
   assertNoSecrets(validated, "methodology sealed judge grade set");
-  writeExclusiveJson(root, join(root, METHODOLOGY_SEALED_JUDGE_GRADE_SET_FILE), validated);
+  writeExclusiveJson(analysisRoot, join(analysisRoot, METHODOLOGY_SEALED_JUDGE_GRADE_SET_FILE), validated);
   return validated;
 }
 
-/** Read only when the caller retains the exact artifact digest. */
+/**
+ * Check stored bytes, structure, and caller digest only. This raw reader does
+ * not establish judge-ledger or source provenance; use the deriving writer or
+ * legacy bridge for authenticated analysis.
+ */
 export function readMethodologySealedJudgeGradeSet(
   root: string,
   expectedArtifactSha256: string,
@@ -97,11 +115,18 @@ export function readMethodologySealedJudgeGradeSet(
  * artifact so legacy report/adjudication readers remain unchanged.
  */
 export function writeMethodologyGradeSetFromSealedJudge(root: string, input: {
-  sealedGradeSet: unknown;
+  expectedSealedGradeSetArtifactSha256: string;
   schedule: unknown;
   recordedAt: string;
-}): MethodologyGradeSetArtifact {
-  const sealed = validateSealedGradeSet(input.sealedGradeSet);
+} & MethodologySealedJudgeDerivationInputs): MethodologyGradeSetArtifact {
+  const stored = readMethodologySealedJudgeGradeSet(
+    root,
+    input.expectedSealedGradeSetArtifactSha256,
+  );
+  const sealed = deriveBoundSealedGradeSet(root, input);
+  if (canonicalJson(stored) !== canonicalJson(sealed)) {
+    throw new Error("stored sealed judge grade set differs from authenticated derivation");
+  }
   const schedule = parseMethodologySchedule(input.schedule, "sealed judge legacy bridge schedule");
   const validation = validateMethodologyGradeSet({
     executionEvidenceSha256: sealed.executionEvidenceSha256,
@@ -123,6 +148,36 @@ export function writeMethodologyGradeSetFromSealedJudge(root: string, input: {
   });
   assertLegacyMethodologyGradeSetMatchesSealed(artifact, sealed);
   return artifact;
+}
+
+function deriveBoundSealedGradeSet(
+  analysisRoot: string,
+  input: MethodologySealedJudgeDerivationInputs,
+): MethodologySealedJudgeGradeSet {
+  digest(input.expectedJudgeBindingSha256, "expectedJudgeBindingSha256");
+  const binding = readMethodologyJudgeBinding(analysisRoot, {
+    ...input,
+    expectedBindingSha256: input.expectedJudgeBindingSha256,
+  });
+  const gradeSet = validateSealedGradeSet(gradeMethodologySealedJudge(input));
+  assertGradeSetMatchesBinding(gradeSet, binding);
+  return gradeSet;
+}
+
+function assertGradeSetMatchesBinding(
+  gradeSet: MethodologySealedJudgeGradeSet,
+  binding: MethodologyJudgeBinding,
+): void {
+  if (gradeSet.runId !== binding.runId ||
+      gradeSet.executionEvidenceSha256 !== binding.executionEvidenceSha256 ||
+      gradeSet.invocationRegistrationSha256 !== binding.invocationRegistrationSha256 ||
+      gradeSet.inputPlanSha256 !== binding.inputPlanSha256 ||
+      gradeSet.projectionSetSha256 !== binding.projectionSetSha256 ||
+      gradeSet.occurrenceArtifactSha256 !== binding.occurrenceArtifactSha256 ||
+      gradeSet.judgeManifestSha256 !== binding.judgeManifestSha256 ||
+      gradeSet.judgeTerminalSealSha256 !== binding.judgeTerminalSealSha256) {
+    throw new Error("sealed judge grade set does not match authenticated judge binding");
+  }
 }
 
 /** Prove that a legacy artifact is an exact projection of the sealed grades. */
