@@ -102,6 +102,7 @@ test("authenticated projection preserves all scheduled outcomes and never upgrad
     const stoppedDigest = writeMethodologyStoppedRunClosure(evidenceRoot, stoppedInput);
     const stopped = readStoppedMethodologyGradingProjections({ root: evidenceRoot,
       expectedStoppedRunClosureSha256: stoppedDigest, trustedCuratorPolicy: POLICY });
+    assert.equal(stopped.runId, "projection-reader-mixed-outcomes");
     assert.equal(stopped.projections.length, schedule.attempts.length);
     assert.ok(stopped.projections.every(({ projection, reviewOutput }) =>
       projection.status === "missing" && projection.statusReason === "outer-run-missing" &&
@@ -272,6 +273,7 @@ test("authenticated projection preserves all scheduled outcomes and never upgrad
     const result = readMethodologyGradingProjections({ root: evidenceRoot,
       expectedExecutionEvidenceSha256: executionEvidenceSha256, trustedCuratorPolicy: POLICY });
 
+    assert.equal(result.runId, "projection-reader-mixed-outcomes");
     assert.deepEqual(result.projections.map((item) => item.projection.attemptId),
       schedule.attempts.map((attempt) => attempt.id));
     const byArmRepeat = Object.fromEntries(schedule.attempts.map((attempt, index) =>

@@ -50,6 +50,7 @@ function projections(): AuthenticatedMethodologyGradingProjectionSet {
     reviewRawOutputSha256: sha("{}"), reviewOutputSha256: methodologyReviewOutputSha256(review),
   };
   return {
+    runId: "binding-fixture-run",
     executionEvidenceSha256, invocationRegistrationSha256: sha("registration"), inputPlanSha256,
     projections: [{ projection, projectionSha256: methodologyGradingProjectionSha256(projection), truth, reviewOutput: review, reviewRawOutput: "{}", resource: {
       attemptId: projection.attemptId, caseName: projection.caseName, armId: "A", expectedStages: 1, observedStages: 1,

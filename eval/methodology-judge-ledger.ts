@@ -117,6 +117,7 @@ export function methodologyProjectionSetSha256(
   const validated = validateProjectionSet(projections);
   return canonicalJsonSha256({
     protocol: METHODOLOGY_JUDGE_OCCURRENCES_PROTOCOL,
+    runId: validated.runId,
     executionEvidenceSha256: validated.executionEvidenceSha256,
     invocationRegistrationSha256: validated.invocationRegistrationSha256,
     inputPlanSha256: validated.inputPlanSha256,
@@ -131,6 +132,9 @@ export function buildMethodologyJudgePlan(input: MethodologyJudgeInputs): Method
   validateRunId(input.runId);
   requireHash(input.judgeImplementationSha256, "judgeImplementationSha256");
   const projections = validateProjectionSet(input.projections);
+  if (input.runId !== projections.runId) {
+    throw new Error("methodology judge runId does not match the authenticated projection set");
+  }
   const projectionSetSha256 = methodologyProjectionSetSha256(projections);
   const pairSources: PairSource[] = [];
 
@@ -340,6 +344,7 @@ function mapRunResult(plan: MethodologyJudgePlan, generic: JudgeRunResult): Meth
 
 function validateProjectionSet(value: AuthenticatedMethodologyGradingProjectionSet): AuthenticatedMethodologyGradingProjectionSet {
   if (!value || !Array.isArray(value.projections)) throw new Error("methodology grading projection set is invalid");
+  validateRunId(value.runId);
   for (const [label, hash] of [["executionEvidenceSha256", value.executionEvidenceSha256], ["invocationRegistrationSha256", value.invocationRegistrationSha256], ["inputPlanSha256", value.inputPlanSha256]] as const) {
     requireHash(hash, label);
   }

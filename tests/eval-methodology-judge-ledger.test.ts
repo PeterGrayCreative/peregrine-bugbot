@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -39,7 +39,7 @@ function fixtureSet(options: { attemptIds?: string[]; zeroBugs?: boolean; truthS
     const projection = { schemaVersion: 2 as const, kind: "methodology-grading-projection" as const, executionEvidenceSha256: hash("e"), inputPlanSha256: hash("p"), caseRegistrationSha256: hash("c"), truthSha256: canonicalJsonSha256(sourceTruth), truthScopeSha256: historicalTruthScopeSha256(sourceTruth), attemptId, caseName: "development/case-11111111", status, statusReason: status === "completed" ? "authenticated-complete" as const : status === "incomplete" ? "model-unable-to-complete" as const : status === "failed" ? "preflight-failed" as const : "outer-run-missing" as const, lifecycleTerminalSha256, reviewTerminalSha256, reviewRawOutputSha256: review === null ? null : hash("{}"), reviewOutputSha256: review === null ? null : methodologyReviewOutputSha256(review) };
     return { projection, projectionSha256: methodologyGradingProjectionSha256(projection), truth: sourceTruth, reviewOutput: review, reviewRawOutput: review === null ? null : "{}", resource: { attemptId, caseName: projection.caseName, armId: "A", expectedStages: 1, observedStages: review === null ? 0 : 1, outcome: status === "missing" ? "missing" : status === "failed" ? "preflight-failed" : "completed", wallDurationMs: 1, reviewDurationMs: review === null ? null : 1, usage: review === null ? null : usage, lifecycleTerminalSha256, reviewTerminalSha256 } };
   });
-  return { executionEvidenceSha256: hash("e"), invocationRegistrationSha256: hash("i"), inputPlanSha256: hash("p"), projections };
+  return { runId: "run-methodology-001", executionEvidenceSha256: hash("e"), invocationRegistrationSha256: hash("i"), inputPlanSha256: hash("p"), projections };
 }
 
 function inputs(projections = fixtureSet()): MethodologyJudgeInputs {
@@ -172,9 +172,31 @@ test("run identity and stale projection sets cannot reuse an existing artifact",
     const base = inputs();
     const result = await runMethodologyJudgeLedger({ ...base, runDirectory: root, execute: async () => ({ verdict: true, durationMs: 1, providerCostUsd: null, usage: { inputTokens: null, cachedInputTokens: null, outputTokens: null, reasoningTokens: null, turns: null, toolCalls: null } }) });
     const expected = { ...base, runDirectory: root, expectedOccurrenceArtifactSha256: result.artifact.artifactSha256, expectedJudgeManifestSha256: result.manifest.manifestSha256, expectedJudgeTerminalSealSha256: hash(readFileSync(join(root, "judge/terminal-seal.json")).toString()), expectedProjectionSetSha256: result.artifact.projectionSetSha256 };
-    assert.throws(() => readMethodologyJudgeLedger({ ...expected, runId: "another-run" }), /does not match the rederived plan/);
+    assert.throws(() => readMethodologyJudgeLedger({ ...expected, runId: "another-run" }), /runId does not match the authenticated projection set/);
     const stale = structuredClone(base.projections); stale.projections[1]!.projection.caseName = "development/case-33333333";
     assert.throws(() => readMethodologyJudgeLedger({ ...expected, projections: stale }), /projection digest is stale/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test("fresh runs reject cross-run projections before artifacts or provider work", async () => {
+  const root = mkdtempSync(join(tmpdir(), "methodology-judge-fresh-cross-run-"));
+  try {
+    let calls = 0;
+    await assert.rejects(
+      runMethodologyJudgeLedger({
+        ...inputs(),
+        runId: "another-run",
+        runDirectory: root,
+        execute: async () => {
+          calls += 1;
+          return { verdict: true, durationMs: 1, providerCostUsd: null, usage: { inputTokens: null, cachedInputTokens: null, outputTokens: null, reasoningTokens: null, turns: null, toolCalls: null } };
+        },
+      }),
+      /runId does not match the authenticated projection set/,
+    );
+    assert.equal(calls, 0);
+    assert.equal(existsSync(join(root, "methodology-judge-occurrences.json")), false);
+    assert.equal(existsSync(join(root, "judge")), false);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
 

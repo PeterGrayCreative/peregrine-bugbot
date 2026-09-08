@@ -48,6 +48,7 @@ export interface MethodologyAttemptResource {
 }
 
 export interface AuthenticatedMethodologyGradingProjectionSet {
+  runId: string;
   executionEvidenceSha256: string;
   invocationRegistrationSha256: string;
   inputPlanSha256: string;
@@ -206,6 +207,7 @@ function projectAuthenticatedExecution(input: { root: string; trustedCuratorPoli
     throw new Error("methodology grading projection count differs from authenticated schedule accounting");
   }
   return {
+    runId: registration.runId,
     executionEvidenceSha256: execution.recordSha256,
     invocationRegistrationSha256: execution.invocationRegistrationSha256,
     inputPlanSha256: execution.inputPlanSha256,

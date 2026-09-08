@@ -102,6 +102,7 @@ function projectionSet(options: {
     };
   });
   return {
+    runId: "run-methodology-grading-001",
     executionEvidenceSha256: digest("execution"),
     invocationRegistrationSha256: digest("registration"),
     inputPlanSha256: digest("input-plan"),
