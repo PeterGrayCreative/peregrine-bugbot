@@ -23,6 +23,8 @@ import { writeMethodologyExecutionEvidence, writeMethodologyStoppedRunClosure, r
 import { gradeMethodologyAttempt } from "../eval/methodology-grading-contract.js";
 import { readMethodologyGradingProjections, readStoppedMethodologyGradingProjections,
   METHODOLOGY_GRADING_PROJECTION_READER_BOUNDARY } from "../eval/methodology-grading-projection.js";
+import { readMethodologyResourceSet, writeMethodologyResourceSet } from "../eval/methodology-resource-artifact.js";
+import { readMethodologyResourceReport, writeMethodologyResourceReport } from "../eval/methodology-resource-report.js";
 import { registerMethodologyInputPlan } from "../eval/methodology-input-plan.js";
 import { registerMethodologyInvocations } from "../eval/methodology-invocations.js";
 import { prepareMethodologyLaneActivation } from "../eval/methodology-lane-activation.js";
@@ -96,6 +98,8 @@ test("authenticated projection preserves all scheduled outcomes and never upgrad
     assert.ok(stopped.projections.every(({ projection, reviewOutput }) =>
       projection.status === "missing" && projection.statusReason === "outer-run-missing" &&
       projection.lifecycleTerminalSha256 === null && reviewOutput === null));
+    assert.ok(stopped.projections.every(({ resource }) => resource.outcome === "missing" &&
+      resource.wallDurationMs === null && resource.reviewDurationMs === null && resource.usage === null));
     const missing = stopped.projections[0]!;
     const missingGrade = gradeMethodologyAttempt({ projection: missing.projection,
       expectedProjectionSha256: missing.projectionSha256, truth: missing.truth, reviewOutput: null,
@@ -279,6 +283,45 @@ test("authenticated projection preserves all scheduled outcomes and never upgrad
     assert.equal(byArmRepeat["D-1"]!.projection.reviewTerminalSha256, null);
     assert.ok(result.projections.every((item) => item.projection.lifecycleTerminalSha256 !== null));
     assert.ok(result.projections.every((item) => item.projection.executionEvidenceSha256 === executionEvidenceSha256));
+    assert.equal(byArmRepeat["A-1"]!.resource.outcome, "completed");
+    assert.equal(typeof byArmRepeat["A-1"]!.resource.wallDurationMs, "number");
+    assert.equal(typeof byArmRepeat["A-1"]!.resource.reviewDurationMs, "number");
+    assert.equal(byArmRepeat["B-1"]!.resource.outcome, "preflight-failed");
+    assert.equal(byArmRepeat["B-1"]!.resource.usage, null);
+    assert.equal(byArmRepeat["C-2"]!.resource.outcome, "review-failed");
+    assert.equal(byArmRepeat["D-1"]!.resource.outcome, "interrupted");
+
+    const analysisRoot = mkdtempSync(join(tmpdir(), "peregrine-methodology-resource-set-"));
+    try {
+      const resourceSet = writeMethodologyResourceSet(analysisRoot, {
+        executionRoot: evidenceRoot,
+        runId: "projection-reader-mixed-outcomes",
+        schedule,
+        expectedExecutionEvidenceSha256: executionEvidenceSha256,
+        trustedCuratorPolicy: POLICY,
+        recordedAt: "2026-09-08T03:00:00.000Z",
+      });
+      assert.equal(resourceSet.resources.length, schedule.attempts.length);
+      assert.deepEqual(readMethodologyResourceSet(analysisRoot, {
+        expectedArtifactSha256: resourceSet.artifactSha256,
+        schedule,
+      }), resourceSet);
+      const resourceReport = writeMethodologyResourceReport(analysisRoot, { schedule, resources: resourceSet });
+      assert.equal(resourceReport.arms.find((arm) => arm.armId === "B")!.outcomes["preflight-failed"], 2);
+      assert.equal(resourceReport.arms.find((arm) => arm.armId === "D")!.outcomes.interrupted, 2);
+      assert.equal(resourceReport.arms.find((arm) => arm.armId === "B")!.usage.costUsd.total, null);
+      assert.equal(resourceReport.arms.find((arm) => arm.armId === "B")!.usage.costUsd.observedSubtotal, 0);
+      assert.deepEqual(readMethodologyResourceReport(analysisRoot, {
+        expectedReportSha256: resourceReport.reportSha256,
+        schedule,
+        resources: resourceSet,
+      }), resourceReport);
+      assert.throws(() => readMethodologyResourceSet(analysisRoot, {
+        expectedArtifactSha256: "f".repeat(64), schedule,
+      }), /digest mismatch/);
+    } finally {
+      rmSync(analysisRoot, { recursive: true, force: true });
+    }
 
     const modelCompleted = byArmRepeat["A-1"]!;
     const grade = gradeMethodologyAttempt({ projection: modelCompleted.projection,

@@ -18,6 +18,8 @@ import { readMethodologyInputPlan } from "./methodology-input-plan.js";
 import { readMethodologyInvocationRegistration } from "./methodology-invocations.js";
 import type { MethodologyReviewOutput } from "./methodology-output.js";
 import { readMethodologyAttemptTerminal } from "./methodology-terminal.js";
+import { readMethodologyAttemptStart } from "./methodology-attempt-lifecycle.js";
+import type { Usage } from "../src/types.js";
 
 export const METHODOLOGY_GRADING_PROJECTION_READER_BOUNDARY =
   "This reader authenticates a lifecycle-terminal schedule and its currently admitted case snapshots. Runner scope remains unverified, so model-completed reviews are projected as incomplete. Missing or stopped schedules require a separate outer closure seal and are never inferred from absent files.";
@@ -28,6 +30,21 @@ export interface AuthenticatedMethodologyGradingProjection {
   truth: HistoricalGroundTruth;
   reviewOutput: MethodologyReviewOutput | null;
   reviewRawOutput: string | null;
+  resource: MethodologyAttemptResource;
+}
+
+export interface MethodologyAttemptResource {
+  attemptId: string;
+  caseName: string;
+  armId: "A" | "B" | "C" | "D";
+  expectedStages: 1 | 2;
+  observedStages: number;
+  outcome: "completed" | "review-failed" | "preflight-failed" | "interrupted" | "missing";
+  wallDurationMs: number | null;
+  reviewDurationMs: number | null;
+  usage: Usage | null;
+  lifecycleTerminalSha256: string | null;
+  reviewTerminalSha256: string | null;
 }
 
 export interface AuthenticatedMethodologyGradingProjectionSet {
@@ -106,13 +123,30 @@ function projectAuthenticatedExecution(input: { root: string; trustedCuratorPoli
     let statusReason: MethodologyGradingProjection["statusReason"];
     let reviewOutput: MethodologyReviewOutput | null = null;
     let reviewRawOutput: string | null = null;
+    let resource: MethodologyAttemptResource = {
+      attemptId: attempt.id,
+      caseName: attempt.caseName,
+      armId: attempt.armId,
+      expectedStages: attempt.expectedStages,
+      observedStages: 0,
+      outcome: "missing",
+      wallDurationMs: null,
+      reviewDurationMs: null,
+      usage: null,
+      lifecycleTerminalSha256: receipt?.lifecycleTerminalSha256 ?? null,
+      reviewTerminalSha256: lifecycle?.reviewTerminalSha256 ?? null,
+    };
     if (lifecycle === null) {
       status = "missing";
       statusReason = "outer-run-missing";
     } else if (lifecycle.status === "preflight-failed") {
       statusReason = "preflight-failed";
+      resource = lifecycleResource(input.root, attempt, lifecycle, receipt!.lifecycleTerminalSha256,
+        "preflight-failed");
     } else if (lifecycle.status === "interrupted") {
       statusReason = "interrupted";
+      resource = lifecycleResource(input.root, attempt, lifecycle, receipt!.lifecycleTerminalSha256,
+        "interrupted");
     } else {
       const terminal = readMethodologyAttemptTerminal(
         input.root,
@@ -120,6 +154,13 @@ function projectAuthenticatedExecution(input: { root: string; trustedCuratorPoli
         attempt.id,
         lifecycle.reviewTerminalSha256!,
       );
+      resource = {
+        ...lifecycleResource(input.root, attempt, lifecycle, receipt!.lifecycleTerminalSha256,
+          terminal.outcome.status === "completed" ? "completed" : "review-failed"),
+        observedStages: terminal.stages.length,
+        reviewDurationMs: terminal.durationMs,
+        usage: terminal.usage,
+      };
       if (terminal.outcome.status === "failed") {
         statusReason = "review-execution-failed";
       } else {
@@ -157,6 +198,7 @@ function projectAuthenticatedExecution(input: { root: string; trustedCuratorPoli
       truth: historicalCase.truth,
       reviewOutput,
       reviewRawOutput,
+      resource,
     };
   });
 
@@ -168,6 +210,30 @@ function projectAuthenticatedExecution(input: { root: string; trustedCuratorPoli
     invocationRegistrationSha256: execution.invocationRegistrationSha256,
     inputPlanSha256: execution.inputPlanSha256,
     projections,
+  };
+}
+
+function lifecycleResource(root: string,
+  attempt: { id: string; caseName: string; armId: "A" | "B" | "C" | "D"; expectedStages: 1 | 2 },
+  lifecycle: ReturnType<typeof readMethodologyAttemptLifecycleTerminal>, lifecycleTerminalSha256: string,
+  outcome: MethodologyAttemptResource["outcome"]): MethodologyAttemptResource {
+  const start = readMethodologyAttemptStart(root, lifecycle.registrationSha256, attempt.id, lifecycle.startSha256);
+  const wallDurationMs = Date.parse(lifecycle.finishedAt) - Date.parse(start.startedAt);
+  if (!Number.isSafeInteger(wallDurationMs) || wallDurationMs < 0) {
+    throw new Error("methodology resource lifecycle duration is invalid");
+  }
+  return {
+    attemptId: attempt.id,
+    caseName: attempt.caseName,
+    armId: attempt.armId,
+    expectedStages: attempt.expectedStages,
+    observedStages: lifecycle.dispatchReceipts.length,
+    outcome,
+    wallDurationMs,
+    reviewDurationMs: null,
+    usage: null,
+    lifecycleTerminalSha256,
+    reviewTerminalSha256: lifecycle.reviewTerminalSha256,
   };
 }
 
