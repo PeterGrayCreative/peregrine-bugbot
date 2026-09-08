@@ -9,6 +9,16 @@ User requested a stop after this recovery checkpoint. No further collection,
 implementation or provider batch should begin until explicit resumption.
 See the [checkpoint handoff](../validation/2026-09-07-recovery-checkpoint-handoff.md).
 
+The user subsequently resumed the bounded recovery plan. Sol verified all
+current recovery stores, created an immutable 147,065,638-byte archive and
+full file inventory under persistent `.worktrees/evidence-curation`, and
+successfully restored and reverified it from a second local copy. See the
+[local recovery report](../validation/2026-09-07-sol-minimal-recovery-results.md).
+No missing dossier was synthetically rebuilt. The selected GitHub repository
+is publicly visible, so causal evidence was not uploaded. Remote/off-device
+durability remains incomplete; R2 collection, R3 implementation and provider
+runs did not resume.
+
 Persistent worktree: `/Users/petergray/Documents/peregrine-bugbot/.worktrees/ts-js-evidence-r2`.
 The missing temporary stores are documented in the
 [interruption record](../validation/2026-09-07-interruption-recovery.md).

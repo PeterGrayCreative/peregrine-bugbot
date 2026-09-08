@@ -13,6 +13,10 @@ another R3 implementation or runtime probe while that stop is in effect.
 Existing structural passes below remain evidence of their stated scope, not
 authorization for historical model runs.
 
+The later recovery-only resumption produced a verified local archive and fresh
+restore. It did not resume R3 or authorize historical providers. Remote backup
+is still open because the selected GitHub repository is public.
+
 The experimental HTTP adapter and a real two-container, credential-free
 synthetic protocol probe now pass. Source and dummy credential mounts were
 separate; read/list/search worked with bounded rejection paths. This does not

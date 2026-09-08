@@ -1,7 +1,7 @@
 # Sol: minimal evidence recovery and durable handoff
 
-Date: 2026-09-07. Status: execution paused before upload because the selected
-repository is public.
+Date: 2026-09-07. Status: local verification/archive/restore complete; remote
+durability paused because the selected repository is public.
 
 Storage decision: the user approved the existing GitHub repository for evidence
 backup. A live check on 2026-09-07 returned `visibility: PUBLIC` and
@@ -10,6 +10,9 @@ branch or upload existed when checked. Upload is therefore blocked until the
 user makes this repository private, selects a separate private repository, or
 explicitly chooses encrypted public storage with a separately preserved key.
 Branch separation alone does not protect benchmark answers.
+
+Local execution results are recorded in the
+[Sol recovery report](../validation/2026-09-07-sol-minimal-recovery-results.md).
 
 ## Assignment
 
