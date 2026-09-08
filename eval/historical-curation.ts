@@ -8,11 +8,13 @@ import {
   diffSizeStratum,
   fileSha256,
   LARGE_DIFF_MIN_LINES,
-  parseCuratorPolicy,
   type ArchitectureFamily,
   type ChangeShape,
-  type CuratorPolicy,
 } from "./case-curation.js";
+import {
+  parseHistoricalCuratorPolicy,
+  type HistoricalCuratorPolicy,
+} from "./historical-curator-policy.js";
 import {
   HISTORICAL_EFFICACY_PROTOCOL,
   parseHistoricalGroundTruth,
@@ -55,12 +57,10 @@ type HistoricalConfirmationCheck =
   | (typeof KNOWN_ROOT_CHECKS)[number]
   | (typeof COMPARISON_CHECKS)[number];
 
-export interface HistoricalCuration {
-  schemaVersion: 2;
+interface HistoricalCurationCore {
   protocol: typeof HISTORICAL_EFFICACY_PROTOCOL;
   caseId: string;
   status: "draft" | "admitted";
-  curatorPolicyId: "protected-git-review-v1";
   truth: {
     truthVersion: string;
     status: HistoricalTruthStatus;
@@ -87,6 +87,11 @@ export interface HistoricalCuration {
     artifact: string;
     sha256: string;
   };
+}
+
+export interface HistoricalCurationV2 extends HistoricalCurationCore {
+  schemaVersion: 2;
+  curatorPolicyId: "protected-git-review-v1";
   confirmations: Array<{
     curatorIdentitySha256: string;
     confirmedAt: string;
@@ -95,6 +100,32 @@ export interface HistoricalCuration {
     checks: HistoricalConfirmationCheck[];
   }>;
 }
+
+export interface HistoricalCurationV3 extends HistoricalCurationCore {
+  schemaVersion: 3;
+  curatorPolicyId: "sole-human-historical-v1";
+  reviewMode: "sole-human-v1";
+  preparationEvidence: Array<{
+    kind: "integrity-check" | "reconstruction" | "source-authentication";
+    preparerIdentitySha256: string;
+    artifactSha256: string;
+    recordedAt: string;
+  }>;
+  humanDecision: null | {
+    decision: "approve";
+    humanReviewerIdentitySha256: string;
+    reviewedAt: string;
+    packetSha256: string;
+    dossierBundleSha256: string;
+    responseSha256: string;
+    responseDecisionSha256: string;
+    caseBundleSha256: string;
+    truthScopeSha256: string;
+    checks: HistoricalConfirmationCheck[];
+  };
+}
+
+export type HistoricalCuration = HistoricalCurationV2 | HistoricalCurationV3;
 
 export interface HistoricalCaseAdmission {
   truth: HistoricalGroundTruth;
@@ -122,14 +153,14 @@ export function requiredHistoricalConfirmationChecks(
 export function readHistoricalCaseAdmission(
   caseDir: string,
   spec: HistoricalCaseSpec,
-  trustedPolicy: CuratorPolicy,
+  trustedPolicy: HistoricalCuratorPolicy,
   options: { requireAdmitted?: boolean } = {},
 ): HistoricalCaseAdmission {
   if (spec.evaluationProtocol !== HISTORICAL_EFFICACY_PROTOCOL) {
     throw new Error(`${spec.id} is not opted into ${HISTORICAL_EFFICACY_PROTOCOL}`);
   }
   if (spec.corpus === "structural-smoke") throw new Error(`${spec.id} is not a historical efficacy case`);
-  const policy = parseCuratorPolicy(trustedPolicy, "caller-supplied curator policy");
+  const policy = parseHistoricalCuratorPolicy(trustedPolicy, "caller-supplied curator policy");
   const caseRoot = realpathSync(resolve(caseDir));
   const caseJsonPath = directFile(caseRoot, "case.json", `${spec.id} case.json`);
   const rawCase = readJson(caseJsonPath, `${spec.id} case.json`);
@@ -181,22 +212,7 @@ export function readHistoricalCaseAdmission(
     curation,
     createHash("sha256").update(truthBytes).digest("hex"),
   );
-  const trustedIdentities = new Set(policy.curatorIdentitySha256s);
-  for (const [index, confirmation] of curation.confirmations.entries()) {
-    if (!trustedIdentities.has(confirmation.curatorIdentitySha256)) {
-      throw new Error(`${spec.id} confirmation ${index} is not registered by the caller-supplied curator policy`);
-    }
-    if (confirmation.caseBundleSha256 !== bundleSha256) {
-      throw new Error(`${spec.id} confirmation ${index} does not authenticate the current historical case bundle`);
-    }
-    if (confirmation.truthScopeSha256 !== curation.truth.scopeSha256) {
-      throw new Error(`${spec.id} confirmation ${index} does not authenticate the current truth scope`);
-    }
-  }
-  if (curation.status === "admitted" &&
-    curation.confirmations.length < policy.minimumIndependentConfirmations) {
-    throw new Error(`${spec.id} does not meet the caller-supplied confirmation policy`);
-  }
+  verifyHistoricalCurationDecision(spec.id, curation, policy, bundleSha256);
   return { truth, curation, caseBundleSha256: bundleSha256, diffLines,
     verificationBoundary: "declared-bundle-and-policy-only" };
 }
@@ -227,22 +243,75 @@ function historicalCaseBundleSha256FromTruthDigest(
     diffSha256: fileSha256(directFile(caseRoot, spec.diffFile, `${spec.id} diff`)),
     proofSha256: fileSha256(directFile(caseRoot, curation.proof.artifact, `${spec.id} curation proof`)),
   };
-  return createHash("sha256")
-    .update("peregrine-historical-case-bundle-v2\0")
-    .update(JSON.stringify({
+  const common = {
       caseId: spec.id,
       artifacts,
       curation: {
         protocol: curation.protocol,
         status: curation.status,
         curatorPolicyId: curation.curatorPolicyId,
+        ...(curation.schemaVersion === 3 ? {
+          reviewMode: curation.reviewMode,
+          preparationEvidence: curation.preparationEvidence,
+        } : {}),
         truth: curation.truth,
         source: curation.source,
         strata: curation.strata,
         proof: curation.proof,
       },
-    }))
+    };
+  return createHash("sha256")
+    .update(curation.schemaVersion === 2
+      ? "peregrine-historical-case-bundle-v2\0"
+      : "peregrine-historical-case-bundle-v3\0")
+    .update(JSON.stringify(common))
     .digest("hex");
+}
+
+function verifyHistoricalCurationDecision(
+  caseId: string,
+  curation: HistoricalCuration,
+  policy: HistoricalCuratorPolicy,
+  bundleSha256: string,
+): void {
+  if (curation.schemaVersion === 2) {
+    if (policy.schemaVersion !== 1 || curation.curatorPolicyId !== policy.policyId) {
+      throw new Error(`${caseId} curation does not match the caller-supplied curator policy`);
+    }
+    const trustedIdentities = new Set(policy.curatorIdentitySha256s);
+    for (const [index, confirmation] of curation.confirmations.entries()) {
+      if (!trustedIdentities.has(confirmation.curatorIdentitySha256)) {
+        throw new Error(`${caseId} confirmation ${index} is not registered by the caller-supplied curator policy`);
+      }
+      if (confirmation.caseBundleSha256 !== bundleSha256) {
+        throw new Error(`${caseId} confirmation ${index} does not authenticate the current historical case bundle`);
+      }
+      if (confirmation.truthScopeSha256 !== curation.truth.scopeSha256) {
+        throw new Error(`${caseId} confirmation ${index} does not authenticate the current truth scope`);
+      }
+    }
+    if (curation.status === "admitted" &&
+      curation.confirmations.length < policy.minimumIndependentConfirmations) {
+      throw new Error(`${caseId} does not meet the caller-supplied confirmation policy`);
+    }
+    return;
+  }
+  if (policy.schemaVersion !== 2 || curation.curatorPolicyId !== policy.policyId ||
+      curation.reviewMode !== policy.reviewMode) {
+    throw new Error(`${caseId} curation does not match the caller-supplied sole-human policy`);
+  }
+  const decision = curation.humanDecision;
+  if (curation.status !== "admitted") return;
+  if (!decision) throw new Error(`${caseId} admitted sole-human curation requires one human decision`);
+  if (decision.humanReviewerIdentitySha256 !== policy.registeredHumanIdentitySha256) {
+    throw new Error(`${caseId} human decision is not registered by the caller-supplied sole-human policy`);
+  }
+  if (decision.caseBundleSha256 !== bundleSha256) {
+    throw new Error(`${caseId} human decision does not authenticate the current historical case bundle`);
+  }
+  if (decision.truthScopeSha256 !== curation.truth.scopeSha256) {
+    throw new Error(`${caseId} human decision does not authenticate the current truth scope`);
+  }
 }
 
 function parseJsonBytes(bytes: Buffer, label: string): unknown {
@@ -259,15 +328,26 @@ export function parseHistoricalCuration(
   truth: HistoricalGroundTruth,
   label = "historical curation",
 ): HistoricalCuration {
-  const root = strictObject(value, label, [
+  const version = value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>).schemaVersion
+    : undefined;
+  const root = strictObject(value, label, version === 3 ? [
+    "schemaVersion", "protocol", "caseId", "status", "curatorPolicyId", "reviewMode",
+    "truth", "source", "strata", "proof", "preparationEvidence", "humanDecision",
+  ] : [
     "schemaVersion", "protocol", "caseId", "status", "curatorPolicyId",
     "truth", "source", "strata", "proof", "confirmations",
   ]);
-  if (root.schemaVersion !== 2) throw new Error(`${label}.schemaVersion must be 2`);
+  if (root.schemaVersion !== 2 && root.schemaVersion !== 3) {
+    throw new Error(`${label}.schemaVersion must be 2 or 3`);
+  }
   if (root.protocol !== HISTORICAL_EFFICACY_PROTOCOL) throw new Error(`${label}.protocol is invalid`);
   if (root.caseId !== spec.id) throw new Error(`${label}.caseId must match case.json`);
   if (root.status !== "draft" && root.status !== "admitted") throw new Error(`${label}.status is invalid`);
-  if (root.curatorPolicyId !== "protected-git-review-v1") throw new Error(`${label}.curatorPolicyId is invalid`);
+  if ((root.schemaVersion === 2 && root.curatorPolicyId !== "protected-git-review-v1") ||
+      (root.schemaVersion === 3 && root.curatorPolicyId !== "sole-human-historical-v1")) {
+    throw new Error(`${label}.curatorPolicyId is invalid`);
+  }
   if (spec.kind !== "historical" || spec.evaluationProtocol !== HISTORICAL_EFFICACY_PROTOCOL) {
     throw new Error(`${label} requires an opted-in historical case spec`);
   }
@@ -344,39 +424,117 @@ export function parseHistoricalCuration(
     sha256: sha256(rawProof.sha256, `${label}.proof.sha256`),
   };
 
-  if (!Array.isArray(root.confirmations)) throw new Error(`${label}.confirmations must be an array`);
   const expectedChecks = requiredHistoricalConfirmationChecks(truth.scope.status);
-  const curatorIds = new Set<string>();
-  const confirmations = root.confirmations.map((value, index) => {
-    const source = `${label}.confirmations[${index}]`;
-    const item = strictObject(value, source, [
-      "curatorIdentitySha256", "confirmedAt", "caseBundleSha256", "truthScopeSha256", "checks",
-    ]);
-    const curatorIdentitySha256 = sha256(item.curatorIdentitySha256, `${source}.curatorIdentitySha256`);
-    if (curatorIds.has(curatorIdentitySha256)) throw new Error(`${label}.confirmations has a duplicate curator`);
-    curatorIds.add(curatorIdentitySha256);
-    if (!Array.isArray(item.checks) || item.checks.length !== expectedChecks.length ||
-      item.checks.some((check, checkIndex) => check !== expectedChecks[checkIndex])) {
-      throw new Error(`${source}.checks must equal the required ordered checklist`);
+  const parseChecks = (value: unknown, source: string): HistoricalConfirmationCheck[] => {
+    if (!Array.isArray(value) || value.length !== expectedChecks.length ||
+      value.some((check, checkIndex) => check !== expectedChecks[checkIndex])) {
+      throw new Error(`${source} must equal the required ordered checklist`);
+    }
+    return [...expectedChecks];
+  };
+  if (root.schemaVersion === 2) {
+    if (!Array.isArray(root.confirmations)) throw new Error(`${label}.confirmations must be an array`);
+    const curatorIds = new Set<string>();
+    const confirmations = root.confirmations.map((value, index) => {
+      const source = `${label}.confirmations[${index}]`;
+      const item = strictObject(value, source, [
+        "curatorIdentitySha256", "confirmedAt", "caseBundleSha256", "truthScopeSha256", "checks",
+      ]);
+      const curatorIdentitySha256 = sha256(item.curatorIdentitySha256, `${source}.curatorIdentitySha256`);
+      if (curatorIds.has(curatorIdentitySha256)) throw new Error(`${label}.confirmations has a duplicate curator`);
+      curatorIds.add(curatorIdentitySha256);
+      return {
+        curatorIdentitySha256,
+        confirmedAt: timestamp(item.confirmedAt, `${source}.confirmedAt`),
+        caseBundleSha256: sha256(item.caseBundleSha256, `${source}.caseBundleSha256`),
+        truthScopeSha256: sha256(item.truthScopeSha256, `${source}.truthScopeSha256`),
+        checks: parseChecks(item.checks, `${source}.checks`),
+      };
+    });
+    if (root.status === "admitted" && confirmations.length < 2) {
+      throw new Error(`${label} admitted cases need two distinct accountable confirmations`);
     }
     return {
-      curatorIdentitySha256,
-      confirmedAt: timestamp(item.confirmedAt, `${source}.confirmedAt`),
-      caseBundleSha256: sha256(item.caseBundleSha256, `${source}.caseBundleSha256`),
-      truthScopeSha256: sha256(item.truthScopeSha256, `${source}.truthScopeSha256`),
-      checks: [...expectedChecks],
+      schemaVersion: 2,
+      protocol: HISTORICAL_EFFICACY_PROTOCOL,
+      caseId: spec.id,
+      status: root.status,
+      curatorPolicyId: "protected-git-review-v1",
+      truth: {
+        truthVersion: truth.scope.truthVersion,
+        status: truth.scope.status,
+        completeness: "partial",
+        scopeSha256,
+      },
+      source,
+      strata: {
+        languageFamily: rawStrata.languageFamily,
+        architectureFamily: rawStrata.architectureFamily as ArchitectureFamily,
+        size: rawStrata.size,
+        changeShapes,
+        secondarySurfaceLanes,
+        mechanismFamilies,
+      },
+      proof,
+      confirmations,
     };
-  });
-  if (root.status === "admitted" && confirmations.length < 2) {
-    throw new Error(`${label} admitted cases need two distinct accountable confirmations`);
   }
 
+  if (root.reviewMode !== "sole-human-v1") throw new Error(`${label}.reviewMode is invalid`);
+  if (!Array.isArray(root.preparationEvidence)) throw new Error(`${label}.preparationEvidence must be an array`);
+  const preparationKeys = new Set<string>();
+  const preparationEvidence = root.preparationEvidence.map((value, index) => {
+    const source = `${label}.preparationEvidence[${index}]`;
+    const item = strictObject(value, source, [
+      "kind", "preparerIdentitySha256", "artifactSha256", "recordedAt",
+    ]);
+    if (item.kind !== "integrity-check" && item.kind !== "reconstruction" &&
+        item.kind !== "source-authentication") throw new Error(`${source}.kind is invalid`);
+    const evidence: HistoricalCurationV3["preparationEvidence"][number] = {
+      kind: item.kind,
+      preparerIdentitySha256: sha256(item.preparerIdentitySha256, `${source}.preparerIdentitySha256`),
+      artifactSha256: sha256(item.artifactSha256, `${source}.artifactSha256`),
+      recordedAt: timestamp(item.recordedAt, `${source}.recordedAt`),
+    };
+    const key = `${evidence.kind}\0${evidence.preparerIdentitySha256}\0${evidence.artifactSha256}`;
+    if (preparationKeys.has(key)) throw new Error(`${label}.preparationEvidence contains a duplicate record`);
+    preparationKeys.add(key);
+    return evidence;
+  });
+  let humanDecision: HistoricalCurationV3["humanDecision"] = null;
+  if (root.humanDecision !== null) {
+    const item = strictObject(root.humanDecision, `${label}.humanDecision`, [
+      "decision", "humanReviewerIdentitySha256", "reviewedAt", "packetSha256",
+      "dossierBundleSha256", "responseSha256", "responseDecisionSha256",
+      "caseBundleSha256", "truthScopeSha256", "checks",
+    ]);
+    if (item.decision !== "approve") throw new Error(`${label}.humanDecision.decision must be approve`);
+    humanDecision = {
+      decision: "approve",
+      humanReviewerIdentitySha256: sha256(item.humanReviewerIdentitySha256, `${label}.humanDecision.humanReviewerIdentitySha256`),
+      reviewedAt: timestamp(item.reviewedAt, `${label}.humanDecision.reviewedAt`),
+      packetSha256: sha256(item.packetSha256, `${label}.humanDecision.packetSha256`),
+      dossierBundleSha256: sha256(item.dossierBundleSha256, `${label}.humanDecision.dossierBundleSha256`),
+      responseSha256: sha256(item.responseSha256, `${label}.humanDecision.responseSha256`),
+      responseDecisionSha256: sha256(item.responseDecisionSha256, `${label}.humanDecision.responseDecisionSha256`),
+      caseBundleSha256: sha256(item.caseBundleSha256, `${label}.humanDecision.caseBundleSha256`),
+      truthScopeSha256: sha256(item.truthScopeSha256, `${label}.humanDecision.truthScopeSha256`),
+      checks: parseChecks(item.checks, `${label}.humanDecision.checks`),
+    };
+  }
+  if (root.status === "admitted" && humanDecision === null) {
+    throw new Error(`${label} admitted sole-human cases need one accountable human decision`);
+  }
+  if (root.status === "draft" && humanDecision !== null) {
+    throw new Error(`${label} draft sole-human cases cannot carry an approval decision`);
+  }
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     protocol: HISTORICAL_EFFICACY_PROTOCOL,
     caseId: spec.id,
     status: root.status,
-    curatorPolicyId: "protected-git-review-v1",
+    curatorPolicyId: "sole-human-historical-v1",
+    reviewMode: "sole-human-v1",
     truth: {
       truthVersion: truth.scope.truthVersion,
       status: truth.scope.status,
@@ -393,7 +551,8 @@ export function parseHistoricalCuration(
       mechanismFamilies,
     },
     proof,
-    confirmations,
+    preparationEvidence,
+    humanDecision,
   };
 }
 

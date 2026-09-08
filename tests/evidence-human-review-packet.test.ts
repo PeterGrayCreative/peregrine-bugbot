@@ -8,6 +8,7 @@ import {
   assembleHumanReviewPacket,
   type HumanPacketAssemblyRequest,
 } from "../scripts/evidence/assemble-human-review-packet.js";
+import { verifyHumanReviewResponse } from "../scripts/evidence/verify-human-review-response.js";
 
 const hash = (value: string | Buffer) => createHash("sha256").update(value).digest("hex");
 
@@ -105,11 +106,12 @@ test("assembles byte-bound portable copies, retained losses, and blank sole-huma
     assert.equal(existsSync(join(data.output, "decisions/loss-beta.json")), false);
     assert.equal(decision.decision, null);
     assert.equal(decision.reason, null);
-    assert.equal(decision.humanReviewerIdentity, null);
+    assert.equal(decision.humanReviewerIdentitySha256, null);
     assert.equal(packetDecision.reviewedEveryDecisionCard, null);
     assert.equal(packetDecision.acknowledgedPacketSha256, null);
     assert.equal(packetDecision.soleHumanReviewerAcknowledged, null);
     assert.equal(packetDecision.independentTwoHumanConfirmationClaimed, null);
+    assert.equal(packetDecision.reviewMode, "sole-human-v1");
 
     for (const dossier of manifest.dossiers) {
       for (const file of [dossier.manifest, ...dossier.files]) {
@@ -134,6 +136,85 @@ test("assembles byte-bound portable copies, retained losses, and blank sole-huma
     );
   } finally {
     data.cleanup();
+  }
+});
+
+function writeCompletedResponse(packet: string, response: string, humanIdentity: string): void {
+  mkdirSync(join(response, "decisions"), { recursive: true });
+  const decision = JSON.parse(readFileSync(join(packet, "decisions/case-alpha.json"), "utf8"));
+  Object.assign(decision, {
+    templateOnly: false,
+    decision: "approve",
+    reason: "Source, reachability, consequence, and stated partial scope are supported.",
+    correction: null,
+    acknowledgedDossierBundleSha256: decision.dossierBundleSha256,
+    humanReviewerIdentitySha256: humanIdentity,
+    reviewedAt: "2026-09-07T15:00:00.000Z",
+  });
+  writeFileSync(join(response, "decisions/case-alpha.json"), `${JSON.stringify(decision, null, 2)}\n`);
+  const packetDecision = JSON.parse(readFileSync(join(packet, "packet-decision.json"), "utf8"));
+  const packetManifest = JSON.parse(readFileSync(join(packet, "packet-manifest.json"), "utf8"));
+  Object.assign(packetDecision, {
+    templateOnly: false,
+    acknowledgedPacketSha256: packetManifest.packetSha256,
+    humanReviewerIdentitySha256: humanIdentity,
+    soleHumanReviewerAcknowledged: true,
+    reviewedEveryDecisionCard: true,
+    decisionsBindPacketAndDossierHashes: true,
+    duplicateFamiliesAccepted: true,
+    limitationsAccepted: true,
+    independentTwoHumanConfirmationClaimed: false,
+    completedAt: "2026-09-07T16:00:00.000Z",
+  });
+  writeFileSync(join(response, "packet-decision.json"), `${JSON.stringify(packetDecision, null, 2)}\n`);
+}
+
+test("authenticates one complete sole-human response against exact packet bytes", () => {
+  const data = fixture();
+  const humanIdentity = "9".repeat(64);
+  try {
+    const assembled = assembleHumanReviewPacket(data.request, data.output);
+    const response = join(data.root, "response");
+    writeCompletedResponse(data.output, response, humanIdentity);
+    const verified = verifyHumanReviewResponse(data.output, response, humanIdentity);
+    assert.equal(verified.packetSha256, assembled.packetSha256);
+    assert.equal(verified.humanReviewerIdentitySha256, humanIdentity);
+    assert.deepEqual(verified.counts, { approve: 1, reject: 0, unresolved: 0 });
+    assert.equal(verified.decisions[0]?.dossierId, "case-alpha");
+    assert.equal(verified.verificationBoundary, "caller-registered-identity-and-byte-binding-only");
+    assert.match(verified.responseSha256, /^[a-f0-9]{64}$/);
+  } finally {
+    data.cleanup();
+  }
+});
+
+test("response verification rejects missing decisions, wrong identities, false attestations, and packet drift", () => {
+  for (const mutate of [
+    (packet: string, response: string) => rmSync(join(response, "decisions/case-alpha.json")),
+    (_packet: string, response: string) => {
+      const value = JSON.parse(readFileSync(join(response, "decisions/case-alpha.json"), "utf8"));
+      value.humanReviewerIdentitySha256 = "8".repeat(64);
+      writeFileSync(join(response, "decisions/case-alpha.json"), JSON.stringify(value));
+    },
+    (_packet: string, response: string) => {
+      const value = JSON.parse(readFileSync(join(response, "packet-decision.json"), "utf8"));
+      value.independentTwoHumanConfirmationClaimed = true;
+      writeFileSync(join(response, "packet-decision.json"), JSON.stringify(value));
+    },
+    (packet: string) => writeFileSync(join(packet, "review-index.md"), "tampered\n"),
+    (packet: string) => writeFileSync(join(packet, "unbound.txt"), "not in manifest\n"),
+  ]) {
+    const data = fixture();
+    const humanIdentity = "9".repeat(64);
+    try {
+      assembleHumanReviewPacket(data.request, data.output);
+      const response = join(data.root, "response");
+      writeCompletedResponse(data.output, response, humanIdentity);
+      mutate(data.output, response);
+      assert.throws(() => verifyHumanReviewResponse(data.output, response, humanIdentity));
+    } finally {
+      data.cleanup();
+    }
   }
 });
 

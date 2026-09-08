@@ -4,7 +4,7 @@ import { resolve } from "node:path";
 import { nonSensitiveEnvironment } from "../src/security/provider-env.js";
 import type { HistoricalCaseSpec } from "../src/types.js";
 import { exec } from "../src/util/exec.js";
-import { directFile, fileSha256, parseCuratorPolicy, type CuratorPolicy } from "./case-curation.js";
+import { directFile, fileSha256 } from "./case-curation.js";
 import {
   leakagePolicyForCase,
   materializeCase,
@@ -17,6 +17,10 @@ import {
   readHistoricalCaseAdmission,
   type HistoricalCaseAdmission,
 } from "./historical-curation.js";
+import {
+  parseHistoricalCuratorPolicy,
+  type HistoricalCuratorPolicy,
+} from "./historical-curator-policy.js";
 import { HISTORICAL_EFFICACY_PROTOCOL, type HistoricalGroundTruth } from "./historical-truth.js";
 import {
   createMethodologyAssetPreparer,
@@ -113,7 +117,7 @@ export interface AuthenticatedHistoricalMethodologyCase {
 
 export function readHistoricalMethodologyCase(
   caseDir: string,
-  trustedPolicy: CuratorPolicy,
+  trustedPolicy: HistoricalCuratorPolicy,
 ): HistoricalMethodologyCaseRegistration {
   return readHistoricalMethodologySnapshot(caseDir, trustedPolicy).registration;
 }
@@ -125,7 +129,7 @@ export function readHistoricalMethodologyCase(
  */
 export function readAuthenticatedHistoricalMethodologyCase(
   caseDir: string,
-  trustedPolicy: CuratorPolicy,
+  trustedPolicy: HistoricalCuratorPolicy,
 ): AuthenticatedHistoricalMethodologyCase {
   const before = readHistoricalMethodologySnapshot(caseDir, trustedPolicy);
   const after = readHistoricalMethodologySnapshot(caseDir, trustedPolicy);
@@ -137,11 +141,11 @@ export function readAuthenticatedHistoricalMethodologyCase(
 
 function readHistoricalMethodologySnapshot(
   caseDir: string,
-  trustedPolicy: CuratorPolicy,
+  trustedPolicy: HistoricalCuratorPolicy,
 ): AuthenticatedHistoricalMethodologyCase {
   const caseDirectory = realpathSync(resolve(caseDir));
   const spec = historicalSpec(caseDirectory);
-  const policy = parseCuratorPolicy(trustedPolicy, "historical methodology trusted policy");
+  const policy = parseHistoricalCuratorPolicy(trustedPolicy, "historical methodology trusted policy");
   const admission = readHistoricalCaseAdmission(caseDirectory, spec, policy, { requireAdmitted: true });
   const leakagePolicy = leakagePolicyForCase(caseDirectory, spec);
   if (!spec.metadataFile) throw new Error(`${spec.id} historical methodology case requires authenticated metadata`);
@@ -196,7 +200,7 @@ export async function materializeHistoricalMethodologyCase(
   registrationValue: unknown,
   scheduleValue: unknown,
   armIdValue: unknown,
-  trustedPolicy: CuratorPolicy,
+  trustedPolicy: HistoricalCuratorPolicy,
 ): Promise<MaterializedHistoricalMethodologyCase> {
   const registration = parseHistoricalMethodologyCaseRegistration(registrationValue);
   const armId = methodologyArmId(armIdValue);

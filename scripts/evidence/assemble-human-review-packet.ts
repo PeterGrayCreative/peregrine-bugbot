@@ -230,7 +230,7 @@ function blankDecision(dossier: CapturedDossier, packetId: string): Buffer {
     reason: null,
     correction: null,
     acknowledgedDossierBundleSha256: null,
-    humanReviewerIdentity: null,
+    humanReviewerIdentitySha256: null,
     reviewedAt: null,
   });
 }
@@ -242,7 +242,7 @@ function renderIndex(packetId: string, dossiers: CapturedDossier[]): Buffer {
     ? "_None._"
     : items.map((item) => `- [${item.dossierId}](dossiers/${item.dossierId}/${item.cardPath})`).join("\n");
   return Buffer.from(`# R2 consolidated human-review packet: ${packetId}\n\n` +
-    `This packet is **review-only and non-admissible**. It uses the \`sole-human-review-only-v1\` mode. ` +
+    `This packet is **review-only and non-admissible**. It uses the \`sole-human-v1\` mode. ` +
     `Only the accountable human reviewer may complete the blank decision templates.\n\n` +
     `Assembly does not establish truth, approval, human confirmation, independent review, protected selection, admission, or partition assignment. ` +
     `AI preparation records cannot satisfy a human gate.\n\n` +
@@ -326,9 +326,9 @@ export function assembleHumanReviewPacket(rawRequest: unknown, destinationPath: 
     schemaVersion: 1,
     templateOnly: true,
     packetId: request.packetId,
-    reviewMode: "sole-human-review-only-v1",
+    reviewMode: "sole-human-v1",
     acknowledgedPacketSha256: null,
-    humanReviewerIdentity: null,
+    humanReviewerIdentitySha256: null,
     soleHumanReviewerAcknowledged: null,
     reviewedEveryDecisionCard: null,
     decisionsBindPacketAndDossierHashes: null,
@@ -355,7 +355,7 @@ export function assembleHumanReviewPacket(rawRequest: unknown, destinationPath: 
   const packetCore = {
     protocol: "r2-human-review-packet-review-only-v1",
     packetId: request.packetId,
-    reviewMode: "sole-human-review-only-v1",
+    reviewMode: "sole-human-v1",
     claims: {
       reviewOnly: true,
       admissible: false,

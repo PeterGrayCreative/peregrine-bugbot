@@ -5,9 +5,10 @@ Active branch: `research/ts-js-evidence-r2`
 
 ## Current recovery notice
 
-User requested a stop after this recovery checkpoint. No further collection,
-implementation or provider batch should begin until explicit resumption.
-See the [checkpoint handoff](../validation/2026-09-07-recovery-checkpoint-handoff.md).
+User explicitly resumed the full R2-R8 goal after the recovery checkpoint.
+Recovery remains closed and durable. Broader preparation may continue under
+the original boundaries; historical provider batches still require separate
+R4 authorization.
 
 The user subsequently resumed the bounded recovery plan. Sol verified all
 current recovery stores, created an immutable 147,065,638-byte archive and
@@ -19,8 +20,14 @@ repository is publicly visible, so causal evidence was not uploaded there.
 The user approved a separate private repository; the split archive was pushed
 to exact commit `c571d88d99dee7c07805c1d820cc405bdb21f46d` and a fresh
 remote-origin clone passed full reassembly and offline verification. Remote
-durability is complete for this recovery closure. Curator isolation, R2
-collection, R3 implementation and provider runs did not resume.
+durability is complete for this recovery closure. That recovery pass did not
+resume curator isolation, R2 collection, R3 implementation, or provider runs.
+
+After explicit resumption, the first new slice implemented
+[sole-human governance and packet-response verification](../validation/2026-09-07-r2-sole-human-governance.md).
+It preserves two-curator v2, adds a separate v3 path for one accountable human,
+and authenticates complete packet responses. No real packet response,
+admission, partition, or provider run occurred.
 
 Persistent worktree: `/Users/petergray/Documents/peregrine-bugbot/.worktrees/ts-js-evidence-r2`.
 The missing temporary stores are documented in the
@@ -79,8 +86,8 @@ minimal reviewer. Production routing remains frozen.
 | Step | State | Evidence / remaining gate |
 | --- | --- | --- |
 | R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
-| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. Twelve exposed leads checked: twelve recoverable opportunities from eleven PRs, plus one unrecoverable lead. Two heads from one PR are not independent cases. Zero new admitted cases. Human curation and protected partitioning remain open. |
-| R3: neutral and truthful harness | In progress | Four-arm scheduling, prompts, materialization, input/lifecycle seals, stopped-run closure, grading projections, and bounded HTTP read tools have structural proof. Synthetic two-container protocol checks pass. Neutral judge/adjudication/report integration, actual Codex/runtime availability, provider-connected egress, retry lineage, and human admission remain open. Legacy historical CLI admission still fails closed. |
+| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. Thirty recovered draft proposals and nine retained losses remain unadmitted. Sole-human v3 governance and complete packet-response verification now pass structural tests without weakening R1/v2. Full packet preparation, human decisions, admission, and protected partitioning remain open. |
+| R3: neutral and truthful harness | In progress | Four-arm scheduling, prompts, materialization, input/lifecycle seals, stopped-run closure, grading projections, bounded HTTP read tools, and both historical curator-policy versions have structural proof. Synthetic two-container protocol checks pass. Neutral judge/adjudication/report integration, actual Codex/runtime availability, provider-connected egress, retry lineage, and real human admission remain open. Legacy historical CLI admission still fails closed. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |
 | R6: select and confirm | Not started | Requires frozen candidate and new powered confirmation corpus. |

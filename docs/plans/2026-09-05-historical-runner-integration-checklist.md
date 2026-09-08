@@ -8,10 +8,9 @@ The full-program goal and R2 human-curation/partition gates remain unchanged.
 
 ## Current boundary
 
-User requested a stop after the 2026-09-07 recovery checkpoint. Do not begin
-another R3 implementation or runtime probe while that stop is in effect.
-Existing structural passes below remain evidence of their stated scope, not
-authorization for historical model runs.
+User explicitly resumed the full R2-R8 goal after the 2026-09-07 recovery
+checkpoint. Structural implementation may continue. This still does not
+authorize historical model runs.
 
 The later recovery-only resumption produced a verified local archive. The
 implementation repository was public, so the user approved a separate private
@@ -63,6 +62,15 @@ building blocks, not an operational historical benchmark. `runMatrix` still
 rejects `historical-efficacy-v1` before scheduling. Production and legacy seeded
 protocols retain their existing behavior. The new curation reader authenticates
 declared confirmations, not actual human independence or historical source trees.
+
+Post-recovery slice adds separate `sole-human-historical-v1` policy and
+historical curation schema v3. It requires one registered human approval bound
+to packet, dossier, truth-scope, and case-bundle hashes while keeping AI
+preparation evidence non-confirming. Historical schema v2 and its
+two-confirmation policy remain unchanged. Complete packet-response verification
+rejects missing/extra decisions, packet drift, false independence claims, and
+unbound files. This is structural governance, not a real human decision or case
+admission. See the [verification record](../validation/2026-09-07-r2-sole-human-governance.md).
 
 ## Ordered integration
 

@@ -1,4 +1,4 @@
-import type { CuratorPolicy } from "./case-curation.js";
+import type { HistoricalCuratorPolicy } from "./historical-curator-policy.js";
 import { sha256 } from "../src/core/telemetry.js";
 import { canonicalJson, canonicalJsonSha256 } from "./experiment.js";
 import {
@@ -45,7 +45,7 @@ export interface AuthenticatedMethodologyGradingProjectionSet {
 export function readMethodologyGradingProjections(input: {
   root: string;
   expectedExecutionEvidenceSha256: string;
-  trustedCuratorPolicy: CuratorPolicy;
+  trustedCuratorPolicy: HistoricalCuratorPolicy;
 }): AuthenticatedMethodologyGradingProjectionSet {
   const execution = readMethodologyExecutionEvidence(input.root, input.expectedExecutionEvidenceSha256);
   return projectAuthenticatedExecution(input, execution);
@@ -56,13 +56,13 @@ export function readMethodologyGradingProjections(input: {
 export function readStoppedMethodologyGradingProjections(input: {
   root: string;
   expectedStoppedRunClosureSha256: string;
-  trustedCuratorPolicy: CuratorPolicy;
+  trustedCuratorPolicy: HistoricalCuratorPolicy;
 }): AuthenticatedMethodologyGradingProjectionSet {
   const closure = readMethodologyStoppedRunClosure(input.root, input.expectedStoppedRunClosureSha256);
   return projectAuthenticatedExecution(input, closure);
 }
 
-function projectAuthenticatedExecution(input: { root: string; trustedCuratorPolicy: CuratorPolicy },
+function projectAuthenticatedExecution(input: { root: string; trustedCuratorPolicy: HistoricalCuratorPolicy },
   execution: MethodologyExecutionEvidence | MethodologyStoppedRunClosure): AuthenticatedMethodologyGradingProjectionSet {
   const registration = readMethodologyInvocationRegistration(
     input.root,

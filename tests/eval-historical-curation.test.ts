@@ -6,6 +6,10 @@ import { join } from "node:path";
 import test from "node:test";
 import type { CuratorPolicy } from "../eval/case-curation.js";
 import {
+  parseHistoricalCuratorPolicy,
+  type HistoricalCuratorPolicy,
+} from "../eval/historical-curator-policy.js";
+import {
   historicalCaseBundleSha256,
   historicalTruthScopeSha256,
   parseHistoricalCuration,
@@ -24,6 +28,10 @@ interface CreatedCase {
   caseDir: string;
   spec: HistoricalCaseSpec;
   policy: CuratorPolicy;
+}
+
+interface SoleHumanCreatedCase extends Omit<CreatedCase, "policy"> {
+  policy: HistoricalCuratorPolicy;
 }
 
 function groundTruth(status: "known-roots" | "reviewed-comparison"): Record<string, unknown> {
@@ -155,6 +163,66 @@ function createCase(
   };
 }
 
+function createSoleHumanCase(status: "draft" | "admitted" = "admitted"): SoleHumanCreatedCase {
+  const created = createCase("known-roots", "draft");
+  const truth = parseHistoricalGroundTruth(JSON.parse(
+    readFileSync(join(created.caseDir, "ground_truth.json"), "utf8"),
+  ));
+  const previous = JSON.parse(readFileSync(join(created.caseDir, "curation.json"), "utf8"));
+  const checks = requiredHistoricalConfirmationChecks("known-roots");
+  const curation: Record<string, any> = {
+    schemaVersion: 3,
+    protocol: previous.protocol,
+    caseId: previous.caseId,
+    status,
+    curatorPolicyId: "sole-human-historical-v1",
+    reviewMode: "sole-human-v1",
+    truth: previous.truth,
+    source: previous.source,
+    strata: previous.strata,
+    proof: previous.proof,
+    preparationEvidence: [{
+      kind: "source-authentication",
+      preparerIdentitySha256: "3".repeat(64),
+      artifactSha256: "4".repeat(64),
+      recordedAt: "2026-09-07T14:00:00.000Z",
+    }],
+    humanDecision: status === "admitted" ? {
+      decision: "approve",
+      humanReviewerIdentitySha256: curatorOne,
+      reviewedAt: "2026-09-07T15:00:00.000Z",
+      packetSha256: "5".repeat(64),
+      dossierBundleSha256: "6".repeat(64),
+      responseSha256: "7".repeat(64),
+      responseDecisionSha256: "8".repeat(64),
+      caseBundleSha256: "0".repeat(64),
+      truthScopeSha256: historicalTruthScopeSha256(truth),
+      checks,
+    } : null,
+  };
+  if (status === "admitted") {
+    const parsed = parseHistoricalCuration(curation, created.spec, truth);
+    curation.humanDecision.caseBundleSha256 = historicalCaseBundleSha256(
+      created.caseDir,
+      created.spec,
+      parsed,
+    );
+  }
+  writeFileSync(join(created.caseDir, "curation.json"), `${JSON.stringify(curation, null, 2)}\n`);
+  return {
+    ...created,
+    policy: {
+      schemaVersion: 2,
+      policyId: "sole-human-historical-v1",
+      trustRoot: "accountable-human-review",
+      reviewMode: "sole-human-v1",
+      minimumHumanDecisions: 1,
+      registeredHumanIdentitySha256: curatorOne,
+      aiPreparationCanSatisfyHumanGate: false,
+    },
+  };
+}
+
 test("an admitted historical root authenticates exact files and caller-trusted confirmations", () => {
   const created = createCase("known-roots", "admitted");
   try {
@@ -181,7 +249,8 @@ test("drafts remain readable only when explicitly requested and cannot masquerad
       created.caseDir, created.spec, created.policy, { requireAdmitted: false },
     );
     assert.equal(draft.curation.status, "draft");
-    assert.deepEqual(draft.curation.confirmations, []);
+    assert.equal(draft.curation.schemaVersion, 2);
+    if (draft.curation.schemaVersion === 2) assert.deepEqual(draft.curation.confirmations, []);
   } finally {
     rmSync(created.root, { recursive: true, force: true });
   }
@@ -391,4 +460,89 @@ test("the checked-in schema keeps v2 historical and partial-truth boundaries exp
   assert.match(schema.properties.proof.properties.artifact.pattern, /\.\*\/\//);
   assert.equal(schema.allOf[1].oneOf.length, 2);
   assert.match(schema.$comment, /external trusted curator policy/);
+});
+
+test("sole-human v3 admission requires one registered decision and keeps AI preparation non-confirming", () => {
+  const created = createSoleHumanCase();
+  try {
+    const admission = readHistoricalCaseAdmission(created.caseDir, created.spec, created.policy);
+    assert.equal(admission.curation.schemaVersion, 3);
+    if (admission.curation.schemaVersion !== 3) assert.fail("expected v3 curation");
+    assert.equal(admission.curation.reviewMode, "sole-human-v1");
+    assert.equal(admission.curation.preparationEvidence.length, 1);
+    assert.equal(admission.curation.humanDecision?.humanReviewerIdentitySha256, curatorOne);
+
+    const wrongPolicy = {
+      ...created.policy,
+      registeredHumanIdentitySha256: curatorTwo,
+    } as HistoricalCuratorPolicy;
+    assert.throws(
+      () => readHistoricalCaseAdmission(created.caseDir, created.spec, wrongPolicy),
+      /human decision is not registered/,
+    );
+
+    const value = JSON.parse(readFileSync(join(created.caseDir, "curation.json"), "utf8"));
+    value.preparationEvidence[0].artifactSha256 = "9".repeat(64);
+    writeFileSync(join(created.caseDir, "curation.json"), JSON.stringify(value));
+    assert.throws(
+      () => readHistoricalCaseAdmission(created.caseDir, created.spec, created.policy),
+      /human decision does not authenticate the current historical case bundle/,
+    );
+  } finally {
+    rmSync(created.root, { recursive: true, force: true });
+  }
+});
+
+test("AI preparation alone cannot admit a sole-human historical case", () => {
+  const created = createSoleHumanCase("draft");
+  try {
+    const value = JSON.parse(readFileSync(join(created.caseDir, "curation.json"), "utf8"));
+    value.status = "admitted";
+    assert.throws(
+      () => parseHistoricalCuration(
+        value,
+        created.spec,
+        parseHistoricalGroundTruth(JSON.parse(
+          readFileSync(join(created.caseDir, "ground_truth.json"), "utf8"),
+        )),
+      ),
+      /need one accountable human decision/,
+    );
+  } finally {
+    rmSync(created.root, { recursive: true, force: true });
+  }
+});
+
+test("sole-human policy parser is strict and does not weaken v1 policy", () => {
+  const created = createSoleHumanCase("draft");
+  try {
+    assert.deepEqual(parseHistoricalCuratorPolicy(created.policy), created.policy);
+    assert.throws(
+      () => parseHistoricalCuratorPolicy({ ...created.policy, aiPreparationCanSatisfyHumanGate: true }),
+      /must be false/,
+    );
+    assert.throws(
+      () => readHistoricalCaseAdmission(created.caseDir, created.spec, created.policy),
+      /not admitted/,
+    );
+    const legacy = createCase("known-roots", "admitted", "case-bbbbbbbb");
+    try {
+      assert.equal(readHistoricalCaseAdmission(legacy.caseDir, legacy.spec, legacy.policy).curation.schemaVersion, 2);
+    } finally {
+      rmSync(legacy.root, { recursive: true, force: true });
+    }
+  } finally {
+    rmSync(created.root, { recursive: true, force: true });
+  }
+});
+
+test("v3 schema exposes sole-human and AI-preparation boundaries", () => {
+  const schema = JSON.parse(readFileSync("schemas/historical-curation-v3.schema.json", "utf8"));
+  const policySchema = JSON.parse(readFileSync("schemas/historical-curator-policy.schema.json", "utf8"));
+  assert.equal(schema.properties.schemaVersion.const, 3);
+  assert.equal(schema.properties.reviewMode.const, "sole-human-v1");
+  assert.equal(schema.properties.humanDecision.oneOf[0].type, "null");
+  assert.equal(policySchema.properties.minimumHumanDecisions.const, 1);
+  assert.equal(policySchema.properties.aiPreparationCanSatisfyHumanGate.const, false);
+  assert.match(policySchema.$comment, /does not claim independent human confirmation/);
 });

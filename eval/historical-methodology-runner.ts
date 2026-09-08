@@ -2,7 +2,7 @@ import { readdirSync, realpathSync } from "node:fs";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import type { PeregrineConfig, ProviderExec, ReviewContext } from "../src/types.js";
 import { leakagePolicyForCase } from "./case-isolation.js";
-import type { CuratorPolicy } from "./case-curation.js";
+import type { HistoricalCuratorPolicy } from "./historical-curator-policy.js";
 import {
   materializeHistoricalMethodologyCase,
   type MaterializedHistoricalMethodologyCase,
@@ -46,7 +46,7 @@ export interface RegisteredHistoricalMethodologyAttemptInput {
     attemptId: string;
     lifecycleTerminalSha256: string;
   }>;
-  trustedCuratorPolicy: CuratorPolicy;
+  trustedCuratorPolicy: HistoricalCuratorPolicy;
   config: PeregrineConfig;
   /** Trusted runtime adapter only; this module never chooses or launches a provider. */
   attachProvider(
