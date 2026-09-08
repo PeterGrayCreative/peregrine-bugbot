@@ -217,7 +217,9 @@ methodology suite passes 78/78.
   binds every scheduled grade and every unmatched finding occurrence, retains
   unresolved outcomes, and rejects missing/extra/stale/cross-run decisions.
   A descriptive four-arm report now consumes and revalidates this contract,
-  but durable persistence, terminal resource metrics, inferential comparisons,
+  and a separate append-only analysis store retains grade-set, adjudication,
+  and report artifacts behind caller-held digests. Authenticated registration-
+  to-analysis joining, terminal resource metrics, inferential comparisons,
   and decision seals remain open. See the
   [adjudication record](../validation/2026-09-08-r3-methodology-adjudication.md).
 

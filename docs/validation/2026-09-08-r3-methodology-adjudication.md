@@ -29,6 +29,11 @@ failure-inclusive completion, separates registered-root and newly confirmed
 findings, reports precision bounds with unresolved findings, and refuses a
 promotional state while resource integration remains absent.
 
+Append-only writers/readers now persist the full grade set, adjudication, and
+report in a dedicated analysis store. Each reader requires its caller-held
+digest and rederives the artifact from the preceding bound inputs; overwrites
+and locally recomputed favorable summaries reject.
+
 ## Verification
 
 Node `v22.22.1`:
@@ -41,7 +46,8 @@ Node `v22.22.1`:
 
 ## Boundary
 
-This is a pure structural contract. Durable file writing/reading, external
-caller-held seals, terminal resource ingestion, human calibration, statistical
+This is structural evidence. The analysis store must remain separate from the
+closed execution store. Joining its run ID to the authenticated invocation
+registration, terminal resource ingestion, human calibration, statistical
 comparisons, and provider-backed results remain open. It neither proves
 reviewer blindness nor establishes that an adjudication is factually correct.

@@ -35,6 +35,37 @@ export interface MethodologyAdjudicationLedger {
   ledgerSha256: string;
 }
 
+export function validateMethodologyGradeSet(input: {
+  executionEvidenceSha256: string;
+  inputPlanSha256: string;
+  expectedAttemptIds: readonly string[];
+  grades: readonly MethodologyAttemptGrade[];
+}): { grades: MethodologyAttemptGrade[]; gradeSetSha256: string } {
+  const executionEvidenceSha256 = digest(input.executionEvidenceSha256, "executionEvidenceSha256");
+  const inputPlanSha256 = digest(input.inputPlanSha256, "inputPlanSha256");
+  const validated = input.grades.map((grade) => ({ grade, identity: validateGrade(grade) }))
+    .sort((left, right) => left.identity.attemptId.localeCompare(right.identity.attemptId));
+  const gradeAttemptIds = validated.map((item) => item.identity.attemptId);
+  if (validated.length === 0 || new Set(gradeAttemptIds).size !== validated.length) {
+    throw new Error("methodology adjudication requires unique grades");
+  }
+  if (!Array.isArray(input.expectedAttemptIds) || input.expectedAttemptIds.some((id) => !ATTEMPT_ID.test(id)) ||
+      new Set(input.expectedAttemptIds).size !== input.expectedAttemptIds.length ||
+      JSON.stringify([...input.expectedAttemptIds].sort()) !== JSON.stringify(gradeAttemptIds)) {
+    throw new Error("methodology adjudication requires exactly every scheduled grade");
+  }
+  if (validated.some(({ identity }) => identity.executionEvidenceSha256 !== executionEvidenceSha256 ||
+      identity.inputPlanSha256 !== inputPlanSha256)) {
+    throw new Error("methodology adjudication grades do not belong to the bound run");
+  }
+  const grades = validated.map((item) => item.grade);
+  const gradeSetSha256 = canonicalJsonSha256(validated.map(({ identity }) => ({
+    attemptId: identity.attemptId,
+    gradeSha256: identity.gradeSha256,
+  })));
+  return { grades, gradeSetSha256 };
+}
+
 export function buildMethodologyAdjudicationLedger(input: {
   runId: string;
   executionEvidenceSha256: string;
@@ -53,25 +84,12 @@ export function buildMethodologyAdjudicationLedger(input: {
   if (input.reviewProtocol !== "blind-to-arm-route-timing-v1") {
     throw new Error("methodology adjudication must remain blind to arm, route, and timing");
   }
-  const gradeIdentities = input.grades.map(validateGrade).sort((left, right) =>
-    left.attemptId.localeCompare(right.attemptId));
-  const gradeAttemptIds = gradeIdentities.map((item) => item.attemptId);
-  if (gradeIdentities.length === 0 || new Set(gradeAttemptIds).size !== gradeIdentities.length) {
-    throw new Error("methodology adjudication requires unique grades");
-  }
-  if (!Array.isArray(input.expectedAttemptIds) || input.expectedAttemptIds.some((id) => !ATTEMPT_ID.test(id)) ||
-      new Set(input.expectedAttemptIds).size !== input.expectedAttemptIds.length ||
-      JSON.stringify([...input.expectedAttemptIds].sort()) !== JSON.stringify(gradeAttemptIds)) {
-    throw new Error("methodology adjudication requires exactly every scheduled grade");
-  }
-  if (gradeIdentities.some((item) => item.executionEvidenceSha256 !== executionEvidenceSha256 ||
-      item.inputPlanSha256 !== inputPlanSha256)) {
-    throw new Error("methodology adjudication grades do not belong to the bound run");
-  }
-  const gradeSetSha256 = canonicalJsonSha256(gradeIdentities.map(({ attemptId, gradeSha256 }) => ({
-    attemptId,
-    gradeSha256,
-  })));
+  const { gradeSetSha256 } = validateMethodologyGradeSet({
+    executionEvidenceSha256,
+    inputPlanSha256,
+    expectedAttemptIds: input.expectedAttemptIds,
+    grades: input.grades,
+  });
   const records = input.records.map(parseRecord).sort(compareRecord);
   const recordKeys = records.map(adjudicationKey);
   if (new Set(recordKeys).size !== recordKeys.length) {

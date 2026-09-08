@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 import {
   buildMethodologyAdjudicationLedger,
@@ -20,6 +23,15 @@ import {
   methodologyArmConfigIdentitySha256,
   type MethodologyDesign,
 } from "../eval/methodology-schedule.js";
+import {
+  METHODOLOGY_REPORT_FILE,
+  readMethodologyAdjudicationArtifact,
+  readMethodologyGradeSet,
+  readMethodologyReportArtifact,
+  writeMethodologyAdjudicationArtifact,
+  writeMethodologyGradeSet,
+  writeMethodologyReportArtifact,
+} from "../eval/methodology-analysis-artifacts.js";
 
 const digest = (character: string): string => character.repeat(64);
 
@@ -206,4 +218,53 @@ test("report applies partial-truth eligibility and unresolved bounds per arm", (
     grades,
     adjudication: { ...ledger, ledgerSha256: digest("9") },
   }), /ledger is invalid/);
+
+  const root = mkdtempSync(join(tmpdir(), "peregrine-methodology-analysis-"));
+  try {
+    const gradeSet = writeMethodologyGradeSet(root, {
+      runId: base.input.runId,
+      schedule,
+      executionEvidenceSha256: base.input.executionEvidenceSha256,
+      inputPlanSha256: base.input.inputPlanSha256,
+      grades,
+      recordedAt: "2026-09-08T01:55:00.000Z",
+    });
+    assert.deepEqual(readMethodologyGradeSet(root, gradeSet.artifactSha256), gradeSet);
+    const storedLedger = writeMethodologyAdjudicationArtifact(root, {
+      gradeSet,
+      curatorIdentitySha256: base.input.curatorIdentitySha256,
+      records,
+      recordedAt: base.input.recordedAt,
+    });
+    assert.deepEqual(readMethodologyAdjudicationArtifact(root, {
+      expectedLedgerSha256: storedLedger.ledgerSha256,
+      gradeSet,
+    }), storedLedger);
+    const storedReport = writeMethodologyReportArtifact(root, {
+      schedule,
+      gradeSet,
+      adjudication: storedLedger,
+    });
+    assert.deepEqual(readMethodologyReportArtifact(root, {
+      expectedReportSha256: storedReport.reportSha256,
+      gradeSet,
+      adjudication: storedLedger,
+    }), storedReport);
+    assert.throws(() => writeMethodologyReportArtifact(root, {
+      schedule,
+      gradeSet,
+      adjudication: storedLedger,
+    }), /EEXIST|exists/i);
+    const reportPath = join(root, METHODOLOGY_REPORT_FILE);
+    const changed = JSON.parse(readFileSync(reportPath, "utf8"));
+    changed.claims.resourceUse = "complete";
+    writeFileSync(reportPath, JSON.stringify(changed));
+    assert.throws(() => readMethodologyReportArtifact(root, {
+      expectedReportSha256: storedReport.reportSha256,
+      gradeSet,
+      adjudication: storedLedger,
+    }), /digest mismatch/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
