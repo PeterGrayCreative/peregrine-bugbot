@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 3,
+  "packetVersion": "r1-case-evidence-v3",
+  "packetSha256": "d96904edf56c5b8dac970f59fa95a14c495cde5bd22d50a805e6874df098c2fe",
+  "caseId": "r1-karma-2714",
+  "evidenceBundleSha256": "8d94f19ccfb5ef792008036e60d06daf12af290465fb3e1c0142c68c6b7a8cb5",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_beta",
+  "curatorIdentitySha256": "d5685cd85a563032fdf19dadfd2e023a8c2b54f6153c85279b9704c1c2f5fe59",
+  "reviewedAt": "2026-09-05T04:25:34Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": {
+    "sourceAuthenticity": true,
+    "exactHistoricalHead": true,
+    "provenance": true,
+    "causalTrace": true,
+    "reachability": true,
+    "consequence": true,
+    "repairBoundary": true,
+    "truthScope": true,
+    "license": true,
+    "limitations": true
+  },
+  "evidenceNotes": [
+    {
+      "source": "v3 metadata/r1-karma-2714.json and independently regenerated canonical diff",
+      "observation": "The pinned diff 2a847c250bb62134d87f5230d97be8483d4a13cf..2789bf57abd977def5caf22609eef74acbad292e is byte-identical to the 3,107-byte stored artifact (SHA-256 6a53f7ffc241801032e21dae011a3e1c6502446827b7e82c7fbcbaec3562ce9a); merge base, trees cdc374713370669a20fdbc475096c9bc81a54343 and 4a556b9586f02fc900c472b652919b7fb420847b, and 2-file +62/-4 stats match."
+    },
+    {
+      "source": "2789bf57abd977def5caf22609eef74acbad292e: lib/preprocessor.js:75-139",
+      "observation": "handleFile is the callback supplied to fs.readFile. Each error retry already calls fs.readFile(file.originalPath, handleFile), which is necessary to obtain a fresh error/buffer; direct callback recursion would not perform a filesystem retry and lacks a new buffer."
+    },
+    {
+      "source": "raw/karma-pr-2714-comments.json discussion 118850978 and commit 92a8c81fbed0cae423fbd84d3e64bc4086fd30af",
+      "observation": "The review concern is bound to the reviewed head; the follow-up only renames handleFile to readFileCallback while preserving both fs.readFile calls, supporting the protected-pattern comparison rather than a confirmed callback-selection defect."
+    },
+    {
+      "source": "cases/r1-karma-2714.md and repository LICENSE",
+      "observation": "The MIT case is narrowly labeled no confirmed defect in retry callback selection. It explicitly excludes the asynchronous terminal throw and weak retry test from that label and makes no global clean claim."
+    }
+  ],
+  "exceptions": []
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "packetVersion": "r1-case-evidence-v2",
+  "caseId": "r1-karma-2846",
+  "evidenceBundleSha256": "945f79640801089a79910f6db309f80be5e1cba87b607538f76bc791e974d618",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_alpha",
+  "curatorIdentitySha256": "a2ef45b13113d050014b9cce96a10be569e2114629ceb52ea4668fffa5607cd7",
+  "reviewedAt": "2026-09-05T03:58:12Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": { "sourceAuthenticity": true, "exactHistoricalHead": true, "provenance": true, "causalTrace": true, "reachability": true, "consequence": true, "repairBoundary": true, "truthScope": true, "license": true, "limitations": true },
+  "evidenceNotes": [
+    { "source": "karma-runner/karma e79463b9..eab78ff6", "observation": "The direct-parent commits, trees, five-file 40-addition/16-deletion diff, and recorded binary-diff digest authenticate the review opportunity." },
+    { "source": "lib/config.js, lib/file-list.js, lib/file.js, and lib/middleware/karma.js at eab78ff6", "observation": "For the narrowed ordinary local-refresh path, Pattern.type reaches File.type but the script branch ignores it; review r147017055 and the accepted middleware change address this exact decision." },
+    { "source": "v2 adjacent seams and test limitations", "observation": "V2 correctly excludes absolute URL and watcher-added paths that lose type earlier, acknowledges the motivating Google Fonts mismatch, and retracts the unsupported explicit script-regression-test claim." }
+  ],
+  "exceptions": []
+}

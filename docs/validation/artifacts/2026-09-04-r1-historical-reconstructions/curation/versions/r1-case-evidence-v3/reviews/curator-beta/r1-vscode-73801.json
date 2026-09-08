@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 3,
+  "packetVersion": "r1-case-evidence-v3",
+  "packetSha256": "d96904edf56c5b8dac970f59fa95a14c495cde5bd22d50a805e6874df098c2fe",
+  "caseId": "r1-vscode-73801",
+  "evidenceBundleSha256": "61620061e6bc56d84935001f37af7bb4633ca31dd629bc9d2455c523ce584304",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_beta",
+  "curatorIdentitySha256": "d5685cd85a563032fdf19dadfd2e023a8c2b54f6153c85279b9704c1c2f5fe59",
+  "reviewedAt": "2026-09-05T04:25:34Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": {
+    "sourceAuthenticity": true,
+    "exactHistoricalHead": true,
+    "provenance": true,
+    "causalTrace": true,
+    "reachability": true,
+    "consequence": true,
+    "repairBoundary": true,
+    "truthScope": true,
+    "license": true,
+    "limitations": true
+  },
+  "evidenceNotes": [
+    {
+      "source": "v3 metadata/r1-vscode-73801.json and independently regenerated canonical diff",
+      "observation": "The pinned diff from 0cfb9ad1c3a4ea5983c8dbb458ed14f7581a6846 to b239497ecacac5e5c945791530251f1ee897b22b is byte-identical to the 6,496-byte stored artifact (SHA-256 a558a94c131a9176bbf4ab728c9a5b02abae12ab56f364c52489e75ad7da2c94); merge base, trees 6f44b1c65a56b58a8ac7c4819d0cab2d5088c143 and 3f3fb544cd8cbe32db074e07f56b2c9bf54f632f, and 4-file +60/-3 stats match."
+    },
+    {
+      "source": "b239497ecacac5e5c945791530251f1ee897b22b: extensions/typescript-language-features/src/typescriptServiceClient.ts:325-352,478-534 and src/utils/electron.ts:12-26",
+      "observation": "The server exit callback calls serviceExited(!isRestarting), whose restart=true path starts a replacement service, and then deletes the memoized extension-wide root used by getTempFile. This makes the wrong-lifecycle cleanup reachable during automatic restart and can remove live cancellation/temp state."
+    },
+    {
+      "source": "raw/vscode-pr-73801-comments.json discussion 284499651 and commit b9a7a6413415d125bdd2c83131c15adaeff84726",
+      "observation": "The authenticated review comment identifies restart breakage at the original defect-bearing commit; the correction removes cleanup from service exit, adds deactivation cleanup, and introduces an instance directory, corroborating the minimal lifetime boundary without treating the comment alone as proof."
+    },
+    {
+      "source": "cases/r1-vscode-73801.md and repository LICENSE",
+      "observation": "The case is MIT-licensed and explicitly limits its claim to cleanup at the service-process rather than extension-instance lifecycle boundary; it discloses that the historical toolchain was not executed and makes no repository-wide clean claim."
+    }
+  ],
+  "exceptions": []
+}

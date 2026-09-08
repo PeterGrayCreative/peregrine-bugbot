@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "packetVersion": "r1-case-evidence-v2",
+  "caseId": "r1-typescript-37467",
+  "evidenceBundleSha256": "4e364e0dde93bfe4a83f8ddb7d2dc859f5b891e82021d405457756dd5aa55e62",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_beta",
+  "curatorIdentitySha256": "d5685cd85a563032fdf19dadfd2e023a8c2b54f6153c85279b9704c1c2f5fe59",
+  "reviewedAt": "2026-09-05T03:58:12Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": { "sourceAuthenticity": true, "exactHistoricalHead": true, "provenance": true, "causalTrace": true, "reachability": true, "consequence": true, "repairBoundary": true, "truthScope": true, "license": true, "limitations": true },
+  "evidenceNotes": [
+    { "source": "microsoft/TypeScript merge base 933c2949 and head 6cbbdbcc", "observation": "Canonical objects and trees resolve; the exact 10-file, 135-addition, 6-deletion patch hashes to 99d05fda5f0f3173eabf57a55fd41803abaa65cc957607b4d4d72f7a892a9acc." },
+    { "source": "textChanges.ts:1269-1275, organizeImports.ts:64-80, issue #38507, and fix 428f5a19", "observation": "The review-head trace, reachable repeated-save consequence, and later repair all bind to the same trivia-preservation interaction." },
+    { "source": "v1 rejection and v2 supersession record", "observation": "The corrected packet explicitly preserves the non-ancestor base error, unrelated reverse-diff content, absent historical harness run, and non-global truth scope." }
+  ],
+  "exceptions": []
+}

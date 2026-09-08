@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 3,
+  "caseId": "r1-vscode-73801",
+  "repository": "microsoft/vscode",
+  "reviewBase": "0cfb9ad1c3a4ea5983c8dbb458ed14f7581a6846",
+  "reviewHead": "b239497ecacac5e5c945791530251f1ee897b22b",
+  "baseTree": "6f44b1c65a56b58a8ac7c4819d0cab2d5088c143",
+  "headTree": "3f3fb544cd8cbe32db074e07f56b2c9bf54f632f",
+  "logicalDiffStats": { "files": 4, "insertions": 60, "deletions": 3 },
+  "canonicalDiff": {
+    "environment": { "LC_ALL": "C", "LANG": "C" },
+    "gitVersion": "git version 2.50.1 (Apple Git-155)",
+    "command": "git -c core.quotePath=true -c color.ui=false -c diff.renames=false diff --binary --full-index --no-ext-diff --no-textconv --no-renames --no-color --diff-algorithm=myers --src-prefix=a/ --dst-prefix=b/ --unified=3 0cfb9ad1c3a4ea5983c8dbb458ed14f7581a6846 b239497ecacac5e5c945791530251f1ee897b22b --",
+    "storedFile": "curation/versions/r1-case-evidence-v3/diffs/r1-vscode-73801.diff",
+    "bytes": 6496,
+    "sha256": "a558a94c131a9176bbf4ab728c9a5b02abae12ab56f364c52489e75ad7da2c94",
+    "fileSections": 4
+  },
+  "supersededDiffClaims": [{ "packetVersion": "r1-case-evidence-v1", "sha256": "dcbb98dee1b5e3c271b53067301bf5fad0a4ed64dd21acbe7cb9f5f4998a3db0", "reason": "Generated without a fully pinned diff format; blob abbreviation could depend on repository configuration." }],
+  "priorEvidence": { "packetVersion": "r1-case-evidence-v2", "evidenceVersion": "r1-case-evidence-v1", "evidenceBundleSha256": "2d404b7b4491a3d0d186a890e117a3760ad5cb9bd1d810796680404b30bf3cbe" },
+  "authority": "The packet-bound stored diff bytes and their SHA-256 are authoritative; superseded hashes in reused prose are provenance only."
+}

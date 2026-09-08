@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 3,
+  "packetVersion": "r1-case-evidence-v3",
+  "packetSha256": "d96904edf56c5b8dac970f59fa95a14c495cde5bd22d50a805e6874df098c2fe",
+  "caseId": "r1-typescript-37467",
+  "evidenceBundleSha256": "5d77640e8f8b2cda046588f32f87bc251ca9c0eba9c144a9ae052ee2489c8c0f",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_beta",
+  "curatorIdentitySha256": "d5685cd85a563032fdf19dadfd2e023a8c2b54f6153c85279b9704c1c2f5fe59",
+  "reviewedAt": "2026-09-05T04:25:34Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": {
+    "sourceAuthenticity": true,
+    "exactHistoricalHead": true,
+    "provenance": true,
+    "causalTrace": true,
+    "reachability": true,
+    "consequence": true,
+    "repairBoundary": true,
+    "truthScope": true,
+    "license": true,
+    "limitations": true
+  },
+  "evidenceNotes": [
+    {
+      "source": "v3 metadata/r1-typescript-37467.json and independently regenerated canonical diff",
+      "observation": "The pinned merge-base diff 933c2949236f38e1255a0aa4564246a3fef1518c..6cbbdbcc4c22f7dd82b023059ca8230a927707e7 is byte-identical to the 11,947-byte stored artifact (SHA-256 afba6912ead4a12ad7edcd1d232ff2d3697fc6b357696d2d7f69ed691f5dd1e5); trees 12cce8acd32216c6da7fa7dd38205440c624f4a1 and 7a399efb616db0313641a8068f7943f9d4db4abc and logical 10-file +135/-6 stats match. The v3 supersession correctly replaces both the non-ancestor v1 comparison and noncanonical v2 hash."
+    },
+    {
+      "source": "6cbbdbcc4c22f7dd82b023059ca8230a927707e7: src/services/textChanges.ts:1269-1275 and src/services/organizeImports.ts:64-80",
+      "observation": "General deletion now preserves a non-first import's leading line trivia, while organizeImports first rebuilds the import block with retained trivia and then sends each later original import through that deletion path. The preserved original comment is therefore emitted again after the rebuilt block."
+    },
+    {
+      "source": "raw/typescript-issue-38507.json and repair commit 428f5a19d6d17ffd30e9f757fedc8b72d68ba299",
+      "observation": "The authenticated issue records one additional duplicate on every save. The repair changes subsequent organize-import deletion to deleteNode and adds an explicit trivia-configurable primitive, directly matching the smallest repair boundary inferred from source."
+    },
+    {
+      "source": "curation/versions/r1-case-evidence-v2/cases/r1-typescript-37467.md and repository LICENSE.txt",
+      "observation": "The Apache-2.0 case confines truth to the interaction between generalized trivia preservation and the existing organize-import cleanup path, discloses that the 2020 harness was not run, and does not generalize to all comment transforms or all PR defects."
+    }
+  ],
+  "exceptions": []
+}

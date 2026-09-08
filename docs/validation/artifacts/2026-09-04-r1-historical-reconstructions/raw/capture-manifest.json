@@ -1,0 +1,248 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-09-05T02:41:37.367Z",
+  "transport": "gh api",
+  "pagination": "single page with per_page=100; capture rejects exactly 100 records",
+  "captures": [
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/microsoft/vscode/pulls/73801",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "vscode-pr-73801.json",
+      "bytes": 15814,
+      "sha256": "80654a530e48963d241697a40027eed0ba92753e63eb8ede45380ee03c899467"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/microsoft/vscode/pulls/73801/comments",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "vscode-pr-73801-comments.json",
+      "bytes": 22464,
+      "sha256": "9a233dc9d8bc327c3a9e521661033e93cff5c606ddd30f1e784878f45077675f"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/microsoft/vscode/pulls/73801/reviews",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "vscode-pr-73801-reviews.json",
+      "bytes": 12679,
+      "sha256": "1c81f9b2f977687cf30e89332fc79814e6aa99516812e66e67055fe1d3a9e615"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/microsoft/vscode/pulls/73801/commits",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "vscode-pr-73801-commits.json",
+      "bytes": 14782,
+      "sha256": "258a45870967bd67b047c0e9c8f58d9e03d740c14d37d15a41b8771422228ebf"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/microsoft/TypeScript/pulls/37467",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "typescript-pr-37467.json",
+      "bytes": 21779,
+      "sha256": "68f3b137f67b1f32ac438f087d01ca4182e875edd53c918abe107691206a8e7c"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/microsoft/TypeScript/pulls/37467/comments",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "typescript-pr-37467-comments.json",
+      "bytes": 17368,
+      "sha256": "724f8780dd3838bcc32f641346471d2a1346eb7585d376233130fc7a0ec52062"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/microsoft/TypeScript/pulls/37467/reviews",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "typescript-pr-37467-reviews.json",
+      "bytes": 13807,
+      "sha256": "2d5dcf98a795b2afb6e54a4237aae07d91a032c5298cab49a9fc296fa30653a3"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/microsoft/TypeScript/issues/38507",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "typescript-issue-38507.json",
+      "bytes": 8897,
+      "sha256": "5e881c674f85a0cacbf84f462274f24333179da4333c67fecfe97c0aa384f9c6"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/microsoft/TypeScript/pulls/38599",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "typescript-pr-38599.json",
+      "bytes": 21123,
+      "sha256": "ae99665a29b4cc9fe03aba2ffa5ce080eaadea6138e02af8c3baca1285dedd8e"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/karma-runner/karma/pulls/2846",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "karma-pr-2846.json",
+      "bytes": 12126,
+      "sha256": "7c4026a84bada5b2de206ee4ebfb5df521631bdd6f23fe1a5361208d3b4c79f3"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/karma-runner/karma/pulls/2846/comments",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "karma-pr-2846-comments.json",
+      "bytes": 16619,
+      "sha256": "832c02b419d889de50601ce8fd1c51f310a5d884f88a0e8aaa4428c46efc43dc"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/karma-runner/karma/pulls/2846/reviews",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "karma-pr-2846-reviews.json",
+      "bytes": 9815,
+      "sha256": "5ef81bd7df173b4f4c72f3f505964025a092b52cf57e7a5abea7df7250493e3f"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/karma-runner/karma/pulls/2714",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "karma-pr-2714.json",
+      "bytes": 17315,
+      "sha256": "45dab7fff61491e66f1a45136ee357f15a1a36c25bad5452284cf70957eebac2"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/karma-runner/karma/pulls/2714/comments",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "karma-pr-2714-comments.json",
+      "bytes": 5227,
+      "sha256": "6ee2245e02a97c86a27cec8d53ddb1627eeaa81a4269c9a3c91657fd012a412c"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/karma-runner/karma/pulls/2714/reviews",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "karma-pr-2714-reviews.json",
+      "bytes": 3194,
+      "sha256": "0307dbbdc0c17621d6694dabbaaf57453b534d8e9fe55302de1d09f5ec5b4f74"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/webpack/webpack/pulls/8233",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "webpack-pr-8233.json",
+      "bytes": 18127,
+      "sha256": "58a960e36ccf31a1bb911ede19c9415fbc8054cf82c584bb115c5dd814791f7a"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/webpack/webpack/pulls/8233/comments",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "webpack-pr-8233-comments.json",
+      "bytes": 21034,
+      "sha256": "140e4edbdcdb50843cfffebad27dc024a0b3a2fd0d0bd7ee53a5d4eabab6c361"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/webpack/webpack/pulls/8233/reviews",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "webpack-pr-8233-reviews.json",
+      "bytes": 5901,
+      "sha256": "32f8d9294fd857735fa20d3de03db2e21b89c08642b0b3a969c66097a836cb31"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/webpack/webpack/issues/8829",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "webpack-issue-8829.json",
+      "bytes": 5955,
+      "sha256": "cc8e33812c22082d663f4ab98bc1e7c290e63bba9a55ecab534d306f5a1ddac8"
+    },
+    {
+      "request": {
+        "method": "GET",
+        "endpoint": "repos/webpack/webpack/pulls/8844",
+        "parameters": {
+          "per_page": 100
+        }
+      },
+      "file": "webpack-pr-8844.json",
+      "bytes": 18203,
+      "sha256": "22eae05ea6e4d8564895419b91a0881b03b39b2a749f7e51da81996cb460161c"
+    }
+  ]
+}

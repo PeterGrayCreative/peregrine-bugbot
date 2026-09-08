@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "packetVersion": "r1-case-evidence-v1",
+  "caseId": "r1-vscode-73801",
+  "evidenceBundleSha256": "2d404b7b4491a3d0d186a890e117a3760ad5cb9bd1d810796680404b30bf3cbe",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_beta",
+  "curatorIdentitySha256": "d5685cd85a563032fdf19dadfd2e023a8c2b54f6153c85279b9704c1c2f5fe59",
+  "reviewedAt": "2026-09-05T03:38:34Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": { "sourceAuthenticity": true, "exactHistoricalHead": true, "provenance": true, "causalTrace": true, "reachability": true, "consequence": true, "repairBoundary": true, "truthScope": true, "license": true, "limitations": true },
+  "evidenceNotes": [
+    { "source": "microsoft/vscode b239497e and raw/vscode-pr-73801-comments.json", "observation": "The canonical direct-parent diff and trees match the packet, and review r284499651 is bound to the reviewed head." },
+    { "source": "typescriptServiceClient.ts and electron.ts at b239497e", "observation": "Unexpected service exit can start a replacement before shared-root cleanup returns; the accepted change moves cleanup to instance-owned extension deactivation." }
+  ],
+  "exceptions": []
+}

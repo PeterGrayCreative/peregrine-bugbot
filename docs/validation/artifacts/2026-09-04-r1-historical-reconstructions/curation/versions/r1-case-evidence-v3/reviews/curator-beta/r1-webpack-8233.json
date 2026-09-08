@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 3,
+  "packetVersion": "r1-case-evidence-v3",
+  "packetSha256": "d96904edf56c5b8dac970f59fa95a14c495cde5bd22d50a805e6874df098c2fe",
+  "caseId": "r1-webpack-8233",
+  "evidenceBundleSha256": "0888b8132a3134e252e2fc722a3bff9a748a32228c6df11ef962fa02dfc8a977",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_beta",
+  "curatorIdentitySha256": "d5685cd85a563032fdf19dadfd2e023a8c2b54f6153c85279b9704c1c2f5fe59",
+  "reviewedAt": "2026-09-05T04:25:34Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": {
+    "sourceAuthenticity": true,
+    "exactHistoricalHead": true,
+    "provenance": true,
+    "causalTrace": true,
+    "reachability": true,
+    "consequence": true,
+    "repairBoundary": true,
+    "truthScope": true,
+    "license": true,
+    "limitations": true
+  },
+  "evidenceNotes": [
+    {
+      "source": "v3 metadata/r1-webpack-8233.json and independently regenerated canonical diff",
+      "observation": "The pinned diff 2228daff027113a10790c75f2901c0b804d60a25..dcd38348e5a74e250a6dbfa22e743fc7da0964ff is byte-identical to the 4,761-byte stored artifact (SHA-256 4313dd3d4567eb8c83fc64cbc2e0065de149a6680f06f3b052908ad00d610921); merge base, trees 6fc6ac847bc62e49f5f2ab9f7774b1f234b75267 and 70f9720cdb1e9641bc5e87a2a80822b9c20dc9d7, and 3-file +101/-1 stats match."
+    },
+    {
+      "source": "v3 stored diff lib/ConstPlugin.js and dcd38348e5a74e250a6dbfa22e743fc7da0964ff:lib/APIPlugin.js:25-67",
+      "observation": "The introduced logical optimizer folds a branch whenever evaluateExpression(left).asBool() is boolean. Existing APIPlugin registers evaluateTypeof for every replacement key, including __non_webpack_require__, although REPLACEMENT_TYPES has no entry for it, making the runtime-sensitive guard falsely eligible for compile-time folding."
+    },
+    {
+      "source": "raw/webpack-issue-8829.json and repair commit ab517aa080979e2a0aabe2186ca768d64ce76624",
+      "observation": "The authenticated issue reports 4.21.0 working and 4.22.0 reducing typeof __non_webpack_require__ !== 'undefined' to true. The repair gates evaluateTypeof registration on a known type and adds a test that toggles runtime require, directly validating causal consequence and the smallest repair boundary."
+    },
+    {
+      "source": "cases/r1-webpack-8233.md and repository LICENSE",
+      "observation": "The MIT case confines the claim to the interaction of logical folding with the missing static type for a runtime-sensitive alias. It discloses that the linked PDF.js reproduction was not archived or rerun and does not claim all logical folding is defective."
+    }
+  ],
+  "exceptions": []
+}

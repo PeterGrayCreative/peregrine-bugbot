@@ -1,0 +1,189 @@
+diff --git a/lib/config.js b/lib/config.js
+index 32c67bb8e412a9f91deec4021689a3d98a75d99b..5fc59ba1b51e86e887df6d8d6fbb5d2426ab2d3e 100644
+--- a/lib/config.js
++++ b/lib/config.js
+@@ -30,13 +30,14 @@ try {
+   TYPE_SCRIPT_AVAILABLE = true
+ } catch (e) {}
+ 
+-var Pattern = function (pattern, served, included, watched, nocache) {
++var Pattern = function (pattern, served, included, watched, nocache, type) {
+   this.pattern = pattern
+   this.served = helper.isDefined(served) ? served : true
+   this.included = helper.isDefined(included) ? included : true
+   this.watched = helper.isDefined(watched) ? watched : true
+   this.nocache = helper.isDefined(nocache) ? nocache : false
+   this.weight = helper.mmPatternWeight(pattern)
++  this.type = type
+ }
+ 
+ Pattern.prototype.compare = function (other) {
+@@ -61,7 +62,8 @@ var createPatternObject = function (pattern) {
+           pattern.served,
+           pattern.included,
+           pattern.watched,
+-          pattern.nocache)
++          pattern.nocache,
++          pattern.type)
+     }
+ 
+     log.warn('Invalid pattern %s!\n\tObject is missing "pattern" property.', pattern)
+diff --git a/lib/file-list.js b/lib/file-list.js
+index 2351624e1de5df09226742417f106fe16ee79ed8..2645e855bc5433efee9fbaf455db67563a2b7d8d 100644
+--- a/lib/file-list.js
++++ b/lib/file-list.js
+@@ -184,7 +184,8 @@ List.prototype._refresh = function () {
+ 
+       var mtime = mg.statCache[path].mtime
+       var doNotCache = patternObject.nocache
+-      var file = new File(path, mtime, doNotCache)
++      var type = patternObject.type
++      var file = new File(path, mtime, doNotCache, type)
+ 
+       if (file.doNotCache) {
+         log.debug('Not preprocessing "%s" due to nocache')
+diff --git a/lib/file.js b/lib/file.js
+index 4eabe8e0046af7b5487754521d4970dc775cedd5..0dd0a48274c127ef970e8cb2121ed5ae4256a088 100644
+--- a/lib/file.js
++++ b/lib/file.js
+@@ -9,7 +9,7 @@
+ var _ = require('lodash')
+ 
+ // Constructor
+-var File = function (path, mtime, doNotCache) {
++var File = function (path, mtime, doNotCache, type) {
+   // used for serving (processed path, eg some/file.coffee -> some/file.coffee.js)
+   this.path = path
+ 
+@@ -23,6 +23,8 @@ var File = function (path, mtime, doNotCache) {
+   this.isUrl = false
+ 
+   this.doNotCache = _.isUndefined(doNotCache) ? false : doNotCache
++
++  this.type = type
+ }
+ 
+ File.prototype.toString = function () {
+diff --git a/lib/middleware/karma.js b/lib/middleware/karma.js
+index 04dd47a3f4f21d98fe3de218c085406c868e011f..a41044012d50424a6eb45f8770f93e3d10d51c61 100644
+--- a/lib/middleware/karma.js
++++ b/lib/middleware/karma.js
+@@ -178,6 +178,7 @@ var createKarmaMiddleware = function (
+             var file = files.included[i]
+             var filePath = file.path
+             var fileExt = path.extname(filePath)
++            var fileType = file.type
+ 
+             if (!files.included.hasOwnProperty(i)) {
+               continue
+@@ -193,12 +194,12 @@ var createKarmaMiddleware = function (
+ 
+             scriptUrls.push(filePath)
+ 
+-            if (fileExt === '.css') {
++            if (fileExt === '.css' || fileType === 'css') {
+               scriptTags.push(util.format(LINK_TAG_CSS, filePath))
+               continue
+             }
+ 
+-            if (fileExt === '.html') {
++            if (fileExt === '.html' || fileType === 'html') {
+               scriptTags.push(util.format(LINK_TAG_HTML, filePath))
+               continue
+             }
+diff --git a/test/unit/middleware/karma.spec.js b/test/unit/middleware/karma.spec.js
+index c400d769c8a54cef73172217d126b8f8b76e40c5..9804da6a0d79ffc51be4cfd114b4305e5d54f691 100644
+--- a/test/unit/middleware/karma.spec.js
++++ b/test/unit/middleware/karma.spec.js
+@@ -13,8 +13,8 @@ describe('middleware.karma', () => {
+   var nextSpy
+   var response
+ 
+-  var MockFile = function (path, sha) {
+-    File.call(this, path)
++  var MockFile = function (path, sha, type) {
++    File.call(this, path, undefined, undefined, type)
+     this.sha = sha || 'sha-default'
+   }
+ 
+@@ -212,12 +212,14 @@ describe('middleware.karma', () => {
+   it('should serve context.html with replaced link tags', (done) => {
+     includedFiles([
+       new MockFile('/first.css', 'sha007'),
+-      new MockFile('/second.html', 'sha678')
++      new MockFile('/second.html', 'sha678'),
++      new MockFile('/third', 'sha111', 'css'),
++      new MockFile('/fourth', 'sha222', 'html')
+     ])
+ 
+     response.once('end', () => {
+       expect(nextSpy).not.to.have.been.called
+-      expect(response).to.beServedAs(200, 'CONTEXT\n<link type="text/css" href="/__proxy__/__karma__/absolute/first.css?sha007" rel="stylesheet">\n<link href="/__proxy__/__karma__/absolute/second.html?sha678" rel="import">')
++      expect(response).to.beServedAs(200, 'CONTEXT\n<link type="text/css" href="/__proxy__/__karma__/absolute/first.css?sha007" rel="stylesheet">\n<link href="/__proxy__/__karma__/absolute/second.html?sha678" rel="import">\n<link type="text/css" href="/__proxy__/__karma__/absolute/third?sha111" rel="stylesheet">\n<link href="/__proxy__/__karma__/absolute/fourth?sha222" rel="import">')
+       done()
+     })
+ 
+@@ -244,12 +246,16 @@ describe('middleware.karma', () => {
+       new MockFile('/some/abc/a.css', 'sha1'),
+       new MockFile('/base/path/b.css', 'sha2'),
+       new MockFile('/some/abc/c.html', 'sha3'),
+-      new MockFile('/base/path/d.html', 'sha4')
++      new MockFile('/base/path/d.html', 'sha4'),
++      new MockFile('/some/abc/e', 'sha5', 'css'),
++      new MockFile('/base/path/f', 'sha6', 'css'),
++      new MockFile('/some/abc/g', 'sha7', 'html'),
++      new MockFile('/base/path/h', 'sha8', 'html')
+     ])
+ 
+     response.once('end', () => {
+       expect(nextSpy).not.to.have.been.called
+-      expect(response).to.beServedAs(200, 'CONTEXT\n<link type="text/css" href="/__proxy__/__karma__/absolute/some/abc/a.css?sha1" rel="stylesheet">\n<link type="text/css" href="/__proxy__/__karma__/base/b.css?sha2" rel="stylesheet">\n<link href="/__proxy__/__karma__/absolute/some/abc/c.html?sha3" rel="import">\n<link href="/__proxy__/__karma__/base/d.html?sha4" rel="import">')
++      expect(response).to.beServedAs(200, 'CONTEXT\n<link type="text/css" href="/__proxy__/__karma__/absolute/some/abc/a.css?sha1" rel="stylesheet">\n<link type="text/css" href="/__proxy__/__karma__/base/b.css?sha2" rel="stylesheet">\n<link href="/__proxy__/__karma__/absolute/some/abc/c.html?sha3" rel="import">\n<link href="/__proxy__/__karma__/base/d.html?sha4" rel="import">\n<link type="text/css" href="/__proxy__/__karma__/absolute/some/abc/e?sha5" rel="stylesheet">\n<link type="text/css" href="/__proxy__/__karma__/base/f?sha6" rel="stylesheet">\n<link href="/__proxy__/__karma__/absolute/some/abc/g?sha7" rel="import">\n<link href="/__proxy__/__karma__/base/h?sha8" rel="import">')
+       done()
+     })
+ 
+@@ -261,7 +267,11 @@ describe('middleware.karma', () => {
+       new MockFile('/some/abc/a.css', 'sha1'),
+       new MockFile('/base/path/b.css', 'sha2'),
+       new MockFile('/some/abc/c.html', 'sha3'),
+-      new MockFile('/base/path/d.html', 'sha4')
++      new MockFile('/base/path/d.html', 'sha4'),
++      new MockFile('/some/abc/e', 'sha5', 'css'),
++      new MockFile('/base/path/f', 'sha6', 'css'),
++      new MockFile('/some/abc/g', 'sha7', 'html'),
++      new MockFile('/base/path/h', 'sha8', 'html')
+     ])
+ 
+     response.once('end', () => {
+@@ -271,7 +281,11 @@ describe('middleware.karma', () => {
+           '/__proxy__/__karma__/absolute/some/abc/a.css?sha1',
+           '/__proxy__/__karma__/base/b.css?sha2',
+           '/__proxy__/__karma__/absolute/some/abc/c.html?sha3',
+-          '/__proxy__/__karma__/base/d.html?sha4'
++          '/__proxy__/__karma__/base/d.html?sha4',
++          '/__proxy__/__karma__/absolute/some/abc/e?sha5',
++          '/__proxy__/__karma__/base/f?sha6',
++          '/__proxy__/__karma__/absolute/some/abc/g?sha7',
++          '/__proxy__/__karma__/base/h?sha8'
+         ]
+       }))
+       done()
+@@ -361,12 +375,16 @@ describe('middleware.karma', () => {
+       new MockFile('/first.css'),
+       new MockFile('/base/path/b.css'),
+       new MockFile('/second.html'),
+-      new MockFile('/base/path/d.html')
++      new MockFile('/base/path/d.html'),
++      new MockFile('/third', null, 'css'),
++      new MockFile('/base/path/f', null, 'css'),
++      new MockFile('/fourth', null, 'html'),
++      new MockFile('/base/path/g', null, 'html')
+     ])
+ 
+     response.once('end', () => {
+       expect(nextSpy).not.to.have.been.called
+-      expect(response).to.beServedAs(200, 'DEBUG\n<link type="text/css" href="/__proxy__/__karma__/absolute/first.css" rel="stylesheet">\n<link type="text/css" href="/__proxy__/__karma__/base/b.css" rel="stylesheet">\n<link href="/__proxy__/__karma__/absolute/second.html" rel="import">\n<link href="/__proxy__/__karma__/base/d.html" rel="import">')
++      expect(response).to.beServedAs(200, 'DEBUG\n<link type="text/css" href="/__proxy__/__karma__/absolute/first.css" rel="stylesheet">\n<link type="text/css" href="/__proxy__/__karma__/base/b.css" rel="stylesheet">\n<link href="/__proxy__/__karma__/absolute/second.html" rel="import">\n<link href="/__proxy__/__karma__/base/d.html" rel="import">\n<link type="text/css" href="/__proxy__/__karma__/absolute/third" rel="stylesheet">\n<link type="text/css" href="/__proxy__/__karma__/base/f" rel="stylesheet">\n<link href="/__proxy__/__karma__/absolute/fourth" rel="import">\n<link href="/__proxy__/__karma__/base/g" rel="import">')
+       done()
+     })
+ 

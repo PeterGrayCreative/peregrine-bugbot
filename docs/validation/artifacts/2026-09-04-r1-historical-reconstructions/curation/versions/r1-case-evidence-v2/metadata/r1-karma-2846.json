@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 2,
+  "caseId": "r1-karma-2846",
+  "language": "javascript",
+  "kind": "review-caught-defect",
+  "repository": "karma-runner/karma",
+  "pullRequest": "https://github.com/karma-runner/karma/pull/2846",
+  "reviewBase": "e79463b94ff6d3ad87526b3c68b38b90e924ea42",
+  "reviewHead": "eab78ff696f3de8ae226f930e08b93d20ffbdb66",
+  "baseTree": "8c42372cca4b0be9f0d2f75833a3abfba7fe904a",
+  "headTree": "72fcd0063020977f14c2c15bdd8d9233e78c4a28",
+  "diffSha256": "7a23b80d43201932ab7a95c876ee99f205c295ea43ffb79acf5d932a46044dfb",
+  "diffFiles": 5,
+  "insertions": 40,
+  "deletions": 16,
+  "proofLevel": "complete-static-trace",
+  "license": "MIT",
+  "supersedes": {
+    "packetVersion": "r1-case-evidence-v1",
+    "evidenceBundleSha256": "65f288926e8deee9a45c6b8f44af5a772036e1ea342bcaff78183469ea1072ed",
+    "reason": "The v1 root overstated the affected surface and test evidence. V2 narrows the root and makes adjacent uncovered seams explicit."
+  },
+  "truthScope": "The known root covers ordinary local files created during List._refresh whose configured type reaches File.type but is ignored when selecting a script tag MIME type. Absolute URL patterns and watcher-added files lose the configured type earlier and are disclosed as separate seams, not credited as this root.",
+  "limitations": [
+    "The motivating PR example is an absolute Google Fonts URL, but the defect-bearing head constructs Url(pattern) without forwarding Pattern.type.",
+    "List.addFile constructs new File(path) for watcher-added files and therefore also loses Pattern.type.",
+    "Later commits repair script selection for refresh-loaded local files but do not add an explicit script-type regression test in the reviewed test file."
+  ],
+  "admitted": false
+}

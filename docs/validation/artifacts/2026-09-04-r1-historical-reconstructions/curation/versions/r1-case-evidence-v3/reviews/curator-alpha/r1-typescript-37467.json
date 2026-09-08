@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 3,
+  "packetVersion": "r1-case-evidence-v3",
+  "packetSha256": "d96904edf56c5b8dac970f59fa95a14c495cde5bd22d50a805e6874df098c2fe",
+  "caseId": "r1-typescript-37467",
+  "evidenceBundleSha256": "5d77640e8f8b2cda046588f32f87bc251ca9c0eba9c144a9ae052ee2489c8c0f",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_alpha",
+  "curatorIdentitySha256": "a2ef45b13113d050014b9cce96a10be569e2114629ceb52ea4668fffa5607cd7",
+  "reviewedAt": "2026-09-05T04:23:07Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": {
+    "sourceAuthenticity": true,
+    "exactHistoricalHead": true,
+    "provenance": true,
+    "causalTrace": true,
+    "reachability": true,
+    "consequence": true,
+    "repairBoundary": true,
+    "truthScope": true,
+    "license": true,
+    "limitations": true
+  },
+  "evidenceNotes": [
+    {
+      "source": "v3 metadata and diffs/r1-typescript-37467.diff; canonical microsoft/TypeScript commits 933c2949 and 6cbbdbcc",
+      "observation": "933c2949 is the merge base and an ancestor of the reviewed head; trees match. The canonical command produced 11947 bytes and SHA-256 afba6912ead4a12ad7edcd1d232ff2d3697fc6b357696d2d7f69ed691f5dd1e5, byte-identical to the stored 12-section no-renames patch. Rename-aware logical stats remain the authentic PR totals of 10 files, 135 insertions, and 6 deletions."
+    },
+    {
+      "source": "6cbbdbcc src/services/textChanges.ts and pre-existing src/services/organizeImports.ts",
+      "observation": "The reviewed patch makes non-first import deletion preserve leading comments. Organize imports already replaces the first import with a rebuilt list containing those comments and then deletes subsequent originals through the generalized deletion path, so their trivia is emitted a second time and repeated saves can grow the duplicate."
+    },
+    {
+      "source": "raw/typescript-issue-38507.json, raw/typescript-pr-38599.json, and repair branch 428f5a19..81d1732f",
+      "observation": "Issue 38507 records successive comment duplication. The repair introduces explicit configurable deletion for subsequent organize-import nodes and the PR adds the SortComments unit input and accepted baseline, closing the same root."
+    },
+    {
+      "source": "v2 case document, v3 metadata supersededDiffClaims, and 6cbbdbcc LICENSE.txt",
+      "observation": "The evidence preserves the rejected v1 non-ancestor comparison, binds the corrected v2 bundle, marks both earlier diff hashes as superseded, limits the claim to this organize-import interaction, states that the 2020 harness was not run, and records the historical Apache-2.0 license."
+    }
+  ],
+  "exceptions": []
+}

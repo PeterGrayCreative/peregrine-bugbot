@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "packetVersion": "r1-case-evidence-v1",
+  "caseId": "r1-webpack-8233",
+  "evidenceBundleSha256": "a04b5d8076b6baf21bd0411e55bc3cda4304d62167bd73c81bd3edee71996708",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_beta",
+  "curatorIdentitySha256": "d5685cd85a563032fdf19dadfd2e023a8c2b54f6153c85279b9704c1c2f5fe59",
+  "reviewedAt": "2026-09-05T03:38:34Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": { "sourceAuthenticity": true, "exactHistoricalHead": true, "provenance": true, "causalTrace": true, "reachability": true, "consequence": true, "repairBoundary": true, "truthScope": true, "license": true, "limitations": true },
+  "evidenceNotes": [
+    { "source": "webpack/webpack dcd38348 lib/ConstPlugin.js and lib/APIPlugin.js", "observation": "The canonical patch adds logical folding while registering evaluateTypeof for a runtime alias lacking REPLACEMENT_TYPES metadata." },
+    { "source": "issue #8829 and repair ab517aa0", "observation": "The release regression and conditional-evaluator fix establish the same unknown-type folding root with a runtime-sensitive test." }
+  ],
+  "exceptions": []
+}

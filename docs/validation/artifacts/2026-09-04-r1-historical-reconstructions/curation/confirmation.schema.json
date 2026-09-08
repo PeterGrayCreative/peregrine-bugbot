@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "R1 independent curator confirmation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "packetVersion",
+    "caseId",
+    "evidenceBundleSha256",
+    "curatorIdentityRef",
+    "curatorIdentitySha256",
+    "reviewedAt",
+    "independenceDeclaration",
+    "disposition",
+    "checks",
+    "evidenceNotes",
+    "exceptions"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "packetVersion": { "const": "r1-case-evidence-v1" },
+    "caseId": {
+      "enum": [
+        "r1-vscode-73801",
+        "r1-typescript-37467",
+        "r1-karma-2846",
+        "r1-karma-2714",
+        "r1-webpack-8233"
+      ]
+    },
+    "evidenceBundleSha256": { "$ref": "#/$defs/sha256" },
+    "curatorIdentityRef": { "type": "string", "minLength": 3, "maxLength": 256 },
+    "curatorIdentitySha256": { "$ref": "#/$defs/sha256" },
+    "reviewedAt": { "type": "string", "format": "date-time" },
+    "independenceDeclaration": {
+      "const": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace."
+    },
+    "disposition": { "enum": ["confirm", "reject", "defer"] },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sourceAuthenticity",
+        "exactHistoricalHead",
+        "provenance",
+        "causalTrace",
+        "reachability",
+        "consequence",
+        "repairBoundary",
+        "truthScope",
+        "license",
+        "limitations"
+      ],
+      "properties": {
+        "sourceAuthenticity": { "type": "boolean" },
+        "exactHistoricalHead": { "type": "boolean" },
+        "provenance": { "type": "boolean" },
+        "causalTrace": { "type": "boolean" },
+        "reachability": { "type": "boolean" },
+        "consequence": { "type": "boolean" },
+        "repairBoundary": { "type": "boolean" },
+        "truthScope": { "type": "boolean" },
+        "license": { "type": "boolean" },
+        "limitations": { "type": "boolean" }
+      }
+    },
+    "evidenceNotes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source", "observation"],
+        "properties": {
+          "source": { "type": "string", "minLength": 1, "maxLength": 512 },
+          "observation": { "type": "string", "minLength": 1, "maxLength": 4000 }
+        }
+      }
+    },
+    "exceptions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 4000 }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "disposition": { "const": "confirm" } } },
+      "then": {
+        "properties": {
+          "checks": {
+            "properties": {
+              "sourceAuthenticity": { "const": true },
+              "exactHistoricalHead": { "const": true },
+              "provenance": { "const": true },
+              "causalTrace": { "const": true },
+              "reachability": { "const": true },
+              "consequence": { "const": true },
+              "repairBoundary": { "const": true },
+              "truthScope": { "const": true },
+              "license": { "const": true },
+              "limitations": { "const": true }
+            }
+          },
+          "exceptions": { "maxItems": 0 }
+        }
+      }
+    },
+    {
+      "if": { "properties": { "disposition": { "enum": ["reject", "defer"] } } },
+      "then": { "properties": { "exceptions": { "minItems": 1 } } }
+    }
+  ],
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

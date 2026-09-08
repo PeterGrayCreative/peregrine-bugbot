@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 2,
+  "caseId": "r1-typescript-37467",
+  "language": "typescript",
+  "kind": "post-merge-defect",
+  "repository": "microsoft/TypeScript",
+  "pullRequest": "https://github.com/microsoft/TypeScript/pull/37467",
+  "laterIssue": "https://github.com/microsoft/TypeScript/issues/38507",
+  "laterFix": "https://github.com/microsoft/TypeScript/pull/38599",
+  "reviewBase": "933c2949236f38e1255a0aa4564246a3fef1518c",
+  "reviewHead": "6cbbdbcc4c22f7dd82b023059ca8230a927707e7",
+  "baseTree": "12cce8acd32216c6da7fa7dd38205440c624f4a1",
+  "headTree": "7a399efb616db0313641a8068f7943f9d4db4abc",
+  "diffSha256": "99d05fda5f0f3173eabf57a55fd41803abaa65cc957607b4d4d72f7a892a9acc",
+  "diffFiles": 10,
+  "insertions": 135,
+  "deletions": 6,
+  "proofLevel": "complete-static-trace",
+  "license": "Apache-2.0",
+  "supersedes": {
+    "packetVersion": "r1-case-evidence-v1",
+    "evidenceBundleSha256": "81115874e4586dec0b1a9b37cae2f143e901d2dd89724ec9b3e0b716733fcefe",
+    "reason": "The v1 base was not an ancestor of the reviewed head. Its two-dot diff reverse-included unrelated target-branch changes and was not the authentic PR review surface."
+  },
+  "truthScope": "The known root is comment duplication caused by the interaction between the PR's generalized trivia-preserving deletion and the pre-existing organize-imports deletion path; no global truth-complete claim is made.",
+  "admitted": false
+}

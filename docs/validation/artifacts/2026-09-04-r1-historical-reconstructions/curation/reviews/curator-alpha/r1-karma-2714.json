@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "packetVersion": "r1-case-evidence-v1",
+  "caseId": "r1-karma-2714",
+  "evidenceBundleSha256": "c547ca1fb0b4f32fd2e60c087b00b230da3351b8ffa028d61a2ea82028fda438",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_alpha",
+  "curatorIdentitySha256": "a2ef45b13113d050014b9cce96a10be569e2114629ceb52ea4668fffa5607cd7",
+  "reviewedAt": "2026-09-05T03:38:34Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": { "sourceAuthenticity": true, "exactHistoricalHead": true, "provenance": true, "causalTrace": true, "reachability": true, "consequence": true, "repairBoundary": true, "truthScope": true, "license": true, "limitations": true },
+  "evidenceNotes": [
+    { "source": "karma-runner/karma 2789bf57 lib/preprocessor.js and raw/karma-pr-2714-comments.json", "observation": "The exact two-file diff is authentic; the retry correctly calls fs.readFile with handleFile, while directly calling handleFile cannot perform a new filesystem read." },
+    { "source": "commit 92a8c81f and case scope", "observation": "The repair only clarifies the callback name and preserves behavior; the case correctly avoids a global-clean claim and discloses asynchronous-throw and test limitations." }
+  ],
+  "exceptions": []
+}

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 3,
+  "packetVersion": "r1-case-evidence-v3",
+  "packetSha256": "d96904edf56c5b8dac970f59fa95a14c495cde5bd22d50a805e6874df098c2fe",
+  "caseId": "r1-karma-2846",
+  "evidenceBundleSha256": "b777827f70beececaa7d0949fe99e32aa9ac55856dc74f426582ef38fbc765d9",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_beta",
+  "curatorIdentitySha256": "d5685cd85a563032fdf19dadfd2e023a8c2b54f6153c85279b9704c1c2f5fe59",
+  "reviewedAt": "2026-09-05T04:25:34Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": {
+    "sourceAuthenticity": true,
+    "exactHistoricalHead": true,
+    "provenance": true,
+    "causalTrace": true,
+    "reachability": true,
+    "consequence": true,
+    "repairBoundary": true,
+    "truthScope": true,
+    "license": true,
+    "limitations": true
+  },
+  "evidenceNotes": [
+    {
+      "source": "v3 metadata/r1-karma-2846.json and independently regenerated canonical diff",
+      "observation": "The pinned diff e79463b94ff6d3ad87526b3c68b38b90e924ea42..eab78ff696f3de8ae226f930e08b93d20ffbdb66 is byte-identical to the 9,492-byte stored artifact (SHA-256 6906187983eb2d3fb76b6b208f2f954fb92b8855c940e9b711347c36e3b79965); merge base, trees 8c42372cca4b0be9f0d2f75833a3abfba7fe904a and 72fcd0063020977f14c2c15bdd8d9233e78c4a28, and 5-file +40/-16 stats match. V3 correctly supersedes the noncanonical v1/v2 diff hash."
+    },
+    {
+      "source": "eab78ff696f3de8ae226f930e08b93d20ffbdb66: lib/file-list.js:156-188 and lib/middleware/karma.js:176-216",
+      "observation": "For ordinary refresh-loaded local files, Pattern.type reaches File.type, CSS and HTML consume it, but the script branch computes SCRIPT_TYPE[fileExt] and otherwise text/javascript. Extensionless Dart/module files and explicit script-type overrides therefore produce the wrong script MIME type."
+    },
+    {
+      "source": "raw/karma-pr-2846-comments.json discussion 147017055 and eab78ff696f3de8ae226f930e08b93d20ffbdb66..a59b83ef0d4878f0c7d5db57e8181ae58e8ba9d6 middleware diff",
+      "observation": "The authenticated reviewer comment is bound to the original head and proposes the missing override. The later source computes scriptFileType from fileType before the extension and adds supported script types, corroborating consequence and repair boundary."
+    },
+    {
+      "source": "eab78ff696f3de8ae226f930e08b93d20ffbdb66: lib/file-list.js:159-161,303-327 and v2 case limitations",
+      "observation": "Absolute URLs construct Url without type and watcher additions construct File without type, so those paths do not reach this root. The MIT case expressly limits credit to ordinary refresh-loaded local files, notes the missing explicit script-type regression assertion, and discloses no historical runtime execution."
+    }
+  ],
+  "exceptions": []
+}

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 2,
+  "packetVersion": "r1-case-evidence-v2",
+  "caseId": "r1-karma-2846",
+  "evidenceBundleSha256": "945f79640801089a79910f6db309f80be5e1cba87b607538f76bc791e974d618",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_beta",
+  "curatorIdentitySha256": "d5685cd85a563032fdf19dadfd2e023a8c2b54f6153c85279b9704c1c2f5fe59",
+  "reviewedAt": "2026-09-05T03:58:12Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "confirm",
+  "checks": { "sourceAuthenticity": true, "exactHistoricalHead": true, "provenance": true, "causalTrace": true, "reachability": true, "consequence": true, "repairBoundary": true, "truthScope": true, "license": true, "limitations": true },
+  "evidenceNotes": [
+    { "source": "karma-runner/karma e79463b9..eab78ff6 and raw PR records", "observation": "The exact direct-parent patch, trees, 5-file 40-addition/16-deletion surface, and recorded binary-diff hash authenticate the reviewed head." },
+    { "source": "config.js:56-66, file-list.js:156-188, middleware/karma.js:197-208, and review r147017055", "observation": "The narrowed local-refresh path carries type to File.type and then ignores it for script MIME selection; the final middleware change closes that same decision." },
+    { "source": "v2 scope and limitations", "observation": "Absolute URL and watcher paths are correctly separated as earlier type-loss seams, the Google Fonts mismatch is explicit, and v2 no longer claims a later explicit script regression test." }
+  ],
+  "exceptions": []
+}

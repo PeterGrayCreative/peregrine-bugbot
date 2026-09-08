@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "packetVersion": "r1-case-evidence-v1",
+  "caseId": "r1-karma-2846",
+  "evidenceBundleSha256": "65f288926e8deee9a45c6b8f44af5a772036e1ea342bcaff78183469ea1072ed",
+  "curatorIdentityRef": "codex-task:/root/r1_curator_beta",
+  "curatorIdentitySha256": "d5685cd85a563032fdf19dadfd2e023a8c2b54f6153c85279b9704c1c2f5fe59",
+  "reviewedAt": "2026-09-05T03:38:34Z",
+  "independenceDeclaration": "I independently inspected the authenticated sources and exact historical diff before accepting or rejecting the primary trace.",
+  "disposition": "reject",
+  "checks": { "sourceAuthenticity": true, "exactHistoricalHead": true, "provenance": true, "causalTrace": true, "reachability": true, "consequence": true, "repairBoundary": true, "truthScope": false, "license": true, "limitations": false },
+  "evidenceNotes": [
+    { "source": "karma-runner/karma eab78ff6 lib/config.js, lib/file-list.js, and lib/middleware/karma.js", "observation": "The local-file script defect is valid, but absolute URL patterns discard pattern.type before middleware, contradicting the claim that type reaches every file." },
+    { "source": "PR #2846 final head a59b83ef", "observation": "The local script decision is repaired, but URL propagation remains and final tests do not add explicit JS, Dart, or module override coverage." }
+  ],
+  "exceptions": [
+    "Narrow the root and causal trace to local non-URL file patterns.",
+    "Record the absolute-URL limitation and correct the unsupported claim that the later script repair added regression tests."
+  ]
+}
