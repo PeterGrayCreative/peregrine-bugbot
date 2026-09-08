@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/OptimalBits/bull/pulls/556/comments",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:56:11.259Z",
+  "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/556/comments?page=1&per_page=100",
+  "sha256": "4d860e4d51c3474d8fabe77ad543e884cb03fc3bdb44441a4961673358913e92",
+  "bytes": 10148
+}

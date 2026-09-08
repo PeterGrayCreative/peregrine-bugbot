@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/OptimalBits/bull/pulls/537",
+    "parameters": {}
+  },
+  "retrievedAt": "2026-09-05T12:56:06.251Z",
+  "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/pulls/537?",
+  "sha256": "83b2098574d2cc971b0fde37ee1d4521cb6c58b7e725fde64a7ea268df0ac077",
+  "bytes": 16746
+}

@@ -238,6 +238,13 @@ export interface EvaluationIsolation {
   runProvider?: ProviderExec;
   /** Race-resistant reader for hostile files created by a contained provider. */
   readProviderOutput?: (path: string) => string;
+  /** Experimental neutral reviewer tools. Production evaluations leave this unset. */
+  neutralReadMcp?: {
+    protocol: "neutral-read-mcp-v1";
+    url: string;
+    serverName: "source_read";
+    enabledTools: readonly ["list_tree", "read_file", "search_text"];
+  };
   validatePrompt(input: {
     prompt: string;
     stage: "breadth" | "investigation";
@@ -348,6 +355,8 @@ export interface FixtureCaseSpec extends CaseSpecBase {
 
 export interface HistoricalCaseSpec extends CaseSpecBase {
   kind: "historical";
+  /** Opt-in neutral research contract. Omitted preserves the legacy historical case contract. */
+  evaluationProtocol?: "historical-efficacy-v1";
   repoSource: string;
   baseCommit: string;
   headCommit: string;

@@ -1,0 +1,212 @@
+# R2 collection progress
+
+The research program resumed after the R1 checkpoint on 2026-09-05. R2 remains
+in progress. No historical case is admitted by this collection step.
+
+## Registered initial sampling frame
+
+The first stratum samples 25 merged public PRs without selecting on comments,
+defect labels, or outcomes. The collection protocol fixes eight repositories,
+June 2019, a seed, within-repository hash ordering, and round-robin selection.
+This is a purposive month/repository frame with reproducible sampling inside
+it. It is not uniform sampling of all TS/JS history from 2017 through 2020.
+
+Artifacts are under `artifacts/2026-09-05-r2-candidate-inventory/`:
+
+- `collection-protocol.json`: sampling rules, 100-candidate ceiling, target
+  source strata, exclusion taxonomy, and partition constraints.
+- `random-sample-v1.json`: the first 25 candidates, all with unknown truth and
+  unassigned partitions; source frame counts and capture receipts.
+- `raw/objects/`: exact response bodies addressed by SHA-256.
+- `raw/requests/`: exact GET parameters, source URLs, retrieval dates, lengths,
+  and body hashes. Interrupted collection resumes verified captures.
+- `random-context-v1.json`, when present: complete context-capture receipts for
+  the sampled candidates. Its absence means this capture pass is unfinished.
+
+Context retrieval includes PR metadata, inline comments, review bodies, general
+discussion, commits, and changed files. Current API base/head values are leads;
+they are not asserted to be contemporaneous historical review revisions.
+Linked fixes and historical licenses require subsequent curation. Original and
+updated timestamps and author/bot metadata remain in the raw source responses.
+Any relevant comment edited after 2020 needs an archived original or exclusion
+from strict historical evidence.
+
+## Remaining work
+
+1. Complete historical reconstruction and eligibility decisions for the frozen
+   100 attempted slots. This count includes weak, duplicate, and after-window
+   leads, not 100 authenticated defects or substantive human reviews.
+2. Reconstruct exact review opportunities, record curator hours and exclusions,
+   and stop initial difficult reconstructions at two hours.
+3. Curate toward 24 bug-bearing cases and 12 scoped comparison cases; preserve
+   source-derived mechanisms, cross-file evidence, size variation, and duplicate
+   families. Capture completion is not curation completion.
+4. Obtain accountable independent confirmations. The R1 agent confirmations do
+   not establish independent human adjudication for future model comparisons.
+5. Protect selection identities/truth under curator control before writing or
+   tuning prompts. Freeze partitions before model outcomes. No holdout claim is
+   supported by a readable local directory.
+
+The initial capture implementation has deterministic tests for interrupted
+pagination, reuse of exact raw bytes, corruption rejection, truncated search,
+and pagination ceilings. These establish collection behavior only.
+
+Completed collection: 25 candidates across seven repositories, 17 discovery
+responses and 150 context responses. Axios supplied no merged PR in the fixed
+June window, so the registered round-robin rule proceeded with seven nonempty
+pools. Both collectors replayed successfully from cached bodies without
+changing either manifest. All changed-file counts matched the corresponding
+PR metadata. Node 22 capture tests passed 3/3 and TypeScript checking passed.
+
+## Targeted screening checkpoint
+
+The frozen `candidate-inventory-v1.json` now contains 100 attempted slots:
+25 comment-independent PRs, 50 review-target leads, and 25 post-merge leads.
+The title-ranked discovery frame contains 8,453 review leads and 214 post-merge
+leads across eight repository families. These are source-search results, not
+admitted cases. Additional screening losses remain in the screeners' reports;
+the 100 slots are not a claim that only 100 source records were inspected.
+
+The main 25-review batch yielded 20 substantive correctness leads, two possible
+scoped comparisons, one weak/performance-only lead, and two without substantive
+evidence. Some substantive discussions describe escaped defects rather than
+review-caught bugs. Actual event class will be bound during reconstruction.
+The post-merge shortlist includes one known R1 duplicate (webpack #8829) and
+one weak/deferred lead without a fixing identity (RxJS #3165). After-window
+comments and edits remain explicitly restricted. No failed slot is replaced
+silently, and no historical case is admitted by the inventory.
+
+The first targeted query protocol stopped on an incomplete Next.js search.
+Version 2 preserves it and subdivides incomplete years into months. A later
+GitHub search-rate-limit response stopped collection; the run resumed from
+verified cached pages with new search requests paced at 2.3 seconds. Every
+accepted leaf validates total count and duplicate IDs. Incomplete source pages
+remain archived. The transport error was observed in the execution transcript;
+no raw error-response body was captured by the successful-response store.
+
+Screening reports and their exact source stores are now in the repository.
+`screening-sources/README.md` maps original scratch paths to the durable copies.
+Integrity replay verified 772 request receipts and 686 raw response objects.
+Run under Node 22:
+
+```sh
+node scripts/evidence/assemble-r2-inventory.mjs
+node scripts/evidence/verify-r2-captures.mjs
+```
+
+Six exposed development reconstructions have completed primary and independent
+AI static checks: Bull #537/#556,
+webpack issue #10966, VS Code issue #112124, and Next.js #7363/#16126.
+They include bug and scoped-comparison leads and cannot later be represented
+as reserved validation. `development-reconstruction-bundle-v1.json` binds their
+reports, independent checks, raw responses, and canonical diffs. No repository
+code was executed. Source clones remain in scratch: this is not yet a
+self-contained replay bundle. Independent checking narrowed Bull #537 to the
+final-attempt multi-result path; the repair test exercises a different retry
+branch. It also separated webpack's timestamp-deletion and time-boundary
+defects into distinct candidate roots. The two comparisons are narrowly scoped;
+the VS Code hover defect is low-impact presentation evidence only.
+
+`development-exposure-v1.json` records 12 exposed reconstruction leads. Both
+six-lead batches now have primary and independent AI static checks. The second
+archive, `development-reconstruction-bundle-second-v1.json`, binds 149 files
+and references the immutable first bundle. Exact raw responses and canonical
+diffs are retained; scratch source clones are not included. Neither archive is
+yet a self-contained replay bundle.
+
+| Second-batch lead | Checked disposition | Important limit |
+| --- | --- | --- |
+| Sequelize #8430 | Scoped comparison: manual transaction setup preserves outer CLS state | Not globally clean; managed transactions remain a separate path |
+| RxJS #2397 | Recoverable declaration-contract regression | Final force-pushed sibling preserves the generic break; no restoration fix found in the bounded search |
+| Nest #5710 | Scoped comparison: existing client-option branch remains accepted | Review head is from 2020; merge is from 2021; original chronology retained |
+| Axios #874 | Scoped comparison against the contemporaneous Node header contract | Independent check reverses the primary rejection: absence of a historical review does not disqualify a naturally sampled comparison |
+| VS Code #98988 | Unrecoverable original reviewed head; excluded from primary replay | Rebased/fixed corroborating code is retained, never substituted for the missing head |
+| Nest #383 | Two recoverable reviewed heads with distinct option-handling defects | Same PR and statistical family; never counted as independent changes |
+
+Across both batches, 12 lead attempts yielded 12 recoverable opportunities
+from 11 PRs and one unrecoverable lead. Seven opportunities are bug-bearing
+static candidates (including the low-impact hover defect), and five are scoped
+comparisons. This does not satisfy an admitted eight-bug/four-comparison
+development set: consequential-impact admission, human verification, duplicate
+grouping, and exact replay remain required. No runtime reproduction or human
+confirmation is claimed. Primary reports and independent corrections both
+remain visible; a favorable correction never overwrites a prior disposition.
+
+The final 12/24 split is not frozen. Selection control, 36-case admission, and
+independent human curation remain open. Exposed leads cannot be relabeled as
+reserved selection, confirmation, or sealed holdout.
+
+## R3 measurement prerequisites
+
+The audited benchmark-semantics branch at `da106fa` was merged locally as
+`3840fa5`: sealed adjudication, versioned decisions, diagnostic reporting
+restrictions, and versioned unattributed completed misses. Original seals and
+prior results remain intact. Focused grading/adjudication/funnel tests passed
+29/29 after integration; this does not establish full historical readiness.
+
+A separate strict schema-v2 historical truth parser now permits partial
+known-root and scoped-comparison evidence, source-derived mechanisms including
+`other-unclassified`, separate reproduced/static proof, and exact metric
+eligibility. Legacy readers reject versioned truth instead of erasing its
+scope. Nine contract tests and typechecking pass under Node 22. Independent
+code review caught and verified a correction to schema path bounds; the schema
+explicitly requires the parser for duplicate IDs and cross-field line order. The contract
+is not yet wired into historical admission, scheduling, grading, or reporting;
+those consumers must preserve its restrictions before any provider run.
+
+Historical source specs now accept the explicit `historical-efficacy-v1`
+opt-in while legacy specs remain unchanged. A pre-scheduling barrier rejects
+the new protocol until versioned curation and metric eligibility are integrated.
+The barrier does not pre-validate legacy cases: malformed legacy inputs still
+produce scheduled configuration-failure artifacts. Combined truth/source tests
+pass 13/13; history-plus-source tests pass 16/16; accounting tests pass 17/17.
+
+A research-only scope-completeness contract now binds the exact registered
+input/tool/context requirements to a deterministic digest. Missing positive
+runner evidence stays unverified; unavailable or contradictory facts and model
+limitations stay incomplete. Tool-call counts and an empty finding list cannot
+establish completeness. Its strongest verdict means availability of registered
+scope, not proof that a model read or understood every file. The consumer must
+authenticate each evidence artifact and bind the registration digest to the
+immutable schedule; that runner integration is still pending. Combined
+truth/source/scope tests pass 21/21 under Node 22, with typechecking and an
+independent bounded code review. Production behavior is unchanged.
+
+The versioned historical curation reader now binds exact case, truth, diff,
+proof, partial scope, and normalized metadata. An admitted declaration needs
+two distinct identities from the caller's trusted roster, confirming the exact
+bundle and scope. This authenticates declared records, not genuine human
+independence or reconstructed source history. No real case has been admitted.
+Independent review caught impossible change-shape claims and proof-path aliases;
+regression tests now reject them. Explicit singleton root groups remain valid
+without inventing extra observations; multi-observation derives from actual
+distinct locations within one root.
+
+Historical metric policy excludes total recall and global-clean specificity.
+Scoped comparisons cannot enter registered recall. Root denominators count
+distinct causal groups, not observations, and no scheduled reviews means recall
+is unavailable. Partial truth alone does not prohibit precision assessment of
+independently adjudicated emitted findings. Authentication of counts, unresolved
+bounds, repeat aggregation, and report/decision integration remain required.
+
+The existing leakage reader now recognizes opted-in historical truth without
+discarding its scope. Curator scope and mechanism labels are forbidden even
+when short; legacy parsing remains unchanged. This is a content-leakage check,
+not proof of a network boundary or neutral mounted resources. Combined contract
+tests pass 40/40; curation plus legacy isolation/history/corpus regression tests
+pass 66/66 under Node 22. Typechecking passes. None ran a historical reviewer.
+
+GitHub Actions `check` and credential-free build/smoke also passed at pushed
+heads `940ff7b` and `3d0b620`. Later changes need their own current-head verification.
+
+At pushed head `68bfefc`, GitHub Actions `check` and credential-free build/smoke
+both passed. Local full validation initially reached 256/259 unit tests because
+the validation clone's dependency symlink appeared untracked and triggered the
+clean-worktree guard in three experiment tests. Replacing that local symlink
+with an ignored dependency directory restored the complete experiment suite
+to 12/12. No production guard or test was weakened. Later commits require their
+own current-head CI assessment; these results belong to the stated source.
+The remaining local validation steps also passed on that snapshot: capture
+tests, historical truth tests, corpus validation, skill/package validation, and
+the provider-denied 8/8 structural mock smoke. This is staged local validation,
+not a claim that the original failed full command passed.

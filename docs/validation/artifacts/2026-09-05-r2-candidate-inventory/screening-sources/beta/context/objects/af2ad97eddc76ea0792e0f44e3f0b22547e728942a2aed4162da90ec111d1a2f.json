@@ -1,0 +1,278 @@
+[
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/361865777",
+    "pull_request_review_id": 336970301,
+    "id": 361865777,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDM2MTg2NTc3Nw==",
+    "diff_hunk": "@@ -128,6 +131,16 @@ const nextServerlessLoader: loader.Loader = function() {\n       export default async (req, res) => {\n         try {\n           await initServer()\n+\n+          ${\n+            basePath\n+              ? `\n+          if(req.url.startsWith(${basePath})) {",
+    "path": "packages/next/build/webpack/loaders/next-serverless-loader.ts",
+    "commit_id": "25064292f2202d6cf5ac0b80aaa61599d1e0b198",
+    "original_commit_id": "adc5b3fcb32f9f6534a546d2f6b6788efee5ed7b",
+    "user": {
+      "login": "ijjk",
+      "id": 22380829,
+      "node_id": "MDQ6VXNlcjIyMzgwODI5",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22380829?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/ijjk",
+      "html_url": "https://github.com/ijjk",
+      "followers_url": "https://api.github.com/users/ijjk/followers",
+      "following_url": "https://api.github.com/users/ijjk/following{/other_user}",
+      "gists_url": "https://api.github.com/users/ijjk/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/ijjk/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/ijjk/subscriptions",
+      "organizations_url": "https://api.github.com/users/ijjk/orgs",
+      "repos_url": "https://api.github.com/users/ijjk/repos",
+      "events_url": "https://api.github.com/users/ijjk/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/ijjk/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "```suggestion\r\n          if(req.url.startsWith('${basePath}')) {\r\n```\r\nLooks like these need quotes still",
+    "created_at": "2019-12-29T18:36:22Z",
+    "updated_at": "2019-12-29T18:40:48Z",
+    "html_url": "https://github.com/vercel/next.js/pull/9872#discussion_r361865777",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/9872",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/361865777"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/9872#discussion_r361865777"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/9872"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/361865777/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 138,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 27,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/361865785",
+    "pull_request_review_id": 336970307,
+    "id": 361865785,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDM2MTg2NTc4NQ==",
+    "diff_hunk": "@@ -128,6 +131,16 @@ const nextServerlessLoader: loader.Loader = function() {\n       export default async (req, res) => {\n         try {\n           await initServer()\n+\n+          ${\n+            basePath\n+              ? `\n+          if(req.url.startsWith(${basePath})) {\n+            req.url = req.url.replace(${basePath}, '')",
+    "path": "packages/next/build/webpack/loaders/next-serverless-loader.ts",
+    "commit_id": "25064292f2202d6cf5ac0b80aaa61599d1e0b198",
+    "original_commit_id": "adc5b3fcb32f9f6534a546d2f6b6788efee5ed7b",
+    "user": {
+      "login": "ijjk",
+      "id": 22380829,
+      "node_id": "MDQ6VXNlcjIyMzgwODI5",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22380829?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/ijjk",
+      "html_url": "https://github.com/ijjk",
+      "followers_url": "https://api.github.com/users/ijjk/followers",
+      "following_url": "https://api.github.com/users/ijjk/following{/other_user}",
+      "gists_url": "https://api.github.com/users/ijjk/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/ijjk/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/ijjk/subscriptions",
+      "organizations_url": "https://api.github.com/users/ijjk/orgs",
+      "repos_url": "https://api.github.com/users/ijjk/repos",
+      "events_url": "https://api.github.com/users/ijjk/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/ijjk/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "```suggestion\r\n            req.url = req.url.replace('${basePath}', '')\r\n```",
+    "created_at": "2019-12-29T18:36:31Z",
+    "updated_at": "2019-12-29T18:40:48Z",
+    "html_url": "https://github.com/vercel/next.js/pull/9872#discussion_r361865785",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/9872",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/361865785"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/9872#discussion_r361865785"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/9872"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/361865785/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 139,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 28,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/361865809",
+    "pull_request_review_id": 336970326,
+    "id": 361865809,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDM2MTg2NTgwOQ==",
+    "diff_hunk": "@@ -181,6 +194,15 @@ const nextServerlessLoader: loader.Loader = function() {\n     export const config = ComponentInfo['confi' + 'g'] || {}\n     export const _app = App\n     export async function renderReqToHTML(req, res, fromExport, _renderOpts, _params) {\n+      ${\n+        basePath\n+          ? `\n+      if(req.url.startsWith(${basePath})) {",
+    "path": "packages/next/build/webpack/loaders/next-serverless-loader.ts",
+    "commit_id": "25064292f2202d6cf5ac0b80aaa61599d1e0b198",
+    "original_commit_id": "adc5b3fcb32f9f6534a546d2f6b6788efee5ed7b",
+    "user": {
+      "login": "ijjk",
+      "id": 22380829,
+      "node_id": "MDQ6VXNlcjIyMzgwODI5",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22380829?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/ijjk",
+      "html_url": "https://github.com/ijjk",
+      "followers_url": "https://api.github.com/users/ijjk/followers",
+      "following_url": "https://api.github.com/users/ijjk/following{/other_user}",
+      "gists_url": "https://api.github.com/users/ijjk/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/ijjk/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/ijjk/subscriptions",
+      "organizations_url": "https://api.github.com/users/ijjk/orgs",
+      "repos_url": "https://api.github.com/users/ijjk/repos",
+      "events_url": "https://api.github.com/users/ijjk/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/ijjk/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "```suggestion\r\n      if(req.url.startsWith('${basePath}')) {\r\n```",
+    "created_at": "2019-12-29T18:36:56Z",
+    "updated_at": "2019-12-29T18:40:48Z",
+    "html_url": "https://github.com/vercel/next.js/pull/9872#discussion_r361865809",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/9872",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/361865809"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/9872#discussion_r361865809"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/9872"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/361865809/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 200,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 43,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/361865817",
+    "pull_request_review_id": 336970333,
+    "id": 361865817,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDM2MTg2NTgxNw==",
+    "diff_hunk": "@@ -181,6 +194,15 @@ const nextServerlessLoader: loader.Loader = function() {\n     export const config = ComponentInfo['confi' + 'g'] || {}\n     export const _app = App\n     export async function renderReqToHTML(req, res, fromExport, _renderOpts, _params) {\n+      ${\n+        basePath\n+          ? `\n+      if(req.url.startsWith(${basePath})) {\n+        req.url = req.url.replace(${basePath}, '')",
+    "path": "packages/next/build/webpack/loaders/next-serverless-loader.ts",
+    "commit_id": "25064292f2202d6cf5ac0b80aaa61599d1e0b198",
+    "original_commit_id": "adc5b3fcb32f9f6534a546d2f6b6788efee5ed7b",
+    "user": {
+      "login": "ijjk",
+      "id": 22380829,
+      "node_id": "MDQ6VXNlcjIyMzgwODI5",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22380829?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/ijjk",
+      "html_url": "https://github.com/ijjk",
+      "followers_url": "https://api.github.com/users/ijjk/followers",
+      "following_url": "https://api.github.com/users/ijjk/following{/other_user}",
+      "gists_url": "https://api.github.com/users/ijjk/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/ijjk/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/ijjk/subscriptions",
+      "organizations_url": "https://api.github.com/users/ijjk/orgs",
+      "repos_url": "https://api.github.com/users/ijjk/repos",
+      "events_url": "https://api.github.com/users/ijjk/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/ijjk/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "```suggestion\r\n        req.url = req.url.replace('${basePath}', '')\r\n```",
+    "created_at": "2019-12-29T18:37:04Z",
+    "updated_at": "2019-12-29T18:40:48Z",
+    "html_url": "https://github.com/vercel/next.js/pull/9872#discussion_r361865817",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/9872",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/361865817"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/9872#discussion_r361865817"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/9872"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/361865817/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 201,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 44,
+    "position": 1,
+    "subject_type": "line"
+  }
+]

@@ -1,0 +1,699 @@
+[
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313285902",
+    "pull_request_review_id": 274143875,
+    "id": 313285902,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMxMzI4NTkwMg==",
+    "diff_hunk": "@@ -0,0 +1 @@\n+registry=\"https://registry.npmjs.org/\"",
+    "path": ".npmrc",
+    "commit_id": "11625038e851456b709bf77b2e2b6a2cd7f39037",
+    "original_commit_id": "08e583d029cb837bc1dde4647f53a0299a07ff06",
+    "user": {
+      "login": "kamilmysliwiec",
+      "id": 23244943,
+      "node_id": "MDQ6VXNlcjIzMjQ0OTQz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23244943?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/kamilmysliwiec",
+      "html_url": "https://github.com/kamilmysliwiec",
+      "followers_url": "https://api.github.com/users/kamilmysliwiec/followers",
+      "following_url": "https://api.github.com/users/kamilmysliwiec/following{/other_user}",
+      "gists_url": "https://api.github.com/users/kamilmysliwiec/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/kamilmysliwiec/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/kamilmysliwiec/subscriptions",
+      "organizations_url": "https://api.github.com/users/kamilmysliwiec/orgs",
+      "repos_url": "https://api.github.com/users/kamilmysliwiec/repos",
+      "events_url": "https://api.github.com/users/kamilmysliwiec/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/kamilmysliwiec/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "It probably shouldn't be a part of this PR",
+    "created_at": "2019-08-13T08:54:29Z",
+    "updated_at": "2019-08-28T16:38:06Z",
+    "html_url": "https://github.com/nestjs/nest/pull/2735#discussion_r313285902",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/2735",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/313285902"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/2735#discussion_r313285902"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/2735"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313285902/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 1,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313286491",
+    "pull_request_review_id": 274144587,
+    "id": 313286491,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMxMzI4NjQ5MQ==",
+    "diff_hunk": "@@ -0,0 +1,120 @@\n+import { Logger } from '@nestjs/common/services/logger.service';\n+import { loadPackage } from '@nestjs/common/utils/load-package.util';\n+import { EventEmitter } from 'events';\n+import { Observable } from 'rxjs';\n+\n+import {\n+  KAFKA_DEFAULT_BROKER,\n+  KAFKA_DEFAULT_CLIENT\n+} from '../constants';\n+import { ReadPacket, KafkaOptions } from '../interfaces';\n+import { ClientProxy } from './client-proxy';\n+\n+import {\n+  KafkaConfig,\n+  Kafka,\n+  Producer,\n+  logLevel\n+} from '../external/kafka.interface';\n+\n+let kafkaPackage: any = {};\n+\n+export class ClientKafka extends ClientProxy {\n+  protected readonly logger = new Logger(ClientKafka.name);\n+  private client: Kafka = null;\n+  private producer: Producer = null;\n+  protected channel: any = null;\n+  protected urls: string[];\n+  protected queue: string;\n+  protected queueOptions: any;\n+  protected responseEmitter: EventEmitter;\n+\n+  private readonly brokers: string[];\n+  private readonly clientId: string;\n+\n+  constructor(protected readonly options: KafkaOptions['options']) {\n+    super();\n+    this.brokers = this.getOptionsProp(this.options.client, 'brokers') || [KAFKA_DEFAULT_BROKER];\n+    this.clientId = this.getOptionsProp(this.options.client, 'clientId') || KAFKA_DEFAULT_CLIENT;\n+\n+    kafkaPackage = loadPackage('kafkajs', ClientKafka.name, () => require('kafkajs'));\n+  }\n+\n+  public close(): void {\n+    this.producer && this.producer.disconnect();\n+    this.producer = null;\n+    this.client = null;\n+  }\n+\n+  public async connect(): Promise<Producer> {\n+    if (this.client) {\n+      return this.producer;\n+    }\n+    this.client = this.createClient();\n+    this.producer = this.client.producer(this.options.producer || {});\n+\n+    await this.producer.connect();\n+    return this.producer;\n+  }\n+\n+  public createClient<T = any>(): T {\n+    const kafkaLogger = kafkaLogLevel => ({namespace, level, label, log}) => {\n+      let loggerMethod: string;\n+\n+      switch (level) {\n+        case logLevel.ERROR:\n+        case logLevel.NOTHING:\n+          loggerMethod = 'error';\n+          break;\n+        case logLevel.WARN:\n+          loggerMethod = 'warn';\n+          break;\n+        case logLevel.INFO:\n+          loggerMethod = 'log';\n+          break;\n+        case logLevel.DEBUG:\n+        default:\n+          loggerMethod = 'debug';\n+          break;\n+      }\n+\n+      const { message, ...others } = log;\n+      this.logger[loggerMethod](`${label} [${namespace}] ${message} ${JSON.stringify(others)}`);\n+    };\n+\n+    return new kafkaPackage.Kafka(Object.assign(this.options.client || {}, {\n+      clientId: this.clientId,\n+      brokers: this.brokers,\n+      logCreator: kafkaLogger,\n+    }) as KafkaConfig);\n+  }\n+\n+  protected dispatchEvent(packet: ReadPacket): Promise<any> {\n+    const pattern = this.normalizePattern(packet.pattern);\n+\n+    // wrap the messages in an array\n+    if (!Array.isArray(packet.data)) {\n+      packet.data = [packet.data];\n+    }\n+\n+    return this.producer.send(Object.assign({\n+      topic: pattern,\n+      messages: packet.data\n+    }, this.options.send || {}));\n+  }\n+\n+  public send<TResult = any, TInput = any>(\n+    pattern: any,\n+    data: TInput,\n+  ): Observable<TResult> {\n+    throw new Error(\n+      'Method is not supported in Kafka mode (learn more in the documentation).',\n+    );",
+    "path": "packages/microservices/client/client-kafka.ts",
+    "commit_id": "11625038e851456b709bf77b2e2b6a2cd7f39037",
+    "original_commit_id": "08e583d029cb837bc1dde4647f53a0299a07ff06",
+    "user": {
+      "login": "kamilmysliwiec",
+      "id": 23244943,
+      "node_id": "MDQ6VXNlcjIzMjQ0OTQz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23244943?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/kamilmysliwiec",
+      "html_url": "https://github.com/kamilmysliwiec",
+      "followers_url": "https://api.github.com/users/kamilmysliwiec/followers",
+      "following_url": "https://api.github.com/users/kamilmysliwiec/following{/other_user}",
+      "gists_url": "https://api.github.com/users/kamilmysliwiec/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/kamilmysliwiec/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/kamilmysliwiec/subscriptions",
+      "organizations_url": "https://api.github.com/users/kamilmysliwiec/orgs",
+      "repos_url": "https://api.github.com/users/kamilmysliwiec/repos",
+      "events_url": "https://api.github.com/users/kamilmysliwiec/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/kamilmysliwiec/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "So we won't provide a `send` method? (bidirectional communication)",
+    "created_at": "2019-08-13T08:55:43Z",
+    "updated_at": "2019-08-28T16:38:06Z",
+    "html_url": "https://github.com/nestjs/nest/pull/2735#discussion_r313286491",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/2735",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/313286491"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/2735#discussion_r313286491"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/2735"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313286491/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 112,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 112,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313394030",
+    "pull_request_review_id": 274279119,
+    "id": 313394030,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMxMzM5NDAzMA==",
+    "diff_hunk": "@@ -0,0 +1 @@\n+registry=\"https://registry.npmjs.org/\"",
+    "path": ".npmrc",
+    "commit_id": "11625038e851456b709bf77b2e2b6a2cd7f39037",
+    "original_commit_id": "08e583d029cb837bc1dde4647f53a0299a07ff06",
+    "user": {
+      "login": "mkaufmaner",
+      "id": 2073135,
+      "node_id": "MDQ6VXNlcjIwNzMxMzU=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2073135?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/mkaufmaner",
+      "html_url": "https://github.com/mkaufmaner",
+      "followers_url": "https://api.github.com/users/mkaufmaner/followers",
+      "following_url": "https://api.github.com/users/mkaufmaner/following{/other_user}",
+      "gists_url": "https://api.github.com/users/mkaufmaner/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/mkaufmaner/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/mkaufmaner/subscriptions",
+      "organizations_url": "https://api.github.com/users/mkaufmaner/orgs",
+      "repos_url": "https://api.github.com/users/mkaufmaner/repos",
+      "events_url": "https://api.github.com/users/mkaufmaner/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/mkaufmaner/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Removed.",
+    "created_at": "2019-08-13T13:25:22Z",
+    "updated_at": "2019-08-28T16:38:06Z",
+    "html_url": "https://github.com/nestjs/nest/pull/2735#discussion_r313394030",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/2735",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/313394030"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/2735#discussion_r313394030"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/2735"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313394030/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 1,
+    "side": "RIGHT",
+    "in_reply_to_id": 313285902,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 1,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313400845",
+    "pull_request_review_id": 274287968,
+    "id": 313400845,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMxMzQwMDg0NQ==",
+    "diff_hunk": "@@ -0,0 +1,117 @@\n+import { Logger } from '@nestjs/common/services/logger.service';\n+import {\n+  KAFKA_DEFAULT_BROKER,\n+  KAFKA_DEFAULT_CLIENT,\n+  KAFKA_DEFAULT_GROUP\n+} from '../constants';\n+import {\n+  KafkaConfig,\n+  Kafka,\n+  Consumer,\n+  EachMessagePayload,\n+  logLevel\n+} from '../external/kafka.interface';\n+import { CustomTransportStrategy, KafkaOptions } from '../interfaces';\n+import { Server } from './server';\n+\n+let kafkaPackage: any = {};",
+    "path": "packages/microservices/server/server-kafka.ts",
+    "commit_id": "11625038e851456b709bf77b2e2b6a2cd7f39037",
+    "original_commit_id": "9dd8e46f10aa89a025b9fb7f2ed6d20c53790291",
+    "user": {
+      "login": "BrunnerLivio",
+      "id": 9899423,
+      "node_id": "MDQ6VXNlcjk4OTk0MjM=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9899423?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/BrunnerLivio",
+      "html_url": "https://github.com/BrunnerLivio",
+      "followers_url": "https://api.github.com/users/BrunnerLivio/followers",
+      "following_url": "https://api.github.com/users/BrunnerLivio/following{/other_user}",
+      "gists_url": "https://api.github.com/users/BrunnerLivio/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/BrunnerLivio/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/BrunnerLivio/subscriptions",
+      "organizations_url": "https://api.github.com/users/BrunnerLivio/orgs",
+      "repos_url": "https://api.github.com/users/BrunnerLivio/repos",
+      "events_url": "https://api.github.com/users/BrunnerLivio/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/BrunnerLivio/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Kafka seems to have types - [`@types/kafkajs`](https://www.npmjs.com/package/@types/kafkajs). You should be able to add the `import * as KafkaJS from 'kafkajs';` and then reference it `let kafkaPackage: KafkaJS | {} = {};`. TypeScript should then remove the `import` statement in the final bundle, since we are only using types. But you should double check, just to be sure :)",
+    "created_at": "2019-08-13T13:38:51Z",
+    "updated_at": "2019-08-28T16:38:06Z",
+    "html_url": "https://github.com/nestjs/nest/pull/2735#discussion_r313400845",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/2735",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/313400845"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/2735#discussion_r313400845"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/2735"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313400845/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 26,
+    "original_line": 17,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 17,
+    "position": 26,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313543405",
+    "pull_request_review_id": 274468295,
+    "id": 313543405,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMxMzU0MzQwNQ==",
+    "diff_hunk": "@@ -0,0 +1,120 @@\n+import { Logger } from '@nestjs/common/services/logger.service';\n+import { loadPackage } from '@nestjs/common/utils/load-package.util';\n+import { EventEmitter } from 'events';\n+import { Observable } from 'rxjs';\n+\n+import {\n+  KAFKA_DEFAULT_BROKER,\n+  KAFKA_DEFAULT_CLIENT\n+} from '../constants';\n+import { ReadPacket, KafkaOptions } from '../interfaces';\n+import { ClientProxy } from './client-proxy';\n+\n+import {\n+  KafkaConfig,\n+  Kafka,\n+  Producer,\n+  logLevel\n+} from '../external/kafka.interface';\n+\n+let kafkaPackage: any = {};\n+\n+export class ClientKafka extends ClientProxy {\n+  protected readonly logger = new Logger(ClientKafka.name);\n+  private client: Kafka = null;\n+  private producer: Producer = null;\n+  protected channel: any = null;\n+  protected urls: string[];\n+  protected queue: string;\n+  protected queueOptions: any;\n+  protected responseEmitter: EventEmitter;\n+\n+  private readonly brokers: string[];\n+  private readonly clientId: string;\n+\n+  constructor(protected readonly options: KafkaOptions['options']) {\n+    super();\n+    this.brokers = this.getOptionsProp(this.options.client, 'brokers') || [KAFKA_DEFAULT_BROKER];\n+    this.clientId = this.getOptionsProp(this.options.client, 'clientId') || KAFKA_DEFAULT_CLIENT;\n+\n+    kafkaPackage = loadPackage('kafkajs', ClientKafka.name, () => require('kafkajs'));\n+  }\n+\n+  public close(): void {\n+    this.producer && this.producer.disconnect();\n+    this.producer = null;\n+    this.client = null;\n+  }\n+\n+  public async connect(): Promise<Producer> {\n+    if (this.client) {\n+      return this.producer;\n+    }\n+    this.client = this.createClient();\n+    this.producer = this.client.producer(this.options.producer || {});\n+\n+    await this.producer.connect();\n+    return this.producer;\n+  }\n+\n+  public createClient<T = any>(): T {\n+    const kafkaLogger = kafkaLogLevel => ({namespace, level, label, log}) => {\n+      let loggerMethod: string;\n+\n+      switch (level) {\n+        case logLevel.ERROR:\n+        case logLevel.NOTHING:\n+          loggerMethod = 'error';\n+          break;\n+        case logLevel.WARN:\n+          loggerMethod = 'warn';\n+          break;\n+        case logLevel.INFO:\n+          loggerMethod = 'log';\n+          break;\n+        case logLevel.DEBUG:\n+        default:\n+          loggerMethod = 'debug';\n+          break;\n+      }\n+\n+      const { message, ...others } = log;\n+      this.logger[loggerMethod](`${label} [${namespace}] ${message} ${JSON.stringify(others)}`);\n+    };\n+\n+    return new kafkaPackage.Kafka(Object.assign(this.options.client || {}, {\n+      clientId: this.clientId,\n+      brokers: this.brokers,\n+      logCreator: kafkaLogger,\n+    }) as KafkaConfig);\n+  }\n+\n+  protected dispatchEvent(packet: ReadPacket): Promise<any> {\n+    const pattern = this.normalizePattern(packet.pattern);\n+\n+    // wrap the messages in an array\n+    if (!Array.isArray(packet.data)) {\n+      packet.data = [packet.data];\n+    }\n+\n+    return this.producer.send(Object.assign({\n+      topic: pattern,\n+      messages: packet.data\n+    }, this.options.send || {}));\n+  }\n+\n+  public send<TResult = any, TInput = any>(\n+    pattern: any,\n+    data: TInput,\n+  ): Observable<TResult> {\n+    throw new Error(\n+      'Method is not supported in Kafka mode (learn more in the documentation).',\n+    );",
+    "path": "packages/microservices/client/client-kafka.ts",
+    "commit_id": "11625038e851456b709bf77b2e2b6a2cd7f39037",
+    "original_commit_id": "08e583d029cb837bc1dde4647f53a0299a07ff06",
+    "user": {
+      "login": "mkaufmaner",
+      "id": 2073135,
+      "node_id": "MDQ6VXNlcjIwNzMxMzU=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2073135?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/mkaufmaner",
+      "html_url": "https://github.com/mkaufmaner",
+      "followers_url": "https://api.github.com/users/mkaufmaner/followers",
+      "following_url": "https://api.github.com/users/mkaufmaner/following{/other_user}",
+      "gists_url": "https://api.github.com/users/mkaufmaner/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/mkaufmaner/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/mkaufmaner/subscriptions",
+      "organizations_url": "https://api.github.com/users/mkaufmaner/orgs",
+      "repos_url": "https://api.github.com/users/mkaufmaner/repos",
+      "events_url": "https://api.github.com/users/mkaufmaner/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/mkaufmaner/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Kafka doesn't inherently support bidirectional communication (messaging pattern) through a single topic.  At least two topics would have to be created.  Even with two topics, the producer would have to know which partition(s) of the topic the consumer group is associated with.  See https://kafka.js.org/docs/producing#custom-partitioner\r\n\r\nI could implement something like this but I would need to break out the logic for consumers and producers into something more granular.  These event \"orchestrators\" (lack of a better term) can be initialized and configured within class property decorators and `onModuleInit` and referenced by the decorators consuming messages and passed to the client methods producing messages.\r\n\r\nSo, I have just decided to avoid that for now and only added support for the async event pattern.",
+    "created_at": "2019-08-13T18:19:23Z",
+    "updated_at": "2019-08-28T16:38:06Z",
+    "html_url": "https://github.com/nestjs/nest/pull/2735#discussion_r313543405",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/2735",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/313543405"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/2735#discussion_r313543405"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/2735"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313543405/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 112,
+    "side": "RIGHT",
+    "in_reply_to_id": 313286491,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 112,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313562129",
+    "pull_request_review_id": 274491162,
+    "id": 313562129,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMxMzU2MjEyOQ==",
+    "diff_hunk": "@@ -0,0 +1,117 @@\n+import { Logger } from '@nestjs/common/services/logger.service';\n+import {\n+  KAFKA_DEFAULT_BROKER,\n+  KAFKA_DEFAULT_CLIENT,\n+  KAFKA_DEFAULT_GROUP\n+} from '../constants';\n+import {\n+  KafkaConfig,\n+  Kafka,\n+  Consumer,\n+  EachMessagePayload,\n+  logLevel\n+} from '../external/kafka.interface';\n+import { CustomTransportStrategy, KafkaOptions } from '../interfaces';\n+import { Server } from './server';\n+\n+let kafkaPackage: any = {};",
+    "path": "packages/microservices/server/server-kafka.ts",
+    "commit_id": "11625038e851456b709bf77b2e2b6a2cd7f39037",
+    "original_commit_id": "9dd8e46f10aa89a025b9fb7f2ed6d20c53790291",
+    "user": {
+      "login": "mkaufmaner",
+      "id": 2073135,
+      "node_id": "MDQ6VXNlcjIwNzMxMzU=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2073135?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/mkaufmaner",
+      "html_url": "https://github.com/mkaufmaner",
+      "followers_url": "https://api.github.com/users/mkaufmaner/followers",
+      "following_url": "https://api.github.com/users/mkaufmaner/following{/other_user}",
+      "gists_url": "https://api.github.com/users/mkaufmaner/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/mkaufmaner/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/mkaufmaner/subscriptions",
+      "organizations_url": "https://api.github.com/users/mkaufmaner/orgs",
+      "repos_url": "https://api.github.com/users/mkaufmaner/repos",
+      "events_url": "https://api.github.com/users/mkaufmaner/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/mkaufmaner/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Was just using the other implementations as a reference and non of them use the third-party definitions.   Instead they all use an implicit any and NestJS implements it's own interface.  However, I would be more than happy to break existing convention and use third party types.  Also, kafkajs ships with its own definitions.",
+    "created_at": "2019-08-13T19:00:56Z",
+    "updated_at": "2019-08-28T16:38:06Z",
+    "html_url": "https://github.com/nestjs/nest/pull/2735#discussion_r313562129",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/2735",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/313562129"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/2735#discussion_r313562129"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/2735"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313562129/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 26,
+    "original_line": 17,
+    "side": "RIGHT",
+    "in_reply_to_id": 313400845,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 17,
+    "position": 26,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313721296",
+    "pull_request_review_id": 274689082,
+    "id": 313721296,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMxMzcyMTI5Ng==",
+    "diff_hunk": "@@ -0,0 +1,117 @@\n+import { Logger } from '@nestjs/common/services/logger.service';\n+import {\n+  KAFKA_DEFAULT_BROKER,\n+  KAFKA_DEFAULT_CLIENT,\n+  KAFKA_DEFAULT_GROUP\n+} from '../constants';\n+import {\n+  KafkaConfig,\n+  Kafka,\n+  Consumer,\n+  EachMessagePayload,\n+  logLevel\n+} from '../external/kafka.interface';\n+import { CustomTransportStrategy, KafkaOptions } from '../interfaces';\n+import { Server } from './server';\n+\n+let kafkaPackage: any = {};",
+    "path": "packages/microservices/server/server-kafka.ts",
+    "commit_id": "11625038e851456b709bf77b2e2b6a2cd7f39037",
+    "original_commit_id": "9dd8e46f10aa89a025b9fb7f2ed6d20c53790291",
+    "user": {
+      "login": "kamilmysliwiec",
+      "id": 23244943,
+      "node_id": "MDQ6VXNlcjIzMjQ0OTQz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23244943?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/kamilmysliwiec",
+      "html_url": "https://github.com/kamilmysliwiec",
+      "followers_url": "https://api.github.com/users/kamilmysliwiec/followers",
+      "following_url": "https://api.github.com/users/kamilmysliwiec/following{/other_user}",
+      "gists_url": "https://api.github.com/users/kamilmysliwiec/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/kamilmysliwiec/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/kamilmysliwiec/subscriptions",
+      "organizations_url": "https://api.github.com/users/kamilmysliwiec/orgs",
+      "repos_url": "https://api.github.com/users/kamilmysliwiec/repos",
+      "events_url": "https://api.github.com/users/kamilmysliwiec/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/kamilmysliwiec/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "We can't use types because all transport packages are optional (and installed lazily on demand)",
+    "created_at": "2019-08-14T06:31:19Z",
+    "updated_at": "2019-08-28T16:38:06Z",
+    "html_url": "https://github.com/nestjs/nest/pull/2735#discussion_r313721296",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/2735",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/313721296"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/2735#discussion_r313721296"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/2735"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313721296/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 26,
+    "original_line": 17,
+    "side": "RIGHT",
+    "in_reply_to_id": 313400845,
+    "author_association": "MEMBER",
+    "original_position": 17,
+    "position": 26,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313725286",
+    "pull_request_review_id": 274693913,
+    "id": 313725286,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMxMzcyNTI4Ng==",
+    "diff_hunk": "@@ -0,0 +1,117 @@\n+import { Logger } from '@nestjs/common/services/logger.service';\n+import {\n+  KAFKA_DEFAULT_BROKER,\n+  KAFKA_DEFAULT_CLIENT,\n+  KAFKA_DEFAULT_GROUP\n+} from '../constants';\n+import {\n+  KafkaConfig,\n+  Kafka,\n+  Consumer,\n+  EachMessagePayload,\n+  logLevel\n+} from '../external/kafka.interface';\n+import { CustomTransportStrategy, KafkaOptions } from '../interfaces';\n+import { Server } from './server';\n+\n+let kafkaPackage: any = {};",
+    "path": "packages/microservices/server/server-kafka.ts",
+    "commit_id": "11625038e851456b709bf77b2e2b6a2cd7f39037",
+    "original_commit_id": "9dd8e46f10aa89a025b9fb7f2ed6d20c53790291",
+    "user": {
+      "login": "BrunnerLivio",
+      "id": 9899423,
+      "node_id": "MDQ6VXNlcjk4OTk0MjM=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9899423?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/BrunnerLivio",
+      "html_url": "https://github.com/BrunnerLivio",
+      "followers_url": "https://api.github.com/users/BrunnerLivio/followers",
+      "following_url": "https://api.github.com/users/BrunnerLivio/following{/other_user}",
+      "gists_url": "https://api.github.com/users/BrunnerLivio/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/BrunnerLivio/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/BrunnerLivio/subscriptions",
+      "organizations_url": "https://api.github.com/users/BrunnerLivio/orgs",
+      "repos_url": "https://api.github.com/users/BrunnerLivio/repos",
+      "events_url": "https://api.github.com/users/BrunnerLivio/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/BrunnerLivio/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "@kamilmysliwiec Are you sure? I did some investigations some time ago with `@nestjs/terminus` because I have had the same problem - I wanted to lazy load on demand, but keep type-security. I learned that TypeScript does not transpile  `import`-statements into the final JS file if the imported element is only used as type.\r\nYou can see in this [gist](https://gist.github.com/BrunnerLivio/e07f2210ecbd14f67c180b30df50b082) what I mean. In this example you still able to lazy load KafkaJS, but with types support.",
+    "created_at": "2019-08-14T06:47:00Z",
+    "updated_at": "2019-08-28T16:38:06Z",
+    "html_url": "https://github.com/nestjs/nest/pull/2735#discussion_r313725286",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/2735",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/313725286"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/2735#discussion_r313725286"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/2735"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313725286/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 26,
+    "original_line": 17,
+    "side": "RIGHT",
+    "in_reply_to_id": 313400845,
+    "author_association": "MEMBER",
+    "original_position": 17,
+    "position": 26,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313725874",
+    "pull_request_review_id": 274694621,
+    "id": 313725874,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMxMzcyNTg3NA==",
+    "diff_hunk": "@@ -0,0 +1,117 @@\n+import { Logger } from '@nestjs/common/services/logger.service';\n+import {\n+  KAFKA_DEFAULT_BROKER,\n+  KAFKA_DEFAULT_CLIENT,\n+  KAFKA_DEFAULT_GROUP\n+} from '../constants';\n+import {\n+  KafkaConfig,\n+  Kafka,\n+  Consumer,\n+  EachMessagePayload,\n+  logLevel\n+} from '../external/kafka.interface';\n+import { CustomTransportStrategy, KafkaOptions } from '../interfaces';\n+import { Server } from './server';\n+\n+let kafkaPackage: any = {};",
+    "path": "packages/microservices/server/server-kafka.ts",
+    "commit_id": "11625038e851456b709bf77b2e2b6a2cd7f39037",
+    "original_commit_id": "9dd8e46f10aa89a025b9fb7f2ed6d20c53790291",
+    "user": {
+      "login": "kamilmysliwiec",
+      "id": 23244943,
+      "node_id": "MDQ6VXNlcjIzMjQ0OTQz",
+      "avatar_url": "https://avatars.githubusercontent.com/u/23244943?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/kamilmysliwiec",
+      "html_url": "https://github.com/kamilmysliwiec",
+      "followers_url": "https://api.github.com/users/kamilmysliwiec/followers",
+      "following_url": "https://api.github.com/users/kamilmysliwiec/following{/other_user}",
+      "gists_url": "https://api.github.com/users/kamilmysliwiec/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/kamilmysliwiec/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/kamilmysliwiec/subscriptions",
+      "organizations_url": "https://api.github.com/users/kamilmysliwiec/orgs",
+      "repos_url": "https://api.github.com/users/kamilmysliwiec/repos",
+      "events_url": "https://api.github.com/users/kamilmysliwiec/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/kamilmysliwiec/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I spent a lot of time trying to workaround this issue in TypeScript months ago (that's why we have `external` directory with types) so I'm pretty sure that it wasn't working before. Perhaps, something has changed in TS and now, it's possible - if so, we should add typings + remove this dir for other strategies as well",
+    "created_at": "2019-08-14T06:49:05Z",
+    "updated_at": "2019-08-28T16:38:06Z",
+    "html_url": "https://github.com/nestjs/nest/pull/2735#discussion_r313725874",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/2735",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/313725874"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/2735#discussion_r313725874"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/2735"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313725874/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 26,
+    "original_line": 17,
+    "side": "RIGHT",
+    "in_reply_to_id": 313400845,
+    "author_association": "MEMBER",
+    "original_position": 17,
+    "position": 26,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313727269",
+    "pull_request_review_id": 274696419,
+    "id": 313727269,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDMxMzcyNzI2OQ==",
+    "diff_hunk": "@@ -0,0 +1,117 @@\n+import { Logger } from '@nestjs/common/services/logger.service';\n+import {\n+  KAFKA_DEFAULT_BROKER,\n+  KAFKA_DEFAULT_CLIENT,\n+  KAFKA_DEFAULT_GROUP\n+} from '../constants';\n+import {\n+  KafkaConfig,\n+  Kafka,\n+  Consumer,\n+  EachMessagePayload,\n+  logLevel\n+} from '../external/kafka.interface';\n+import { CustomTransportStrategy, KafkaOptions } from '../interfaces';\n+import { Server } from './server';\n+\n+let kafkaPackage: any = {};",
+    "path": "packages/microservices/server/server-kafka.ts",
+    "commit_id": "11625038e851456b709bf77b2e2b6a2cd7f39037",
+    "original_commit_id": "9dd8e46f10aa89a025b9fb7f2ed6d20c53790291",
+    "user": {
+      "login": "BrunnerLivio",
+      "id": 9899423,
+      "node_id": "MDQ6VXNlcjk4OTk0MjM=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9899423?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/BrunnerLivio",
+      "html_url": "https://github.com/BrunnerLivio",
+      "followers_url": "https://api.github.com/users/BrunnerLivio/followers",
+      "following_url": "https://api.github.com/users/BrunnerLivio/following{/other_user}",
+      "gists_url": "https://api.github.com/users/BrunnerLivio/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/BrunnerLivio/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/BrunnerLivio/subscriptions",
+      "organizations_url": "https://api.github.com/users/BrunnerLivio/orgs",
+      "repos_url": "https://api.github.com/users/BrunnerLivio/repos",
+      "events_url": "https://api.github.com/users/BrunnerLivio/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/BrunnerLivio/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Alright. I think lets keep it in this PR as the other strategies, but challenge this in an additional PR. :)",
+    "created_at": "2019-08-14T06:54:24Z",
+    "updated_at": "2019-08-28T16:38:06Z",
+    "html_url": "https://github.com/nestjs/nest/pull/2735#discussion_r313727269",
+    "pull_request_url": "https://api.github.com/repos/nestjs/nest/pulls/2735",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/comments/313727269"
+      },
+      "html": {
+        "href": "https://github.com/nestjs/nest/pull/2735#discussion_r313727269"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/nestjs/nest/pulls/2735"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/nestjs/nest/pulls/comments/313727269/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 26,
+    "original_line": 17,
+    "side": "RIGHT",
+    "in_reply_to_id": 313400845,
+    "author_association": "MEMBER",
+    "original_position": 17,
+    "position": 26,
+    "subject_type": "line"
+  }
+]

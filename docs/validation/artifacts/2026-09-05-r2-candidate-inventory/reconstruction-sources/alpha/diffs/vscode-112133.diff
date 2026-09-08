@@ -1,0 +1,12 @@
+diff --git a/src/vs/workbench/services/hover/browser/hoverWidget.ts b/src/vs/workbench/services/hover/browser/hoverWidget.ts
+index a7fba5f9a7656b88243262443b3ad611092fe3f3..fe21b0cc7422f8d3866f210495d70932c1865a97 100644
+--- a/src/vs/workbench/services/hover/browser/hoverWidget.ts
++++ b/src/vs/workbench/services/hover/browser/hoverWidget.ts
+@@ -83,6 +83,7 @@ export class HoverWidget extends Widget {
+ 		const contentsElement = $('div.hover-contents');
+ 		if (typeof options.text === 'string') {
+ 			contentsElement.textContent = options.text;
++			contentsElement.style.whiteSpace = 'pre-wrap';
+ 		} else {
+ 			const markdown = options.text;
+ 			const mdRenderer = this._instantiationService.createInstance(

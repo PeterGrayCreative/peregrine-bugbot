@@ -1,0 +1,52 @@
+[
+    {
+        "Name": "peregrine-read-mcp-probe-20260907-v1",
+        "Id": "02d24cb8eb77ed07174602bcfdf53d5b9eec75f84580d013b6eab8943b76e4f6",
+        "Created": "2026-09-07T16:59:13.157897419Z",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv4": true,
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "172.18.0.0/16",
+                    "Gateway": "172.18.0.1"
+                }
+            ]
+        },
+        "Internal": true,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Options": {
+            "com.docker.network.enable_ipv4": "true",
+            "com.docker.network.enable_ipv6": "false"
+        },
+        "Labels": {},
+        "Containers": {
+            "8239c66b705b874d1a079e6206b57188fcdf83cd2e7d08694e649bc98ec4b8ab": {
+                "Name": "peregrine-read-mcp-server-20260907-v1",
+                "EndpointID": "b7fbfd60b5fb9a5865039f7c3f3fd4cae241137e4ccabbdc6d4d86ef6c03e067",
+                "MacAddress": "aa:d0:16:de:79:61",
+                "IPv4Address": "172.18.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Status": {
+            "IPAM": {
+                "Subnets": {
+                    "172.18.0.0/16": {
+                        "IPsInUse": 4,
+                        "DynamicIPsAvailable": 65532
+                    }
+                }
+            }
+        }
+    }
+]

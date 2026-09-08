@@ -27,6 +27,7 @@ import type {
 } from "../src/types.js";
 import { exec } from "../src/util/exec.js";
 import { parseGroundTruth } from "./case-truth.js";
+import { HISTORICAL_EFFICACY_PROTOCOL, parseHistoricalGroundTruth } from "./historical-truth.js";
 
 const OPAQUE_CASE_ID = /^case-[a-f0-9]{8,32}$/;
 const COMMIT_OID = /^(?:[a-f0-9]{40}|[a-f0-9]{64})$/;
@@ -96,8 +97,17 @@ export function leakagePolicyForCase(caseDir: string, spec: CaseSpec): LeakagePo
   } catch (error) {
     throw new Error(`ground truth must be valid JSON: ${error instanceof Error ? error.message : String(error)}`);
   }
-  parseGroundTruth(value);
   const forbiddenTerms: string[] = [];
+  // Opt-in truth is parsed without projecting away partial scope. Scheduling
+  // remains separately disabled until all historical consumers are integrated.
+  if (spec.kind === "historical" && spec.evaluationProtocol === HISTORICAL_EFFICACY_PROTOCOL) {
+    const truth = parseHistoricalGroundTruth(value);
+    // These curator-authored annotations are answer-bearing even when too
+    // short for the legacy generic prose heuristic.
+    forbiddenTerms.push(truth.scope.reviewedScope, ...truth.bugs.map((bug) => bug.mechanismFamily));
+  } else {
+    parseGroundTruth(value);
+  }
   collectAnswerTerms(value, forbiddenTerms);
   return {
     caseId: spec.id,

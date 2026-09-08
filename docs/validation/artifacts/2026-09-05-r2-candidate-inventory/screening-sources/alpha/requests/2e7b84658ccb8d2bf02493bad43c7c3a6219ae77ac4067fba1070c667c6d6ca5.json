@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/microsoft/vscode/issues/75617/events",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:49:47.354Z",
+  "sourceUrl": "https://api.github.com/repos/microsoft/vscode/issues/75617/events?page=1&per_page=100",
+  "sha256": "d9d18b958e759d125c26fdb548b8b36f70295ee03f2078af2421eecbf0519ab1",
+  "bytes": 14707
+}

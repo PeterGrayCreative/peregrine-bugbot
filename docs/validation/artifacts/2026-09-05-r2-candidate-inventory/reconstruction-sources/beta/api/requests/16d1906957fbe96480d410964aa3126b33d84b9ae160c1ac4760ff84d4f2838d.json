@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/vercel/next.js/pulls/16126",
+    "parameters": {}
+  },
+  "retrievedAt": "2026-09-05T13:08:22.924Z",
+  "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/16126?",
+  "sha256": "057aecb3073d9004036d1389cacfc53355d7fca7c14e29f08dd015ffb20b0725",
+  "bytes": 18484
+}

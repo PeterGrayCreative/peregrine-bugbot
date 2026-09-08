@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "search/issues",
+    "parameters": {
+      "order": "asc",
+      "page": 1,
+      "per_page": 100,
+      "q": "repo:OptimalBits/bull is:issue is:closed created:2017-01-01..2020-12-31 regression in:title",
+      "sort": "created"
+    }
+  },
+  "retrievedAt": "2026-09-05T12:52:13.240Z",
+  "sourceUrl": "https://api.github.com/search/issues?order=asc&page=1&per_page=100&q=repo%3AOptimalBits%2Fbull+is%3Aissue+is%3Aclosed+created%3A2017-01-01..2020-12-31+regression+in%3Atitle&sort=created",
+  "sha256": "c9938edecb99d754b2d039ac9eec320a94c769b6a6417921e2dcbef9e2fe01a0",
+  "bytes": 79
+}

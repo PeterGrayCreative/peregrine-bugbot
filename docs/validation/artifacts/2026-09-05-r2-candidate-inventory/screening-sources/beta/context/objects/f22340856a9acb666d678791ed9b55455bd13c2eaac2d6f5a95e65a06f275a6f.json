@@ -1,0 +1,1740 @@
+[
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/447921195",
+    "pull_request_review_id": 440312892,
+    "id": 447921195,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ0NzkyMTE5NQ==",
+    "diff_hunk": "@@ -246,7 +263,13 @@ export default async function exportPage({\n         html = components.Component\n         queryWithAutoExportWarn()\n       } else {\n-        curRenderOpts = { ...components, ...renderOpts, ampPath, params }\n+        curRenderOpts = {\n+          ...components,\n+          ...renderOpts,\n+          ampPath,\n+          params,\n+          getFontDefinition,\n+        }\n         // @ts-ignore\n         html = await renderMethod(req, res, page, query, curRenderOpts)",
+    "path": "packages/next/export/worker.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "2f45a7b5aaa6d316a4245d757f0d5e9d6f3cfd1c",
+    "user": {
+      "login": "prateekbh",
+      "id": 5960497,
+      "node_id": "MDQ6VXNlcjU5NjA0OTc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5960497?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/prateekbh",
+      "html_url": "https://github.com/prateekbh",
+      "followers_url": "https://api.github.com/users/prateekbh/followers",
+      "following_url": "https://api.github.com/users/prateekbh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/prateekbh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/prateekbh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/prateekbh/subscriptions",
+      "organizations_url": "https://api.github.com/users/prateekbh/orgs",
+      "repos_url": "https://api.github.com/users/prateekbh/repos",
+      "events_url": "https://api.github.com/users/prateekbh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/prateekbh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This flow here works fine here 👍 ",
+    "created_at": "2020-06-30T19:15:29Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r447921195",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/447921195"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r447921195"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/447921195/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 282,
+    "original_line": 274,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 60,
+    "position": 75,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/447921567",
+    "pull_request_review_id": 440313400,
+    "id": 447921567,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ0NzkyMTU2Nw==",
+    "diff_hunk": "@@ -401,7 +402,18 @@ const nextServerlessLoader: loader.Loader = function () {\n         // make sure to set renderOpts to the correct params e.g. _params\n         // if provided from worker or params if we're parsing them here\n         renderOpts.params = _params || params\n+        renderOpts.getFontDefinition = (fontURL) => {\n+          console.log('will dist dirrrr', \"${distDir}\", \"${canonicalBase}\", \"${basePath}\");\n+          const manifest = requireFontManifest(\"${distDir}\", true)",
+    "path": "packages/next/build/webpack/loaders/next-serverless-loader.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "2f45a7b5aaa6d316a4245d757f0d5e9d6f3cfd1c",
+    "user": {
+      "login": "prateekbh",
+      "id": 5960497,
+      "node_id": "MDQ6VXNlcjU5NjA0OTc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5960497?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/prateekbh",
+      "html_url": "https://github.com/prateekbh",
+      "followers_url": "https://api.github.com/users/prateekbh/followers",
+      "following_url": "https://api.github.com/users/prateekbh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/prateekbh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/prateekbh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/prateekbh/subscriptions",
+      "organizations_url": "https://api.github.com/users/prateekbh/orgs",
+      "repos_url": "https://api.github.com/users/prateekbh/repos",
+      "events_url": "https://api.github.com/users/prateekbh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/prateekbh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "problem is that `distDir` comes `private-dot-next` not sure how to require the manifest when in here.",
+    "created_at": "2020-06-30T19:16:19Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r447921567",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/447921567"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r447921567"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/447921567/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 407,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 14,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/447972250",
+    "pull_request_review_id": 440377590,
+    "id": 447972250,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ0Nzk3MjI1MA==",
+    "diff_hunk": "@@ -401,7 +402,18 @@ const nextServerlessLoader: loader.Loader = function () {\n         // make sure to set renderOpts to the correct params e.g. _params\n         // if provided from worker or params if we're parsing them here\n         renderOpts.params = _params || params\n+        renderOpts.getFontDefinition = (fontURL) => {\n+          console.log('will dist dirrrr', \"${distDir}\", \"${canonicalBase}\", \"${basePath}\");\n+          const manifest = requireFontManifest(\"${distDir}\", true)",
+    "path": "packages/next/build/webpack/loaders/next-serverless-loader.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "2f45a7b5aaa6d316a4245d757f0d5e9d6f3cfd1c",
+    "user": {
+      "login": "prateekbh",
+      "id": 5960497,
+      "node_id": "MDQ6VXNlcjU5NjA0OTc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5960497?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/prateekbh",
+      "html_url": "https://github.com/prateekbh",
+      "followers_url": "https://api.github.com/users/prateekbh/followers",
+      "following_url": "https://api.github.com/users/prateekbh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/prateekbh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/prateekbh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/prateekbh/subscriptions",
+      "organizations_url": "https://api.github.com/users/prateekbh/orgs",
+      "repos_url": "https://api.github.com/users/prateekbh/repos",
+      "events_url": "https://api.github.com/users/prateekbh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/prateekbh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This comes down to basically an error `private-dot-next/serverless/font-manifest.json` NOT FOUND.\r\nwhat is `private-dot-next`?",
+    "created_at": "2020-06-30T20:53:43Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r447972250",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/447972250"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r447972250"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/447972250/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 407,
+    "side": "RIGHT",
+    "in_reply_to_id": 447921567,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 14,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/450804804",
+    "pull_request_review_id": 443813603,
+    "id": 450804804,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MDgwNDgwNA==",
+    "diff_hunk": "@@ -0,0 +1,121 @@\n+// eslint-disable-next-line import/no-extraneous-dependencies\n+import { NodePath } from 'ast-types/lib/node-path'\n+import { visit } from 'next/dist/compiled/recast'\n+import { compilation as CompilationType, Compiler } from 'webpack'\n+import { namedTypes } from 'ast-types'\n+import { RawSource } from 'webpack-sources'\n+import {\n+  getFontDefinitionFromNetwork,\n+  FontManifest,\n+} from '../../../next-server/server/font-utils'\n+\n+interface VisitorMap {\n+  [key: string]: (path: NodePath) => void\n+}\n+\n+export default class FontStylesheetGatheringPlugin {\n+  compiler?: Compiler\n+  gatheredStylesheets: Array<string> = []\n+\n+  private parserHandler = (\n+    factory: CompilationType.NormalModuleFactory\n+  ): void => {\n+    const JS_TYPES = ['auto', 'esm', 'dynamic']\n+    // Do an extra walk per module and add interested visitors to the walk.\n+    for (const type of JS_TYPES) {\n+      factory.hooks.parser\n+        .for('javascript/' + type)\n+        .tap(this.constructor.name, (parser) => {\n+          var that = this\n+          parser.hooks.program.tap(this.constructor.name, (ast: any) => {\n+            // We will only optimize fonts from first party code.\n+            if (parser?.state?.module?.resource.includes('node_modules')) {\n+              return\n+            }\n+            visit(ast, {\n+              visitCallExpression: function (path) {",
+    "path": "packages/next/build/webpack/plugins/font-stylesheet-gathering-plugin.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "3eaade22a960544fbb22026cf770905ea69df1cc",
+    "user": {
+      "login": "timneutkens",
+      "id": 6324199,
+      "node_id": "MDQ6VXNlcjYzMjQxOTk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6324199?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/timneutkens",
+      "html_url": "https://github.com/timneutkens",
+      "followers_url": "https://api.github.com/users/timneutkens/followers",
+      "following_url": "https://api.github.com/users/timneutkens/following{/other_user}",
+      "gists_url": "https://api.github.com/users/timneutkens/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/timneutkens/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/timneutkens/subscriptions",
+      "organizations_url": "https://api.github.com/users/timneutkens/orgs",
+      "repos_url": "https://api.github.com/users/timneutkens/repos",
+      "events_url": "https://api.github.com/users/timneutkens/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/timneutkens/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I believe you can tap into the callExpression directly instead of manually traversing the AST:\r\nhttps://github.com/webpack/webpack/blob/master/lib/javascript/JavascriptParser.js#L236-L260\r\n",
+    "created_at": "2020-07-07T11:48:30Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r450804804",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/450804804"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r450804804"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/450804804/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 36,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 36,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/450805766",
+    "pull_request_review_id": 443814886,
+    "id": 450805766,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MDgwNTc2Ng==",
+    "diff_hunk": "@@ -9,6 +9,7 @@ export const EXPORT_DETAIL = 'export-detail.json'\n export const PRERENDER_MANIFEST = 'prerender-manifest.json'\n export const ROUTES_MANIFEST = 'routes-manifest.json'\n export const REACT_LOADABLE_MANIFEST = 'react-loadable-manifest.json'\n+export const FONT_MANIFEST = 'font-manifest.json'",
+    "path": "packages/next/next-server/lib/constants.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "3eaade22a960544fbb22026cf770905ea69df1cc",
+    "user": {
+      "login": "timneutkens",
+      "id": 6324199,
+      "node_id": "MDQ6VXNlcjYzMjQxOTk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6324199?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/timneutkens",
+      "html_url": "https://github.com/timneutkens",
+      "followers_url": "https://api.github.com/users/timneutkens/followers",
+      "following_url": "https://api.github.com/users/timneutkens/following{/other_user}",
+      "gists_url": "https://api.github.com/users/timneutkens/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/timneutkens/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/timneutkens/subscriptions",
+      "organizations_url": "https://api.github.com/users/timneutkens/orgs",
+      "repos_url": "https://api.github.com/users/timneutkens/repos",
+      "events_url": "https://api.github.com/users/timneutkens/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/timneutkens/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Instead of adding a new manifest it'd easier to reuse the build-manifest I think 🤔 ",
+    "created_at": "2020-07-07T11:50:32Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r450805766",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/450805766"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r450805766"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/450805766/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 12,
+    "original_line": 12,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 4,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451045558",
+    "pull_request_review_id": 444125734,
+    "id": 451045558,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MTA0NTU1OA==",
+    "diff_hunk": "@@ -9,6 +9,7 @@ export const EXPORT_DETAIL = 'export-detail.json'\n export const PRERENDER_MANIFEST = 'prerender-manifest.json'\n export const ROUTES_MANIFEST = 'routes-manifest.json'\n export const REACT_LOADABLE_MANIFEST = 'react-loadable-manifest.json'\n+export const FONT_MANIFEST = 'font-manifest.json'",
+    "path": "packages/next/next-server/lib/constants.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "3eaade22a960544fbb22026cf770905ea69df1cc",
+    "user": {
+      "login": "prateekbh",
+      "id": 5960497,
+      "node_id": "MDQ6VXNlcjU5NjA0OTc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5960497?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/prateekbh",
+      "html_url": "https://github.com/prateekbh",
+      "followers_url": "https://api.github.com/users/prateekbh/followers",
+      "following_url": "https://api.github.com/users/prateekbh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/prateekbh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/prateekbh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/prateekbh/subscriptions",
+      "organizations_url": "https://api.github.com/users/prateekbh/orgs",
+      "repos_url": "https://api.github.com/users/prateekbh/repos",
+      "events_url": "https://api.github.com/users/prateekbh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/prateekbh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "May be, however I am afraid that by writing `build-manifest` from multiple plugins they might overwrite each other? ",
+    "created_at": "2020-07-07T17:58:18Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r451045558",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/451045558"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r451045558"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451045558/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 12,
+    "original_line": 12,
+    "side": "RIGHT",
+    "in_reply_to_id": 450805766,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 4,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451123997",
+    "pull_request_review_id": 444225658,
+    "id": 451123997,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MTEyMzk5Nw==",
+    "diff_hunk": "@@ -0,0 +1,121 @@\n+// eslint-disable-next-line import/no-extraneous-dependencies\n+import { NodePath } from 'ast-types/lib/node-path'\n+import { visit } from 'next/dist/compiled/recast'\n+import { compilation as CompilationType, Compiler } from 'webpack'\n+import { namedTypes } from 'ast-types'\n+import { RawSource } from 'webpack-sources'\n+import {\n+  getFontDefinitionFromNetwork,\n+  FontManifest,\n+} from '../../../next-server/server/font-utils'\n+\n+interface VisitorMap {\n+  [key: string]: (path: NodePath) => void\n+}\n+\n+export default class FontStylesheetGatheringPlugin {\n+  compiler?: Compiler\n+  gatheredStylesheets: Array<string> = []\n+\n+  private parserHandler = (\n+    factory: CompilationType.NormalModuleFactory\n+  ): void => {\n+    const JS_TYPES = ['auto', 'esm', 'dynamic']\n+    // Do an extra walk per module and add interested visitors to the walk.\n+    for (const type of JS_TYPES) {\n+      factory.hooks.parser\n+        .for('javascript/' + type)\n+        .tap(this.constructor.name, (parser) => {\n+          var that = this\n+          parser.hooks.program.tap(this.constructor.name, (ast: any) => {\n+            // We will only optimize fonts from first party code.\n+            if (parser?.state?.module?.resource.includes('node_modules')) {\n+              return\n+            }\n+            visit(ast, {\n+              visitCallExpression: function (path) {",
+    "path": "packages/next/build/webpack/plugins/font-stylesheet-gathering-plugin.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "3eaade22a960544fbb22026cf770905ea69df1cc",
+    "user": {
+      "login": "prateekbh",
+      "id": 5960497,
+      "node_id": "MDQ6VXNlcjU5NjA0OTc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5960497?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/prateekbh",
+      "html_url": "https://github.com/prateekbh",
+      "followers_url": "https://api.github.com/users/prateekbh/followers",
+      "following_url": "https://api.github.com/users/prateekbh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/prateekbh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/prateekbh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/prateekbh/subscriptions",
+      "organizations_url": "https://api.github.com/users/prateekbh/orgs",
+      "repos_url": "https://api.github.com/users/prateekbh/repos",
+      "events_url": "https://api.github.com/users/prateekbh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/prateekbh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I agree. This might also let us remove the logic from both `next/head` as we could just make the link tags inert here itself.\r\nBut I could never get this to work hence added `recast` at the time of conformance work.\r\nFWIW, this is the code i tried\r\n```js\r\nparser.hooks.expression(or call).for('__jsx').tap('FontStylesheetGatheringPlugin', expression => {\r\n console.log(parser.state.module.resource)\r\n})\r\n```\r\n^ would let us capture the call creating the link tag",
+    "created_at": "2020-07-07T20:28:18Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r451123997",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/451123997"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r451123997"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451123997/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 36,
+    "side": "RIGHT",
+    "in_reply_to_id": 450804804,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 36,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451182622",
+    "pull_request_review_id": 444297222,
+    "id": 451182622,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MTE4MjYyMg==",
+    "diff_hunk": "@@ -0,0 +1,121 @@\n+// eslint-disable-next-line import/no-extraneous-dependencies\n+import { NodePath } from 'ast-types/lib/node-path'\n+import { visit } from 'next/dist/compiled/recast'\n+import { compilation as CompilationType, Compiler } from 'webpack'\n+import { namedTypes } from 'ast-types'\n+import { RawSource } from 'webpack-sources'\n+import {\n+  getFontDefinitionFromNetwork,\n+  FontManifest,\n+} from '../../../next-server/server/font-utils'\n+\n+interface VisitorMap {\n+  [key: string]: (path: NodePath) => void\n+}\n+\n+export default class FontStylesheetGatheringPlugin {\n+  compiler?: Compiler\n+  gatheredStylesheets: Array<string> = []\n+\n+  private parserHandler = (\n+    factory: CompilationType.NormalModuleFactory\n+  ): void => {\n+    const JS_TYPES = ['auto', 'esm', 'dynamic']\n+    // Do an extra walk per module and add interested visitors to the walk.\n+    for (const type of JS_TYPES) {\n+      factory.hooks.parser\n+        .for('javascript/' + type)\n+        .tap(this.constructor.name, (parser) => {\n+          var that = this\n+          parser.hooks.program.tap(this.constructor.name, (ast: any) => {\n+            // We will only optimize fonts from first party code.\n+            if (parser?.state?.module?.resource.includes('node_modules')) {\n+              return\n+            }\n+            visit(ast, {\n+              visitCallExpression: function (path) {",
+    "path": "packages/next/build/webpack/plugins/font-stylesheet-gathering-plugin.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "3eaade22a960544fbb22026cf770905ea69df1cc",
+    "user": {
+      "login": "prateekbh",
+      "id": 5960497,
+      "node_id": "MDQ6VXNlcjU5NjA0OTc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5960497?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/prateekbh",
+      "html_url": "https://github.com/prateekbh",
+      "followers_url": "https://api.github.com/users/prateekbh/followers",
+      "following_url": "https://api.github.com/users/prateekbh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/prateekbh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/prateekbh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/prateekbh/subscriptions",
+      "organizations_url": "https://api.github.com/users/prateekbh/orgs",
+      "repos_url": "https://api.github.com/users/prateekbh/repos",
+      "events_url": "https://api.github.com/users/prateekbh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/prateekbh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Update:https://twitter.com/_prateekbh/status/1280603310211215361\r\nDone 👍🏻\r\nits not the most readable/straightforward thing, but it'll definitely be faster",
+    "created_at": "2020-07-07T22:37:10Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r451182622",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/451182622"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r451182622"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451182622/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 36,
+    "side": "RIGHT",
+    "in_reply_to_id": 450804804,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 36,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451737355",
+    "pull_request_review_id": 445016554,
+    "id": 451737355,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MTczNzM1NQ==",
+    "diff_hunk": "@@ -0,0 +1,136 @@\n+// eslint-disable-next-line import/no-extraneous-dependencies\n+import { NodePath } from 'ast-types/lib/node-path'\n+import { compilation as CompilationType, Compiler } from 'webpack'\n+import { namedTypes } from 'ast-types'\n+import { RawSource } from 'webpack-sources'\n+import {\n+  getFontDefinitionFromNetwork,\n+  FontManifest,\n+} from '../../../next-server/server/font-utils'\n+// @ts-ignore\n+import BasicEvaluatedExpression from 'webpack/lib/BasicEvaluatedExpression'\n+import { OPTIMIZED_FONT_PROVIDERS } from '../../../next-server/lib/constants'\n+\n+interface VisitorMap {\n+  [key: string]: (path: NodePath) => void\n+}\n+\n+export default class FontStylesheetGatheringPlugin {\n+  compiler?: Compiler\n+  gatheredStylesheets: Array<string> = []\n+\n+  private parserHandler = (\n+    factory: CompilationType.NormalModuleFactory\n+  ): void => {\n+    const JS_TYPES = ['auto', 'esm', 'dynamic']\n+    // Do an extra walk per module and add interested visitors to the walk.\n+    for (const type of JS_TYPES) {\n+      factory.hooks.parser\n+        .for('javascript/' + type)\n+        .tap(this.constructor.name, (parser) => {\n+          /**\n+           * Webpack fun facts:\n+           * `parser.hooks.call.for` cannot catch calls for user defined identifiers like `__jsx`\n+           * it can only detect calls for native objects like `window`, `this`, `eval` etc.\n+           * In order to be able to catch calls of variables like `__jsx`, first we need to catch them as\n+           * Identifier and then return `BasicEvaluatedExpression` whose `id` and `type` webpack matches to\n+           * invoke hook for call.\n+           * See: https://github.com/webpack/webpack/blob/webpack-4/lib/Parser.js#L1931-L1932.\n+           */\n+          parser.hooks.evaluate\n+            .for('Identifier')\n+            .tap(this.constructor.name, (node: namedTypes.Identifier) => {\n+              return node.name === '__jsx'\n+                ? new BasicEvaluatedExpression()\n+                    //@ts-ignore\n+                    .setRange(node.range)\n+                    .setExpression(node)\n+                    .setIdentifier('__jsx')\n+                : undefined\n+            })\n+\n+          parser.hooks.call\n+            .for('__jsx')\n+            .tap(this.constructor.name, (node: namedTypes.CallExpression) => {\n+              // We will only optimize fonts from first party code.\n+              if (parser?.state?.module?.resource.includes('node_modules')) {",
+    "path": "packages/next/build/webpack/plugins/font-stylesheet-gathering-plugin.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "cf4d9d1846b9e2a0534d1d436323ad616ff54ccd",
+    "user": {
+      "login": "atcastle",
+      "id": 8526945,
+      "node_id": "MDQ6VXNlcjg1MjY5NDU=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8526945?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/atcastle",
+      "html_url": "https://github.com/atcastle",
+      "followers_url": "https://api.github.com/users/atcastle/followers",
+      "following_url": "https://api.github.com/users/atcastle/following{/other_user}",
+      "gists_url": "https://api.github.com/users/atcastle/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/atcastle/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/atcastle/subscriptions",
+      "organizations_url": "https://api.github.com/users/atcastle/orgs",
+      "repos_url": "https://api.github.com/users/atcastle/repos",
+      "events_url": "https://api.github.com/users/atcastle/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/atcastle/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Would it be a little faster if we did this bail out up in hooks.evaluate instead? ",
+    "created_at": "2020-07-08T18:15:12Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r451737355",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/451737355"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r451737355"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451737355/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 56,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 56,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451744165",
+    "pull_request_review_id": 445016554,
+    "id": 451744165,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MTc0NDE2NQ==",
+    "diff_hunk": "@@ -0,0 +1,136 @@\n+// eslint-disable-next-line import/no-extraneous-dependencies\n+import { NodePath } from 'ast-types/lib/node-path'\n+import { compilation as CompilationType, Compiler } from 'webpack'\n+import { namedTypes } from 'ast-types'\n+import { RawSource } from 'webpack-sources'\n+import {\n+  getFontDefinitionFromNetwork,\n+  FontManifest,\n+} from '../../../next-server/server/font-utils'\n+// @ts-ignore\n+import BasicEvaluatedExpression from 'webpack/lib/BasicEvaluatedExpression'\n+import { OPTIMIZED_FONT_PROVIDERS } from '../../../next-server/lib/constants'\n+\n+interface VisitorMap {\n+  [key: string]: (path: NodePath) => void\n+}\n+\n+export default class FontStylesheetGatheringPlugin {\n+  compiler?: Compiler\n+  gatheredStylesheets: Array<string> = []\n+\n+  private parserHandler = (\n+    factory: CompilationType.NormalModuleFactory\n+  ): void => {\n+    const JS_TYPES = ['auto', 'esm', 'dynamic']\n+    // Do an extra walk per module and add interested visitors to the walk.\n+    for (const type of JS_TYPES) {\n+      factory.hooks.parser\n+        .for('javascript/' + type)\n+        .tap(this.constructor.name, (parser) => {\n+          /**\n+           * Webpack fun facts:\n+           * `parser.hooks.call.for` cannot catch calls for user defined identifiers like `__jsx`\n+           * it can only detect calls for native objects like `window`, `this`, `eval` etc.\n+           * In order to be able to catch calls of variables like `__jsx`, first we need to catch them as\n+           * Identifier and then return `BasicEvaluatedExpression` whose `id` and `type` webpack matches to\n+           * invoke hook for call.\n+           * See: https://github.com/webpack/webpack/blob/webpack-4/lib/Parser.js#L1931-L1932.\n+           */\n+          parser.hooks.evaluate\n+            .for('Identifier')\n+            .tap(this.constructor.name, (node: namedTypes.Identifier) => {\n+              return node.name === '__jsx'\n+                ? new BasicEvaluatedExpression()\n+                    //@ts-ignore\n+                    .setRange(node.range)\n+                    .setExpression(node)\n+                    .setIdentifier('__jsx')\n+                : undefined\n+            })\n+\n+          parser.hooks.call\n+            .for('__jsx')\n+            .tap(this.constructor.name, (node: namedTypes.CallExpression) => {\n+              // We will only optimize fonts from first party code.\n+              if (parser?.state?.module?.resource.includes('node_modules')) {\n+                return\n+              }\n+              if (node.arguments.length !== 2) {\n+                // A font link tag has only two arguments rel=stylesheet and href='...'\n+                return\n+              }\n+              if (!isNodeCreatingLinkElement(node)) {\n+                return\n+              }\n+\n+              const propsNode = node.arguments[1] as namedTypes.ObjectExpression\n+              const props: {\n+                [key: string]: string\n+              } = propsNode.properties.reduce((originalProps, prop: any) => {",
+    "path": "packages/next/build/webpack/plugins/font-stylesheet-gathering-plugin.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "cf4d9d1846b9e2a0534d1d436323ad616ff54ccd",
+    "user": {
+      "login": "atcastle",
+      "id": 8526945,
+      "node_id": "MDQ6VXNlcjg1MjY5NDU=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8526945?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/atcastle",
+      "html_url": "https://github.com/atcastle",
+      "followers_url": "https://api.github.com/users/atcastle/followers",
+      "following_url": "https://api.github.com/users/atcastle/following{/other_user}",
+      "gists_url": "https://api.github.com/users/atcastle/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/atcastle/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/atcastle/subscriptions",
+      "organizations_url": "https://api.github.com/users/atcastle/orgs",
+      "repos_url": "https://api.github.com/users/atcastle/repos",
+      "events_url": "https://api.github.com/users/atcastle/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/atcastle/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "nit: if this is always making one key in the object per element in properties, forEach might be more semantic/readable than reduce",
+    "created_at": "2020-07-08T18:27:28Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r451744165",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/451744165"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r451744165"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451744165/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 70,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 70,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451757503",
+    "pull_request_review_id": 445016554,
+    "id": 451757503,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MTc1NzUwMw==",
+    "diff_hunk": "@@ -0,0 +1,136 @@\n+// eslint-disable-next-line import/no-extraneous-dependencies\n+import { NodePath } from 'ast-types/lib/node-path'\n+import { compilation as CompilationType, Compiler } from 'webpack'\n+import { namedTypes } from 'ast-types'\n+import { RawSource } from 'webpack-sources'\n+import {\n+  getFontDefinitionFromNetwork,\n+  FontManifest,\n+} from '../../../next-server/server/font-utils'\n+// @ts-ignore\n+import BasicEvaluatedExpression from 'webpack/lib/BasicEvaluatedExpression'\n+import { OPTIMIZED_FONT_PROVIDERS } from '../../../next-server/lib/constants'\n+\n+interface VisitorMap {\n+  [key: string]: (path: NodePath) => void\n+}\n+\n+export default class FontStylesheetGatheringPlugin {\n+  compiler?: Compiler\n+  gatheredStylesheets: Array<string> = []\n+\n+  private parserHandler = (\n+    factory: CompilationType.NormalModuleFactory\n+  ): void => {\n+    const JS_TYPES = ['auto', 'esm', 'dynamic']\n+    // Do an extra walk per module and add interested visitors to the walk.\n+    for (const type of JS_TYPES) {\n+      factory.hooks.parser\n+        .for('javascript/' + type)\n+        .tap(this.constructor.name, (parser) => {\n+          /**\n+           * Webpack fun facts:\n+           * `parser.hooks.call.for` cannot catch calls for user defined identifiers like `__jsx`\n+           * it can only detect calls for native objects like `window`, `this`, `eval` etc.\n+           * In order to be able to catch calls of variables like `__jsx`, first we need to catch them as\n+           * Identifier and then return `BasicEvaluatedExpression` whose `id` and `type` webpack matches to\n+           * invoke hook for call.\n+           * See: https://github.com/webpack/webpack/blob/webpack-4/lib/Parser.js#L1931-L1932.\n+           */\n+          parser.hooks.evaluate\n+            .for('Identifier')\n+            .tap(this.constructor.name, (node: namedTypes.Identifier) => {\n+              return node.name === '__jsx'\n+                ? new BasicEvaluatedExpression()\n+                    //@ts-ignore\n+                    .setRange(node.range)\n+                    .setExpression(node)\n+                    .setIdentifier('__jsx')\n+                : undefined\n+            })\n+\n+          parser.hooks.call\n+            .for('__jsx')\n+            .tap(this.constructor.name, (node: namedTypes.CallExpression) => {\n+              // We will only optimize fonts from first party code.\n+              if (parser?.state?.module?.resource.includes('node_modules')) {\n+                return\n+              }\n+              if (node.arguments.length !== 2) {\n+                // A font link tag has only two arguments rel=stylesheet and href='...'\n+                return\n+              }\n+              if (!isNodeCreatingLinkElement(node)) {\n+                return\n+              }\n+\n+              const propsNode = node.arguments[1] as namedTypes.ObjectExpression\n+              const props: {\n+                [key: string]: string\n+              } = propsNode.properties.reduce((originalProps, prop: any) => {\n+                // todo check the type of prop\n+                // @ts-ignore\n+                originalProps[prop.key.name] = prop.value.value\n+                return originalProps\n+              }, {})\n+              if (\n+                !props.rel ||\n+                props.rel !== 'stylesheet' ||\n+                !props.href ||\n+                !OPTIMIZED_FONT_PROVIDERS.some((url) =>\n+                  props.href.startsWith(url)\n+                )\n+              ) {\n+                return false\n+              }\n+\n+              this.gatheredStylesheets.push(props.href)\n+            })\n+        })\n+    }\n+  }\n+\n+  public apply(compiler: Compiler) {\n+    this.compiler = compiler\n+    compiler.hooks.normalModuleFactory.tap(\n+      this.constructor.name,\n+      this.parserHandler\n+    )\n+    compiler.hooks.make.tapAsync(this.constructor.name, (compilation, cb) => {\n+      compilation.hooks.finishModules.tapAsync(\n+        this.constructor.name,\n+        async (_, modulesFinished) => {\n+          const allContent = this.gatheredStylesheets.map((url) =>",
+    "path": "packages/next/build/webpack/plugins/font-stylesheet-gathering-plugin.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "cf4d9d1846b9e2a0534d1d436323ad616ff54ccd",
+    "user": {
+      "login": "atcastle",
+      "id": 8526945,
+      "node_id": "MDQ6VXNlcjg1MjY5NDU=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8526945?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/atcastle",
+      "html_url": "https://github.com/atcastle",
+      "followers_url": "https://api.github.com/users/atcastle/followers",
+      "following_url": "https://api.github.com/users/atcastle/following{/other_user}",
+      "gists_url": "https://api.github.com/users/atcastle/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/atcastle/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/atcastle/subscriptions",
+      "organizations_url": "https://api.github.com/users/atcastle/orgs",
+      "repos_url": "https://api.github.com/users/atcastle/repos",
+      "events_url": "https://api.github.com/users/atcastle/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/atcastle/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "readability nit: allContent isn't very descriptive here. `fontDefPromises` or something might be better",
+    "created_at": "2020-07-08T18:51:50Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r451757503",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/451757503"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r451757503"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451757503/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 103,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 103,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451759378",
+    "pull_request_review_id": 445016554,
+    "id": 451759378,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MTc1OTM3OA==",
+    "diff_hunk": "@@ -34,3 +35,4 @@ export const TEMPORARY_REDIRECT_STATUS = 307\n export const PERMANENT_REDIRECT_STATUS = 308\n export const STATIC_PROPS_ID = '__N_SSG'\n export const SERVER_PROPS_ID = '__N_SSP'\n+export const OPTIMIZED_FONT_PROVIDERS = ['https://fonts.googleapis.com/css']",
+    "path": "packages/next/next-server/lib/constants.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "cf4d9d1846b9e2a0534d1d436323ad616ff54ccd",
+    "user": {
+      "login": "atcastle",
+      "id": 8526945,
+      "node_id": "MDQ6VXNlcjg1MjY5NDU=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8526945?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/atcastle",
+      "html_url": "https://github.com/atcastle",
+      "followers_url": "https://api.github.com/users/atcastle/followers",
+      "following_url": "https://api.github.com/users/atcastle/following{/other_user}",
+      "gists_url": "https://api.github.com/users/atcastle/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/atcastle/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/atcastle/subscriptions",
+      "organizations_url": "https://api.github.com/users/atcastle/orgs",
+      "repos_url": "https://api.github.com/users/atcastle/repos",
+      "events_url": "https://api.github.com/users/atcastle/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/atcastle/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Do we expect to add more optimized font providers?",
+    "created_at": "2020-07-08T18:55:31Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r451759378",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/451759378"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r451759378"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451759378/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 37,
+    "original_line": 38,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 12,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451764720",
+    "pull_request_review_id": 445016554,
+    "id": 451764720,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MTc2NDcyMA==",
+    "diff_hunk": "@@ -0,0 +1,42 @@\n+const https = require('https')\n+\n+export type FontManifest = Array<{\n+  url: string\n+  content: string\n+}>\n+\n+export function getFontDefinitionFromNetwork(url: string): Promise<string> {\n+  return new Promise((resolve) => {\n+    let rawData: any = ''\n+    https.get(\n+      url,\n+      {\n+        headers: {\n+          'user-agent':\n+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.61 Safari/537.36',\n+        },\n+      },\n+      (res: any) => {\n+        res.on('data', (chunk: any) => {\n+          rawData += chunk\n+        })\n+        res.on('end', () => {\n+          resolve(rawData.toString('utf8'))\n+        })\n+      }\n+    )\n+  })\n+}\n+\n+export function getFontDefinitionFromManifest(\n+  url: string,\n+  manifest: FontManifest\n+): string {\n+  let fontContent = ''\n+  manifest.forEach((font: any) => {\n+    if (font && font.url === url) {\n+      fontContent = font.content",
+    "path": "packages/next/next-server/server/font-utils.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "cf4d9d1846b9e2a0534d1d436323ad616ff54ccd",
+    "user": {
+      "login": "atcastle",
+      "id": 8526945,
+      "node_id": "MDQ6VXNlcjg1MjY5NDU=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8526945?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/atcastle",
+      "html_url": "https://github.com/atcastle",
+      "followers_url": "https://api.github.com/users/atcastle/followers",
+      "following_url": "https://api.github.com/users/atcastle/following{/other_user}",
+      "gists_url": "https://api.github.com/users/atcastle/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/atcastle/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/atcastle/subscriptions",
+      "organizations_url": "https://api.github.com/users/atcastle/orgs",
+      "repos_url": "https://api.github.com/users/atcastle/repos",
+      "events_url": "https://api.github.com/users/atcastle/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/atcastle/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "readability nit: are we expecting `fontContent` to potentially be overwritten multiple times here? if not, `.find` would be more readable. If so, a comment explaining why that's the case could help",
+    "created_at": "2020-07-08T19:05:31Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r451764720",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/451764720"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r451764720"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451764720/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 38,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 38,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451767003",
+    "pull_request_review_id": 445016554,
+    "id": 451767003,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MTc2NzAwMw==",
+    "diff_hunk": "@@ -220,6 +227,16 @@ export default class Server {\n       ),\n       flushToDisk: this.nextConfig.experimental.sprFlushToDisk,\n     })\n+\n+    /**\n+     * This sets environment variable to be used at the time of SSR by head.tsx.\n+     * Using this from process.env allows targetting both serverless and SSR by calling\n+     * `process.env.__NEXT_OPTIMIZE_FONTS`.\n+     * TODO(prateekbh@): Remove this when experimental.optimizeFonts are being clened up.\n+     */\n+    if (this.renderOpts.optimizeFonts) {\n+      process.env.__NEXT_OPTIMIZE_FONTS = JSON.stringify(true)",
+    "path": "packages/next/next-server/server/next-server.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "cf4d9d1846b9e2a0534d1d436323ad616ff54ccd",
+    "user": {
+      "login": "atcastle",
+      "id": 8526945,
+      "node_id": "MDQ6VXNlcjg1MjY5NDU=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8526945?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/atcastle",
+      "html_url": "https://github.com/atcastle",
+      "followers_url": "https://api.github.com/users/atcastle/followers",
+      "following_url": "https://api.github.com/users/atcastle/following{/other_user}",
+      "gists_url": "https://api.github.com/users/atcastle/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/atcastle/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/atcastle/subscriptions",
+      "organizations_url": "https://api.github.com/users/atcastle/orgs",
+      "repos_url": "https://api.github.com/users/atcastle/repos",
+      "events_url": "https://api.github.com/users/atcastle/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/atcastle/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "@Timer @timneutkens Does it make sense to automatically add everything in config.experimental to process.env? might help avoid some missed cleanups later on.",
+    "created_at": "2020-07-08T19:09:57Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r451767003",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/451767003"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r451767003"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451767003/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 237,
+    "original_line": 238,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 49,
+    "position": 49,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451774171",
+    "pull_request_review_id": 445016554,
+    "id": 451774171,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MTc3NDE3MQ==",
+    "diff_hunk": "@@ -236,6 +239,22 @@ export class Head extends Component<\n         ))\n   }\n \n+  makeStylesheetInert(node: ReactNode): ReactNode {",
+    "path": "packages/next/pages/_document.tsx",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "cf4d9d1846b9e2a0534d1d436323ad616ff54ccd",
+    "user": {
+      "login": "atcastle",
+      "id": 8526945,
+      "node_id": "MDQ6VXNlcjg1MjY5NDU=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/8526945?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/atcastle",
+      "html_url": "https://github.com/atcastle",
+      "followers_url": "https://api.github.com/users/atcastle/followers",
+      "following_url": "https://api.github.com/users/atcastle/following{/other_user}",
+      "gists_url": "https://api.github.com/users/atcastle/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/atcastle/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/atcastle/subscriptions",
+      "organizations_url": "https://api.github.com/users/atcastle/orgs",
+      "repos_url": "https://api.github.com/users/atcastle/repos",
+      "events_url": "https://api.github.com/users/atcastle/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/atcastle/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "readability nit: is `makeStyleSheetInert` actually taking a node as an argument, or an array of children? it's a little confusing, since React.Children.map can work on either",
+    "created_at": "2020-07-08T19:23:40Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r451774171",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/451774171"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r451774171"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451774171/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 242,
+    "original_line": 242,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 17,
+    "position": 17,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451889074",
+    "pull_request_review_id": 445205023,
+    "id": 451889074,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MTg4OTA3NA==",
+    "diff_hunk": "@@ -34,3 +35,4 @@ export const TEMPORARY_REDIRECT_STATUS = 307\n export const PERMANENT_REDIRECT_STATUS = 308\n export const STATIC_PROPS_ID = '__N_SSG'\n export const SERVER_PROPS_ID = '__N_SSP'\n+export const OPTIMIZED_FONT_PROVIDERS = ['https://fonts.googleapis.com/css']",
+    "path": "packages/next/next-server/lib/constants.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "cf4d9d1846b9e2a0534d1d436323ad616ff54ccd",
+    "user": {
+      "login": "prateekbh",
+      "id": 5960497,
+      "node_id": "MDQ6VXNlcjU5NjA0OTc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5960497?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/prateekbh",
+      "html_url": "https://github.com/prateekbh",
+      "followers_url": "https://api.github.com/users/prateekbh/followers",
+      "following_url": "https://api.github.com/users/prateekbh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/prateekbh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/prateekbh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/prateekbh/subscriptions",
+      "organizations_url": "https://api.github.com/users/prateekbh/orgs",
+      "repos_url": "https://api.github.com/users/prateekbh/repos",
+      "events_url": "https://api.github.com/users/prateekbh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/prateekbh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Yes, as in when requested",
+    "created_at": "2020-07-09T00:00:11Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r451889074",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/451889074"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r451889074"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451889074/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 37,
+    "original_line": 38,
+    "side": "RIGHT",
+    "in_reply_to_id": 451759378,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 12,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451889505",
+    "pull_request_review_id": 445205519,
+    "id": 451889505,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MTg4OTUwNQ==",
+    "diff_hunk": "@@ -220,6 +227,16 @@ export default class Server {\n       ),\n       flushToDisk: this.nextConfig.experimental.sprFlushToDisk,\n     })\n+\n+    /**\n+     * This sets environment variable to be used at the time of SSR by head.tsx.\n+     * Using this from process.env allows targetting both serverless and SSR by calling\n+     * `process.env.__NEXT_OPTIMIZE_FONTS`.\n+     * TODO(prateekbh@): Remove this when experimental.optimizeFonts are being clened up.\n+     */\n+    if (this.renderOpts.optimizeFonts) {\n+      process.env.__NEXT_OPTIMIZE_FONTS = JSON.stringify(true)",
+    "path": "packages/next/next-server/server/next-server.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "cf4d9d1846b9e2a0534d1d436323ad616ff54ccd",
+    "user": {
+      "login": "prateekbh",
+      "id": 5960497,
+      "node_id": "MDQ6VXNlcjU5NjA0OTc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5960497?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/prateekbh",
+      "html_url": "https://github.com/prateekbh",
+      "followers_url": "https://api.github.com/users/prateekbh/followers",
+      "following_url": "https://api.github.com/users/prateekbh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/prateekbh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/prateekbh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/prateekbh/subscriptions",
+      "organizations_url": "https://api.github.com/users/prateekbh/orgs",
+      "repos_url": "https://api.github.com/users/prateekbh/repos",
+      "events_url": "https://api.github.com/users/prateekbh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/prateekbh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I was personally not sure about this. Not all experimental flags are required so deep down in the components like this one.",
+    "created_at": "2020-07-09T00:01:50Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r451889505",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/451889505"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r451889505"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451889505/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 237,
+    "original_line": 238,
+    "side": "RIGHT",
+    "in_reply_to_id": 451767003,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 49,
+    "position": 49,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451991446",
+    "pull_request_review_id": 445321816,
+    "id": 451991446,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MTk5MTQ0Ng==",
+    "diff_hunk": "@@ -0,0 +1,136 @@\n+// eslint-disable-next-line import/no-extraneous-dependencies\n+import { NodePath } from 'ast-types/lib/node-path'\n+import { compilation as CompilationType, Compiler } from 'webpack'\n+import { namedTypes } from 'ast-types'\n+import { RawSource } from 'webpack-sources'\n+import {\n+  getFontDefinitionFromNetwork,\n+  FontManifest,\n+} from '../../../next-server/server/font-utils'\n+// @ts-ignore\n+import BasicEvaluatedExpression from 'webpack/lib/BasicEvaluatedExpression'\n+import { OPTIMIZED_FONT_PROVIDERS } from '../../../next-server/lib/constants'\n+\n+interface VisitorMap {\n+  [key: string]: (path: NodePath) => void\n+}\n+\n+export default class FontStylesheetGatheringPlugin {\n+  compiler?: Compiler\n+  gatheredStylesheets: Array<string> = []\n+\n+  private parserHandler = (\n+    factory: CompilationType.NormalModuleFactory\n+  ): void => {\n+    const JS_TYPES = ['auto', 'esm', 'dynamic']\n+    // Do an extra walk per module and add interested visitors to the walk.\n+    for (const type of JS_TYPES) {\n+      factory.hooks.parser\n+        .for('javascript/' + type)\n+        .tap(this.constructor.name, (parser) => {\n+          /**\n+           * Webpack fun facts:\n+           * `parser.hooks.call.for` cannot catch calls for user defined identifiers like `__jsx`\n+           * it can only detect calls for native objects like `window`, `this`, `eval` etc.\n+           * In order to be able to catch calls of variables like `__jsx`, first we need to catch them as\n+           * Identifier and then return `BasicEvaluatedExpression` whose `id` and `type` webpack matches to\n+           * invoke hook for call.\n+           * See: https://github.com/webpack/webpack/blob/webpack-4/lib/Parser.js#L1931-L1932.\n+           */\n+          parser.hooks.evaluate\n+            .for('Identifier')\n+            .tap(this.constructor.name, (node: namedTypes.Identifier) => {\n+              return node.name === '__jsx'\n+                ? new BasicEvaluatedExpression()\n+                    //@ts-ignore\n+                    .setRange(node.range)\n+                    .setExpression(node)\n+                    .setIdentifier('__jsx')\n+                : undefined\n+            })\n+\n+          parser.hooks.call\n+            .for('__jsx')\n+            .tap(this.constructor.name, (node: namedTypes.CallExpression) => {\n+              // We will only optimize fonts from first party code.\n+              if (parser?.state?.module?.resource.includes('node_modules')) {",
+    "path": "packages/next/build/webpack/plugins/font-stylesheet-gathering-plugin.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "cf4d9d1846b9e2a0534d1d436323ad616ff54ccd",
+    "user": {
+      "login": "prateekbh",
+      "id": 5960497,
+      "node_id": "MDQ6VXNlcjU5NjA0OTc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5960497?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/prateekbh",
+      "html_url": "https://github.com/prateekbh",
+      "followers_url": "https://api.github.com/users/prateekbh/followers",
+      "following_url": "https://api.github.com/users/prateekbh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/prateekbh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/prateekbh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/prateekbh/subscriptions",
+      "organizations_url": "https://api.github.com/users/prateekbh/orgs",
+      "repos_url": "https://api.github.com/users/prateekbh/repos",
+      "events_url": "https://api.github.com/users/prateekbh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/prateekbh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Yes, totally. Great catch.",
+    "created_at": "2020-07-09T06:28:50Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r451991446",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/451991446"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r451991446"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/451991446/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 56,
+    "side": "RIGHT",
+    "in_reply_to_id": 451737355,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 56,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/452001559",
+    "pull_request_review_id": 445334381,
+    "id": 452001559,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MjAwMTU1OQ==",
+    "diff_hunk": "@@ -236,6 +239,22 @@ export class Head extends Component<\n         ))\n   }\n \n+  makeStylesheetInert(node: ReactNode): ReactNode {",
+    "path": "packages/next/pages/_document.tsx",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "cf4d9d1846b9e2a0534d1d436323ad616ff54ccd",
+    "user": {
+      "login": "prateekbh",
+      "id": 5960497,
+      "node_id": "MDQ6VXNlcjU5NjA0OTc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5960497?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/prateekbh",
+      "html_url": "https://github.com/prateekbh",
+      "followers_url": "https://api.github.com/users/prateekbh/followers",
+      "following_url": "https://api.github.com/users/prateekbh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/prateekbh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/prateekbh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/prateekbh/subscriptions",
+      "organizations_url": "https://api.github.com/users/prateekbh/orgs",
+      "repos_url": "https://api.github.com/users/prateekbh/repos",
+      "events_url": "https://api.github.com/users/prateekbh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/prateekbh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "ReactNode itself is defined as either. A single element or an array. So this is intentional as the function can work with both.",
+    "created_at": "2020-07-09T06:53:47Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r452001559",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/452001559"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r452001559"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/452001559/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 242,
+    "original_line": 242,
+    "side": "RIGHT",
+    "in_reply_to_id": 451774171,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 17,
+    "position": 17,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/452037394",
+    "pull_request_review_id": 445380500,
+    "id": 452037394,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MjAzNzM5NA==",
+    "diff_hunk": "@@ -9,6 +9,7 @@ export const EXPORT_DETAIL = 'export-detail.json'\n export const PRERENDER_MANIFEST = 'prerender-manifest.json'\n export const ROUTES_MANIFEST = 'routes-manifest.json'\n export const REACT_LOADABLE_MANIFEST = 'react-loadable-manifest.json'\n+export const FONT_MANIFEST = 'font-manifest.json'",
+    "path": "packages/next/next-server/lib/constants.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "3eaade22a960544fbb22026cf770905ea69df1cc",
+    "user": {
+      "login": "timneutkens",
+      "id": 6324199,
+      "node_id": "MDQ6VXNlcjYzMjQxOTk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6324199?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/timneutkens",
+      "html_url": "https://github.com/timneutkens",
+      "followers_url": "https://api.github.com/users/timneutkens/followers",
+      "following_url": "https://api.github.com/users/timneutkens/following{/other_user}",
+      "gists_url": "https://api.github.com/users/timneutkens/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/timneutkens/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/timneutkens/subscriptions",
+      "organizations_url": "https://api.github.com/users/timneutkens/orgs",
+      "repos_url": "https://api.github.com/users/timneutkens/repos",
+      "events_url": "https://api.github.com/users/timneutkens/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/timneutkens/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "It doesn't have to be multiple plugins though, we can share information into the build manifest 👍\r\n\r\nThe reason using build manifest is better is that it's automatically made available to rendering and _document, meaning you don't have to change the rendering code as much as you have to when introducing a new file",
+    "created_at": "2020-07-09T08:04:32Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r452037394",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/452037394"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r452037394"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/452037394/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 12,
+    "original_line": 12,
+    "side": "RIGHT",
+    "in_reply_to_id": 450805766,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 4,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/452394809",
+    "pull_request_review_id": 445846820,
+    "id": 452394809,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1MjM5NDgwOQ==",
+    "diff_hunk": "@@ -9,6 +9,7 @@ export const EXPORT_DETAIL = 'export-detail.json'\n export const PRERENDER_MANIFEST = 'prerender-manifest.json'\n export const ROUTES_MANIFEST = 'routes-manifest.json'\n export const REACT_LOADABLE_MANIFEST = 'react-loadable-manifest.json'\n+export const FONT_MANIFEST = 'font-manifest.json'",
+    "path": "packages/next/next-server/lib/constants.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "3eaade22a960544fbb22026cf770905ea69df1cc",
+    "user": {
+      "login": "prateekbh",
+      "id": 5960497,
+      "node_id": "MDQ6VXNlcjU5NjA0OTc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5960497?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/prateekbh",
+      "html_url": "https://github.com/prateekbh",
+      "followers_url": "https://api.github.com/users/prateekbh/followers",
+      "following_url": "https://api.github.com/users/prateekbh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/prateekbh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/prateekbh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/prateekbh/subscriptions",
+      "organizations_url": "https://api.github.com/users/prateekbh/orgs",
+      "repos_url": "https://api.github.com/users/prateekbh/repos",
+      "events_url": "https://api.github.com/users/prateekbh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/prateekbh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I found that BuildManifestPlugin is built on client run of webpack. This is a problem because FontStylesheetGatheringPlugin runs on the server build of webpack.\r\nThe reason for keeping it on server side run is that otherwise it does not build the user defined `_document.jsx` which is a common place to define stylesheets and fonts and seems to be building only for server run of webpack.",
+    "created_at": "2020-07-09T18:00:16Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r452394809",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/452394809"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r452394809"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/452394809/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 12,
+    "original_line": 12,
+    "side": "RIGHT",
+    "in_reply_to_id": 450805766,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 4,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/453872422",
+    "pull_request_review_id": 447527515,
+    "id": 453872422,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1Mzg3MjQyMg==",
+    "diff_hunk": "@@ -9,6 +9,7 @@ export const EXPORT_DETAIL = 'export-detail.json'\n export const PRERENDER_MANIFEST = 'prerender-manifest.json'\n export const ROUTES_MANIFEST = 'routes-manifest.json'\n export const REACT_LOADABLE_MANIFEST = 'react-loadable-manifest.json'\n+export const FONT_MANIFEST = 'font-manifest.json'",
+    "path": "packages/next/next-server/lib/constants.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "3eaade22a960544fbb22026cf770905ea69df1cc",
+    "user": {
+      "login": "prateekbh",
+      "id": 5960497,
+      "node_id": "MDQ6VXNlcjU5NjA0OTc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5960497?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/prateekbh",
+      "html_url": "https://github.com/prateekbh",
+      "followers_url": "https://api.github.com/users/prateekbh/followers",
+      "following_url": "https://api.github.com/users/prateekbh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/prateekbh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/prateekbh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/prateekbh/subscriptions",
+      "organizations_url": "https://api.github.com/users/prateekbh/orgs",
+      "repos_url": "https://api.github.com/users/prateekbh/repos",
+      "events_url": "https://api.github.com/users/prateekbh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/prateekbh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "@timneutkens would there be a way to generate this on server run and consolidate during client bundle of webpack?",
+    "created_at": "2020-07-13T19:12:47Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r453872422",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/453872422"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r453872422"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/453872422/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 12,
+    "original_line": 12,
+    "side": "RIGHT",
+    "in_reply_to_id": 450805766,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 4,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/455278260",
+    "pull_request_review_id": 449250406,
+    "id": 455278260,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ1NTI3ODI2MA==",
+    "diff_hunk": "@@ -0,0 +1,161 @@\n+import { parse, HTMLElement } from 'node-html-parser'\n+import { OPTIMIZED_FONT_PROVIDERS } from './constants'\n+\n+const MIDDLEWARE_TIME_BUDGET = 10\n+\n+type postProcessOptions = {\n+  optimizeFonts: boolean\n+}\n+\n+type renderOptions = {\n+  getFontDefinition?: (url: string) => string\n+}\n+\n+type postProcessData = {\n+  preloads: {\n+    images: Array<string>\n+  }\n+}\n+\n+interface PostProcessMiddleware {\n+  inspect: (\n+    originalDom: HTMLElement,\n+    data: postProcessData,\n+    options: renderOptions\n+  ) => void\n+  mutate: (\n+    markup: string,\n+    data: postProcessData,\n+    options: renderOptions\n+  ) => Promise<string>\n+}\n+\n+type middlewareSignature = {\n+  name: string\n+  middleware: PostProcessMiddleware\n+  condition: ((options: postProcessOptions) => boolean) | null\n+}\n+\n+const middlewareRegistry: Array<middlewareSignature> = []\n+\n+function registerPostProcessor(\n+  name: string,\n+  middleware: PostProcessMiddleware,\n+  condition?: (options: postProcessOptions) => boolean\n+) {\n+  middlewareRegistry.push({ name, middleware, condition: condition || null })\n+}\n+\n+async function processHTML(\n+  html: string,\n+  data: renderOptions,\n+  options: postProcessOptions\n+): Promise<string> {\n+  // Don't parse unless there's at least one processor middleware\n+  if (!middlewareRegistry[0]) {\n+    return html\n+  }\n+  const postProcessData: postProcessData = {\n+    preloads: {\n+      images: [],\n+    },\n+  }\n+  const root: HTMLElement = parse(html)\n+  let document = html\n+  // Calls the middleware, with some instrumentation and logging\n+  async function callMiddleWare(\n+    middleware: PostProcessMiddleware,\n+    name: string\n+  ) {\n+    let timer = Date.now()",
+    "path": "packages/next/next-server/lib/post-process.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "477937b8fb25c822c31dede1ba30607c1a53ff65",
+    "user": {
+      "login": "timneutkens",
+      "id": 6324199,
+      "node_id": "MDQ6VXNlcjYzMjQxOTk=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/6324199?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/timneutkens",
+      "html_url": "https://github.com/timneutkens",
+      "followers_url": "https://api.github.com/users/timneutkens/followers",
+      "following_url": "https://api.github.com/users/timneutkens/following{/other_user}",
+      "gists_url": "https://api.github.com/users/timneutkens/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/timneutkens/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/timneutkens/subscriptions",
+      "organizations_url": "https://api.github.com/users/timneutkens/orgs",
+      "repos_url": "https://api.github.com/users/timneutkens/repos",
+      "events_url": "https://api.github.com/users/timneutkens/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/timneutkens/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "should this use hrtime instead 🤔 I think this is fine initially though",
+    "created_at": "2020-07-15T19:06:17Z",
+    "updated_at": "2020-07-28T08:25:03Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r455278260",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/455278260"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r455278260"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/455278260/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 70,
+    "original_line": 70,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 70,
+    "position": 70,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/467613988",
+    "pull_request_review_id": 463894017,
+    "id": 467613988,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ2NzYxMzk4OA==",
+    "diff_hunk": "@@ -34,3 +35,4 @@ export const TEMPORARY_REDIRECT_STATUS = 307\n export const PERMANENT_REDIRECT_STATUS = 308\n export const STATIC_PROPS_ID = '__N_SSG'\n export const SERVER_PROPS_ID = '__N_SSP'\n+export const OPTIMIZED_FONT_PROVIDERS = ['https://fonts.googleapis.com/css']",
+    "path": "packages/next/next-server/lib/constants.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "cf4d9d1846b9e2a0534d1d436323ad616ff54ccd",
+    "user": {
+      "login": "wongmjane",
+      "id": 1332975,
+      "node_id": "MDQ6VXNlcjEzMzI5NzU=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1332975?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/wongmjane",
+      "html_url": "https://github.com/wongmjane",
+      "followers_url": "https://api.github.com/users/wongmjane/followers",
+      "following_url": "https://api.github.com/users/wongmjane/following{/other_user}",
+      "gists_url": "https://api.github.com/users/wongmjane/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/wongmjane/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/wongmjane/subscriptions",
+      "organizations_url": "https://api.github.com/users/wongmjane/orgs",
+      "repos_url": "https://api.github.com/users/wongmjane/repos",
+      "events_url": "https://api.github.com/users/wongmjane/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/wongmjane/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Google Font has introduced a [v2 API](https://developers.google.com/fonts/docs/css2) Update with supports for variable fonts\r\n\r\nThe v2 API has the new base URL: `https://fonts.googleapis.com/css2`",
+    "created_at": "2020-08-09T18:28:07Z",
+    "updated_at": "2020-08-09T18:28:07Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r467613988",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/467613988"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r467613988"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/467613988/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 37,
+    "original_line": 38,
+    "side": "RIGHT",
+    "in_reply_to_id": 451759378,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 12,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/467649463",
+    "pull_request_review_id": 463919407,
+    "id": 467649463,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQ2NzY0OTQ2Mw==",
+    "diff_hunk": "@@ -34,3 +35,4 @@ export const TEMPORARY_REDIRECT_STATUS = 307\n export const PERMANENT_REDIRECT_STATUS = 308\n export const STATIC_PROPS_ID = '__N_SSG'\n export const SERVER_PROPS_ID = '__N_SSP'\n+export const OPTIMIZED_FONT_PROVIDERS = ['https://fonts.googleapis.com/css']",
+    "path": "packages/next/next-server/lib/constants.ts",
+    "commit_id": "eb7f10e0ea942448b00441d9261fd53fce9df00d",
+    "original_commit_id": "cf4d9d1846b9e2a0534d1d436323ad616ff54ccd",
+    "user": {
+      "login": "prateekbh",
+      "id": 5960497,
+      "node_id": "MDQ6VXNlcjU5NjA0OTc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/5960497?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/prateekbh",
+      "html_url": "https://github.com/prateekbh",
+      "followers_url": "https://api.github.com/users/prateekbh/followers",
+      "following_url": "https://api.github.com/users/prateekbh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/prateekbh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/prateekbh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/prateekbh/subscriptions",
+      "organizations_url": "https://api.github.com/users/prateekbh/orgs",
+      "repos_url": "https://api.github.com/users/prateekbh/repos",
+      "events_url": "https://api.github.com/users/prateekbh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/prateekbh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Hi! @wongmjane!\r\nThe usage of this const is with `startswith` so yeah the v2 API should already covered.\r\nPlease let us know if you find otherwise",
+    "created_at": "2020-08-10T00:38:21Z",
+    "updated_at": "2020-08-10T00:38:22Z",
+    "html_url": "https://github.com/vercel/next.js/pull/14746#discussion_r467649463",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/14746",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/467649463"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/14746#discussion_r467649463"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/14746"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/467649463/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 37,
+    "original_line": 38,
+    "side": "RIGHT",
+    "in_reply_to_id": 451759378,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 12,
+    "subject_type": "line"
+  }
+]

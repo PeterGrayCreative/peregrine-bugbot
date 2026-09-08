@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/webpack/webpack/pulls/7210/reviews",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:56:24.144Z",
+  "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/7210/reviews?page=1&per_page=100",
+  "sha256": "33691f9a88673fe0fb0cf99e223c106535beab4f29f4773e9b3ecd19d891bb1b",
+  "bytes": 6129
+}

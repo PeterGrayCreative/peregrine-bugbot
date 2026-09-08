@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "evidenceClass": "credential-free-synthetic-protocol-probe",
+  "capturedAt": "2026-09-07T17:01:57.810Z",
+  "image": "ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:0ad23c12cc2172a54b2b298ebde4096d3e4924efc3d3bf5c2c4f616c7d00e6b3",
+  "sourceHeadBeforeUncommittedAdapter": "ba908155a919f781cd0b6dc5ad03a031b1a9fe46",
+  "sources": [
+    {
+      "path": "eval/methodology-read-mcp.ts",
+      "bytes": 16831,
+      "sha256": "47e41ef224d2b6bfe8daedce4c9dd9897dbcaf3b9f577b2190dcbf271a12ee6c"
+    },
+    {
+      "path": "eval/methodology-read-tools.ts",
+      "bytes": 12093,
+      "sha256": "f558a0a1ddbb990d2a21d3c8d4702e699cbd4cf6e05717d0bbf84bbb556d5c04"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 24831,
+      "sha256": "677f89ab60383a30ebfce75e9e1813473f028d97850a8eb9753022b2b016af7c"
+    }
+  ],
+  "files": [
+    {
+      "path": "containers.json",
+      "bytes": 21068,
+      "sha256": "79687541a18993534d4b6b44485d95ee9f8a5bf70c882e85b79de818e24f651e"
+    },
+    {
+      "path": "network.json",
+      "bytes": 1598,
+      "sha256": "dd845b54517322a861527b296c23b8fcff3c7b50a5515900d1c7e92ccbb847e9"
+    },
+    {
+      "path": "image.json",
+      "bytes": 4073,
+      "sha256": "c58a0b575798e2c593c331ade61855c1f3b72adc25328e8324da65b7c5fa9576"
+    },
+    {
+      "path": "server.stdout.json",
+      "bytes": 248,
+      "sha256": "ffe20d39757567203beabcaf4b3c78975875e6d2af7d3f166346cf1e0482aeb5"
+    },
+    {
+      "path": "client.stdout.json",
+      "bytes": 403,
+      "sha256": "4766d61140e0cfbe0a1913221d479f4993065bea97f4f59749247eeefa9d99bf"
+    },
+    {
+      "path": "probe-server.mjs",
+      "bytes": 1809,
+      "sha256": "d0f951679b3d7f5ed949fc326e4c765c73f757122dc2b95cabc46b322e864763"
+    },
+    {
+      "path": "probe-client.mjs",
+      "bytes": 3472,
+      "sha256": "6de46ec6f04618fa0b28b427b404fcd4b6d83e33a8bf9a73bc45a4109395d93d"
+    },
+    {
+      "path": "source.txt",
+      "bytes": 21,
+      "sha256": "95131219f57a9d85e376412f5cd123d7e3abb7e67b2748a3830c40c18113ad4c"
+    },
+    {
+      "path": "client-only-canary.json",
+      "bytes": 63,
+      "sha256": "325e1f90215729aa1513b3d6c84b48ea5a7f440310edfcbef421a2f71244d150"
+    },
+    {
+      "path": "capture-runtime-probe.mjs",
+      "bytes": 5363,
+      "sha256": "5215808b0173736ebae3c18fc8100cec6533fe34e827ad4d5ef10ed5573e65d4"
+    },
+    {
+      "path": "methodology-read-mcp.js",
+      "bytes": 17301,
+      "sha256": "f31bcb37ad8c21721824091fff7ce4e1963e5fbb982fbdd1ef9e1c3b0f48eaa8"
+    },
+    {
+      "path": "methodology-read-tools.js",
+      "bytes": 13076,
+      "sha256": "091cf587ca740201e24944a0929ae931fd0c12a675542405c95cf99749bfc392"
+    },
+    {
+      "path": "package.json",
+      "bytes": 18,
+      "sha256": "1239d4d885dcad42201a27ed9324f8f0f760b78700d8db9ced39a511cffe7eae"
+    },
+    {
+      "path": "cleanup.stdout.txt",
+      "bytes": 206,
+      "sha256": "c525e11b16561988ada62c9d9f1d091f5410bdf0e4c8f2ffd2c3eae42b875f81"
+    }
+  ],
+  "providerCalls": 0,
+  "codexInvocations": 0,
+  "realCredentialsMounted": false,
+  "limitations": [
+    "No Codex initialization or model-visible tool catalog was tested.",
+    "No provider-connected network or credential-bearing runtime was tested.",
+    "One outbound IPv4 TCP target and the IPv4 default route were checked, not an exhaustive egress policy.",
+    "This authored synthetic probe is not an independent signed runtime attestation.",
+    "The captured random MCP endpoint/session capabilities expired with container cleanup."
+  ]
+}

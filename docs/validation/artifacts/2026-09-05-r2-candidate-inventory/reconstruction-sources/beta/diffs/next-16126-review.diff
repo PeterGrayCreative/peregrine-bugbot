@@ -1,0 +1,1116 @@
+diff --git a/packages/next/client/index.tsx b/packages/next/client/index.tsx
+index b49f832749a4eeadeeebd96c40ec6e00120e48d1..64e60429448ea662915d6d4b5431d68c30c57d73 100644
+--- a/packages/next/client/index.tsx
++++ b/packages/next/client/index.tsx
+@@ -17,7 +17,7 @@ import * as envConfig from '../next-server/lib/runtime-config'
+ import { getURL, loadGetInitialProps, ST } from '../next-server/lib/utils'
+ import type { NEXT_DATA } from '../next-server/lib/utils'
+ import initHeadManager from './head-manager'
+-import PageLoader from './page-loader'
++import PageLoader, { createLink } from './page-loader'
+ import measureWebVitals from './performance-relayer'
+ import { createRouter, makePublicRouterInstance } from './router'
+ 
+@@ -39,7 +39,7 @@ declare global {
+ }
+ 
+ type RenderRouteInfo = PrivateRouteInfo & { App: AppComponent }
+-type RenderErrorProps = Omit<RenderRouteInfo, 'Component'>
++type RenderErrorProps = Omit<RenderRouteInfo, 'Component' | 'styleSheets'>
+ 
+ if (!('finally' in Promise.prototype)) {
+   ;(Promise.prototype as PromiseConstructor['prototype']).finally = require('next/dist/build/polyfills/finally-polyfill.min')
+@@ -84,7 +84,14 @@ if (hasBasePath(asPath)) {
+ 
+ type RegisterFn = (input: [string, () => void]) => void
+ 
+-const pageLoader = new PageLoader(buildId, prefix, page)
++const pageLoader = new PageLoader(
++  buildId,
++  prefix,
++  page,
++  [].slice
++    .call(document.querySelectorAll('link[rel=stylesheet][data-n-p]'))
++    .map((e: HTMLLinkElement) => e.getAttribute('href')!)
++)
+ const register: RegisterFn = ([r, f]) => pageLoader.registerPage(r, f)
+ if (window.__NEXT_P) {
+   // Defer page registration for another tick. This will increase the overall
+@@ -102,6 +109,7 @@ let lastRenderReject: (() => void) | null
+ let webpackHMR: any
+ export let router: Router
+ let CachedComponent: React.ComponentType
++let cachedStyleSheets: string[]
+ let CachedApp: AppComponent, onPerfEntry: (metric: any) => void
+ 
+ class Container extends React.Component<{
+@@ -233,7 +241,10 @@ export default async (opts: { webpackHMR?: any } = {}) => {
+   let initialErr = hydrateErr
+ 
+   try {
+-    ;({ page: CachedComponent } = await pageLoader.loadPage(page))
++    ;({
++      page: CachedComponent,
++      styleSheets: cachedStyleSheets,
++    } = await pageLoader.loadPage(page))
+ 
+     if (process.env.NODE_ENV !== 'production') {
+       const { isValidElementType } = require('react-is')
+@@ -291,11 +302,12 @@ export default async (opts: { webpackHMR?: any } = {}) => {
+     pageLoader,
+     App: CachedApp,
+     Component: CachedComponent,
++    initialStyleSheets: cachedStyleSheets,
+     wrapApp,
+     err: initialErr,
+     isFallback: Boolean(isFallback),
+-    subscription: ({ Component, props, err }, App) =>
+-      render({ App, Component, props, err }),
++    subscription: ({ Component, styleSheets, props, err }, App) =>
++      render({ App, Component, styleSheets, props, err }),
+   })
+ 
+   // call init-client middleware
+@@ -314,6 +326,7 @@ export default async (opts: { webpackHMR?: any } = {}) => {
+   const renderCtx = {
+     App: CachedApp,
+     Component: CachedComponent,
++    styleSheets: cachedStyleSheets,
+     props: hydrateProps,
+     err: initialErr,
+   }
+@@ -364,6 +377,7 @@ export function renderError(renderErrorProps: RenderErrorProps) {
+       App: () => null,
+       props: {},
+       Component: () => null,
++      styleSheets: [],
+     })
+   }
+   if (process.env.__NEXT_PLUGINS) {
+@@ -383,30 +397,33 @@ export function renderError(renderErrorProps: RenderErrorProps) {
+ 
+   // Make sure we log the error to the console, otherwise users can't track down issues.
+   console.error(err)
+-  return pageLoader.loadPage('/_error').then(({ page: ErrorComponent }) => {
+-    // In production we do a normal render with the `ErrorComponent` as component.
+-    // If we've gotten here upon initial render, we can use the props from the server.
+-    // Otherwise, we need to call `getInitialProps` on `App` before mounting.
+-    const AppTree = wrapApp(App)
+-    const appCtx = {
+-      Component: ErrorComponent,
+-      AppTree,
+-      router,
+-      ctx: { err, pathname: page, query, asPath, AppTree },
+-    }
+-    return Promise.resolve(
+-      renderErrorProps.props
+-        ? renderErrorProps.props
+-        : loadGetInitialProps(App, appCtx)
+-    ).then((initProps) =>
+-      doRender({
+-        ...renderErrorProps,
+-        err,
++  return pageLoader
++    .loadPage('/_error')
++    .then(({ page: ErrorComponent, styleSheets }) => {
++      // In production we do a normal render with the `ErrorComponent` as component.
++      // If we've gotten here upon initial render, we can use the props from the server.
++      // Otherwise, we need to call `getInitialProps` on `App` before mounting.
++      const AppTree = wrapApp(App)
++      const appCtx = {
+         Component: ErrorComponent,
+-        props: initProps,
+-      })
+-    )
+-  })
++        AppTree,
++        router,
++        ctx: { err, pathname: page, query, asPath, AppTree },
++      }
++      return Promise.resolve(
++        renderErrorProps.props
++          ? renderErrorProps.props
++          : loadGetInitialProps(App, appCtx)
++      ).then((initProps) =>
++        doRender({
++          ...renderErrorProps,
++          err,
++          Component: ErrorComponent,
++          styleSheets,
++          props: initProps,
++        })
++      )
++    })
+ }
+ 
+ // If hydrate does not exist, eg in preact.
+@@ -533,7 +550,13 @@ const wrapApp = (App: AppComponent) => (
+   )
+ }
+ 
+-async function doRender({ App, Component, props, err }: RenderRouteInfo) {
++async function doRender({
++  App,
++  Component,
++  props,
++  err,
++  styleSheets,
++}: RenderRouteInfo) {
+   Component = Component || lastAppProps.Component
+   props = props || lastAppProps.props
+ 
+@@ -561,8 +584,99 @@ async function doRender({ App, Component, props, err }: RenderRouteInfo) {
+     }
+   })
+ 
++  // TODO: consider replacing this with real `<style>` tags that have
++  // plain-text CSS content that's provided by RouteInfo. That'd remove the
++  // need for the staging `<link>`s and the ability for CSS to be missing at
++  // this phase, allowing us to remove the error handling flow that reloads the
++  // page.
++  function onStart(): Promise<void[]> {
++    if (
++      // We can skip this during hydration. Running it wont cause any harm, but
++      // we may as well save the CPU cycles.
++      isInitialRender ||
++      // We use `style-loader` in development, so we don't need to do anything
++      // unless we're in production:
++      process.env.NODE_ENV !== 'production'
++    ) {
++      return Promise.resolve([])
++    }
++
++    let referenceNode: HTMLLinkElement | undefined = ([].slice.call(
++      document.querySelectorAll('link[data-n-g], link[data-n-p]')
++    ) as HTMLLinkElement[]).pop()
++
++    const required: Promise<void>[] = styleSheets.map((href) => {
++      const [link, promise] = createLink(href, 'stylesheet')
++      link.setAttribute('data-n-staging', '')
++      link.setAttribute('media', 'none')
++      if (referenceNode) {
++        referenceNode.parentNode!.insertBefore(link, referenceNode.nextSibling)
++        referenceNode = link
++      } else {
++        document.head.appendChild(link)
++      }
++      return promise
++    })
++    return Promise.all(required).catch(() => {
++      // This is too late in the rendering lifecycle to use the existing
++      // `PAGE_LOAD_ERROR` flow (via `handleRouteInfoError`).
++      // To match that behavior, we request the page to reload with the current
++      // asPath. This is already set at this phase since we "committed" to the
++      // render.
++      // This handles an edge case where a new deployment is rolled during
++      // client-side transition and the CSS assets are missing.
++
++      // This prevents:
++      //   1. An unstyled page from being rendered (old behavior)
++      //   2. The `/_error` page being rendered (we want to reload for the new
++      //      deployment)
++      window.location.href = router.asPath
++
++      // Instead of rethrowing the CSS loading error, we give a promise that
++      // won't resolve. This pauses the rendering process until the page
++      // reloads. Re-throwing the error could result in a flash of error page.
++      // throw cssLoadingError
++      return new Promise(() => {})
++    })
++  }
++
++  function onAbort() {
++    document.querySelectorAll('link[data-n-staging]').forEach((el) => {
++      el.remove()
++    })
++  }
++  renderPromise.catch((abortError) => {
++    onAbort()
++    throw abortError
++  })
++
++  function onCommit() {
++    if (
++      // We can skip this during hydration. Running it wont cause any harm, but
++      // we may as well save the CPU cycles.
++      !isInitialRender &&
++      // We use `style-loader` in development, so we don't need to do anything
++      // unless we're in production:
++      process.env.NODE_ENV === 'production'
++    ) {
++      // Remove old stylesheets:
++      document.querySelectorAll('link[data-n-p]').forEach((el) => el.remove())
++
++      // Activate new stylesheets:
++      ;[].slice
++        .call(document.querySelectorAll('link[data-n-staging]'))
++        .forEach((el: HTMLLinkElement) => {
++          el.removeAttribute('data-n-staging')
++          el.removeAttribute('media')
++          el.setAttribute('data-n-p', '')
++        })
++    }
++
++    resolvePromise()
++  }
++
+   const elem = (
+-    <Root callback={resolvePromise!}>
++    <Root callback={onCommit}>
+       <AppContainer>
+         <App {...appProps} />
+       </AppContainer>
+@@ -570,6 +684,7 @@ async function doRender({ App, Component, props, err }: RenderRouteInfo) {
+   )
+ 
+   // We catch runtime errors using componentDidCatch which will trigger renderError
++  await onStart()
+   renderReactElement(
+     process.env.__NEXT_STRICT_MODE ? (
+       <React.StrictMode>{elem}</React.StrictMode>
+diff --git a/packages/next/client/page-loader.ts b/packages/next/client/page-loader.ts
+index a69b391ab4c1776a37b0ffec875349248030f0eb..d888efc4bdd23824782b206507b69556d9f1a070 100644
+--- a/packages/next/client/page-loader.ts
++++ b/packages/next/client/page-loader.ts
+@@ -32,6 +32,8 @@ const relPrefetch =
+       // IE 11, Edge 12+, nearly all evergreen
+       'prefetch'
+ 
++const relPreload = hasRel('preload') ? 'preload' : relPrefetch
++
+ const hasNoModule = 'noModule' in document.createElement('script')
+ 
+ const requestIdleCallback: (fn: () => void) => void =
+@@ -49,30 +51,43 @@ function normalizeRoute(route: string) {
+   return route.replace(/\/$/, '')
+ }
+ 
+-function appendLink(
++export function createLink(
+   href: string,
+   rel: string,
+   as?: string,
+   link?: HTMLLinkElement
+-): Promise<any> {
+-  return new Promise((res, rej) => {
+-    link = document.createElement('link')
+-    link.crossOrigin = process.env.__NEXT_CROSS_ORIGIN!
+-    link.href = href
+-    link.rel = rel
+-    if (as) link.as = as
+-
+-    link.onload = res
+-    link.onerror = rej
++): [HTMLLinkElement, Promise<any>] {
++  link = document.createElement('link')
++  return [
++    link,
++    new Promise((res, rej) => {
++      link!.crossOrigin = process.env.__NEXT_CROSS_ORIGIN!
++      link!.href = href
++      link!.rel = rel
++      if (as) link!.as = as
++
++      link!.onload = res
++      link!.onerror = rej
++    }),
++  ]
++}
+ 
+-    document.head.appendChild(link)
+-  })
++function appendLink(href: string, rel: string, as?: string): Promise<any> {
++  const [link, res] = createLink(href, rel, as)
++  document.head.appendChild(link)
++  return res
+ }
+ 
+-export type GoodPageCache = { page: ComponentType; mod: any }
++export type GoodPageCache = {
++  page: ComponentType
++  mod: any
++  styleSheets: string[]
++}
+ export type PageCacheEntry = { error: any } | GoodPageCache
+ 
+ export default class PageLoader {
++  private initialPage: string
++  private initialStyleSheets: string[]
+   private buildId: string
+   private assetPrefix: string
+   private pageCache: Record<string, PageCacheEntry>
+@@ -82,7 +97,15 @@ export default class PageLoader {
+   private promisedSsgManifest?: Promise<ClientSsgManifest>
+   private promisedDevPagesManifest?: Promise<any>
+ 
+-  constructor(buildId: string, assetPrefix: string, initialPage: string) {
++  constructor(
++    buildId: string,
++    assetPrefix: string,
++    initialPage: string,
++    initialStyleSheets: string[]
++  ) {
++    this.initialPage = initialPage
++    this.initialStyleSheets = initialStyleSheets
++
+     this.buildId = buildId
+     this.assetPrefix = assetPrefix
+ 
+@@ -294,13 +317,20 @@ export default class PageLoader {
+               ) {
+                 this.loadScript(d, route)
+               }
++
++              // Prefetch CSS as it'll be needed when the page JavaScript
++              // evaluates. This will only trigger if explicit prefetching is
++              // disabled for a <Link>... prefetching in this case is desirable
++              // because we *know* it's going to be used very soon (page was
++              // loaded).
+               if (
+                 d.endsWith('.css') &&
+-                !document.querySelector(`link[rel=stylesheet][href^="${d}"]`)
++                !document.querySelector(
++                  `link[rel="${relPreload}"][href^="${d}"]`
++                )
+               ) {
+-                appendLink(d, 'stylesheet').catch(() => {
+-                  // FIXME: handle failure
+-                  // Right now, this is needed to prevent an unhandled rejection.
++                appendLink(d, relPreload, 'style').catch(() => {
++                  /* ignore preload error */
+                 })
+               }
+             })
+@@ -334,10 +364,14 @@ export default class PageLoader {
+ 
+   // This method if called by the route code.
+   registerPage(route: string, regFn: () => any) {
+-    const register = () => {
++    const register = (styleSheets: string[]) => {
+       try {
+         const mod = regFn()
+-        const pageData = { page: mod.default || mod, mod }
++        const pageData: PageCacheEntry = {
++          page: mod.default || mod,
++          mod,
++          styleSheets,
++        }
+         this.pageCache[route] = pageData
+         this.pageRegisterEvents.emit(route, pageData)
+       } catch (error) {
+@@ -357,7 +391,10 @@ export default class PageLoader {
+         const check = (status: string) => {
+           if (status === 'idle') {
+             ;(module as any).hot.removeStatusHandler(check)
+-            register()
++            register(
++              /* css is handled via style-loader in development */
++              []
++            )
+           }
+         }
+         ;(module as any).hot.status(check)
+@@ -365,7 +402,23 @@ export default class PageLoader {
+       }
+     }
+ 
+-    register()
++    const promisedDeps: Promise<string[]> =
++      // Shared styles will already be on the page:
++      route === '/_app' ||
++      // We use `style-loader` in development:
++      process.env.NODE_ENV !== 'production'
++        ? Promise.resolve([])
++        : route === this.initialPage
++        ? Promise.resolve(this.initialStyleSheets)
++        : // TODO: test this doesn't block register of initial page
++          this.getDependencies(route)
++    promisedDeps.then(
++      (deps) => register(deps.filter((d) => d.endsWith('.css'))),
++      (error) => {
++        this.pageCache[route] = { error }
++        this.pageRegisterEvents.emit(route, { error })
++      }
++    )
+   }
+ 
+   /**
+diff --git a/packages/next/next-server/lib/router/router.ts b/packages/next/next-server/lib/router/router.ts
+index c2c4e366ab0df53b582aa236af93701533693f95..b5a384cd7709b22a3f69debe7f6af473586d95b8 100644
+--- a/packages/next/next-server/lib/router/router.ts
++++ b/packages/next/next-server/lib/router/router.ts
+@@ -159,6 +159,7 @@ export type PrefetchOptions = {
+ 
+ export type PrivateRouteInfo = {
+   Component: ComponentType
++  styleSheets: string[]
+   __N_SSG?: boolean
+   __N_SSP?: boolean
+   props?: Record<string, any>
+@@ -257,6 +258,7 @@ export default class Router implements BaseRouter {
+       App,
+       wrapApp,
+       Component,
++      initialStyleSheets,
+       err,
+       subscription,
+       isFallback,
+@@ -265,6 +267,7 @@ export default class Router implements BaseRouter {
+       initialProps: any
+       pageLoader: any
+       Component: ComponentType
++      initialStyleSheets: string[]
+       App: AppComponent
+       wrapApp: (App: AppComponent) => any
+       err?: Error
+@@ -282,6 +285,7 @@ export default class Router implements BaseRouter {
+     if (pathname !== '/_error') {
+       this.components[this.route] = {
+         Component,
++        styleSheets: initialStyleSheets,
+         props: initialProps,
+         err,
+         __N_SSG: initialProps && initialProps.__N_SSG,
+@@ -289,7 +293,12 @@ export default class Router implements BaseRouter {
+       }
+     }
+ 
+-    this.components['/_app'] = { Component: App as ComponentType }
++    this.components['/_app'] = {
++      Component: App as ComponentType,
++      styleSheets: [
++        /* /_app does not need its stylesheets managed */
++      ],
++    }
+ 
+     // Backwards compat for Router.router.events
+     // TODO: Should be remove the following major version as it was never documented
+@@ -668,8 +677,15 @@ export default class Router implements BaseRouter {
+     }
+ 
+     try {
+-      const { page: Component } = await this.fetchComponent('/_error')
+-      const routeInfo: PrivateRouteInfo = { Component, err, error: err }
++      const { page: Component, styleSheets } = await this.fetchComponent(
++        '/_error'
++      )
++      const routeInfo: PrivateRouteInfo = {
++        Component,
++        styleSheets,
++        err,
++        error: err,
++      }
+ 
+       try {
+         routeInfo.props = await this.getInitialProps(Component, {
+@@ -706,6 +722,7 @@ export default class Router implements BaseRouter {
+         ? cachedRouteInfo
+         : await this.fetchComponent(route).then((res) => ({
+             Component: res.page,
++            styleSheets: res.styleSheets,
+             __N_SSG: res.mod.__N_SSG,
+             __N_SSP: res.mod.__N_SSP,
+           }))
+diff --git a/packages/next/pages/_document.tsx b/packages/next/pages/_document.tsx
+index b513483a218c5ab6c76603c1405a3c76385bde9c..577b06ef22be446074f3b6de3e88b387b3a46e13 100644
+--- a/packages/next/pages/_document.tsx
++++ b/packages/next/pages/_document.tsx
+@@ -154,9 +154,12 @@ export class Head extends Component<
+   getCssLinks(files: DocumentFiles): JSX.Element[] | null {
+     const { assetPrefix, devOnlyCacheBusterQueryString } = this.context
+     const cssFiles = files.allFiles.filter((f) => f.endsWith('.css'))
++    const sharedFiles = new Set(files.sharedFiles)
+ 
+     const cssLinkElements: JSX.Element[] = []
+     cssFiles.forEach((file) => {
++      const isSharedFile = sharedFiles.has(file)
++
+       cssLinkElements.push(
+         <link
+           key={`${file}-preload`}
+@@ -180,6 +183,8 @@ export class Head extends Component<
+           crossOrigin={
+             this.props.crossOrigin || process.env.__NEXT_CROSS_ORIGIN
+           }
++          data-n-g={isSharedFile ? '' : undefined}
++          data-n-p={isSharedFile ? undefined : ''}
+         />
+       )
+     })
+diff --git a/test/integration/build-output/test/index.test.js b/test/integration/build-output/test/index.test.js
+index 452cbfeb81d102e250a3c33c30cff0e1f92c5c04..4220fec054ecef5a1489a1181a547069af7e833f 100644
+--- a/test/integration/build-output/test/index.test.js
++++ b/test/integration/build-output/test/index.test.js
+@@ -94,17 +94,17 @@ describe('Build Output', () => {
+       expect(parseFloat(indexSize) - 265).toBeLessThanOrEqual(0)
+       expect(indexSize.endsWith('B')).toBe(true)
+ 
+-      // should be no bigger than 60 kb
+-      expect(parseFloat(indexFirstLoad) - 60).toBeLessThanOrEqual(0)
++      // should be no bigger than 60.1 kb
++      expect(parseFloat(indexFirstLoad) - 60.1).toBeLessThanOrEqual(0)
+       expect(indexFirstLoad.endsWith('kB')).toBe(true)
+ 
+       expect(parseFloat(err404Size) - 3.8).toBeLessThanOrEqual(0)
+       expect(err404Size.endsWith('kB')).toBe(true)
+ 
+-      expect(parseFloat(err404FirstLoad) - 63).toBeLessThanOrEqual(0)
++      expect(parseFloat(err404FirstLoad) - 63.3).toBeLessThanOrEqual(0)
+       expect(err404FirstLoad.endsWith('kB')).toBe(true)
+ 
+-      expect(parseFloat(sharedByAll) - 59.6).toBeLessThanOrEqual(0)
++      expect(parseFloat(sharedByAll) - 59.8).toBeLessThanOrEqual(0)
+       expect(sharedByAll.endsWith('kB')).toBe(true)
+ 
+       if (_appSize.endsWith('kB')) {
+@@ -118,7 +118,7 @@ describe('Build Output', () => {
+       expect(parseFloat(webpackSize) - 752).toBeLessThanOrEqual(0)
+       expect(webpackSize.endsWith(' B')).toBe(true)
+ 
+-      expect(parseFloat(mainSize) - 6.5).toBeLessThanOrEqual(0)
++      expect(parseFloat(mainSize) - 6.9).toBeLessThanOrEqual(0)
+       expect(mainSize.endsWith('kB')).toBe(true)
+ 
+       expect(parseFloat(frameworkSize) - 41).toBeLessThanOrEqual(0)
+diff --git a/test/integration/css-fixtures/composes-ordering/pages/common.module.css b/test/integration/css-fixtures/composes-ordering/pages/common.module.css
+new file mode 100644
+index 0000000000000000000000000000000000000000..4a4cbb65c748d4741bb690b97ef1244104db05bc
+--- /dev/null
++++ b/test/integration/css-fixtures/composes-ordering/pages/common.module.css
+@@ -0,0 +1,3 @@
++.colorRed {
++  color: red;
++}
+diff --git a/test/integration/css-fixtures/composes-ordering/pages/index.js b/test/integration/css-fixtures/composes-ordering/pages/index.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..0ded73bed98729cba81bcf6a32014089e61690b7
+--- /dev/null
++++ b/test/integration/css-fixtures/composes-ordering/pages/index.js
+@@ -0,0 +1,16 @@
++import Link from 'next/link'
++import css from './index.module.css'
++
++export default function Home() {
++  return (
++    <main>
++      <Link href="/other">
++        <a id="link-other">other</a>
++      </Link>
++      <br />
++      <h1 id="black-title" className={css.header}>
++        Black
++      </h1>
++    </main>
++  )
++}
+diff --git a/test/integration/css-fixtures/composes-ordering/pages/index.module.css b/test/integration/css-fixtures/composes-ordering/pages/index.module.css
+new file mode 100644
+index 0000000000000000000000000000000000000000..0eea8b0a2e907dce88ba8a5cf38a57b442f7bcbe
+--- /dev/null
++++ b/test/integration/css-fixtures/composes-ordering/pages/index.module.css
+@@ -0,0 +1,5 @@
++.header {
++  font-size: 25px;
++  composes: colorRed from 'common.module.css';
++  color: #111;
++}
+diff --git a/test/integration/css-fixtures/composes-ordering/pages/other.js b/test/integration/css-fixtures/composes-ordering/pages/other.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..2b3b76459e53751ebf339f79e9d536c8646c3b5e
+--- /dev/null
++++ b/test/integration/css-fixtures/composes-ordering/pages/other.js
+@@ -0,0 +1,16 @@
++import Link from 'next/link'
++import css from './other.module.css'
++
++export default function Other() {
++  return (
++    <main>
++      <Link href="/">
++        <a id="link-index">index page</a>
++      </Link>
++      <br />
++      <h1 id="red-title" className={css.root}>
++        Red
++      </h1>
++    </main>
++  )
++}
+diff --git a/test/integration/css-fixtures/composes-ordering/pages/other.module.css b/test/integration/css-fixtures/composes-ordering/pages/other.module.css
+new file mode 100644
+index 0000000000000000000000000000000000000000..db62f52210d17a74db436bc052d1d7f9ce9432bc
+--- /dev/null
++++ b/test/integration/css-fixtures/composes-ordering/pages/other.module.css
+@@ -0,0 +1,3 @@
++.root {
++  composes: colorRed from './common.module.css';
++}
+diff --git a/test/integration/css-fixtures/transition-cleanup/pages/common.module.css b/test/integration/css-fixtures/transition-cleanup/pages/common.module.css
+new file mode 100644
+index 0000000000000000000000000000000000000000..4a4cbb65c748d4741bb690b97ef1244104db05bc
+--- /dev/null
++++ b/test/integration/css-fixtures/transition-cleanup/pages/common.module.css
+@@ -0,0 +1,3 @@
++.colorRed {
++  color: red;
++}
+diff --git a/test/integration/css-fixtures/transition-cleanup/pages/index.js b/test/integration/css-fixtures/transition-cleanup/pages/index.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..2c1b84ba3108090f7e3ecac2bc0c4314b11561ab
+--- /dev/null
++++ b/test/integration/css-fixtures/transition-cleanup/pages/index.js
+@@ -0,0 +1,20 @@
++import Link from 'next/link'
++import css from './index.module.css'
++
++export default function Home() {
++  return (
++    <main>
++      <Link href="/other">
++        <a id="link-other">other</a>
++      </Link>
++      <br />
++      <h1 id="black-title" className={css.header}>
++        Black
++      </h1>
++    </main>
++  )
++}
++
++export function getServerSideProps() {
++  return { props: {} }
++}
+diff --git a/test/integration/css-fixtures/transition-cleanup/pages/index.module.css b/test/integration/css-fixtures/transition-cleanup/pages/index.module.css
+new file mode 100644
+index 0000000000000000000000000000000000000000..0eea8b0a2e907dce88ba8a5cf38a57b442f7bcbe
+--- /dev/null
++++ b/test/integration/css-fixtures/transition-cleanup/pages/index.module.css
+@@ -0,0 +1,5 @@
++.header {
++  font-size: 25px;
++  composes: colorRed from 'common.module.css';
++  color: #111;
++}
+diff --git a/test/integration/css-fixtures/transition-cleanup/pages/other.js b/test/integration/css-fixtures/transition-cleanup/pages/other.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..2362bda8c0cbdf820f87d7b5e16484c86ef11a96
+--- /dev/null
++++ b/test/integration/css-fixtures/transition-cleanup/pages/other.js
+@@ -0,0 +1,9 @@
++import css from './other.module.css'
++
++export default function Other() {
++  throw new Error(`oops ${css.root}`)
++}
++
++export function getServerSideProps() {
++  return { props: {} }
++}
+diff --git a/test/integration/css-fixtures/transition-cleanup/pages/other.module.css b/test/integration/css-fixtures/transition-cleanup/pages/other.module.css
+new file mode 100644
+index 0000000000000000000000000000000000000000..db62f52210d17a74db436bc052d1d7f9ce9432bc
+--- /dev/null
++++ b/test/integration/css-fixtures/transition-cleanup/pages/other.module.css
+@@ -0,0 +1,3 @@
++.root {
++  composes: colorRed from './common.module.css';
++}
+diff --git a/test/integration/css-fixtures/transition-reload/pages/common.module.css b/test/integration/css-fixtures/transition-reload/pages/common.module.css
+new file mode 100644
+index 0000000000000000000000000000000000000000..4a4cbb65c748d4741bb690b97ef1244104db05bc
+--- /dev/null
++++ b/test/integration/css-fixtures/transition-reload/pages/common.module.css
+@@ -0,0 +1,3 @@
++.colorRed {
++  color: red;
++}
+diff --git a/test/integration/css-fixtures/transition-reload/pages/index.js b/test/integration/css-fixtures/transition-reload/pages/index.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..dd97041a332c8d2a6caa383a02d79a2b200853cf
+--- /dev/null
++++ b/test/integration/css-fixtures/transition-reload/pages/index.js
+@@ -0,0 +1,16 @@
++import Link from 'next/link'
++import css from './index.module.css'
++
++export default function Home() {
++  return (
++    <main>
++      <Link href="/other" prefetch={false}>
++        <a id="link-other">other</a>
++      </Link>
++      <br />
++      <h1 id="black-title" className={css.header}>
++        Black
++      </h1>
++    </main>
++  )
++}
+diff --git a/test/integration/css-fixtures/transition-reload/pages/index.module.css b/test/integration/css-fixtures/transition-reload/pages/index.module.css
+new file mode 100644
+index 0000000000000000000000000000000000000000..0eea8b0a2e907dce88ba8a5cf38a57b442f7bcbe
+--- /dev/null
++++ b/test/integration/css-fixtures/transition-reload/pages/index.module.css
+@@ -0,0 +1,5 @@
++.header {
++  font-size: 25px;
++  composes: colorRed from 'common.module.css';
++  color: #111;
++}
+diff --git a/test/integration/css-fixtures/transition-reload/pages/other.js b/test/integration/css-fixtures/transition-reload/pages/other.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..ec594ee73f32fa7c1d115edb9859f70ebc7e79e7
+--- /dev/null
++++ b/test/integration/css-fixtures/transition-reload/pages/other.js
+@@ -0,0 +1,16 @@
++import Link from 'next/link'
++import css from './other.module.css'
++
++export default function Other() {
++  return (
++    <main>
++      <Link href="/" prefetch={false}>
++        <a id="link-index">index page</a>
++      </Link>
++      <br />
++      <h1 id="red-title" className={css.root}>
++        Red
++      </h1>
++    </main>
++  )
++}
+diff --git a/test/integration/css-fixtures/transition-reload/pages/other.module.css b/test/integration/css-fixtures/transition-reload/pages/other.module.css
+new file mode 100644
+index 0000000000000000000000000000000000000000..db62f52210d17a74db436bc052d1d7f9ce9432bc
+--- /dev/null
++++ b/test/integration/css-fixtures/transition-reload/pages/other.module.css
+@@ -0,0 +1,3 @@
++.root {
++  composes: colorRed from './common.module.css';
++}
+diff --git a/test/integration/css/test/index.test.js b/test/integration/css/test/index.test.js
+index 7f212fb47a3bf5dc3dd1bc24934cefa91768daeb..665f6a02b494fb7cc9ae8eb32582cbef2a9e2155 100644
+--- a/test/integration/css/test/index.test.js
++++ b/test/integration/css/test/index.test.js
+@@ -1,7 +1,7 @@
+ /* eslint-env jest */
+ import cheerio from 'cheerio'
+ import 'flat-map-polyfill'
+-import { readdir, readFile, remove } from 'fs-extra'
++import { readdir, readFile, remove, readJSON } from 'fs-extra'
+ import {
+   check,
+   File,
+@@ -1051,4 +1051,290 @@ describe('CSS Support', () => {
+       expect(cssMapFiles.length).toBe(1)
+     })
+   })
++
++  // https://github.com/vercel/next.js/issues/12445
++  describe('CSS Modules Composes Ordering', () => {
++    const appDir = join(fixturesDir, 'composes-ordering')
++    let app, appPort
++
++    function tests(isDev = false) {
++      async function checkBlackTitle(browser) {
++        await browser.waitForElementByCss('#black-title')
++        const titleColor = await browser.eval(
++          `window.getComputedStyle(document.querySelector('#black-title')).color`
++        )
++        expect(titleColor).toBe('rgb(17, 17, 17)')
++      }
++      async function checkRedTitle(browser) {
++        await browser.waitForElementByCss('#red-title')
++        const titleColor = await browser.eval(
++          `window.getComputedStyle(document.querySelector('#red-title')).color`
++        )
++        expect(titleColor).toBe('rgb(255, 0, 0)')
++      }
++      async function checkCssPreloadCount(browser) {
++        return Number(
++          await browser.eval(
++            ` [].slice.call(document.querySelectorAll('link[rel=preload][href$="css"]')).length`
++          )
++        )
++      }
++
++      it('should have correct color on index page (on load)', async () => {
++        const browser = await webdriver(appPort, '/')
++        try {
++          await checkBlackTitle(browser)
++        } finally {
++          await browser.close()
++        }
++      })
++
++      it('should have correct color on index page (on hover)', async () => {
++        const browser = await webdriver(appPort, '/')
++        try {
++          await checkBlackTitle(browser)
++          await browser.waitForElementByCss('#link-other').moveTo()
++          await waitFor(2000)
++          await checkBlackTitle(browser)
++        } finally {
++          await browser.close()
++        }
++      })
++
++      if (!isDev) {
++        it('should preload CSS on hover', async () => {
++          const browser = await webdriver(appPort, '/')
++          try {
++            await checkBlackTitle(browser)
++            expect(await checkCssPreloadCount(browser)).toBe(1)
++            await browser.waitForElementByCss('#link-other').moveTo()
++            await waitFor(2000)
++            expect(await checkCssPreloadCount(browser)).toBe(2)
++          } finally {
++            await browser.close()
++          }
++        })
++
++        it('should have correct CSS injection order', async () => {
++          const browser = await webdriver(appPort, '/')
++          try {
++            await checkBlackTitle(browser)
++
++            const prevSiblingHref = await browser.eval(
++              `document.querySelector('link[rel=stylesheet][data-n-p]').previousSibling.getAttribute('href')`
++            )
++            const currentPageHref = await browser.eval(
++              `document.querySelector('link[rel=stylesheet][data-n-p]').getAttribute('href')`
++            )
++            expect(prevSiblingHref).toBeDefined()
++            expect(prevSiblingHref).toBe(currentPageHref)
++
++            // Navigate to other:
++            await browser.waitForElementByCss('#link-other').click()
++            await checkRedTitle(browser)
++
++            const newPrevSiblingHref = await browser.eval(
++              `document.querySelector('link[rel=stylesheet][data-n-p]').previousSibling.getAttribute('href')`
++            )
++            const newPageHref = await browser.eval(
++              `document.querySelector('link[rel=stylesheet][data-n-p]').getAttribute('href')`
++            )
++            expect(newPageHref).toBeDefined()
++            expect(newPrevSiblingHref).toBe(prevSiblingHref)
++            expect(newPageHref).not.toBe(currentPageHref)
++          } finally {
++            await browser.close()
++          }
++        })
++      }
++
++      it('should have correct color on index page (on nav from index)', async () => {
++        const browser = await webdriver(appPort, '/')
++        try {
++          await checkBlackTitle(browser)
++          await browser.waitForElementByCss('#link-other').click()
++
++          // Wait for navigation:
++          await browser.waitForElementByCss('#link-index')
++          await checkRedTitle(browser)
++
++          // Navigate back to index:
++          await browser.waitForElementByCss('#link-index').click()
++          await checkBlackTitle(browser)
++        } finally {
++          await browser.close()
++        }
++      })
++
++      it('should have correct color on index page (on nav from other)', async () => {
++        const browser = await webdriver(appPort, '/other')
++        try {
++          await checkRedTitle(browser)
++          await browser.waitForElementByCss('#link-index').click()
++
++          // Wait for navigation:
++          await browser.waitForElementByCss('#link-other')
++          await checkBlackTitle(browser)
++
++          // Navigate back to other:
++          await browser.waitForElementByCss('#link-other').click()
++          await checkRedTitle(browser)
++        } finally {
++          await browser.close()
++        }
++      })
++    }
++
++    describe('Development Mode', () => {
++      beforeAll(async () => {
++        await remove(join(appDir, '.next'))
++      })
++      beforeAll(async () => {
++        appPort = await findPort()
++        app = await launchApp(appDir, appPort)
++      })
++      afterAll(async () => {
++        await killApp(app)
++      })
++
++      tests(true)
++    })
++
++    describe('Production Mode', () => {
++      beforeAll(async () => {
++        await remove(join(appDir, '.next'))
++      })
++      beforeAll(async () => {
++        await nextBuild(appDir, [], {})
++        appPort = await findPort()
++        app = await nextStart(appDir, appPort)
++      })
++      afterAll(async () => {
++        await killApp(app)
++      })
++
++      tests()
++    })
++  })
++
++  describe('CSS Cleanup on Render Failure', () => {
++    const appDir = join(fixturesDir, 'transition-cleanup')
++    let app, appPort
++
++    function tests() {
++      async function checkBlackTitle(browser) {
++        await browser.waitForElementByCss('#black-title')
++        const titleColor = await browser.eval(
++          `window.getComputedStyle(document.querySelector('#black-title')).color`
++        )
++        expect(titleColor).toBe('rgb(17, 17, 17)')
++      }
++
++      it('not have intermediary page styles on error rendering', async () => {
++        const browser = await webdriver(appPort, '/')
++        try {
++          await checkBlackTitle(browser)
++
++          const currentPageStyles = await browser.eval(
++            `document.querySelector('link[rel=stylesheet][data-n-p]')`
++          )
++          expect(currentPageStyles).toBeDefined()
++
++          // Navigate to other:
++          await browser.waitForElementByCss('#link-other').click()
++          await check(
++            () => browser.eval(`document.body.innerText`),
++            'An unexpected error has occurred.',
++            true
++          )
++
++          const newPageStyles = await browser.eval(
++            `document.querySelector('link[rel=stylesheet][data-n-p]')`
++          )
++          expect(newPageStyles).toBeFalsy()
++
++          const allPageStyles = await browser.eval(
++            `document.querySelector('link[rel=stylesheet]')`
++          )
++          expect(allPageStyles).toBeFalsy()
++        } finally {
++          await browser.close()
++        }
++      })
++    }
++
++    describe('Production Mode', () => {
++      beforeAll(async () => {
++        await remove(join(appDir, '.next'))
++      })
++      beforeAll(async () => {
++        await nextBuild(appDir, [], {})
++        appPort = await findPort()
++        app = await nextStart(appDir, appPort)
++      })
++      afterAll(async () => {
++        await killApp(app)
++      })
++
++      tests()
++    })
++  })
++
++  describe('Page reload on CSS missing', () => {
++    const appDir = join(fixturesDir, 'transition-reload')
++    let app, appPort
++
++    function tests() {
++      async function checkBlackTitle(browser) {
++        await browser.waitForElementByCss('#black-title')
++        const titleColor = await browser.eval(
++          `window.getComputedStyle(document.querySelector('#black-title')).color`
++        )
++        expect(titleColor).toBe('rgb(17, 17, 17)')
++      }
++
++      it('should fall back to server-side transition on missing CSS', async () => {
++        const browser = await webdriver(appPort, '/')
++        try {
++          await checkBlackTitle(browser)
++          await browser.eval(`window.__priorNavigatePageState = 'OOF';`)
++
++          // Navigate to other:
++          await browser.waitForElementByCss('#link-other').click()
++          // Wait for navigation:
++          await browser.waitForElementByCss('#link-index')
++
++          const state = await browser.eval(`window.__priorNavigatePageState`)
++          expect(state).toBeFalsy()
++        } finally {
++          await browser.close()
++        }
++      })
++    }
++
++    describe('Production Mode', () => {
++      beforeAll(async () => {
++        await remove(join(appDir, '.next'))
++      })
++      beforeAll(async () => {
++        await nextBuild(appDir, [], {})
++        appPort = await findPort()
++        app = await nextStart(appDir, appPort)
++
++        // Remove other page CSS files:
++        const manifest = await readJSON(
++          join(appDir, '.next', 'build-manifest.json')
++        )
++        const files = manifest['pages']['/other'].filter((e) =>
++          e.endsWith('.css')
++        )
++        await Promise.all(files.map((f) => remove(join(appDir, '.next', f))))
++      })
++      afterAll(async () => {
++        await killApp(app)
++      })
++
++      tests()
++    })
++  })
+ })
+diff --git a/test/integration/size-limit/test/index.test.js b/test/integration/size-limit/test/index.test.js
+index a58b9d0676591bb4a1918a68875fc49f7b0f328d..1b683cdd7f15e01e4909f68d2212bab3870f742b 100644
+--- a/test/integration/size-limit/test/index.test.js
++++ b/test/integration/size-limit/test/index.test.js
+@@ -80,7 +80,7 @@ describe('Production response size', () => {
+     )
+ 
+     // These numbers are without gzip compression!
+-    const delta = responseSizesBytes - 276 * 1024
++    const delta = responseSizesBytes - 277 * 1024
+     expect(delta).toBeLessThanOrEqual(1024) // don't increase size more than 1kb
+     expect(delta).toBeGreaterThanOrEqual(-1024) // don't decrease size more than 1kb without updating target
+   })
+@@ -100,7 +100,7 @@ describe('Production response size', () => {
+     )
+ 
+     // These numbers are without gzip compression!
+-    const delta = responseSizesBytes - 166 * 1024
++    const delta = responseSizesBytes - 168 * 1024
+     expect(delta).toBeLessThanOrEqual(1024) // don't increase size more than 1kb
+     expect(delta).toBeGreaterThanOrEqual(-1024) // don't decrease size more than 1kb without updating target
+   })

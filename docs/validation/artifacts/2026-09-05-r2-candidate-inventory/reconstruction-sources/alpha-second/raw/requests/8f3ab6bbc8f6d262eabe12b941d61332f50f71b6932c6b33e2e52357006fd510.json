@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/ReactiveX/rxjs/contents/LICENSE.txt",
+    "parameters": {
+      "ref": "5acaafc49fd9050976e31b8c87cb55c4171edf4d"
+    }
+  },
+  "retrievedAt": "2026-09-05T13:29:48.483Z",
+  "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/contents/LICENSE.txt?ref=5acaafc49fd9050976e31b8c87cb55c4171edf4d",
+  "sha256": "e3e155642e469f5875593381db6f82b8187c50bfeb22e6de0604f79eb52fd5d0",
+  "bytes": 16155
+}

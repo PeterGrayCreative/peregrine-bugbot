@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/sequelize/sequelize/issues/7771",
+    "parameters": {}
+  },
+  "retrievedAt": "2026-09-05T12:50:11.239Z",
+  "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/issues/7771?",
+  "sha256": "1e69a341a8a02a949b06410d46fa93c349d0834b83ec0a94ad509ab62eee758b",
+  "bytes": 5193
+}

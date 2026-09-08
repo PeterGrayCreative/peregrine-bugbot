@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/sequelize/sequelize/pulls/7756/files",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:55:48.825Z",
+  "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/7756/files?page=1&per_page=100",
+  "sha256": "a30d20389a7d0b7fd29b64edb42795bff6a59ac2a7a6b0b4be4daa2bcf7b268a",
+  "bytes": 3326
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/nestjs/nest/issues/4801",
+    "parameters": {}
+  },
+  "retrievedAt": "2026-09-05T12:50:09.662Z",
+  "sourceUrl": "https://api.github.com/repos/nestjs/nest/issues/4801?",
+  "sha256": "ffcdd956d6cb63994dc393699922bc91a0c96f05a001628bb4e6f2dd7704c776",
+  "bytes": 4341
+}

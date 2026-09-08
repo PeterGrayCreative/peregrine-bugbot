@@ -1,0 +1,486 @@
+[
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/430000354",
+    "pull_request_review_id": 417790757,
+    "id": 430000354,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQzMDAwMDM1NA==",
+    "diff_hunk": "@@ -990,15 +990,6 @@ describe('Client Navigation', () => {\n       await browser.close()\n     })\n \n-    it('should 404 for <page>/', async () => {",
+    "path": "test/integration/client-navigation/test/index.test.js",
+    "commit_id": "4d71df7f91f67bb4d680ec772116da2c4589e366",
+    "original_commit_id": "dc0b352f8875ca69be5bb7675616759a2cd7205a",
+    "user": {
+      "login": "Timer",
+      "id": 616428,
+      "node_id": "MDQ6VXNlcjYxNjQyOA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/616428?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Timer",
+      "html_url": "https://github.com/Timer",
+      "followers_url": "https://api.github.com/users/Timer/followers",
+      "following_url": "https://api.github.com/users/Timer/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Timer/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Timer/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Timer/subscriptions",
+      "organizations_url": "https://api.github.com/users/Timer/orgs",
+      "repos_url": "https://api.github.com/users/Timer/repos",
+      "events_url": "https://api.github.com/users/Timer/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Timer/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This test should be kept and read \"should not 404\".",
+    "created_at": "2020-05-25T15:54:50Z",
+    "updated_at": "2020-06-23T09:35:02Z",
+    "html_url": "https://github.com/vercel/next.js/pull/13333#discussion_r430000354",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/13333",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/430000354"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/13333#discussion_r430000354"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/13333"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/430000354/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 1005,
+    "original_line": 1005,
+    "side": "LEFT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 4,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/430000487",
+    "pull_request_review_id": 417790904,
+    "id": 430000487,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQzMDAwMDQ4Nw==",
+    "diff_hunk": "@@ -367,12 +367,6 @@ export default function (render, fetch) {\n         expect($('h2').text()).toBe('This page could not be found.')\n       })\n \n-      it('should 404 for <page>/', async () => {",
+    "path": "test/integration/client-navigation/test/rendering.js",
+    "commit_id": "4d71df7f91f67bb4d680ec772116da2c4589e366",
+    "original_commit_id": "dc0b352f8875ca69be5bb7675616759a2cd7205a",
+    "user": {
+      "login": "Timer",
+      "id": 616428,
+      "node_id": "MDQ6VXNlcjYxNjQyOA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/616428?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Timer",
+      "html_url": "https://github.com/Timer",
+      "followers_url": "https://api.github.com/users/Timer/followers",
+      "following_url": "https://api.github.com/users/Timer/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Timer/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Timer/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Timer/subscriptions",
+      "organizations_url": "https://api.github.com/users/Timer/orgs",
+      "repos_url": "https://api.github.com/users/Timer/repos",
+      "events_url": "https://api.github.com/users/Timer/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Timer/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This test should be kept and read \"should not 404\".",
+    "created_at": "2020-05-25T15:55:11Z",
+    "updated_at": "2020-06-23T09:35:02Z",
+    "html_url": "https://github.com/vercel/next.js/pull/13333#discussion_r430000487",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/13333",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/430000487"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/13333#discussion_r430000487"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/13333"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/430000487/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 366,
+    "original_line": 366,
+    "side": "LEFT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 4,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/430010412",
+    "pull_request_review_id": 417802686,
+    "id": 430010412,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQzMDAxMDQxMg==",
+    "diff_hunk": "@@ -8,6 +8,9 @@ export function normalizePagePath(page: string): string {\n   if (!page.startsWith('/')) {\n     page = `/${page}`\n   }\n+  if (page.endsWith('/')) {",
+    "path": "packages/next/next-server/server/normalize-page-path.ts",
+    "commit_id": "4d71df7f91f67bb4d680ec772116da2c4589e366",
+    "original_commit_id": "525e04d59951d416b2dd53e3bb0b4685a8a3914f",
+    "user": {
+      "login": "Timer",
+      "id": 616428,
+      "node_id": "MDQ6VXNlcjYxNjQyOA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/616428?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Timer",
+      "html_url": "https://github.com/Timer",
+      "followers_url": "https://api.github.com/users/Timer/followers",
+      "following_url": "https://api.github.com/users/Timer/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Timer/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Timer/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Timer/subscriptions",
+      "organizations_url": "https://api.github.com/users/Timer/orgs",
+      "repos_url": "https://api.github.com/users/Timer/repos",
+      "events_url": "https://api.github.com/users/Timer/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Timer/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Does this need `page !== '/'` too?",
+    "created_at": "2020-05-25T16:26:45Z",
+    "updated_at": "2020-06-23T09:35:02Z",
+    "html_url": "https://github.com/vercel/next.js/pull/13333#discussion_r430010412",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/13333",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/430010412"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/13333#discussion_r430010412"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/13333"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/430010412/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 11,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/430012159",
+    "pull_request_review_id": 417804712,
+    "id": 430012159,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQzMDAxMjE1OQ==",
+    "diff_hunk": "@@ -8,6 +8,9 @@ export function normalizePagePath(page: string): string {\n   if (!page.startsWith('/')) {\n     page = `/${page}`\n   }\n+  if (page.endsWith('/')) {",
+    "path": "packages/next/next-server/server/normalize-page-path.ts",
+    "commit_id": "4d71df7f91f67bb4d680ec772116da2c4589e366",
+    "original_commit_id": "525e04d59951d416b2dd53e3bb0b4685a8a3914f",
+    "user": {
+      "login": "Janpot",
+      "id": 2109932,
+      "node_id": "MDQ6VXNlcjIxMDk5MzI=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2109932?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Janpot",
+      "html_url": "https://github.com/Janpot",
+      "followers_url": "https://api.github.com/users/Janpot/followers",
+      "following_url": "https://api.github.com/users/Janpot/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Janpot/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Janpot/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Janpot/subscriptions",
+      "organizations_url": "https://api.github.com/users/Janpot/orgs",
+      "repos_url": "https://api.github.com/users/Janpot/repos",
+      "events_url": "https://api.github.com/users/Janpot/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Janpot/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "`'/'` can't reach this code as higher up there is \r\n```js\r\n  if (page === '/') {\r\n    page = '/index'\r\n  }\r\n```\r\nbut, I have the feeling that that piece is a bit out of place in this function. Removing it right now causes mayhem, but might be necessary in the future to get the `/index` behavior sorted out. \r\n\r\nTo be on the safe side, in case it ever gets removed, I will use the same regex as in\r\n```js\r\npathname = pathname.replace(/(?!^)\\/$/, '')\r\n```\r\n",
+    "created_at": "2020-05-25T16:32:50Z",
+    "updated_at": "2020-06-23T09:35:02Z",
+    "html_url": "https://github.com/vercel/next.js/pull/13333#discussion_r430012159",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/13333",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/430012159"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/13333#discussion_r430012159"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/13333"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/430012159/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 11,
+    "side": "RIGHT",
+    "in_reply_to_id": 430010412,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/437713856",
+    "pull_request_review_id": 427536782,
+    "id": 437713856,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQzNzcxMzg1Ng==",
+    "diff_hunk": "@@ -15,6 +15,8 @@ export function normalizePagePath(page: string): string {\n   if (!page.startsWith('/')) {\n     page = `/${page}`\n   }\n+  // remove trailing slash\n+  page = page.replace(/(?!^)\\/$/, '')",
+    "path": "packages/next/next-server/server/normalize-page-path.ts",
+    "commit_id": "4d71df7f91f67bb4d680ec772116da2c4589e366",
+    "original_commit_id": "7a9080f2f58a8df2fb6f6e629822f4e1a7c8e8ba",
+    "user": {
+      "login": "Timer",
+      "id": 616428,
+      "node_id": "MDQ6VXNlcjYxNjQyOA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/616428?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Timer",
+      "html_url": "https://github.com/Timer",
+      "followers_url": "https://api.github.com/users/Timer/followers",
+      "following_url": "https://api.github.com/users/Timer/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Timer/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Timer/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Timer/subscriptions",
+      "organizations_url": "https://api.github.com/users/Timer/orgs",
+      "repos_url": "https://api.github.com/users/Timer/repos",
+      "events_url": "https://api.github.com/users/Timer/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Timer/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Instead of duplicating this everywhere can we make a helper function?",
+    "created_at": "2020-06-09T20:53:16Z",
+    "updated_at": "2020-06-23T09:35:02Z",
+    "html_url": "https://github.com/vercel/next.js/pull/13333#discussion_r437713856",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/13333",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/437713856"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/13333#discussion_r437713856"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/13333"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/437713856/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 19,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 5,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/438122352",
+    "pull_request_review_id": 428053153,
+    "id": 438122352,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQzODEyMjM1Mg==",
+    "diff_hunk": "@@ -235,9 +235,9 @@ describe('Serverless', () => {\n     expect(param).toBe('val')\n   })\n \n-  it('should 404 on API request with trailing slash', async () => {\n-    const res = await fetchViaHTTP(appPort, '/api/hello/')\n-    expect(res.status).toBe(404)\n+  it('should reply successfully on API request with trailing slash', async () => {",
+    "path": "test/integration/serverless/test/index.test.js",
+    "commit_id": "4d71df7f91f67bb4d680ec772116da2c4589e366",
+    "original_commit_id": "c63fd0a5ae388dd40667756f17334f4173a72fe9",
+    "user": {
+      "login": "Timer",
+      "id": 616428,
+      "node_id": "MDQ6VXNlcjYxNjQyOA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/616428?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Timer",
+      "html_url": "https://github.com/Timer",
+      "followers_url": "https://api.github.com/users/Timer/followers",
+      "following_url": "https://api.github.com/users/Timer/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Timer/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Timer/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Timer/subscriptions",
+      "organizations_url": "https://api.github.com/users/Timer/orgs",
+      "repos_url": "https://api.github.com/users/Timer/repos",
+      "events_url": "https://api.github.com/users/Timer/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Timer/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This test needs to verify it sends a redirect when we don't have it follow redirects.",
+    "created_at": "2020-06-10T13:29:51Z",
+    "updated_at": "2020-06-23T09:35:02Z",
+    "html_url": "https://github.com/vercel/next.js/pull/13333#discussion_r438122352",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/13333",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/438122352"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/13333#discussion_r438122352"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/13333"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/438122352/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 238,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 7,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/438123062",
+    "pull_request_review_id": 428053153,
+    "id": 438123062,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQzODEyMzA2Mg==",
+    "diff_hunk": "@@ -170,9 +169,9 @@ describe('Serverless Trace', () => {\n     expect(param).toBe('val')\n   })\n \n-  it('should 404 on API request with trailing slash', async () => {\n-    const res = await fetchViaHTTP(appPort, '/api/hello/')\n-    expect(res.status).toBe(404)\n+  it('should reply successfully on API request with trailing slash', async () => {",
+    "path": "test/integration/serverless-trace/test/index.test.js",
+    "commit_id": "4d71df7f91f67bb4d680ec772116da2c4589e366",
+    "original_commit_id": "c63fd0a5ae388dd40667756f17334f4173a72fe9",
+    "user": {
+      "login": "Timer",
+      "id": 616428,
+      "node_id": "MDQ6VXNlcjYxNjQyOA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/616428?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Timer",
+      "html_url": "https://github.com/Timer",
+      "followers_url": "https://api.github.com/users/Timer/followers",
+      "following_url": "https://api.github.com/users/Timer/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Timer/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Timer/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Timer/subscriptions",
+      "organizations_url": "https://api.github.com/users/Timer/orgs",
+      "repos_url": "https://api.github.com/users/Timer/repos",
+      "events_url": "https://api.github.com/users/Timer/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Timer/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This test needs to verify it sends a redirect when we don't have it follow redirects.",
+    "created_at": "2020-06-10T13:30:50Z",
+    "updated_at": "2020-06-23T09:35:02Z",
+    "html_url": "https://github.com/vercel/next.js/pull/13333#discussion_r438123062",
+    "pull_request_url": "https://api.github.com/repos/vercel/next.js/pulls/13333",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/comments/438123062"
+      },
+      "html": {
+        "href": "https://github.com/vercel/next.js/pull/13333#discussion_r438123062"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/vercel/next.js/pulls/13333"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/vercel/next.js/pulls/comments/438123062/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 172,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 15,
+    "position": 1,
+    "subject_type": "line"
+  }
+]

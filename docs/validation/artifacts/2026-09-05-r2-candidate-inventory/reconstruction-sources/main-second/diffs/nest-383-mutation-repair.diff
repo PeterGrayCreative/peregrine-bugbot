@@ -1,0 +1,22 @@
+diff --git a/src/common/pipes/validation.pipe.ts b/src/common/pipes/validation.pipe.ts
+index bd8b2f1b2d21f88684c59e7fac62f85d11f3d541..05371035fe5979a08c30d5d8d2e294e983564866 100644
+--- a/src/common/pipes/validation.pipe.ts
++++ b/src/common/pipes/validation.pipe.ts
+@@ -14,12 +14,12 @@ export class ValidationPipe implements PipeTransform<any> {
+ 
+   private returnTransformed: boolean;
+ 
+-  private validatorOptions: ValidatorOptions = {};
++  private validatorOptions: ValidatorOptions;
+ 
+-  constructor(options?: ValidationPipeOptions) {
+-    this.returnTransformed = (options && 'transform' in options) ? options.transform : true;
+-    if (options) delete options.transform;
+-    this.validatorOptions = { ...options } as ValidatorOptions;
++  constructor(options: ValidationPipeOptions = {}) {
++    const { transform, ...validatorOptions } = options;
++    this.returnTransformed = transform != null ? transform : true;
++    this.validatorOptions = validatorOptions;
+   }
+ 
+   public async transform(value, metadata: ArgumentMetadata) {

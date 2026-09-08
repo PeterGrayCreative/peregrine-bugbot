@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/microsoft/vscode/pulls/99866",
+    "parameters": {}
+  },
+  "retrievedAt": "2026-09-05T12:52:54.667Z",
+  "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/99866?",
+  "sha256": "a998546fc80a570ef6ab24b90aeef48bfefb889fec4168d3a5f56d1a4e794938",
+  "bytes": 20005
+}

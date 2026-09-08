@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/sequelize/sequelize/pulls/9287/comments",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:55:59.018Z",
+  "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/pulls/9287/comments?page=1&per_page=100",
+  "sha256": "81a9dc10c4127c243ecd77586e032d9bee29d2ccf573ee84505a5ad213abb562",
+  "bytes": 20929
+}

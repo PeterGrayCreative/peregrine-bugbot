@@ -1,0 +1,5 @@
+Flag --time has been deprecated, use --timeout instead
+peregrine-read-mcp-server-20260907-v1
+peregrine-read-mcp-server-20260907-v1
+peregrine-read-mcp-client-20260907-v1
+peregrine-read-mcp-probe-20260907-v1

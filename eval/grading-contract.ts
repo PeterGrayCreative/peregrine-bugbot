@@ -121,6 +121,9 @@ export function assertGradingEvidenceConsistent(
   expectedJudge?: GradingEvidence["judge"],
 ): void {
   assertMatchReuseMatchesRootCause(truth, matches, source);
+  if (evidence.version !== "root-cause-v1" && evidence.version !== "root-cause-v2") {
+    throw new Error(`${source}.grading.version is invalid`);
+  }
   const bugs = new Map(truth.bugs.map((bug) => [bug.id, bug]));
   const decisions = new Set<string>();
   const candidates: MatchCandidate[] = [];
@@ -206,6 +209,8 @@ export function assertGradingEvidenceConsistent(
     throw new Error(`${source}.grading.rootCauseMatches is inconsistent`);
   }
   for (const bug of truth.bugs) {
+    // Preserve the interpretation of sealed v1 artifacts. V2 does not infer
+    // review infrastructure failure from an unmatched root or a judge failure.
     const expectedStage = matches[bug.id] === null
       ? evidence.version === LEGACY_GRADING_VERSION ? "infrastructure" : "unattributed"
       : "none";

@@ -1,0 +1,537 @@
+[
+    {
+        "Id": "8239c66b705b874d1a079e6206b57188fcdf83cd2e7d08694e649bc98ec4b8ab",
+        "Created": "2026-09-07T16:59:13.278773044Z",
+        "Path": "docker-entrypoint.sh",
+        "Args": [
+            "node",
+            "/probe-server.mjs"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 591,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-09-07T16:59:13.363117127Z",
+            "FinishedAt": "0001-01-01T00:00:00Z"
+        },
+        "Image": "sha256:0ad23c12cc2172a54b2b298ebde4096d3e4924efc3d3bf5c2c4f616c7d00e6b3",
+        "ResolvConfPath": "/var/lib/docker/containers/8239c66b705b874d1a079e6206b57188fcdf83cd2e7d08694e649bc98ec4b8ab/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/8239c66b705b874d1a079e6206b57188fcdf83cd2e7d08694e649bc98ec4b8ab/hostname",
+        "HostsPath": "/var/lib/docker/containers/8239c66b705b874d1a079e6206b57188fcdf83cd2e7d08694e649bc98ec4b8ab/hosts",
+        "LogPath": "/var/lib/docker/containers/8239c66b705b874d1a079e6206b57188fcdf83cd2e7d08694e649bc98ec4b8ab/8239c66b705b874d1a079e6206b57188fcdf83cd2e7d08694e649bc98ec4b8ab-json.log",
+        "Name": "/peregrine-read-mcp-server-20260907-v1",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": null,
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "peregrine-read-mcp-probe-20260907-v1",
+            "PortBindings": {},
+            "RestartPolicy": {
+                "Name": "no",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": [
+                "ALL"
+            ],
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": null,
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": true,
+            "SecurityOpt": [
+                "no-new-privileges"
+            ],
+            "Tmpfs": {
+                "/home/peregrine": "rw,noexec,nosuid,nodev,size=16m,uid=1000,gid=1000",
+                "/tmp": "rw,noexec,nosuid,nodev,size=16m,uid=1000,gid=1000"
+            },
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 268435456,
+            "NanoCpus": 1000000000,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": [],
+            "BlkioDeviceReadBps": [],
+            "BlkioDeviceWriteBps": [],
+            "BlkioDeviceReadIOps": [],
+            "BlkioDeviceWriteIOps": [],
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [],
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 536870912,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": 64,
+            "Ulimits": [],
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "Mounts": [
+                {
+                    "Type": "bind",
+                    "Source": "/Users/petergray/Documents/peregrine-bugbot/.worktrees/evidence-curation/read-mcp-runtime-probe-v1/capsule",
+                    "Target": "/capsule",
+                    "ReadOnly": true
+                },
+                {
+                    "Type": "bind",
+                    "Source": "/Users/petergray/Documents/peregrine-bugbot/.worktrees/ts-js-evidence-r2/docs/validation/artifacts/2026-09-07-read-mcp-runtime/probe-server.mjs",
+                    "Target": "/probe-server.mjs",
+                    "ReadOnly": true
+                },
+                {
+                    "Type": "bind",
+                    "Source": "/Users/petergray/Documents/peregrine-bugbot/.worktrees/ts-js-evidence-r2/docs/validation/artifacts/2026-09-07-read-mcp-runtime/source.txt",
+                    "Target": "/review/source.txt",
+                    "ReadOnly": true
+                }
+            ],
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [
+            {
+                "Type": "bind",
+                "Source": "/Users/petergray/Documents/peregrine-bugbot/.worktrees/evidence-curation/read-mcp-runtime-probe-v1/capsule",
+                "Destination": "/capsule",
+                "Mode": "",
+                "RW": false,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/Users/petergray/Documents/peregrine-bugbot/.worktrees/ts-js-evidence-r2/docs/validation/artifacts/2026-09-07-read-mcp-runtime/probe-server.mjs",
+                "Destination": "/probe-server.mjs",
+                "Mode": "",
+                "RW": false,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/Users/petergray/Documents/peregrine-bugbot/.worktrees/ts-js-evidence-r2/docs/validation/artifacts/2026-09-07-read-mcp-runtime/source.txt",
+                "Destination": "/review/source.txt",
+                "Mode": "",
+                "RW": false,
+                "Propagation": "rprivate"
+            }
+        ],
+        "Config": {
+            "Hostname": "8239c66b705b",
+            "Domainname": "",
+            "User": "1000:1000",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/opt/peregrine-provider/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "NODE_VERSION=22.22.1",
+                "YARN_VERSION=1.22.22",
+                "NODE_ENV=production",
+                "HOME=/home/peregrine",
+                "XDG_CONFIG_HOME=/home/peregrine/xdg-config",
+                "XDG_CACHE_HOME=/home/peregrine/xdg-cache",
+                "XDG_DATA_HOME=/home/peregrine/xdg-data",
+                "TMPDIR=/tmp",
+                "GIT_CONFIG_NOSYSTEM=1",
+                "GIT_CONFIG_GLOBAL=/dev/null",
+                "GIT_TERMINAL_PROMPT=0",
+                "DISABLE_AUTOUPDATER=1",
+                "DISABLE_UPDATES=1",
+                "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1"
+            ],
+            "Cmd": [
+                "node",
+                "/probe-server.mjs"
+            ],
+            "Image": "ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:0ad23c12cc2172a54b2b298ebde4096d3e4924efc3d3bf5c2c4f616c7d00e6b3",
+            "Volumes": null,
+            "WorkingDir": "/workspace",
+            "Entrypoint": [
+                "docker-entrypoint.sh"
+            ],
+            "Labels": {
+                "io.peregrine.claude-code.version": "2.1.252",
+                "io.peregrine.codex.version": "0.152.0",
+                "io.peregrine.node.version": "22.22.1",
+                "org.opencontainers.image.description": "Provider CLIs for externally contained Peregrine evaluation attempts",
+                "org.opencontainers.image.revision": "511a687c2aecf484bd28f9f9e32420a3985a69ab",
+                "org.opencontainers.image.source": "https://github.com/PeterGrayCreative/peregrine-bugbot",
+                "org.opencontainers.image.title": "Peregrine evaluation runtime"
+            }
+        },
+        "NetworkSettings": {
+            "SandboxID": "771a8992a40a1f7e019c1654f6d3d79ce66079b914fa25ac220f7b54f2899c06",
+            "SandboxKey": "/var/run/docker/netns/771a8992a40a",
+            "Ports": {},
+            "Networks": {
+                "peregrine-read-mcp-probe-20260907-v1": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": [
+                        "review-tools"
+                    ],
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "02d24cb8eb77ed07174602bcfdf53d5b9eec75f84580d013b6eab8943b76e4f6",
+                    "EndpointID": "b7fbfd60b5fb9a5865039f7c3f3fd4cae241137e4ccabbdc6d4d86ef6c03e067",
+                    "Gateway": "",
+                    "IPAddress": "172.18.0.2",
+                    "MacAddress": "aa:d0:16:de:79:61",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": [
+                        "peregrine-read-mcp-server-20260907-v1",
+                        "review-tools",
+                        "8239c66b705b"
+                    ]
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:29d83f816b852a647dcf03ce40290deaee600d53fde09bff81558d2223f7aab1",
+            "size": 2573,
+            "platform": {
+                "architecture": "arm64",
+                "os": "linux"
+            }
+        }
+    },
+    {
+        "Id": "4d4f6001d49520142f7a41ce81165eee2f03a15aad6e8123e1f0c17bf198a56b",
+        "Created": "2026-09-07T16:59:52.547946007Z",
+        "Path": "docker-entrypoint.sh",
+        "Args": [
+            "node",
+            "/probe-client.mjs",
+            "http://review-tools:3099/mcp/5926c93ec7df9b3ed45d9ad5d17b6d1ae976fee480b655f5b9397a783aa7386b"
+        ],
+        "State": {
+            "Status": "exited",
+            "Running": false,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 0,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-09-07T16:59:52.629803424Z",
+            "FinishedAt": "2026-09-07T16:59:52.836146757Z"
+        },
+        "Image": "sha256:0ad23c12cc2172a54b2b298ebde4096d3e4924efc3d3bf5c2c4f616c7d00e6b3",
+        "ResolvConfPath": "/var/lib/docker/containers/4d4f6001d49520142f7a41ce81165eee2f03a15aad6e8123e1f0c17bf198a56b/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/4d4f6001d49520142f7a41ce81165eee2f03a15aad6e8123e1f0c17bf198a56b/hostname",
+        "HostsPath": "/var/lib/docker/containers/4d4f6001d49520142f7a41ce81165eee2f03a15aad6e8123e1f0c17bf198a56b/hosts",
+        "LogPath": "/var/lib/docker/containers/4d4f6001d49520142f7a41ce81165eee2f03a15aad6e8123e1f0c17bf198a56b/4d4f6001d49520142f7a41ce81165eee2f03a15aad6e8123e1f0c17bf198a56b-json.log",
+        "Name": "/peregrine-read-mcp-client-20260907-v1",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": null,
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "peregrine-read-mcp-probe-20260907-v1",
+            "PortBindings": {},
+            "RestartPolicy": {
+                "Name": "no",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": [
+                "ALL"
+            ],
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": null,
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": true,
+            "SecurityOpt": [
+                "no-new-privileges"
+            ],
+            "Tmpfs": {
+                "/home/peregrine": "rw,noexec,nosuid,nodev,size=16m,uid=1000,gid=1000",
+                "/tmp": "rw,noexec,nosuid,nodev,size=16m,uid=1000,gid=1000"
+            },
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 268435456,
+            "NanoCpus": 1000000000,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": [],
+            "BlkioDeviceReadBps": [],
+            "BlkioDeviceWriteBps": [],
+            "BlkioDeviceReadIOps": [],
+            "BlkioDeviceWriteIOps": [],
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "",
+            "CpusetMems": "",
+            "Devices": [],
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 536870912,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": 64,
+            "Ulimits": [],
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "Mounts": [
+                {
+                    "Type": "bind",
+                    "Source": "/Users/petergray/Documents/peregrine-bugbot/.worktrees/ts-js-evidence-r2/docs/validation/artifacts/2026-09-07-read-mcp-runtime/probe-client.mjs",
+                    "Target": "/probe-client.mjs",
+                    "ReadOnly": true
+                },
+                {
+                    "Type": "bind",
+                    "Source": "/Users/petergray/Documents/peregrine-bugbot/.worktrees/ts-js-evidence-r2/docs/validation/artifacts/2026-09-07-read-mcp-runtime/client-only-canary.json",
+                    "Target": "/client-only-canary.json",
+                    "ReadOnly": true
+                }
+            ],
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [
+            {
+                "Type": "bind",
+                "Source": "/Users/petergray/Documents/peregrine-bugbot/.worktrees/ts-js-evidence-r2/docs/validation/artifacts/2026-09-07-read-mcp-runtime/probe-client.mjs",
+                "Destination": "/probe-client.mjs",
+                "Mode": "",
+                "RW": false,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/Users/petergray/Documents/peregrine-bugbot/.worktrees/ts-js-evidence-r2/docs/validation/artifacts/2026-09-07-read-mcp-runtime/client-only-canary.json",
+                "Destination": "/client-only-canary.json",
+                "Mode": "",
+                "RW": false,
+                "Propagation": "rprivate"
+            }
+        ],
+        "Config": {
+            "Hostname": "4d4f6001d495",
+            "Domainname": "",
+            "User": "1000:1000",
+            "AttachStdin": false,
+            "AttachStdout": true,
+            "AttachStderr": true,
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/opt/peregrine-provider/node_modules/.bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "NODE_VERSION=22.22.1",
+                "YARN_VERSION=1.22.22",
+                "NODE_ENV=production",
+                "HOME=/home/peregrine",
+                "XDG_CONFIG_HOME=/home/peregrine/xdg-config",
+                "XDG_CACHE_HOME=/home/peregrine/xdg-cache",
+                "XDG_DATA_HOME=/home/peregrine/xdg-data",
+                "TMPDIR=/tmp",
+                "GIT_CONFIG_NOSYSTEM=1",
+                "GIT_CONFIG_GLOBAL=/dev/null",
+                "GIT_TERMINAL_PROMPT=0",
+                "DISABLE_AUTOUPDATER=1",
+                "DISABLE_UPDATES=1",
+                "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1"
+            ],
+            "Cmd": [
+                "node",
+                "/probe-client.mjs",
+                "http://review-tools:3099/mcp/5926c93ec7df9b3ed45d9ad5d17b6d1ae976fee480b655f5b9397a783aa7386b"
+            ],
+            "Image": "ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:0ad23c12cc2172a54b2b298ebde4096d3e4924efc3d3bf5c2c4f616c7d00e6b3",
+            "Volumes": null,
+            "WorkingDir": "/workspace",
+            "Entrypoint": [
+                "docker-entrypoint.sh"
+            ],
+            "Labels": {
+                "io.peregrine.claude-code.version": "2.1.252",
+                "io.peregrine.codex.version": "0.152.0",
+                "io.peregrine.node.version": "22.22.1",
+                "org.opencontainers.image.description": "Provider CLIs for externally contained Peregrine evaluation attempts",
+                "org.opencontainers.image.revision": "511a687c2aecf484bd28f9f9e32420a3985a69ab",
+                "org.opencontainers.image.source": "https://github.com/PeterGrayCreative/peregrine-bugbot",
+                "org.opencontainers.image.title": "Peregrine evaluation runtime"
+            }
+        },
+        "NetworkSettings": {
+            "SandboxID": "",
+            "SandboxKey": "",
+            "Ports": {},
+            "Networks": {
+                "peregrine-read-mcp-probe-20260907-v1": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "02d24cb8eb77ed07174602bcfdf53d5b9eec75f84580d013b6eab8943b76e4f6",
+                    "EndpointID": "",
+                    "Gateway": "",
+                    "IPAddress": "",
+                    "MacAddress": "",
+                    "IPPrefixLen": 0,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": [
+                        "peregrine-read-mcp-client-20260907-v1",
+                        "4d4f6001d495"
+                    ]
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:29d83f816b852a647dcf03ce40290deaee600d53fde09bff81558d2223f7aab1",
+            "size": 2573,
+            "platform": {
+                "architecture": "arm64",
+                "os": "linux"
+            }
+        }
+    }
+]

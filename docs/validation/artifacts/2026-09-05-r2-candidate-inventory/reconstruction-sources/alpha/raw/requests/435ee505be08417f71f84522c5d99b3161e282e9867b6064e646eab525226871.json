@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/microsoft/vscode/commits/6f933020e8dd4ea046eae2bcfc59a18edf2bc517",
+    "parameters": {}
+  },
+  "retrievedAt": "2026-09-05T13:07:44.308Z",
+  "sourceUrl": "https://api.github.com/repos/microsoft/vscode/commits/6f933020e8dd4ea046eae2bcfc59a18edf2bc517?",
+  "sha256": "4b195679cb2cecf3f452fbc0b550f766d96a0df3a452e0a80d5d8d28cdc6b46f",
+  "bytes": 7447
+}

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/axios/axios/pulls/1752/reviews",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:56:52.626Z",
+  "sourceUrl": "https://api.github.com/repos/axios/axios/pulls/1752/reviews?page=1&per_page=100",
+  "sha256": "4f80de2f53c6108c251aeb961675e26420d19e7c046b2c52f2706aa0485b750f",
+  "bytes": 3268
+}

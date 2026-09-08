@@ -5,3 +5,13 @@ eval/cases/**/diff.patch -text -whitespace
 # Historical evidence versions are content-addressed, including source-owned
 # whitespace and line endings in stored patches and already sealed prose.
 docs/validation/artifacts/2026-09-04-r1-historical-reconstructions/curation/versions/** -whitespace
+
+# Raw API evidence is hashed as captured bytes; checkout must not normalize it.
+docs/validation/artifacts/2026-09-05-r2-candidate-inventory/raw/objects/** -text -whitespace
+docs/validation/artifacts/2026-09-05-r2-candidate-inventory/screening-sources/**/objects/** -text -whitespace
+# Screening reports are bound by the frozen inventory, including Markdown breaks.
+docs/validation/artifacts/2026-09-05-r2-candidate-inventory/screening/*.md -text -whitespace
+docs/validation/artifacts/2026-09-05-r2-candidate-inventory/reconstruction-sources/**/raw/** -text -whitespace
+docs/validation/artifacts/2026-09-05-r2-candidate-inventory/reconstruction-sources/**/api/** -text -whitespace
+docs/validation/artifacts/2026-09-05-r2-candidate-inventory/reconstruction-sources/**/diffs/** -text -whitespace
+docs/validation/artifacts/2026-09-05-r2-candidate-inventory/reconstructions/*.md -text -whitespace

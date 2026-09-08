@@ -1,0 +1,2011 @@
+[
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/100664507",
+    "pull_request_review_id": 21383185,
+    "id": 100664507,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEwMDY2NDUwNw==",
+    "diff_hunk": "@@ -151,6 +155,132 @@ const QueryGenerator = {\n     return `ALTER TABLE ${this.quoteTable(tableName)} CHANGE ${attrString.join(', ')};`;\n   },\n \n+  // A recursive parser for nested where conditions\n+  parseConditionObject(_conditions, path) {\n+    path = path || [];\n+    return Utils._.reduce(_conditions, (r, v, k) => { // result, key, value",
+    "path": "lib/dialects/mysql/query-generator.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "cb733114d3ca73ab166cb775fdeb3ddecb67fe35",
+    "user": {
+      "login": "felixfbecker",
+      "id": 10532611,
+      "node_id": "MDQ6VXNlcjEwNTMyNjEx",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10532611?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/felixfbecker",
+      "html_url": "https://github.com/felixfbecker",
+      "followers_url": "https://api.github.com/users/felixfbecker/followers",
+      "following_url": "https://api.github.com/users/felixfbecker/following{/other_user}",
+      "gists_url": "https://api.github.com/users/felixfbecker/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/felixfbecker/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/felixfbecker/subscriptions",
+      "organizations_url": "https://api.github.com/users/felixfbecker/orgs",
+      "repos_url": "https://api.github.com/users/felixfbecker/repos",
+      "events_url": "https://api.github.com/users/felixfbecker/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/felixfbecker/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "the comment is wrong.",
+    "created_at": "2017-02-11T10:10:32Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r100664507",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/100664507"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r100664507"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/100664507/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": null,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 18,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/100664513",
+    "pull_request_review_id": 21383185,
+    "id": 100664513,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEwMDY2NDUxMw==",
+    "diff_hunk": "@@ -151,6 +155,132 @@ const QueryGenerator = {\n     return `ALTER TABLE ${this.quoteTable(tableName)} CHANGE ${attrString.join(', ')};`;\n   },\n \n+  // A recursive parser for nested where conditions\n+  parseConditionObject(_conditions, path) {",
+    "path": "lib/dialects/mysql/query-generator.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "cb733114d3ca73ab166cb775fdeb3ddecb67fe35",
+    "user": {
+      "login": "felixfbecker",
+      "id": 10532611,
+      "node_id": "MDQ6VXNlcjEwNTMyNjEx",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10532611?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/felixfbecker",
+      "html_url": "https://github.com/felixfbecker",
+      "followers_url": "https://api.github.com/users/felixfbecker/followers",
+      "following_url": "https://api.github.com/users/felixfbecker/following{/other_user}",
+      "gists_url": "https://api.github.com/users/felixfbecker/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/felixfbecker/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/felixfbecker/subscriptions",
+      "organizations_url": "https://api.github.com/users/felixfbecker/orgs",
+      "repos_url": "https://api.github.com/users/felixfbecker/repos",
+      "events_url": "https://api.github.com/users/felixfbecker/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/felixfbecker/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Is this method copied? If yes, you might wanna add it to AbstractQueryGenerator",
+    "created_at": "2017-02-11T10:10:54Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r100664513",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/100664513"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r100664513"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/100664513/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": null,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 16,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/100664522",
+    "pull_request_review_id": 21383185,
+    "id": 100664522,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEwMDY2NDUyMg==",
+    "diff_hunk": "@@ -151,6 +155,132 @@ const QueryGenerator = {\n     return `ALTER TABLE ${this.quoteTable(tableName)} CHANGE ${attrString.join(', ')};`;\n   },\n \n+  // A recursive parser for nested where conditions\n+  parseConditionObject(_conditions, path) {\n+    path = path || [];\n+    return Utils._.reduce(_conditions, (r, v, k) => { // result, key, value\n+      if (Utils._.isObject(v)) {\n+        r = r.concat(this.parseConditionObject(v, path.concat(k))); // Recursively parse objects\n+      } else {\n+        r.push({ path: path.concat(k), value: v });\n+      }\n+      return r;\n+    }, []);\n+  },\n+\n+  handleSequelizeMethod(smth, tableName, factory, options, prepend) {\n+    if (smth instanceof Utils.Json) {\n+      // Parse nested object\n+      if (smth.conditions) {\n+        const conditions = _.map(this.parseConditionObject(smth.conditions), condition =>\n+          `${this.quoteIdentifier(_.first(condition.path))}->>'\\$.${_.tail(condition.path).join('.')}' = '${condition.value}'`\n+        );\n+\n+        return conditions.join(' and ');\n+      } else if (smth.path) {\n+        let str;\n+\n+        // Allow specifying conditions using the mysql json syntax\n+        if (_.some(['->', '->>'], _.partial(_.includes, smth.path))) {\n+          str = smth.path;\n+        } else {\n+          // Also support json dot notation\n+          const path = smth.path.split('.');\n+          str = `${this.quoteIdentifier(_.first(path))}->>'\\$.${_.tail(path).join(',')}'`;\n+        }\n+\n+        if (smth.value) {\n+          str += util.format(' = %s', this.escape(smth.value));\n+        }\n+\n+        return str;\n+      }\n+    } else {\n+      return AbstractQueryGenerator.handleSequelizeMethod.call(this, smth, tableName, factory, options, prepend);",
+    "path": "lib/dialects/mysql/query-generator.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "cb733114d3ca73ab166cb775fdeb3ddecb67fe35",
+    "user": {
+      "login": "felixfbecker",
+      "id": 10532611,
+      "node_id": "MDQ6VXNlcjEwNTMyNjEx",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10532611?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/felixfbecker",
+      "html_url": "https://github.com/felixfbecker",
+      "followers_url": "https://api.github.com/users/felixfbecker/followers",
+      "following_url": "https://api.github.com/users/felixfbecker/following{/other_user}",
+      "gists_url": "https://api.github.com/users/felixfbecker/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/felixfbecker/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/felixfbecker/subscriptions",
+      "organizations_url": "https://api.github.com/users/felixfbecker/orgs",
+      "repos_url": "https://api.github.com/users/felixfbecker/repos",
+      "events_url": "https://api.github.com/users/felixfbecker/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/felixfbecker/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "`super.handleSequelizeMethod()`",
+    "created_at": "2017-02-11T10:11:41Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r100664522",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/100664522"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r100664522"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/100664522/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": null,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 56,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/100664531",
+    "pull_request_review_id": 21383185,
+    "id": 100664531,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEwMDY2NDUzMQ==",
+    "diff_hunk": "@@ -151,6 +155,132 @@ const QueryGenerator = {\n     return `ALTER TABLE ${this.quoteTable(tableName)} CHANGE ${attrString.join(', ')};`;\n   },\n \n+  // A recursive parser for nested where conditions\n+  parseConditionObject(_conditions, path) {\n+    path = path || [];\n+    return Utils._.reduce(_conditions, (r, v, k) => { // result, key, value\n+      if (Utils._.isObject(v)) {\n+        r = r.concat(this.parseConditionObject(v, path.concat(k))); // Recursively parse objects\n+      } else {\n+        r.push({ path: path.concat(k), value: v });\n+      }\n+      return r;\n+    }, []);\n+  },\n+\n+  handleSequelizeMethod(smth, tableName, factory, options, prepend) {\n+    if (smth instanceof Utils.Json) {\n+      // Parse nested object\n+      if (smth.conditions) {\n+        const conditions = _.map(this.parseConditionObject(smth.conditions), condition =>\n+          `${this.quoteIdentifier(_.first(condition.path))}->>'\\$.${_.tail(condition.path).join('.')}' = '${condition.value}'`\n+        );\n+\n+        return conditions.join(' and ');\n+      } else if (smth.path) {\n+        let str;\n+\n+        // Allow specifying conditions using the mysql json syntax\n+        if (_.some(['->', '->>'], _.partial(_.includes, smth.path))) {\n+          str = smth.path;\n+        } else {\n+          // Also support json dot notation\n+          const path = smth.path.split('.');\n+          str = `${this.quoteIdentifier(_.first(path))}->>'\\$.${_.tail(path).join(',')}'`;\n+        }\n+\n+        if (smth.value) {\n+          str += util.format(' = %s', this.escape(smth.value));\n+        }\n+\n+        return str;\n+      }\n+    } else {\n+      return AbstractQueryGenerator.handleSequelizeMethod.call(this, smth, tableName, factory, options, prepend);\n+    }\n+  },\n+\n+  whereItemQuery(key, value, options) {\n+    options = options || {};\n+\n+    let field = options.field || options.model && options.model.rawAttributes && options.model.rawAttributes[key] || options.model && options.model.fieldRawAttributesMap && options.model.fieldRawAttributesMap[key];\n+    let fieldType = options.type || (field && field.type);\n+\n+    if (key && typeof key === 'string' && key.indexOf('.') !== -1 && options.model) {\n+      if (options.model.rawAttributes[key.split('.')[0]] && options.model.rawAttributes[key.split('.')[0]].type instanceof DataTypes.JSON) {\n+        field = options.model.rawAttributes[key.split('.')[0]];\n+        fieldType = field.type;\n+        const tmp = value;\n+        value = {};\n+\n+        Dottie.set(value, key.split('.').slice(1), tmp);\n+        key = field.field || key.split('.')[0];\n+      }\n+    }\n+\n+    if (_.isPlainObject(value) && fieldType instanceof DataTypes.JSON) {",
+    "path": "lib/dialects/mysql/query-generator.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "cb733114d3ca73ab166cb775fdeb3ddecb67fe35",
+    "user": {
+      "login": "felixfbecker",
+      "id": 10532611,
+      "node_id": "MDQ6VXNlcjEwNTMyNjEx",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10532611?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/felixfbecker",
+      "html_url": "https://github.com/felixfbecker",
+      "followers_url": "https://api.github.com/users/felixfbecker/followers",
+      "following_url": "https://api.github.com/users/felixfbecker/following{/other_user}",
+      "gists_url": "https://api.github.com/users/felixfbecker/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/felixfbecker/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/felixfbecker/subscriptions",
+      "organizations_url": "https://api.github.com/users/felixfbecker/orgs",
+      "repos_url": "https://api.github.com/users/felixfbecker/repos",
+      "events_url": "https://api.github.com/users/felixfbecker/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/felixfbecker/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Why not allow class instances?",
+    "created_at": "2017-02-11T10:12:11Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r100664531",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/100664531"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r100664531"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/100664531/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": null,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 78,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/100664539",
+    "pull_request_review_id": 21383185,
+    "id": 100664539,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEwMDY2NDUzOQ==",
+    "diff_hunk": "@@ -151,6 +155,132 @@ const QueryGenerator = {\n     return `ALTER TABLE ${this.quoteTable(tableName)} CHANGE ${attrString.join(', ')};`;\n   },\n \n+  // A recursive parser for nested where conditions\n+  parseConditionObject(_conditions, path) {\n+    path = path || [];\n+    return Utils._.reduce(_conditions, (r, v, k) => { // result, key, value\n+      if (Utils._.isObject(v)) {\n+        r = r.concat(this.parseConditionObject(v, path.concat(k))); // Recursively parse objects\n+      } else {\n+        r.push({ path: path.concat(k), value: v });\n+      }\n+      return r;\n+    }, []);\n+  },\n+\n+  handleSequelizeMethod(smth, tableName, factory, options, prepend) {\n+    if (smth instanceof Utils.Json) {\n+      // Parse nested object\n+      if (smth.conditions) {\n+        const conditions = _.map(this.parseConditionObject(smth.conditions), condition =>\n+          `${this.quoteIdentifier(_.first(condition.path))}->>'\\$.${_.tail(condition.path).join('.')}' = '${condition.value}'`\n+        );\n+\n+        return conditions.join(' and ');\n+      } else if (smth.path) {\n+        let str;\n+\n+        // Allow specifying conditions using the mysql json syntax\n+        if (_.some(['->', '->>'], _.partial(_.includes, smth.path))) {\n+          str = smth.path;\n+        } else {\n+          // Also support json dot notation\n+          const path = smth.path.split('.');\n+          str = `${this.quoteIdentifier(_.first(path))}->>'\\$.${_.tail(path).join(',')}'`;\n+        }\n+\n+        if (smth.value) {\n+          str += util.format(' = %s', this.escape(smth.value));\n+        }\n+\n+        return str;\n+      }\n+    } else {\n+      return AbstractQueryGenerator.handleSequelizeMethod.call(this, smth, tableName, factory, options, prepend);\n+    }\n+  },\n+\n+  whereItemQuery(key, value, options) {\n+    options = options || {};\n+\n+    let field = options.field || options.model && options.model.rawAttributes && options.model.rawAttributes[key] || options.model && options.model.fieldRawAttributesMap && options.model.fieldRawAttributesMap[key];\n+    let fieldType = options.type || (field && field.type);\n+\n+    if (key && typeof key === 'string' && key.indexOf('.') !== -1 && options.model) {\n+      if (options.model.rawAttributes[key.split('.')[0]] && options.model.rawAttributes[key.split('.')[0]].type instanceof DataTypes.JSON) {\n+        field = options.model.rawAttributes[key.split('.')[0]];\n+        fieldType = field.type;\n+        const tmp = value;\n+        value = {};\n+\n+        Dottie.set(value, key.split('.').slice(1), tmp);\n+        key = field.field || key.split('.')[0];\n+      }\n+    }\n+\n+    if (_.isPlainObject(value) && fieldType instanceof DataTypes.JSON) {\n+      let prefix = '';\n+      if (options.prefix) {\n+        if (options.prefix instanceof Utils.Literal) {\n+          prefix = this.handleSequelizeMethod(options.prefix)+'.';\n+        } else {\n+          prefix = this.quoteTable(options.prefix)+'.';\n+        }\n+      }\n+      let prefixedKey = `${prefix}${this.quoteIdentifier(key)}`;\n+\n+      if (options.json !== false) {\n+        const items = [];\n+        const traverse = (prop, item, path) => {\n+          const where = {};\n+          let cast;\n+\n+          if (path[path.length - 1].indexOf('::') > -1) {\n+            const tmp = path[path.length - 1].split('::');\n+            cast = tmp[1];\n+            path[path.length - 1] = tmp[0];\n+          }\n+\n+          let baseKey = `${prefixedKey}->>'\\$.${path.join('.')}\\'`;\n+\n+          if (_.isPlainObject(item)) {\n+            _.forOwn(item, (item, prop) => {\n+              if (prop.indexOf('$') === 0) {\n+                where[prop] = item;\n+                items.push(this.whereItemQuery(new Utils.Literal(baseKey), where/*, _.pick(options, 'prefix')*/));\n+              } else {\n+                traverse(prop, item, path.concat([prop]));\n+              }\n+            });\n+          } else {\n+            where.$eq = item;\n+            items.push(this.whereItemQuery(new Utils.Literal(baseKey), where/*, _.pick(options, 'prefix')*/));\n+          }\n+        };\n+\n+        _.forOwn(value, (item, prop) => {\n+          if (prop.indexOf('$') === 0) {\n+            const where = {};\n+            where[prop] = item;\n+            items.push(this.whereItemQuery(key, where, _.assign({}, options, {json: false})));\n+            return;\n+          }\n+\n+          traverse(prop, item, [prop]);\n+        });\n+\n+        const result = items.join(' AND ');\n+        return items.length > 1 ? '('+result+')' : result;\n+      } else {\n+        if (value.$contains) {\n+          return `JSON_CONTAINS(${prefixedKey}, '${JSON.stringify(value.$contains)}')`;\n+        }\n+      }\n+    }\n+\n+    return AbstractQueryGenerator.whereItemQuery.call(this, key, value, options);",
+    "path": "lib/dialects/mysql/query-generator.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "cb733114d3ca73ab166cb775fdeb3ddecb67fe35",
+    "user": {
+      "login": "felixfbecker",
+      "id": 10532611,
+      "node_id": "MDQ6VXNlcjEwNTMyNjEx",
+      "avatar_url": "https://avatars.githubusercontent.com/u/10532611?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/felixfbecker",
+      "html_url": "https://github.com/felixfbecker",
+      "followers_url": "https://api.github.com/users/felixfbecker/followers",
+      "following_url": "https://api.github.com/users/felixfbecker/following{/other_user}",
+      "gists_url": "https://api.github.com/users/felixfbecker/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/felixfbecker/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/felixfbecker/subscriptions",
+      "organizations_url": "https://api.github.com/users/felixfbecker/orgs",
+      "repos_url": "https://api.github.com/users/felixfbecker/repos",
+      "events_url": "https://api.github.com/users/felixfbecker/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/felixfbecker/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "`super`",
+    "created_at": "2017-02-11T10:12:44Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r100664539",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/100664539"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r100664539"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/100664539/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": null,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 138,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/101128388",
+    "pull_request_review_id": 21848975,
+    "id": 101128388,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEwMTEyODM4OA==",
+    "diff_hunk": "@@ -151,6 +155,132 @@ const QueryGenerator = {\n     return `ALTER TABLE ${this.quoteTable(tableName)} CHANGE ${attrString.join(', ')};`;\n   },\n \n+  // A recursive parser for nested where conditions\n+  parseConditionObject(_conditions, path) {\n+    path = path || [];\n+    return Utils._.reduce(_conditions, (r, v, k) => { // result, key, value\n+      if (Utils._.isObject(v)) {\n+        r = r.concat(this.parseConditionObject(v, path.concat(k))); // Recursively parse objects\n+      } else {\n+        r.push({ path: path.concat(k), value: v });\n+      }\n+      return r;\n+    }, []);\n+  },\n+\n+  handleSequelizeMethod(smth, tableName, factory, options, prepend) {\n+    if (smth instanceof Utils.Json) {\n+      // Parse nested object\n+      if (smth.conditions) {\n+        const conditions = _.map(this.parseConditionObject(smth.conditions), condition =>\n+          `${this.quoteIdentifier(_.first(condition.path))}->>'\\$.${_.tail(condition.path).join('.')}' = '${condition.value}'`\n+        );\n+\n+        return conditions.join(' and ');\n+      } else if (smth.path) {\n+        let str;\n+\n+        // Allow specifying conditions using the mysql json syntax\n+        if (_.some(['->', '->>'], _.partial(_.includes, smth.path))) {\n+          str = smth.path;\n+        } else {\n+          // Also support json dot notation\n+          const path = smth.path.split('.');\n+          str = `${this.quoteIdentifier(_.first(path))}->>'\\$.${_.tail(path).join(',')}'`;\n+        }\n+\n+        if (smth.value) {\n+          str += util.format(' = %s', this.escape(smth.value));\n+        }\n+\n+        return str;\n+      }\n+    } else {\n+      return AbstractQueryGenerator.handleSequelizeMethod.call(this, smth, tableName, factory, options, prepend);\n+    }\n+  },\n+\n+  whereItemQuery(key, value, options) {\n+    options = options || {};\n+\n+    let field = options.field || options.model && options.model.rawAttributes && options.model.rawAttributes[key] || options.model && options.model.fieldRawAttributesMap && options.model.fieldRawAttributesMap[key];\n+    let fieldType = options.type || (field && field.type);\n+\n+    if (key && typeof key === 'string' && key.indexOf('.') !== -1 && options.model) {\n+      if (options.model.rawAttributes[key.split('.')[0]] && options.model.rawAttributes[key.split('.')[0]].type instanceof DataTypes.JSON) {\n+        field = options.model.rawAttributes[key.split('.')[0]];\n+        fieldType = field.type;\n+        const tmp = value;\n+        value = {};\n+\n+        Dottie.set(value, key.split('.').slice(1), tmp);\n+        key = field.field || key.split('.')[0];\n+      }\n+    }\n+\n+    if (_.isPlainObject(value) && fieldType instanceof DataTypes.JSON) {",
+    "path": "lib/dialects/mysql/query-generator.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "cb733114d3ca73ab166cb775fdeb3ddecb67fe35",
+    "user": {
+      "login": "rundef",
+      "id": 2675698,
+      "node_id": "MDQ6VXNlcjI2NzU2OTg=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2675698?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/rundef",
+      "html_url": "https://github.com/rundef",
+      "followers_url": "https://api.github.com/users/rundef/followers",
+      "following_url": "https://api.github.com/users/rundef/following{/other_user}",
+      "gists_url": "https://api.github.com/users/rundef/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/rundef/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/rundef/subscriptions",
+      "organizations_url": "https://api.github.com/users/rundef/orgs",
+      "repos_url": "https://api.github.com/users/rundef/repos",
+      "events_url": "https://api.github.com/users/rundef/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/rundef/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "No reason in particular, I inspired myself from the [AbstractQueryGenerator](https://github.com/rundef/sequelize/blob/mysql_json_datatype/lib/dialects/abstract/query-generator.js#L1938). I'll remove it.",
+    "created_at": "2017-02-14T19:57:38Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r101128388",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/101128388"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r101128388"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/101128388/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": null,
+    "side": "RIGHT",
+    "in_reply_to_id": 100664531,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 78,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/103875434",
+    "pull_request_review_id": 24678256,
+    "id": 103875434,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEwMzg3NTQzNA==",
+    "diff_hunk": "@@ -227,7 +227,7 @@ describe(Support.getTestDialectTeaser('Model'), function () {\n           return this.Event.findAll({\n             where: {\n               data: {\n-                employment: null\n+                employment: current.dialect.name === 'mysql' ? 'null' : null",
+    "path": "test/integration/model/json.test.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "b0bec28bbc0242bacbfebeb1db036d1ddf11a2f8",
+    "user": {
+      "login": "janmeier",
+      "id": 1210224,
+      "node_id": "MDQ6VXNlcjEyMTAyMjQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1210224?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/janmeier",
+      "html_url": "https://github.com/janmeier",
+      "followers_url": "https://api.github.com/users/janmeier/followers",
+      "following_url": "https://api.github.com/users/janmeier/following{/other_user}",
+      "gists_url": "https://api.github.com/users/janmeier/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/janmeier/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/janmeier/subscriptions",
+      "organizations_url": "https://api.github.com/users/janmeier/orgs",
+      "repos_url": "https://api.github.com/users/janmeier/repos",
+      "events_url": "https://api.github.com/users/janmeier/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/janmeier/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This seems wrong to me - We are inserting literal null, but querying for the string null. Is this because it is actually inserted as the JSON value null, and not as a database null? What does postgres do in this case?",
+    "created_at": "2017-03-02T08:52:59Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r103875434",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/103875434"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r103875434"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/103875434/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": null,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 5,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/103875574",
+    "pull_request_review_id": 24678256,
+    "id": 103875574,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEwMzg3NTU3NA==",
+    "diff_hunk": "@@ -151,6 +153,64 @@ const QueryGenerator = {\n     return `ALTER TABLE ${this.quoteTable(tableName)} CHANGE ${attrString.join(', ')};`;\n   },\n \n+  handleSequelizeMethod(smth, tableName, factory, options, prepend) {",
+    "path": "lib/dialects/mysql/query-generator.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "b0bec28bbc0242bacbfebeb1db036d1ddf11a2f8",
+    "user": {
+      "login": "janmeier",
+      "id": 1210224,
+      "node_id": "MDQ6VXNlcjEyMTAyMjQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1210224?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/janmeier",
+      "html_url": "https://github.com/janmeier",
+      "followers_url": "https://api.github.com/users/janmeier/followers",
+      "following_url": "https://api.github.com/users/janmeier/following{/other_user}",
+      "gists_url": "https://api.github.com/users/janmeier/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/janmeier/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/janmeier/subscriptions",
+      "organizations_url": "https://api.github.com/users/janmeier/orgs",
+      "repos_url": "https://api.github.com/users/janmeier/repos",
+      "events_url": "https://api.github.com/users/janmeier/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/janmeier/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Seems at least partly duplicated from abstract query-generator. What's changed here?",
+    "created_at": "2017-03-02T08:53:51Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r103875574",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/103875574"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r103875574"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/103875574/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 162,
+    "original_line": null,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 13,
+    "position": 12,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/103979312",
+    "pull_request_review_id": 24789776,
+    "id": 103979312,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEwMzk3OTMxMg==",
+    "diff_hunk": "@@ -227,7 +227,7 @@ describe(Support.getTestDialectTeaser('Model'), function () {\n           return this.Event.findAll({\n             where: {\n               data: {\n-                employment: null\n+                employment: current.dialect.name === 'mysql' ? 'null' : null",
+    "path": "test/integration/model/json.test.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "b0bec28bbc0242bacbfebeb1db036d1ddf11a2f8",
+    "user": {
+      "login": "rundef",
+      "id": 2675698,
+      "node_id": "MDQ6VXNlcjI2NzU2OTg=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2675698?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/rundef",
+      "html_url": "https://github.com/rundef",
+      "followers_url": "https://api.github.com/users/rundef/followers",
+      "following_url": "https://api.github.com/users/rundef/following{/other_user}",
+      "gists_url": "https://api.github.com/users/rundef/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/rundef/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/rundef/subscriptions",
+      "organizations_url": "https://api.github.com/users/rundef/orgs",
+      "repos_url": "https://api.github.com/users/rundef/repos",
+      "events_url": "https://api.github.com/users/rundef/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/rundef/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Yeah, it seems wrong to me too, but unfortunately, MySQL returns null as a string, rather than the null value.",
+    "created_at": "2017-03-02T17:18:18Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r103979312",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/103979312"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r103979312"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/103979312/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": null,
+    "side": "RIGHT",
+    "in_reply_to_id": 103875434,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 5,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/103983529",
+    "pull_request_review_id": 24794159,
+    "id": 103983529,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEwMzk4MzUyOQ==",
+    "diff_hunk": "@@ -151,6 +153,64 @@ const QueryGenerator = {\n     return `ALTER TABLE ${this.quoteTable(tableName)} CHANGE ${attrString.join(', ')};`;\n   },\n \n+  handleSequelizeMethod(smth, tableName, factory, options, prepend) {",
+    "path": "lib/dialects/mysql/query-generator.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "b0bec28bbc0242bacbfebeb1db036d1ddf11a2f8",
+    "user": {
+      "login": "rundef",
+      "id": 2675698,
+      "node_id": "MDQ6VXNlcjI2NzU2OTg=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2675698?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/rundef",
+      "html_url": "https://github.com/rundef",
+      "followers_url": "https://api.github.com/users/rundef/followers",
+      "following_url": "https://api.github.com/users/rundef/following{/other_user}",
+      "gists_url": "https://api.github.com/users/rundef/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/rundef/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/rundef/subscriptions",
+      "organizations_url": "https://api.github.com/users/rundef/orgs",
+      "repos_url": "https://api.github.com/users/rundef/repos",
+      "events_url": "https://api.github.com/users/rundef/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/rundef/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I added code to handle MySQL JSON queries. It's pretty similar to the sqlite query-generator.",
+    "created_at": "2017-03-02T17:36:22Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r103983529",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/103983529"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r103983529"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/103983529/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 162,
+    "original_line": null,
+    "side": "RIGHT",
+    "in_reply_to_id": 103875574,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 13,
+    "position": 12,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/104306576",
+    "pull_request_review_id": 25140813,
+    "id": 104306576,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEwNDMwNjU3Ng==",
+    "diff_hunk": "@@ -113,7 +113,7 @@ Sequelize.BOOLEAN                     // TINYINT(1)\n Sequelize.ENUM('value 1', 'value 2')  // An ENUM with allowed values 'value 1' and 'value 2'\n Sequelize.ARRAY(Sequelize.TEXT)       // Defines an array. PostgreSQL only.\n \n-Sequelize.JSON                        // JSON column. PostgreSQL only.\n+Sequelize.JSON                        // JSON column. PostgreSQL and MySQL only.",
+    "path": "docs/docs/models-definition.md",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "b0bec28bbc0242bacbfebeb1db036d1ddf11a2f8",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Please add SQLite as well",
+    "created_at": "2017-03-05T08:09:08Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r104306576",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/104306576"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r104306576"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/104306576/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": null,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 5,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/104306581",
+    "pull_request_review_id": 25140813,
+    "id": 104306581,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEwNDMwNjU4MQ==",
+    "diff_hunk": "@@ -984,7 +984,7 @@ An OR query\n ## `json(conditions, [value])` -> `Sequelize.json`",
+    "path": "docs/api/sequelize.md",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "b0bec28bbc0242bacbfebeb1db036d1ddf11a2f8",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Remove all changes from this file, its auto generated, change actual comments in same file `sequelize.js`",
+    "created_at": "2017-03-05T08:09:50Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r104306581",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/104306581"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r104306581"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/104306581/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": null,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 1,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/104306666",
+    "pull_request_review_id": 25140813,
+    "id": 104306666,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEwNDMwNjY2Ng==",
+    "diff_hunk": "@@ -179,7 +179,7 @@ A key / value column. Only available in postgres.\n ## `JSON()`",
+    "path": "docs/api/datatypes.md",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "b0bec28bbc0242bacbfebeb1db036d1ddf11a2f8",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Change the actual file, its `datatypes.js`",
+    "created_at": "2017-03-05T08:11:16Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r104306666",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/104306666"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r104306666"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/104306666/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": null,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 1,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/104306895",
+    "pull_request_review_id": 25140813,
+    "id": 104306895,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEwNDMwNjg5NQ==",
+    "diff_hunk": "@@ -227,7 +227,7 @@ describe(Support.getTestDialectTeaser('Model'), function () {\n           return this.Event.findAll({\n             where: {\n               data: {\n-                employment: null\n+                employment: current.dialect.name === 'mysql' ? 'null' : null",
+    "path": "test/integration/model/json.test.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "b0bec28bbc0242bacbfebeb1db036d1ddf11a2f8",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "If we are inserting a SQL NULL we will get actual NULL back, our JSON processing is somehow turning `null` to `'null'`. If we fix that this problem will not appear",
+    "created_at": "2017-03-05T08:23:11Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r104306895",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/104306895"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r104306895"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/104306895/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": null,
+    "side": "RIGHT",
+    "in_reply_to_id": 103875434,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 5,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/104306916",
+    "pull_request_review_id": 25140813,
+    "id": 104306916,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEwNDMwNjkxNg==",
+    "diff_hunk": "@@ -10,44 +10,49 @@ const Support = require(__dirname + '/../support')\n   , sql = current.dialect.QueryGenerator;\n \n // Notice: [] will be replaced by dialect specific tick/quote character when there is not dialect specific expectation but only a default expectation\n-\n if (current.dialect.supports.JSON) {\n+  const type = DataTypes[current.dialect.name].JSON ?",
+    "path": "test/unit/sql/json.test.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "b0bec28bbc0242bacbfebeb1db036d1ddf11a2f8",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Why this need special treatment for MySQL, it seems to work with Postgres and SQLite ?",
+    "created_at": "2017-03-05T08:24:24Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r104306916",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/104306916"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r104306916"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/104306916/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": null,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 6,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/105720560",
+    "pull_request_review_id": 26613606,
+    "id": 105720560,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEwNTcyMDU2MA==",
+    "diff_hunk": "@@ -227,7 +227,7 @@ describe(Support.getTestDialectTeaser('Model'), function () {\n           return this.Event.findAll({\n             where: {\n               data: {\n-                employment: null\n+                employment: current.dialect.name === 'mysql' ? 'null' : null",
+    "path": "test/integration/model/json.test.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "b0bec28bbc0242bacbfebeb1db036d1ddf11a2f8",
+    "user": {
+      "login": "rundef",
+      "id": 2675698,
+      "node_id": "MDQ6VXNlcjI2NzU2OTg=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2675698?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/rundef",
+      "html_url": "https://github.com/rundef",
+      "followers_url": "https://api.github.com/users/rundef/followers",
+      "following_url": "https://api.github.com/users/rundef/following{/other_user}",
+      "gists_url": "https://api.github.com/users/rundef/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/rundef/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/rundef/subscriptions",
+      "organizations_url": "https://api.github.com/users/rundef/orgs",
+      "repos_url": "https://api.github.com/users/rundef/repos",
+      "events_url": "https://api.github.com/users/rundef/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/rundef/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "It's not the sequelize JSON processing that is returning `'null'` as a string. Let's say we have the following JSON data:\r\n```json\r\n{ \"test\": null }\r\n```\r\n\r\nIn that case, MySQL returns `'null'` as a string when we run the following query:\r\n```sql\r\nSELECT data->>'$.test' FROM table\r\n```\r\n\r\nMySQL only returns NULL when the property doesn't exist in the JSON document.\r\nI'm thinking about using the [JSON_TYPE function](https://dev.mysql.com/doc/refman/5.7/en/json-attribute-functions.html#function_json-type) because, in that case, it returns `'NULL'` (rather than `'STRING'`).\r\nSo the final query would be something similiar to this:\r\n```sql\r\nSELECT * FROM table WHERE (data->>'$.test' IS NULL OR JSON_TYPE(data->>'$.test') = 'NULL')\r\n```",
+    "created_at": "2017-03-13T17:26:19Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r105720560",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/105720560"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r105720560"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/105720560/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": null,
+    "side": "RIGHT",
+    "in_reply_to_id": 103875434,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 5,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/106956223",
+    "pull_request_review_id": 27902620,
+    "id": 106956223,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEwNjk1NjIyMw==",
+    "diff_hunk": "@@ -122,33 +128,35 @@ if (current.dialect.supports.JSON) {\n           });\n         }\n \n-        test('json function', function () {\n-          expectsql(sql.handleSequelizeMethod(Sequelize.json(`json('{\"profile\":{\"name\":\"david\"}}')`)), {\n-            default: `json('{\"profile\":{\"name\":\"david\"}}')`\n+        if (current.dialect.name !== 'mysql') {",
+    "path": "test/unit/sql/json.test.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "73f31876d90ce1c17225abcf53ff0a3a6a5fde69",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Why these tests ignored for MySQL ?",
+    "created_at": "2017-03-20T16:59:07Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r106956223",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/106956223"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r106956223"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/106956223/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 131,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 81,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/142016916",
+    "pull_request_review_id": 66324137,
+    "id": 142016916,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0MjAxNjkxNg==",
+    "diff_hunk": "@@ -158,6 +159,100 @@ const QueryGenerator = {\n     return `ALTER TABLE ${this.quoteTable(tableName)} CHANGE ${attrString.join(', ')};`;\n   },\n \n+  handleSequelizeMethod(smth, tableName, factory, options, prepend) {\n+    if (smth instanceof Utils.Json) {",
+    "path": "lib/dialects/mysql/query-generator.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "4ac39ec089742f1b7d83dc9bade8cf2501e466f8",
+    "user": {
+      "login": "eseliger",
+      "id": 19534377,
+      "node_id": "MDQ6VXNlcjE5NTM0Mzc3",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19534377?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/eseliger",
+      "html_url": "https://github.com/eseliger",
+      "followers_url": "https://api.github.com/users/eseliger/followers",
+      "following_url": "https://api.github.com/users/eseliger/following{/other_user}",
+      "gists_url": "https://api.github.com/users/eseliger/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/eseliger/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/eseliger/subscriptions",
+      "organizations_url": "https://api.github.com/users/eseliger/orgs",
+      "repos_url": "https://api.github.com/users/eseliger/repos",
+      "events_url": "https://api.github.com/users/eseliger/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/eseliger/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "all this code has no coverage, please add tests for it",
+    "created_at": "2017-09-30T22:55:33Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r142016916",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/142016916"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r142016916"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/142016916/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 163,
+    "original_line": 163,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 13,
+    "position": 13,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/142023010",
+    "pull_request_review_id": 66330131,
+    "id": 142023010,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0MjAyMzAxMA==",
+    "diff_hunk": "@@ -235,6 +240,22 @@ describe('model', () => {\n           expect(user.username).to.equal('swen');\n         });\n       });\n+\n+      // JSONB Supports this, but not JSON in postgres/mysql\n+      if (current.dialect.name !== 'postgres' && current.dialect.name !== 'mysql') {",
+    "path": "test/integration/json.test.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "4ac39ec089742f1b7d83dc9bade8cf2501e466f8",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Only SQLite supports it then? Compare with `dialect === 'sqlite'` in that case",
+    "created_at": "2017-10-01T07:52:16Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r142023010",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/142023010"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r142023010"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/142023010/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 245,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 20,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/142023161",
+    "pull_request_review_id": 66330131,
+    "id": 142023161,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0MjAyMzE2MQ==",
+    "diff_hunk": "@@ -158,6 +159,100 @@ const QueryGenerator = {\n     return `ALTER TABLE ${this.quoteTable(tableName)} CHANGE ${attrString.join(', ')};`;\n   },\n \n+  handleSequelizeMethod(smth, tableName, factory, options, prepend) {",
+    "path": "lib/dialects/mysql/query-generator.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "4ac39ec089742f1b7d83dc9bade8cf2501e466f8",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Looks same as SQLite's, is there any difference? SQLite inherits MySQL dialect, I would like to minimize duplicated code",
+    "created_at": "2017-10-01T08:00:08Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r142023161",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/142023161"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r142023161"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/142023161/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 162,
+    "original_line": 162,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 12,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/142023178",
+    "pull_request_review_id": 66330131,
+    "id": 142023178,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0MjAyMzE3OA==",
+    "diff_hunk": "@@ -3,6 +3,7 @@\n const _ = require('lodash');",
+    "path": "lib/dialects/mysql/query-generator.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "4ac39ec089742f1b7d83dc9bade8cf2501e466f8",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Some methods are copied from SQLite, SQLite inherits MySQL. Please find a way to reduce this duplicated code",
+    "created_at": "2017-10-01T08:01:39Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r142023178",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/142023178"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r142023178"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/142023178/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 3,
+    "original_line": 3,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 1,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/143337410",
+    "pull_request_review_id": 67839830,
+    "id": 143337410,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0MzMzNzQxMA==",
+    "diff_hunk": "@@ -158,6 +159,100 @@ const QueryGenerator = {\n     return `ALTER TABLE ${this.quoteTable(tableName)} CHANGE ${attrString.join(', ')};`;\n   },\n \n+  handleSequelizeMethod(smth, tableName, factory, options, prepend) {",
+    "path": "lib/dialects/mysql/query-generator.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "4ac39ec089742f1b7d83dc9bade8cf2501e466f8",
+    "user": {
+      "login": "rundef",
+      "id": 2675698,
+      "node_id": "MDQ6VXNlcjI2NzU2OTg=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2675698?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/rundef",
+      "html_url": "https://github.com/rundef",
+      "followers_url": "https://api.github.com/users/rundef/followers",
+      "following_url": "https://api.github.com/users/rundef/following{/other_user}",
+      "gists_url": "https://api.github.com/users/rundef/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/rundef/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/rundef/subscriptions",
+      "organizations_url": "https://api.github.com/users/rundef/orgs",
+      "repos_url": "https://api.github.com/users/rundef/repos",
+      "events_url": "https://api.github.com/users/rundef/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/rundef/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "They're different, and they both call `AbstractQuery.handleSequelizeMethod()` at the end, so there's no duplicated code here. I did however remove the `_traverseJSON` method which was duplicated.",
+    "created_at": "2017-10-07T18:30:17Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r143337410",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/143337410"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r143337410"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/143337410/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 162,
+    "original_line": 162,
+    "side": "RIGHT",
+    "in_reply_to_id": 142023161,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 12,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/143509412",
+    "pull_request_review_id": 68030972,
+    "id": 143509412,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0MzUwOTQxMg==",
+    "diff_hunk": "@@ -2216,13 +2216,18 @@ const QueryGenerator = {\n       return;\n     }\n \n+    item = this.toJSONValue(item);\n     items.push(this.whereItemQuery(this._castKey(pathKey, item, cast), {[Op.eq]: item}));\n   },\n \n-  _castKey(key, value, cast) {\n+  toJSONValue(value) {",
+    "path": "lib/dialects/abstract/query-generator.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "2e0bfad208a2d94170de8a7844c1b01dc3446e31",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "make private `_toJSONValue`? I understand you are following `toBooleanValue` but I would like to keep these new methods private",
+    "created_at": "2017-10-09T15:55:58Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r143509412",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/143509412"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r143509412"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/143509412/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 2223,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 27,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/143509779",
+    "pull_request_review_id": 68030972,
+    "id": 143509779,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0MzUwOTc3OQ==",
+    "diff_hunk": "@@ -312,6 +386,88 @@ const QueryGenerator = {\n   },\n \n   /**\n+   * Check whether the statmement is json function or simple path\n+   *\n+   * @param   {String}  stmt  The statement to validate\n+   * @returns {Boolean}       true if the given statement is json function\n+   * @throws  {Error}         throw if the statement looks like json function but has invalid token\n+   */\n+  checkValidJsonStatement(stmt) {",
+    "path": "lib/dialects/mysql/query-generator.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "2e0bfad208a2d94170de8a7844c1b01dc3446e31",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Make this one private as well with underscore prefix\r\n\r\nAdd `@private` marker",
+    "created_at": "2017-10-09T15:57:20Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r143509779",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/143509779"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r143509779"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/143509779/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 395,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 116,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/143510082",
+    "pull_request_review_id": 68030972,
+    "id": 143510082,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0MzUxMDA4Mg==",
+    "diff_hunk": "@@ -123,19 +129,22 @@ if (current.dialect.supports.JSON) {\n \n         test('json function', () => {\n           expectsql(sql.handleSequelizeMethod(Sequelize.json('json(\\'{\"profile\":{\"name\":\"david\"}}\\')')), {\n-            default: 'json(\\'{\"profile\":{\"name\":\"david\"}}\\')'\n+            default: 'json(\\'{\"profile\":{\"name\":\"david\"}}\\')',\n+            //mysql: '`json(\\'{\"profile\":{\"name\":\"david\"}}\\')`->>\\'$.\\''",
+    "path": "test/unit/sql/json.test.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "2e0bfad208a2d94170de8a7844c1b01dc3446e31",
+    "user": {
+      "login": "sushantdhiman",
+      "id": 9989487,
+      "node_id": "MDQ6VXNlcjk5ODk0ODc=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/9989487?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sushantdhiman",
+      "html_url": "https://github.com/sushantdhiman",
+      "followers_url": "https://api.github.com/users/sushantdhiman/followers",
+      "following_url": "https://api.github.com/users/sushantdhiman/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sushantdhiman/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sushantdhiman/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sushantdhiman/subscriptions",
+      "organizations_url": "https://api.github.com/users/sushantdhiman/orgs",
+      "repos_url": "https://api.github.com/users/sushantdhiman/repos",
+      "events_url": "https://api.github.com/users/sushantdhiman/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sushantdhiman/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "can remove this line if its same as default. Please do the same for other tests below with commented mysql assertion",
+    "created_at": "2017-10-09T15:58:17Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r143510082",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/143510082"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r143510082"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/143510082/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 133,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 80,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/145439649",
+    "pull_request_review_id": 70239823,
+    "id": 145439649,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0NTQzOTY0OQ==",
+    "diff_hunk": "@@ -123,19 +129,22 @@ if (current.dialect.supports.JSON) {\n \n         test('json function', () => {\n           expectsql(sql.handleSequelizeMethod(Sequelize.json('json(\\'{\"profile\":{\"name\":\"david\"}}\\')')), {\n-            default: 'json(\\'{\"profile\":{\"name\":\"david\"}}\\')'\n+            default: 'json(\\'{\"profile\":{\"name\":\"david\"}}\\')',\n+            //mysql: '`json(\\'{\"profile\":{\"name\":\"david\"}}\\')`->>\\'$.\\''",
+    "path": "test/unit/sql/json.test.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "2e0bfad208a2d94170de8a7844c1b01dc3446e31",
+    "user": {
+      "login": "rundef",
+      "id": 2675698,
+      "node_id": "MDQ6VXNlcjI2NzU2OTg=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2675698?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/rundef",
+      "html_url": "https://github.com/rundef",
+      "followers_url": "https://api.github.com/users/rundef/followers",
+      "following_url": "https://api.github.com/users/rundef/following{/other_user}",
+      "gists_url": "https://api.github.com/users/rundef/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/rundef/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/rundef/subscriptions",
+      "organizations_url": "https://api.github.com/users/rundef/orgs",
+      "repos_url": "https://api.github.com/users/rundef/repos",
+      "events_url": "https://api.github.com/users/rundef/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/rundef/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Done, thanks @jedwards1211 !",
+    "created_at": "2017-10-18T14:52:36Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r145439649",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/145439649"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r145439649"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/145439649/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 133,
+    "side": "RIGHT",
+    "in_reply_to_id": 143510082,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 80,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/146120642",
+    "pull_request_review_id": 71022286,
+    "id": 146120642,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0NjEyMDY0Mg==",
+    "diff_hunk": "@@ -123,19 +129,19 @@ if (current.dialect.supports.JSON) {\n \n         test('json function', () => {\n           expectsql(sql.handleSequelizeMethod(Sequelize.json('json(\\'{\"profile\":{\"name\":\"david\"}}\\')')), {\n-            default: 'json(\\'{\"profile\":{\"name\":\"david\"}}\\')'\n+            default: 'json(\\'{\"profile\":{\"name\":\"david\"}}\\')',",
+    "path": "test/unit/sql/json.test.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "676827c936d01200ad9956b724d613e4bdb3be51",
+    "user": {
+      "login": "eseliger",
+      "id": 19534377,
+      "node_id": "MDQ6VXNlcjE5NTM0Mzc3",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19534377?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/eseliger",
+      "html_url": "https://github.com/eseliger",
+      "followers_url": "https://api.github.com/users/eseliger/followers",
+      "following_url": "https://api.github.com/users/eseliger/following{/other_user}",
+      "gists_url": "https://api.github.com/users/eseliger/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/eseliger/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/eseliger/subscriptions",
+      "organizations_url": "https://api.github.com/users/eseliger/orgs",
+      "repos_url": "https://api.github.com/users/eseliger/repos",
+      "events_url": "https://api.github.com/users/eseliger/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/eseliger/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "this trailing comma is not needed\r\n(as the next two as well)",
+    "created_at": "2017-10-22T02:49:06Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r146120642",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/146120642"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r146120642"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/146120642/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 132,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 79,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/146120745",
+    "pull_request_review_id": 71022286,
+    "id": 146120745,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0NjEyMDc0NQ==",
+    "diff_hunk": "@@ -158,6 +159,79 @@ const QueryGenerator = {\n     return `ALTER TABLE ${this.quoteTable(tableName)} CHANGE ${attrString.join(', ')};`;\n   },\n \n+  handleSequelizeMethod(smth, tableName, factory, options, prepend) {\n+    if (smth instanceof Utils.Json) {\n+      // Parse nested object\n+      if (smth.conditions) {\n+        const conditions = _.map(this.parseConditionObject(smth.conditions), condition =>\n+          `${this.quoteIdentifier(_.first(condition.path))}->>'\\$.${_.tail(condition.path).join('.')}' = '${condition.value}'`\n+        );\n+\n+        return conditions.join(' and ');\n+      } else if (smth.path) {\n+        let str;\n+\n+        // Allow specifying conditions using the sqlite json functions\n+        if (this._checkValidJsonStatement(smth.path)) {\n+          str = smth.path;\n+        } else {\n+          // Also support json dot notation\n+          let path = smth.path;\n+          let startWithDot = true;\n+\n+          // Convert .number. to [number].\n+          path = path.replace(/\\.(\\d+)\\./g, '[$1].');\n+          // Convert .number$ to [number]\n+          path = path.replace(/\\.(\\d+)$/, '[$1]');",
+    "path": "lib/dialects/mysql/query-generator.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "676827c936d01200ad9956b724d613e4bdb3be51",
+    "user": {
+      "login": "eseliger",
+      "id": 19534377,
+      "node_id": "MDQ6VXNlcjE5NTM0Mzc3",
+      "avatar_url": "https://avatars.githubusercontent.com/u/19534377?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/eseliger",
+      "html_url": "https://github.com/eseliger",
+      "followers_url": "https://api.github.com/users/eseliger/followers",
+      "following_url": "https://api.github.com/users/eseliger/following{/other_user}",
+      "gists_url": "https://api.github.com/users/eseliger/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/eseliger/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/eseliger/subscriptions",
+      "organizations_url": "https://api.github.com/users/eseliger/orgs",
+      "repos_url": "https://api.github.com/users/eseliger/repos",
+      "events_url": "https://api.github.com/users/eseliger/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/eseliger/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "just to make sure, you meant with `.number$` the end of the string, right?",
+    "created_at": "2017-10-22T03:01:10Z",
+    "updated_at": "2017-10-26T01:08:21Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r146120745",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/146120745"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r146120745"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/146120745/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 185,
+    "original_line": 185,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 35,
+    "position": 35,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/147025754",
+    "pull_request_review_id": 72056316,
+    "id": 147025754,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE0NzAyNTc1NA==",
+    "diff_hunk": "@@ -158,6 +159,79 @@ const QueryGenerator = {\n     return `ALTER TABLE ${this.quoteTable(tableName)} CHANGE ${attrString.join(', ')};`;\n   },\n \n+  handleSequelizeMethod(smth, tableName, factory, options, prepend) {\n+    if (smth instanceof Utils.Json) {\n+      // Parse nested object\n+      if (smth.conditions) {\n+        const conditions = _.map(this.parseConditionObject(smth.conditions), condition =>\n+          `${this.quoteIdentifier(_.first(condition.path))}->>'\\$.${_.tail(condition.path).join('.')}' = '${condition.value}'`\n+        );\n+\n+        return conditions.join(' and ');\n+      } else if (smth.path) {\n+        let str;\n+\n+        // Allow specifying conditions using the sqlite json functions\n+        if (this._checkValidJsonStatement(smth.path)) {\n+          str = smth.path;\n+        } else {\n+          // Also support json dot notation\n+          let path = smth.path;\n+          let startWithDot = true;\n+\n+          // Convert .number. to [number].\n+          path = path.replace(/\\.(\\d+)\\./g, '[$1].');\n+          // Convert .number$ to [number]\n+          path = path.replace(/\\.(\\d+)$/, '[$1]');",
+    "path": "lib/dialects/mysql/query-generator.js",
+    "commit_id": "e2ef28fb7bab5f03fd136deb72af3fbafec0ab0e",
+    "original_commit_id": "676827c936d01200ad9956b724d613e4bdb3be51",
+    "user": {
+      "login": "rundef",
+      "id": 2675698,
+      "node_id": "MDQ6VXNlcjI2NzU2OTg=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2675698?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/rundef",
+      "html_url": "https://github.com/rundef",
+      "followers_url": "https://api.github.com/users/rundef/followers",
+      "following_url": "https://api.github.com/users/rundef/following{/other_user}",
+      "gists_url": "https://api.github.com/users/rundef/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/rundef/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/rundef/subscriptions",
+      "organizations_url": "https://api.github.com/users/rundef/orgs",
+      "repos_url": "https://api.github.com/users/rundef/repos",
+      "events_url": "https://api.github.com/users/rundef/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/rundef/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Yes, exactly",
+    "created_at": "2017-10-26T01:08:29Z",
+    "updated_at": "2017-10-26T01:08:29Z",
+    "html_url": "https://github.com/sequelize/sequelize/pull/7106#discussion_r147025754",
+    "pull_request_url": "https://api.github.com/repos/sequelize/sequelize/pulls/7106",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/147025754"
+      },
+      "html": {
+        "href": "https://github.com/sequelize/sequelize/pull/7106#discussion_r147025754"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/sequelize/sequelize/pulls/7106"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/sequelize/sequelize/pulls/comments/147025754/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 185,
+    "original_line": 185,
+    "side": "RIGHT",
+    "in_reply_to_id": 146120745,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 35,
+    "position": 35,
+    "subject_type": "line"
+  }
+]

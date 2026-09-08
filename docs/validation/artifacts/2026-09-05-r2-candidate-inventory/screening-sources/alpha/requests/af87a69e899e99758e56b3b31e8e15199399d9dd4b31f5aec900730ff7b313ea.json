@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/nestjs/nest/issues/4597/events",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:50:09.161Z",
+  "sourceUrl": "https://api.github.com/repos/nestjs/nest/issues/4597/events?page=1&per_page=100",
+  "sha256": "5032ecf601d7f9297c10689695d71c356ed42b086508fff0ff2fd757d0c2afba",
+  "bytes": 7832
+}

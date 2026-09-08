@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/nodejs/node/contents/lib/_http_incoming.js",
+    "parameters": {
+      "ref": "v7.9.0"
+    }
+  },
+  "retrievedAt": "2026-09-05T13:30:06.095Z",
+  "sourceUrl": "https://api.github.com/repos/nodejs/node/contents/lib/_http_incoming.js?ref=v7.9.0",
+  "sha256": "22a6d4aa606e74af5e951377dcb21707970d6c4dc91a9ed1bcb43a9cae224460",
+  "bytes": 7585
+}

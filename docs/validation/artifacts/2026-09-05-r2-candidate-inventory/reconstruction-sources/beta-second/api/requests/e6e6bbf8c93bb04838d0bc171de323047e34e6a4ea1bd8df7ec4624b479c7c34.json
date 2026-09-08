@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/nodejs/node/contents/doc/api/http.md",
+    "parameters": {
+      "ref": "v7.9.0"
+    }
+  },
+  "retrievedAt": "2026-09-05T13:30:35.259Z",
+  "sourceUrl": "https://api.github.com/repos/nodejs/node/contents/doc/api/http.md?ref=v7.9.0",
+  "sha256": "d263cb916f7d52e64f1f87bcc854907db3686e11ab0f0a8fe9ab9b6c66725dfc",
+  "bytes": 70738
+}

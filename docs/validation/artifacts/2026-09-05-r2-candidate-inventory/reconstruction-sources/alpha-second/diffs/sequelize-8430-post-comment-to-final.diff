@@ -1,0 +1,12 @@
+diff --git a/docs/models-usage.md b/docs/models-usage.md
+index cb5e6a6231dca0c46ff6d5fd532775e59404130e..210cdd236fe73eed0eff749216c88c0197a9df15 100644
+--- a/docs/models-usage.md
++++ b/docs/models-usage.md
+@@ -97,6 +97,7 @@ The success handler will always receive an object with two properties:
+ 
+ * `count` - an integer, total number records matching the where clause
+ * `rows` - an array of objects, the records matching the where clause, within the limit and offset range
++
+ ```js
+ Project
+   .findAndCountAll({

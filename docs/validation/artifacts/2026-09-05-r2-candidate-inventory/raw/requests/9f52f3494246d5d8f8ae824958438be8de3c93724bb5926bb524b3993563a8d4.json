@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/OptimalBits/bull/issues/1331/comments",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T11:57:58.612Z",
+  "sourceUrl": "https://api.github.com/repos/OptimalBits/bull/issues/1331/comments?page=1&per_page=100",
+  "sha256": "5971d2c15f3c3a0e03a0f4af87ee7fed119654170e4b30bb7bf2237bc134aa8b",
+  "bytes": 5746
+}

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "search/issues",
+    "parameters": {
+      "order": "asc",
+      "page": 1,
+      "per_page": 100,
+      "q": "repo:OptimalBits/bull is:pr is:merged merged:2019-06-01..2019-06-30",
+      "sort": "created"
+    }
+  },
+  "retrievedAt": "2026-09-05T11:56:46.726Z",
+  "sourceUrl": "https://api.github.com/search/issues?order=asc&page=1&per_page=100&q=repo%3AOptimalBits%2Fbull+is%3Apr+is%3Amerged+merged%3A2019-06-01..2019-06-30&sort=created",
+  "sha256": "f844985c81394bdd61a36f5ef26e96552ce42a083c9a094bc61adacf65d1e055",
+  "bytes": 7574
+}

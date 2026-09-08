@@ -1,0 +1,1675 @@
+diff --git a/package-lock.json b/package-lock.json
+index 21d8d420e84a7fce25341d69622e33363c8c0b87..ab72118d79168310bf85e5aacea3fd2cd6546026 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -1,6 +1,6 @@
+ {
+   "name": "nestjs",
+-  "version": "4.4.0",
++  "version": "4.5.10",
+   "lockfileVersion": 1,
+   "requires": true,
+   "dependencies": {
+@@ -14,6 +14,14 @@
+         "cli-color": "1.1.0"
+       },
+       "dependencies": {
++        "class-validator": {
++          "version": "0.7.3",
++          "resolved": "http://192.168.228.42:5000/class-validator/-/class-validator-0.7.3.tgz",
++          "integrity": "sha512-aRRlS1WlQ+52aHlmDCDX5dLwtpbg9is7i9yYhzQosTAVs86nX0Um8hb7ChTwMn7jfpyxxjAZpBrlrAc2tqNpYA==",
++          "requires": {
++            "validator": "7.2.0"
++          }
++        },
+         "cli-color": {
+           "version": "1.1.0",
+           "resolved": "https://registry.npmjs.org/cli-color/-/cli-color-1.1.0.tgz",
+@@ -171,6 +179,16 @@
+         "@types/node": "7.0.48"
+       }
+     },
++    "JSONStream": {
++      "version": "1.3.1",
++      "resolved": "https://registry.npmjs.org/JSONStream/-/JSONStream-1.3.1.tgz",
++      "integrity": "sha1-cH92HgHa6eFvG8+TcDt4xwlmV5o=",
++      "dev": true,
++      "requires": {
++        "jsonparse": "1.3.1",
++        "through": "2.3.8"
++      }
++    },
+     "abbrev": {
+       "version": "1.0.9",
+       "resolved": "https://registry.npmjs.org/abbrev/-/abbrev-1.0.9.tgz",
+@@ -895,6 +913,7 @@
+       "requires": {
+         "anymatch": "1.3.2",
+         "async-each": "1.0.1",
++        "fsevents": "1.1.3",
+         "glob-parent": "2.0.0",
+         "inherits": "2.0.3",
+         "is-binary-path": "1.0.1",
+@@ -909,6 +928,42 @@
+       "integrity": "sha512-uTGIPNx/nSpBdsF6xnseRXLLtfr9VLqkz8ZqHXr3Y7b6SftyRxBGjwMtJj1OhNbmlc1wZzLNAlAcvyIiE8a6ZA==",
+       "dev": true
+     },
++    "clang-format": {
++      "version": "1.2.2",
++      "resolved": "http://192.168.228.42:5000/clang-format/-/clang-format-1.2.2.tgz",
++      "integrity": "sha512-6X9u1JBMak/9VbC0IZajEDvp19/PbjCanbRO3Z2xsluypQtbPPAGDvGGovLOWoUpXIvJH9vJExmzlqWvwItZxA==",
++      "dev": true,
++      "requires": {
++        "async": "1.5.2",
++        "glob": "7.1.2",
++        "resolve": "1.5.0"
++      },
++      "dependencies": {
++        "glob": {
++          "version": "7.1.2",
++          "resolved": "http://192.168.228.42:5000/glob/-/glob-7.1.2.tgz",
++          "integrity": "sha512-MJTUg1kjuLeQCJ+ccE4Vpa6kKVXkPYJ2mOCQyUuKLcLQsdrMCpBPUi8qVE6+YuaJkozeA9NusTAw3hLr8Xe5EQ==",
++          "dev": true,
++          "requires": {
++            "fs.realpath": "1.0.0",
++            "inflight": "1.0.6",
++            "inherits": "2.0.3",
++            "minimatch": "3.0.4",
++            "once": "1.3.3",
++            "path-is-absolute": "1.0.1"
++          }
++        },
++        "minimatch": {
++          "version": "3.0.4",
++          "resolved": "http://192.168.228.42:5000/minimatch/-/minimatch-3.0.4.tgz",
++          "integrity": "sha512-yJHVQEhyqPLUTgt9B83PXu6W3rx4MvvHvSUvToogpwoGDOUQ+yDrR0HRot+yOCdCO7u4hX3pWft6kWBBcqh0UA==",
++          "dev": true,
++          "requires": {
++            "brace-expansion": "1.1.8"
++          }
++        }
++      }
++    },
+     "class-transformer": {
+       "version": "0.1.8",
+       "resolved": "https://registry.npmjs.org/class-transformer/-/class-transformer-0.1.8.tgz",
+@@ -956,11 +1011,18 @@
+       }
+     },
+     "class-validator": {
+-      "version": "0.7.3",
+-      "resolved": "https://registry.npmjs.org/class-validator/-/class-validator-0.7.3.tgz",
+-      "integrity": "sha512-aRRlS1WlQ+52aHlmDCDX5dLwtpbg9is7i9yYhzQosTAVs86nX0Um8hb7ChTwMn7jfpyxxjAZpBrlrAc2tqNpYA==",
++      "version": "0.8.1",
++      "resolved": "http://192.168.228.42:5000/class-validator/-/class-validator-0.8.1.tgz",
++      "integrity": "sha512-sQgc0oEI2VqyARUZdXNWvsopOO12rrE1/3TdGDhn/P0bpAOTnhT2hdkHyVGOpSQKjolLgtWq1EddXhSL/9CgnQ==",
+       "requires": {
+-        "validator": "7.2.0"
++        "validator": "9.2.0"
++      },
++      "dependencies": {
++        "validator": {
++          "version": "9.2.0",
++          "resolved": "http://192.168.228.42:5000/validator/-/validator-9.2.0.tgz",
++          "integrity": "sha512-6Ij4Eo0KM4LkR0d0IegOwluG5453uqT5QyF5SV5Ezvm8/zmkKI/L4eoraafZGlZPC9guLkwKzgypcw8VGWWnGA=="
++        }
+       }
+     },
+     "cli-boxes": {
+@@ -1546,8 +1608,8 @@
+       "integrity": "sha1-HxXOa4RPfKQUlcgZDAgzwwuLFpM=",
+       "dev": true,
+       "requires": {
+-        "is-text-path": "1.0.1",
+         "JSONStream": "1.3.1",
++        "is-text-path": "1.0.1",
+         "lodash": "4.17.4",
+         "meow": "3.7.0",
+         "split2": "2.2.0",
+@@ -2702,154 +2764,1058 @@
+             "is-buffer": "1.1.6"
+           }
+         },
+-        "micromatch": {
+-          "version": "2.3.11",
+-          "resolved": "https://registry.npmjs.org/micromatch/-/micromatch-2.3.11.tgz",
+-          "integrity": "sha1-hmd8l9FyCzY0MdBNDRUpO9OMFWU=",
++        "micromatch": {
++          "version": "2.3.11",
++          "resolved": "https://registry.npmjs.org/micromatch/-/micromatch-2.3.11.tgz",
++          "integrity": "sha1-hmd8l9FyCzY0MdBNDRUpO9OMFWU=",
++          "dev": true,
++          "requires": {
++            "arr-diff": "2.0.0",
++            "array-unique": "0.2.1",
++            "braces": "1.8.5",
++            "expand-brackets": "0.1.5",
++            "extglob": "0.3.2",
++            "filename-regex": "2.0.1",
++            "is-extglob": "1.0.0",
++            "is-glob": "2.0.1",
++            "kind-of": "3.2.2",
++            "normalize-path": "2.1.1",
++            "object.omit": "2.0.1",
++            "parse-glob": "3.0.4",
++            "regex-cache": "0.4.4"
++          }
++        }
++      }
++    },
++    "fined": {
++      "version": "1.1.0",
++      "resolved": "https://registry.npmjs.org/fined/-/fined-1.1.0.tgz",
++      "integrity": "sha1-s33IRLdqL15wgeiE98CuNE8VNHY=",
++      "dev": true,
++      "requires": {
++        "expand-tilde": "2.0.2",
++        "is-plain-object": "2.0.4",
++        "object.defaults": "1.1.0",
++        "object.pick": "1.3.0",
++        "parse-filepath": "1.0.1"
++      },
++      "dependencies": {
++        "expand-tilde": {
++          "version": "2.0.2",
++          "resolved": "https://registry.npmjs.org/expand-tilde/-/expand-tilde-2.0.2.tgz",
++          "integrity": "sha1-l+gBqgUt8CRU3kawK/YhZCzchQI=",
++          "dev": true,
++          "requires": {
++            "homedir-polyfill": "1.0.1"
++          }
++        }
++      }
++    },
++    "first-chunk-stream": {
++      "version": "1.0.0",
++      "resolved": "https://registry.npmjs.org/first-chunk-stream/-/first-chunk-stream-1.0.0.tgz",
++      "integrity": "sha1-Wb+1DNkF9g18OUzT2ayqtOatk04=",
++      "dev": true
++    },
++    "flagged-respawn": {
++      "version": "0.3.2",
++      "resolved": "https://registry.npmjs.org/flagged-respawn/-/flagged-respawn-0.3.2.tgz",
++      "integrity": "sha1-/xke3c1wiKZ1smEP/8l2vpuAdLU=",
++      "dev": true
++    },
++    "for-in": {
++      "version": "1.0.2",
++      "resolved": "https://registry.npmjs.org/for-in/-/for-in-1.0.2.tgz",
++      "integrity": "sha1-gQaNKVqBQuwKxybG4iAMMPttXoA=",
++      "dev": true
++    },
++    "for-own": {
++      "version": "0.1.5",
++      "resolved": "https://registry.npmjs.org/for-own/-/for-own-0.1.5.tgz",
++      "integrity": "sha1-UmXGgaTylNq78XyVCbZ2OqhFEM4=",
++      "dev": true,
++      "requires": {
++        "for-in": "1.0.2"
++      }
++    },
++    "forever-agent": {
++      "version": "0.6.1",
++      "resolved": "https://registry.npmjs.org/forever-agent/-/forever-agent-0.6.1.tgz",
++      "integrity": "sha1-+8cfDEGt6zf5bFd60e1C2P2sypE=",
++      "dev": true
++    },
++    "form-data": {
++      "version": "2.1.4",
++      "resolved": "https://registry.npmjs.org/form-data/-/form-data-2.1.4.tgz",
++      "integrity": "sha1-M8GDrPGTJ27KqYFDpp6Uv+4XUNE=",
++      "dev": true,
++      "requires": {
++        "asynckit": "0.4.0",
++        "combined-stream": "1.0.5",
++        "mime-types": "2.1.17"
++      }
++    },
++    "formatio": {
++      "version": "1.2.0",
++      "resolved": "https://registry.npmjs.org/formatio/-/formatio-1.2.0.tgz",
++      "integrity": "sha1-87IWfZBoxGmKjVH092CjmlTYGOs=",
++      "dev": true,
++      "requires": {
++        "samsam": "1.3.0"
++      }
++    },
++    "forwarded": {
++      "version": "0.1.2",
++      "resolved": "https://registry.npmjs.org/forwarded/-/forwarded-0.1.2.tgz",
++      "integrity": "sha1-mMI9qxF1ZXuMBXPozszZGw/xjIQ="
++    },
++    "fragment-cache": {
++      "version": "0.2.1",
++      "resolved": "https://registry.npmjs.org/fragment-cache/-/fragment-cache-0.2.1.tgz",
++      "integrity": "sha1-QpD60n8T6Jvn8zeZxrxaCr//DRk=",
++      "dev": true,
++      "requires": {
++        "map-cache": "0.2.2"
++      }
++    },
++    "fresh": {
++      "version": "0.5.2",
++      "resolved": "https://registry.npmjs.org/fresh/-/fresh-0.5.2.tgz",
++      "integrity": "sha1-PYyt2Q2XZWn6g1qx+OSyOhBWBac="
++    },
++    "from": {
++      "version": "0.1.7",
++      "resolved": "https://registry.npmjs.org/from/-/from-0.1.7.tgz",
++      "integrity": "sha1-g8YK/Fi5xWmXAH7Rp2izqzA6RP4=",
++      "dev": true
++    },
++    "fs-exists-sync": {
++      "version": "0.1.0",
++      "resolved": "https://registry.npmjs.org/fs-exists-sync/-/fs-exists-sync-0.1.0.tgz",
++      "integrity": "sha1-mC1ok6+RjnLQjeyehnP/K1qNat0=",
++      "dev": true
++    },
++    "fs-extra": {
++      "version": "4.0.2",
++      "resolved": "https://registry.npmjs.org/fs-extra/-/fs-extra-4.0.2.tgz",
++      "integrity": "sha1-+RcExT0bRh+JNFKwwwfZmXZHq2s=",
++      "dev": true,
++      "requires": {
++        "graceful-fs": "4.1.11",
++        "jsonfile": "4.0.0",
++        "universalify": "0.1.1"
++      }
++    },
++    "fs.realpath": {
++      "version": "1.0.0",
++      "resolved": "https://registry.npmjs.org/fs.realpath/-/fs.realpath-1.0.0.tgz",
++      "integrity": "sha1-FQStJSMVjKpA20onh8sBQRmU6k8=",
++      "dev": true
++    },
++    "fsevents": {
++      "version": "1.1.3",
++      "resolved": "http://192.168.228.42:5000/fsevents/-/fsevents-1.1.3.tgz",
++      "integrity": "sha512-WIr7iDkdmdbxu/Gh6eKEZJL6KPE74/5MEsf2whTOFNxbIoIixogroLdKYqB6FDav4Wavh/lZdzzd3b2KxIXC5Q==",
++      "dev": true,
++      "optional": true,
++      "requires": {
++        "nan": "2.8.0",
++        "node-pre-gyp": "0.6.39"
++      },
++      "dependencies": {
++        "abbrev": {
++          "version": "1.1.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "ajv": {
++          "version": "4.11.8",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "co": "4.6.0",
++            "json-stable-stringify": "1.0.1"
++          }
++        },
++        "ansi-regex": {
++          "version": "2.1.1",
++          "bundled": true,
++          "dev": true
++        },
++        "aproba": {
++          "version": "1.1.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "are-we-there-yet": {
++          "version": "1.1.4",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "delegates": "1.0.0",
++            "readable-stream": "2.2.9"
++          }
++        },
++        "asn1": {
++          "version": "0.2.3",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "assert-plus": {
++          "version": "0.2.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "asynckit": {
++          "version": "0.4.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "aws-sign2": {
++          "version": "0.6.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "aws4": {
++          "version": "1.6.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "balanced-match": {
++          "version": "0.4.2",
++          "bundled": true,
++          "dev": true
++        },
++        "bcrypt-pbkdf": {
++          "version": "1.0.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "tweetnacl": "0.14.5"
++          }
++        },
++        "block-stream": {
++          "version": "0.0.9",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "inherits": "2.0.3"
++          }
++        },
++        "boom": {
++          "version": "2.10.1",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "hoek": "2.16.3"
++          }
++        },
++        "brace-expansion": {
++          "version": "1.1.7",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "balanced-match": "0.4.2",
++            "concat-map": "0.0.1"
++          }
++        },
++        "buffer-shims": {
++          "version": "1.0.0",
++          "bundled": true,
++          "dev": true
++        },
++        "caseless": {
++          "version": "0.12.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "co": {
++          "version": "4.6.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "code-point-at": {
++          "version": "1.1.0",
++          "bundled": true,
++          "dev": true
++        },
++        "combined-stream": {
++          "version": "1.0.5",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "delayed-stream": "1.0.0"
++          }
++        },
++        "concat-map": {
++          "version": "0.0.1",
++          "bundled": true,
++          "dev": true
++        },
++        "console-control-strings": {
++          "version": "1.1.0",
++          "bundled": true,
++          "dev": true
++        },
++        "core-util-is": {
++          "version": "1.0.2",
++          "bundled": true,
++          "dev": true
++        },
++        "cryptiles": {
++          "version": "2.0.5",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "boom": "2.10.1"
++          }
++        },
++        "dashdash": {
++          "version": "1.14.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "assert-plus": "1.0.0"
++          },
++          "dependencies": {
++            "assert-plus": {
++              "version": "1.0.0",
++              "bundled": true,
++              "dev": true,
++              "optional": true
++            }
++          }
++        },
++        "debug": {
++          "version": "2.6.8",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "ms": "2.0.0"
++          }
++        },
++        "deep-extend": {
++          "version": "0.4.2",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "delayed-stream": {
++          "version": "1.0.0",
++          "bundled": true,
++          "dev": true
++        },
++        "delegates": {
++          "version": "1.0.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "detect-libc": {
++          "version": "1.0.2",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "ecc-jsbn": {
++          "version": "0.1.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "jsbn": "0.1.1"
++          }
++        },
++        "extend": {
++          "version": "3.0.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "extsprintf": {
++          "version": "1.0.2",
++          "bundled": true,
++          "dev": true
++        },
++        "forever-agent": {
++          "version": "0.6.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "form-data": {
++          "version": "2.1.4",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "asynckit": "0.4.0",
++            "combined-stream": "1.0.5",
++            "mime-types": "2.1.15"
++          }
++        },
++        "fs.realpath": {
++          "version": "1.0.0",
++          "bundled": true,
++          "dev": true
++        },
++        "fstream": {
++          "version": "1.0.11",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "graceful-fs": "4.1.11",
++            "inherits": "2.0.3",
++            "mkdirp": "0.5.1",
++            "rimraf": "2.6.1"
++          }
++        },
++        "fstream-ignore": {
++          "version": "1.0.5",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "fstream": "1.0.11",
++            "inherits": "2.0.3",
++            "minimatch": "3.0.4"
++          }
++        },
++        "gauge": {
++          "version": "2.7.4",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "aproba": "1.1.1",
++            "console-control-strings": "1.1.0",
++            "has-unicode": "2.0.1",
++            "object-assign": "4.1.1",
++            "signal-exit": "3.0.2",
++            "string-width": "1.0.2",
++            "strip-ansi": "3.0.1",
++            "wide-align": "1.1.2"
++          }
++        },
++        "getpass": {
++          "version": "0.1.7",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "assert-plus": "1.0.0"
++          },
++          "dependencies": {
++            "assert-plus": {
++              "version": "1.0.0",
++              "bundled": true,
++              "dev": true,
++              "optional": true
++            }
++          }
++        },
++        "glob": {
++          "version": "7.1.2",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "fs.realpath": "1.0.0",
++            "inflight": "1.0.6",
++            "inherits": "2.0.3",
++            "minimatch": "3.0.4",
++            "once": "1.4.0",
++            "path-is-absolute": "1.0.1"
++          }
++        },
++        "graceful-fs": {
++          "version": "4.1.11",
++          "bundled": true,
++          "dev": true
++        },
++        "har-schema": {
++          "version": "1.0.5",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "har-validator": {
++          "version": "4.2.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "ajv": "4.11.8",
++            "har-schema": "1.0.5"
++          }
++        },
++        "has-unicode": {
++          "version": "2.0.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "hawk": {
++          "version": "3.1.3",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "boom": "2.10.1",
++            "cryptiles": "2.0.5",
++            "hoek": "2.16.3",
++            "sntp": "1.0.9"
++          }
++        },
++        "hoek": {
++          "version": "2.16.3",
++          "bundled": true,
++          "dev": true
++        },
++        "http-signature": {
++          "version": "1.1.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "assert-plus": "0.2.0",
++            "jsprim": "1.4.0",
++            "sshpk": "1.13.0"
++          }
++        },
++        "inflight": {
++          "version": "1.0.6",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "once": "1.4.0",
++            "wrappy": "1.0.2"
++          }
++        },
++        "inherits": {
++          "version": "2.0.3",
++          "bundled": true,
++          "dev": true
++        },
++        "ini": {
++          "version": "1.3.4",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "is-fullwidth-code-point": {
++          "version": "1.0.0",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "number-is-nan": "1.0.1"
++          }
++        },
++        "is-typedarray": {
++          "version": "1.0.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "isarray": {
++          "version": "1.0.0",
++          "bundled": true,
++          "dev": true
++        },
++        "isstream": {
++          "version": "0.1.2",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "jodid25519": {
++          "version": "1.0.2",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "jsbn": "0.1.1"
++          }
++        },
++        "jsbn": {
++          "version": "0.1.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "json-schema": {
++          "version": "0.2.3",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "json-stable-stringify": {
++          "version": "1.0.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "jsonify": "0.0.0"
++          }
++        },
++        "json-stringify-safe": {
++          "version": "5.0.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "jsonify": {
++          "version": "0.0.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "jsprim": {
++          "version": "1.4.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "assert-plus": "1.0.0",
++            "extsprintf": "1.0.2",
++            "json-schema": "0.2.3",
++            "verror": "1.3.6"
++          },
++          "dependencies": {
++            "assert-plus": {
++              "version": "1.0.0",
++              "bundled": true,
++              "dev": true,
++              "optional": true
++            }
++          }
++        },
++        "mime-db": {
++          "version": "1.27.0",
++          "bundled": true,
++          "dev": true
++        },
++        "mime-types": {
++          "version": "2.1.15",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "mime-db": "1.27.0"
++          }
++        },
++        "minimatch": {
++          "version": "3.0.4",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "brace-expansion": "1.1.7"
++          }
++        },
++        "minimist": {
++          "version": "0.0.8",
++          "bundled": true,
++          "dev": true
++        },
++        "mkdirp": {
++          "version": "0.5.1",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "minimist": "0.0.8"
++          }
++        },
++        "ms": {
++          "version": "2.0.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "node-pre-gyp": {
++          "version": "0.6.39",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "detect-libc": "1.0.2",
++            "hawk": "3.1.3",
++            "mkdirp": "0.5.1",
++            "nopt": "4.0.1",
++            "npmlog": "4.1.0",
++            "rc": "1.2.1",
++            "request": "2.81.0",
++            "rimraf": "2.6.1",
++            "semver": "5.3.0",
++            "tar": "2.2.1",
++            "tar-pack": "3.4.0"
++          }
++        },
++        "nopt": {
++          "version": "4.0.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "abbrev": "1.1.0",
++            "osenv": "0.1.4"
++          }
++        },
++        "npmlog": {
++          "version": "4.1.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "are-we-there-yet": "1.1.4",
++            "console-control-strings": "1.1.0",
++            "gauge": "2.7.4",
++            "set-blocking": "2.0.0"
++          }
++        },
++        "number-is-nan": {
++          "version": "1.0.1",
++          "bundled": true,
++          "dev": true
++        },
++        "oauth-sign": {
++          "version": "0.8.2",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "object-assign": {
++          "version": "4.1.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "once": {
++          "version": "1.4.0",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "wrappy": "1.0.2"
++          }
++        },
++        "os-homedir": {
++          "version": "1.0.2",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "os-tmpdir": {
++          "version": "1.0.2",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "osenv": {
++          "version": "0.1.4",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "os-homedir": "1.0.2",
++            "os-tmpdir": "1.0.2"
++          }
++        },
++        "path-is-absolute": {
++          "version": "1.0.1",
++          "bundled": true,
++          "dev": true
++        },
++        "performance-now": {
++          "version": "0.2.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "process-nextick-args": {
++          "version": "1.0.7",
++          "bundled": true,
++          "dev": true
++        },
++        "punycode": {
++          "version": "1.4.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "qs": {
++          "version": "6.4.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "rc": {
++          "version": "1.2.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "deep-extend": "0.4.2",
++            "ini": "1.3.4",
++            "minimist": "1.2.0",
++            "strip-json-comments": "2.0.1"
++          },
++          "dependencies": {
++            "minimist": {
++              "version": "1.2.0",
++              "bundled": true,
++              "dev": true,
++              "optional": true
++            }
++          }
++        },
++        "readable-stream": {
++          "version": "2.2.9",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "buffer-shims": "1.0.0",
++            "core-util-is": "1.0.2",
++            "inherits": "2.0.3",
++            "isarray": "1.0.0",
++            "process-nextick-args": "1.0.7",
++            "string_decoder": "1.0.1",
++            "util-deprecate": "1.0.2"
++          }
++        },
++        "request": {
++          "version": "2.81.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "aws-sign2": "0.6.0",
++            "aws4": "1.6.0",
++            "caseless": "0.12.0",
++            "combined-stream": "1.0.5",
++            "extend": "3.0.1",
++            "forever-agent": "0.6.1",
++            "form-data": "2.1.4",
++            "har-validator": "4.2.1",
++            "hawk": "3.1.3",
++            "http-signature": "1.1.1",
++            "is-typedarray": "1.0.0",
++            "isstream": "0.1.2",
++            "json-stringify-safe": "5.0.1",
++            "mime-types": "2.1.15",
++            "oauth-sign": "0.8.2",
++            "performance-now": "0.2.0",
++            "qs": "6.4.0",
++            "safe-buffer": "5.0.1",
++            "stringstream": "0.0.5",
++            "tough-cookie": "2.3.2",
++            "tunnel-agent": "0.6.0",
++            "uuid": "3.0.1"
++          }
++        },
++        "rimraf": {
++          "version": "2.6.1",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "glob": "7.1.2"
++          }
++        },
++        "safe-buffer": {
++          "version": "5.0.1",
++          "bundled": true,
++          "dev": true
++        },
++        "semver": {
++          "version": "5.3.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "set-blocking": {
++          "version": "2.0.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "signal-exit": {
++          "version": "3.0.2",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "sntp": {
++          "version": "1.0.9",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "hoek": "2.16.3"
++          }
++        },
++        "sshpk": {
++          "version": "1.13.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "asn1": "0.2.3",
++            "assert-plus": "1.0.0",
++            "bcrypt-pbkdf": "1.0.1",
++            "dashdash": "1.14.1",
++            "ecc-jsbn": "0.1.1",
++            "getpass": "0.1.7",
++            "jodid25519": "1.0.2",
++            "jsbn": "0.1.1",
++            "tweetnacl": "0.14.5"
++          },
++          "dependencies": {
++            "assert-plus": {
++              "version": "1.0.0",
++              "bundled": true,
++              "dev": true,
++              "optional": true
++            }
++          }
++        },
++        "string-width": {
++          "version": "1.0.2",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "code-point-at": "1.1.0",
++            "is-fullwidth-code-point": "1.0.0",
++            "strip-ansi": "3.0.1"
++          }
++        },
++        "string_decoder": {
++          "version": "1.0.1",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "safe-buffer": "5.0.1"
++          }
++        },
++        "stringstream": {
++          "version": "0.0.5",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "strip-ansi": {
++          "version": "3.0.1",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "ansi-regex": "2.1.1"
++          }
++        },
++        "strip-json-comments": {
++          "version": "2.0.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "tar": {
++          "version": "2.2.1",
++          "bundled": true,
++          "dev": true,
++          "requires": {
++            "block-stream": "0.0.9",
++            "fstream": "1.0.11",
++            "inherits": "2.0.3"
++          }
++        },
++        "tar-pack": {
++          "version": "3.4.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "debug": "2.6.8",
++            "fstream": "1.0.11",
++            "fstream-ignore": "1.0.5",
++            "once": "1.4.0",
++            "readable-stream": "2.2.9",
++            "rimraf": "2.6.1",
++            "tar": "2.2.1",
++            "uid-number": "0.0.6"
++          }
++        },
++        "tough-cookie": {
++          "version": "2.3.2",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "punycode": "1.4.1"
++          }
++        },
++        "tunnel-agent": {
++          "version": "0.6.0",
++          "bundled": true,
++          "dev": true,
++          "optional": true,
++          "requires": {
++            "safe-buffer": "5.0.1"
++          }
++        },
++        "tweetnacl": {
++          "version": "0.14.5",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "uid-number": {
++          "version": "0.0.6",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "util-deprecate": {
++          "version": "1.0.2",
++          "bundled": true,
++          "dev": true
++        },
++        "uuid": {
++          "version": "3.0.1",
++          "bundled": true,
++          "dev": true,
++          "optional": true
++        },
++        "verror": {
++          "version": "1.3.6",
++          "bundled": true,
+           "dev": true,
++          "optional": true,
+           "requires": {
+-            "arr-diff": "2.0.0",
+-            "array-unique": "0.2.1",
+-            "braces": "1.8.5",
+-            "expand-brackets": "0.1.5",
+-            "extglob": "0.3.2",
+-            "filename-regex": "2.0.1",
+-            "is-extglob": "1.0.0",
+-            "is-glob": "2.0.1",
+-            "kind-of": "3.2.2",
+-            "normalize-path": "2.1.1",
+-            "object.omit": "2.0.1",
+-            "parse-glob": "3.0.4",
+-            "regex-cache": "0.4.4"
++            "extsprintf": "1.0.2"
+           }
+-        }
+-      }
+-    },
+-    "fined": {
+-      "version": "1.1.0",
+-      "resolved": "https://registry.npmjs.org/fined/-/fined-1.1.0.tgz",
+-      "integrity": "sha1-s33IRLdqL15wgeiE98CuNE8VNHY=",
+-      "dev": true,
+-      "requires": {
+-        "expand-tilde": "2.0.2",
+-        "is-plain-object": "2.0.4",
+-        "object.defaults": "1.1.0",
+-        "object.pick": "1.3.0",
+-        "parse-filepath": "1.0.1"
+-      },
+-      "dependencies": {
+-        "expand-tilde": {
+-          "version": "2.0.2",
+-          "resolved": "https://registry.npmjs.org/expand-tilde/-/expand-tilde-2.0.2.tgz",
+-          "integrity": "sha1-l+gBqgUt8CRU3kawK/YhZCzchQI=",
++        },
++        "wide-align": {
++          "version": "1.1.2",
++          "bundled": true,
+           "dev": true,
++          "optional": true,
+           "requires": {
+-            "homedir-polyfill": "1.0.1"
++            "string-width": "1.0.2"
+           }
++        },
++        "wrappy": {
++          "version": "1.0.2",
++          "bundled": true,
++          "dev": true
+         }
+       }
+     },
+-    "first-chunk-stream": {
+-      "version": "1.0.0",
+-      "resolved": "https://registry.npmjs.org/first-chunk-stream/-/first-chunk-stream-1.0.0.tgz",
+-      "integrity": "sha1-Wb+1DNkF9g18OUzT2ayqtOatk04=",
+-      "dev": true
+-    },
+-    "flagged-respawn": {
+-      "version": "0.3.2",
+-      "resolved": "https://registry.npmjs.org/flagged-respawn/-/flagged-respawn-0.3.2.tgz",
+-      "integrity": "sha1-/xke3c1wiKZ1smEP/8l2vpuAdLU=",
+-      "dev": true
+-    },
+-    "for-in": {
+-      "version": "1.0.2",
+-      "resolved": "https://registry.npmjs.org/for-in/-/for-in-1.0.2.tgz",
+-      "integrity": "sha1-gQaNKVqBQuwKxybG4iAMMPttXoA=",
+-      "dev": true
+-    },
+-    "for-own": {
+-      "version": "0.1.5",
+-      "resolved": "https://registry.npmjs.org/for-own/-/for-own-0.1.5.tgz",
+-      "integrity": "sha1-UmXGgaTylNq78XyVCbZ2OqhFEM4=",
+-      "dev": true,
+-      "requires": {
+-        "for-in": "1.0.2"
+-      }
+-    },
+-    "forever-agent": {
+-      "version": "0.6.1",
+-      "resolved": "https://registry.npmjs.org/forever-agent/-/forever-agent-0.6.1.tgz",
+-      "integrity": "sha1-+8cfDEGt6zf5bFd60e1C2P2sypE=",
+-      "dev": true
+-    },
+-    "form-data": {
+-      "version": "2.1.4",
+-      "resolved": "https://registry.npmjs.org/form-data/-/form-data-2.1.4.tgz",
+-      "integrity": "sha1-M8GDrPGTJ27KqYFDpp6Uv+4XUNE=",
+-      "dev": true,
+-      "requires": {
+-        "asynckit": "0.4.0",
+-        "combined-stream": "1.0.5",
+-        "mime-types": "2.1.17"
+-      }
+-    },
+-    "formatio": {
+-      "version": "1.2.0",
+-      "resolved": "https://registry.npmjs.org/formatio/-/formatio-1.2.0.tgz",
+-      "integrity": "sha1-87IWfZBoxGmKjVH092CjmlTYGOs=",
+-      "dev": true,
+-      "requires": {
+-        "samsam": "1.3.0"
+-      }
+-    },
+-    "forwarded": {
+-      "version": "0.1.2",
+-      "resolved": "https://registry.npmjs.org/forwarded/-/forwarded-0.1.2.tgz",
+-      "integrity": "sha1-mMI9qxF1ZXuMBXPozszZGw/xjIQ="
+-    },
+-    "fragment-cache": {
+-      "version": "0.2.1",
+-      "resolved": "https://registry.npmjs.org/fragment-cache/-/fragment-cache-0.2.1.tgz",
+-      "integrity": "sha1-QpD60n8T6Jvn8zeZxrxaCr//DRk=",
+-      "dev": true,
+-      "requires": {
+-        "map-cache": "0.2.2"
+-      }
+-    },
+-    "fresh": {
+-      "version": "0.5.2",
+-      "resolved": "https://registry.npmjs.org/fresh/-/fresh-0.5.2.tgz",
+-      "integrity": "sha1-PYyt2Q2XZWn6g1qx+OSyOhBWBac="
+-    },
+-    "from": {
+-      "version": "0.1.7",
+-      "resolved": "https://registry.npmjs.org/from/-/from-0.1.7.tgz",
+-      "integrity": "sha1-g8YK/Fi5xWmXAH7Rp2izqzA6RP4=",
+-      "dev": true
+-    },
+-    "fs-exists-sync": {
+-      "version": "0.1.0",
+-      "resolved": "https://registry.npmjs.org/fs-exists-sync/-/fs-exists-sync-0.1.0.tgz",
+-      "integrity": "sha1-mC1ok6+RjnLQjeyehnP/K1qNat0=",
+-      "dev": true
+-    },
+-    "fs-extra": {
+-      "version": "4.0.2",
+-      "resolved": "https://registry.npmjs.org/fs-extra/-/fs-extra-4.0.2.tgz",
+-      "integrity": "sha1-+RcExT0bRh+JNFKwwwfZmXZHq2s=",
+-      "dev": true,
+-      "requires": {
+-        "graceful-fs": "4.1.11",
+-        "jsonfile": "4.0.0",
+-        "universalify": "0.1.1"
+-      }
+-    },
+-    "fs.realpath": {
+-      "version": "1.0.0",
+-      "resolved": "https://registry.npmjs.org/fs.realpath/-/fs.realpath-1.0.0.tgz",
+-      "integrity": "sha1-FQStJSMVjKpA20onh8sBQRmU6k8=",
+-      "dev": true
+-    },
+     "gauge": {
+       "version": "2.7.4",
+       "resolved": "https://registry.npmjs.org/gauge/-/gauge-2.7.4.tgz",
+@@ -3330,6 +4296,78 @@
+         "vinyl-fs": "0.3.14"
+       }
+     },
++    "gulp-clang-format": {
++      "version": "1.0.25",
++      "resolved": "http://192.168.228.42:5000/gulp-clang-format/-/gulp-clang-format-1.0.25.tgz",
++      "integrity": "sha512-YSYk3st/ktKrBWfnDSutYZU9pLnCdaeJBTT8YguTJJLkQjSFZjBCBquecSXfoWW+NcVfGuei3N7vs7xuSR+2bg==",
++      "dev": true,
++      "requires": {
++        "clang-format": "1.2.2",
++        "gulp-diff": "1.0.0",
++        "gulp-util": "3.0.8",
++        "pkginfo": "0.3.1",
++        "stream-combiner2": "1.1.1",
++        "stream-equal": "0.1.6",
++        "through2": "0.6.5"
++      },
++      "dependencies": {
++        "isarray": {
++          "version": "0.0.1",
++          "resolved": "http://192.168.228.42:5000/isarray/-/isarray-0.0.1.tgz",
++          "integrity": "sha1-ihis/Kmo9Bd+Cav8YDiTmwXR7t8=",
++          "dev": true
++        },
++        "readable-stream": {
++          "version": "1.0.34",
++          "resolved": "http://192.168.228.42:5000/readable-stream/-/readable-stream-1.0.34.tgz",
++          "integrity": "sha1-Elgg40vIQtLyqq+v5MKRbuMsFXw=",
++          "dev": true,
++          "requires": {
++            "core-util-is": "1.0.2",
++            "inherits": "2.0.3",
++            "isarray": "0.0.1",
++            "string_decoder": "0.10.31"
++          }
++        },
++        "string_decoder": {
++          "version": "0.10.31",
++          "resolved": "http://192.168.228.42:5000/string_decoder/-/string_decoder-0.10.31.tgz",
++          "integrity": "sha1-YuIDvEF2bGwoyfyEMB2rHFMQ+pQ=",
++          "dev": true
++        },
++        "through2": {
++          "version": "0.6.5",
++          "resolved": "http://192.168.228.42:5000/through2/-/through2-0.6.5.tgz",
++          "integrity": "sha1-QaucZ7KdVyCQcUEOHXp6lozTrUg=",
++          "dev": true,
++          "requires": {
++            "readable-stream": "1.0.34",
++            "xtend": "4.0.1"
++          }
++        }
++      }
++    },
++    "gulp-diff": {
++      "version": "1.0.0",
++      "resolved": "http://192.168.228.42:5000/gulp-diff/-/gulp-diff-1.0.0.tgz",
++      "integrity": "sha1-EBsjcS3WsQe9B9BauI6jrEhf7Xc=",
++      "dev": true,
++      "requires": {
++        "cli-color": "1.2.0",
++        "diff": "2.2.3",
++        "event-stream": "3.3.4",
++        "gulp-util": "3.0.8",
++        "through2": "2.0.3"
++      },
++      "dependencies": {
++        "diff": {
++          "version": "2.2.3",
++          "resolved": "http://192.168.228.42:5000/diff/-/diff-2.2.3.tgz",
++          "integrity": "sha1-YOr9DSjukG5Oj/ClLBIpUhAzv5k=",
++          "dev": true
++        }
++      }
++    },
+     "gulp-sequence": {
+       "version": "0.4.6",
+       "resolved": "https://registry.npmjs.org/gulp-sequence/-/gulp-sequence-0.4.6.tgz",
+@@ -4535,16 +5573,6 @@
+       "integrity": "sha1-T9kss04OnbPInIYi7PUfm5eMbLk=",
+       "dev": true
+     },
+-    "JSONStream": {
+-      "version": "1.3.1",
+-      "resolved": "https://registry.npmjs.org/JSONStream/-/JSONStream-1.3.1.tgz",
+-      "integrity": "sha1-cH92HgHa6eFvG8+TcDt4xwlmV5o=",
+-      "dev": true,
+-      "requires": {
+-        "jsonparse": "1.3.1",
+-        "through": "2.3.8"
+-      }
+-    },
+     "jsprim": {
+       "version": "1.4.1",
+       "resolved": "https://registry.npmjs.org/jsprim/-/jsprim-1.4.1.tgz",
+@@ -5529,6 +6557,13 @@
+       "resolved": "https://registry.npmjs.org/mute-stream/-/mute-stream-0.0.7.tgz",
+       "integrity": "sha1-MHXOk7whuPq0PhvE2n6BFe0ee6s="
+     },
++    "nan": {
++      "version": "2.8.0",
++      "resolved": "http://192.168.228.42:5000/nan/-/nan-2.8.0.tgz",
++      "integrity": "sha1-7XFfP+neArV6XmJS2QqWZ14fCFo=",
++      "dev": true,
++      "optional": true
++    },
+     "nanomatch": {
+       "version": "1.2.5",
+       "resolved": "https://registry.npmjs.org/nanomatch/-/nanomatch-1.2.5.tgz",
+@@ -7542,6 +8577,12 @@
+         "pinkie": "2.0.4"
+       }
+     },
++    "pkginfo": {
++      "version": "0.3.1",
++      "resolved": "http://192.168.228.42:5000/pkginfo/-/pkginfo-0.3.1.tgz",
++      "integrity": "sha1-Wyn2qB9wcXFC4J52W76rl7T4HiE=",
++      "dev": true
++    },
+     "posix-character-classes": {
+       "version": "0.1.1",
+       "resolved": "https://registry.npmjs.org/posix-character-classes/-/posix-character-classes-0.1.1.tgz",
+@@ -7566,6 +8607,12 @@
+       "integrity": "sha1-gV7R9uvGWSb4ZbMQwHE7yzMVzks=",
+       "dev": true
+     },
++    "prettier": {
++      "version": "1.10.2",
++      "resolved": "http://192.168.228.42:5000/prettier/-/prettier-1.10.2.tgz",
++      "integrity": "sha512-TcdNoQIWFoHblurqqU6d1ysopjq7UX0oRcT/hJ8qvBAELiYWn+Ugf0AXdnzISEJ7vuhNnQ98N8jR8Sh53x4IZg==",
++      "dev": true
++    },
+     "pretty-hrtime": {
+       "version": "1.0.3",
+       "resolved": "https://registry.npmjs.org/pretty-hrtime/-/pretty-hrtime-1.0.3.tgz",
+@@ -8651,27 +9698,45 @@
+         "duplexer": "0.1.1"
+       }
+     },
++    "stream-combiner2": {
++      "version": "1.1.1",
++      "resolved": "http://192.168.228.42:5000/stream-combiner2/-/stream-combiner2-1.1.1.tgz",
++      "integrity": "sha1-+02KFCDqNidk4hrUeAOXvry0HL4=",
++      "dev": true,
++      "requires": {
++        "duplexer2": "0.1.4",
++        "readable-stream": "2.3.3"
++      },
++      "dependencies": {
++        "duplexer2": {
++          "version": "0.1.4",
++          "resolved": "http://192.168.228.42:5000/duplexer2/-/duplexer2-0.1.4.tgz",
++          "integrity": "sha1-ixLauHjA1p4+eJEFFmKjL8a93ME=",
++          "dev": true,
++          "requires": {
++            "readable-stream": "2.3.3"
++          }
++        }
++      }
++    },
+     "stream-consume": {
+       "version": "0.1.0",
+       "resolved": "https://registry.npmjs.org/stream-consume/-/stream-consume-0.1.0.tgz",
+       "integrity": "sha1-pB6tGm1ggc63n2WwYZAbbY89HQ8=",
+       "dev": true
+     },
++    "stream-equal": {
++      "version": "0.1.6",
++      "resolved": "http://192.168.228.42:5000/stream-equal/-/stream-equal-0.1.6.tgz",
++      "integrity": "sha1-zFIvqzhRYBLk1O5HUTsUe3I1kBk=",
++      "dev": true
++    },
+     "stream-shift": {
+       "version": "1.0.0",
+       "resolved": "https://registry.npmjs.org/stream-shift/-/stream-shift-1.0.0.tgz",
+       "integrity": "sha1-1cdSgl5TZ+eG944Y5EXqIjoVWVI=",
+       "dev": true
+     },
+-    "string_decoder": {
+-      "version": "1.0.3",
+-      "resolved": "https://registry.npmjs.org/string_decoder/-/string_decoder-1.0.3.tgz",
+-      "integrity": "sha512-4AH6Z5fzNNBcH+6XDMfA/BTt87skxqJlO0lAh3Dker5zThcAxG6mKz+iGu308UKoPPQ8Dcqx/4JhujzltRa+hQ==",
+-      "dev": true,
+-      "requires": {
+-        "safe-buffer": "5.1.1"
+-      }
+-    },
+     "string-width": {
+       "version": "2.1.1",
+       "resolved": "https://registry.npmjs.org/string-width/-/string-width-2.1.1.tgz",
+@@ -8696,6 +9761,15 @@
+         }
+       }
+     },
++    "string_decoder": {
++      "version": "1.0.3",
++      "resolved": "https://registry.npmjs.org/string_decoder/-/string_decoder-1.0.3.tgz",
++      "integrity": "sha512-4AH6Z5fzNNBcH+6XDMfA/BTt87skxqJlO0lAh3Dker5zThcAxG6mKz+iGu308UKoPPQ8Dcqx/4JhujzltRa+hQ==",
++      "dev": true,
++      "requires": {
++        "safe-buffer": "5.1.1"
++      }
++    },
+     "stringstream": {
+       "version": "0.0.5",
+       "resolved": "https://registry.npmjs.org/stringstream/-/stringstream-0.0.5.tgz",
+diff --git a/package.json b/package.json
+index 04135d4181b4518b4f33fea41e02919267c12800..a342891ee64ef7aac29b6535b98bacf6240797ad 100644
+--- a/package.json
++++ b/package.json
+@@ -24,7 +24,7 @@
+     "@nestjs/testing": "^4.0.0",
+     "@nestjs/websockets": "^4.0.0",
+     "class-transformer": "^0.1.8",
+-    "class-validator": "^0.7.3",
++    "class-validator": "^0.8.1",
+     "cli-color": "^1.1.0",
+     "engine.io-client": "^3.1.1",
+     "express": "^4.16.2",
+diff --git a/src/common/pipes/validation.pipe.ts b/src/common/pipes/validation.pipe.ts
+index 4ef46bc2738990b07e88d59e8a23a3f5518187ba..bd8b2f1b2d21f88684c59e7fac62f85d11f3d541 100644
+--- a/src/common/pipes/validation.pipe.ts
++++ b/src/common/pipes/validation.pipe.ts
+@@ -1,23 +1,40 @@
+-import { validate } from 'class-validator';
+-import { plainToClass } from 'class-transformer';
++import { validate, ValidatorOptions } from 'class-validator';
++import { classToPlain, plainToClass } from 'class-transformer';
+ import { PipeTransform } from '../interfaces/pipe-transform.interface';
+ import { ArgumentMetadata, BadRequestException } from '../index';
+ import { isNil } from '../utils/shared.utils';
+ import { Pipe } from './../decorators/core/component.decorator';
+ 
++export interface ValidationPipeOptions extends ValidatorOptions {
++  transform?: boolean;
++}
++
+ @Pipe()
+ export class ValidationPipe implements PipeTransform<any> {
++
++  private returnTransformed: boolean;
++
++  private validatorOptions: ValidatorOptions = {};
++
++  constructor(options?: ValidationPipeOptions) {
++    this.returnTransformed = (options && 'transform' in options) ? options.transform : true;
++    if (options) delete options.transform;
++    this.validatorOptions = { ...options } as ValidatorOptions;
++  }
++
+   public async transform(value, metadata: ArgumentMetadata) {
+     const { metatype } = metadata;
+     if (!metatype || !this.toValidate(metatype)) {
+       return value;
+     }
+     const entity = plainToClass(metatype, value);
+-    const errors = await validate(entity);
++    const errors = await validate(entity, this.validatorOptions);
+     if (errors.length > 0) {
+       throw new BadRequestException(errors);
+     }
+-    return value;
++    return this.returnTransformed ? entity
++      : Object.keys(this.validatorOptions) ? classToPlain(entity)
++      : value;
+   }
+ 
+   private toValidate(metatype): boolean {
+diff --git a/src/common/test/pipes/validation.pipe.spec.ts b/src/common/test/pipes/validation.pipe.spec.ts
+index cc178c2d90423e78b967dbc7c39aa32d7bd48c7f..a6ccc16be57b8d255f5a12a5b511ff6003687434 100644
+--- a/src/common/test/pipes/validation.pipe.spec.ts
++++ b/src/common/test/pipes/validation.pipe.spec.ts
+@@ -18,24 +18,68 @@ describe('ValidationPipe', () => {
+     metatype: TestModel,
+     data: '',
+   };
+-  beforeEach(() => {
+-    target = new ValidationPipe();
+-  });
++
+   describe('transform', () => {
+     describe('when validation passes', () => {
++      beforeEach(() => {
++        target = new ValidationPipe();
++      });
+       it('should return the value unchanged', async () => {
+         const testObj = { prop1: 'value1', prop2: 'value2' };
+         expect(await target.transform(testObj, {} as any)).to.equal(testObj);
+         expect(await target.transform(testObj, {} as any)).to.not.be.instanceOf(
+-          TestModel,
++            TestModel,
+         );
+       });
+     });
+-    describe('when validation vails', () => {
++    describe('when validation fails', () => {
++      beforeEach(() => {
++        target = new ValidationPipe();
++      });
+       it('should throw an error', async () => {
+         const testObj = { prop1: 'value1' };
+         return expect(target.transform(testObj, metadata)).to.be.rejected;
+       });
+     });
++    describe('when validation transforms', () => {
++      it('should return a TestModel instance', async () => {
++        target = new ValidationPipe({transform: true});
++        const testObj = { prop1: 'value1', prop2: 'value2', prop3: 'value3'};
++        expect(await target.transform(testObj, metadata)).to.be.instanceOf(TestModel);
++      });
++      describe('when validation strips', () => {
++        it('should return a TestModel without extra properties', async () => {
++          target = new ValidationPipe({whitelist: true});
++          const testObj = { prop1: 'value1', prop2: 'value2', prop3: 'value3'};
++          expect(await target.transform(testObj, metadata)).to.be.instanceOf(TestModel);
++          expect(await target.transform(testObj, metadata)).to.not.have.property('prop3');
++        });
++      });
++      describe('when validation rejects', () => {
++        it('should throw an error', () => {
++          target = new ValidationPipe({forbidNonWhitelisted: true});
++          const testObj = { prop1: 'value1', prop2: 'value2', prop3: 'value3' };
++          expect(target.transform(testObj, metadata)).to.be.rejected;
++        });
++      });
++    });
++    describe('when validation does\'t transform', () => {
++      describe('when validation strips', () => {
++        it('should return a plain object without extra properties', async () => {
++          target = new ValidationPipe({transform: false, whitelist: true});
++          const testObj = { prop1: 'value1', prop2: 'value2', prop3: 'value3'};
++          expect(await target.transform(testObj, metadata)).to.not.be.instanceOf(TestModel);
++          expect(await target.transform(testObj, metadata)).to.not.have.property('prop3');
++        });
++      });
++      describe('when validation rejects', () => {
++        it('should throw an error', () => {
++          target = new ValidationPipe({transform: false, forbidNonWhitelisted: true});
++          const testObj = { prop1: 'value1', prop2: 'value2', prop3: 'value3' };
++          expect(target.transform(testObj, metadata)).to.be.rejected;
++        });
++      });
++    });
+   });
+-});
++
++});
+\ No newline at end of file

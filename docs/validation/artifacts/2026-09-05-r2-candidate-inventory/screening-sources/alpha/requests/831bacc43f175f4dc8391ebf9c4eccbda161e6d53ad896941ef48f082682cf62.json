@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "search/issues",
+    "parameters": {
+      "order": "asc",
+      "page": 1,
+      "per_page": 100,
+      "q": "repo:sequelize/sequelize is:issue is:closed created:2017-01-01..2020-12-31 regression in:title",
+      "sort": "created"
+    }
+  },
+  "retrievedAt": "2026-09-05T12:49:13.238Z",
+  "sourceUrl": "https://api.github.com/search/issues?order=asc&page=1&per_page=100&q=repo%3Asequelize%2Fsequelize+is%3Aissue+is%3Aclosed+created%3A2017-01-01..2020-12-31+regression+in%3Atitle&sort=created",
+  "sha256": "bd0b38fa4921e5cc12586a4b6b5387e649053e56339e5954555c04ed22de4b8b",
+  "bytes": 52423
+}

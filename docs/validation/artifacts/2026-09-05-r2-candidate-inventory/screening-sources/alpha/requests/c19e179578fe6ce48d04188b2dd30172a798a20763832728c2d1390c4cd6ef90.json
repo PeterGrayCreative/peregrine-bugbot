@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/webpack/webpack/issues/11707/events",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:50:29.480Z",
+  "sourceUrl": "https://api.github.com/repos/webpack/webpack/issues/11707/events?page=1&per_page=100",
+  "sha256": "a521a85d1981fb50589c71e6000d145d54373dde1dadedafdfcae33d4d419fff",
+  "bytes": 8713
+}

@@ -1,0 +1,752 @@
+{
+  "schemaVersion": 1,
+  "protocolSha256": "f0f6d6b124c5cfc30735da5eb8c7abc486af5304e92ffaf839887533bfac0565",
+  "evidenceClass": "historical-candidate",
+  "admittedCases": 0,
+  "frameSizes": [
+    {
+      "repository": "microsoft/vscode",
+      "family": "editor-application",
+      "count": 118
+    },
+    {
+      "repository": "vercel/next.js",
+      "family": "frontend-server-framework",
+      "count": 87
+    },
+    {
+      "repository": "nestjs/nest",
+      "family": "backend-framework",
+      "count": 64
+    },
+    {
+      "repository": "sequelize/sequelize",
+      "family": "persistence",
+      "count": 18
+    },
+    {
+      "repository": "OptimalBits/bull",
+      "family": "worker-queue",
+      "count": 3
+    },
+    {
+      "repository": "webpack/webpack",
+      "family": "bundler",
+      "count": 52
+    },
+    {
+      "repository": "axios/axios",
+      "family": "http-client",
+      "count": 0
+    },
+    {
+      "repository": "ReactiveX/rxjs",
+      "family": "reactive-library",
+      "count": 21
+    }
+  ],
+  "requests": [
+    {
+      "schemaVersion": 1,
+      "request": {
+        "host": "api.github.com",
+        "method": "GET",
+        "endpoint": "repos/microsoft/vscode",
+        "parameters": {}
+      },
+      "retrievedAt": "2026-09-05T11:56:36.419Z",
+      "sourceUrl": "https://api.github.com/repos/microsoft/vscode?",
+      "sha256": "da01d50d59949dedb22dd9705621338cd2913a6247dabd01fe03a5cb85ad42de",
+      "bytes": 6518
+    },
+    {
+      "schemaVersion": 1,
+      "request": {
+        "host": "api.github.com",
+        "method": "GET",
+        "endpoint": "search/issues",
+        "parameters": {
+          "order": "asc",
+          "page": 1,
+          "per_page": 100,
+          "q": "repo:microsoft/vscode is:pr is:merged merged:2019-06-01..2019-06-30",
+          "sort": "created"
+        }
+      },
+      "retrievedAt": "2026-09-05T11:56:38.732Z",
+      "sourceUrl": "https://api.github.com/search/issues?order=asc&page=1&per_page=100&q=repo%3Amicrosoft%2Fvscode+is%3Apr+is%3Amerged+merged%3A2019-06-01..2019-06-30&sort=created",
+      "sha256": "9e866df32e1d8c1f8e9f19577fcb7c8a933d81161878834f0ecee9c8c78428ab",
+      "bytes": 570193
+    },
+    {
+      "schemaVersion": 1,
+      "request": {
+        "host": "api.github.com",
+        "method": "GET",
+        "endpoint": "search/issues",
+        "parameters": {
+          "order": "asc",
+          "page": 2,
+          "per_page": 100,
+          "q": "repo:microsoft/vscode is:pr is:merged merged:2019-06-01..2019-06-30",
+          "sort": "created"
+        }
+      },
+      "retrievedAt": "2026-09-05T11:56:39.705Z",
+      "sourceUrl": "https://api.github.com/search/issues?order=asc&page=2&per_page=100&q=repo%3Amicrosoft%2Fvscode+is%3Apr+is%3Amerged+merged%3A2019-06-01..2019-06-30&sort=created",
+      "sha256": "215f31ef71c6f60e6d877169429c71a01071dcad7874633a9e28abbf253a6311",
+      "bytes": 99730
+    },
+    {
+      "schemaVersion": 1,
+      "request": {
+        "host": "api.github.com",
+        "method": "GET",
+        "endpoint": "repos/vercel/next.js",
+        "parameters": {}
+      },
+      "retrievedAt": "2026-09-05T11:56:40.367Z",
+      "sourceUrl": "https://api.github.com/repos/vercel/next.js?",
+      "sha256": "150fbd7dfbc46db5a0e29638b86b02eaa614d1e8789e77aacfed3087477aa568",
+      "bytes": 6260
+    },
+    {
+      "schemaVersion": 1,
+      "request": {
+        "host": "api.github.com",
+        "method": "GET",
+        "endpoint": "search/issues",
+        "parameters": {
+          "order": "asc",
+          "page": 1,
+          "per_page": 100,
+          "q": "repo:vercel/next.js is:pr is:merged merged:2019-06-01..2019-06-30",
+          "sort": "created"
+        }
+      },
+      "retrievedAt": "2026-09-05T11:56:42.159Z",
+      "sourceUrl": "https://api.github.com/search/issues?order=asc&page=1&per_page=100&q=repo%3Avercel%2Fnext.js+is%3Apr+is%3Amerged+merged%3A2019-06-01..2019-06-30&sort=created",
+      "sha256": "52b1e3b37a7713f8c1e02f3d96bfe67d11f33001c7778be46dff4d25e2518925",
+      "bytes": 228425
+    },
+    {
+      "schemaVersion": 1,
+      "request": {
+        "host": "api.github.com",
+        "method": "GET",
+        "endpoint": "repos/nestjs/nest",
+        "parameters": {}
+      },
+      "retrievedAt": "2026-09-05T11:56:42.780Z",
+      "sourceUrl": "https://api.github.com/repos/nestjs/nest?",
+      "sha256": "88a4cb81bc58dbcd41c786ab49340b6d298ea7912d3018dec96a40d30c8407ea",
+      "bytes": 6266
+    },
+    {
+      "schemaVersion": 1,
+      "request": {
+        "host": "api.github.com",
+        "method": "GET",
+        "endpoint": "search/issues",
+        "parameters": {
+          "order": "asc",
+          "page": 1,
+          "per_page": 100,
+          "q": "repo:nestjs/nest is:pr is:merged merged:2019-06-01..2019-06-30",
+          "sort": "created"
+        }
+      },
+      "retrievedAt": "2026-09-05T11:56:44.042Z",
+      "sourceUrl": "https://api.github.com/search/issues?order=asc&page=1&per_page=100&q=repo%3Anestjs%2Fnest+is%3Apr+is%3Amerged+merged%3A2019-06-01..2019-06-30&sort=created",
+      "sha256": "9abd40a4dcdad249f7ef3e6eea3d3b1b20d9ba4a04c289f3425b37de14b609e7",
+      "bytes": 329439
+    },
+    {
+      "schemaVersion": 1,
+      "request": {
+        "host": "api.github.com",
+        "method": "GET",
+        "endpoint": "repos/sequelize/sequelize",
+        "parameters": {}
+      },
+      "retrievedAt": "2026-09-05T11:56:44.621Z",
+      "sourceUrl": "https://api.github.com/repos/sequelize/sequelize?",
+      "sha256": "167cebd6fcb1eb5aa572dab23be20437276ce25895da4b408321062af80e9c0b",
+      "bytes": 6761
+    },
+    {
+      "schemaVersion": 1,
+      "request": {
+        "host": "api.github.com",
+        "method": "GET",
+        "endpoint": "search/issues",
+        "parameters": {
+          "order": "asc",
+          "page": 1,
+          "per_page": 100,
+          "q": "repo:sequelize/sequelize is:pr is:merged merged:2019-06-01..2019-06-30",
+          "sort": "created"
+        }
+      },
+      "retrievedAt": "2026-09-05T11:56:45.457Z",
+      "sourceUrl": "https://api.github.com/search/issues?order=asc&page=1&per_page=100&q=repo%3Asequelize%2Fsequelize+is%3Apr+is%3Amerged+merged%3A2019-06-01..2019-06-30&sort=created",
+      "sha256": "08b6df6120125889d85f5e4f2fc71842147a48ed64c3cdfeb5106b2f013fa54c",
+      "bytes": 65143
+    },
+    {
+      "schemaVersion": 1,
+      "request": {
+        "host": "api.github.com",
+        "method": "GET",
+        "endpoint": "repos/OptimalBits/bull",
+        "parameters": {}
+      },
+      "retrievedAt": "2026-09-05T11:56:46.075Z",
+      "sourceUrl": "https://api.github.com/repos/OptimalBits/bull?",
+      "sha256": "23dcf2e3c4e7744fb4fb54b0b31fd4fc13ab3aff6e52757696079653ccb398bf",
+      "bytes": 6396
+    },
+    {
+      "schemaVersion": 1,
+      "request": {
+        "host": "api.github.com",
+        "method": "GET",
+        "endpoint": "search/issues",
+        "parameters": {
+          "order": "asc",
+          "page": 1,
+          "per_page": 100,
+          "q": "repo:OptimalBits/bull is:pr is:merged merged:2019-06-01..2019-06-30",
+          "sort": "created"
+        }
+      },
+      "retrievedAt": "2026-09-05T11:56:46.726Z",
+      "sourceUrl": "https://api.github.com/search/issues?order=asc&page=1&per_page=100&q=repo%3AOptimalBits%2Fbull+is%3Apr+is%3Amerged+merged%3A2019-06-01..2019-06-30&sort=created",
+      "sha256": "f844985c81394bdd61a36f5ef26e96552ce42a083c9a094bc61adacf65d1e055",
+      "bytes": 7574
+    },
+    {
+      "schemaVersion": 1,
+      "request": {
+        "host": "api.github.com",
+        "method": "GET",
+        "endpoint": "repos/webpack/webpack",
+        "parameters": {}
+      },
+      "retrievedAt": "2026-09-05T11:56:47.295Z",
+      "sourceUrl": "https://api.github.com/repos/webpack/webpack?",
+      "sha256": "273ae26481f8eb9ff4481b720482ce882f894c3ee8ac2baea8df9f0cf76a66f7",
+      "bytes": 6609
+    },
+    {
+      "schemaVersion": 1,
+      "request": {
+        "host": "api.github.com",
+        "method": "GET",
+        "endpoint": "search/issues",
+        "parameters": {
+          "order": "asc",
+          "page": 1,
+          "per_page": 100,
+          "q": "repo:webpack/webpack is:pr is:merged merged:2019-06-01..2019-06-30",
+          "sort": "created"
+        }
+      },
+      "retrievedAt": "2026-09-05T11:56:48.532Z",
+      "sourceUrl": "https://api.github.com/search/issues?order=asc&page=1&per_page=100&q=repo%3Awebpack%2Fwebpack+is%3Apr+is%3Amerged+merged%3A2019-06-01..2019-06-30&sort=created",
+      "sha256": "b62f03e9170c153c5c4753cfb1485142e93dbb8bc0424977ce3159bcf433be17",
+      "bytes": 254803
+    },
+    {
+      "schemaVersion": 1,
+      "request": {
+        "host": "api.github.com",
+        "method": "GET",
+        "endpoint": "repos/axios/axios",
+        "parameters": {}
+      },
+      "retrievedAt": "2026-09-05T11:56:49.117Z",
+      "sourceUrl": "https://api.github.com/repos/axios/axios?",
+      "sha256": "6be7fd1309f1a28fa88e55fa2bf734c8f54c65b0cb4b89278dd21382fc526c5f",
+      "bytes": 6044
+    },
+    {
+      "schemaVersion": 1,
+      "request": {
+        "host": "api.github.com",
+        "method": "GET",
+        "endpoint": "search/issues",
+        "parameters": {
+          "order": "asc",
+          "page": 1,
+          "per_page": 100,
+          "q": "repo:axios/axios is:pr is:merged merged:2019-06-01..2019-06-30",
+          "sort": "created"
+        }
+      },
+      "retrievedAt": "2026-09-05T11:56:49.698Z",
+      "sourceUrl": "https://api.github.com/search/issues?order=asc&page=1&per_page=100&q=repo%3Aaxios%2Faxios+is%3Apr+is%3Amerged+merged%3A2019-06-01..2019-06-30&sort=created",
+      "sha256": "c9938edecb99d754b2d039ac9eec320a94c769b6a6417921e2dcbef9e2fe01a0",
+      "bytes": 79
+    },
+    {
+      "schemaVersion": 1,
+      "request": {
+        "host": "api.github.com",
+        "method": "GET",
+        "endpoint": "repos/ReactiveX/rxjs",
+        "parameters": {}
+      },
+      "retrievedAt": "2026-09-05T11:56:50.270Z",
+      "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs?",
+      "sha256": "77d559672ce70e3add7d1e18261b755940713495ae57dd6451f160a7b3bf6f57",
+      "bytes": 6232
+    },
+    {
+      "schemaVersion": 1,
+      "request": {
+        "host": "api.github.com",
+        "method": "GET",
+        "endpoint": "search/issues",
+        "parameters": {
+          "order": "asc",
+          "page": 1,
+          "per_page": 100,
+          "q": "repo:ReactiveX/rxjs is:pr is:merged merged:2019-06-01..2019-06-30",
+          "sort": "created"
+        }
+      },
+      "retrievedAt": "2026-09-05T11:56:51.134Z",
+      "sourceUrl": "https://api.github.com/search/issues?order=asc&page=1&per_page=100&q=repo%3AReactiveX%2Frxjs+is%3Apr+is%3Amerged+merged%3A2019-06-01..2019-06-30&sort=created",
+      "sha256": "e7a84ce67836516bd6aa8a34e180344d37c29e8e0567146a0b66804e7fb5a06b",
+      "bytes": 68924
+    }
+  ],
+  "candidates": [
+    {
+      "candidateId": "r2-random-001",
+      "repository": "microsoft/vscode",
+      "family": "editor-application",
+      "number": 76187,
+      "sourceUrl": "https://github.com/microsoft/vscode/pull/76187",
+      "createdAt": "2019-06-26T15:46:02Z",
+      "updatedAt": "2020-03-27T23:24:14Z",
+      "authorType": "User",
+      "rank": "01b8208f53e107788f1ca5e02f913b0658bdf9d31df5fb8f72f4911093f93f76",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-002",
+      "repository": "vercel/next.js",
+      "family": "frontend-server-framework",
+      "number": 7669,
+      "sourceUrl": "https://github.com/vercel/next.js/pull/7669",
+      "createdAt": "2019-06-25T21:36:18Z",
+      "updatedAt": "2022-02-01T12:06:40Z",
+      "authorType": "User",
+      "rank": "0108c32b767e542dd0f4ddf98a88711526394ca63a17bd1ed6371ad77b54ac37",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-003",
+      "repository": "nestjs/nest",
+      "family": "backend-framework",
+      "number": 2402,
+      "sourceUrl": "https://github.com/nestjs/nest/pull/2402",
+      "createdAt": "2019-06-15T01:05:36Z",
+      "updatedAt": "2019-09-23T15:13:38Z",
+      "authorType": "Bot",
+      "rank": "0196e547c02a31f1bee5142d661b1dcc91ba0da92835e5f59c6587ce95b87ba8",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-004",
+      "repository": "sequelize/sequelize",
+      "family": "persistence",
+      "number": 11086,
+      "sourceUrl": "https://github.com/sequelize/sequelize/pull/11086",
+      "createdAt": "2019-06-19T21:46:45Z",
+      "updatedAt": "2019-07-26T19:41:42Z",
+      "authorType": "User",
+      "rank": "1091a6d5cc0c5588358fda71a1fe137b3f57370f6d08d6ff0fe332539b941173",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-005",
+      "repository": "OptimalBits/bull",
+      "family": "worker-queue",
+      "number": 1331,
+      "sourceUrl": "https://github.com/OptimalBits/bull/pull/1331",
+      "createdAt": "2019-06-01T09:17:48Z",
+      "updatedAt": "2019-06-01T09:34:25Z",
+      "authorType": "User",
+      "rank": "1610c88b129aef0d67781358cef96271bb756b755b9ea37553cee1cc26cbdcd0",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-006",
+      "repository": "webpack/webpack",
+      "family": "bundler",
+      "number": 9321,
+      "sourceUrl": "https://github.com/webpack/webpack/pull/9321",
+      "createdAt": "2019-06-24T02:15:49Z",
+      "updatedAt": "2019-06-24T02:33:54Z",
+      "authorType": "Bot",
+      "rank": "007aa8f429ca972c9c4e62ecbeee192ff0073f315e0052e4a5c7b9d6944ba8c4",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-007",
+      "repository": "ReactiveX/rxjs",
+      "family": "reactive-library",
+      "number": 4832,
+      "sourceUrl": "https://github.com/ReactiveX/rxjs/pull/4832",
+      "createdAt": "2019-06-04T21:48:52Z",
+      "updatedAt": "2019-07-05T00:43:32Z",
+      "authorType": "User",
+      "rank": "020527d711acfefab1cd7dbe53ebcc365b47c2dce88fac16668f3dd7e1fb79e4",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-008",
+      "repository": "microsoft/vscode",
+      "family": "editor-application",
+      "number": 76054,
+      "sourceUrl": "https://github.com/microsoft/vscode/pull/76054",
+      "createdAt": "2019-06-25T00:50:13Z",
+      "updatedAt": "2020-03-27T23:24:14Z",
+      "authorType": "User",
+      "rank": "04e5992475e6f4e5c29338e8cff79a249d01bb27c9f7d4df0f80f10d82a3b392",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-009",
+      "repository": "vercel/next.js",
+      "family": "frontend-server-framework",
+      "number": 7604,
+      "sourceUrl": "https://github.com/vercel/next.js/pull/7604",
+      "createdAt": "2019-06-18T23:54:34Z",
+      "updatedAt": "2020-06-24T20:17:12Z",
+      "authorType": "User",
+      "rank": "021910cfd78b7e42c6ca22458373dbe77736072b831de6cc19e625ff580a31a4",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-010",
+      "repository": "nestjs/nest",
+      "family": "backend-framework",
+      "number": 2325,
+      "sourceUrl": "https://github.com/nestjs/nest/pull/2325",
+      "createdAt": "2019-05-31T18:07:07Z",
+      "updatedAt": "2019-09-23T16:13:19Z",
+      "authorType": "Bot",
+      "rank": "0bc97923418025c19da93c3d86ce5389f6a977e7e64e937df9aceb18cbeb28a0",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-011",
+      "repository": "sequelize/sequelize",
+      "family": "persistence",
+      "number": 11097,
+      "sourceUrl": "https://github.com/sequelize/sequelize/pull/11097",
+      "createdAt": "2019-06-21T18:07:11Z",
+      "updatedAt": "2019-07-26T19:41:27Z",
+      "authorType": "User",
+      "rank": "184f9d3a646ef88159e3efc83f476d209a4f35ccb87b60606ebb6bf4accf0f7d",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-012",
+      "repository": "OptimalBits/bull",
+      "family": "worker-queue",
+      "number": 1333,
+      "sourceUrl": "https://github.com/OptimalBits/bull/pull/1333",
+      "createdAt": "2019-06-03T13:47:31Z",
+      "updatedAt": "2019-06-03T18:29:27Z",
+      "authorType": "User",
+      "rank": "1ed4997ede0c01573fb7f89a055f9e5d6104baeff439351efcb395cc388271fd",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-013",
+      "repository": "webpack/webpack",
+      "family": "bundler",
+      "number": 9238,
+      "sourceUrl": "https://github.com/webpack/webpack/pull/9238",
+      "createdAt": "2019-06-07T02:17:44Z",
+      "updatedAt": "2019-06-09T12:16:48Z",
+      "authorType": "Bot",
+      "rank": "008b34e2dc9fe2393d9082e3d9fe0a4ea96ad940ba1c7a2564143407f46339e0",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-014",
+      "repository": "ReactiveX/rxjs",
+      "family": "reactive-library",
+      "number": 4775,
+      "sourceUrl": "https://github.com/ReactiveX/rxjs/pull/4775",
+      "createdAt": "2019-05-12T00:08:13Z",
+      "updatedAt": "2019-07-06T01:40:04Z",
+      "authorType": "User",
+      "rank": "087e03c984301529938ea5eb45ef8490f6f603088b6236b7495d0f681d514848",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-015",
+      "repository": "microsoft/vscode",
+      "family": "editor-application",
+      "number": 75286,
+      "sourceUrl": "https://github.com/microsoft/vscode/pull/75286",
+      "createdAt": "2019-06-11T17:28:39Z",
+      "updatedAt": "2020-03-28T23:24:03Z",
+      "authorType": "User",
+      "rank": "08ee6dda8dba3dbcdc2192211e76ed213fe9114b7d6f4aac858f65ae031ceb14",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-016",
+      "repository": "vercel/next.js",
+      "family": "frontend-server-framework",
+      "number": 7646,
+      "sourceUrl": "https://github.com/vercel/next.js/pull/7646",
+      "createdAt": "2019-06-24T14:18:33Z",
+      "updatedAt": "2020-06-24T19:58:07Z",
+      "authorType": "User",
+      "rank": "02ab8576dfa3abedc333854fcb25abd772c91e7cedc46f9d8f7e0049ad47991c",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-017",
+      "repository": "nestjs/nest",
+      "family": "backend-framework",
+      "number": 2321,
+      "sourceUrl": "https://github.com/nestjs/nest/pull/2321",
+      "createdAt": "2019-05-31T04:45:46Z",
+      "updatedAt": "2019-09-23T16:13:13Z",
+      "authorType": "Bot",
+      "rank": "17ae639aff29c1edd9e714b2fe2aaf8ccb61acde4e0e5a7e744f2843aad23dd6",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-018",
+      "repository": "sequelize/sequelize",
+      "family": "persistence",
+      "number": 11015,
+      "sourceUrl": "https://github.com/sequelize/sequelize/pull/11015",
+      "createdAt": "2019-05-29T13:55:58Z",
+      "updatedAt": "2019-06-10T01:23:38Z",
+      "authorType": "User",
+      "rank": "213914819d66f9ec2e8baaa38bba6af666001e2dab981f4d11cc2ea487ec8bba",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-019",
+      "repository": "OptimalBits/bull",
+      "family": "worker-queue",
+      "number": 1332,
+      "sourceUrl": "https://github.com/OptimalBits/bull/pull/1332",
+      "createdAt": "2019-06-01T10:24:32Z",
+      "updatedAt": "2019-06-01T10:32:45Z",
+      "authorType": "User",
+      "rank": "73686f496e0920e40c98cd6aafc84d3f10dd8bc7d060d3d1c9881f5a4f76005e",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-020",
+      "repository": "webpack/webpack",
+      "family": "bundler",
+      "number": 9260,
+      "sourceUrl": "https://github.com/webpack/webpack/pull/9260",
+      "createdAt": "2019-06-12T12:52:58Z",
+      "updatedAt": "2019-06-12T13:55:28Z",
+      "authorType": "User",
+      "rank": "04e4c91b40197573543344a69be95cd073dbd278975706f261c5c3d6f210b00f",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-021",
+      "repository": "ReactiveX/rxjs",
+      "family": "reactive-library",
+      "number": 4774,
+      "sourceUrl": "https://github.com/ReactiveX/rxjs/pull/4774",
+      "createdAt": "2019-05-11T22:32:23Z",
+      "updatedAt": "2019-07-06T01:39:54Z",
+      "authorType": "User",
+      "rank": "373983ab814c5c0e5a996a03f491c7a47a1c991688f97b177725481dfa286ca4",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-022",
+      "repository": "microsoft/vscode",
+      "family": "editor-application",
+      "number": 75982,
+      "sourceUrl": "https://github.com/microsoft/vscode/pull/75982",
+      "createdAt": "2019-06-24T07:17:44Z",
+      "updatedAt": "2020-03-27T23:24:14Z",
+      "authorType": "User",
+      "rank": "0a468fb3687926b84c63b48aea127ee612e7f7ceae30074f83b8c5c0c2aede45",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-023",
+      "repository": "vercel/next.js",
+      "family": "frontend-server-framework",
+      "number": 7597,
+      "sourceUrl": "https://github.com/vercel/next.js/pull/7597",
+      "createdAt": "2019-06-18T13:51:54Z",
+      "updatedAt": "2020-06-24T22:38:06Z",
+      "authorType": "User",
+      "rank": "056d1e2e83c82f7cfd90e8eb6e9ff775f14744b0727b09127c0d2a0f09e9f4a7",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-024",
+      "repository": "nestjs/nest",
+      "family": "backend-framework",
+      "number": 2370,
+      "sourceUrl": "https://github.com/nestjs/nest/pull/2370",
+      "createdAt": "2019-06-08T17:51:52Z",
+      "updatedAt": "2019-09-23T15:13:14Z",
+      "authorType": "Bot",
+      "rank": "1cabe7fb55dc40d839b134fd40f0cbb36d4876695abbee1ea742e97995cdf754",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    },
+    {
+      "candidateId": "r2-random-025",
+      "repository": "sequelize/sequelize",
+      "family": "persistence",
+      "number": 11122,
+      "sourceUrl": "https://github.com/sequelize/sequelize/pull/11122",
+      "createdAt": "2019-06-27T18:07:04Z",
+      "updatedAt": "2019-07-26T19:41:18Z",
+      "authorType": "User",
+      "rank": "4196dacc9666e09dff45af5c6967324a65637a58531f65dea8db5bcfce63f39f",
+      "sourceStratum": "sampled-without-comment-selection",
+      "status": "awaiting-source-review",
+      "truthStatus": "unknown",
+      "partition": "unassigned",
+      "duplicateFamily": "unassessed",
+      "limitation": "Sampling does not establish historical validity, a defect, or a safe comparison."
+    }
+  ]
+}

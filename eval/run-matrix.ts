@@ -199,6 +199,23 @@ export async function runMatrix(
   const requireBehavioralAdmission = protocol?.mode === "screening" || protocol?.mode === "checkpoint";
   const discoveredCases = discoverCases(casesDir);
   let cases = selectMatrixCases(discoveredCases, matrix.corpora, matrix.caseIds, protocol?.mode);
+  const pendingHistoricalProtocolCases = cases.filter((item) => {
+    try {
+      const value = JSON.parse(readFileSync(join(item.caseDir, "case.json"), "utf8"));
+      if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+      const raw = value as Record<string, unknown>;
+      return raw.kind === "historical" && raw.evaluationProtocol === "historical-efficacy-v1";
+    } catch {
+      // Legacy case validation remains attempt-owned so malformed cases are
+      // represented by scheduled configuration-failure artifacts.
+      return false;
+    }
+  });
+  if (pendingHistoricalProtocolCases.length > 0) {
+    throw new Error(
+      "historical-efficacy-v1 cases cannot be scheduled until versioned curation and metric eligibility are integrated",
+    );
+  }
   const behavioralCases = cases.filter((item) => item.corpus !== "structural-smoke");
   if (protocol?.mode === "screening" && behavioralCases.length === 0) {
     throw new Error("screening requires at least one selected behavioral case");
@@ -1426,8 +1443,22 @@ export function loadCaseSpec(caseDir: string): CaseSpec {
         `case ${caseId}: historical cases need repoSource, baseCommit, and headCommit`,
       );
     }
+    if (historical.evaluationProtocol === "historical-efficacy-v1" &&
+      historical.corpus === "structural-smoke") {
+      throw new RunFailureError(
+        "configuration",
+        `case ${caseId}: historical cases cannot use the structural-smoke corpus`,
+      );
+    }
+    if (historical.evaluationProtocol !== undefined &&
+      historical.evaluationProtocol !== "historical-efficacy-v1") {
+      throw new RunFailureError(
+        "configuration",
+        `case ${caseId}: historical evaluationProtocol is invalid`,
+      );
+    }
     rejectUnexpectedKeys(value as Record<string, unknown>, [
-      "id", "corpus", "kind", "repoSource", "baseCommit", "headCommit", "diffFile", "metadataFile", "leakageExceptionsFile",
+      "id", "corpus", "kind", "evaluationProtocol", "repoSource", "baseCommit", "headCommit", "diffFile", "metadataFile", "leakageExceptionsFile",
     ], caseId);
   } else {
     const fixture = spec as Partial<Extract<CaseSpec, { kind: "seeded" | "clean" }>>;

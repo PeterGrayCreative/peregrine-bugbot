@@ -63,6 +63,10 @@
     }
   },
   "required": ["version", "judge", "decisions", "rootCauseMatches", "missStages", "unmatchedFindings"],
+  "allOf": [{
+    "if": { "properties": { "version": { "const": "root-cause-v1" } } },
+    "then": { "properties": { "missStages": { "additionalProperties": { "not": { "const": "unattributed" } } } } }
+  }],
   "$defs": {
     "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
   }

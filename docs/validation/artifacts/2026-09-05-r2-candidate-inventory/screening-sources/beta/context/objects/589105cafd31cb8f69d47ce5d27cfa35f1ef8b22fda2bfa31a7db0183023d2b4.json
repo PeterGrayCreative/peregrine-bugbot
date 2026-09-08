@@ -1,0 +1,210 @@
+[
+  {
+    "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/277838516",
+    "pull_request_review_id": 229753924,
+    "id": 277838516,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDI3NzgzODUxNg==",
+    "diff_hunk": "@@ -851,49 +814,38 @@ Queue.prototype.run = function(concurrency) {\n   This function updates the delay timer, which is a timer that timeouts\n   at the next known delayed job.\n */\n-Queue.prototype.updateDelayTimer = function(newDelayedTimestamp) {\n-  const now = Date.now();\n-\n-  newDelayedTimestamp = Math.round(newDelayedTimestamp);\n-  if (newDelayedTimestamp < this.delayedTimestamp) {\n-    clearTimeout(this.delayTimer);\n-    this.delayedTimestamp = newDelayedTimestamp;\n+Queue.prototype.updateDelayTimer = function() {\n+  return scripts\n+    .updateDelaySet(this, Date.now())\n+    .then(nextTimestamp => {\n+      this.delayedTimestamp = nextTimestamp\n+        ? nextTimestamp / 4096\n+        : Number.MAX_VALUE;\n+\n+      // Clear any existing update delay timer\n+      if (this.delayTimer) {",
+    "path": "lib/queue.js",
+    "commit_id": "0ed8a2e548909bb40b36572c11d565cc002b07c2",
+    "original_commit_id": "0ed8a2e548909bb40b36572c11d565cc002b07c2",
+    "user": {
+      "login": "manast",
+      "id": 95200,
+      "node_id": "MDQ6VXNlcjk1MjAw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/95200?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/manast",
+      "html_url": "https://github.com/manast",
+      "followers_url": "https://api.github.com/users/manast/followers",
+      "following_url": "https://api.github.com/users/manast/following{/other_user}",
+      "gists_url": "https://api.github.com/users/manast/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/manast/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/manast/subscriptions",
+      "organizations_url": "https://api.github.com/users/manast/orgs",
+      "repos_url": "https://api.github.com/users/manast/repos",
+      "events_url": "https://api.github.com/users/manast/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/manast/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "this if is not needed since clearTimeout(0) is a noop",
+    "created_at": "2019-04-23T19:35:28Z",
+    "updated_at": "2019-04-23T19:35:28Z",
+    "html_url": "https://github.com/OptimalBits/bull/pull/1294#discussion_r277838516",
+    "pull_request_url": "https://api.github.com/repos/OptimalBits/bull/pulls/1294",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/277838516"
+      },
+      "html": {
+        "href": "https://github.com/OptimalBits/bull/pull/1294#discussion_r277838516"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/1294"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/277838516/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 826,
+    "original_line": 826,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 119,
+    "position": 119,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/296361991",
+    "pull_request_review_id": 252989540,
+    "id": 296361991,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDI5NjM2MTk5MQ==",
+    "diff_hunk": "@@ -851,49 +814,38 @@ Queue.prototype.run = function(concurrency) {\n   This function updates the delay timer, which is a timer that timeouts\n   at the next known delayed job.\n */\n-Queue.prototype.updateDelayTimer = function(newDelayedTimestamp) {\n-  const now = Date.now();\n-\n-  newDelayedTimestamp = Math.round(newDelayedTimestamp);\n-  if (newDelayedTimestamp < this.delayedTimestamp) {\n-    clearTimeout(this.delayTimer);\n-    this.delayedTimestamp = newDelayedTimestamp;\n+Queue.prototype.updateDelayTimer = function() {\n+  return scripts\n+    .updateDelaySet(this, Date.now())\n+    .then(nextTimestamp => {\n+      this.delayedTimestamp = nextTimestamp\n+        ? nextTimestamp / 4096\n+        : Number.MAX_VALUE;\n+\n+      // Clear any existing update delay timer\n+      if (this.delayTimer) {\n+        clearTimeout(this.delayTimer);\n+      }\n \n-    const nextDelayedJob = newDelayedTimestamp - now;\n-    const delay = nextDelayedJob <= 0 ? 0 : nextDelayedJob;\n+      // Delay for the next update of delay set\n+      const delay = _.min([\n+        this.delayedTimestamp - Date.now(),\n+        this.settings.guardInterval\n+      ]);\n \n-    const update = delay => {\n-      if (delay) {\n-        delay = delay < MAX_TIMEOUT_MS ? delay : MAX_TIMEOUT_MS;\n-        this.delayTimer = setTimeout(delayUpdate, delay);\n+      // Schedule next processing of the delayed jobs\n+      if (delay <= 0) {\n+        // Next set of jobs are due right now, process them also\n+        this.updateDelayTimer();",
+    "path": "lib/queue.js",
+    "commit_id": "0ed8a2e548909bb40b36572c11d565cc002b07c2",
+    "original_commit_id": "0ed8a2e548909bb40b36572c11d565cc002b07c2",
+    "user": {
+      "login": "gabegorelick",
+      "id": 610129,
+      "node_id": "MDQ6VXNlcjYxMDEyOQ==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/610129?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/gabegorelick",
+      "html_url": "https://github.com/gabegorelick",
+      "followers_url": "https://api.github.com/users/gabegorelick/followers",
+      "following_url": "https://api.github.com/users/gabegorelick/following{/other_user}",
+      "gists_url": "https://api.github.com/users/gabegorelick/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/gabegorelick/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/gabegorelick/subscriptions",
+      "organizations_url": "https://api.github.com/users/gabegorelick/orgs",
+      "repos_url": "https://api.github.com/users/gabegorelick/repos",
+      "events_url": "https://api.github.com/users/gabegorelick/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/gabegorelick/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I'm getting warnings about unhandled promises stemming from this. It seems like this should return here?",
+    "created_at": "2019-06-21T19:13:32Z",
+    "updated_at": "2019-06-21T19:13:32Z",
+    "html_url": "https://github.com/OptimalBits/bull/pull/1294#discussion_r296361991",
+    "pull_request_url": "https://api.github.com/repos/OptimalBits/bull/pulls/1294",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/296361991"
+      },
+      "html": {
+        "href": "https://github.com/OptimalBits/bull/pull/1294#discussion_r296361991"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/1294"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/296361991/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 839,
+    "original_line": 839,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 138,
+    "position": 138,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/296364078",
+    "pull_request_review_id": 252992218,
+    "id": 296364078,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDI5NjM2NDA3OA==",
+    "diff_hunk": "@@ -851,49 +814,38 @@ Queue.prototype.run = function(concurrency) {\n   This function updates the delay timer, which is a timer that timeouts\n   at the next known delayed job.\n */\n-Queue.prototype.updateDelayTimer = function(newDelayedTimestamp) {\n-  const now = Date.now();\n-\n-  newDelayedTimestamp = Math.round(newDelayedTimestamp);\n-  if (newDelayedTimestamp < this.delayedTimestamp) {\n-    clearTimeout(this.delayTimer);\n-    this.delayedTimestamp = newDelayedTimestamp;\n+Queue.prototype.updateDelayTimer = function() {\n+  return scripts\n+    .updateDelaySet(this, Date.now())\n+    .then(nextTimestamp => {\n+      this.delayedTimestamp = nextTimestamp\n+        ? nextTimestamp / 4096\n+        : Number.MAX_VALUE;\n+\n+      // Clear any existing update delay timer\n+      if (this.delayTimer) {\n+        clearTimeout(this.delayTimer);\n+      }\n \n-    const nextDelayedJob = newDelayedTimestamp - now;\n-    const delay = nextDelayedJob <= 0 ? 0 : nextDelayedJob;\n+      // Delay for the next update of delay set\n+      const delay = _.min([\n+        this.delayedTimestamp - Date.now(),\n+        this.settings.guardInterval\n+      ]);\n \n-    const update = delay => {\n-      if (delay) {\n-        delay = delay < MAX_TIMEOUT_MS ? delay : MAX_TIMEOUT_MS;\n-        this.delayTimer = setTimeout(delayUpdate, delay);\n+      // Schedule next processing of the delayed jobs\n+      if (delay <= 0) {\n+        // Next set of jobs are due right now, process them also\n+        this.updateDelayTimer();",
+    "path": "lib/queue.js",
+    "commit_id": "0ed8a2e548909bb40b36572c11d565cc002b07c2",
+    "original_commit_id": "0ed8a2e548909bb40b36572c11d565cc002b07c2",
+    "user": {
+      "login": "gabegorelick",
+      "id": 610129,
+      "node_id": "MDQ6VXNlcjYxMDEyOQ==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/610129?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/gabegorelick",
+      "html_url": "https://github.com/gabegorelick",
+      "followers_url": "https://api.github.com/users/gabegorelick/followers",
+      "following_url": "https://api.github.com/users/gabegorelick/following{/other_user}",
+      "gists_url": "https://api.github.com/users/gabegorelick/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/gabegorelick/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/gabegorelick/subscriptions",
+      "organizations_url": "https://api.github.com/users/gabegorelick/orgs",
+      "repos_url": "https://api.github.com/users/gabegorelick/repos",
+      "events_url": "https://api.github.com/users/gabegorelick/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/gabegorelick/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Nevermind, I see `updateDelayTimer` handles errors itself. I must be running into something else.",
+    "created_at": "2019-06-21T19:20:29Z",
+    "updated_at": "2019-06-21T19:20:30Z",
+    "html_url": "https://github.com/OptimalBits/bull/pull/1294#discussion_r296364078",
+    "pull_request_url": "https://api.github.com/repos/OptimalBits/bull/pulls/1294",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/296364078"
+      },
+      "html": {
+        "href": "https://github.com/OptimalBits/bull/pull/1294#discussion_r296364078"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/OptimalBits/bull/pulls/1294"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/OptimalBits/bull/pulls/comments/296364078/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 839,
+    "original_line": 839,
+    "side": "RIGHT",
+    "in_reply_to_id": 296361991,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 138,
+    "position": 138,
+    "subject_type": "line"
+  }
+]

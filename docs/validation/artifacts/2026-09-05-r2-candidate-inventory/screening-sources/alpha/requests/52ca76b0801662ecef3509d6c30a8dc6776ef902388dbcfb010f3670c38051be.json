@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/microsoft/vscode/issues/102188/timeline",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T13:00:54.500Z",
+  "sourceUrl": "https://api.github.com/repos/microsoft/vscode/issues/102188/timeline?page=1&per_page=100",
+  "sha256": "68cee0a04192c0ed5fa52f45cde1ac22cdc4b93d95bc53ff61526b326c396e66",
+  "bytes": 44896
+}

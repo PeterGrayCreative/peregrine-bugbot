@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/ReactiveX/rxjs/issues/2785",
+    "parameters": {}
+  },
+  "retrievedAt": "2026-09-05T12:59:44.321Z",
+  "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/issues/2785?",
+  "sha256": "5328005f0aae8f18773f40a486abb221604b15ee17765238865c8656834bce00",
+  "bytes": 3974
+}

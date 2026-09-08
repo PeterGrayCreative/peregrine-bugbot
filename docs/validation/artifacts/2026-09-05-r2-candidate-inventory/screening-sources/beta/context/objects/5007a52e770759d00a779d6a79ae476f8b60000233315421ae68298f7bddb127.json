@@ -1,0 +1,349 @@
+[
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/158923598",
+    "pull_request_review_id": 85796612,
+    "id": 158923598,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1ODkyMzU5OA==",
+    "diff_hunk": "@@ -52,7 +52,7 @@ describe(\"StatsTestCases\", () => {\n \t\t\t\tif(/error$/.test(testName)) {\n \t\t\t\t\tstats.hasErrors().should.be.equal(true);\n \t\t\t\t} else if(stats.hasErrors()) {\n-\t\t\t\t\tdone(new Error(stats.toJson().errors.join(\"\\n\\n\")));\n+\t\t\t\t\treturn done(new Error(stats.toJson().errors.join(\"\\n\\n\")));",
+    "path": "test/StatsTestCases.test.js",
+    "commit_id": "da6dba24740522ffd18163fd49afa4a55ba93754",
+    "original_commit_id": "d2c30491668d2442e49467a9362e48e2d9dd840f",
+    "user": {
+      "login": "mikegreiling",
+      "id": 812328,
+      "node_id": "MDQ6VXNlcjgxMjMyOA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/812328?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/mikegreiling",
+      "html_url": "https://github.com/mikegreiling",
+      "followers_url": "https://api.github.com/users/mikegreiling/followers",
+      "following_url": "https://api.github.com/users/mikegreiling/following{/other_user}",
+      "gists_url": "https://api.github.com/users/mikegreiling/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/mikegreiling/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/mikegreiling/subscriptions",
+      "organizations_url": "https://api.github.com/users/mikegreiling/orgs",
+      "repos_url": "https://api.github.com/users/mikegreiling/repos",
+      "events_url": "https://api.github.com/users/mikegreiling/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/mikegreiling/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I was constantly getting a confusing `Error: done() called multiple times` while working on these tests.  I'm pretty sure we want to return here, but please correct me if I'm wrong.",
+    "created_at": "2017-12-28T10:15:22Z",
+    "updated_at": "2017-12-28T10:19:53Z",
+    "html_url": "https://github.com/webpack/webpack/pull/6176#discussion_r158923598",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/6176",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/158923598"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/6176#discussion_r158923598"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/6176"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/158923598/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 55,
+    "original_line": 55,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 5,
+    "position": 5,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/159043394",
+    "pull_request_review_id": 85933316,
+    "id": 159043394,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1OTA0MzM5NA==",
+    "diff_hunk": "@@ -0,0 +1,13 @@\n+\"use strict\";\n+\n+module.exports = function testAssertions(code, stdout, stderr) {",
+    "path": "test/binCases/errors/child-compilation-error/test.js",
+    "commit_id": "da6dba24740522ffd18163fd49afa4a55ba93754",
+    "original_commit_id": "da6dba24740522ffd18163fd49afa4a55ba93754",
+    "user": {
+      "login": "ooflorent",
+      "id": 168498,
+      "node_id": "MDQ6VXNlcjE2ODQ5OA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/168498?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/ooflorent",
+      "html_url": "https://github.com/ooflorent",
+      "followers_url": "https://api.github.com/users/ooflorent/followers",
+      "following_url": "https://api.github.com/users/ooflorent/following{/other_user}",
+      "gists_url": "https://api.github.com/users/ooflorent/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/ooflorent/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/ooflorent/subscriptions",
+      "organizations_url": "https://api.github.com/users/ooflorent/orgs",
+      "repos_url": "https://api.github.com/users/ooflorent/repos",
+      "events_url": "https://api.github.com/users/ooflorent/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/ooflorent/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "ˋbinCases` will be removed on v4 branch. You should move this test elsewhere. ",
+    "created_at": "2017-12-29T10:01:03Z",
+    "updated_at": "2017-12-29T10:04:46Z",
+    "html_url": "https://github.com/webpack/webpack/pull/6176#discussion_r159043394",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/6176",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/159043394"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/6176#discussion_r159043394"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/6176"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/159043394/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 3,
+    "original_line": 3,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 3,
+    "position": 3,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/159043570",
+    "pull_request_review_id": 85933316,
+    "id": 159043570,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1OTA0MzU3MA==",
+    "diff_hunk": "@@ -10,13 +10,15 @@ describe(\"Stats\", () => {\n \t\tdescribe(\"does have\", () => {\n \t\t\tit(\"hasErrors\", () => {\n \t\t\t\tconst mockStats = new Stats({\n+\t\t\t\t\tchildren: [],",
+    "path": "test/Stats.unittest.js",
+    "commit_id": "da6dba24740522ffd18163fd49afa4a55ba93754",
+    "original_commit_id": "da6dba24740522ffd18163fd49afa4a55ba93754",
+    "user": {
+      "login": "ooflorent",
+      "id": 168498,
+      "node_id": "MDQ6VXNlcjE2ODQ5OA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/168498?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/ooflorent",
+      "html_url": "https://github.com/ooflorent",
+      "followers_url": "https://api.github.com/users/ooflorent/followers",
+      "following_url": "https://api.github.com/users/ooflorent/following{/other_user}",
+      "gists_url": "https://api.github.com/users/ooflorent/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/ooflorent/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/ooflorent/subscriptions",
+      "organizations_url": "https://api.github.com/users/ooflorent/orgs",
+      "repos_url": "https://api.github.com/users/ooflorent/repos",
+      "events_url": "https://api.github.com/users/ooflorent/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/ooflorent/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Doesn't it default to ˋ[]`?",
+    "created_at": "2017-12-29T10:02:59Z",
+    "updated_at": "2017-12-29T10:04:46Z",
+    "html_url": "https://github.com/webpack/webpack/pull/6176#discussion_r159043570",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/6176",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/159043570"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/6176#discussion_r159043570"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/6176"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/159043570/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 13,
+    "original_line": 13,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 4,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/159095574",
+    "pull_request_review_id": 86000653,
+    "id": 159095574,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1OTA5NTU3NA==",
+    "diff_hunk": "@@ -10,13 +10,15 @@ describe(\"Stats\", () => {\n \t\tdescribe(\"does have\", () => {\n \t\t\tit(\"hasErrors\", () => {\n \t\t\t\tconst mockStats = new Stats({\n+\t\t\t\t\tchildren: [],",
+    "path": "test/Stats.unittest.js",
+    "commit_id": "da6dba24740522ffd18163fd49afa4a55ba93754",
+    "original_commit_id": "da6dba24740522ffd18163fd49afa4a55ba93754",
+    "user": {
+      "login": "mikegreiling",
+      "id": 812328,
+      "node_id": "MDQ6VXNlcjgxMjMyOA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/812328?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/mikegreiling",
+      "html_url": "https://github.com/mikegreiling",
+      "followers_url": "https://api.github.com/users/mikegreiling/followers",
+      "following_url": "https://api.github.com/users/mikegreiling/following{/other_user}",
+      "gists_url": "https://api.github.com/users/mikegreiling/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/mikegreiling/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/mikegreiling/subscriptions",
+      "organizations_url": "https://api.github.com/users/mikegreiling/orgs",
+      "repos_url": "https://api.github.com/users/mikegreiling/repos",
+      "events_url": "https://api.github.com/users/mikegreiling/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/mikegreiling/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "It does in the `Compilation` class, but we aren't mocking the full class here, we're just using a native object in its place, and this needs to be included or the `Stats.prototype.hasErrors()` method will error out.",
+    "created_at": "2017-12-29T19:25:20Z",
+    "updated_at": "2017-12-29T19:25:36Z",
+    "html_url": "https://github.com/webpack/webpack/pull/6176#discussion_r159095574",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/6176",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/159095574"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/6176#discussion_r159095574"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/6176"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/159095574/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 13,
+    "original_line": 13,
+    "side": "RIGHT",
+    "in_reply_to_id": 159043570,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 4,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/159095763",
+    "pull_request_review_id": 86000882,
+    "id": 159095763,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1OTA5NTc2Mw==",
+    "diff_hunk": "@@ -0,0 +1,13 @@\n+\"use strict\";\n+\n+module.exports = function testAssertions(code, stdout, stderr) {",
+    "path": "test/binCases/errors/child-compilation-error/test.js",
+    "commit_id": "da6dba24740522ffd18163fd49afa4a55ba93754",
+    "original_commit_id": "da6dba24740522ffd18163fd49afa4a55ba93754",
+    "user": {
+      "login": "mikegreiling",
+      "id": 812328,
+      "node_id": "MDQ6VXNlcjgxMjMyOA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/812328?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/mikegreiling",
+      "html_url": "https://github.com/mikegreiling",
+      "followers_url": "https://api.github.com/users/mikegreiling/followers",
+      "following_url": "https://api.github.com/users/mikegreiling/following{/other_user}",
+      "gists_url": "https://api.github.com/users/mikegreiling/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/mikegreiling/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/mikegreiling/subscriptions",
+      "organizations_url": "https://api.github.com/users/mikegreiling/orgs",
+      "repos_url": "https://api.github.com/users/mikegreiling/repos",
+      "events_url": "https://api.github.com/users/mikegreiling/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/mikegreiling/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "@sokra had instructed me to add a test here:\r\n\r\n> * add test case in `test/binCases/...`\r\n> * fix `NoEmitOnErrorsPlugin`\r\n>     * add `test/statsCases` for this one.\r\n\r\nIf this isn't the right place for it, where should it go?",
+    "created_at": "2017-12-29T19:27:45Z",
+    "updated_at": "2017-12-29T19:27:46Z",
+    "html_url": "https://github.com/webpack/webpack/pull/6176#discussion_r159095763",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/6176",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/159095763"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/6176#discussion_r159095763"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/6176"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/159095763/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 3,
+    "original_line": 3,
+    "side": "RIGHT",
+    "in_reply_to_id": 159043394,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 3,
+    "position": 3,
+    "subject_type": "line"
+  }
+]

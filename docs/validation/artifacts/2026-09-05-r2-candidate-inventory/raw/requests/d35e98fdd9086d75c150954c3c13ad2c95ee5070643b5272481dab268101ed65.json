@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/webpack/webpack/pulls/9321",
+    "parameters": {}
+  },
+  "retrievedAt": "2026-09-05T11:58:00.864Z",
+  "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/9321?",
+  "sha256": "f89c8c686defe64b36bb8ca6dc4724b5e7c7ec5d4b6a846c18d4ed8b3689ab25",
+  "bytes": 21545
+}

@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/jshttp/content-type/contents/index.js",
+    "parameters": {
+      "ref": "v1.0.4"
+    }
+  },
+  "retrievedAt": "2026-09-05T13:19:41.877Z",
+  "sourceUrl": "https://api.github.com/repos/jshttp/content-type/contents/index.js?ref=v1.0.4",
+  "sha256": "cf417b11686f11b2514ebd40ba409966e40a0482e5704e960cb2671b3761d808",
+  "bytes": 7404
+}

@@ -365,8 +365,8 @@ export async function gradeResult(
         bug.id,
         classifyMissStage({
           matched: matches[bug.id] !== null,
-          // Until runner-owned stage evidence exists, do not guess why a
-          // completed model review missed a registered bug.
+          // The review completed. Without authenticated stage evidence the
+          // miss is unattributed; judge failures remain in decisions above.
         }),
       ])),
       unmatchedFindings,

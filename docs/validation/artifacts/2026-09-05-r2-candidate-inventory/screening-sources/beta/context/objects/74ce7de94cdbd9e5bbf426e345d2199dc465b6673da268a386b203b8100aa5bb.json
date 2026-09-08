@@ -1,0 +1,2296 @@
+[
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/131975879",
+    "pull_request_review_id": 55007965,
+    "id": 131975879,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzMTk3NTg3OQ==",
+    "diff_hunk": "@@ -14,5 +14,10 @@\n \t\"win32ShellNameShort\": \"C&ode - OSS\",\n \t\"darwinBundleIdentifier\": \"com.visualstudio.code.oss\",\n \t\"reportIssueUrl\": \"https://github.com/Microsoft/vscode/issues/new\",\n-\t\"urlProtocol\": \"code-oss\"\n-}\n\\ No newline at end of file\n+\t\"urlProtocol\": \"code-oss\",",
+    "path": "product.json",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "1570beb0cc84c1ed9ef524116998cd539a822737",
+    "user": {
+      "login": "rebornix",
+      "id": 876920,
+      "node_id": "MDQ6VXNlcjg3NjkyMA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/876920?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/rebornix",
+      "html_url": "https://github.com/rebornix",
+      "followers_url": "https://api.github.com/users/rebornix/followers",
+      "following_url": "https://api.github.com/users/rebornix/following{/other_user}",
+      "gists_url": "https://api.github.com/users/rebornix/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/rebornix/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/rebornix/subscriptions",
+      "organizations_url": "https://api.github.com/users/rebornix/orgs",
+      "repos_url": "https://api.github.com/users/rebornix/repos",
+      "events_url": "https://api.github.com/users/rebornix/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/rebornix/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "you don't want to check in this, right :)",
+    "created_at": "2017-08-08T17:18:03Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r131975879",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/131975879"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r131975879"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/131975879/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 17,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 7,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/131992863",
+    "pull_request_review_id": 55026860,
+    "id": 131992863,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzMTk5Mjg2Mw==",
+    "diff_hunk": "@@ -44,4 +47,12 @@ export class TerminalFindWidget extends SimpleFindWidget {\n \tprotected onFocusTrackerBlur() {\n \t\tthis._terminalService.getActiveInstance().notifyFindWidgetFocusChanged(false);\n \t}\n+\n+\tprotected onFindInputFocusTrackerFocus() {",
+    "path": "src/vs/workbench/parts/terminal/electron-browser/terminalFindWidget.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "1570beb0cc84c1ed9ef524116998cd539a822737",
+    "user": {
+      "login": "rebornix",
+      "id": 876920,
+      "node_id": "MDQ6VXNlcjg3NjkyMA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/876920?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/rebornix",
+      "html_url": "https://github.com/rebornix",
+      "followers_url": "https://api.github.com/users/rebornix/followers",
+      "following_url": "https://api.github.com/users/rebornix/following{/other_user}",
+      "gists_url": "https://api.github.com/users/rebornix/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/rebornix/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/rebornix/subscriptions",
+      "organizations_url": "https://api.github.com/users/rebornix/orgs",
+      "repos_url": "https://api.github.com/users/rebornix/repos",
+      "events_url": "https://api.github.com/users/rebornix/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/rebornix/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "We'd better not expose input box to external callers, let's handle input, checkboxes inside the widget.",
+    "created_at": "2017-08-08T18:22:05Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r131992863",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/131992863"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r131992863"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/131992863/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 51,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 25,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/131995607",
+    "pull_request_review_id": 55029913,
+    "id": 131995607,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzMTk5NTYwNw==",
+    "diff_hunk": "@@ -54,12 +53,14 @@ import { IContextKeyService, RawContextKey, ContextKeyExpr, IContextKey } from '\n import { Command } from 'vs/editor/common/editorCommonExtensions';\n import { IWorkbenchEditorService } from 'vs/workbench/services/editor/common/editorService';\n import { KeybindingsRegistry } from 'vs/platform/keybinding/common/keybindingsRegistry';\n+import { default as WebView, KEYBINDING_CONTEXT_WEBVIEW_FIND_WIDGET_INPUT_FOCUSED } from 'vs/workbench/parts/html/browser/webview';",
+    "path": "src/vs/workbench/parts/extensions/browser/extensionEditor.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "1570beb0cc84c1ed9ef524116998cd539a822737",
+    "user": {
+      "login": "rebornix",
+      "id": 876920,
+      "node_id": "MDQ6VXNlcjg3NjkyMA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/876920?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/rebornix",
+      "html_url": "https://github.com/rebornix",
+      "followers_url": "https://api.github.com/users/rebornix/followers",
+      "following_url": "https://api.github.com/users/rebornix/following{/other_user}",
+      "gists_url": "https://api.github.com/users/rebornix/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/rebornix/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/rebornix/subscriptions",
+      "organizations_url": "https://api.github.com/users/rebornix/orgs",
+      "repos_url": "https://api.github.com/users/rebornix/repos",
+      "events_url": "https://api.github.com/users/rebornix/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/rebornix/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Let's align the casing this time, use `Webview` always instead of mix of both `WebView` and `Webview`.",
+    "created_at": "2017-08-08T18:32:57Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r131995607",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/131995607"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r131995607"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/131995607/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 56,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/131995964",
+    "pull_request_review_id": 55030319,
+    "id": 131995964,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzMTk5NTk2NA==",
+    "diff_hunk": "@@ -5,16 +5,21 @@\n \n import { SimpleFindWidget } from 'vs/editor/contrib/find/browser/simpleFindWidget';\n import { IContextViewService } from 'vs/platform/contextview/browser/contextView';\n-import Webview from './webview';\n+import { IContextKeyService, RawContextKey } from 'vs/platform/contextkey/common/contextkey';\n+import WebView from './webview';\n \n export class WebviewFindWidget extends SimpleFindWidget {\n \n \tconstructor(\n \t\t@IContextViewService _contextViewService: IContextViewService,\n-\t\tprivate webview: Webview\n+\t\t@IContextKeyService private _contextKeyService: IContextKeyService,\n+\t\tprivate webview: WebView,\n+\t\tprivate _findInputContextKey: RawContextKey<boolean>\n \t) {\n \t\tsuper(_contextViewService);\n \n+\t\tthis._findInputFocused = _findInputContextKey.bindTo(this._contextKeyService);\n+\t\tconsole.debug(this._findInputContextKey.keys());",
+    "path": "src/vs/workbench/parts/html/browser/webviewFindWidget.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "1570beb0cc84c1ed9ef524116998cd539a822737",
+    "user": {
+      "login": "rebornix",
+      "id": 876920,
+      "node_id": "MDQ6VXNlcjg3NjkyMA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/876920?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/rebornix",
+      "html_url": "https://github.com/rebornix",
+      "followers_url": "https://api.github.com/users/rebornix/followers",
+      "following_url": "https://api.github.com/users/rebornix/following{/other_user}",
+      "gists_url": "https://api.github.com/users/rebornix/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/rebornix/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/rebornix/subscriptions",
+      "organizations_url": "https://api.github.com/users/rebornix/orgs",
+      "repos_url": "https://api.github.com/users/rebornix/repos",
+      "events_url": "https://api.github.com/users/rebornix/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/rebornix/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "✂️ ",
+    "created_at": "2017-08-08T18:34:21Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r131995964",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/131995964"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r131995964"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/131995964/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 22,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 20,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/131998087",
+    "pull_request_review_id": 55032755,
+    "id": 131998087,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzMTk5ODA4Nw==",
+    "diff_hunk": "@@ -339,6 +343,23 @@ actionRegistry.registerWorkbenchAction(new SyncActionDescriptor(HideTerminalFind\n \tprimary: KeyCode.Escape,\n \tsecondary: [KeyCode.Shift | KeyCode.Escape]\n }, ContextKeyExpr.and(KEYBINDING_CONTEXT_TERMINAL_FOCUS, KEYBINDING_CONTEXT_TERMINAL_FIND_WIDGET_VISIBLE)), 'Terminal: Focus Find Widget', category);\n+actionRegistry.registerWorkbenchAction(new SyncActionDescriptor(ShowNextFindTermTerminalFindWidgetAction, ShowNextFindTermTerminalFindWidgetAction.ID, ShowNextFindTermTerminalFindWidgetAction.LABEL, {\n+\tprimary: KeyMod.Alt | KeyCode.DownArrow\n+}, ContextKeyExpr.and(KEYBINDING_CONTEXT_TERMINAL_FIND_WIDGET_INPUT_FOCUSED, KEYBINDING_CONTEXT_TERMINAL_FIND_WIDGET_VISIBLE)), 'Terminal: Find History Show Next', category);\n+\n+actionRegistry.registerWorkbenchAction(new SyncActionDescriptor(ShowPreviousFindTermTerminalFindWidgetAction, ShowPreviousFindTermTerminalFindWidgetAction.ID, ShowPreviousFindTermTerminalFindWidgetAction.LABEL, {\n+\tprimary: KeyMod.Alt | KeyCode.UpArrow\n+}, ContextKeyExpr.and(KEYBINDING_CONTEXT_TERMINAL_FIND_WIDGET_INPUT_FOCUSED, KEYBINDING_CONTEXT_TERMINAL_FIND_WIDGET_VISIBLE)), 'Terminal: Find History Show Previous', category);\n+\n+actionRegistry.registerWorkbenchAction(new SyncActionDescriptor(NextMatchTerminalFindWidgetAction, NextMatchTerminalFindWidgetAction.ID, NextMatchTerminalFindWidgetAction.LABEL, {\n+\tprimary: KeyCode.F3,\n+\tmac: { primary: KeyMod.CtrlCmd | KeyCode.KEY_G, secondary: [KeyCode.F3] }\n+}, KEYBINDING_CONTEXT_TERMINAL_FOCUS), 'Terminal: Find Next', category);",
+    "path": "src/vs/workbench/parts/terminal/electron-browser/terminal.contribution.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "1570beb0cc84c1ed9ef524116998cd539a822737",
+    "user": {
+      "login": "rebornix",
+      "id": 876920,
+      "node_id": "MDQ6VXNlcjg3NjkyMA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/876920?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/rebornix",
+      "html_url": "https://github.com/rebornix",
+      "followers_url": "https://api.github.com/users/rebornix/followers",
+      "following_url": "https://api.github.com/users/rebornix/following{/other_user}",
+      "gists_url": "https://api.github.com/users/rebornix/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/rebornix/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/rebornix/subscriptions",
+      "organizations_url": "https://api.github.com/users/rebornix/orgs",
+      "repos_url": "https://api.github.com/users/rebornix/repos",
+      "events_url": "https://api.github.com/users/rebornix/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/rebornix/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "`Terminal:  ` prefix is redundant.",
+    "created_at": "2017-08-08T18:42:30Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r131998087",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/131998087"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r131998087"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/131998087/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 357,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 41,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/132010686",
+    "pull_request_review_id": 55046998,
+    "id": 132010686,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzMjAxMDY4Ng==",
+    "diff_hunk": "@@ -44,4 +47,12 @@ export class TerminalFindWidget extends SimpleFindWidget {\n \tprotected onFocusTrackerBlur() {\n \t\tthis._terminalService.getActiveInstance().notifyFindWidgetFocusChanged(false);\n \t}\n+\n+\tprotected onFindInputFocusTrackerFocus() {",
+    "path": "src/vs/workbench/parts/terminal/electron-browser/terminalFindWidget.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "1570beb0cc84c1ed9ef524116998cd539a822737",
+    "user": {
+      "login": "cleidigh",
+      "id": 25272315,
+      "node_id": "MDQ6VXNlcjI1MjcyMzE1",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25272315?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/cleidigh",
+      "html_url": "https://github.com/cleidigh",
+      "followers_url": "https://api.github.com/users/cleidigh/followers",
+      "following_url": "https://api.github.com/users/cleidigh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/cleidigh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/cleidigh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/cleidigh/subscriptions",
+      "organizations_url": "https://api.github.com/users/cleidigh/orgs",
+      "repos_url": "https://api.github.com/users/cleidigh/repos",
+      "events_url": "https://api.github.com/users/cleidigh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/cleidigh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "@rebornix \r\nI really wanted to hide this further but for right now the context key has to come from above",
+    "created_at": "2017-08-08T19:36:33Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r132010686",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/132010686"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r132010686"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/132010686/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 51,
+    "side": "RIGHT",
+    "in_reply_to_id": 131992863,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 25,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/132010814",
+    "pull_request_review_id": 55047152,
+    "id": 132010814,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzMjAxMDgxNA==",
+    "diff_hunk": "@@ -54,12 +53,14 @@ import { IContextKeyService, RawContextKey, ContextKeyExpr, IContextKey } from '\n import { Command } from 'vs/editor/common/editorCommonExtensions';\n import { IWorkbenchEditorService } from 'vs/workbench/services/editor/common/editorService';\n import { KeybindingsRegistry } from 'vs/platform/keybinding/common/keybindingsRegistry';\n+import { default as WebView, KEYBINDING_CONTEXT_WEBVIEW_FIND_WIDGET_INPUT_FOCUSED } from 'vs/workbench/parts/html/browser/webview';",
+    "path": "src/vs/workbench/parts/extensions/browser/extensionEditor.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "1570beb0cc84c1ed9ef524116998cd539a822737",
+    "user": {
+      "login": "cleidigh",
+      "id": 25272315,
+      "node_id": "MDQ6VXNlcjI1MjcyMzE1",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25272315?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/cleidigh",
+      "html_url": "https://github.com/cleidigh",
+      "followers_url": "https://api.github.com/users/cleidigh/followers",
+      "following_url": "https://api.github.com/users/cleidigh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/cleidigh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/cleidigh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/cleidigh/subscriptions",
+      "organizations_url": "https://api.github.com/users/cleidigh/orgs",
+      "repos_url": "https://api.github.com/users/cleidigh/repos",
+      "events_url": "https://api.github.com/users/cleidigh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/cleidigh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Done",
+    "created_at": "2017-08-08T19:37:07Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r132010814",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/132010814"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r132010814"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/132010814/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 56,
+    "side": "RIGHT",
+    "in_reply_to_id": 131995607,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/132011052",
+    "pull_request_review_id": 55047423,
+    "id": 132011052,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzMjAxMTA1Mg==",
+    "diff_hunk": "@@ -5,16 +5,21 @@\n \n import { SimpleFindWidget } from 'vs/editor/contrib/find/browser/simpleFindWidget';\n import { IContextViewService } from 'vs/platform/contextview/browser/contextView';\n-import Webview from './webview';\n+import { IContextKeyService, RawContextKey } from 'vs/platform/contextkey/common/contextkey';\n+import WebView from './webview';\n \n export class WebviewFindWidget extends SimpleFindWidget {\n \n \tconstructor(\n \t\t@IContextViewService _contextViewService: IContextViewService,\n-\t\tprivate webview: Webview\n+\t\t@IContextKeyService private _contextKeyService: IContextKeyService,\n+\t\tprivate webview: WebView,\n+\t\tprivate _findInputContextKey: RawContextKey<boolean>\n \t) {\n \t\tsuper(_contextViewService);\n \n+\t\tthis._findInputFocused = _findInputContextKey.bindTo(this._contextKeyService);\n+\t\tconsole.debug(this._findInputContextKey.keys());",
+    "path": "src/vs/workbench/parts/html/browser/webviewFindWidget.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "1570beb0cc84c1ed9ef524116998cd539a822737",
+    "user": {
+      "login": "cleidigh",
+      "id": 25272315,
+      "node_id": "MDQ6VXNlcjI1MjcyMzE1",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25272315?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/cleidigh",
+      "html_url": "https://github.com/cleidigh",
+      "followers_url": "https://api.github.com/users/cleidigh/followers",
+      "following_url": "https://api.github.com/users/cleidigh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/cleidigh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/cleidigh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/cleidigh/subscriptions",
+      "organizations_url": "https://api.github.com/users/cleidigh/orgs",
+      "repos_url": "https://api.github.com/users/cleidigh/repos",
+      "events_url": "https://api.github.com/users/cleidigh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/cleidigh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Doh, have to get find in open files working! Bad stray console lines.",
+    "created_at": "2017-08-08T19:38:14Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r132011052",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/132011052"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r132011052"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/132011052/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 22,
+    "side": "RIGHT",
+    "in_reply_to_id": 131995964,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 20,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/132011261",
+    "pull_request_review_id": 55047653,
+    "id": 132011261,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzMjAxMTI2MQ==",
+    "diff_hunk": "@@ -339,6 +343,23 @@ actionRegistry.registerWorkbenchAction(new SyncActionDescriptor(HideTerminalFind\n \tprimary: KeyCode.Escape,\n \tsecondary: [KeyCode.Shift | KeyCode.Escape]\n }, ContextKeyExpr.and(KEYBINDING_CONTEXT_TERMINAL_FOCUS, KEYBINDING_CONTEXT_TERMINAL_FIND_WIDGET_VISIBLE)), 'Terminal: Focus Find Widget', category);\n+actionRegistry.registerWorkbenchAction(new SyncActionDescriptor(ShowNextFindTermTerminalFindWidgetAction, ShowNextFindTermTerminalFindWidgetAction.ID, ShowNextFindTermTerminalFindWidgetAction.LABEL, {\n+\tprimary: KeyMod.Alt | KeyCode.DownArrow\n+}, ContextKeyExpr.and(KEYBINDING_CONTEXT_TERMINAL_FIND_WIDGET_INPUT_FOCUSED, KEYBINDING_CONTEXT_TERMINAL_FIND_WIDGET_VISIBLE)), 'Terminal: Find History Show Next', category);\n+\n+actionRegistry.registerWorkbenchAction(new SyncActionDescriptor(ShowPreviousFindTermTerminalFindWidgetAction, ShowPreviousFindTermTerminalFindWidgetAction.ID, ShowPreviousFindTermTerminalFindWidgetAction.LABEL, {\n+\tprimary: KeyMod.Alt | KeyCode.UpArrow\n+}, ContextKeyExpr.and(KEYBINDING_CONTEXT_TERMINAL_FIND_WIDGET_INPUT_FOCUSED, KEYBINDING_CONTEXT_TERMINAL_FIND_WIDGET_VISIBLE)), 'Terminal: Find History Show Previous', category);\n+\n+actionRegistry.registerWorkbenchAction(new SyncActionDescriptor(NextMatchTerminalFindWidgetAction, NextMatchTerminalFindWidgetAction.ID, NextMatchTerminalFindWidgetAction.LABEL, {\n+\tprimary: KeyCode.F3,\n+\tmac: { primary: KeyMod.CtrlCmd | KeyCode.KEY_G, secondary: [KeyCode.F3] }\n+}, KEYBINDING_CONTEXT_TERMINAL_FOCUS), 'Terminal: Find Next', category);",
+    "path": "src/vs/workbench/parts/terminal/electron-browser/terminal.contribution.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "1570beb0cc84c1ed9ef524116998cd539a822737",
+    "user": {
+      "login": "cleidigh",
+      "id": 25272315,
+      "node_id": "MDQ6VXNlcjI1MjcyMzE1",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25272315?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/cleidigh",
+      "html_url": "https://github.com/cleidigh",
+      "followers_url": "https://api.github.com/users/cleidigh/followers",
+      "following_url": "https://api.github.com/users/cleidigh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/cleidigh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/cleidigh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/cleidigh/subscriptions",
+      "organizations_url": "https://api.github.com/users/cleidigh/orgs",
+      "repos_url": "https://api.github.com/users/cleidigh/repos",
+      "events_url": "https://api.github.com/users/cleidigh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/cleidigh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Done",
+    "created_at": "2017-08-08T19:39:09Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r132011261",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/132011261"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r132011261"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/132011261/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 357,
+    "side": "RIGHT",
+    "in_reply_to_id": 131998087,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 41,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134321419",
+    "pull_request_review_id": 57599749,
+    "id": 134321419,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDMyMTQxOQ==",
+    "diff_hunk": "@@ -122,6 +124,11 @@ export abstract class TerminalService implements ITerminalService {\n \t\t}\n \t}\n \n+\t// ContextKey to match terminal with simpleFindWidget\n+\tpublic getTerminalFocusContextKey(): IContextKey<boolean> {",
+    "path": "src/vs/workbench/parts/terminal/common/terminalService.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "Tyriar",
+      "id": 2193314,
+      "node_id": "MDQ6VXNlcjIxOTMzMTQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2193314?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Tyriar",
+      "html_url": "https://github.com/Tyriar",
+      "followers_url": "https://api.github.com/users/Tyriar/followers",
+      "following_url": "https://api.github.com/users/Tyriar/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Tyriar/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Tyriar/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Tyriar/subscriptions",
+      "organizations_url": "https://api.github.com/users/Tyriar/orgs",
+      "repos_url": "https://api.github.com/users/Tyriar/repos",
+      "events_url": "https://api.github.com/users/Tyriar/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Tyriar/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Remove since we already have the `terminalFocusContextKey` getter at line 41?",
+    "created_at": "2017-08-21T20:18:32Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134321419",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134321419"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134321419"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134321419/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 128,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 21,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134321905",
+    "pull_request_review_id": 57599749,
+    "id": 134321905,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDMyMTkwNQ==",
+    "diff_hunk": "@@ -5,15 +5,22 @@\n \n import { SimpleFindWidget } from 'vs/editor/contrib/find/browser/simpleFindWidget';\n import { IContextViewService } from 'vs/platform/contextview/browser/contextView';\n+import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';\n+import { ISimpleFindWidgetService } from 'vs/editor/contrib/find/browser/simpleFindWidgetService';\n import Webview from './webview';\n \n export class WebviewFindWidget extends SimpleFindWidget {\n \n \tconstructor(\n \t\t@IContextViewService _contextViewService: IContextViewService,\n-\t\tprivate webview: Webview\n+\t\t@IContextKeyService _contextKeyService: IContextKeyService,\n+\t\t@ISimpleFindWidgetService _simpleFindWidgetService: ISimpleFindWidgetService,\n+\t\tprivate webview: Webview,\n+\t\t// private _findInputContextKey: RawContextKey<boolean>\n \t) {\n-\t\tsuper(_contextViewService);\n+\t\tsuper(_contextViewService, _contextKeyService, _simpleFindWidgetService);\n+\n+\t\t// this._findInputFocused = _findInputContextKey.bindTo(this._contextKeyService);",
+    "path": "src/vs/workbench/parts/html/browser/webviewFindWidget.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "Tyriar",
+      "id": 2193314,
+      "node_id": "MDQ6VXNlcjIxOTMzMTQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2193314?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Tyriar",
+      "html_url": "https://github.com/Tyriar",
+      "followers_url": "https://api.github.com/users/Tyriar/followers",
+      "following_url": "https://api.github.com/users/Tyriar/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Tyriar/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Tyriar/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Tyriar/subscriptions",
+      "organizations_url": "https://api.github.com/users/Tyriar/orgs",
+      "repos_url": "https://api.github.com/users/Tyriar/repos",
+      "events_url": "https://api.github.com/users/Tyriar/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Tyriar/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Remove?",
+    "created_at": "2017-08-21T20:20:51Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134321905",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134321905"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134321905"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134321905/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 23,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 21,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134321925",
+    "pull_request_review_id": 57599749,
+    "id": 134321925,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDMyMTkyNQ==",
+    "diff_hunk": "@@ -5,15 +5,22 @@\n \n import { SimpleFindWidget } from 'vs/editor/contrib/find/browser/simpleFindWidget';\n import { IContextViewService } from 'vs/platform/contextview/browser/contextView';\n+import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';\n+import { ISimpleFindWidgetService } from 'vs/editor/contrib/find/browser/simpleFindWidgetService';\n import Webview from './webview';\n \n export class WebviewFindWidget extends SimpleFindWidget {\n \n \tconstructor(\n \t\t@IContextViewService _contextViewService: IContextViewService,\n-\t\tprivate webview: Webview\n+\t\t@IContextKeyService _contextKeyService: IContextKeyService,\n+\t\t@ISimpleFindWidgetService _simpleFindWidgetService: ISimpleFindWidgetService,\n+\t\tprivate webview: Webview,\n+\t\t// private _findInputContextKey: RawContextKey<boolean>",
+    "path": "src/vs/workbench/parts/html/browser/webviewFindWidget.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "Tyriar",
+      "id": 2193314,
+      "node_id": "MDQ6VXNlcjIxOTMzMTQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2193314?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Tyriar",
+      "html_url": "https://github.com/Tyriar",
+      "followers_url": "https://api.github.com/users/Tyriar/followers",
+      "following_url": "https://api.github.com/users/Tyriar/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Tyriar/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Tyriar/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Tyriar/subscriptions",
+      "organizations_url": "https://api.github.com/users/Tyriar/orgs",
+      "repos_url": "https://api.github.com/users/Tyriar/repos",
+      "events_url": "https://api.github.com/users/Tyriar/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Tyriar/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Remove?",
+    "created_at": "2017-08-21T20:20:56Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134321925",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134321925"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134321925"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134321925/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 19,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 16,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322093",
+    "pull_request_review_id": 57599749,
+    "id": 134322093,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDMyMjA5Mw==",
+    "diff_hunk": "@@ -33,7 +27,7 @@ export const KEYBINDING_CONTEXT_WEBVIEWEDITOR_NOT_FOCUSED: ContextKeyExpr = KEYB\n export abstract class WebviewEditor extends BaseWebviewEditor {\n \n \tprotected _webviewFocusContextKey: IContextKey<boolean>;\n-\tprotected _webview: WebView;\n+\tprotected _webview: Webview;",
+    "path": "src/vs/workbench/parts/html/browser/webviewEditor.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "Tyriar",
+      "id": 2193314,
+      "node_id": "MDQ6VXNlcjIxOTMzMTQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2193314?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Tyriar",
+      "html_url": "https://github.com/Tyriar",
+      "followers_url": "https://api.github.com/users/Tyriar/followers",
+      "following_url": "https://api.github.com/users/Tyriar/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Tyriar/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Tyriar/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Tyriar/subscriptions",
+      "organizations_url": "https://api.github.com/users/Tyriar/orgs",
+      "repos_url": "https://api.github.com/users/Tyriar/repos",
+      "events_url": "https://api.github.com/users/Tyriar/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Tyriar/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Change this and the import back to it's regular casing?",
+    "created_at": "2017-08-21T20:21:41Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134322093",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322093"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134322093"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322093/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 30,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 28,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322139",
+    "pull_request_review_id": 57599749,
+    "id": 134322139,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDMyMjEzOQ==",
+    "diff_hunk": "@@ -442,12 +449,30 @@ export default class Webview {\n \t\tthis._findStarted = false;\n \t\tthis._webview.stopFindInPage(keepSelection ? StopFindInPageActions.keepSelection : StopFindInPageActions.clearSelection);\n \t}\n+\t/*",
+    "path": "src/vs/workbench/parts/html/browser/webview.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "Tyriar",
+      "id": 2193314,
+      "node_id": "MDQ6VXNlcjIxOTMzMTQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2193314?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Tyriar",
+      "html_url": "https://github.com/Tyriar",
+      "followers_url": "https://api.github.com/users/Tyriar/followers",
+      "following_url": "https://api.github.com/users/Tyriar/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Tyriar/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Tyriar/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Tyriar/subscriptions",
+      "organizations_url": "https://api.github.com/users/Tyriar/orgs",
+      "repos_url": "https://api.github.com/users/Tyriar/repos",
+      "events_url": "https://api.github.com/users/Tyriar/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Tyriar/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Remove comments?",
+    "created_at": "2017-08-21T20:21:57Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134322139",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322139"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134322139"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322139/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 452,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 43,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322230",
+    "pull_request_review_id": 57599749,
+    "id": 134322230,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDMyMjIzMA==",
+    "diff_hunk": "@@ -51,15 +50,15 @@ import { KeybindingLabel } from 'vs/base/browser/ui/keybindingLabel/keybindingLa\n import { attachListStyler } from 'vs/platform/theme/common/styler';\n import { IContextViewService } from 'vs/platform/contextview/browser/contextView';\n import { IContextKeyService, RawContextKey, ContextKeyExpr, IContextKey } from 'vs/platform/contextkey/common/contextkey';\n-import { Command } from 'vs/editor/common/editorCommonExtensions';\n-import { IWorkbenchEditorService } from 'vs/workbench/services/editor/common/editorService';\n-import { KeybindingsRegistry } from 'vs/platform/keybinding/common/keybindingsRegistry';\n+import { default as Webview } from 'vs/workbench/parts/html/browser/webview';",
+    "path": "src/vs/workbench/parts/extensions/browser/extensionEditor.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "Tyriar",
+      "id": 2193314,
+      "node_id": "MDQ6VXNlcjIxOTMzMTQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2193314?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Tyriar",
+      "html_url": "https://github.com/Tyriar",
+      "followers_url": "https://api.github.com/users/Tyriar/followers",
+      "following_url": "https://api.github.com/users/Tyriar/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Tyriar/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Tyriar/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Tyriar/subscriptions",
+      "organizations_url": "https://api.github.com/users/Tyriar/orgs",
+      "repos_url": "https://api.github.com/users/Tyriar/repos",
+      "events_url": "https://api.github.com/users/Tyriar/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Tyriar/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Change the casing back to normal",
+    "created_at": "2017-08-21T20:22:20Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134322230",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322230"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134322230"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322230/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 53,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 27,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322254",
+    "pull_request_review_id": 57599749,
+    "id": 134322254,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDMyMjI1NA==",
+    "diff_hunk": "@@ -51,15 +50,15 @@ import { KeybindingLabel } from 'vs/base/browser/ui/keybindingLabel/keybindingLa\n import { attachListStyler } from 'vs/platform/theme/common/styler';\n import { IContextViewService } from 'vs/platform/contextview/browser/contextView';\n import { IContextKeyService, RawContextKey, ContextKeyExpr, IContextKey } from 'vs/platform/contextkey/common/contextkey';\n-import { Command } from 'vs/editor/common/editorCommonExtensions';\n-import { IWorkbenchEditorService } from 'vs/workbench/services/editor/common/editorService';\n-import { KeybindingsRegistry } from 'vs/platform/keybinding/common/keybindingsRegistry';\n+import { default as Webview } from 'vs/workbench/parts/html/browser/webview';\n+import { ISimpleFindWidgetService } from 'vs/editor/contrib/find/browser/simpleFindWidgetService';\n \n /**  A context key that is set when an extension editor webview has focus. */\n export const KEYBINDING_CONTEXT_EXTENSIONEDITOR_WEBVIEW_FOCUS = new RawContextKey<boolean>('extensionEditorWebviewFocus', undefined);\n /**  A context key that is set when an extension editor webview not have focus. */\n export const KEYBINDING_CONTEXT_EXTENSIONEDITOR_WEBVIEW_NOT_FOCUSED: ContextKeyExpr = KEYBINDING_CONTEXT_EXTENSIONEDITOR_WEBVIEW_FOCUS.toNegated();\n \n+",
+    "path": "src/vs/workbench/parts/extensions/browser/extensionEditor.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "Tyriar",
+      "id": 2193314,
+      "node_id": "MDQ6VXNlcjIxOTMzMTQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2193314?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Tyriar",
+      "html_url": "https://github.com/Tyriar",
+      "followers_url": "https://api.github.com/users/Tyriar/followers",
+      "following_url": "https://api.github.com/users/Tyriar/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Tyriar/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Tyriar/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Tyriar/subscriptions",
+      "organizations_url": "https://api.github.com/users/Tyriar/orgs",
+      "repos_url": "https://api.github.com/users/Tyriar/repos",
+      "events_url": "https://api.github.com/users/Tyriar/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Tyriar/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Remove extra space",
+    "created_at": "2017-08-21T20:22:25Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134322254",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322254"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134322254"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322254/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 61,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 35,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322318",
+    "pull_request_review_id": 57599749,
+    "id": 134322318,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDMyMjMxOA==",
+    "diff_hunk": "@@ -632,6 +633,9 @@ export class Workbench implements IPartService {\n \t\tthis.toShutdown.push(this.quickOpen);\n \t\tserviceCollection.set(IQuickOpenService, this.quickOpen);\n \n+\t\t// cleidigh",
+    "path": "src/vs/workbench/electron-browser/workbench.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "Tyriar",
+      "id": 2193314,
+      "node_id": "MDQ6VXNlcjIxOTMzMTQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2193314?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Tyriar",
+      "html_url": "https://github.com/Tyriar",
+      "followers_url": "https://api.github.com/users/Tyriar/followers",
+      "following_url": "https://api.github.com/users/Tyriar/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Tyriar/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Tyriar/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Tyriar/subscriptions",
+      "organizations_url": "https://api.github.com/users/Tyriar/orgs",
+      "repos_url": "https://api.github.com/users/Tyriar/repos",
+      "events_url": "https://api.github.com/users/Tyriar/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Tyriar/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Remove comment",
+    "created_at": "2017-08-21T20:22:45Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134322318",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322318"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134322318"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322318/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 636,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322706",
+    "pull_request_review_id": 57599749,
+    "id": 134322706,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDMyMjcwNg==",
+    "diff_hunk": "@@ -21,13 +29,20 @@ const NLS_NEXT_MATCH_BTN_LABEL = nls.localize('label.nextMatchButton', \"Next mat\n const NLS_CLOSE_BTN_LABEL = nls.localize('label.closeButton', \"Close\");\n \n export abstract class SimpleFindWidget extends Widget {\n+\n \tprotected _findInput: FindInput;\n \tprotected _domNode: HTMLElement;\n \tprotected _isVisible: boolean;\n \tprotected _focusTracker: dom.IFocusTracker;\n+\tprotected _findInputFocusTracker: dom.IFocusTracker;\n+\tprotected _findInputFocused: IContextKey<boolean>;\n+\tprotected _findHistory: HistoryNavigator<string>;\n+\tprotected _updateHistoryDelayer: Delayer<void>;\n \n \tconstructor(\n \t\t@IContextViewService private _contextViewService: IContextViewService,\n+\t\t@IContextKeyService private _contextKeyService: IContextKeyService,\n+\t\t@ISimpleFindWidgetService private _simpleFindWidgetService: ISimpleFindWidgetService,\n \t\tprivate animate: boolean = true",
+    "path": "src/vs/editor/contrib/find/browser/simpleFindWidget.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "Tyriar",
+      "id": 2193314,
+      "node_id": "MDQ6VXNlcjIxOTMzMTQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2193314?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Tyriar",
+      "html_url": "https://github.com/Tyriar",
+      "followers_url": "https://api.github.com/users/Tyriar/followers",
+      "following_url": "https://api.github.com/users/Tyriar/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Tyriar/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Tyriar/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Tyriar/subscriptions",
+      "organizations_url": "https://api.github.com/users/Tyriar/orgs",
+      "repos_url": "https://api.github.com/users/Tyriar/repos",
+      "events_url": "https://api.github.com/users/Tyriar/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Tyriar/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "_animate",
+    "created_at": "2017-08-21T20:24:37Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134322706",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322706"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134322706"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322706/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 46,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 36,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322772",
+    "pull_request_review_id": 57599749,
+    "id": 134322772,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDMyMjc3Mg==",
+    "diff_hunk": "@@ -167,6 +216,26 @@ export abstract class SimpleFindWidget extends Widget {\n \t\t\tthis._domNode.setAttribute('aria-hidden', 'true');\n \t\t}\n \t}\n+\n+\tpublic showNextFindTerm() {\n+\t\tlet next = this._findHistory.next();\n+\t\tif (next) {\n+\t\t\tthis._findInput.setValue(next);\n+\t\t}\n+\t}\n+\n+\tpublic showPreviousFindTerm() {\n+\t\tlet previous = this._findHistory.previous();\n+\t\tif (previous) {\n+\t\t\tthis._findInput.setValue(previous);\n+\t\t}\n+\t}\n+\n+\t// Allow subclass to provide find\n+\tpublic baseFind(previous: boolean) {",
+    "path": "src/vs/editor/contrib/find/browser/simpleFindWidget.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "Tyriar",
+      "id": 2193314,
+      "node_id": "MDQ6VXNlcjIxOTMzMTQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2193314?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Tyriar",
+      "html_url": "https://github.com/Tyriar",
+      "followers_url": "https://api.github.com/users/Tyriar/followers",
+      "following_url": "https://api.github.com/users/Tyriar/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Tyriar/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Tyriar/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Tyriar/subscriptions",
+      "organizations_url": "https://api.github.com/users/Tyriar/orgs",
+      "repos_url": "https://api.github.com/users/Tyriar/repos",
+      "events_url": "https://api.github.com/users/Tyriar/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Tyriar/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "What is this.find? Can subclasses just reimplement that instead?",
+    "created_at": "2017-08-21T20:24:56Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134322772",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322772"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134322772"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134322772/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 235,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 144,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134339852",
+    "pull_request_review_id": 57619932,
+    "id": 134339852,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDMzOTg1Mg==",
+    "diff_hunk": "@@ -21,13 +29,20 @@ const NLS_NEXT_MATCH_BTN_LABEL = nls.localize('label.nextMatchButton', \"Next mat\n const NLS_CLOSE_BTN_LABEL = nls.localize('label.closeButton', \"Close\");\n \n export abstract class SimpleFindWidget extends Widget {\n+\n \tprotected _findInput: FindInput;\n \tprotected _domNode: HTMLElement;\n \tprotected _isVisible: boolean;\n \tprotected _focusTracker: dom.IFocusTracker;\n+\tprotected _findInputFocusTracker: dom.IFocusTracker;\n+\tprotected _findInputFocused: IContextKey<boolean>;\n+\tprotected _findHistory: HistoryNavigator<string>;\n+\tprotected _updateHistoryDelayer: Delayer<void>;\n \n \tconstructor(\n \t\t@IContextViewService private _contextViewService: IContextViewService,\n+\t\t@IContextKeyService private _contextKeyService: IContextKeyService,\n+\t\t@ISimpleFindWidgetService private _simpleFindWidgetService: ISimpleFindWidgetService,\n \t\tprivate animate: boolean = true",
+    "path": "src/vs/editor/contrib/find/browser/simpleFindWidget.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "cleidigh",
+      "id": 25272315,
+      "node_id": "MDQ6VXNlcjI1MjcyMzE1",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25272315?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/cleidigh",
+      "html_url": "https://github.com/cleidigh",
+      "followers_url": "https://api.github.com/users/cleidigh/followers",
+      "following_url": "https://api.github.com/users/cleidigh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/cleidigh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/cleidigh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/cleidigh/subscriptions",
+      "organizations_url": "https://api.github.com/users/cleidigh/orgs",
+      "repos_url": "https://api.github.com/users/cleidigh/repos",
+      "events_url": "https://api.github.com/users/cleidigh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/cleidigh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "@Tyriar \r\nI found many pre-existing inconsistencies for private variables , eg some with underscore some without.\r\nWhen working with any files should I fix these types of things? Change any private variables\r\nto use underscore?",
+    "created_at": "2017-08-21T21:48:37Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134339852",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134339852"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134339852"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134339852/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 46,
+    "side": "RIGHT",
+    "in_reply_to_id": 134322706,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 36,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134340932",
+    "pull_request_review_id": 57621105,
+    "id": 134340932,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDM0MDkzMg==",
+    "diff_hunk": "@@ -21,13 +29,20 @@ const NLS_NEXT_MATCH_BTN_LABEL = nls.localize('label.nextMatchButton', \"Next mat\n const NLS_CLOSE_BTN_LABEL = nls.localize('label.closeButton', \"Close\");\n \n export abstract class SimpleFindWidget extends Widget {\n+\n \tprotected _findInput: FindInput;\n \tprotected _domNode: HTMLElement;\n \tprotected _isVisible: boolean;\n \tprotected _focusTracker: dom.IFocusTracker;\n+\tprotected _findInputFocusTracker: dom.IFocusTracker;\n+\tprotected _findInputFocused: IContextKey<boolean>;\n+\tprotected _findHistory: HistoryNavigator<string>;\n+\tprotected _updateHistoryDelayer: Delayer<void>;\n \n \tconstructor(\n \t\t@IContextViewService private _contextViewService: IContextViewService,\n+\t\t@IContextKeyService private _contextKeyService: IContextKeyService,\n+\t\t@ISimpleFindWidgetService private _simpleFindWidgetService: ISimpleFindWidgetService,\n \t\tprivate animate: boolean = true",
+    "path": "src/vs/editor/contrib/find/browser/simpleFindWidget.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "Tyriar",
+      "id": 2193314,
+      "node_id": "MDQ6VXNlcjIxOTMzMTQ=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/2193314?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/Tyriar",
+      "html_url": "https://github.com/Tyriar",
+      "followers_url": "https://api.github.com/users/Tyriar/followers",
+      "following_url": "https://api.github.com/users/Tyriar/following{/other_user}",
+      "gists_url": "https://api.github.com/users/Tyriar/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/Tyriar/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/Tyriar/subscriptions",
+      "organizations_url": "https://api.github.com/users/Tyriar/orgs",
+      "repos_url": "https://api.github.com/users/Tyriar/repos",
+      "events_url": "https://api.github.com/users/Tyriar/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/Tyriar/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I know there are inconsistencies, try to stick to the style of the file, all the properties and constructor args above use the _ prefix",
+    "created_at": "2017-08-21T21:54:37Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134340932",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134340932"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134340932"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134340932/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 46,
+    "side": "RIGHT",
+    "in_reply_to_id": 134322706,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 36,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134351372",
+    "pull_request_review_id": 57632485,
+    "id": 134351372,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDM1MTM3Mg==",
+    "diff_hunk": "@@ -122,6 +124,11 @@ export abstract class TerminalService implements ITerminalService {\n \t\t}\n \t}\n \n+\t// ContextKey to match terminal with simpleFindWidget\n+\tpublic getTerminalFocusContextKey(): IContextKey<boolean> {",
+    "path": "src/vs/workbench/parts/terminal/common/terminalService.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "cleidigh",
+      "id": 25272315,
+      "node_id": "MDQ6VXNlcjI1MjcyMzE1",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25272315?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/cleidigh",
+      "html_url": "https://github.com/cleidigh",
+      "followers_url": "https://api.github.com/users/cleidigh/followers",
+      "following_url": "https://api.github.com/users/cleidigh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/cleidigh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/cleidigh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/cleidigh/subscriptions",
+      "organizations_url": "https://api.github.com/users/cleidigh/orgs",
+      "repos_url": "https://api.github.com/users/cleidigh/repos",
+      "events_url": "https://api.github.com/users/cleidigh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/cleidigh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Done",
+    "created_at": "2017-08-21T23:06:01Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134351372",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134351372"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134351372"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134351372/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 128,
+    "side": "RIGHT",
+    "in_reply_to_id": 134321419,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 21,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134351730",
+    "pull_request_review_id": 57632859,
+    "id": 134351730,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDM1MTczMA==",
+    "diff_hunk": "@@ -5,15 +5,22 @@\n \n import { SimpleFindWidget } from 'vs/editor/contrib/find/browser/simpleFindWidget';\n import { IContextViewService } from 'vs/platform/contextview/browser/contextView';\n+import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';\n+import { ISimpleFindWidgetService } from 'vs/editor/contrib/find/browser/simpleFindWidgetService';\n import Webview from './webview';\n \n export class WebviewFindWidget extends SimpleFindWidget {\n \n \tconstructor(\n \t\t@IContextViewService _contextViewService: IContextViewService,\n-\t\tprivate webview: Webview\n+\t\t@IContextKeyService _contextKeyService: IContextKeyService,\n+\t\t@ISimpleFindWidgetService _simpleFindWidgetService: ISimpleFindWidgetService,\n+\t\tprivate webview: Webview,\n+\t\t// private _findInputContextKey: RawContextKey<boolean>",
+    "path": "src/vs/workbench/parts/html/browser/webviewFindWidget.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "cleidigh",
+      "id": 25272315,
+      "node_id": "MDQ6VXNlcjI1MjcyMzE1",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25272315?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/cleidigh",
+      "html_url": "https://github.com/cleidigh",
+      "followers_url": "https://api.github.com/users/cleidigh/followers",
+      "following_url": "https://api.github.com/users/cleidigh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/cleidigh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/cleidigh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/cleidigh/subscriptions",
+      "organizations_url": "https://api.github.com/users/cleidigh/orgs",
+      "repos_url": "https://api.github.com/users/cleidigh/repos",
+      "events_url": "https://api.github.com/users/cleidigh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/cleidigh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Done",
+    "created_at": "2017-08-21T23:08:49Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134351730",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134351730"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134351730"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134351730/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 19,
+    "side": "RIGHT",
+    "in_reply_to_id": 134321925,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 16,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134351779",
+    "pull_request_review_id": 57632915,
+    "id": 134351779,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDM1MTc3OQ==",
+    "diff_hunk": "@@ -5,15 +5,22 @@\n \n import { SimpleFindWidget } from 'vs/editor/contrib/find/browser/simpleFindWidget';\n import { IContextViewService } from 'vs/platform/contextview/browser/contextView';\n+import { IContextKeyService } from 'vs/platform/contextkey/common/contextkey';\n+import { ISimpleFindWidgetService } from 'vs/editor/contrib/find/browser/simpleFindWidgetService';\n import Webview from './webview';\n \n export class WebviewFindWidget extends SimpleFindWidget {\n \n \tconstructor(\n \t\t@IContextViewService _contextViewService: IContextViewService,\n-\t\tprivate webview: Webview\n+\t\t@IContextKeyService _contextKeyService: IContextKeyService,\n+\t\t@ISimpleFindWidgetService _simpleFindWidgetService: ISimpleFindWidgetService,\n+\t\tprivate webview: Webview,\n+\t\t// private _findInputContextKey: RawContextKey<boolean>\n \t) {\n-\t\tsuper(_contextViewService);\n+\t\tsuper(_contextViewService, _contextKeyService, _simpleFindWidgetService);\n+\n+\t\t// this._findInputFocused = _findInputContextKey.bindTo(this._contextKeyService);",
+    "path": "src/vs/workbench/parts/html/browser/webviewFindWidget.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "cleidigh",
+      "id": 25272315,
+      "node_id": "MDQ6VXNlcjI1MjcyMzE1",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25272315?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/cleidigh",
+      "html_url": "https://github.com/cleidigh",
+      "followers_url": "https://api.github.com/users/cleidigh/followers",
+      "following_url": "https://api.github.com/users/cleidigh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/cleidigh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/cleidigh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/cleidigh/subscriptions",
+      "organizations_url": "https://api.github.com/users/cleidigh/orgs",
+      "repos_url": "https://api.github.com/users/cleidigh/repos",
+      "events_url": "https://api.github.com/users/cleidigh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/cleidigh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Done",
+    "created_at": "2017-08-21T23:09:17Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134351779",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134351779"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134351779"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134351779/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 23,
+    "side": "RIGHT",
+    "in_reply_to_id": 134321905,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 21,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134352025",
+    "pull_request_review_id": 57633175,
+    "id": 134352025,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDM1MjAyNQ==",
+    "diff_hunk": "@@ -33,7 +27,7 @@ export const KEYBINDING_CONTEXT_WEBVIEWEDITOR_NOT_FOCUSED: ContextKeyExpr = KEYB\n export abstract class WebviewEditor extends BaseWebviewEditor {\n \n \tprotected _webviewFocusContextKey: IContextKey<boolean>;\n-\tprotected _webview: WebView;\n+\tprotected _webview: Webview;",
+    "path": "src/vs/workbench/parts/html/browser/webviewEditor.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "cleidigh",
+      "id": 25272315,
+      "node_id": "MDQ6VXNlcjI1MjcyMzE1",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25272315?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/cleidigh",
+      "html_url": "https://github.com/cleidigh",
+      "followers_url": "https://api.github.com/users/cleidigh/followers",
+      "following_url": "https://api.github.com/users/cleidigh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/cleidigh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/cleidigh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/cleidigh/subscriptions",
+      "organizations_url": "https://api.github.com/users/cleidigh/orgs",
+      "repos_url": "https://api.github.com/users/cleidigh/repos",
+      "events_url": "https://api.github.com/users/cleidigh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/cleidigh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Done",
+    "created_at": "2017-08-21T23:11:06Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134352025",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134352025"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134352025"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134352025/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 30,
+    "side": "RIGHT",
+    "in_reply_to_id": 134322093,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 28,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134352563",
+    "pull_request_review_id": 57633698,
+    "id": 134352563,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDM1MjU2Mw==",
+    "diff_hunk": "@@ -442,12 +449,30 @@ export default class Webview {\n \t\tthis._findStarted = false;\n \t\tthis._webview.stopFindInPage(keepSelection ? StopFindInPageActions.keepSelection : StopFindInPageActions.clearSelection);\n \t}\n+\t/*",
+    "path": "src/vs/workbench/parts/html/browser/webview.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "cleidigh",
+      "id": 25272315,
+      "node_id": "MDQ6VXNlcjI1MjcyMzE1",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25272315?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/cleidigh",
+      "html_url": "https://github.com/cleidigh",
+      "followers_url": "https://api.github.com/users/cleidigh/followers",
+      "following_url": "https://api.github.com/users/cleidigh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/cleidigh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/cleidigh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/cleidigh/subscriptions",
+      "organizations_url": "https://api.github.com/users/cleidigh/orgs",
+      "repos_url": "https://api.github.com/users/cleidigh/repos",
+      "events_url": "https://api.github.com/users/cleidigh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/cleidigh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "How did I miss that???\r\nNo more late-night commits ;-)",
+    "created_at": "2017-08-21T23:15:08Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134352563",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134352563"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134352563"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134352563/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 452,
+    "side": "RIGHT",
+    "in_reply_to_id": 134322139,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 43,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134352713",
+    "pull_request_review_id": 57633878,
+    "id": 134352713,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDM1MjcxMw==",
+    "diff_hunk": "@@ -51,15 +50,15 @@ import { KeybindingLabel } from 'vs/base/browser/ui/keybindingLabel/keybindingLa\n import { attachListStyler } from 'vs/platform/theme/common/styler';\n import { IContextViewService } from 'vs/platform/contextview/browser/contextView';\n import { IContextKeyService, RawContextKey, ContextKeyExpr, IContextKey } from 'vs/platform/contextkey/common/contextkey';\n-import { Command } from 'vs/editor/common/editorCommonExtensions';\n-import { IWorkbenchEditorService } from 'vs/workbench/services/editor/common/editorService';\n-import { KeybindingsRegistry } from 'vs/platform/keybinding/common/keybindingsRegistry';\n+import { default as Webview } from 'vs/workbench/parts/html/browser/webview';",
+    "path": "src/vs/workbench/parts/extensions/browser/extensionEditor.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "cleidigh",
+      "id": 25272315,
+      "node_id": "MDQ6VXNlcjI1MjcyMzE1",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25272315?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/cleidigh",
+      "html_url": "https://github.com/cleidigh",
+      "followers_url": "https://api.github.com/users/cleidigh/followers",
+      "following_url": "https://api.github.com/users/cleidigh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/cleidigh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/cleidigh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/cleidigh/subscriptions",
+      "organizations_url": "https://api.github.com/users/cleidigh/orgs",
+      "repos_url": "https://api.github.com/users/cleidigh/repos",
+      "events_url": "https://api.github.com/users/cleidigh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/cleidigh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Done",
+    "created_at": "2017-08-21T23:16:24Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134352713",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134352713"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134352713"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134352713/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 53,
+    "side": "RIGHT",
+    "in_reply_to_id": 134322230,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 27,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134352824",
+    "pull_request_review_id": 57633987,
+    "id": 134352824,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDM1MjgyNA==",
+    "diff_hunk": "@@ -51,15 +50,15 @@ import { KeybindingLabel } from 'vs/base/browser/ui/keybindingLabel/keybindingLa\n import { attachListStyler } from 'vs/platform/theme/common/styler';\n import { IContextViewService } from 'vs/platform/contextview/browser/contextView';\n import { IContextKeyService, RawContextKey, ContextKeyExpr, IContextKey } from 'vs/platform/contextkey/common/contextkey';\n-import { Command } from 'vs/editor/common/editorCommonExtensions';\n-import { IWorkbenchEditorService } from 'vs/workbench/services/editor/common/editorService';\n-import { KeybindingsRegistry } from 'vs/platform/keybinding/common/keybindingsRegistry';\n+import { default as Webview } from 'vs/workbench/parts/html/browser/webview';\n+import { ISimpleFindWidgetService } from 'vs/editor/contrib/find/browser/simpleFindWidgetService';\n \n /**  A context key that is set when an extension editor webview has focus. */\n export const KEYBINDING_CONTEXT_EXTENSIONEDITOR_WEBVIEW_FOCUS = new RawContextKey<boolean>('extensionEditorWebviewFocus', undefined);\n /**  A context key that is set when an extension editor webview not have focus. */\n export const KEYBINDING_CONTEXT_EXTENSIONEDITOR_WEBVIEW_NOT_FOCUSED: ContextKeyExpr = KEYBINDING_CONTEXT_EXTENSIONEDITOR_WEBVIEW_FOCUS.toNegated();\n \n+",
+    "path": "src/vs/workbench/parts/extensions/browser/extensionEditor.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "cleidigh",
+      "id": 25272315,
+      "node_id": "MDQ6VXNlcjI1MjcyMzE1",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25272315?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/cleidigh",
+      "html_url": "https://github.com/cleidigh",
+      "followers_url": "https://api.github.com/users/cleidigh/followers",
+      "following_url": "https://api.github.com/users/cleidigh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/cleidigh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/cleidigh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/cleidigh/subscriptions",
+      "organizations_url": "https://api.github.com/users/cleidigh/orgs",
+      "repos_url": "https://api.github.com/users/cleidigh/repos",
+      "events_url": "https://api.github.com/users/cleidigh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/cleidigh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Done",
+    "created_at": "2017-08-21T23:17:08Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134352824",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134352824"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134352824"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134352824/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 61,
+    "side": "RIGHT",
+    "in_reply_to_id": 134322254,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 35,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134352864",
+    "pull_request_review_id": 57634031,
+    "id": 134352864,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDM1Mjg2NA==",
+    "diff_hunk": "@@ -632,6 +633,9 @@ export class Workbench implements IPartService {\n \t\tthis.toShutdown.push(this.quickOpen);\n \t\tserviceCollection.set(IQuickOpenService, this.quickOpen);\n \n+\t\t// cleidigh",
+    "path": "src/vs/workbench/electron-browser/workbench.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "cleidigh",
+      "id": 25272315,
+      "node_id": "MDQ6VXNlcjI1MjcyMzE1",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25272315?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/cleidigh",
+      "html_url": "https://github.com/cleidigh",
+      "followers_url": "https://api.github.com/users/cleidigh/followers",
+      "following_url": "https://api.github.com/users/cleidigh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/cleidigh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/cleidigh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/cleidigh/subscriptions",
+      "organizations_url": "https://api.github.com/users/cleidigh/orgs",
+      "repos_url": "https://api.github.com/users/cleidigh/repos",
+      "events_url": "https://api.github.com/users/cleidigh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/cleidigh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Done",
+    "created_at": "2017-08-21T23:17:27Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134352864",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134352864"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134352864"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134352864/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 636,
+    "side": "RIGHT",
+    "in_reply_to_id": 134322318,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134353155",
+    "pull_request_review_id": 57634336,
+    "id": 134353155,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDM1MzE1NQ==",
+    "diff_hunk": "@@ -21,13 +29,20 @@ const NLS_NEXT_MATCH_BTN_LABEL = nls.localize('label.nextMatchButton', \"Next mat\n const NLS_CLOSE_BTN_LABEL = nls.localize('label.closeButton', \"Close\");\n \n export abstract class SimpleFindWidget extends Widget {\n+\n \tprotected _findInput: FindInput;\n \tprotected _domNode: HTMLElement;\n \tprotected _isVisible: boolean;\n \tprotected _focusTracker: dom.IFocusTracker;\n+\tprotected _findInputFocusTracker: dom.IFocusTracker;\n+\tprotected _findInputFocused: IContextKey<boolean>;\n+\tprotected _findHistory: HistoryNavigator<string>;\n+\tprotected _updateHistoryDelayer: Delayer<void>;\n \n \tconstructor(\n \t\t@IContextViewService private _contextViewService: IContextViewService,\n+\t\t@IContextKeyService private _contextKeyService: IContextKeyService,\n+\t\t@ISimpleFindWidgetService private _simpleFindWidgetService: ISimpleFindWidgetService,\n \t\tprivate animate: boolean = true",
+    "path": "src/vs/editor/contrib/find/browser/simpleFindWidget.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "cleidigh",
+      "id": 25272315,
+      "node_id": "MDQ6VXNlcjI1MjcyMzE1",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25272315?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/cleidigh",
+      "html_url": "https://github.com/cleidigh",
+      "followers_url": "https://api.github.com/users/cleidigh/followers",
+      "following_url": "https://api.github.com/users/cleidigh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/cleidigh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/cleidigh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/cleidigh/subscriptions",
+      "organizations_url": "https://api.github.com/users/cleidigh/orgs",
+      "repos_url": "https://api.github.com/users/cleidigh/repos",
+      "events_url": "https://api.github.com/users/cleidigh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/cleidigh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Okay, will follow that convention\r\nDone",
+    "created_at": "2017-08-21T23:19:51Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134353155",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134353155"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134353155"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134353155/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 46,
+    "side": "RIGHT",
+    "in_reply_to_id": 134322706,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 36,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134353300",
+    "pull_request_review_id": 57634494,
+    "id": 134353300,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDM1MzMwMA==",
+    "diff_hunk": "@@ -167,6 +216,26 @@ export abstract class SimpleFindWidget extends Widget {\n \t\t\tthis._domNode.setAttribute('aria-hidden', 'true');\n \t\t}\n \t}\n+\n+\tpublic showNextFindTerm() {\n+\t\tlet next = this._findHistory.next();\n+\t\tif (next) {\n+\t\t\tthis._findInput.setValue(next);\n+\t\t}\n+\t}\n+\n+\tpublic showPreviousFindTerm() {\n+\t\tlet previous = this._findHistory.previous();\n+\t\tif (previous) {\n+\t\t\tthis._findInput.setValue(previous);\n+\t\t}\n+\t}\n+\n+\t// Allow subclass to provide find\n+\tpublic baseFind(previous: boolean) {",
+    "path": "src/vs/editor/contrib/find/browser/simpleFindWidget.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "cleidigh",
+      "id": 25272315,
+      "node_id": "MDQ6VXNlcjI1MjcyMzE1",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25272315?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/cleidigh",
+      "html_url": "https://github.com/cleidigh",
+      "followers_url": "https://api.github.com/users/cleidigh/followers",
+      "following_url": "https://api.github.com/users/cleidigh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/cleidigh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/cleidigh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/cleidigh/subscriptions",
+      "organizations_url": "https://api.github.com/users/cleidigh/orgs",
+      "repos_url": "https://api.github.com/users/cleidigh/repos",
+      "events_url": "https://api.github.com/users/cleidigh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/cleidigh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Mistaken thought that base class function was required.\r\nRemoved, tested.",
+    "created_at": "2017-08-21T23:21:05Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134353300",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134353300"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134353300"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134353300/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 235,
+    "side": "RIGHT",
+    "in_reply_to_id": 134322772,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 144,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134358385",
+    "pull_request_review_id": 57639887,
+    "id": 134358385,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDM1ODM4NQ==",
+    "diff_hunk": "@@ -0,0 +1,151 @@\n+/*---------------------------------------------------------------------------------------------\n+ *  Copyright (c) Microsoft Corporation. All rights reserved.\n+ *  Licensed under the MIT License. See License.txt in the project root for license information.\n+ *--------------------------------------------------------------------------------------------*/\n+\n+import { Command } from 'vs/editor/common/editorCommonExtensions';\n+import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';\n+import { KeyCode, KeyMod } from 'vs/base/common/keyCodes';\n+import { KeybindingsRegistry } from 'vs/platform/keybinding/common/keybindingsRegistry';\n+import { ISimpleFindWidgetService, KEYBINDING_CONTEXT_SIMPLE_FIND_WIDGET_ACTIVE } from 'vs/editor/contrib/find/browser/simpleFindWidgetService';\n+import { SimpleFindWidget, KEYBINDING_CONTEXT_SIMPLE_FIND_WIDGET_INPUT_FOCUSED } from 'vs/editor/contrib/find/browser/simpleFindWidget';\n+\n+export const SIMPLE_FIND_IDS = {\n+\tShowWidgetSimpleFindCommand: 'editor.action.simplefind.show',",
+    "path": "src/vs/editor/contrib/find/browser/simpleFindWidget.contribution.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "rebornix",
+      "id": 876920,
+      "node_id": "MDQ6VXNlcjg3NjkyMA==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/876920?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/rebornix",
+      "html_url": "https://github.com/rebornix",
+      "followers_url": "https://api.github.com/users/rebornix/followers",
+      "following_url": "https://api.github.com/users/rebornix/following{/other_user}",
+      "gists_url": "https://api.github.com/users/rebornix/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/rebornix/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/rebornix/subscriptions",
+      "organizations_url": "https://api.github.com/users/rebornix/orgs",
+      "repos_url": "https://api.github.com/users/rebornix/repos",
+      "events_url": "https://api.github.com/users/rebornix/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/rebornix/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Since it goes everywhere, let's not call it `editor.xyz`, maybe just `simplefind.show` or so.",
+    "created_at": "2017-08-22T00:02:56Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134358385",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134358385"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134358385"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134358385/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 14,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 14,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134362444",
+    "pull_request_review_id": 57644299,
+    "id": 134362444,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDEzNDM2MjQ0NA==",
+    "diff_hunk": "@@ -0,0 +1,151 @@\n+/*---------------------------------------------------------------------------------------------\n+ *  Copyright (c) Microsoft Corporation. All rights reserved.\n+ *  Licensed under the MIT License. See License.txt in the project root for license information.\n+ *--------------------------------------------------------------------------------------------*/\n+\n+import { Command } from 'vs/editor/common/editorCommonExtensions';\n+import { ServicesAccessor } from 'vs/platform/instantiation/common/instantiation';\n+import { KeyCode, KeyMod } from 'vs/base/common/keyCodes';\n+import { KeybindingsRegistry } from 'vs/platform/keybinding/common/keybindingsRegistry';\n+import { ISimpleFindWidgetService, KEYBINDING_CONTEXT_SIMPLE_FIND_WIDGET_ACTIVE } from 'vs/editor/contrib/find/browser/simpleFindWidgetService';\n+import { SimpleFindWidget, KEYBINDING_CONTEXT_SIMPLE_FIND_WIDGET_INPUT_FOCUSED } from 'vs/editor/contrib/find/browser/simpleFindWidget';\n+\n+export const SIMPLE_FIND_IDS = {\n+\tShowWidgetSimpleFindCommand: 'editor.action.simplefind.show',",
+    "path": "src/vs/editor/contrib/find/browser/simpleFindWidget.contribution.ts",
+    "commit_id": "bda04b866b0d0cc26c7ab7be795c882a59a3ca17",
+    "original_commit_id": "de1357faee5558c7ab82a5d4001588884230a22a",
+    "user": {
+      "login": "cleidigh",
+      "id": 25272315,
+      "node_id": "MDQ6VXNlcjI1MjcyMzE1",
+      "avatar_url": "https://avatars.githubusercontent.com/u/25272315?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/cleidigh",
+      "html_url": "https://github.com/cleidigh",
+      "followers_url": "https://api.github.com/users/cleidigh/followers",
+      "following_url": "https://api.github.com/users/cleidigh/following{/other_user}",
+      "gists_url": "https://api.github.com/users/cleidigh/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/cleidigh/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/cleidigh/subscriptions",
+      "organizations_url": "https://api.github.com/users/cleidigh/orgs",
+      "repos_url": "https://api.github.com/users/cleidigh/repos",
+      "events_url": "https://api.github.com/users/cleidigh/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/cleidigh/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "@rebornix \r\nThat's whythe comment musing about using 'workbench.XYZ'\r\nisn't that what represents global commands?\r\n\r\n",
+    "created_at": "2017-08-22T00:43:28Z",
+    "updated_at": "2017-08-25T23:07:20Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/32113#discussion_r134362444",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/32113",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134362444"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/32113#discussion_r134362444"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/32113"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/134362444/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 14,
+    "side": "RIGHT",
+    "in_reply_to_id": 134358385,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 14,
+    "position": 1,
+    "subject_type": "line"
+  }
+]

@@ -35,6 +35,20 @@ const codexCommand = (paths: ReturnType<typeof roots>, extra: string[] = []) => 
   "--json", ...extra, "-",
 ];
 
+const methodologyCodexCommand = (paths: ReturnType<typeof roots>) => [
+  "exec", "--ephemeral", "--ignore-user-config", "--ignore-rules",
+  "--config", "project_doc_max_bytes=0", "--config", "project_doc_fallback_filenames=[]",
+  "--config", 'projects."/workspace".trust_level="untrusted"',
+  "--disable", "shell_tool", "--disable", "unified_exec",
+  "--config", 'mcp_servers.source_read.url="http://host.docker.internal:43123/mcp/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"',
+  "--config", 'mcp_servers.source_read.enabled_tools=["list_tree","read_file","search_text"]',
+  "--strict-config", "--sandbox", "read-only", "--model", "gpt-5.6-sol",
+  "--config", 'model_reasoning_effort="high"', "--cd", paths.checkoutDir,
+  "--output-schema", join(paths.assetsDir, "schemas", "methodology-review.schema.json"),
+  "--output-last-message", join(paths.outputDir, "methodology-test", "stage-1.json"),
+  "--json", "--color", "never", "-",
+];
+
 test("API-key launch is immutable, no-pull, narrow, and passes only a credential name", () => {
   const paths = roots();
   process.env.OPENAI_API_KEY = "must-not-appear";
@@ -185,6 +199,39 @@ test("every Codex isolation flag is unique and value-bound", () => {
   const duplicateConfig = [...original];
   duplicateConfig.splice(duplicateConfig.indexOf(image), 0, "--config", "project_doc_max_bytes=0");
   assert.throws(() => parseContainedProviderArgs(duplicateConfig, "codex", "api-key"));
+});
+
+test("methodology profile admits only Sol-high with neutral MCP reads and no built-in shell", () => {
+  const paths = roots(); process.env.OPENAI_API_KEY = "x";
+  mkdirSync(join(paths.assetsDir, "schemas"));
+  mkdirSync(join(paths.outputDir, "methodology-test"));
+  const original = buildContainedProviderArgs(
+    { runner: "codex", providerAccess: "api-key", image, ...paths, profile: "methodology-review" },
+    "codex", methodologyCodexCommand(paths),
+    "peregrine-eval-00000000-0000-4000-8000-000000000007",
+  );
+  assert.equal(parseContainedProviderArgs(
+    original, "codex", "api-key", undefined, "methodology-review",
+  ).profile, "methodology-review");
+  assert.equal(original[original.indexOf("--add-host") + 1], "host.docker.internal:host-gateway");
+  for (const mutate of [
+    (args: string[]) => { args[args.indexOf("host.docker.internal:host-gateway")] = "host.docker.internal:1.2.3.4"; },
+    (args: string[]) => { args.splice(args.indexOf("--disable"), 2); },
+    (args: string[]) => { args[args.indexOf("gpt-5.6-sol")] = "gpt-5.6-luna"; },
+    (args: string[]) => {
+      const index = args.findIndex((value) => value.startsWith("mcp_servers.source_read.url="));
+      args[index] = 'mcp_servers.source_read.url="http://example.com/mcp/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"';
+    },
+    (args: string[]) => {
+      const index = args.findIndex((value) => value.startsWith("mcp_servers.source_read.enabled_tools="));
+      args[index] = 'mcp_servers.source_read.enabled_tools=["list_tree","read_file","search_text","shell"]';
+    },
+  ]) {
+    const changed = [...original]; mutate(changed);
+    assert.throws(() => parseContainedProviderArgs(
+      changed, "codex", "api-key", undefined, "methodology-review",
+    ));
+  }
 });
 
 test("timed-out provider containers are force-removed and checked for survivors", async () => {

@@ -1,0 +1,141 @@
+[
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/157606869",
+    "pull_request_review_id": 84277317,
+    "id": 157606869,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1NzYwNjg2OQ==",
+    "diff_hunk": "@@ -81,7 +88,7 @@ class WebpackOptionsDefaulter extends OptionsDefaulter {\n \t\t\treturn options.output.library || \"\";\n \t\t});\n \t\tthis.set(\"output.libraryTarget\", \"var\");\n-\t\tthis.set(\"output.path\", process.cwd());\n+\t\tthis.set(\"output.path\", path.join(process.cwd(), \"dist\"));",
+    "path": "lib/WebpackOptionsDefaulter.js",
+    "commit_id": "002f45ae72a9fa4ca10670765d47a4545427f906",
+    "original_commit_id": "5e8700f5c5090ca3f1087a108066d74212c920de",
+    "user": {
+      "login": "sokra",
+      "id": 1365881,
+      "node_id": "MDQ6VXNlcjEzNjU4ODE=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/1365881?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/sokra",
+      "html_url": "https://github.com/sokra",
+      "followers_url": "https://api.github.com/users/sokra/followers",
+      "following_url": "https://api.github.com/users/sokra/following{/other_user}",
+      "gists_url": "https://api.github.com/users/sokra/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/sokra/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/sokra/subscriptions",
+      "organizations_url": "https://api.github.com/users/sokra/orgs",
+      "repos_url": "https://api.github.com/users/sokra/repos",
+      "events_url": "https://api.github.com/users/sokra/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/sokra/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This would mean\r\n\r\n``` js\r\noutput: {\r\n  filename: \"bundle.js\"\r\n}\r\n```\r\n\r\nwill write to `./dist/bundle.js`.\r\n\r\nIs this expected?",
+    "created_at": "2017-12-18T21:34:49Z",
+    "updated_at": "2018-01-03T15:43:38Z",
+    "html_url": "https://github.com/webpack/webpack/pull/6140#discussion_r157606869",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/6140",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/157606869"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/6140#discussion_r157606869"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/6140"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/157606869/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 117,
+    "original_line": 91,
+    "side": "RIGHT",
+    "author_association": "MEMBER",
+    "original_position": 32,
+    "position": 97,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/157610730",
+    "pull_request_review_id": 84281912,
+    "id": 157610730,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDE1NzYxMDczMA==",
+    "diff_hunk": "@@ -81,7 +88,7 @@ class WebpackOptionsDefaulter extends OptionsDefaulter {\n \t\t\treturn options.output.library || \"\";\n \t\t});\n \t\tthis.set(\"output.libraryTarget\", \"var\");\n-\t\tthis.set(\"output.path\", process.cwd());\n+\t\tthis.set(\"output.path\", path.join(process.cwd(), \"dist\"));",
+    "path": "lib/WebpackOptionsDefaulter.js",
+    "commit_id": "002f45ae72a9fa4ca10670765d47a4545427f906",
+    "original_commit_id": "5e8700f5c5090ca3f1087a108066d74212c920de",
+    "user": {
+      "login": "TheLarkInn",
+      "id": 3408176,
+      "node_id": "MDQ6VXNlcjM0MDgxNzY=",
+      "avatar_url": "https://avatars.githubusercontent.com/u/3408176?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/TheLarkInn",
+      "html_url": "https://github.com/TheLarkInn",
+      "followers_url": "https://api.github.com/users/TheLarkInn/followers",
+      "following_url": "https://api.github.com/users/TheLarkInn/following{/other_user}",
+      "gists_url": "https://api.github.com/users/TheLarkInn/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/TheLarkInn/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/TheLarkInn/subscriptions",
+      "organizations_url": "https://api.github.com/users/TheLarkInn/orgs",
+      "repos_url": "https://api.github.com/users/TheLarkInn/repos",
+      "events_url": "https://api.github.com/users/TheLarkInn/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/TheLarkInn/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": true
+    },
+    "body": "Yes definitely. Although I don't have stats yet to back this up. I'd say this is a pretty common pattern from seeing eall the diff examples etc. ",
+    "created_at": "2017-12-18T21:51:59Z",
+    "updated_at": "2018-01-03T15:43:38Z",
+    "html_url": "https://github.com/webpack/webpack/pull/6140#discussion_r157610730",
+    "pull_request_url": "https://api.github.com/repos/webpack/webpack/pulls/6140",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/comments/157610730"
+      },
+      "html": {
+        "href": "https://github.com/webpack/webpack/pull/6140#discussion_r157610730"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/webpack/webpack/pulls/6140"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/webpack/webpack/pulls/comments/157610730/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": 117,
+    "original_line": 91,
+    "side": "RIGHT",
+    "in_reply_to_id": 157606869,
+    "author_association": "MEMBER",
+    "original_position": 32,
+    "position": 97,
+    "subject_type": "line"
+  }
+]

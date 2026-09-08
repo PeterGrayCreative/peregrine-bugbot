@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/microsoft/vscode/pulls/106448/comments",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:50:59.816Z",
+  "sourceUrl": "https://api.github.com/repos/microsoft/vscode/pulls/106448/comments?page=1&per_page=100",
+  "sha256": "e33f4bebd2fe706d42cbc8321c512147c00332e36fb0f6f2ade6a74e17cbb223",
+  "bytes": 56330
+}

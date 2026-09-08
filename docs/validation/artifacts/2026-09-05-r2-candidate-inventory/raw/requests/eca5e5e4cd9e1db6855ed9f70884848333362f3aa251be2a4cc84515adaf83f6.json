@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/webpack/webpack/pulls/7210/files",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:56:25.999Z",
+  "sourceUrl": "https://api.github.com/repos/webpack/webpack/pulls/7210/files?page=1&per_page=100",
+  "sha256": "0ac5ddd0b2ef8b67bd30fecdfe9fb6fdda8725d0193951f24b21773fb89aa4c8",
+  "bytes": 1211
+}

@@ -1,0 +1,1 @@
+{"ready":true,"endpoint":"http://review-tools:3099/mcp/5926c93ec7df9b3ed45d9ad5d17b6d1ae976fee480b655f5b9397a783aa7386b","sourceWriteDenied":true,"clientCanaryAbsent":true,"noIpv4DefaultRoute":true,"testedOutboundTcpDenied":true,"node":"v22.22.1"}

@@ -1,0 +1,732 @@
+diff --git a/packages/next-server/lib/utils.ts b/packages/next-server/lib/utils.ts
+index c65c7a5afd8d3f288086a1b4d818a9a0a1aa8997..21177234df41d03d07e9afb39df74c1c57e4c5fa 100644
+--- a/packages/next-server/lib/utils.ts
++++ b/packages/next-server/lib/utils.ts
+@@ -137,9 +137,47 @@ export type DocumentProps = DocumentInitialProps & {
+ }
+ 
+ /**
+- * Utils
++ * Next `API` route request
++ */
++export type NextApiRequest = IncomingMessage & {
++  /**
++   * Object of `query` values from url
++   */
++  query: {
++    [key: string]: string | string[],
++  }
++  /**
++   * Object of `cookies` from header
++   */
++  cookies: {
++    [key: string]: string,
++  },
++
++  body: any,
++}
++
++/**
++ * Send body of response
+  */
++type Send = (statusCode: number, body: any) => void
+ 
++/**
++ * Next `API` route response
++ */
++export type NextApiResponse = ServerResponse & {
++  /**
++   * Send data `any` data in reponse
++   */
++  send: Send,
++  /**
++   * Send data `json` data in reponse
++   */
++  json: Send,
++}
++
++/**
++ * Utils
++ */
+ export function execOnce(this: any, fn: () => any) {
+   let used = false
+   return (...args: any) => {
+diff --git a/packages/next-server/package.json b/packages/next-server/package.json
+index 2cefa9e9398e53fc311fb2dc5342c8746e92bfa5..b2e4757b162558549cbe716b6c869c9fd3b9c209 100644
+--- a/packages/next-server/package.json
++++ b/packages/next-server/package.json
+@@ -39,11 +39,13 @@
+   },
+   "dependencies": {
+     "amp-toolbox-optimizer": "0.5.3",
++    "cookie": "0.4.0",
+     "etag": "1.8.1",
+     "find-up": "4.0.0",
+     "fresh": "0.5.2",
+     "path-to-regexp": "2.1.0",
+     "prop-types": "15.7.2",
++    "raw-body": "2.4.0",
+     "react-is": "16.8.6",
+     "react-ssr-prepass": "1.0.5",
+     "send": "0.16.1",
+@@ -56,6 +58,7 @@
+   "devDependencies": {
+     "@taskr/clear": "1.1.0",
+     "@taskr/watch": "1.1.0",
++    "@types/cookie": "0.3.2",
+     "@types/react": "16.8.18",
+     "@types/react-dom": "16.8.4",
+     "@types/react-is": "16.7.1",
+diff --git a/packages/next-server/server/api-utils.ts b/packages/next-server/server/api-utils.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..860aaa130bacac47e646d3ebfa2502dad92a4dd9
+--- /dev/null
++++ b/packages/next-server/server/api-utils.ts
+@@ -0,0 +1,169 @@
++import { IncomingMessage } from 'http'
++import { NextApiResponse, NextApiRequest } from '../lib/utils'
++import { Stream } from 'stream'
++import getRawBody from 'raw-body'
++import { URL } from 'url'
++
++/**
++ * Parse incoming message like `json` or `urlencoded`
++ * @param req
++ */
++export async function parseBody(req: NextApiRequest) {
++  const type = req.headers['content-type'] || 'text/plain'
++  const encoding = getCharset(type)
++
++  const buffer = await getRawBody(req, { encoding })
++
++  const body = buffer.toString()
++
++  if (type.startsWith('application/json')) {
++    return parseJson(body)
++  } else if (type.startsWith('application/x-www-form-urlencoded')) {
++    const qs = require('querystring')
++    return qs.decode(body)
++  } else {
++    return body
++  }
++}
++
++/**
++ * Parse `JSON` and handles invalid `JSON` strings
++ * @param str `JSON` string
++ */
++function parseJson(str: string) {
++  try {
++    return JSON.parse(str)
++  } catch (e) {
++    throw new ApiError(400, 'Invalid JSON')
++  }
++}
++
++/**
++ * Parsing query arguments from request `url` string
++ * @param url of request
++ * @returns Object with key name of query argument and its value
++ */
++export function parseQuery({ url, headers }: IncomingMessage) {
++  if (url) {
++      const params = new URL(`${headers.host}${url}`).searchParams
++
++      return reduceParams(params.entries())
++  } else {
++    return {}
++  }
++}
++
++/**
++ * Send `any` body to response
++ * @param res response object
++ * @param statusCode `HTTP` status code of response
++ * @param body of response
++ */
++export function sendData(res: NextApiResponse, statusCode: number, body: any) {
++  res.statusCode = statusCode
++
++  if (body === null) {
++    res.end()
++    return
++  }
++
++  const contentType = res.getHeader('Content-Type')
++
++  if (Buffer.isBuffer(body)) {
++    if (!contentType) {
++      res.setHeader('Content-Type', 'application/octet-stream')
++    }
++    res.setHeader('Content-Length', body.length)
++    res.end(body)
++    return
++  }
++
++  if (body instanceof Stream) {
++    if (!contentType) {
++      res.setHeader('Content-Type', 'application/octet-stream')
++    }
++    body.pipe(res)
++    return
++  }
++
++  let str = body
++
++  // Stringify JSON body
++  if (typeof body === 'object' || typeof body === 'number') {
++    str = JSON.stringify(body)
++    res.setHeader('Content-Type', 'application/json; charset=utf-8')
++  }
++
++  res.setHeader('Content-Length', Buffer.byteLength(str))
++  res.end(str)
++}
++
++/**
++ * Send `JSON` object
++ * @param res response object
++ * @param statusCode `HTTP` status code of response
++ * @param jsonBody of data
++ */
++export function sendJson(
++  res: NextApiResponse,
++  statusCode: number,
++  jsonBody: any,
++): void {
++  // Set header to application/json
++  res.setHeader('Content-Type', 'application/json; charset=utf-8')
++
++  // Use send to handle request
++  res.send(statusCode, jsonBody)
++}
++
++function reduceParams(params: IterableIterator<[string, string]>) {
++  const obj: any = {}
++  for (const [key, value] of params) {
++    obj[key] = value
++  }
++  return obj
++}
++
++/**
++ * Parse `charset` from `content-type`
++ * @param contentType string
++ */
++function getCharset(contentType: string) {
++  const arr = contentType.split(';')
++  const index = arr.findIndex((value) => value.startsWith('charset'))
++
++  if (index > -1) {
++    // Removes `charset=`
++    return arr[index].slice(7)
++  } else {
++    return 'utf-8'
++  }
++}
++
++/**
++ * Custom error class
++ */
++export class ApiError extends Error {
++  readonly statusCode: number
++
++  constructor(statusCode: number, message: string) {
++    super(message)
++    this.statusCode = statusCode
++  }
++}
++
++/**
++ * Sends error in `response`
++ * @param res response object
++ * @param statusCode of response
++ * @param message of response
++ */
++export function sendError(
++  res: NextApiResponse,
++  statusCode: number,
++  message: string,
++) {
++  res.statusCode = statusCode
++  res.statusMessage = message
++  res.end()
++}
+diff --git a/packages/next-server/server/next-server.ts b/packages/next-server/server/next-server.ts
+index 8b42ca5e13437fbf3beaf9c79be40277950fc971..be4c90e202fdd2340dd9ba69c2d9ada63808bd4a 100644
+--- a/packages/next-server/server/next-server.ts
++++ b/packages/next-server/server/next-server.ts
+@@ -17,6 +17,16 @@ import {
+ } from '../lib/constants'
+ import { getRouteMatch } from '../lib/router/utils'
+ import * as envConfig from '../lib/runtime-config'
++import { NextApiRequest, NextApiResponse } from '../lib/utils'
++import { parse as parseCookies } from 'cookie'
++import {
++  parseQuery,
++  sendJson,
++  sendData,
++  parseBody,
++  sendError,
++  ApiError,
++} from './api-utils'
+ import loadConfig from './config'
+ import { recursiveReadDirSync } from './lib/recursive-readdir-sync'
+ import {
+@@ -211,7 +221,11 @@ export default class Server {
+         match: route('/api/:path*'),
+         fn: async (req, res, params, parsedUrl) => {
+           const { pathname } = parsedUrl
+-          await this.handleApiRequest(req, res, pathname!)
++          await this.handleApiRequest(
++            req as NextApiRequest,
++            res as NextApiResponse,
++            pathname!,
++          )
+         },
+       },
+     ]
+@@ -252,8 +266,8 @@ export default class Server {
+    * @param pathname path of request
+    */
+   private async handleApiRequest(
+-    req: IncomingMessage,
+-    res: ServerResponse,
++    req: NextApiRequest,
++    res: NextApiResponse,
+     pathname: string,
+   ) {
+     const resolverFunction = await this.resolveApiRequest(pathname)
+@@ -263,8 +277,25 @@ export default class Server {
+       return
+     }
+ 
+-    const resolver = interopDefault(require(resolverFunction))
+-    resolver(req, res)
++    try {
++      // Parsing of cookies
++      req.cookies = parseCookies(req.headers.cookie || '')
++      // Parsing query string
++      req.query = parseQuery(req)
++      // // Parsing of body
++      req.body = await parseBody(req)
++      res.send = (statusCode, data) => sendData(res, statusCode, data)
++      res.json = (statusCode, data) => sendJson(res, statusCode, data)
++
++      const resolver = interopDefault(require(resolverFunction))
++      resolver(req, res)
++    } catch (e) {
++      if (e instanceof ApiError) {
++        sendError(res, e.statusCode, e.message)
++      } else {
++        sendError(res, 500, e.message)
++      }
++    }
+   }
+ 
+   /**
+diff --git a/packages/next/server/on-demand-entry-handler.js b/packages/next/server/on-demand-entry-handler.js
+index 44ef9cd7cad170ac1acd51e6578fc9543fd3abcd..2f56bbde6cfe113cf8d6b56a464776de3979e9d9 100644
+--- a/packages/next/server/on-demand-entry-handler.js
++++ b/packages/next/server/on-demand-entry-handler.js
+@@ -52,6 +52,9 @@ export default function onDemandEntryHandler (devMiddleware, multiCompiler, {
+       invalidator.startBuilding()
+ 
+       const allEntries = Object.keys(entries).map(async (page) => {
++        if (compiler.name === 'client' && page.startsWith('/api')) {
++          return
++        }
+         const { name, absolutePagePath } = entries[page]
+         const pageExists = await isWriteable(absolutePagePath)
+         if (!pageExists) {
+@@ -69,31 +72,30 @@ export default function onDemandEntryHandler (devMiddleware, multiCompiler, {
+     })
+   }
+ 
+-  multiCompiler.hooks.done.tap('NextJsOnDemandEntries', (multiStats) => {
+-    const clientStats = multiStats.stats[0]
+-    const { compilation } = clientStats
+-    const hardFailedPages = compilation.errors
+-      .filter(e => {
+-        // Make sure to only pick errors which marked with missing modules
+-        const hasNoModuleFoundError = /ENOENT/.test(e.message) || /Module not found/.test(e.message)
+-        if (!hasNoModuleFoundError) return false
+-
+-        // The page itself is missing. So this is a failed page.
+-        if (IS_BUNDLED_PAGE_REGEX.test(e.module.name)) return true
+-
+-        // No dependencies means this is a top level page.
+-        // So this is a failed page.
+-        return e.module.dependencies.length === 0
+-      })
++  function findHardFailedPages (errors) {
++    return errors.filter(e => {
++      // Make sure to only pick errors which marked with missing modules
++      const hasNoModuleFoundError = /ENOENT/.test(e.message) || /Module not found/.test(e.message)
++      if (!hasNoModuleFoundError) return false
++
++      // The page itself is missing. So this is a failed page.
++      if (IS_BUNDLED_PAGE_REGEX.test(e.module.name)) return true
++
++      // No dependencies means this is a top level page.
++      // So this is a failed page.
++      return e.module.dependencies.length === 0
++    })
+       .map(e => e.module.chunks)
+       .reduce((a, b) => [...a, ...b], [])
+       .map(c => {
+         const pageName = ROUTE_NAME_REGEX.exec(c.name)[1]
+         return normalizePage(`/${pageName}`)
+       })
++  }
+ 
+-    // compilation.entrypoints is a Map object, so iterating over it 0 is the key and 1 is the value
+-    for (const [, entrypoint] of compilation.entrypoints.entries()) {
++  function getPagePathsFromEntrypoints (entrypoints) {
++    const pagePaths = []
++    for (const [, entrypoint] of entrypoints.entries()) {
+       const result = ROUTE_NAME_REGEX.exec(entrypoint.name)
+       if (!result) {
+         continue
+@@ -105,6 +107,19 @@ export default function onDemandEntryHandler (devMiddleware, multiCompiler, {
+         continue
+       }
+ 
++      pagePaths.push(pagePath)
++    }
++
++    return pagePaths
++  }
++
++  multiCompiler.hooks.done.tap('NextJsOnDemandEntries', (multiStats) => {
++    const [clientStats, serverStats] = multiStats.stats
++    const hardFailedPages = [...new Set([...findHardFailedPages(clientStats.compilation.errors), ...findHardFailedPages(serverStats.compilation.errors)])]
++    const pagePaths = new Set([...getPagePathsFromEntrypoints(clientStats.compilation.entrypoints), ...(getPagePathsFromEntrypoints(serverStats.compilation.entrypoints))])
++
++    // compilation.entrypoints is a Map object, so iterating over it 0 is the key and 1 is the value
++    for (const pagePath of pagePaths) {
+       const page = normalizePage('/' + pagePath)
+ 
+       const entry = entries[page]
+diff --git a/packages/next/types/index.d.ts b/packages/next/types/index.d.ts
+index e52c03029113b9651eceacf68e3ff28820585477..2f9cdd6679f06976a11fc97b2d4ec83709d965ef 100644
+--- a/packages/next/types/index.d.ts
++++ b/packages/next/types/index.d.ts
+@@ -1,5 +1,5 @@
+ import React from 'react'
+-import { NextPageContext, NextComponentType } from 'next-server/dist/lib/utils';
++import { NextPageContext, NextComponentType, NextApiResponse, NextApiRequest } from 'next-server/dist/lib/utils'
+ 
+ /// <reference types="node" />
+ /// <reference types="react" />
+@@ -38,4 +38,4 @@ export type NextPage<P = {}> = {
+   getInitialProps?(ctx: NextPageContext): Promise<P>
+ }
+ 
+-export { NextPageContext, NextComponentType }
++export { NextPageContext, NextComponentType, NextApiResponse, NextApiRequest }
+diff --git a/test/integration/api-support/pages/api/cookies.js b/test/integration/api-support/pages/api/cookies.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..9dcf94298a8c8995ebeb548db33501e692b78fb3
+--- /dev/null
++++ b/test/integration/api-support/pages/api/cookies.js
+@@ -0,0 +1,3 @@
++export default (req, res) => {
++  res.send(200, req.cookies)
++}
+diff --git a/test/integration/api-support/pages/api/error.js b/test/integration/api-support/pages/api/error.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..d10aa5035c388c01da77bea193f093462fa57b30
+--- /dev/null
++++ b/test/integration/api-support/pages/api/error.js
+@@ -0,0 +1,3 @@
++export default (req, res) => {
++  res.json(500, { error: 'Server error!' })
++}
+diff --git a/test/integration/api-support/pages/api/parse/index.js b/test/integration/api-support/pages/api/parse/index.js
+new file mode 100644
+index 0000000000000000000000000000000000000000..6d0c828bd3a07335b94e4f17e330ecab6aaea5e8
+--- /dev/null
++++ b/test/integration/api-support/pages/api/parse/index.js
+@@ -0,0 +1,3 @@
++export default (req, res) => {
++  res.json(200, req.body)
++}
+diff --git a/test/integration/api-support/pages/api/posts/index.js b/test/integration/api-support/pages/api/posts/index.js
+index 85f827c2e83539a905cd7c8f810c0389aca2b995..7edc5d72faa6781f4c6ba94a13dbf6383abfff57 100644
+--- a/test/integration/api-support/pages/api/posts/index.js
++++ b/test/integration/api-support/pages/api/posts/index.js
+@@ -1,14 +1,7 @@
+-import url from 'url'
+-
+-export default (req, res) => {
+-  res.writeHead(200, { 'Content-Type': 'application/json' })
+-
+-  if (req.method === 'POST') {
+-    const { query } = url.parse(req.url, true)
+-    const json = JSON.stringify([{ title: query.title }])
+-    res.end(json)
++export default ({ query, method }, res) => {
++  if (method === 'POST') {
++    res.json(200, [{ title: query.title }])
+   } else {
+-    const json = JSON.stringify([{ title: 'Cool Post!' }])
+-    res.end(json)
++    res.json(200, [{ title: 'Cool Post!' }])
+   }
+ }
+diff --git a/test/integration/api-support/pages/api/users.js b/test/integration/api-support/pages/api/users.js
+index d304e25642b3f575500991f9c09089fd7413f003..dcd861393132d7de1ccb18ea7c7327ddc28fee0e 100644
+--- a/test/integration/api-support/pages/api/users.js
++++ b/test/integration/api-support/pages/api/users.js
+@@ -1,15 +1,9 @@
+-import url from 'url'
+-
+-export default (req, res) => {
+-  res.writeHead(200, { 'Content-Type': 'application/json' })
+-
+-  const { query } = url.parse(req.url, true)
+-
++export default ({ query }, res) => {
+   const users = [{ name: 'Tim' }, { name: 'Jon' }]
+ 
+-  const response =
+-    query && query.name ? users.filter(user => user.name === query.name) : users
++  const response = query.name
++    ? users.filter(user => user.name === query.name)
++    : users
+ 
+-  const json = JSON.stringify(response)
+-  res.end(json)
++  res.json(200, response)
+ }
+diff --git a/test/integration/api-support/pages/user.js b/test/integration/api-support/pages/user.js
+index 6846de76a7d7c50c28bfefd034a39fba851326fa..bf869b17ad7be736fc02fdfa4ec0bb367f3bff01 100644
+--- a/test/integration/api-support/pages/user.js
++++ b/test/integration/api-support/pages/user.js
+@@ -1 +1 @@
+-export default () => <div>API - support</div>
++export default () => <div>User</div>
+diff --git a/test/integration/api-support/test/index.test.js b/test/integration/api-support/test/index.test.js
+index d1249e1646195669195593b86f0570c1e55d6878..f86b2a5075cf6e4b83eaf3a8001ac4f0b9f3ebef 100644
+--- a/test/integration/api-support/test/index.test.js
++++ b/test/integration/api-support/test/index.test.js
+@@ -1,13 +1,7 @@
+ /* eslint-env jest */
+ /* global jasmine */
+ import { join } from 'path'
+-import {
+-  killApp,
+-  findPort,
+-  launchApp,
+-  fetchViaHTTP
+-  // renderViaHTTP,
+-} from 'next-test-utils'
++import { killApp, findPort, launchApp, fetchViaHTTP } from 'next-test-utils'
+ 
+ const appDir = join(__dirname, '../')
+ let appPort
+@@ -21,12 +15,12 @@ describe('API support', () => {
+   })
+   afterAll(() => killApp(server))
+ 
+-  it('API request to undefined path', async () => {
++  it('should return 404 for undefined path', async () => {
+     const { status } = await fetchViaHTTP(appPort, '/api/unexisting', null, {})
+     expect(status).toEqual(404)
+   })
+ 
+-  it('API request to list of users', async () => {
++  it('should return JSON of unfiltered users', async () => {
+     const data = await fetchViaHTTP(appPort, '/api/users', null, {}).then(
+       res => res.ok && res.json()
+     )
+@@ -34,7 +28,7 @@ describe('API support', () => {
+     expect(data).toEqual([{ name: 'Tim' }, { name: 'Jon' }])
+   })
+ 
+-  it('API request to list of users with query parameter', async () => {
++  it('should return JSON list of filtered users', async () => {
+     const data = await fetchViaHTTP(
+       appPort,
+       '/api/users?name=Tim',
+@@ -45,7 +39,7 @@ describe('API support', () => {
+     expect(data).toEqual([{ name: 'Tim' }])
+   })
+ 
+-  it('API request to nested posts', async () => {
++  it('should return JSON for nested API endpoints', async () => {
+     const data = await fetchViaHTTP(appPort, '/api/posts', null, {}).then(
+       res => res.ok && res.json()
+     )
+@@ -53,7 +47,7 @@ describe('API support', () => {
+     expect(data).toEqual([{ title: 'Cool Post!' }])
+   })
+ 
+-  it('Post on pages', async () => {
++  it('should return 404 on POST on pages', async () => {
+     const data = await fetchViaHTTP(appPort, '/users', null, {
+       method: 'POST'
+     }).then(res => res.status)
+@@ -61,11 +55,85 @@ describe('API support', () => {
+     expect(data).toEqual(404)
+   })
+ 
+-  it('API post on route', async () => {
++  it('should return JSON on post on API', async () => {
+     const data = await fetchViaHTTP(appPort, '/api/posts?title=Nextjs', null, {
+       method: 'POST'
+     }).then(res => res.ok && res.json())
+ 
+     expect(data).toEqual([{ title: 'Nextjs' }])
+   })
++
++  it('should parse JSON body', async () => {
++    const data = await fetchViaHTTP(appPort, '/api/parse', null, {
++      method: 'POST',
++      headers: {
++        'Content-Type': 'application/json; charset=utf-8'
++      },
++      body: JSON.stringify([{ title: 'Nextjs' }])
++    }).then(res => res.ok && res.json())
++
++    expect(data).toEqual([{ title: 'Nextjs' }])
++  })
++
++  it('shuld return error with invalid JSON', async () => {
++    const data = await fetchViaHTTP(appPort, '/api/parse', null, {
++      method: 'POST',
++      headers: {
++        'Content-Type': 'application/json; charset=utf-8'
++      },
++      body: `{"message":Invalid"}`
++    })
++    expect(data.status).toEqual(400)
++    expect(data.statusText).toEqual('Invalid JSON')
++  })
++
++  it('should parse urlencoded body', async () => {
++    const body = {
++      title: 'Nextjs',
++      description: 'The React Framework for Production'
++    }
++
++    const formBody = Object.keys(body)
++      .map(key => {
++        return `${encodeURIComponent(key)}=${encodeURIComponent(body[key])}`
++      })
++      .join('&')
++
++    const data = await fetchViaHTTP(appPort, '/api/parse', null, {
++      method: 'POST',
++      headers: {
++        'Content-Type': 'application/x-www-form-urlencoded'
++      },
++      body: formBody
++    }).then(res => res.ok && res.json())
++
++    expect(data).toEqual({
++      title: 'Nextjs',
++      description: 'The React Framework for Production'
++    })
++  })
++
++  it('should return custom error', async () => {
++    const data = await fetchViaHTTP(appPort, '/api/error', null, {})
++    const json = await data.json()
++
++    expect(data.status).toEqual(500)
++    expect(json).toEqual({ error: 'Server error!' })
++  })
++
++  it('should return empty cookies object', async () => {
++    const data = await fetchViaHTTP(appPort, '/api/cookies', null, {}).then(
++      res => res.ok && res.json()
++    )
++    expect(data).toEqual({})
++  })
++
++  it('should return cookies object', async () => {
++    const data = await fetchViaHTTP(appPort, '/api/cookies', null, {
++      headers: {
++        Cookie: 'nextjs=cool;'
++      }
++    }).then(res => res.ok && res.json())
++    expect(data).toEqual({ nextjs: 'cool' })
++  })
+ })
+diff --git a/yarn.lock b/yarn.lock
+index 4e56f0bc6f1f026ceed5e08f8f8cce441ff49b86..1f3c4301f47d5bf162d0bc8692054e88d21ca599 100644
+--- a/yarn.lock
++++ b/yarn.lock
+@@ -1788,6 +1788,11 @@
+   dependencies:
+     "@babel/types" "^7.3.0"
+ 
++"@types/cookie@0.3.2":
++  version "0.3.2"
++  resolved "https://registry.yarnpkg.com/@types/cookie/-/cookie-0.3.2.tgz#453f4b14b25da6a8ea4494842dedcbf0151deef9"
++  integrity sha512-aHQA072E10/8iUQsPH7mQU/KUyQBZAGzTVRCUvnSz8mSvbrYsP4xEO2RSA0Pjltolzi0j8+8ixrm//Hr4umPzw==
++
+ "@types/cross-spawn@6.0.0":
+   version "6.0.0"
+   resolved "https://registry.yarnpkg.com/@types/cross-spawn/-/cross-spawn-6.0.0.tgz#320aaf1d1a12979f1b84fe7a5590a7e860bf3a80"
+@@ -3175,6 +3180,11 @@ bytes@3.1.0:
+   resolved "https://registry.yarnpkg.com/bytes/-/bytes-3.1.0.tgz#f6cf7933a360e0588fa9fde85651cdc7f805d1f6"
+   integrity sha512-zauLjrfCG+xvoyaqLoV8bLVXXNGC4JqlxFCutSDWA6fJrTo2ZuvLYTqZ7aHBLZSMOopbzwv8f+wZcVzfVTI2Dg==
+ 
++bytes@3.1.0:
++  version "3.1.0"
++  resolved "https://registry.yarnpkg.com/bytes/-/bytes-3.1.0.tgz#f6cf7933a360e0588fa9fde85651cdc7f805d1f6"
++  integrity sha512-zauLjrfCG+xvoyaqLoV8bLVXXNGC4JqlxFCutSDWA6fJrTo2ZuvLYTqZ7aHBLZSMOopbzwv8f+wZcVzfVTI2Dg==
++
+ cacache@^11.0.1, cacache@^11.3.2:
+   version "11.3.2"
+   resolved "https://registry.yarnpkg.com/cacache/-/cacache-11.3.2.tgz#2d81e308e3d258ca38125b676b98b2ac9ce69bfa"
+@@ -3935,6 +3945,11 @@ cookie@0.4.0:
+   resolved "https://registry.yarnpkg.com/cookie/-/cookie-0.4.0.tgz#beb437e7022b3b6d49019d088665303ebe9c14ba"
+   integrity sha512-+Hp8fLp57wnUSt0tY0tHEXh4voZRDnoIrZPqlo3DPiI4y9lwg/jqx+1Om94/W6ZaPDOUbnjOt/99w66zk+l1Xg==
+ 
++cookie@0.4.0:
++  version "0.4.0"
++  resolved "https://registry.yarnpkg.com/cookie/-/cookie-0.4.0.tgz#beb437e7022b3b6d49019d088665303ebe9c14ba"
++  integrity sha512-+Hp8fLp57wnUSt0tY0tHEXh4voZRDnoIrZPqlo3DPiI4y9lwg/jqx+1Om94/W6ZaPDOUbnjOt/99w66zk+l1Xg==
++
+ copy-concurrently@^1.0.0:
+   version "1.0.5"
+   resolved "https://registry.yarnpkg.com/copy-concurrently/-/copy-concurrently-1.0.5.tgz#92297398cae34937fcafd6ec8139c18051f0b5e0"
+@@ -6442,6 +6457,17 @@ http-errors@~1.6.2:
+     setprototypeof "1.1.0"
+     statuses ">= 1.4.0 < 2"
+ 
++http-errors@1.7.2:
++  version "1.7.2"
++  resolved "https://registry.yarnpkg.com/http-errors/-/http-errors-1.7.2.tgz#4f5029cf13239f31036e5b2e55292bcfbcc85c8f"
++  integrity sha512-uUQBt3H/cSIVfch6i1EuPNy/YsRSOUBXTVfZ+yR7Zjez3qjBz6i9+i4zjNaoqcoFVI4lQJ5plg63TvGfRSDCRg==
++  dependencies:
++    depd "~1.1.2"
++    inherits "2.0.3"
++    setprototypeof "1.1.1"
++    statuses ">= 1.5.0 < 2"
++    toidentifier "1.0.0"
++
+ http-proxy-agent@^2.1.0:
+   version "2.1.0"
+   resolved "https://registry.yarnpkg.com/http-proxy-agent/-/http-proxy-agent-2.1.0.tgz#e4821beef5b2142a2026bd73926fe537631c5405"
+@@ -10526,6 +10552,16 @@ raw-body@2.4.0:
+     iconv-lite "0.4.24"
+     unpipe "1.0.0"
+ 
++raw-body@2.4.0:
++  version "2.4.0"
++  resolved "https://registry.yarnpkg.com/raw-body/-/raw-body-2.4.0.tgz#a1ce6fb9c9bc356ca52e89256ab59059e13d0332"
++  integrity sha512-4Oz8DUIwdvoa5qMJelxipzi/iJIi40O5cGV1wNYp5hvZP8ZN0T+jiNkL0QepXs+EsQ9XJ8ipEDoiH70ySUJP3Q==
++  dependencies:
++    bytes "3.1.0"
++    http-errors "1.7.2"
++    iconv-lite "0.4.24"
++    unpipe "1.0.0"
++
+ rc@^1.0.1, rc@^1.1.6, rc@^1.2.7:
+   version "1.2.8"
+   resolved "https://registry.yarnpkg.com/rc/-/rc-1.2.8.tgz#cd924bf5200a075b83c188cd6b9e211b7fc0d3ed"

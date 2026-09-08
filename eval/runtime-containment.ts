@@ -37,8 +37,8 @@ export interface ContainedProviderOptions {
   outputDir: string;
   image?: string;
   run?: typeof exec;
-  /** Review launches retain the broad evaluator allowlist; judge launches use an exact command profile. */
-  profile?: "review" | "semantic-judge";
+  /** Methodology and judge launches use narrower command profiles than legacy reviews. */
+  profile?: "review" | "methodology-review" | "semantic-judge";
 }
 
 export interface ParsedContainedLaunch {
@@ -54,7 +54,7 @@ export interface ParsedContainedLaunch {
   sessionDir?: string;
   command: string;
   commandArgs: string[];
-  profile: "review" | "semantic-judge";
+  profile: "review" | "methodology-review" | "semantic-judge";
 }
 
 export function buildContainedProviderArgs(
@@ -92,10 +92,13 @@ export function buildContainedProviderArgs(
   }
 
   const translated = commandArgs.map((value) => translateArgument(value, checkoutDir, assetsDir, outputDir));
+  const profile = options.profile ?? "review";
   const args = [
     "run", "--name", containerName, "--pull", "never",
     ...(options.runner === "codex" ? ["--interactive"] : []),
-    "--network", "bridge", "--read-only", "--cap-drop", "ALL",
+    "--network", "bridge",
+    ...(profile === "methodology-review" ? ["--add-host", "host.docker.internal:host-gateway"] : []),
+    "--read-only", "--cap-drop", "ALL",
     "--security-opt", "no-new-privileges", "--pids-limit", "256", "--user", `${identity.uid}:${identity.gid}`,
     "--workdir", "/workspace",
     "--mount", bindMount(checkoutDir, "/workspace", true),
@@ -109,7 +112,7 @@ export function buildContainedProviderArgs(
     ...access,
     image, command, ...translated,
   ];
-  parseContainedProviderArgs(args, options.runner, options.providerAccess, identity, options.profile ?? "review");
+  parseContainedProviderArgs(args, options.runner, options.providerAccess, identity, profile);
   return args;
 }
 
@@ -129,7 +132,7 @@ export function parseContainedProviderArgs(
   runner: Exclude<RunnerName, "mock">,
   providerAccess: Exclude<ExperimentProviderAccess, "not-applicable">,
   expectedIdentity = hostIdentity(),
-  profile: "review" | "semantic-judge" = "review",
+  profile: "review" | "methodology-review" | "semantic-judge" = "review",
 ): ParsedContainedLaunch {
   let cursor = 0;
   const take = (expected?: string): string => {
@@ -145,6 +148,9 @@ export function parseContainedProviderArgs(
   take("--pull"); take("never");
   if (runner === "codex") take("--interactive");
   take("--network"); take("bridge");
+  if (profile === "methodology-review") {
+    take("--add-host"); take("host.docker.internal:host-gateway");
+  }
   take("--read-only"); take("--cap-drop"); take("ALL");
   take("--security-opt"); take("no-new-privileges"); take("--pids-limit"); take("256");
   take("--user"); take(`${expectedIdentity.uid}:${expectedIdentity.gid}`); take("--workdir"); take("/workspace");
@@ -182,7 +188,7 @@ export function parseContainedProviderArgs(
 function validateProviderCommand(
   runner: Exclude<RunnerName, "mock">,
   args: readonly string[],
-  profile: "review" | "semantic-judge",
+  profile: "review" | "methodology-review" | "semantic-judge",
 ): void {
   if (profile === "semantic-judge") {
     if (runner !== "codex") throw new Error("semantic judge containment currently supports only Codex");
@@ -200,6 +206,10 @@ function validateProviderCommand(
     if (JSON.stringify(args) !== JSON.stringify(expected)) {
       throw new Error("semantic judge command does not match the exact Luna medium profile");
     }
+    return;
+  }
+  if (profile === "methodology-review") {
+    validateMethodologyCodexCommand(runner, args);
     return;
   }
   const valueFlags = runner === "codex"
@@ -241,6 +251,77 @@ function validateProviderCommand(
     requirePair("--permission-mode", "dontAsk");
     requirePair("--allowedTools", "Read,Grep,Glob");
     requirePair("--plugin-dir", "/opt/peregrine");
+  }
+}
+
+function validateMethodologyCodexCommand(
+  runner: Exclude<RunnerName, "mock">,
+  args: readonly string[],
+): void {
+  if (runner !== "codex") throw new Error("methodology review containment currently supports only Codex");
+  const valueFlags = new Set(["--config", "--model", "--cd", "--output-schema", "--output-last-message", "--sandbox", "--color", "--disable"]);
+  const switches = new Set(["exec", "--ephemeral", "--ignore-user-config", "--ignore-rules", "--strict-config", "--json", "-"]);
+  const pairs = new Map<string, string[]>();
+  for (let index = 0; index < args.length; index++) {
+    const value = args[index]!;
+    if (switches.has(value)) continue;
+    if (!valueFlags.has(value) || args[index + 1] === undefined) {
+      throw new Error("unsupported Codex methodology evaluation flag");
+    }
+    const next = args[++index]!;
+    pairs.set(value, [...(pairs.get(value) ?? []), next]);
+  }
+  const oneSwitch = (value: string) => {
+    if (args.filter((item) => item === value).length !== 1) {
+      throw new Error(`Codex methodology evaluation requires exactly one ${value}`);
+    }
+  };
+  for (const value of switches) oneSwitch(value);
+  const one = (flag: string, expected?: string): string => {
+    const values = pairs.get(flag) ?? [];
+    if (values.length !== 1 || (expected !== undefined && values[0] !== expected)) {
+      throw new Error(`Codex methodology evaluation requires exact ${flag}`);
+    }
+    return values[0]!;
+  };
+  one("--sandbox", "read-only");
+  one("--color", "never");
+  one("--cd", "/workspace");
+  one("--model", "gpt-5.6-sol");
+  const disabled = pairs.get("--disable") ?? [];
+  if (JSON.stringify(disabled) !== JSON.stringify(["shell_tool", "unified_exec"])) {
+    throw new Error("Codex methodology evaluation must disable built-in shell tools");
+  }
+  const schema = one("--output-schema");
+  if (!["/opt/peregrine/schemas/methodology-discovery.schema.json", "/opt/peregrine/schemas/breadth-result.schema.json", "/opt/peregrine/schemas/methodology-review.schema.json"].includes(schema)) {
+    throw new Error("Codex methodology evaluation schema is not allowlisted");
+  }
+  if (!/^\/output\/methodology-[A-Za-z0-9._-]+\/stage-[12]\.json$/.test(one("--output-last-message"))) {
+    throw new Error("Codex methodology evaluation output path is not attempt-owned");
+  }
+  const configs = pairs.get("--config") ?? [];
+  const fixed = [
+    "project_doc_max_bytes=0",
+    "project_doc_fallback_filenames=[]",
+    'projects."/workspace".trust_level="untrusted"',
+    'model_reasoning_effort="high"',
+    'mcp_servers.source_read.enabled_tools=["list_tree","read_file","search_text"]',
+  ];
+  if (configs.length !== fixed.length + 1 || fixed.some((value) => !configs.includes(value))) {
+    throw new Error("Codex methodology evaluation configuration is not the exact allowlisted set");
+  }
+  const urlConfig = configs.find((value) => value.startsWith("mcp_servers.source_read.url="));
+  if (!urlConfig) throw new Error("Codex methodology evaluation requires the neutral read MCP URL");
+  let url: URL;
+  try {
+    url = new URL(JSON.parse(urlConfig.slice(urlConfig.indexOf("=") + 1)) as string);
+  } catch {
+    throw new Error("Codex methodology evaluation neutral read MCP URL is invalid");
+  }
+  if (url.protocol !== "http:" || url.hostname !== "host.docker.internal" ||
+      !/^[1-9][0-9]{0,4}$/.test(url.port) || Number(url.port) > 65535 ||
+      !/^\/mcp\/[a-f0-9]{64}$/.test(url.pathname) || url.search || url.hash || url.username || url.password) {
+    throw new Error("Codex methodology evaluation neutral read MCP URL is outside the allowlisted shape");
   }
 }
 

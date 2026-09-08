@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "search/issues",
+    "parameters": {
+      "order": "asc",
+      "page": 1,
+      "per_page": 100,
+      "q": "repo:webpack/webpack is:issue is:closed created:2017-01-01..2020-12-31 regression in:title",
+      "sort": "created"
+    }
+  },
+  "retrievedAt": "2026-09-05T12:49:14.613Z",
+  "sourceUrl": "https://api.github.com/search/issues?order=asc&page=1&per_page=100&q=repo%3Awebpack%2Fwebpack+is%3Aissue+is%3Aclosed+created%3A2017-01-01..2020-12-31+regression+in%3Atitle&sort=created",
+  "sha256": "cbff7cf818b1e261a72d6c913ed539ffa65eb587963d813a1be1bda678543773",
+  "bytes": 64726
+}

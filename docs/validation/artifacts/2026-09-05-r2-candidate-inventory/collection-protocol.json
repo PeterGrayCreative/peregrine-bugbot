@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "registeredAt": "2026-09-05",
+  "historicalWindow": "2017-01-01..2020-12-31",
+  "randomSampleWindow": "2019-06-01..2019-06-30",
+  "seed": "peregrine-r2-public-random-v1-2026-09-05",
+  "inventoryCeiling": 100,
+  "targetStrata": { "reviewCaught": 50, "postMerge": 25, "commentIndependentSample": 25 },
+  "repositories": [
+    { "repository": "microsoft/vscode", "family": "editor-application" },
+    { "repository": "vercel/next.js", "family": "frontend-server-framework" },
+    { "repository": "nestjs/nest", "family": "backend-framework" },
+    { "repository": "sequelize/sequelize", "family": "persistence" },
+    { "repository": "OptimalBits/bull", "family": "worker-queue" },
+    { "repository": "webpack/webpack", "family": "bundler" },
+    { "repository": "axios/axios", "family": "http-client" },
+    { "repository": "ReactiveX/rxjs", "family": "reactive-library" }
+  ],
+  "randomSampling": "Capture every merged PR returned for June 2019 in each listed repository. Sort each repository by SHA-256(seed:repository:number). Select round-robin in listed repository order until 25. Do not inspect comments or bug labels to select this stratum.",
+  "selectionBias": "Purposive repository and month selection; seeded pseudo-random sampling within this frame only. No claim of uniform sampling across all 2017-2020 TS/JS history.",
+  "sourceScope": "Public GitHub GET requests only; raw response objects and request receipts stored under raw/.",
+  "admission": "No automatic admission. Reconstruct exact review opportunity, assess duplicate families and scope, retain partial truth, and obtain independent confirmations.",
+  "lossReasons": ["unrecoverable-review-head", "incorrect-historical-base", "outside-date-window", "edited-after-window-without-original", "not-ts-js", "pre-existing-only", "unsupported-root", "unavailable-context", "duplicate-family", "reproduction-unavailable", "two-hour-reconstruction-deferred"],
+  "partitionPolicy": "Unassigned until independently curated. All related PR/root/clone families stay in one partition. Selection identities and truth require curator control before prompt development. No sealed-holdout claim.",
+  "providerRunsAuthorized": false
+}

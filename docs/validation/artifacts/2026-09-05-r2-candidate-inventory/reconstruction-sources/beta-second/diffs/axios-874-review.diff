@@ -1,0 +1,73 @@
+diff --git a/lib/helpers/parseHeaders.js b/lib/helpers/parseHeaders.js
+index da96796ac687191647ecd51590ccbbb14630ccf7..8af2cc7f1b6259ab31bf612e25ed1cfc299cffc8 100644
+--- a/lib/helpers/parseHeaders.js
++++ b/lib/helpers/parseHeaders.js
+@@ -2,6 +2,15 @@
+ 
+ var utils = require('./../utils');
+ 
++// Headers whose duplicates are ignored by node
++// c.f. https://nodejs.org/api/http.html#http_message_headers
++var ignoreDuplicateOf = [
++  'age', 'authorization', 'content-length', 'content-type', 'etag',
++  'expires', 'from', 'host', 'if-modified-since', 'if-unmodified-since',
++  'last-modified', 'location', 'max-forwards', 'proxy-authorization',
++  'referer', 'retry-after', 'user-agent'
++];
++
+ /**
+  * Parse headers into an object
+  *
+@@ -29,7 +38,14 @@ module.exports = function parseHeaders(headers) {
+     val = utils.trim(line.substr(i + 1));
+ 
+     if (key) {
+-      parsed[key] = parsed[key] ? parsed[key] + ', ' + val : val;
++      if (parsed[key] && ignoreDuplicateOf.indexOf(key) >= 0) {
++        return;
++      }
++      if (key === 'set-cookie') {
++        parsed[key] = (parsed[key] ? parsed[key] : []).concat([val]);
++      } else {
++        parsed[key] = parsed[key] ? parsed[key] + ', ' + val : val;
++      }
+     }
+   });
+ 
+diff --git a/test/specs/helpers/parseHeaders.spec.js b/test/specs/helpers/parseHeaders.spec.js
+index 93479644b64359c1c9fb5b18936aa3121f2653f6..db964d60b29295844ec0dc27c96362b9efb90c92 100644
+--- a/test/specs/helpers/parseHeaders.spec.js
++++ b/test/specs/helpers/parseHeaders.spec.js
+@@ -15,5 +15,31 @@ describe('helpers::parseHeaders', function () {
+     expect(parsed['connection']).toEqual('keep-alive');
+     expect(parsed['transfer-encoding']).toEqual('chunked');
+   });
+-});
+ 
++  it('should use array for set-cookie', function() {
++    var parsedZero = parseHeaders('');
++    var parsedSingle = parseHeaders(
++      'Set-Cookie: key=val;'
++    );
++    var parsedMulti = parseHeaders(
++      'Set-Cookie: key=val;\n' +
++      'Set-Cookie: key2=val2;\n'
++    );
++
++    expect(parsedZero['set-cookie']).toBeUndefined();
++    expect(parsedSingle['set-cookie']).toEqual(['key=val;']);
++    expect(parsedMulti['set-cookie']).toEqual(['key=val;', 'key2=val2;']);
++  });
++
++  it('should handle duplicates', function() {
++    var parsed = parseHeaders(
++      'Age: age-a\n' + // age is in ignore duplicates blacklist
++      'Age: age-b\n' +
++      'Foo: foo-a\n' +
++      'Foo: foo-b\n'
++    );
++
++    expect(parsed['age']).toEqual('age-a');
++    expect(parsed['foo']).toEqual('foo-a, foo-b');
++  });
++});

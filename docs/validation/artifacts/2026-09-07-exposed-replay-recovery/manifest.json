@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 2,
+  "createdAt": "2026-09-07T16:54:53.918Z",
+  "evidenceClass": "visible-development-source-recovery-only",
+  "status": "offline-source-verified-not-admitted",
+  "sourceRepository": "https://github.com/sequelize/sequelize.git",
+  "oldManifestSha256": "eec2c2d1734440e47fc0d4f2f461986abcef605517cf3cfc1158a4669e60bb9f",
+  "oldBundleSha256": "9d9a441c1983cb732a43e7f9a87dbf76b82c1f383d6a7804bcd7c6c82af80af6",
+  "oldBundleBytes": 73954380,
+  "artifact": {
+    "path": "/Users/petergray/Documents/peregrine-bugbot/.worktrees/evidence-curation/exposed-replay-recovery-v2/sequelize-8430-recovered-v2.bundle",
+    "bytes": 20773571,
+    "sha256": "29b45847bf8c13ea38acbc7743c420e36c3f890e7babc9b17a1de36da45518cc",
+    "oldByteIdentity": false,
+    "localPersistentOnly": true
+  },
+  "history": {
+    "reviewBase": "a056b5aa36c7598f5cbb3aaee0165bda53e9c65a",
+    "reviewBaseTree": "0547c8a3712081add3675782b200e4e0e272e557",
+    "reviewHead": "bda0df47ebcca4ad06f9eec006d35537ce6deb43",
+    "reviewHeadTree": "0c9ada3aa6305bbd2e70b71d487beaf00c02d3b3",
+    "finalBase": "2a3b3dba6bc257e19378bd18f56017fd66bfe6e6",
+    "finalBaseTree": "00c003917abff84efc8bf6000e66b05b63bb790d",
+    "finalHead": "a2d0c10a38083958361ff8218a015adcc21e7764",
+    "finalHeadTree": "e3a6afdf22b5e4137769e0a17c6ad59b3de4c49a",
+    "rootCommitOids": [
+      "fee92083a75c15f5b6cd2d0c2f3bb043ae155e68"
+    ],
+    "reviewHeadAncestryCommitCount": 7749,
+    "repositoryFamilyIdentitySha256": "ecbb11132c5f78baa9f763a604e2631220a6512bb6320590200cc5aa6b8df3e3"
+  },
+  "canonicalDiffs": {
+    "review": {
+      "bytes": 2219,
+      "sha256": "b0141b612d654f0b32b9a7eac61d54febf319feb0114e6775fab187e659f01ce",
+      "files": 3,
+      "insertions": 18,
+      "deletions": 3
+    },
+    "final": {
+      "bytes": 2219,
+      "sha256": "b0141b612d654f0b32b9a7eac61d54febf319feb0114e6775fab187e659f01ce"
+    },
+    "commentHeadToFinal": {
+      "bytes": 516,
+      "sha256": "1e995caac443af908c84a874094710862da6f0dc193424344c79ae4699f90998"
+    }
+  },
+  "license": {
+    "spdx": "MIT",
+    "path": "LICENSE",
+    "blob": "1a7101a7f57e21531f6c0cba50a0ab725782f511",
+    "contentSha256": "367eeae92316a2485489ffbb05f9c3bc90b439c0e0b026d81d23a6453bdc4aa8"
+  },
+  "checks": {
+    "source.git": {
+      "fsck": true,
+      "shallow": false,
+      "allFourTrees": true,
+      "ancestryCount": 7749,
+      "roots": [
+        "fee92083a75c15f5b6cd2d0c2f3bb043ae155e68"
+      ],
+      "familyIdentitySha256": "ecbb11132c5f78baa9f763a604e2631220a6512bb6320590200cc5aa6b8df3e3",
+      "threeCanonicalDiffs": true,
+      "license": true,
+      "noAlternatesPromisorReplacementsGrafts": true
+    },
+    "offline-restore.git": {
+      "fsck": true,
+      "shallow": false,
+      "allFourTrees": true,
+      "ancestryCount": 7749,
+      "roots": [
+        "fee92083a75c15f5b6cd2d0c2f3bb043ae155e68"
+      ],
+      "familyIdentitySha256": "ecbb11132c5f78baa9f763a604e2631220a6512bb6320590200cc5aa6b8df3e3",
+      "threeCanonicalDiffs": true,
+      "license": true,
+      "noAlternatesPromisorReplacementsGrafts": true
+    }
+  },
+  "limits": {
+    "aggregateDiskBytes": 65597440,
+    "capBytes": 262144000,
+    "elapsedSeconds": 10.296,
+    "wallCapSeconds": 1200
+  },
+  "limitations": [
+    "Source availability only; not admission, human confirmation, partition selection, or runtime reproduction.",
+    "Exact historical refs only; current default branch intentionally not acquired.",
+    "No historical source, hooks, dependencies, builds, or providers executed.",
+    "Persistent local bundle only, not pushed to Git; missing old bundle is not recreated byte-for-byte unless hashes match."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/nestjs/nest/pulls/2402",
+    "parameters": {}
+  },
+  "retrievedAt": "2026-09-05T11:57:49.467Z",
+  "sourceUrl": "https://api.github.com/repos/nestjs/nest/pulls/2402?",
+  "sha256": "64b822aea8383398caa13ed3c042c3baebd2dfb82582395c644b87e83ac3189d",
+  "bytes": 17903
+}

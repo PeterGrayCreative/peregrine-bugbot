@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/nestjs/nest/issues/4597/timeline",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:52:04.885Z",
+  "sourceUrl": "https://api.github.com/repos/nestjs/nest/issues/4597/timeline?page=1&per_page=100",
+  "sha256": "958a12973d3e34dff8103ae29323523d165818869ce80f676b0412c2ce05929f",
+  "bytes": 26306
+}

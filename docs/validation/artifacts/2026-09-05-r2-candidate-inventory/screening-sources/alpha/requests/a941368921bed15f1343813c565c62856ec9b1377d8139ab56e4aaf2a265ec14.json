@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/vercel/next.js/issues/1798/timeline",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:52:01.713Z",
+  "sourceUrl": "https://api.github.com/repos/vercel/next.js/issues/1798/timeline?page=1&per_page=100",
+  "sha256": "6ff5788e4255f3bf039370336c1ad90fb201d899f5cb9d766d65a076ad83ed55",
+  "bytes": 52319
+}

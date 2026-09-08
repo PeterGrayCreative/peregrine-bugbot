@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "search/issues",
+    "parameters": {
+      "order": "asc",
+      "page": 2,
+      "per_page": 100,
+      "q": "repo:vercel/next.js is:pr is:merged created:2020-04-01..2020-04-30 comments:>=3",
+      "sort": "created"
+    }
+  },
+  "retrievedAt": "2026-09-05T12:44:39.102Z",
+  "sourceUrl": "https://api.github.com/search/issues?order=asc&page=2&per_page=100&q=repo%3Avercel%2Fnext.js+is%3Apr+is%3Amerged+created%3A2020-04-01..2020-04-30+comments%3A%3E%3D3&sort=created",
+  "sha256": "b18aca43eaafadacb567eab7ae8e43d7266faec7fccc6ced70440d89c84e722b",
+  "bytes": 63233
+}

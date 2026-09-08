@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/sequelize/sequelize/issues/10688/events",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:50:18.746Z",
+  "sourceUrl": "https://api.github.com/repos/sequelize/sequelize/issues/10688/events?page=1&per_page=100",
+  "sha256": "92df7688d547c0d2844e2da2455d5913f6b5aa83475f233f64b0a63721dfd2ba",
+  "bytes": 5070
+}

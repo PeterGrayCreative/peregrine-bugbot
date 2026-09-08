@@ -62,6 +62,15 @@ async function runStage(args: {
         "--config", `projects.${JSON.stringify(args.ctx.evaluationIsolation.runProvider ? "/workspace" : args.ctx.repoPath)}.trust_level="untrusted"`,
       ]
     : [];
+  const neutralReadMcp = args.ctx.evaluationIsolation?.neutralReadMcp;
+  const neutralToolArgs = neutralReadMcp
+    ? [
+        "--disable", "shell_tool",
+        "--disable", "unified_exec",
+        "--config", `mcp_servers.${neutralReadMcp.serverName}.url=${JSON.stringify(neutralReadMcp.url)}`,
+        "--config", `mcp_servers.${neutralReadMcp.serverName}.enabled_tools=${JSON.stringify(neutralReadMcp.enabledTools)}`,
+      ]
+    : [];
   const result = await (args.ctx.evaluationIsolation?.runProvider ?? args.run)(
     "codex",
     [
@@ -69,6 +78,7 @@ async function runStage(args: {
       "--ephemeral",
       "--ignore-user-config",
       ...isolationArgs,
+      ...neutralToolArgs,
       "--strict-config",
       "--sandbox",
       "read-only",
@@ -168,6 +178,10 @@ async function runStage(args: {
     promptSha256: sha256(args.prompt),
   };
 }
+
+// Research harnesses may reuse the exact Codex CLI, telemetry, and failure
+// boundary without changing the production engine's orchestration contract.
+export { runStage as runCodexStage };
 
 function withCleanupDetail(message: string, result: ExecResult): string {
   return result.cleanupErrors?.length

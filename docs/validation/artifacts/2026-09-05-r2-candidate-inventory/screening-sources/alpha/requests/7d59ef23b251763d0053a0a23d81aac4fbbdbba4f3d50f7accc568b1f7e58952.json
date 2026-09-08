@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "search/issues",
+    "parameters": {
+      "order": "asc",
+      "page": 1,
+      "per_page": 100,
+      "q": "repo:vercel/next.js is:issue is:closed created:2017-01-01..2020-12-31 regression in:title",
+      "sort": "created"
+    }
+  },
+  "retrievedAt": "2026-09-05T12:49:11.806Z",
+  "sourceUrl": "https://api.github.com/search/issues?order=asc&page=1&per_page=100&q=repo%3Avercel%2Fnext.js+is%3Aissue+is%3Aclosed+created%3A2017-01-01..2020-12-31+regression+in%3Atitle&sort=created",
+  "sha256": "c276486ecd8938ec0ac0a3254614ac12033c41728cd0d4b2d26d3e64bdabe51b",
+  "bytes": 55988
+}

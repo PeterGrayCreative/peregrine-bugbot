@@ -1,0 +1,1109 @@
+[
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/349274977",
+    "pull_request_review_id": 321130418,
+    "id": 349274977,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDM0OTI3NDk3Nw==",
+    "diff_hunk": "@@ -23,9 +23,17 @@ function yarnInstall(location, opts) {\n \tconst args = original.filter(arg => arg === '--ignore-optional' || arg === '--frozen-lockfile');\n \n \tconsole.log(`Installing dependencies in ${location}...`);\n+\tconst oldConfigArch = process.env['npm_config_arch']\n+\tif (location.startsWith(\"remote\") && oldConfigArch == \"arm64\") {\n+\t\t// Temporarily set remote arch to x86, because remote portion builds\n+\t\t// against node, which is not consistently supported on Windows on Arm\n+\t\t// (yet).\n+\t\tprocess.env[\"npm_config_arch\"] = \"ia32\"\n+\t}\n \tconsole.log(`$ yarn ${args.join(' ')}`);\n \tconst result = cp.spawnSync(yarn, args, opts);\n-\n+\t// Restore the architecture, if temporarily swapped.\n+\tprocess.env[\"npm_config_arch\"] = oldConfigArch",
+    "path": "build/npm/postinstall.js",
+    "commit_id": "2e0cf81197c92eb6e73bd6f7db9d5e9b4f5806d8",
+    "original_commit_id": "1d372ecfb3bf4a8a05389899471834366e78a16b",
+    "user": {
+      "login": "richard-townsend-arm",
+      "id": 29576774,
+      "node_id": "MDQ6VXNlcjI5NTc2Nzc0",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29576774?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/richard-townsend-arm",
+      "html_url": "https://github.com/richard-townsend-arm",
+      "followers_url": "https://api.github.com/users/richard-townsend-arm/followers",
+      "following_url": "https://api.github.com/users/richard-townsend-arm/following{/other_user}",
+      "gists_url": "https://api.github.com/users/richard-townsend-arm/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/richard-townsend-arm/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/richard-townsend-arm/subscriptions",
+      "organizations_url": "https://api.github.com/users/richard-townsend-arm/orgs",
+      "repos_url": "https://api.github.com/users/richard-townsend-arm/repos",
+      "events_url": "https://api.github.com/users/richard-townsend-arm/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/richard-townsend-arm/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "I think the build error may come from here. Probably should strengthen the check so it fires only on Windows.",
+    "created_at": "2019-11-21T19:26:10Z",
+    "updated_at": "2020-04-14T11:26:34Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/85326#discussion_r349274977",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/85326",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/349274977"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/85326#discussion_r349274977"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/85326"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/349274977/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 36,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 15,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/349451839",
+    "pull_request_review_id": 321358653,
+    "id": 349451839,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDM0OTQ1MTgzOQ==",
+    "diff_hunk": "@@ -99,6 +99,9 @@ function getElectron(arch) {\n     };\n }\n async function main(arch = process.arch) {",
+    "path": "build/lib/electron.js",
+    "commit_id": "2e0cf81197c92eb6e73bd6f7db9d5e9b4f5806d8",
+    "original_commit_id": "7d5c80b03cb9af0ce132842aea62f219cf65df69",
+    "user": {
+      "login": "joaomoreno",
+      "id": 22350,
+      "node_id": "MDQ6VXNlcjIyMzUw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22350?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/joaomoreno",
+      "html_url": "https://github.com/joaomoreno",
+      "followers_url": "https://api.github.com/users/joaomoreno/followers",
+      "following_url": "https://api.github.com/users/joaomoreno/following{/other_user}",
+      "gists_url": "https://api.github.com/users/joaomoreno/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/joaomoreno/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/joaomoreno/subscriptions",
+      "organizations_url": "https://api.github.com/users/joaomoreno/orgs",
+      "repos_url": "https://api.github.com/users/joaomoreno/repos",
+      "events_url": "https://api.github.com/users/joaomoreno/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/joaomoreno/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "How about this instead?\r\n\r\n```suggestion\r\n async function main(arch = process.env[\"npm_config_arch\"] || process.arch) {\r\n```",
+    "created_at": "2019-11-22T06:44:56Z",
+    "updated_at": "2020-04-14T11:26:34Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/85326#discussion_r349451839",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/85326",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/349451839"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/85326#discussion_r349451839"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/85326"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/349451839/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 102,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 3,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/349452170",
+    "pull_request_review_id": 321358653,
+    "id": 349452170,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDM0OTQ1MjE3MA==",
+    "diff_hunk": "@@ -23,9 +23,17 @@ function yarnInstall(location, opts) {\n \tconst args = original.filter(arg => arg === '--ignore-optional' || arg === '--frozen-lockfile');\n \n \tconsole.log(`Installing dependencies in ${location}...`);\n+\tconst oldConfigArch = process.env['npm_config_arch']\n+\tif (location.startsWith(\"remote\") && oldConfigArch == \"arm64\") {\n+\t\t// Temporarily set remote arch to x86, because remote portion builds\n+\t\t// against node, which is not consistently supported on Windows on Arm\n+\t\t// (yet).\n+\t\tprocess.env[\"npm_config_arch\"] = \"ia32\"\n+\t}\n \tconsole.log(`$ yarn ${args.join(' ')}`);\n \tconst result = cp.spawnSync(yarn, args, opts);",
+    "path": "build/npm/postinstall.js",
+    "commit_id": "2e0cf81197c92eb6e73bd6f7db9d5e9b4f5806d8",
+    "original_commit_id": "7d5c80b03cb9af0ce132842aea62f219cf65df69",
+    "user": {
+      "login": "joaomoreno",
+      "id": 22350,
+      "node_id": "MDQ6VXNlcjIyMzUw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22350?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/joaomoreno",
+      "html_url": "https://github.com/joaomoreno",
+      "followers_url": "https://api.github.com/users/joaomoreno/followers",
+      "following_url": "https://api.github.com/users/joaomoreno/following{/other_user}",
+      "gists_url": "https://api.github.com/users/joaomoreno/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/joaomoreno/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/joaomoreno/subscriptions",
+      "organizations_url": "https://api.github.com/users/joaomoreno/orgs",
+      "repos_url": "https://api.github.com/users/joaomoreno/repos",
+      "events_url": "https://api.github.com/users/joaomoreno/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/joaomoreno/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Shouldn't the new environment flag simply be added to the `opts`, instead of fiddling around with the current process env?",
+    "created_at": "2019-11-22T06:46:30Z",
+    "updated_at": "2020-04-14T11:26:34Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/85326#discussion_r349452170",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/85326",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/349452170"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/85326#discussion_r349452170"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/85326"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/349452170/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 27,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/349456121",
+    "pull_request_review_id": 321364558,
+    "id": 349456121,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDM0OTQ1NjEyMQ==",
+    "diff_hunk": "@@ -23,9 +23,17 @@ function yarnInstall(location, opts) {\n \tconst args = original.filter(arg => arg === '--ignore-optional' || arg === '--frozen-lockfile');\n \n \tconsole.log(`Installing dependencies in ${location}...`);\n+\tconst oldConfigArch = process.env['npm_config_arch']\n+\tif (location.startsWith(\"remote\") && oldConfigArch == \"arm64\") {\n+\t\t// Temporarily set remote arch to x86, because remote portion builds\n+\t\t// against node, which is not consistently supported on Windows on Arm\n+\t\t// (yet).\n+\t\tprocess.env[\"npm_config_arch\"] = \"ia32\"\n+\t}\n \tconsole.log(`$ yarn ${args.join(' ')}`);\n \tconst result = cp.spawnSync(yarn, args, opts);",
+    "path": "build/npm/postinstall.js",
+    "commit_id": "2e0cf81197c92eb6e73bd6f7db9d5e9b4f5806d8",
+    "original_commit_id": "7d5c80b03cb9af0ce132842aea62f219cf65df69",
+    "user": {
+      "login": "deepak1556",
+      "id": 964386,
+      "node_id": "MDQ6VXNlcjk2NDM4Ng==",
+      "avatar_url": "https://avatars.githubusercontent.com/u/964386?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/deepak1556",
+      "html_url": "https://github.com/deepak1556",
+      "followers_url": "https://api.github.com/users/deepak1556/followers",
+      "following_url": "https://api.github.com/users/deepak1556/following{/other_user}",
+      "gists_url": "https://api.github.com/users/deepak1556/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/deepak1556/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/deepak1556/subscriptions",
+      "organizations_url": "https://api.github.com/users/deepak1556/orgs",
+      "repos_url": "https://api.github.com/users/deepak1556/repos",
+      "events_url": "https://api.github.com/users/deepak1556/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/deepak1556/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": true
+    },
+    "body": "Agreed, setting the env through `opts` will be cleaner.",
+    "created_at": "2019-11-22T07:07:18Z",
+    "updated_at": "2020-04-14T11:26:34Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/85326#discussion_r349456121",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/85326",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/349456121"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/85326#discussion_r349456121"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/85326"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/349456121/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 27,
+    "side": "RIGHT",
+    "in_reply_to_id": 349452170,
+    "author_association": "COLLABORATOR",
+    "original_position": 12,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366772902",
+    "pull_request_review_id": 343086157,
+    "id": 366772902,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDM2Njc3MjkwMg==",
+    "diff_hunk": "@@ -37,6 +38,7 @@ const BUILD_TARGETS = [\n \n const noop = () => { return Promise.resolve(); };\n \n+gulp.task('vscode-reh-win32-arm64-min', noop);",
+    "path": "build/gulpfile.reh.js",
+    "commit_id": "2e0cf81197c92eb6e73bd6f7db9d5e9b4f5806d8",
+    "original_commit_id": "40d74d4e0d73f1bea5eb165f92a7c5be44c3ea11",
+    "user": {
+      "login": "joaomoreno",
+      "id": 22350,
+      "node_id": "MDQ6VXNlcjIyMzUw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22350?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/joaomoreno",
+      "html_url": "https://github.com/joaomoreno",
+      "followers_url": "https://api.github.com/users/joaomoreno/followers",
+      "following_url": "https://api.github.com/users/joaomoreno/following{/other_user}",
+      "gists_url": "https://api.github.com/users/joaomoreno/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/joaomoreno/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/joaomoreno/subscriptions",
+      "organizations_url": "https://api.github.com/users/joaomoreno/orgs",
+      "repos_url": "https://api.github.com/users/joaomoreno/repos",
+      "events_url": "https://api.github.com/users/joaomoreno/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/joaomoreno/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This is not needed",
+    "created_at": "2020-01-15T09:33:17Z",
+    "updated_at": "2020-04-14T11:26:34Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/85326#discussion_r366772902",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/85326",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366772902"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/85326#discussion_r366772902"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/85326"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366772902/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 41,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 12,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366772942",
+    "pull_request_review_id": 343086157,
+    "id": 366772942,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDM2Njc3Mjk0Mg==",
+    "diff_hunk": "@@ -45,6 +47,7 @@ gulp.task('vscode-reh-linux-armhf-min', noop);\n gulp.task('vscode-reh-linux-arm64-min', noop);\n gulp.task('vscode-reh-linux-alpine-min', noop);\n \n+gulp.task('vscode-reh-web-win32-arm64-min', noop);",
+    "path": "build/gulpfile.reh.js",
+    "commit_id": "2e0cf81197c92eb6e73bd6f7db9d5e9b4f5806d8",
+    "original_commit_id": "40d74d4e0d73f1bea5eb165f92a7c5be44c3ea11",
+    "user": {
+      "login": "joaomoreno",
+      "id": 22350,
+      "node_id": "MDQ6VXNlcjIyMzUw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22350?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/joaomoreno",
+      "html_url": "https://github.com/joaomoreno",
+      "followers_url": "https://api.github.com/users/joaomoreno/followers",
+      "following_url": "https://api.github.com/users/joaomoreno/following{/other_user}",
+      "gists_url": "https://api.github.com/users/joaomoreno/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/joaomoreno/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/joaomoreno/subscriptions",
+      "organizations_url": "https://api.github.com/users/joaomoreno/orgs",
+      "repos_url": "https://api.github.com/users/joaomoreno/repos",
+      "events_url": "https://api.github.com/users/joaomoreno/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/joaomoreno/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This is not needed",
+    "created_at": "2020-01-15T09:33:23Z",
+    "updated_at": "2020-04-14T11:26:34Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/85326#discussion_r366772942",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/85326",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366772942"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/85326#discussion_r366772942"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/85326"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366772942/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 50,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 20,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366773039",
+    "pull_request_review_id": 343086157,
+    "id": 366773039,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDM2Njc3MzAzOQ==",
+    "diff_hunk": "@@ -110,8 +110,10 @@ function defineWin32SetupTasks(arch, target) {\n \tgulp.task(task.define(`vscode-win32-${arch}-${target}-setup`, task.series(cleanTask, buildWin32Setup(arch, target))));\n }\n \n+defineWin32SetupTasks('arm64', 'system');",
+    "path": "build/gulpfile.vscode.win32.js",
+    "commit_id": "2e0cf81197c92eb6e73bd6f7db9d5e9b4f5806d8",
+    "original_commit_id": "40d74d4e0d73f1bea5eb165f92a7c5be44c3ea11",
+    "user": {
+      "login": "joaomoreno",
+      "id": 22350,
+      "node_id": "MDQ6VXNlcjIyMzUw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22350?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/joaomoreno",
+      "html_url": "https://github.com/joaomoreno",
+      "followers_url": "https://api.github.com/users/joaomoreno/followers",
+      "following_url": "https://api.github.com/users/joaomoreno/following{/other_user}",
+      "gists_url": "https://api.github.com/users/joaomoreno/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/joaomoreno/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/joaomoreno/subscriptions",
+      "organizations_url": "https://api.github.com/users/joaomoreno/orgs",
+      "repos_url": "https://api.github.com/users/joaomoreno/repos",
+      "events_url": "https://api.github.com/users/joaomoreno/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/joaomoreno/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Not needed",
+    "created_at": "2020-01-15T09:33:35Z",
+    "updated_at": "2020-04-14T11:26:34Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/85326#discussion_r366773039",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/85326",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366773039"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/85326#discussion_r366773039"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/85326"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366773039/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 113,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366773086",
+    "pull_request_review_id": 343086157,
+    "id": 366773086,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDM2Njc3MzA4Ng==",
+    "diff_hunk": "@@ -110,8 +110,10 @@ function defineWin32SetupTasks(arch, target) {\n \tgulp.task(task.define(`vscode-win32-${arch}-${target}-setup`, task.series(cleanTask, buildWin32Setup(arch, target))));\n }\n \n+defineWin32SetupTasks('arm64', 'system');\n defineWin32SetupTasks('ia32', 'system');\n defineWin32SetupTasks('x64', 'system');\n+defineWin32SetupTasks('arm64', 'user');",
+    "path": "build/gulpfile.vscode.win32.js",
+    "commit_id": "2e0cf81197c92eb6e73bd6f7db9d5e9b4f5806d8",
+    "original_commit_id": "40d74d4e0d73f1bea5eb165f92a7c5be44c3ea11",
+    "user": {
+      "login": "joaomoreno",
+      "id": 22350,
+      "node_id": "MDQ6VXNlcjIyMzUw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22350?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/joaomoreno",
+      "html_url": "https://github.com/joaomoreno",
+      "followers_url": "https://api.github.com/users/joaomoreno/followers",
+      "following_url": "https://api.github.com/users/joaomoreno/following{/other_user}",
+      "gists_url": "https://api.github.com/users/joaomoreno/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/joaomoreno/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/joaomoreno/subscriptions",
+      "organizations_url": "https://api.github.com/users/joaomoreno/orgs",
+      "repos_url": "https://api.github.com/users/joaomoreno/repos",
+      "events_url": "https://api.github.com/users/joaomoreno/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/joaomoreno/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Not needed",
+    "created_at": "2020-01-15T09:33:41Z",
+    "updated_at": "2020-04-14T11:26:34Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/85326#discussion_r366773086",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/85326",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366773086"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/85326#discussion_r366773086"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/85326"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366773086/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 116,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 7,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366773150",
+    "pull_request_review_id": 343086157,
+    "id": 366773150,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDM2Njc3MzE1MA==",
+    "diff_hunk": "@@ -142,10 +145,11 @@ function updateIcon(executablePath) {\n \t};\n }\n \n+gulp.task(task.define('vscode-win32-arm64-inno-updater', task.series(copyInnoUpdater('ia32'), updateIcon(path.join(buildPath('ia32'), 'tools', 'inno_updater.exe')))));",
+    "path": "build/gulpfile.vscode.win32.js",
+    "commit_id": "2e0cf81197c92eb6e73bd6f7db9d5e9b4f5806d8",
+    "original_commit_id": "40d74d4e0d73f1bea5eb165f92a7c5be44c3ea11",
+    "user": {
+      "login": "joaomoreno",
+      "id": 22350,
+      "node_id": "MDQ6VXNlcjIyMzUw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22350?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/joaomoreno",
+      "html_url": "https://github.com/joaomoreno",
+      "followers_url": "https://api.github.com/users/joaomoreno/followers",
+      "following_url": "https://api.github.com/users/joaomoreno/following{/other_user}",
+      "gists_url": "https://api.github.com/users/joaomoreno/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/joaomoreno/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/joaomoreno/subscriptions",
+      "organizations_url": "https://api.github.com/users/joaomoreno/orgs",
+      "repos_url": "https://api.github.com/users/joaomoreno/repos",
+      "events_url": "https://api.github.com/users/joaomoreno/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/joaomoreno/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Not needed",
+    "created_at": "2020-01-15T09:33:49Z",
+    "updated_at": "2020-04-14T11:26:34Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/85326#discussion_r366773150",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/85326",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366773150"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/85326#discussion_r366773150"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/85326"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366773150/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 148,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 23,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366774174",
+    "pull_request_review_id": 343086157,
+    "id": 366774174,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDM2Njc3NDE3NA==",
+    "diff_hunk": "@@ -23,9 +23,14 @@ function yarnInstall(location, opts) {\n \tconst args = original.filter(arg => arg === '--ignore-optional' || arg === '--frozen-lockfile');\n \n \tconsole.log(`Installing dependencies in ${location}...`);\n+\tif (location.startsWith(\"remote\") && process.env[\"npm_config_arch\"] == \"arm64\") {",
+    "path": "build/npm/postinstall.js",
+    "commit_id": "2e0cf81197c92eb6e73bd6f7db9d5e9b4f5806d8",
+    "original_commit_id": "40d74d4e0d73f1bea5eb165f92a7c5be44c3ea11",
+    "user": {
+      "login": "joaomoreno",
+      "id": 22350,
+      "node_id": "MDQ6VXNlcjIyMzUw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22350?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/joaomoreno",
+      "html_url": "https://github.com/joaomoreno",
+      "followers_url": "https://api.github.com/users/joaomoreno/followers",
+      "following_url": "https://api.github.com/users/joaomoreno/following{/other_user}",
+      "gists_url": "https://api.github.com/users/joaomoreno/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/joaomoreno/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/joaomoreno/subscriptions",
+      "organizations_url": "https://api.github.com/users/joaomoreno/orgs",
+      "repos_url": "https://api.github.com/users/joaomoreno/repos",
+      "events_url": "https://api.github.com/users/joaomoreno/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/joaomoreno/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Just move this further down to when we call `yarnInstall('remote')` and add the option as an argument.",
+    "created_at": "2020-01-15T09:35:54Z",
+    "updated_at": "2020-04-14T11:26:34Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/85326#discussion_r366774174",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/85326",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366774174"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/85326#discussion_r366774174"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/85326"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/366774174/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 26,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/367858962",
+    "pull_request_review_id": 344477582,
+    "id": 367858962,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDM2Nzg1ODk2Mg==",
+    "diff_hunk": "@@ -23,9 +23,14 @@ function yarnInstall(location, opts) {\n \tconst args = original.filter(arg => arg === '--ignore-optional' || arg === '--frozen-lockfile');\n \n \tconsole.log(`Installing dependencies in ${location}...`);\n+\tif (location.startsWith(\"remote\") && process.env[\"npm_config_arch\"] == \"arm64\") {",
+    "path": "build/npm/postinstall.js",
+    "commit_id": "2e0cf81197c92eb6e73bd6f7db9d5e9b4f5806d8",
+    "original_commit_id": "40d74d4e0d73f1bea5eb165f92a7c5be44c3ea11",
+    "user": {
+      "login": "richard-townsend-arm",
+      "id": 29576774,
+      "node_id": "MDQ6VXNlcjI5NTc2Nzc0",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29576774?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/richard-townsend-arm",
+      "html_url": "https://github.com/richard-townsend-arm",
+      "followers_url": "https://api.github.com/users/richard-townsend-arm/followers",
+      "following_url": "https://api.github.com/users/richard-townsend-arm/following{/other_user}",
+      "gists_url": "https://api.github.com/users/richard-townsend-arm/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/richard-townsend-arm/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/richard-townsend-arm/subscriptions",
+      "organizations_url": "https://api.github.com/users/richard-townsend-arm/orgs",
+      "repos_url": "https://api.github.com/users/richard-townsend-arm/repos",
+      "events_url": "https://api.github.com/users/richard-townsend-arm/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/richard-townsend-arm/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "This has been replaced with a new method which applies the the override for `remote/` portions.",
+    "created_at": "2020-01-17T10:09:51Z",
+    "updated_at": "2020-04-14T11:26:34Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/85326#discussion_r367858962",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/85326",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/367858962"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/85326#discussion_r367858962"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/85326"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/367858962/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 26,
+    "side": "RIGHT",
+    "in_reply_to_id": 366774174,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/405464914",
+    "pull_request_review_id": 389900363,
+    "id": 405464914,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQwNTQ2NDkxNA==",
+    "diff_hunk": "@@ -25,6 +25,7 @@ const cp = require('child_process');\n const REPO_ROOT = path.dirname(__dirname);\n \n const BUILD_TARGETS = [\n+\t{ platform: 'win32', arch: 'arm64', pkgTarget: 'node8-win-arm64' },",
+    "path": "build/gulpfile.reh.js",
+    "commit_id": "2e0cf81197c92eb6e73bd6f7db9d5e9b4f5806d8",
+    "original_commit_id": "38126cdc1aaf15380d6a98dbecb1c4d6588887ff",
+    "user": {
+      "login": "joaomoreno",
+      "id": 22350,
+      "node_id": "MDQ6VXNlcjIyMzUw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22350?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/joaomoreno",
+      "html_url": "https://github.com/joaomoreno",
+      "followers_url": "https://api.github.com/users/joaomoreno/followers",
+      "following_url": "https://api.github.com/users/joaomoreno/following{/other_user}",
+      "gists_url": "https://api.github.com/users/joaomoreno/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/joaomoreno/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/joaomoreno/subscriptions",
+      "organizations_url": "https://api.github.com/users/joaomoreno/orgs",
+      "repos_url": "https://api.github.com/users/joaomoreno/repos",
+      "events_url": "https://api.github.com/users/joaomoreno/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/joaomoreno/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Let's remove this and focus on the client bits for now.",
+    "created_at": "2020-04-08T11:51:10Z",
+    "updated_at": "2020-04-14T11:26:34Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/85326#discussion_r405464914",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/85326",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/405464914"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/85326#discussion_r405464914"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/85326"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/405464914/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 28,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 4,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/405465125",
+    "pull_request_review_id": 389900363,
+    "id": 405465125,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQwNTQ2NTEyNQ==",
+    "diff_hunk": "@@ -146,6 +147,6 @@ gulp.task(task.define('vscode-win32-ia32-inno-updater', task.series(copyInnoUpda\n gulp.task(task.define('vscode-win32-x64-inno-updater', task.series(copyInnoUpdater('x64'), updateIcon(path.join(buildPath('x64'), 'tools', 'inno_updater.exe')))));\n \n // CodeHelper.exe icon\n-\n+gulp.task(task.define('vscode-win32-arm64-code-helper', task.series(updateIcon(path.join(buildPath('ia32'), 'resources', 'app', 'out', 'vs', 'platform', 'files', 'node', 'watcher', 'win32', 'CodeHelper.exe')))));",
+    "path": "build/gulpfile.vscode.win32.js",
+    "commit_id": "2e0cf81197c92eb6e73bd6f7db9d5e9b4f5806d8",
+    "original_commit_id": "38126cdc1aaf15380d6a98dbecb1c4d6588887ff",
+    "user": {
+      "login": "joaomoreno",
+      "id": 22350,
+      "node_id": "MDQ6VXNlcjIyMzUw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22350?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/joaomoreno",
+      "html_url": "https://github.com/joaomoreno",
+      "followers_url": "https://api.github.com/users/joaomoreno/followers",
+      "following_url": "https://api.github.com/users/joaomoreno/following{/other_user}",
+      "gists_url": "https://api.github.com/users/joaomoreno/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/joaomoreno/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/joaomoreno/subscriptions",
+      "organizations_url": "https://api.github.com/users/joaomoreno/orgs",
+      "repos_url": "https://api.github.com/users/joaomoreno/repos",
+      "events_url": "https://api.github.com/users/joaomoreno/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/joaomoreno/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Don't we need an ARM64 compiled version of `CodeHelper.exe` for this?",
+    "created_at": "2020-04-08T11:51:36Z",
+    "updated_at": "2020-04-14T11:26:34Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/85326#discussion_r405465125",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/85326",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/405465125"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/85326#discussion_r405465125"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/85326"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/405465125/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 150,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 13,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/405465898",
+    "pull_request_review_id": 389900363,
+    "id": 405465898,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQwNTQ2NTg5OA==",
+    "diff_hunk": "@@ -107,7 +107,7 @@ function getElectron(arch: string): () => NodeJS.ReadWriteStream {\n \t};\n }\n \n-async function main(arch = process.arch): Promise<void> {\n+async function main(arch = process.env[\"npm_config_arch\"] || process.arch): Promise<void> {",
+    "path": "build/lib/electron.ts",
+    "commit_id": "2e0cf81197c92eb6e73bd6f7db9d5e9b4f5806d8",
+    "original_commit_id": "38126cdc1aaf15380d6a98dbecb1c4d6588887ff",
+    "user": {
+      "login": "joaomoreno",
+      "id": 22350,
+      "node_id": "MDQ6VXNlcjIyMzUw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22350?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/joaomoreno",
+      "html_url": "https://github.com/joaomoreno",
+      "followers_url": "https://api.github.com/users/joaomoreno/followers",
+      "following_url": "https://api.github.com/users/joaomoreno/following{/other_user}",
+      "gists_url": "https://api.github.com/users/joaomoreno/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/joaomoreno/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/joaomoreno/subscriptions",
+      "organizations_url": "https://api.github.com/users/joaomoreno/orgs",
+      "repos_url": "https://api.github.com/users/joaomoreno/repos",
+      "events_url": "https://api.github.com/users/joaomoreno/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/joaomoreno/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "We don't need this, since the build isn't fetching electron from here.",
+    "created_at": "2020-04-08T11:52:58Z",
+    "updated_at": "2020-04-14T11:26:34Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/85326#discussion_r405465898",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/85326",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/405465898"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/85326#discussion_r405465898"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/85326"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/405465898/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 110,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 5,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/405466153",
+    "pull_request_review_id": 389900363,
+    "id": 405466153,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQwNTQ2NjE1Mw==",
+    "diff_hunk": "@@ -25,17 +25,28 @@ function yarnInstall(location, opts) {\n \tconsole.log(`Installing dependencies in ${location}...`);\n \tconsole.log(`$ yarn ${args.join(' ')}`);\n \tconst result = cp.spawnSync(yarn, args, opts);\n-\n \tif (result.error || result.status !== 0) {\n \t\tprocess.exit(1);\n \t}\n }\n \n+function remoteOpts() {",
+    "path": "build/npm/postinstall.js",
+    "commit_id": "2e0cf81197c92eb6e73bd6f7db9d5e9b4f5806d8",
+    "original_commit_id": "38126cdc1aaf15380d6a98dbecb1c4d6588887ff",
+    "user": {
+      "login": "joaomoreno",
+      "id": 22350,
+      "node_id": "MDQ6VXNlcjIyMzUw",
+      "avatar_url": "https://avatars.githubusercontent.com/u/22350?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/joaomoreno",
+      "html_url": "https://github.com/joaomoreno",
+      "followers_url": "https://api.github.com/users/joaomoreno/followers",
+      "following_url": "https://api.github.com/users/joaomoreno/following{/other_user}",
+      "gists_url": "https://api.github.com/users/joaomoreno/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/joaomoreno/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/joaomoreno/subscriptions",
+      "organizations_url": "https://api.github.com/users/joaomoreno/orgs",
+      "repos_url": "https://api.github.com/users/joaomoreno/repos",
+      "events_url": "https://api.github.com/users/joaomoreno/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/joaomoreno/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "Again, let's remove this and leave `remote` for another day.",
+    "created_at": "2020-04-08T11:53:24Z",
+    "updated_at": "2020-04-14T11:26:34Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/85326#discussion_r405466153",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/85326",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/405466153"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/85326#discussion_r405466153"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/85326"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/405466153/reactions",
+      "total_count": 0,
+      "+1": 0,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 33,
+    "side": "RIGHT",
+    "author_association": "CONTRIBUTOR",
+    "original_position": 10,
+    "position": 1,
+    "subject_type": "line"
+  },
+  {
+    "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/405527048",
+    "pull_request_review_id": 389976642,
+    "id": 405527048,
+    "node_id": "MDI0OlB1bGxSZXF1ZXN0UmV2aWV3Q29tbWVudDQwNTUyNzA0OA==",
+    "diff_hunk": "@@ -146,6 +147,6 @@ gulp.task(task.define('vscode-win32-ia32-inno-updater', task.series(copyInnoUpda\n gulp.task(task.define('vscode-win32-x64-inno-updater', task.series(copyInnoUpdater('x64'), updateIcon(path.join(buildPath('x64'), 'tools', 'inno_updater.exe')))));\n \n // CodeHelper.exe icon\n-\n+gulp.task(task.define('vscode-win32-arm64-code-helper', task.series(updateIcon(path.join(buildPath('ia32'), 'resources', 'app', 'out', 'vs', 'platform', 'files', 'node', 'watcher', 'win32', 'CodeHelper.exe')))));",
+    "path": "build/gulpfile.vscode.win32.js",
+    "commit_id": "2e0cf81197c92eb6e73bd6f7db9d5e9b4f5806d8",
+    "original_commit_id": "38126cdc1aaf15380d6a98dbecb1c4d6588887ff",
+    "user": {
+      "login": "richard-townsend-arm",
+      "id": 29576774,
+      "node_id": "MDQ6VXNlcjI5NTc2Nzc0",
+      "avatar_url": "https://avatars.githubusercontent.com/u/29576774?v=4",
+      "gravatar_id": "",
+      "url": "https://api.github.com/users/richard-townsend-arm",
+      "html_url": "https://github.com/richard-townsend-arm",
+      "followers_url": "https://api.github.com/users/richard-townsend-arm/followers",
+      "following_url": "https://api.github.com/users/richard-townsend-arm/following{/other_user}",
+      "gists_url": "https://api.github.com/users/richard-townsend-arm/gists{/gist_id}",
+      "starred_url": "https://api.github.com/users/richard-townsend-arm/starred{/owner}{/repo}",
+      "subscriptions_url": "https://api.github.com/users/richard-townsend-arm/subscriptions",
+      "organizations_url": "https://api.github.com/users/richard-townsend-arm/orgs",
+      "repos_url": "https://api.github.com/users/richard-townsend-arm/repos",
+      "events_url": "https://api.github.com/users/richard-townsend-arm/events{/privacy}",
+      "received_events_url": "https://api.github.com/users/richard-townsend-arm/received_events",
+      "type": "User",
+      "user_view_type": "public",
+      "site_admin": false
+    },
+    "body": "That would be ideal, but it currently runs fine under x86 emulation (and it's running in the background, so the performance degradation is not as noticeable). ",
+    "created_at": "2020-04-08T13:32:06Z",
+    "updated_at": "2020-04-14T11:26:34Z",
+    "html_url": "https://github.com/microsoft/vscode/pull/85326#discussion_r405527048",
+    "pull_request_url": "https://api.github.com/repos/microsoft/vscode/pulls/85326",
+    "_links": {
+      "self": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/comments/405527048"
+      },
+      "html": {
+        "href": "https://github.com/microsoft/vscode/pull/85326#discussion_r405527048"
+      },
+      "pull_request": {
+        "href": "https://api.github.com/repos/microsoft/vscode/pulls/85326"
+      }
+    },
+    "reactions": {
+      "url": "https://api.github.com/repos/microsoft/vscode/pulls/comments/405527048/reactions",
+      "total_count": 1,
+      "+1": 1,
+      "-1": 0,
+      "laugh": 0,
+      "hooray": 0,
+      "confused": 0,
+      "heart": 0,
+      "rocket": 0,
+      "eyes": 0
+    },
+    "start_line": null,
+    "original_start_line": null,
+    "start_side": null,
+    "line": null,
+    "original_line": 150,
+    "side": "RIGHT",
+    "in_reply_to_id": 405465125,
+    "author_association": "CONTRIBUTOR",
+    "original_position": 13,
+    "position": 1,
+    "subject_type": "line"
+  }
+]

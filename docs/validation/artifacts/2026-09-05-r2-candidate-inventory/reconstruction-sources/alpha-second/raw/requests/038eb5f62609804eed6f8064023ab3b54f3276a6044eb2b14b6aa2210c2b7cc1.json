@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/ReactiveX/rxjs/commits",
+    "parameters": {
+      "path": "src/observable/ErrorObservable.ts",
+      "since": "2017-02-21T00:00:00Z",
+      "until": "2017-06-30T23:59:59Z"
+    }
+  },
+  "retrievedAt": "2026-09-05T13:29:48.027Z",
+  "sourceUrl": "https://api.github.com/repos/ReactiveX/rxjs/commits?path=src%2Fobservable%2FErrorObservable.ts&since=2017-02-21T00%3A00%3A00Z&until=2017-06-30T23%3A59%3A59Z",
+  "sha256": "7b2f774a5d0242e3282f315c0bcfe25295335a62ee471f41ba95ef07e36448e4",
+  "bytes": 7826
+}

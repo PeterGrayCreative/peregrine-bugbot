@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/webpack/webpack/issues/11707/timeline",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:52:11.162Z",
+  "sourceUrl": "https://api.github.com/repos/webpack/webpack/issues/11707/timeline?page=1&per_page=100",
+  "sha256": "176bdf83b9228e956d1089442e641abaad0c53d2c7e75a8c97289598c49a1e61",
+  "bytes": 58727
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://peregrine.local/schemas/historical-curator-policy.schema.json",
+  "$comment": "Sole-human historical governance only. This does not claim independent human confirmation or sealed-holdout protection.",
+  "title": "Peregrine sole-human historical curator policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "policyId",
+    "trustRoot",
+    "reviewMode",
+    "minimumHumanDecisions",
+    "registeredHumanIdentitySha256",
+    "aiPreparationCanSatisfyHumanGate"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "policyId": { "const": "sole-human-historical-v1" },
+    "trustRoot": { "const": "accountable-human-review" },
+    "reviewMode": { "const": "sole-human-v1" },
+    "minimumHumanDecisions": { "const": 1 },
+    "registeredHumanIdentitySha256": { "$ref": "#/$defs/sha256" },
+    "aiPreparationCanSatisfyHumanGate": { "const": false }
+  },
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/vercel/next.js/pulls/10018/comments",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T13:00:06.968Z",
+  "sourceUrl": "https://api.github.com/repos/vercel/next.js/pulls/10018/comments?page=1&per_page=100",
+  "sha256": "9765304f7978c88319a7f729adf67aa7634a63e660c3bdc2e852d5b42442b63b",
+  "bytes": 5588
+}

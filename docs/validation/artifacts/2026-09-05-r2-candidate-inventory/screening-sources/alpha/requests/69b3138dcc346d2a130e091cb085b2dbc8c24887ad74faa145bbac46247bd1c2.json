@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "request": {
+    "host": "api.github.com",
+    "method": "GET",
+    "endpoint": "repos/webpack/webpack/issues/8829/events",
+    "parameters": {
+      "page": 1,
+      "per_page": 100
+    }
+  },
+  "retrievedAt": "2026-09-05T12:50:23.442Z",
+  "sourceUrl": "https://api.github.com/repos/webpack/webpack/issues/8829/events?page=1&per_page=100",
+  "sha256": "db6de1c9d89e55e4750dde1f8e818eb5fe72d6af241b453d5494e04dc2bcd2b7",
+  "bytes": 3945
+}

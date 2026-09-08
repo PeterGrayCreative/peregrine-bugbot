@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "registeredAt": "2026-09-05",
+  "scope": "Discovery frames for the remaining 75 inventory slots; search results are leads, not admitted cases.",
+  "repositoryProtocol": "collection-protocol.json",
+  "window": "2017-01-01..2020-12-31",
+  "reviewQuery": "is:pr is:merged created:2017-01-01..2020-12-31 comments:>=3",
+  "postMergeQuery": "is:issue is:closed created:2017-01-01..2020-12-31 regression in:title",
+  "ordering": "created ascending; split into calendar-year queries if search exceeds GitHub's 1000-result ceiling; otherwise fail closed and preserve captures.",
+  "screening": "Review threads must contain a substantive correctness claim with source IDs. Post-merge reports must have fixing evidence and a recoverable introducing opportunity before admission. Comment counts, closed status and regression wording are discovery signals only.",
+  "bias": "Discussion-volume selection favors active PRs and automation-heavy repositories; regression-title selection misses reports with other wording. These targeted frames complement the separately frozen comment-independent sample and do not change its selection.",
+  "candidateCeiling": 100,
+  "remainingSlots": { "reviewThread": 50, "postMerge": 25 },
+  "providerRunsAuthorized": false
+}

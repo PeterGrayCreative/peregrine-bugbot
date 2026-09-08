@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "createdDate": "2026-09-07",
+  "evidenceClass": "visible-development-recovery-only",
+  "status": "local-repository-artifact-pending-commit-and-push",
+  "archive": {
+    "path": "exposed-development-recovery-v1.tar.gz",
+    "format": "ustar+gzip-no-name-no-time",
+    "bytes": 505644,
+    "sha256": "6d239304eed00622fe950ae5f92617a5db940d575674797916a47e6395ad43f4",
+    "root": "exposed-development-recovery-v1",
+    "regularFiles": 317,
+    "uncompressedFileBytes": 2979824,
+    "ordering": "LC_ALL=C sorted relative paths, directory entries explicit, no recursion",
+    "metadata": {
+      "uid": 0,
+      "gid": 0,
+      "uname": "root",
+      "gname": "root",
+      "fileMode": "0644",
+      "directoryMode": "0755",
+      "mtimeUnixSeconds": 946702800,
+      "macOSMetadataCopyingDisabled": true
+    }
+  },
+  "recoveryManifest": {
+    "path": "exposed-development-recovery-v1/recovery-manifest.json",
+    "sha256": "a17f57299e419f8864d93c547da043270a1026c1772feb3b4e2bc05cf270efaf",
+    "boundFiles": 316
+  },
+  "verification": {
+    "repeatArchiveSha256Matched": true,
+    "freshRestoreCompleteFileSetMatched": true,
+    "freshRestoreVerifiedByteAndHashBindings": 316,
+    "freshRestoreSymlinks": 0,
+    "originalRecoveryTreeReverifiedUnchanged": true,
+    "nodeVersion": "22.22.1"
+  },
+  "counts": {
+    "draftUnresolvedCards": 12,
+    "originalUnrecoverableLeadLosses": 1,
+    "humanDecisions": 0,
+    "admissions": 0,
+    "providerCalls": 0
+  },
+  "limitations": [
+    "Already exposed development evidence only; never reserved selection or holdout.",
+    "No supplementary curator data, credentials, source clones, or replay archives included.",
+    "Original evidence references remain unchanged, including unresolved historical scratch paths.",
+    "Cards remain draft and unresolved; no consolidated final packet or partial human review request.",
+    "Archive preservation does not establish source-history, license applicability, or proof-reference completeness.",
+    "Remote durability is not established until a containing commit and remote push are verified."
+  ]
+}
