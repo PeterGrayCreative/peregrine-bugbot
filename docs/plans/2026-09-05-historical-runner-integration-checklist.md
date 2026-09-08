@@ -246,8 +246,16 @@ methodology suite passes 78/78.
   receipts, resource outcomes, frozen case truth/catalog identities, and
   strictly positive paired wall time. Their append-only artifact is joined to
   the unchanged v1 analysis binding by a separate source-bound derived seal.
-  Root-level discovery deduplication, sealed semantic-judge provenance,
-  inferential intervals, and decision seals remain open.
+  A source-bound arm-blind semantic-judge ledger now supplies the only
+  definitive pair verdicts; persisted grades are rederived rather than accepted
+  from callers. A composite append-only binding reauthenticates the execution,
+  judge, grade, adjudication, report, and resource chain. Confirmed-new
+  occurrences can be grouped into post-hoc discovery roots through a packet
+  that omits arm, route, and timing. The exact grouping implementation and a
+  private append-only operator blinding-key artifact are bound, and a fresh
+  process can reopen and reproduce the sealed summary. Curator blindness is
+  operator-mediated and not independently attested. Inferential intervals and
+  decision seals remain open.
   Cross-run, caller-invented run identity, altered projection, mixed execution,
   and source drift reject. A separate versioned resource artifact derives every scheduled
   attempt's lifecycle wall duration, runner duration, stage count, and
@@ -259,6 +267,8 @@ methodology suite passes 78/78.
   See also the [resource record](../validation/2026-09-08-r3-methodology-resource-evidence.md).
   The [analysis-binding record](../validation/2026-09-08-r3-methodology-analysis-binding.md)
   describes the final structural join and its limits.
+  The [sealed-judge record](../validation/2026-09-08-r3-sealed-semantic-judge.md)
+  describes the authenticated semantic and discovery chain.
 
 ## Zero-provider acceptance sequence
 
