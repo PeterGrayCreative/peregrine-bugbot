@@ -48,8 +48,12 @@ artifact. They are reported as unavailable rather than inferred as zero.
 - TypeScript no-emit typecheck: passing.
 - A pre-commit repository-wide validation reached 292/295 tests. The three
   failures were the expected provider-experiment clean-worktree guard because
-  the implementation was still uncommitted; the clean-commit rerun and remote
-  CI remain pending.
+  the implementation was still uncommitted.
+- After committing the implementation as `5d8e383`, `npm run validate` passed
+  end to end from the clean worktree. This included 295 base tests, 218
+  methodology tests, 13 methodology HTTP tests, historical-truth and evidence
+  capture suites, corpus validation, skill/package checks, and the eight-case
+  structural smoke. Remote CI is pending.
 - Independent pre-integration review found four defects: repeated comparison
   noise was undercounted, the public inference builder could expose intervals
   before duplicate-family authentication, truth versions were caller-asserted,
