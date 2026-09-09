@@ -36,6 +36,7 @@ import type {
 import { writeMethodologyAnalysisBinding } from "../../eval/methodology-analysis-binding.js";
 import { registerMethodologyInputPlan } from "../../eval/methodology-input-plan.js";
 import { registerMethodologyInvocations } from "../../eval/methodology-invocations.js";
+import { writeMethodologyInferencePlan } from "../../eval/methodology-inference-seal.js";
 import {
   writeMethodologyRunSeal,
   type MethodologyTerminalReceipt,
@@ -145,6 +146,7 @@ export interface MethodologySealedAnalysisFixture {
   sealed: ReturnType<typeof writeMethodologySealedJudgeGradeSet>;
   legacy: ReturnType<typeof writeMethodologyGradeSet>;
   adjudication: ReturnType<typeof writeMethodologyAdjudicationArtifact>;
+  inferencePlan: ReturnType<typeof writeMethodologyInferencePlan>;
   writeInput: MethodologySealedAnalysisBindingWriteInputs;
 }
 
@@ -187,6 +189,23 @@ export async function createMethodologySealedAnalysisFixture(
       admissionBinding: prepared[0]!.admissionBinding,
       rawScope,
       laneActivation: activation,
+    }],
+  });
+  const inferencePlan = writeMethodologyInferencePlan(analysisRoot, {
+    executionRoot,
+    invocationRegistrationSha256,
+    inputPlanSha256,
+    runId,
+    schedule,
+    analysisStage: "development-screen",
+    hypothesis: "detection",
+    bootstrapSamples: 101,
+    bootstrapSeed: 17,
+    minIndependentClusters: 2,
+    caseClusters: [{
+      caseName: registration.caseName,
+      repositoryFamilySha256: registration.source.repositoryIdentitySha256,
+      duplicateFamilySha256: digest("b"),
     }],
   });
   const lifecycleReceipts: MethodologyLifecycleSealReceipt[] = [];
@@ -350,6 +369,7 @@ export async function createMethodologySealedAnalysisFixture(
     sealed,
     legacy,
     adjudication,
+    inferencePlan,
     writeInput: {
       ...anchors,
       executionRoot,

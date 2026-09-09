@@ -48,19 +48,54 @@ export function writeMethodologyGradeSet(root: string, input: {
 }
 
 export function readMethodologyGradeSet(root: string, expectedArtifactSha256: string): MethodologyGradeSetArtifact {
-  const raw = readExperimentJson(join(root, METHODOLOGY_GRADE_SET_FILE)) as MethodologyGradeSetArtifact;
-  const schedule = readScheduleFromGradeSet(raw);
-  const artifact = buildGradeSet({
-    runId: raw.runId,
-    schedule,
-    executionEvidenceSha256: raw.executionEvidenceSha256,
-    inputPlanSha256: raw.inputPlanSha256,
-    grades: raw.grades,
-    recordedAt: raw.recordedAt,
-  });
-  if (artifact.artifactSha256 !== expectedArtifactSha256 || canonicalJson(artifact) !== canonicalJson(raw)) {
+  const artifact = parseMethodologyGradeSetArtifact(
+    readExperimentJson(join(root, METHODOLOGY_GRADE_SET_FILE)),
+  );
+  if (artifact.artifactSha256 !== expectedArtifactSha256) {
     throw new Error("methodology grade-set artifact digest mismatch");
   }
+  return artifact;
+}
+
+/**
+ * Authenticate one complete grade-set artifact, including every embedded
+ * grade and the artifact self-digest. Callers must pass this result to
+ * downstream analysis instead of independently asserting derived fields such
+ * as truth versions.
+ */
+export function parseMethodologyGradeSetArtifact(
+  value: unknown,
+  source = "methodology grade-set artifact",
+): MethodologyGradeSetArtifact {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error(`${source} must be an object`);
+  }
+  const root = value as Record<string, unknown>;
+  const keys = [
+    "schemaVersion", "protocol", "runId", "schedule", "executionEvidenceSha256", "inputPlanSha256",
+    "gradeSetSha256", "grades", "recordedAt", "artifactSha256",
+  ].sort();
+  if (canonicalJson(Object.keys(root).sort()) !== canonicalJson(keys)) {
+    throw new Error(`${source} has an invalid shape`);
+  }
+  if (root.schemaVersion !== 1 || root.protocol !== "historical-methodology-grade-set-v1") {
+    throw new Error(`${source} protocol/version is invalid`);
+  }
+  if (!Array.isArray(root.grades)) throw new Error(`${source}.grades must be an array`);
+  const artifact = buildGradeSet({
+    runId: root.runId as string,
+    schedule: root.schedule,
+    executionEvidenceSha256: root.executionEvidenceSha256 as string,
+    inputPlanSha256: root.inputPlanSha256 as string,
+    grades: root.grades as MethodologyAttemptGrade[],
+    recordedAt: root.recordedAt as string,
+  });
+  if (artifact.gradeSetSha256 !== root.gradeSetSha256 ||
+      artifact.artifactSha256 !== root.artifactSha256 ||
+      canonicalJson(artifact) !== canonicalJson(value)) {
+    throw new Error(`${source} digest or canonical contents are invalid`);
+  }
+  assertNoSecrets(artifact, source);
   return artifact;
 }
 
@@ -181,12 +216,6 @@ function buildGradeSet(input: {
   };
   const artifactSha256 = canonicalJsonSha256(body);
   return { ...body, artifactSha256 };
-}
-
-function readScheduleFromGradeSet(raw: MethodologyGradeSetArtifact): MethodologySchedule {
-  const value = raw as MethodologyGradeSetArtifact & { schedule?: unknown };
-  if (!value.schedule) throw new Error("methodology grade-set artifact is missing its schedule");
-  return parseMethodologySchedule(value.schedule, "methodology grade-set stored schedule");
 }
 
 function timestamp(value: unknown): string {
