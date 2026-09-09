@@ -56,7 +56,10 @@ All Node commands use the repository Node 22 pin.
 - Focused egress, containment, attachment, scope, invocation, and lifecycle
   tests: passed.
 - `git diff --check`: passed.
-- Full `npm run validate`: pending the clean committed-tree gate.
+- Full `npm run validate` on clean commit `de3bac6`: passed, including 295 core
+  tests, 13 evidence-capture tests, 44 historical-truth tests, 188 methodology
+  tests, 13 methodology-HTTP tests, corpus/skill/package validation, and the
+  8/8 structural smoke.
 
 No Docker daemon, external network, provider, model, or credential-bearing
 operation was used by this integration verification. The earlier standalone
