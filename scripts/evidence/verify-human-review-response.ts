@@ -34,6 +34,7 @@ interface PacketDossier {
   dossierId: string;
   classification: "ready-for-human-review" | "reconstruction-loss";
   dossierBundleSha256: string;
+  cardPath: string;
 }
 
 interface PacketManifest {
@@ -48,6 +49,11 @@ export interface VerifiedHumanReviewPacket {
   proposals: number;
   retainedLosses: number;
   dossierIds: string[];
+  readyDossiers: Array<{
+    dossierId: string;
+    dossierBundleSha256: string;
+    cardPath: string;
+  }>;
 }
 
 export function verifyHumanReviewPacket(packetDirectory: string): VerifiedHumanReviewPacket {
@@ -58,6 +64,13 @@ export function verifyHumanReviewPacket(packetDirectory: string): VerifiedHumanR
     proposals: packet.dossiers.filter((item) => item.classification === "ready-for-human-review").length,
     retainedLosses: packet.dossiers.filter((item) => item.classification === "reconstruction-loss").length,
     dossierIds: packet.dossiers.map((item) => item.dossierId),
+    readyDossiers: packet.dossiers
+      .filter((item) => item.classification === "ready-for-human-review")
+      .map((item) => ({
+        dossierId: item.dossierId,
+        dossierBundleSha256: item.dossierBundleSha256,
+        cardPath: item.cardPath,
+      })),
   };
 }
 
@@ -233,6 +246,7 @@ function readPacketManifest(root: string): PacketManifest {
       dossierId: item.dossierId,
       classification: item.classification,
       dossierBundleSha256: dossierBundle,
+      cardPath: item.cardPath,
     };
   });
   if (!Array.isArray(manifest.generatedFiles)) throw new Error("packet manifest.generatedFiles must be an array");

@@ -1,7 +1,7 @@
 # TypeScript and JavaScript evidence and ablation progress
 
 Updated: 2026-09-09
-Active branch: `research/ts-js-evidence-r3-dependence-severity`
+Active branch: `research/ts-js-evidence-r2-review-workspace`
 
 ## Current recovery notice
 
@@ -74,6 +74,14 @@ that exact remote commit reproduced packet SHA-256
 This reaches the collection target for one consolidated human review; none of
 the drafts is admitted or partitioned yet, and sole-human review will not be
 described as independent verification.
+
+A durable blank response workspace is now initialized on private evidence PR
+[#1](https://github.com/PeterGrayCreative/peregrine-evidence-backup/pull/1)
+at commit `24e725b`. Its generated guide links all 36 authenticated dossiers to
+their separate decision templates and binds the declared reviewer identity as
+an operator-prepared identity, not a human decision. The workspace starts with
+zero decisions and remains a draft until the user completes every response and
+the verifier accepts the exact packet/identity bindings.
 
 The experimental HTTP tool path passed fourteen focused tests and a real
 credential-free two-container protocol probe. This supersedes the transport
@@ -172,8 +180,8 @@ minimal reviewer. Production routing remains frozen.
 | Step | State | Evidence / remaining gate |
 | --- | --- | --- |
 | R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
-| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. A restore-tested v2 packet at private evidence commit `5d4969e` binds all 36 target draft proposals (24 defect-bearing, 12 scoped comparisons) and 11 retained losses. Sole-human governance, response-to-admission derivation, and the authenticated post-admission partition/duplicate-family contract now pass structural tests. All real decisions remain blank. Human review, admission-yield evaluation, durable admission import, the real partition attestation, and the resulting partition artifact remain open; no independence or protected-selection claim is made. |
-| R3: neutral and truthful harness | In progress | Four-arm scheduling, prompts, materialization, input/lifecycle seals, stopped-run closure, grading projections, bounded HTTP read tools, exact Sol-high/no-shell/three-tool Codex launch policy, both historical curator-policy versions, all-findings adjudication, a source-bound sealed semantic-judge path, descriptive reporting and contrasts, append-only composite analysis, authenticated resources, explicit zero retries, source-bound post-hoc discovery-root grouping, a trusted provider attachment, fail-closed runner-owned scope/audit evidence, credential-free exact-destination egress/MCP sidecar proof, structural sidecar integration, and an authenticated R2 partition-artifact contract have evidence. A preregistered inference plan, grade-bound append-only adjudication resolutions, content-addressed unmatched-root ledgers, honest decision surfaces, and versioned decision-seal lineage are implemented structurally. Real duplicate-family evidence does not exist until human review and partitioning occur; registered-root severity is not yet joined to inference, so dependence-aware intervals and severe-regression decisions remain fail-closed. The accepted image reports Codex CLI 0.152.0 and parses the MCP config without credentials. Missing durations/tokens/cost and unavailable completion subcategories remain unknown rather than zero; old artifacts remain unchanged. A separately authorized credential-bearing model/tool canary and real human admission remain open. Curator blindness is operator-mediated, not independently attested. Diagnostic child retries are outside methodology v1. Legacy historical CLI admission still fails closed. |
+| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. A restore-tested v2 packet at private evidence commit `5d4969e` binds all 36 target draft proposals (24 defect-bearing, 12 scoped comparisons) and 11 retained losses. Private draft PR #1 now provides the single all-at-once blank response workspace at `24e725b`. Sole-human governance, response-to-admission derivation, and the authenticated post-admission partition/duplicate-family contract pass structural tests. Human decisions, admission-yield evaluation, durable admission import, the real partition attestation, and the resulting partition artifact remain open; no independence or protected-selection claim is made. |
+| R3: neutral and truthful harness | Structurally complete; runtime canary separately gated | Four-arm scheduling, neutral prompts and mounts, input/lifecycle/stop seals, honest grading projections, all-finding adjudication, grouped discovery roots, resource accounting, exact Sol-high launch policy, bounded read tools, fail-closed scope evidence, destination-restricted egress, semantic judge, authenticated analysis joins, operator-only R2 truth/severity binding, clustered inference v2, and append-only decision lineage have deterministic evidence. Development severity remains descriptive and selection remains exploratory. Old artifacts and production behavior are unchanged. A credential-bearing model/tool canary requires separate authorization and is not historical efficacy evidence. Real execution still depends on completed R2 human admission. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |
 | R6: select and confirm | Not started | Requires frozen candidate and new powered confirmation corpus. |

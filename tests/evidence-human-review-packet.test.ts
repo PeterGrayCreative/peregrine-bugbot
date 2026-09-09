@@ -22,6 +22,7 @@ import {
 } from "../scripts/evidence/verify-human-review-response.js";
 import { buildSoleHumanAdmissionFromResponse } from "../scripts/evidence/build-sole-human-admission.js";
 import { buildRecoveredHumanReviewRequest } from "../scripts/evidence/build-recovered-human-review-request.js";
+import { initializeHumanReviewWorkspace } from "../scripts/evidence/initialize-human-review-workspace.js";
 
 const hash = (value: string | Buffer) => createHash("sha256").update(value).digest("hex");
 
@@ -147,6 +148,39 @@ test("assembles byte-bound portable copies, retained losses, and blank sole-huma
       readFileSync(join(secondOutput, "packet-manifest.json")),
       readFileSync(join(data.output, "packet-manifest.json")),
     );
+  } finally {
+    data.cleanup();
+  }
+});
+
+test("initializes one durable all-at-once response workspace without making human decisions", () => {
+  const data = fixture();
+  try {
+    const assembled = assembleHumanReviewPacket(data.request, data.output);
+    const workspace = join(data.root, "human-response-workspace");
+    const packetBefore = readFileSync(join(data.output, "packet-manifest.json"));
+    const initialized = initializeHumanReviewWorkspace({
+      packetDirectory: data.output,
+      destination: workspace,
+      reviewerIdentityDescriptor: "github-user:https://github.com/PeterGrayCreative",
+    });
+    assert.equal(initialized.packetSha256, assembled.packetSha256);
+    assert.equal(initialized.copiedTemplates.length, 2);
+    assert.equal(initialized.claims.decisionsPresent, false);
+    assert.equal(initialized.claims.humanReviewComplete, false);
+    assert.equal(initialized.reviewerIdentity.descriptor, "github-user:https://github.com/PeterGrayCreative");
+    assert.equal(initialized.reviewerIdentity.sha256, hash(`peregrine-human-reviewer-v1\0${initialized.reviewerIdentity.descriptor}`));
+    assert.deepEqual(readFileSync(join(workspace, "response/decisions/case-alpha.json")), readFileSync(join(data.output, "decisions/case-alpha.json")));
+    assert.deepEqual(readFileSync(join(workspace, "response/packet-decision.json")), readFileSync(join(data.output, "packet-decision.json")));
+    assert.deepEqual(readFileSync(join(data.output, "packet-manifest.json")), packetBefore);
+    const guide = readFileSync(join(workspace, "REVIEW.md"), "utf8");
+    assert.match(guide, /Review all 1 proposals/);
+    assert.match(guide, /dossiers\/case-alpha\/human-evidence-card\.md/);
+    assert.match(guide, /response\/decisions\/case-alpha\.json/);
+    assert.match(guide, /do not claim independent confirmation/i);
+    assert.throws(() => verifyHumanReviewResponse(data.output, join(workspace, "response"), initialized.reviewerIdentity.sha256), /template|decision/i);
+    assert.throws(() => initializeHumanReviewWorkspace({ packetDirectory: data.output, destination: workspace, reviewerIdentityDescriptor: "same" }), /overwrite/);
+    assert.throws(() => initializeHumanReviewWorkspace({ packetDirectory: data.output, destination: join(data.output, "response"), reviewerIdentityDescriptor: "same" }), /disjoint|overwrite/);
   } finally {
     data.cleanup();
   }
