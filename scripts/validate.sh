@@ -50,7 +50,8 @@ while IFS= read -r -d '' script; do
 done < <(find "${repo_root}/scripts" "${repo_root}/tests" -type f -name '*.sh' -print0)
 
 tracked_metadata="$(git -C "$repo_root" ls-files -- \
-  'skills/**' 'scripts/**' 'tests/**' '.claude-plugin/**' '.codex-plugin/**' | \
+  'skills/**' 'scripts/**' 'tests/**' '.claude-plugin/**' '.codex-plugin/**' \
+  '.cursor-plugin/**' 'cursor/**' | \
   grep -E '(^|/)(\.DS_Store|\._[^/]*|__MACOSX)(/|$)' || true)"
 if [[ -n "$tracked_metadata" ]]; then
   echo 'error: package contains macOS metadata' >&2

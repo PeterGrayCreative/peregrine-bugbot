@@ -1,13 +1,14 @@
 # peregrine-bugbot
 
-Invariant-first pull-request review for Claude and Codex. Peregrine runs a bounded breadth pass, sends its candidate ledger to a stronger investigation pass, validates the result, then optionally posts deduplicated GitHub review comments.
+Invariant-first pull-request review for Claude, Codex, and Cursor. Peregrine runs a bounded breadth pass, sends its candidate ledger to a stronger investigation pass, validates the result, then optionally posts deduplicated GitHub review comments.
 
 This repository is the canonical source for the runtime and both skills. It no longer checks out `bugbot-codex-skills` at runtime.
 
 ## What ships
 
-- `skills/`: the same `invariant-first-pr-review` and `build-review-profile` skills for both hosts.
-- `.claude-plugin/` and `.codex-plugin/`: native plugin manifests around that shared skill tree.
+- `skills/`: the same `invariant-first-pr-review` and `build-review-profile` skills across supported interactive hosts.
+- `.claude-plugin/`, `.codex-plugin/`, and `.cursor-plugin/`: native plugin manifests around that shared skill tree.
+- `cursor/`: Cursor-only named subagents and the `/peregrine-review` command; review packet text remains shared under `skills/`.
 - `src/engines/`: real Claude and Codex adapters plus a deterministic mock.
 - `schemas/`: strict breadth, review, and benchmark-judge output contracts.
 - `.github/workflows/`: isolated analysis and posting jobs; model credentials never enter the posting job, and the analysis job has no write permission.
@@ -68,6 +69,15 @@ claude plugin marketplace add PeterGrayCreative/peregrine-bugbot@main
 claude plugin install peregrine@peregrine --scope user
 ```
 
+Cursor, before Peregrine is listed in the public Cursor Marketplace, can load the same repository as a local plugin:
+
+```bash
+mkdir -p "$HOME/.cursor/plugins/local"
+ln -s '/absolute/path/to/peregrine-bugbot' "$HOME/.cursor/plugins/local/peregrine"
+```
+
+Reload Cursor and confirm the plugin in **Customize**. See [the Cursor provider guide](docs/providers/cursor.md) for the native worker topology and local-development install.
+
 Restart the selected host or start a new task/session after installation. See
 the [complete GitHub installation guide](docs/installing-from-github.md) for
 updates, verification, copied-skill migration, uninstalling,
@@ -85,6 +95,7 @@ pass:
 | --- | --- | --- |
 | Codex | `gpt-5.6-luna` / `high` | `gpt-5.6-sol` / `high` |
 | Claude | `claude-sonnet-5` / `high` | `claude-opus-5` / `high` |
+| Cursor | `composer-2.5[]` | `grok-4.6[effort=xhigh]` |
 
 For interactive plugin calls, the calling agent is coordinator-only. It launches
 one breadth worker, waits for the frozen ledger, then launches a distinct
@@ -116,8 +127,12 @@ claude plugin install peregrine@peregrine --scope user \
 ```
 
 Codex does not currently expose persistent plugin `userConfig`, so use the
-per-review block there. Peregrine records requested and actual routing and
-reports a fallback when the host cannot select the requested model. A routing
+per-review block there. Cursor pins the installed native subagents to
+`composer-2.5[]` for breadth and `grok-4.6[effort=xhigh]` for investigation;
+when an exact per-invocation override is unavailable, those named-agent routes
+are the fallback and the requested versus actual route must be reported.
+Peregrine records requested and actual routing and reports a fallback when the
+host cannot select the requested model. A routing
 fallback still uses two separate workers. If the host cannot create two workers,
 Peregrine stops instead of silently investigating in the calling agent.
 
@@ -156,6 +171,7 @@ npm run doctor
 
 ```text
 skills/          canonical cross-host skills
+cursor/          Cursor-only subagents and command
 src/core/        prompts, filtering, schemas, normalized results
 src/engines/     claude, codex, and mock runners
 src/github/      deduplication and guarded posting

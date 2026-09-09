@@ -127,7 +127,37 @@ request takes precedence. Both forms launch a breadth subagent and then a
 distinct investigation subagent; the calling agent remains coordinator-only.
 See [configuration](configuration.md#interactive-plugin-routing).
 
-## Install in both hosts
+## Install in Cursor
+
+Cursor loads Peregrine through `.cursor-plugin/plugin.json`, which exposes the
+shared skills plus the two native Peregrine subagents and `/peregrine-review`
+command. Until Peregrine is listed in the public Cursor Marketplace, use
+Cursor's documented local-plugin path from a clone of this repository:
+
+```bash
+mkdir -p "$HOME/.cursor/plugins/local"
+ln -s '/absolute/path/to/peregrine-bugbot' "$HOME/.cursor/plugins/local/peregrine"
+```
+
+Alternatively copy the repository into `$HOME/.cursor/plugins/local/peregrine`.
+Restart Cursor or run **Developer: Reload Window**, then open **Customize** and
+confirm the plugin, the `invariant-first-pr-review` skill,
+`peregrine-breadth`, `peregrine-investigation`, and `peregrine-review` command
+are visible. A marketplace installation with the same plugin name takes
+precedence over a local copy.
+
+The native routes are pinned to `composer-2.5[]` for breadth and
+`grok-4.6[effort=xhigh]` for investigation. See the
+[Cursor provider guide](providers/cursor.md).
+
+For public distribution, submit the repository through Cursor's plugin
+marketplace publishing flow after this manifest lands on `main`. Teams and
+Enterprise installations can also import a GitHub repository into a team
+marketplace. Cursor does not currently document a separate non-interactive
+`cursor plugin install <name>` command, so the repository wrappers intentionally
+do not invent one.
+
+## Install in Codex and Claude
 
 The Codex and Claude installations are independent. To use Peregrine in both,
 run both sets of commands:
@@ -166,11 +196,18 @@ verification commands from the installation section to confirm the active
 source and version.
 
 If you cloned this repository for development, the package scripts execute the
-same commands:
+same Codex and Claude commands:
 
 ```bash
 npm run plugin:update:codex
 npm run plugin:update:claude
+```
+
+A Cursor local-plugin checkout is updated with ordinary Git, then a Cursor
+window reload:
+
+```bash
+git -C '/absolute/path/to/peregrine-bugbot' pull --ff-only
 ```
 
 The package scripts are conveniences, not a requirement for a GitHub install.

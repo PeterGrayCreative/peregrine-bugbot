@@ -3,7 +3,7 @@
   "owner": {
     "name": "Peter Gray"
   },
-  "description": "Canonical Peregrine pull-request review skills for Claude and Codex.",
+  "description": "Canonical Peregrine pull-request review skills for Claude, Codex, and Cursor.",
   "plugins": [
     {
       "name": "peregrine",

@@ -1,8 +1,8 @@
 # Architecture
 
-Peregrine has one canonical skill implementation and thin host adapters. Claude and Codex receive the same invariant method, finding contract, review lanes, and project-profile trust rules.
+Peregrine has one canonical skill implementation and thin host adapters. Claude, Codex, and Cursor receive the same invariant method, finding contract, review lanes, and project-profile trust rules.
 
-The GitHub repository is also the distribution boundary. `.claude-plugin/marketplace.json` and `.agents/plugins/marketplace.json` expose the root plugin from `main`; native marketplace refresh plus plugin reinstall/update replaces disconnected copied-skill upgrade paths.
+The GitHub repository is also the distribution boundary. `.claude-plugin/marketplace.json` and `.agents/plugins/marketplace.json` expose the root plugin from `main`; `.cursor-plugin/plugin.json` exposes the same skills with Cursor-native agents and commands. Native marketplace refresh plus plugin reinstall/update replaces disconnected copied-skill upgrade paths.
 
 ```mermaid
 flowchart LR
@@ -27,10 +27,10 @@ flowchart LR
 
 ## Boundaries
 
-1. **Skills:** `skills/` is the only editable source. `.claude-plugin/` and `.codex-plugin/` package the same directories; installed copies are release artifacts, not sources.
+1. **Skills:** `skills/` is the only editable methodology source. `.claude-plugin/`, `.codex-plugin/`, and `.cursor-plugin/` package the same directories; installed copies are release artifacts, not sources.
 2. **Core:** filtering, prompts, package paths, strict model-output parsing, and normalized `EngineResult` construction are provider-neutral.
 3. **Deterministic routing:** the Node runner resolves the trusted profile, executes the bundled review-manifest code before inference, and embeds its output and the filtered diff in both stages. Profile order remains explicit path, merge-base-safe repository profile, then external per-repository profile. Manifest structure is trusted, while repository-derived paths and metadata remain untrusted data. Models do not spend turns rerunning the manifest or reconstructing the changed-file list.
-4. **Orchestration:** Interactive Claude and Codex calls keep the parent coordinator-only and launch two sequential workers: breadth first, investigation second. Role-tagged packets prevent recursive delegation. The automated runners launch the same two stages as separate read-only processes with strict JSON schemas. Per-stage usage and duration are retained as telemetry.
+4. **Orchestration:** Interactive Claude, Codex, and Cursor calls keep the parent coordinator-only and launch two sequential workers: breadth first, investigation second. Role-tagged packets prevent recursive delegation. The automated runners launch the same two stages as separate read-only processes with strict JSON schemas. Per-stage usage and duration are retained as telemetry.
 5. **Outbound trust gate:** structured output is reparsed, bounded, checked for credential patterns, and only then persisted or passed to the separate posting process.
 6. **Artifact:** `review` writes a normalized result. `post` parses the artifact again and refuses invalid status/finding/usage shapes.
 7. **Posting:** GitHub posting refreshes the PR head, applies the confidence threshold and comment cap, deduplicates root-cause fingerprints, validates inline locations against the diff, and falls back once to a body-only review on an inline `422`.

@@ -1,6 +1,6 @@
 # Configuration
 
-`peregrine.config.json` is versioned with `schemaVersion: 1`. The default runner remains `claude`; select Codex with `--runner codex`, `PEREGRINE_RUNNER=codex`, a reusable-workflow input, or the `PEREGRINE_RUNNER` repository variable.
+`peregrine.config.json` is versioned with `schemaVersion: 1`. The default runner remains `claude`; select Codex with `--runner codex`, `PEREGRINE_RUNNER=codex`, a reusable-workflow input, or the `PEREGRINE_RUNNER` repository variable. Cursor is an interactive native-plugin host, not a third Node runner.
 
 The default route is deliberately strong rather than cost-minimal:
 
@@ -8,6 +8,7 @@ The default route is deliberately strong rather than cost-minimal:
 | --- | --- | --- |
 | Claude | `claude-sonnet-5` / `high` | `claude-opus-5` / `high` |
 | Codex | `gpt-5.6-luna` / `high` | `gpt-5.6-sol` / `high` |
+| Cursor | `composer-2.5[]` | `grok-4.6[effort=xhigh]` |
 
 ## Runner settings
 
@@ -140,6 +141,13 @@ claude plugin install peregrine@peregrine --scope user \
 Claude users can change the same values later through the plugin configuration
 interface. Codex does not currently expose an equivalent plugin `userConfig`
 manifest field, so use the per-invocation block in Codex.
+
+Cursor stores its installed defaults directly in the two custom subagent files:
+`composer-2.5[]` for `peregrine-breadth` and
+`grok-4.6[effort=xhigh]` for `peregrine-investigation`. A per-request
+`peregrineRouting` block may request another route, but the coordinator must
+report a fallback when the active Cursor runtime cannot override the named
+agent's configured model. Cursor still requires two distinct sequential workers.
 
 `skillName`, `maxTurns`, `maxBudgetUsd`, and `timeoutMs` remain automated-runner
 settings. Interactive hosts own their parent task lifecycle and cannot reliably

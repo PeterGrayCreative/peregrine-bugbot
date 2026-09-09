@@ -13,7 +13,7 @@
   "interface": {
     "displayName": "Peregrine Review",
     "shortDescription": "Invariant-first pull-request review",
-    "longDescription": "Review pull requests with a shared invariant-first method across Claude and Codex.",
+    "longDescription": "Review pull requests with a shared invariant-first method across Claude, Codex, and Cursor.",
     "developerName": "Peter Gray",
     "category": "Productivity",
     "capabilities": ["Read"],
