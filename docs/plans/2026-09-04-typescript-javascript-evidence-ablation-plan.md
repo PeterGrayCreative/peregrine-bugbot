@@ -1,7 +1,7 @@
 # TypeScript and JavaScript evidence gathering and Peregrine ablation plan
 
 Date: 2026-09-04
-Status: active research direction; R1 complete, R2 and R3 in progress
+Status: active research direction; R1 complete, R2 human review pending, R3 partition-binding checkpoint complete
 
 This program preserves the original optimization plan, its implementation
 checklist, and every prior experiment. It pauses the next production
@@ -57,8 +57,10 @@ Collection proceeds in two bounded stages:
 
 Bug/fix pairs, backports, forks, clones, and related symptoms remain one
 statistical family and one partition. Reverse-applying a fix is synthetic, not
-an authentic introducing pull request. Two accountable independent curators
-must confirm each admitted case.
+an authentic introducing pull request. The current program has one accountable
+human curator/verifier. Its versioned sole-human decisions are admissible only
+with an explicit non-independence claim; they do not establish independent
+confirmation or a sealed holdout.
 
 ## Transfer protection
 
@@ -149,7 +151,7 @@ Small zero-event samples do not certify tight non-inferiority bounds.
 | Step | Deliverable and stop condition |
 | --- | --- |
 | R1 | Five exact historical reconstructions and a source/yield report. Stop if authentic review opportunities are not recoverable. |
-| R2 | A 100-candidate inventory, 36 independently curated cases, duplicate groups, and a frozen split. |
+| R2 | A 100-candidate inventory, 36 explicitly sole-human-curated cases, duplicate groups, and a frozen split; no independent-confirmation claim. |
 | R3 | Neutral and truthful harness prerequisites with deterministic integrity tests. |
 | R4 | Four frozen prompts, caps, routes, runtime, corpus, rubric, analysis, hashes, and a zero-provider dry run. This is the next provider-authorization checkpoint. |
 | R5 | Authorized 96-attempt methodology comparison and at most three registered component screens. |
