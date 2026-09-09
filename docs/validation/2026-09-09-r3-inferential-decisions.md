@@ -5,6 +5,8 @@ Date: 2026-09-09
 Status: deterministic structural implementation. No provider or reviewer-model
 experiment ran, and this record makes no bug-finding efficacy claim.
 
+Delivery: [PR #39](https://github.com/PeterGrayCreative/peregrine-bugbot/pull/39).
+
 ## Implemented boundary
 
 - The inference plan is written before methodology execution and binds the
