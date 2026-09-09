@@ -19,12 +19,14 @@ test("the checked-in config and both plugin manifests are internally consistent"
       breadthEffort: current.runners.claude.breadthEffort,
       investigationModel: current.runners.claude.investigationModel,
       investigationEffort: current.runners.claude.investigationEffort,
+      investigationPromptMode: current.runners.claude.investigationPromptMode,
     },
     {
       breadthModel: "claude-sonnet-5",
       breadthEffort: "high",
       investigationModel: "claude-opus-5",
       investigationEffort: "high",
+      investigationPromptMode: "method-packet",
     },
   );
   assert.deepEqual(
@@ -33,12 +35,14 @@ test("the checked-in config and both plugin manifests are internally consistent"
       breadthEffort: current.runners.codex.breadthEffort,
       investigationModel: current.runners.codex.investigationModel,
       investigationEffort: current.runners.codex.investigationEffort,
+      investigationPromptMode: current.runners.codex.investigationPromptMode,
     },
     {
       breadthModel: "gpt-5.6-luna",
       breadthEffort: "high",
       investigationModel: "gpt-5.6-sol",
       investigationEffort: "high",
+      investigationPromptMode: "method-packet",
     },
   );
   const packageVersion = (
@@ -207,7 +211,7 @@ test("provider-scoped environment overrides cannot change the other provider", (
   }
 });
 
-test("schema version 1 configs acquire stable legacy defaults", () => {
+test("schema version 1 configs acquire stable method-packet defaults", () => {
   const dir = mkdtempSync(join(tmpdir(), "peregrine-config-compat-"));
   const path = join(dir, "config.json");
   const legacy = JSON.parse(JSON.stringify(config())) as {
@@ -223,8 +227,15 @@ test("schema version 1 configs acquire stable legacy defaults", () => {
     writeFileSync(path, JSON.stringify(legacy));
     const loaded = loadConfig(path);
     assert.equal(loaded.runners.claude.breadthEffort, "high");
-    assert.equal(loaded.runners.claude.investigationPromptMode, "legacy");
-    assert.equal(loaded.runners.codex.investigationPromptMode, "legacy");
+    assert.equal(loaded.runners.claude.investigationPromptMode, "method-packet");
+    assert.equal(loaded.runners.codex.investigationPromptMode, "method-packet");
+
+    legacy.runners.claude.investigationPromptMode = "legacy";
+    legacy.runners.codex.investigationPromptMode = "legacy";
+    writeFileSync(path, JSON.stringify(legacy));
+    const explicitLegacy = loadConfig(path);
+    assert.equal(explicitLegacy.runners.claude.investigationPromptMode, "legacy");
+    assert.equal(explicitLegacy.runners.codex.investigationPromptMode, "legacy");
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

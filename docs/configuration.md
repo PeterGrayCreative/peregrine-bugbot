@@ -48,9 +48,13 @@ diff as a separately delimited variable section. Compilation fails closed if a
 required canonical heading is missing. Repository-controlled profile and
 custom-lane text never enters the trusted method tags.
 
-The checked-in default remains `legacy` for both runners. The Stage 2 Codex
-screening validated the opt-in mode as an isolated experiment; it did not test
-Claude behavior or authorize a production-routing change.
+The checked-in default is `method-packet` for both runners. Configurations that
+omit `investigationPromptMode` also resolve to `method-packet`. Set the field to
+`legacy` explicitly to retain runtime skill traversal. The Stage 2 Codex
+screening measured a 29.81% median paired wall-time reduction and 62.15% lower
+input-token use on the registered visible-seeded corpus without losing a
+registered reliable root. That evidence does not establish Claude performance
+or broader historical and sealed-holdout quality claims.
 
 ## Pricing contracts
 

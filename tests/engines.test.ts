@@ -284,7 +284,7 @@ test("Codex runner performs isolated breadth and investigation stages", async ()
   assert.deepEqual(validatedStages, ["breadth", "investigation"]);
 });
 
-test("method-packet compilation fails as a typed configuration outcome before provider work", async () => {
+test("default method-packet compilation fails as a typed configuration outcome before provider work", async () => {
   const assets = mkdtempSync(join(tmpdir(), "peregrine-missing-method-assets-"));
   try {
     for (const runner of ["claude", "codex"] as const) {
@@ -294,7 +294,7 @@ test("method-packet compilation fails as a typed configuration outcome before pr
         return { stdout: "", stderr: "", code: 0, timedOut: false };
       };
       const ctx = context();
-      ctx.config.runners[runner].investigationPromptMode = "method-packet";
+      delete ctx.config.runners[runner].investigationPromptMode;
       ctx.evaluationIsolation = {
         providerHome: "/tmp/peregrine-test-provider-home",
         providerAssetsRoot: assets,

@@ -256,7 +256,7 @@ export function createClaudeEngine(
       const manifest = await prepareReviewManifest(ctx, cfg.skillName);
       let methodPacket;
       try {
-        methodPacket = cfg.investigationPromptMode === "method-packet"
+        methodPacket = cfg.investigationPromptMode !== "legacy"
           ? await compileInvestigatorMethodPacket({
               skillDir: ctx.evaluationIsolation
                 ? join(ctx.evaluationIsolation.providerAssetsRoot, "skills", cfg.skillName)
