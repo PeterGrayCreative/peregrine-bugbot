@@ -9,7 +9,7 @@ import { buildMethodologyAdjudicationLedger } from "../eval/methodology-adjudica
 import { writeMethodologyGradeSet } from "../eval/methodology-analysis-artifacts.js";
 import { buildMethodologyResourceSet } from "../eval/methodology-resource-artifact.js";
 import { writeMethodologyContrastArtifact } from "../eval/methodology-contrast-artifacts.js";
-import { readMethodologyContrastBinding, writeMethodologyContrastBinding } from "../eval/methodology-contrast-binding.js";
+import { CONTRAST_SOURCE_PATHS, readMethodologyContrastBinding, writeMethodologyContrastBinding } from "../eval/methodology-contrast-binding.js";
 import { gradeMethodologyAttempt, methodologyComparisonId, methodologyFindingEvidenceSha256, methodologyReviewOutputSha256, type MethodologyGradingProjection } from "../eval/methodology-grading-contract.js";
 import { buildMethodologySchedule, methodologyArmConfigIdentitySha256, type MethodologyDesign } from "../eval/methodology-schedule.js";
 import { historicalPermittedMetrics, parseHistoricalGroundTruth } from "../eval/historical-truth.js";
@@ -51,6 +51,15 @@ function installBaseBinding(root: string, data: ReturnType<typeof makeFixture>, 
   writeExclusiveJson(root, join(root, "methodology-analysis-binding.json"), binding);
   return binding;
 }
+
+test("keeps the public source-path read access immutable", () => {
+  assert.equal(Object.isFrozen(CONTRAST_SOURCE_PATHS), true);
+  const original = [...CONTRAST_SOURCE_PATHS];
+  assert.throws(() => {
+    (CONTRAST_SOURCE_PATHS as unknown as string[]).pop();
+  }, TypeError);
+  assert.deepEqual(CONTRAST_SOURCE_PATHS, original);
+});
 
 test("binds and rereads contrast to v1 base binding and exact source tree", () => {
   const data = makeFixture();

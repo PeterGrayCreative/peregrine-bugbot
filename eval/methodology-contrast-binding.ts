@@ -17,7 +17,7 @@ export const METHODOLOGY_CONTRAST_BINDING_FILE = "methodology-contrast-binding.j
 
 // Keep this list explicit. It is the union of the v1 analysis binding's fixed
 // dependency list and every new module used to derive/bind this artifact.
-const CONTRAST_SOURCE_PATHS = [
+const CONTRAST_SOURCE_PATHS_CANONICAL = Object.freeze([
   "eval/artifacts.ts",
   "eval/benchmark-panels.ts",
   "eval/case-curation.ts",
@@ -78,7 +78,13 @@ const CONTRAST_SOURCE_PATHS = [
   "src/security/secrets.ts",
   "src/types.ts",
   "src/util/exec.ts",
-] as const;
+] as const);
+
+// Keep the existing read-only export for consumers that need to compose a
+// related source closure, but never expose the canonical value itself.
+export const CONTRAST_SOURCE_PATHS = Object.freeze([
+  ...CONTRAST_SOURCE_PATHS_CANONICAL,
+]) as typeof CONTRAST_SOURCE_PATHS_CANONICAL;
 
 export interface MethodologyContrastBinding {
   schemaVersion: 1;
@@ -252,7 +258,7 @@ function sourceManifest(repositoryRoot: string): MethodologyContrastBinding["con
   if (loaded !== expectedLoaded || relative(root, loaded).startsWith("..")) {
     throw new Error("methodology contrast binding module is not loaded from repositoryRoot");
   }
-  return CONTRAST_SOURCE_PATHS.map((path) => {
+  return CONTRAST_SOURCE_PATHS_CANONICAL.map((path) => {
     const absolute = join(root, path);
     const stat = lstatSync(absolute);
     if (!stat.isFile() || stat.isSymbolicLink()) throw new Error(`methodology contrast source is unsafe: ${path}`);
@@ -278,8 +284,8 @@ function validateBinding(value: MethodologyContrastBinding): void {
     if (!/^[a-f0-9]{64}$/.test(value[field])) throw new Error(`methodology contrast binding ${field} is invalid`);
   }
   timestamp(value.boundAt);
-  if (!Array.isArray(value.contrastSource) || value.contrastSource.length !== CONTRAST_SOURCE_PATHS.length ||
-      canonicalJson(value.contrastSource.map((item) => item.path)) !== canonicalJson(CONTRAST_SOURCE_PATHS)) {
+  if (!Array.isArray(value.contrastSource) || value.contrastSource.length !== CONTRAST_SOURCE_PATHS_CANONICAL.length ||
+      canonicalJson(value.contrastSource.map((item) => item.path)) !== canonicalJson(CONTRAST_SOURCE_PATHS_CANONICAL)) {
     throw new Error("methodology contrast source manifest paths are invalid");
   }
   for (const item of value.contrastSource) {

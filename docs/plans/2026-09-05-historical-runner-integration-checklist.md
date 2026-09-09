@@ -300,8 +300,13 @@ legacy version-2 tool policies and version-1 scope records remain readable.
   that omits arm, route, and timing. The exact grouping implementation and a
   private append-only operator blinding-key artifact are bound, and a fresh
   process can reopen and reproduce the sealed summary. Curator blindness is
-  operator-mediated and not independently attested. Inferential intervals and
-  decision seals remain open.
+  operator-mediated and not independently attested. A preregistered inference
+  plan now derives failure-inclusive point estimates and all required decision
+  surfaces from authenticated evidence. Grade-bound adjudication resolutions,
+  content-addressed unmatched-root ledgers, and append-only versioned decision
+  seals preserve every earlier decision. Inferential intervals remain blocked
+  until duplicate-family assignments are authenticated; severe-regression
+  decisions also remain blocked until registered-root severity is bound.
   Cross-run, caller-invented run identity, altered projection, mixed execution,
   and source drift reject. A separate versioned resource artifact derives every scheduled
   attempt's lifecycle wall duration, runner duration, stage count, and
@@ -317,6 +322,8 @@ legacy version-2 tool policies and version-1 scope records remain readable.
   describes the authenticated semantic and discovery chain.
   The [trusted attachment record](../validation/2026-09-08-r3-trusted-provider-attachment.md)
   describes the runner/factory boundary and its remaining runtime limits.
+  The [inferential-decision record](../validation/2026-09-09-r3-inferential-decisions.md)
+  describes the versioned decision lineage and its deliberate blockers.
 
 ## Zero-provider acceptance sequence
 
