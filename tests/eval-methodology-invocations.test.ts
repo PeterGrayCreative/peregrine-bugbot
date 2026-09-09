@@ -9,6 +9,7 @@ import { compileMethodologyDiscoveryPrompt, compileMethodologyReviewPrompt } fro
 import { createMethodologyInvocationRecorder, readMethodologyInvocation, registerMethodologyInvocations,
   readMethodologyInvocationRegistration, type MethodologyInvocationInput } from "../eval/methodology-invocations.js";
 import { canonicalJsonSha256 } from "../eval/experiment.js";
+import { ACCEPTED_EVAL_RUNTIME_IMAGE } from "../eval/runtime-containment.js";
 
 const scope = { baseRef: "a".repeat(40), headRef: "b".repeat(40), diff: "+const x = 1;",
   taskSpecification: "Preserve behavior.", rawChangedPaths: ["src/a.ts"] };
@@ -152,4 +153,78 @@ test("reader rejects byte tampering and cross-run registration identities", asyn
     writeFileSync(path, JSON.stringify(record));
     assert.throws(() => readMethodologyInvocation(f.root, f.registrationSha256, first.attemptId, 1, receipt), /digest/);
   } finally { f.cleanup(); }
+});
+
+test("trusted v2 tool policy binds the attachment reference to the scheduled attempt", async () => {
+  const f = await fixture();
+  try {
+    const input = await f.input("A");
+    const attachment = {
+      schemaVersion: 1 as const,
+      protocol: "methodology-provider-attachment-reference-v1" as const,
+      attemptId: input.attemptId,
+      armId: "A" as const,
+      sourceHeadTree: "b".repeat(40),
+      effectiveRootsSha256: "1".repeat(64),
+      image: ACCEPTED_EVAL_RUNTIME_IMAGE,
+      runner: "codex" as const,
+      providerAccess: "cli-session" as const,
+      profile: "methodology-review" as const,
+      executionClass: "provider" as const,
+      outputByteLimit: 4_194_304,
+      readLimitsSha256: "2".repeat(64),
+      mcpLimitsSha256: "3".repeat(64),
+      attestationSha256: "4".repeat(64),
+    };
+    input.toolPolicy = {
+      protocol: "neutral-read-mcp-v2",
+      url: "http://host.docker.internal:43123/mcp/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      serverName: "source_read",
+      enabledTools: ["list_tree", "read_file", "search_text"],
+      attachment,
+    };
+    const receipt = f.record(input);
+    assert.deepEqual(readMethodologyInvocation(f.root, f.registrationSha256, input.attemptId, 1, receipt).input,
+      input);
+  } finally { f.cleanup(); }
+
+  for (const mutate of [
+    (value: Record<string, unknown>) => { value.attemptId = "attempt-999999"; },
+    (value: Record<string, unknown>) => { value.armId = "D"; },
+    (value: Record<string, unknown>) => { value.image = "ghcr.io/example.invalid/runtime@sha256:" + "a".repeat(64); },
+    (value: Record<string, unknown>) => { value.effectiveRootsSha256 = "invalid"; },
+    (value: Record<string, unknown>) => { value.executionClass = "unknown"; },
+    (value: Record<string, unknown>) => { value.outputByteLimit = 0; },
+  ]) {
+    const invalid = await fixture();
+    try {
+      const input = await invalid.input("A");
+      const attachment: Record<string, unknown> = {
+        schemaVersion: 1,
+        protocol: "methodology-provider-attachment-reference-v1",
+        attemptId: input.attemptId,
+        armId: "A",
+        sourceHeadTree: "b".repeat(40),
+        effectiveRootsSha256: "1".repeat(64),
+        image: ACCEPTED_EVAL_RUNTIME_IMAGE,
+        runner: "codex",
+        providerAccess: "cli-session",
+        profile: "methodology-review",
+        executionClass: "provider",
+        outputByteLimit: 4_194_304,
+        readLimitsSha256: "2".repeat(64),
+        mcpLimitsSha256: "3".repeat(64),
+        attestationSha256: "4".repeat(64),
+      };
+      mutate(attachment);
+      input.toolPolicy = {
+        protocol: "neutral-read-mcp-v2",
+        url: "http://host.docker.internal:43123/mcp/" + "a".repeat(64),
+        serverName: "source_read",
+        enabledTools: ["list_tree", "read_file", "search_text"],
+        attachment: attachment as NonNullable<NonNullable<MethodologyInvocationInput["toolPolicy"]>["attachment"]>,
+      };
+      assert.throws(() => invalid.record(input), /attachment evidence/);
+    } finally { invalid.cleanup(); }
+  }
 });

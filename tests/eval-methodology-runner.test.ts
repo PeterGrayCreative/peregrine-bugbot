@@ -219,6 +219,7 @@ test("neutral methodology tool policy disables built-in shell and configures onl
       "shell_tool", "unified_exec",
     ]);
     assert.ok(args.includes('mcp_servers.source_read.enabled_tools=["list_tree","read_file","search_text"]'));
+    assert.ok(args.includes("mcp_servers.source_read.required=true"));
     assert.ok(args.includes('mcp_servers.source_read.url="http://host.docker.internal:43123/mcp/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"'));
   } finally {
     setup.materialized.cleanup();

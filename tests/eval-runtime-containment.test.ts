@@ -42,6 +42,7 @@ const methodologyCodexCommand = (paths: ReturnType<typeof roots>) => [
   "--disable", "shell_tool", "--disable", "unified_exec",
   "--config", 'mcp_servers.source_read.url="http://host.docker.internal:43123/mcp/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"',
   "--config", 'mcp_servers.source_read.enabled_tools=["list_tree","read_file","search_text"]',
+  "--config", "mcp_servers.source_read.required=true",
   "--strict-config", "--sandbox", "read-only", "--model", "gpt-5.6-sol",
   "--config", 'model_reasoning_effort="high"', "--cd", paths.checkoutDir,
   "--output-schema", join(paths.assetsDir, "schemas", "methodology-review.schema.json"),

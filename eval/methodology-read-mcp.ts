@@ -40,7 +40,12 @@ const TOOL_DEFINITIONS = [
 /** One initialization per server lifetime. Close and create a fresh service for
  * another client/run. No SSE, outgoing requests, resources, prompts, or shell. */
 export async function startReviewReadMcpServer(exportRoot: string, readLimits: ReviewReadToolLimits,
-  options: ReviewReadMcpOptions): Promise<{ url: string; authorizeHost(authority: string): void; close(): Promise<void> }> {
+  options: ReviewReadMcpOptions): Promise<{
+    url: string;
+    authorizeHost(authority: string): void;
+    replaceAuthorizedHosts(authorities: readonly string[]): void;
+    close(): Promise<void>;
+  }> {
   if (!fields(options, ["maxRequestBytes", "maxResponseBytes", "requestTimeoutMs", "maxConnections", "maxRequests"],
     ["host", "port", "allowedHosts", "allowedOrigins", "maxSessions"])) throw new Error("invalid MCP configuration");
   for (const key of ["maxRequestBytes", "maxResponseBytes", "requestTimeoutMs", "maxConnections", "maxRequests"] as const) {
@@ -216,9 +221,17 @@ export async function startReviewReadMcpServer(exportRoot: string, readLimits: R
   if (!address || typeof address === "string") throw new Error("MCP listener has no TCP address");
   const authority = `${host.includes(":") ? `[${host}]` : host}:${address.port}`;
   if (options.allowedHosts === undefined) allowedHosts.add(authority.toLowerCase());
-  return { url: `http://${authority}${endpoint}`, authorizeHost: (candidate) => {
+  const assertAuthorizationOpen = () => {
     if (closed || sessions.size > 0) throw new Error("MCP host authorization is frozen after first initialization");
+  };
+  return { url: `http://${authority}${endpoint}`, authorizeHost: (candidate) => {
+    assertAuthorizationOpen();
     for (const value of authorities([candidate])) allowedHosts.add(value);
+  }, replaceAuthorizedHosts: (candidates) => {
+    assertAuthorizationOpen();
+    const replacements = authorities(candidates);
+    allowedHosts.clear();
+    for (const value of replacements) allowedHosts.add(value);
   }, close: async () => {
     closed = true;
     sessions.clear();

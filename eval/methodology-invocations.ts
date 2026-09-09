@@ -8,6 +8,7 @@ import { parseMethodologyDiscoveryOutput } from "./methodology-output.js";
 import type { CompiledMethodologyPrompt } from "./methodology-prompts.js";
 import { parseMethodologySchedule, type MethodologySchedule } from "./methodology-schedule.js";
 import type { EvaluationIsolation } from "../src/types.js";
+import { ACCEPTED_EVAL_RUNTIME_IMAGE } from "./runtime-containment.js";
 
 export interface MethodologyInvocationInput {
   attemptId: string;
@@ -160,7 +161,7 @@ function validateInput(input: MethodologyInvocationInput, registration: Invocati
       input.stageMaximumMs !== attempt.stageDeadlineMs[input.stageIndex - 1]) {
     throw new Error("methodology invocation route or ceiling mismatch");
   }
-  if (input.toolPolicy !== undefined) validateToolPolicy(input.toolPolicy);
+  if (input.toolPolicy !== undefined) validateToolPolicy(input.toolPolicy, input.attemptId, attempt.armId);
   const requestedAt = timestamp(input.requestedAt);
   const deadline = timestamp(input.attemptDeadlineAt);
   if (deadline <= requestedAt || deadline - requestedAt > registration.schedule.design.totalDeadlineMs) {
@@ -184,11 +185,21 @@ function validateInput(input: MethodologyInvocationInput, registration: Invocati
   }
 }
 
-function validateToolPolicy(value: NonNullable<EvaluationIsolation["neutralReadMcp"]>): void {
-  keys(value, ["protocol", "url", "serverName", "enabledTools"]);
-  if (value.protocol !== "neutral-read-mcp-v1" || value.serverName !== "source_read" ||
+function validateToolPolicy(
+  value: NonNullable<EvaluationIsolation["neutralReadMcp"]>,
+  attemptId: string,
+  armId: "A" | "B" | "C" | "D",
+): void {
+  keys(value, ["protocol", "url", "serverName", "enabledTools"], ["attachment"]);
+  if (!(["neutral-read-mcp-v1", "neutral-read-mcp-v2"] as const).includes(value.protocol) ||
+      value.serverName !== "source_read" ||
       canonicalJson(value.enabledTools) !== canonicalJson(["list_tree", "read_file", "search_text"])) {
     throw new Error("methodology invocation tool policy is invalid");
+  }
+  if (value.protocol === "neutral-read-mcp-v1") {
+    if (value.attachment !== undefined) throw new Error("legacy methodology tool policy cannot carry attachment evidence");
+  } else {
+    validateAttachmentReference(value.attachment, attemptId, armId);
   }
   let url: URL;
   try { url = new URL(value.url); }
@@ -197,6 +208,29 @@ function validateToolPolicy(value: NonNullable<EvaluationIsolation["neutralReadM
       !/^[1-9][0-9]{0,4}$/.test(url.port) || Number(url.port) > 65535 ||
       !/^\/mcp\/[a-f0-9]{64}$/.test(url.pathname) || url.search || url.hash || url.username || url.password) {
     throw new Error("methodology invocation tool policy URL is outside the allowed shape");
+  }
+}
+
+function validateAttachmentReference(
+  value: NonNullable<NonNullable<EvaluationIsolation["neutralReadMcp"]>["attachment"]> | undefined,
+  attemptId: string,
+  armId: "A" | "B" | "C" | "D",
+): void {
+  if (!value) throw new Error("trusted methodology tool policy lacks attachment evidence");
+  keys(value, ["schemaVersion", "protocol", "attemptId", "armId", "sourceHeadTree",
+    "effectiveRootsSha256", "image", "runner", "providerAccess", "profile", "executionClass",
+    "outputByteLimit", "readLimitsSha256",
+    "mcpLimitsSha256", "attestationSha256"]);
+  if (value.schemaVersion !== 1 || value.protocol !== "methodology-provider-attachment-reference-v1" ||
+      value.attemptId !== attemptId || value.armId !== armId ||
+      !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(value.sourceHeadTree) ||
+      value.image !== ACCEPTED_EVAL_RUNTIME_IMAGE || value.runner !== "codex" ||
+      !["api-key", "cli-session"].includes(value.providerAccess) || value.profile !== "methodology-review" ||
+      !["provider", "structural-mock"].includes(value.executionClass) ||
+      !Number.isSafeInteger(value.outputByteLimit) || value.outputByteLimit < 1 || value.outputByteLimit > 100_000_000 ||
+      [value.effectiveRootsSha256, value.readLimitsSha256, value.mcpLimitsSha256,
+        value.attestationSha256].some((digest) => !isHash(digest))) {
+    throw new Error("methodology invocation attachment evidence is invalid");
   }
 }
 

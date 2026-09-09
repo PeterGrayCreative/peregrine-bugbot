@@ -69,6 +69,7 @@ async function runStage(args: {
         "--disable", "unified_exec",
         "--config", `mcp_servers.${neutralReadMcp.serverName}.url=${JSON.stringify(neutralReadMcp.url)}`,
         "--config", `mcp_servers.${neutralReadMcp.serverName}.enabled_tools=${JSON.stringify(neutralReadMcp.enabledTools)}`,
+        "--config", `mcp_servers.${neutralReadMcp.serverName}.required=true`,
       ]
     : [];
   const result = await (args.ctx.evaluationIsolation?.runProvider ?? args.run)(

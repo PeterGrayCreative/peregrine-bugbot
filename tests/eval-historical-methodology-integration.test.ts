@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import test from "node:test";
 import { repositoryFamilyIdentitySha256 } from "../eval/case-isolation.js";
 import type { CuratorPolicy } from "../eval/case-curation.js";
@@ -38,7 +38,8 @@ import {
   type MethodologyDesign,
 } from "../eval/methodology-schedule.js";
 import { readMethodologyAttemptTerminal } from "../eval/methodology-terminal.js";
-import type { HistoricalCaseSpec, PeregrineConfig, ProviderExec, ReviewContext } from "../src/types.js";
+import type { HistoricalCaseSpec, PeregrineConfig, ReviewContext } from "../src/types.js";
+import { createFakeMethodologyProvider } from "./helpers/fake-methodology-provider.js";
 
 const CURATOR_ONE = "1".repeat(64);
 const CURATOR_TWO = "2".repeat(64);
@@ -170,9 +171,31 @@ test("an admitted synthetic historical case reaches a terminal-complete four-arm
         assert.equal(existsSync(join(evidenceRoot,
           `${attempt.id}.methodology-start.json`)), false);
       }
-      const calls: string[][] = [];
-      const outputs = new Map<string, string>();
       let attachedRepoPath = "";
+      const provider = createFakeMethodologyProvider({
+        onRequest: (request) => {
+          assert.equal(Object.isFrozen(request), true);
+          assert.equal(Object.isFrozen(request.paths), true);
+          assert.throws(() => {
+            (request.paths as { repo: string }).repo = evidenceRoot;
+          }, TypeError);
+          attachedRepoPath = request.paths.repo;
+          assert.equal(request.armId, armId);
+          assert.doesNotMatch(JSON.stringify(request), new RegExp(escapeRegex(evidenceRoot)));
+          assert.doesNotMatch(JSON.stringify(request), new RegExp(escapeRegex(fixture.caseDir)));
+          const manifest = prepared.find((item) => item.assetsManifest.armId === armId)!.assetsManifest;
+          for (const file of manifest.files) {
+            modelVisibleBytes.push(readFileSync(join(request.paths.assets, ...file.path.split("/")), "utf8"));
+          }
+        },
+        onInvocation: ({ prompt }) => {
+          mockedStages++;
+          modelVisibleBytes.push(prompt);
+        },
+        response: ({ schema }) => schema === "methodology-discovery.schema.json"
+          ? DISCOVERY_OUTPUT
+          : schema === "breadth-result.schema.json" ? BREADTH_OUTPUT : REVIEW_OUTPUT,
+      });
       const lifecycle = await runRegisteredHistoricalMethodologyAttempt({
         evidenceRoot,
         invocationRegistrationSha256: registrationSha256,
@@ -181,42 +204,13 @@ test("an admitted synthetic historical case reaches a terminal-complete four-arm
         priorLifecycleReceipts: [...lifecycleReceipts],
         trustedCuratorPolicy: TRUSTED_POLICY,
         config: config(),
-        attachProvider: (request) => {
-          attachedRepoPath = request.repoPath;
-          assert.equal(request.armId, armId);
-          assert.doesNotMatch(JSON.stringify(request), new RegExp(escapeRegex(evidenceRoot)));
-          assert.doesNotMatch(JSON.stringify(request), new RegExp(escapeRegex(fixture.caseDir)));
-          const manifest = prepared.find((item) => item.assetsManifest.armId === armId)!.assetsManifest;
-          for (const file of manifest.files) {
-            modelVisibleBytes.push(readFileSync(join(request.providerAssetsRoot, ...file.path.split("/")), "utf8"));
-          }
-          const runProvider: ProviderExec = async (_command, args, options) => {
-            calls.push([...args]);
-            mockedStages++;
-            modelVisibleBytes.push(options?.stdin ?? "");
-            const outputPath = argumentAfter(args, "--output-last-message");
-            const schema = basename(argumentAfter(args, "--output-schema"));
-            outputs.set(outputPath, schema === "methodology-discovery.schema.json"
-              ? DISCOVERY_OUTPUT
-              : schema === "breadth-result.schema.json" ? BREADTH_OUTPUT : REVIEW_OUTPUT);
-            return { stdout: "", stderr: "", code: 0, timedOut: false };
-          };
-          return {
-            runProvider,
-            readProviderOutput: (path: string) => outputs.get(path)!,
-            neutralReadMcp: {
-              protocol: "neutral-read-mcp-v1" as const,
-              url: "http://host.docker.internal:43123/mcp/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-              serverName: "source_read" as const,
-              enabledTools: ["list_tree", "read_file", "search_text"] as const,
-            },
-          };
-        },
+        attachProvider: provider.attachProvider,
       });
       assert.ok(attachedRepoPath);
       assert.equal(existsSync(attachedRepoPath), false);
       assert.equal(lifecycle.status, "review-terminal");
-      assert.equal(calls.length, attempt.expectedStages);
+      assert.equal(provider.calls.filter((call) => call[0] === "docker" && call[1] === "run").length,
+        attempt.expectedStages);
       assert.equal(lifecycle.dispatchReceipts.length, attempt.expectedStages);
       const lifecycleRecord = readMethodologyAttemptLifecycleTerminal(
         evidenceRoot, registrationSha256, attempt.id, lifecycle.lifecycleTerminalSha256,
@@ -454,12 +448,6 @@ function buildSchedule(caseName: string, expectedBugCount: number) {
     },
     cases: [{ caseName, corpus: "development", expectedBugCount }],
   });
-}
-
-function argumentAfter(args: string[], flag: string): string {
-  const index = args.indexOf(flag);
-  assert.notEqual(index, -1, `${flag} must be present`);
-  return args[index + 1]!;
 }
 
 function git(cwd: string, ...raw: Array<string | { trim: boolean }>): string {

@@ -1,6 +1,6 @@
 import { readdirSync, realpathSync } from "node:fs";
 import { isAbsolute, relative, resolve, sep } from "node:path";
-import type { PeregrineConfig, ProviderExec, ReviewContext } from "../src/types.js";
+import type { PeregrineConfig, ReviewContext } from "../src/types.js";
 import { leakagePolicyForCase } from "./case-isolation.js";
 import type { HistoricalCuratorPolicy } from "./historical-curator-policy.js";
 import {
@@ -21,21 +21,12 @@ import { createMethodologyInvocationRecorder, readMethodologyInvocationRegistrat
 import { prepareMethodologyLaneActivation } from "./methodology-lane-activation.js";
 import { loadCaseSpec } from "./run-matrix.js";
 import { METHODOLOGY_STOPPED_RUN_CLOSURE_FILE } from "./methodology-execution-evidence.js";
-
-export interface HistoricalMethodologyProviderAttachmentRequest {
-  attemptId: string;
-  armId: "A" | "B" | "C" | "D";
-  repoPath: string;
-  providerHome: string;
-  providerAssetsRoot: string;
-  providerOutputRoot: string;
-}
-
-export interface HistoricalMethodologyProviderAttachment {
-  runProvider: ProviderExec;
-  readProviderOutput(path: string): string;
-  neutralReadMcp: NonNullable<ReviewContext["evaluationIsolation"]>["neutralReadMcp"];
-}
+import {
+  assertMethodologyProviderAttachment,
+  assertMethodologyProviderAttacher,
+  type MethodologyProviderAttachment,
+  type MethodologyProviderAttacher,
+} from "./methodology-provider-attachment.js";
 
 export interface RegisteredHistoricalMethodologyAttemptInput {
   evidenceRoot: string;
@@ -50,9 +41,7 @@ export interface RegisteredHistoricalMethodologyAttemptInput {
   trustedCuratorPolicy: HistoricalCuratorPolicy;
   config: PeregrineConfig;
   /** Trusted runtime adapter only; this module never chooses or launches a provider. */
-  attachProvider(
-    request: HistoricalMethodologyProviderAttachmentRequest,
-  ): HistoricalMethodologyProviderAttachment | Promise<HistoricalMethodologyProviderAttachment>;
+  attachProvider: MethodologyProviderAttacher;
   now?: () => number;
 }
 
@@ -92,14 +81,15 @@ export async function runRegisteredHistoricalMethodologyAttempt(
   );
   const plannedCase = plan.cases.find((candidate) => candidate.caseName === attempt.caseName);
   if (!plannedCase) throw new Error("registered historical methodology attempt lacks a planned case");
-  if (typeof input.attachProvider !== "function") {
-    throw new Error("registered historical methodology attempt requires a trusted provider attachment");
-  }
+  assertMethodologyProviderAttacher(input.attachProvider);
   const recordInvocation = createMethodologyInvocationRecorder(
     input.evidenceRoot,
     input.invocationRegistrationSha256,
   );
-  const holder: { materialized: MaterializedHistoricalMethodologyCase | null } = { materialized: null };
+  const holder: {
+    materialized: MaterializedHistoricalMethodologyCase | null;
+    attachment: MethodologyProviderAttachment | null;
+  } = { materialized: null, attachment: null };
   try {
     return await runMethodologyAttemptLifecycle({
       evidenceRoot: input.evidenceRoot,
@@ -151,15 +141,21 @@ export async function runRegisteredHistoricalMethodologyAttempt(
         if (!isolation.providerOutputRoot) {
           throw new Error("historical methodology materialization lacks a provider output root");
         }
-        const attachment = await input.attachProvider({
+        const attachmentPaths = Object.freeze({
+          repo: materialized.materialized.repoPath,
+          home: isolation.providerHome,
+          assets: isolation.providerAssetsRoot,
+          output: isolation.providerOutputRoot,
+        });
+        const attachmentRequest = Object.freeze({
           attemptId: input.attemptId,
           armId: attempt.armId,
-          repoPath: materialized.materialized.repoPath,
-          providerHome: isolation.providerHome,
-          providerAssetsRoot: isolation.providerAssetsRoot,
-          providerOutputRoot: isolation.providerOutputRoot,
+          sourceHeadTree: materialized.admissionBinding.sourceHeadTree,
+          paths: attachmentPaths,
         });
-        assertProviderAttachment(attachment);
+        const attachment = await input.attachProvider(attachmentRequest);
+        holder.attachment = attachment;
+        assertMethodologyProviderAttachment(attachment, attachmentRequest, attachment.attestation);
         return {
           assetManifest: materialized.assetsManifest,
           rawScope: materialized.rawScope,
@@ -181,7 +177,21 @@ export async function runRegisteredHistoricalMethodologyAttempt(
       ...(input.now ? { now: input.now } : {}),
     });
   } finally {
-    holder.materialized?.cleanup();
+    const cleanupErrors: unknown[] = [];
+    try {
+      await holder.attachment?.close();
+    } catch (error) {
+      cleanupErrors.push(error);
+    }
+    try {
+      holder.materialized?.cleanup();
+    } catch (error) {
+      cleanupErrors.push(error);
+    }
+    if (cleanupErrors.length === 1) throw cleanupErrors[0];
+    if (cleanupErrors.length > 1) {
+      throw new AggregateError(cleanupErrors, "historical methodology attachment cleanup failed");
+    }
   }
 }
 
@@ -238,16 +248,6 @@ function leakagePolicyForMaterialized(caseDirectory: string) {
   // The case reader already authenticated the exact spec; this independent
   // parser supplies the runner-only leakage guard and is never model-visible.
   return leakagePolicyForCase(caseDirectory, loadCaseSpec(caseDirectory));
-}
-
-function assertProviderAttachment(value: unknown): asserts value is HistoricalMethodologyProviderAttachment {
-  if (!value || typeof value !== "object" || Array.isArray(value) ||
-      Object.keys(value).sort(compareText).join("\0") !== ["neutralReadMcp", "readProviderOutput", "runProvider"].sort(compareText).join("\0") ||
-      typeof (value as HistoricalMethodologyProviderAttachment).runProvider !== "function" ||
-      typeof (value as HistoricalMethodologyProviderAttachment).readProviderOutput !== "function" ||
-      !(value as HistoricalMethodologyProviderAttachment).neutralReadMcp) {
-    throw new Error("trusted methodology provider attachment is invalid");
-  }
 }
 
 function assertEvidenceOutsideProviderRoots(

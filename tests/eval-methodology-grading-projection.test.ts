@@ -3,7 +3,7 @@ import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import test from "node:test";
 import { repositoryFamilyIdentitySha256 } from "../eval/case-isolation.js";
 import type { CuratorPolicy } from "../eval/case-curation.js";
@@ -17,6 +17,7 @@ import {
 import { materializeHistoricalMethodologyCase, readHistoricalMethodologyCase,
   type MaterializedHistoricalMethodologyCase } from "../eval/historical-methodology-case.js";
 import { runRegisteredHistoricalMethodologyAttempt } from "../eval/historical-methodology-runner.js";
+import { observeMethodologyProviderAttacher } from "../eval/methodology-provider-attachment.js";
 import { writeMethodologyExecutionEvidence, writeMethodologyStoppedRunClosure, readMethodologyStoppedRunClosure,
   METHODOLOGY_STOPPED_RUN_CLOSURE_FILE, type MethodologyStoppedRunClosureInput,
   type MethodologyLifecycleSealReceipt } from "../eval/methodology-execution-evidence.js";
@@ -39,7 +40,8 @@ import { prepareMethodologyLaneActivation } from "../eval/methodology-lane-activ
 import { historicalPermittedMetrics, parseHistoricalGroundTruth } from "../eval/historical-truth.js";
 import { buildMethodologySchedule, methodologyArmConfigIdentitySha256,
   type MethodologyDesign } from "../eval/methodology-schedule.js";
-import type { HistoricalCaseSpec, PeregrineConfig, ProviderExec, ReviewContext } from "../src/types.js";
+import type { HistoricalCaseSpec, PeregrineConfig, ReviewContext } from "../src/types.js";
+import { createFakeMethodologyProvider } from "./helpers/fake-methodology-provider.js";
 
 const CURATORS = ["1".repeat(64), "2".repeat(64)];
 const POLICY: CuratorPolicy = { schemaVersion: 1, policyId: "protected-git-review-v1",
@@ -141,7 +143,25 @@ test("authenticated projection preserves all scheduled outcomes and never upgrad
     rmSync(join(evidenceRoot, METHODOLOGY_STOPPED_RUN_CLOSURE_FILE));
     let testedTwoStageCrash = false;
     for (const attempt of schedule.attempts) {
-      const outputs = new Map<string, string>();
+      const provider = createFakeMethodologyProvider({
+        onInvocation: () => {
+          if (attempt.armId === "D") {
+            const blocker = join(evidenceRoot, `${attempt.id}.methodology-terminal.json`);
+            if (!existsSync(blocker)) writeFileSync(blocker, "{}\n");
+          }
+        },
+        response: ({ schema }) => ({
+          text: schema === "methodology-discovery.schema.json" ? DISCOVERY :
+            schema === "breadth-result.schema.json" ? BREADTH :
+              attempt.armId === "C" && attempt.repeat === 1 ? UNABLE_REVIEW : REVIEW,
+          code: attempt.armId === "C" && attempt.repeat === 2 ? 1 : 0,
+        }),
+      });
+      const attachProvider = attempt.armId === "B"
+        ? observeMethodologyProviderAttacher(provider.attachProvider, () => {
+          throw new Error("synthetic preflight failure");
+        })
+        : provider.attachProvider;
       const lifecycle = await runRegisteredHistoricalMethodologyAttempt({
         evidenceRoot,
         invocationRegistrationSha256: registrationSha256,
@@ -150,32 +170,7 @@ test("authenticated projection preserves all scheduled outcomes and never upgrad
         priorLifecycleReceipts: [...lifecycleReceipts],
         trustedCuratorPolicy: POLICY,
         config: config(),
-        attachProvider: () => {
-          if (attempt.armId === "B") throw new Error("synthetic preflight failure");
-          const runProvider: ProviderExec = async (_command, args) => {
-            if (attempt.armId === "D") {
-              const blocker = join(evidenceRoot, `${attempt.id}.methodology-terminal.json`);
-              if (!existsSync(blocker)) writeFileSync(blocker, "{}\n");
-            }
-            const outputPath = argumentAfter(args, "--output-last-message");
-            const schema = basename(argumentAfter(args, "--output-schema"));
-            outputs.set(outputPath, schema === "methodology-discovery.schema.json" ? DISCOVERY :
-              schema === "breadth-result.schema.json" ? BREADTH :
-                attempt.armId === "C" && attempt.repeat === 1 ? UNABLE_REVIEW : REVIEW);
-            return { stdout: "", stderr: "",
-              code: attempt.armId === "C" && attempt.repeat === 2 ? 1 : 0, timedOut: false };
-          };
-          return {
-            runProvider,
-            readProviderOutput: (path: string) => outputs.get(path)!,
-            neutralReadMcp: {
-              protocol: "neutral-read-mcp-v1" as const,
-              url: "http://host.docker.internal:43123/mcp/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-              serverName: "source_read" as const,
-              enabledTools: ["list_tree", "read_file", "search_text"] as const,
-            },
-          };
-        },
+        attachProvider,
       });
       if (attempt.armId === "D") rmSync(join(evidenceRoot, `${attempt.id}.methodology-terminal.json`), { force: true });
       lifecycleReceipts.push({ attemptId: attempt.id,
@@ -517,11 +512,6 @@ function reviewContext(item: MaterializedHistoricalMethodologyCase): ReviewConte
   return { repoPath: value.repoPath, diffPath: value.diffPath, diffText: value.diffText,
     baseRef: value.baseRef, headRef: value.headRef, config: config(),
     evaluationIsolation: value.evaluationIsolation };
-}
-function argumentAfter(args: string[], flag: string): string {
-  const index = args.indexOf(flag);
-  assert.notEqual(index, -1);
-  return args[index + 1]!;
 }
 function git(cwd: string, ...raw: Array<string | { trim: boolean }>): string {
   const options = typeof raw.at(-1) === "object" ? raw.pop() as { trim: boolean } : { trim: true };
