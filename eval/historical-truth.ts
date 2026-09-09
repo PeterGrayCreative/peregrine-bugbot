@@ -36,6 +36,11 @@ export interface HistoricalGroundTruth {
   bugs: HistoricalTruthBug[];
 }
 
+/** Canonical causal-root identity shared by grading and operator-only truth bindings. */
+export function historicalRootCauseKey(bug: Pick<HistoricalTruthBug, "id" | "rootCauseGroup">): string {
+  return JSON.stringify(bug.rootCauseGroup === undefined ? ["bug", bug.id] : ["group", bug.rootCauseGroup]);
+}
+
 const OPAQUE_BUG_ID = /^bug-[a-f0-9]{8,32}$/;
 const OPAQUE_ROOT_CAUSE_ID = /^root-[a-f0-9]{8,32}$/;
 const TRUTH_VERSION = /^[a-z0-9][a-z0-9._-]{0,63}$/;

@@ -5,6 +5,7 @@ import {
   type HistoricalMetricEligibility,
 } from "./historical-metric-eligibility.js";
 import {
+  historicalRootCauseKey,
   parseHistoricalGroundTruth,
   type HistoricalGroundTruth,
   type HistoricalTruthBug,
@@ -28,12 +29,6 @@ const PROJECTION_KEYS = ["schemaVersion", "kind", "executionEvidenceSha256", "in
   "statusReason", "lifecycleTerminalSha256", "reviewTerminalSha256", "reviewRawOutputSha256",
   "reviewOutputSha256"] as const;
 const VERDICT_KEYS = ["comparisonId", "bugId", "findingIndex", "findingEvidenceSha256", "verdict"] as const;
-
-// Same structured namespace as the legacy primitive, expressed over the
-// historical type because it intentionally admits the extra unclassified lane.
-function historicalRootCauseKey(bug: HistoricalTruthBug): string {
-  return JSON.stringify(bug.rootCauseGroup === undefined ? ["bug", bug.id] : ["group", bug.rootCauseGroup]);
-}
 
 export type MethodologyAttemptStatus = "completed" | "incomplete" | "failed" | "missing";
 export type MethodologyAttemptStatusReason = "authenticated-complete" | "runner-scope-unverified" |

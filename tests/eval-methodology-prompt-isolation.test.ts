@@ -50,3 +50,21 @@ test("trusted method vocabulary does not relax raw-context marker or answer chec
   const leaked = await compileMethodologyReviewPrompt({ armId: "A", scope: leakedScope });
   assert.throws(() => createMethodologyPromptValidator(policy(), leaked, leakedScope), /forbidden/);
 });
+
+test("operator-only R2 truth bindings are absent from every assembled reviewer prompt", async () => {
+  const canaries = ["r2-operator-truth-binding-v1", "methodology-r2-truth-bindings", "f".repeat(64)];
+  for (const armId of ["A", "B", "C", "D"] as const) {
+    const handoff = armId === "C"
+      ? { status: "completed", limitations: [], candidates: [] } as const
+      : armId === "D"
+        ? { model: "test", candidates: [], clear: [], escalations: [], coverage: { coveredFiles: ["src/a.ts"], unavailable: [] } } as const
+        : undefined;
+    const compiled = await compileMethodologyReviewPrompt({
+      armId,
+      scope,
+      ...(armId === "B" || armId === "D" ? { activatedLanes: [] } : {}),
+      ...(handoff === undefined ? {} : { handoff }),
+    });
+    for (const canary of canaries) assert.equal(compiled.prompt.includes(canary), false);
+  }
+});
