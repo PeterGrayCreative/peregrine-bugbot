@@ -77,11 +77,13 @@ described as independent verification.
 
 A durable blank response workspace is now initialized on private evidence PR
 [#1](https://github.com/PeterGrayCreative/peregrine-evidence-backup/pull/1)
-at commit `24e725b`. Its generated guide links all 36 authenticated dossiers to
-their separate decision templates and binds the declared reviewer identity as
-an operator-prepared identity, not a human decision. The workspace starts with
-zero decisions and remains a draft until the user completes every response and
-the verifier accepts the exact packet/identity bindings.
+at commit `bf5af2b`. Its generated guide links all 36 authenticated dossiers to
+one consolidated `RESPONSE.json` workbook and the strict per-dossier reference
+templates. A deterministic compiler expands only a complete, exact-order,
+packet- and identity-bound workbook into the pre-existing 37-file verifier
+format. The declared reviewer identity remains operator-prepared metadata, not
+a human decision. The workspace starts with zero decisions and remains a draft
+until the user completes the workbook and the verifier accepts it.
 
 The experimental HTTP tool path passed fourteen focused tests and a real
 credential-free two-container protocol probe. This supersedes the transport
@@ -180,7 +182,7 @@ minimal reviewer. Production routing remains frozen.
 | Step | State | Evidence / remaining gate |
 | --- | --- | --- |
 | R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
-| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. A restore-tested v2 packet at private evidence commit `5d4969e` binds all 36 target draft proposals (24 defect-bearing, 12 scoped comparisons) and 11 retained losses. Private draft PR #1 now provides the single all-at-once blank response workspace at `24e725b`. Sole-human governance, response-to-admission derivation, and the authenticated post-admission partition/duplicate-family contract pass structural tests. Human decisions, admission-yield evaluation, durable admission import, the real partition attestation, and the resulting partition artifact remain open; no independence or protected-selection claim is made. |
+| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. A restore-tested v2 packet at private evidence commit `5d4969e` binds all 36 target draft proposals (24 defect-bearing, 12 scoped comparisons) and 11 retained losses. Private draft PR #1 now provides the single all-at-once blank response workbook at `bf5af2b`. Sole-human governance, workbook compilation, response-to-admission derivation, and the authenticated post-admission partition/duplicate-family contract pass structural tests. Human decisions, admission-yield evaluation, durable admission import, the real partition attestation, and the resulting partition artifact remain open; no independence or protected-selection claim is made. |
 | R3: neutral and truthful harness | Structurally complete; runtime canary separately gated | Four-arm scheduling, neutral prompts and mounts, input/lifecycle/stop seals, honest grading projections, all-finding adjudication, grouped discovery roots, resource accounting, exact Sol-high launch policy, bounded read tools, fail-closed scope evidence, destination-restricted egress, semantic judge, authenticated analysis joins, operator-only R2 truth/severity binding, clustered inference v2, and append-only decision lineage have deterministic evidence. Development severity remains descriptive and selection remains exploratory. Old artifacts and production behavior are unchanged. A credential-bearing model/tool canary requires separate authorization and is not historical efficacy evidence. Real execution still depends on completed R2 human admission. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |

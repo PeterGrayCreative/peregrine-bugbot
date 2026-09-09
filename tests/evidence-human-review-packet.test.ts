@@ -23,6 +23,7 @@ import {
 import { buildSoleHumanAdmissionFromResponse } from "../scripts/evidence/build-sole-human-admission.js";
 import { buildRecoveredHumanReviewRequest } from "../scripts/evidence/build-recovered-human-review-request.js";
 import { initializeHumanReviewWorkspace } from "../scripts/evidence/initialize-human-review-workspace.js";
+import { compileHumanReviewWorkbook } from "../scripts/evidence/compile-human-review-workbook.js";
 
 const hash = (value: string | Buffer) => createHash("sha256").update(value).digest("hex");
 
@@ -166,6 +167,7 @@ test("initializes one durable all-at-once response workspace without making huma
     });
     assert.equal(initialized.packetSha256, assembled.packetSha256);
     assert.equal(initialized.copiedTemplates.length, 2);
+    assert.equal(initialized.workbookSha256, hash(readFileSync(join(workspace, "RESPONSE.json"))));
     assert.equal(initialized.claims.decisionsPresent, false);
     assert.equal(initialized.claims.humanReviewComplete, false);
     assert.equal(initialized.reviewerIdentity.descriptor, "github-user:https://github.com/PeterGrayCreative");
@@ -177,10 +179,56 @@ test("initializes one durable all-at-once response workspace without making huma
     assert.match(guide, /Review all 1 proposals/);
     assert.match(guide, /dossiers\/case-alpha\/human-evidence-card\.md/);
     assert.match(guide, /response\/decisions\/case-alpha\.json/);
+    assert.match(guide, /single `RESPONSE\.json` workbook/);
     assert.match(guide, /do not claim independent confirmation/i);
     assert.throws(() => verifyHumanReviewResponse(data.output, join(workspace, "response"), initialized.reviewerIdentity.sha256), /template|decision/i);
     assert.throws(() => initializeHumanReviewWorkspace({ packetDirectory: data.output, destination: workspace, reviewerIdentityDescriptor: "same" }), /overwrite/);
     assert.throws(() => initializeHumanReviewWorkspace({ packetDirectory: data.output, destination: join(data.output, "response"), reviewerIdentityDescriptor: "same" }), /disjoint|overwrite/);
+  } finally {
+    data.cleanup();
+  }
+});
+
+test("compiles one complete human workbook into the strict response layout", () => {
+  const data = fixture();
+  try {
+    assembleHumanReviewPacket(data.request, data.output);
+    const workspace = join(data.root, "human-response-workspace");
+    const initialized = initializeHumanReviewWorkspace({
+      packetDirectory: data.output,
+      destination: workspace,
+      reviewerIdentityDescriptor: "github-user:https://github.com/PeterGrayCreative",
+    });
+    const workbookPath = join(workspace, "RESPONSE.json");
+    const workbook = JSON.parse(readFileSync(workbookPath, "utf8"));
+    workbook.templateOnly = false;
+    Object.assign(workbook.decisions[0], {
+      decision: "approve",
+      reason: "The exact source, reachable trigger, consequence, and partial truth scope are supported.",
+      acknowledgedDossierBundleSha256: workbook.decisions[0].dossierBundleSha256,
+      reviewedAt: "2026-09-09T15:00:00.000Z",
+    });
+    Object.assign(workbook.packetDecision, {
+      acknowledgedPacketSha256: workbook.packetSha256,
+      soleHumanReviewerAcknowledged: true,
+      reviewedEveryDecisionCard: true,
+      decisionsBindPacketAndDossierHashes: true,
+      duplicateFamiliesAccepted: true,
+      limitationsAccepted: true,
+      independentTwoHumanConfirmationClaimed: false,
+      completedAt: "2026-09-09T15:01:00.000Z",
+    });
+    writeFileSync(workbookPath, `${JSON.stringify(workbook, null, 2)}\n`);
+    const destination = join(data.root, "compiled-response");
+    const compiled = compileHumanReviewWorkbook({ packetDirectory: data.output, workbookFile: workbookPath, destination, expectedHumanReviewerIdentitySha256: initialized.reviewerIdentity.sha256 });
+    assert.deepEqual(compiled.counts, { approve: 1, reject: 0, unresolved: 0 });
+    assert.deepEqual(verifyHumanReviewResponse(data.output, destination, initialized.reviewerIdentity.sha256), compiled);
+    assert.throws(() => compileHumanReviewWorkbook({ packetDirectory: data.output, workbookFile: workbookPath, destination, expectedHumanReviewerIdentitySha256: initialized.reviewerIdentity.sha256 }), /overwrite/);
+
+    workbook.decisions[0].acknowledgedDossierBundleSha256 = "f".repeat(64);
+    writeFileSync(workbookPath, `${JSON.stringify(workbook, null, 2)}\n`);
+    assert.throws(() => compileHumanReviewWorkbook({ packetDirectory: data.output, workbookFile: workbookPath, destination: join(data.root, "invalid-response"), expectedHumanReviewerIdentitySha256: initialized.reviewerIdentity.sha256 }), /canonical dossier/);
+    assert.equal(existsSync(join(data.root, "invalid-response")), false);
   } finally {
     data.cleanup();
   }

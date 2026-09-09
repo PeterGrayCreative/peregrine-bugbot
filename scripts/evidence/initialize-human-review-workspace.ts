@@ -26,6 +26,7 @@ export interface HumanReviewWorkspaceInitialization {
   };
   responseDirectory: "response";
   copiedTemplates: Array<{ path: string; bytes: number; sha256: string }>;
+  workbookSha256: string;
   guideSha256: string;
   claims: {
     decisionsPresent: false;
@@ -91,8 +92,8 @@ function renderGuide(input: {
     `- Reviewer identity: \`${input.identityDescriptor}\`\n` +
     `- Reviewer identity SHA-256: \`${input.identitySha256}\`\n` +
     `- Governance: one accountable human; do not claim independent confirmation or a sealed holdout.\n\n` +
-    `For each decision JSON, set \`templateOnly\` to \`false\`, choose \`approve\`, \`reject\`, or \`unresolved\`, supply a concrete reason, copy its dossier bundle digest into \`acknowledgedDossierBundleSha256\`, use the reviewer identity digest above, and record a canonical UTC timestamp. An approval cannot contain a correction; corrections require a new dossier version.\n\n` +
-    `After all proposal decisions are complete, finish \`response/packet-decision.json\`. A packet-level acknowledgment cannot convert unresolved or rejected proposals into admissions. Do not edit the sealed packet.\n\n` +
+    `Complete the single \`RESPONSE.json\` workbook. Set \`templateOnly\` to \`false\`, choose \`approve\`, \`reject\`, or \`unresolved\` for every proposal, supply a concrete reason, copy each dossier bundle digest into \`acknowledgedDossierBundleSha256\`, and record a canonical UTC timestamp. An approval cannot contain a correction; corrections require a new dossier version.\n\n` +
+    `After all proposal decisions are complete, finish the workbook's \`packetDecision\`. A packet-level acknowledgment cannot convert unresolved or rejected proposals into admissions. The separate files under \`response/\` are byte-identical reference templates; do not edit them by hand. The compiler will create a new strict response directory from the completed workbook. Do not edit the sealed packet.\n\n` +
     `## Proposals\n\n${rows}\n`);
 }
 
@@ -131,6 +132,34 @@ export function initializeHumanReviewWorkspace(input: {
     packetLink,
     dossiers: packet.readyDossiers,
   });
+  const workbook = Buffer.from(`${JSON.stringify({
+    schemaVersion: 1,
+    protocol: "r2-sole-human-review-workbook-v1",
+    templateOnly: true,
+    packetId: packet.packetId,
+    packetSha256: packet.packetSha256,
+    humanReviewerIdentitySha256: reviewerIdentitySha256,
+    decisions: packet.readyDossiers.map((item) => ({
+      dossierId: item.dossierId,
+      dossierBundleSha256: item.dossierBundleSha256,
+      decision: null,
+      reason: null,
+      correction: null,
+      acknowledgedDossierBundleSha256: null,
+      reviewedAt: null,
+    })),
+    packetDecision: {
+      reviewMode: "sole-human-v1",
+      acknowledgedPacketSha256: null,
+      soleHumanReviewerAcknowledged: null,
+      reviewedEveryDecisionCard: null,
+      decisionsBindPacketAndDossierHashes: null,
+      duplicateFamiliesAccepted: null,
+      limitationsAccepted: null,
+      independentTwoHumanConfirmationClaimed: null,
+      completedAt: null,
+    },
+  }, null, 2)}\n`);
   const body: Omit<HumanReviewWorkspaceInitialization, "initializationSha256"> = {
     schemaVersion: 1,
     protocol: "r2-sole-human-review-workspace-v1",
@@ -143,6 +172,7 @@ export function initializeHumanReviewWorkspace(input: {
     },
     responseDirectory: "response",
     copiedTemplates: copiedTemplates.map((item) => item.binding),
+    workbookSha256: sha256(workbook),
     guideSha256: sha256(reviewGuide),
     claims: {
       decisionsPresent: false,
@@ -161,6 +191,7 @@ export function initializeHumanReviewWorkspace(input: {
       writeFileSync(join(destination, ...template.path.split("/")), template.bytes, { flag: "wx" });
     }
     writeFileSync(join(destination, "REVIEW.md"), reviewGuide, { flag: "wx" });
+    writeFileSync(join(destination, "RESPONSE.json"), workbook, { flag: "wx" });
     writeFileSync(join(destination, "initialization.json"), `${JSON.stringify(artifact, null, 2)}\n`, { flag: "wx" });
     if (JSON.stringify(verifyHumanReviewPacket(packetRoot)) !== JSON.stringify(packet)) {
       throw new Error("packet changed while the review workspace was initialized");
