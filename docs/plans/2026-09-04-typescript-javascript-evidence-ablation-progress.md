@@ -182,7 +182,7 @@ minimal reviewer. Production routing remains frozen.
 | Step | State | Evidence / remaining gate |
 | --- | --- | --- |
 | R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
-| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. A restore-tested v2 packet at private evidence commit `5d4969e` binds all 36 target draft proposals (24 defect-bearing, 12 scoped comparisons) and 11 retained losses. Private draft PR #1 now provides the single all-at-once blank response workbook at `bf5af2b`. Sole-human governance, workbook compilation, response-to-admission derivation, and the authenticated post-admission partition/duplicate-family contract pass structural tests. Human decisions, admission-yield evaluation, durable admission import, the real partition attestation, and the resulting partition artifact remain open; no independence or protected-selection claim is made. |
+| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. A restore-tested v2 packet at private evidence commit `5d4969e` binds all 36 target draft proposals (24 defect-bearing, 12 scoped comparisons) and 11 retained losses. Private draft PR #1 now provides one blank v2 workbook at `b2e1bce` covering all human approval, class, partition, and duplicate-family decisions. Sole-human governance, one-pass response/attestation compilation, response-to-admission derivation, and the authenticated post-admission partition contract pass structural tests. Human decisions, admission-yield evaluation, durable admission import, and the resulting real partition artifact remain open; no independence or protected-selection claim is made. |
 | R3: neutral and truthful harness | Structurally complete; runtime canary separately gated | Four-arm scheduling, neutral prompts and mounts, input/lifecycle/stop seals, honest grading projections, all-finding adjudication, grouped discovery roots, resource accounting, exact Sol-high launch policy, bounded read tools, fail-closed scope evidence, destination-restricted egress, semantic judge, authenticated analysis joins, operator-only R2 truth/severity binding, clustered inference v2, and append-only decision lineage have deterministic evidence. Development severity remains descriptive and selection remains exploratory. Old artifacts and production behavior are unchanged. A credential-bearing model/tool canary requires separate authorization and is not historical efficacy evidence. Real execution still depends on completed R2 human admission. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |
@@ -499,3 +499,17 @@ This is deterministic structural infrastructure, not efficacy evidence. The
 durable R2 packet still has zero admissions until the sole human curator reviews
 it, so no real R2 truth binding, v2 preregistration, or provider experiment has
 been produced.
+
+## 2026-09-09: one-pass R2 curation and partition workbook
+
+Private evidence draft PR #1 now holds workbook protocol v2 at `b2e1bce`.
+The same blank `RESPONSE.json` covers all 36 proposal decisions and, for every
+approval, its development/selection placement, bug/comparison class, and
+duplicate-family ID. No field is prefilled with a human judgment.
+
+The compiler derives both the existing strict response directory and the
+self-authenticating R2 partition attestation from that single completed file.
+It rejects missing or contradictory partition fields, duplicate families that
+span partitions, wrong packet or reviewer bindings, false independence claims,
+and existing or overlapping destinations. This removes a second manual
+attestation step but does not satisfy the human gate or authorize provider work.

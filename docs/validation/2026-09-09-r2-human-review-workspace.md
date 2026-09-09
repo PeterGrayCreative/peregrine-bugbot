@@ -14,13 +14,13 @@ hand. It does not make a human decision.
 - Evidence repository: `PeterGrayCreative/peregrine-evidence-backup` (private)
 - Draft PR: [#1](https://github.com/PeterGrayCreative/peregrine-evidence-backup/pull/1)
 - Branch: `curation/r2-human-review-v2`
-- Commit: `bf5af2b`
+- Commit: `b2e1bce`
 - Guide: `review-workspaces/r2-recovered-human-review-v2/REVIEW.md`
 - Single editable workbook: `review-workspaces/r2-recovered-human-review-v2/RESPONSE.json`
 - Strict reference templates: `review-workspaces/r2-recovered-human-review-v2/response`
 - Packet SHA-256: `2b73535d50524c256bf26223b9f577d94cb1110e47745b6ebc0a06893ed89574`
-- Workbook SHA-256: `e73f614e89640719f8a4ac6cddc7509fed23179cbf6481d43767885a7e12a430`
-- Initialization SHA-256: `0dd09bb1d8bf34846f6af1c0eee3af926e5388c861af624bd41c4d78a201cc5c`
+- Workbook SHA-256: `4d1658fb3be9b1b4a65f0503016f66056ed1bfd789431e1f5da24bb15fd51b44`
+- Initialization SHA-256: `8010c3901ef9919c10f6e7683f3b2a9a5c3c2063f489435193b911d9359a6b35`
 - Reviewer identity SHA-256: `ae599bb9dccbf7e231c7e4d8e13fdae15a769c503b3ac2f7cef820bcac18d43e`
 
 The guide links each immutable dossier card to its row in a single blank
@@ -30,9 +30,13 @@ packet is not nested in or mutated by the workspace.
 
 `compile-human-review-workbook.ts` accepts only a completed workbook with the
 exact canonical dossier order, packet and reviewer digests, acknowledgments,
-bounded reasons, correction rules, and canonical timestamps. It creates a new
-strict response directory and immediately passes that output through the
-existing response verifier. Invalid workbooks leave no partial output.
+bounded reasons, correction rules, canonical timestamps, and a partition,
+case class, and duplicate-family ID for every approval. It creates a new
+strict response directory plus a self-authenticating partition attestation,
+then immediately passes the response through the existing verifier. Duplicate
+families spanning partitions and invalid workbooks leave no partial output.
+The original v1 compiler API and CLI form remain available for the prior
+workbook protocol; only v2 can derive the partition attestation.
 
 ## Verification
 
@@ -48,12 +52,16 @@ templates are byte-identical, the source packet is unchanged, links target the
 authenticated card path, an existing or overlapping destination rejects, and
 the blank response cannot pass completed-response verification. They also prove
 that a completed workbook compiles to the existing strict response contract and
-that a forged dossier acknowledgment rejects without output.
+partition-attestation contract, while a missing partition assignment or forged
+dossier acknowledgment rejects without output.
 
 ## Human gate
 
 Only the user may complete `RESPONSE.json`. Every proposal must be marked
 `approve`, `reject`, or `unresolved` with evidence and the bound reviewer
-identity. The packet acknowledgment comes last. The draft PR must not be merged
-until the complete response verifies. One-person review remains explicitly
-non-independent and does not create a sealed holdout.
+identity. Every approved proposal also needs its development/selection,
+bug/comparison, and duplicate-family assignment. The packet acknowledgment
+comes last and records the sole-human partition acceptance without claiming
+independent selection. The draft PR must not be merged until the complete
+response and generated partition attestation verify. One-person review remains
+explicitly non-independent and does not create a sealed holdout.

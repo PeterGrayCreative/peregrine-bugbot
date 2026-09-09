@@ -15,8 +15,8 @@ import { verifyHumanReviewPacket } from "./verify-human-review-response.js";
 const PORTABLE_SEGMENT = /^[A-Za-z0-9._-]+$/;
 
 export interface HumanReviewWorkspaceInitialization {
-  schemaVersion: 1;
-  protocol: "r2-sole-human-review-workspace-v1";
+  schemaVersion: 2;
+  protocol: "r2-sole-human-review-workspace-v2";
   packetId: string;
   packetSha256: string;
   reviewerIdentity: {
@@ -25,6 +25,7 @@ export interface HumanReviewWorkspaceInitialization {
     claim: "operator-prepared-identity-not-a-review-decision";
   };
   responseDirectory: "response";
+  partitionAttestationFile: "partition-attestation.json";
   copiedTemplates: Array<{ path: string; bytes: number; sha256: string }>;
   workbookSha256: string;
   guideSha256: string;
@@ -93,7 +94,8 @@ function renderGuide(input: {
     `- Reviewer identity SHA-256: \`${input.identitySha256}\`\n` +
     `- Governance: one accountable human; do not claim independent confirmation or a sealed holdout.\n\n` +
     `Complete the single \`RESPONSE.json\` workbook. Set \`templateOnly\` to \`false\`, choose \`approve\`, \`reject\`, or \`unresolved\` for every proposal, supply a concrete reason, copy each dossier bundle digest into \`acknowledgedDossierBundleSha256\`, and record a canonical UTC timestamp. An approval cannot contain a correction; corrections require a new dossier version.\n\n` +
-    `After all proposal decisions are complete, finish the workbook's \`packetDecision\`. A packet-level acknowledgment cannot convert unresolved or rejected proposals into admissions. The separate files under \`response/\` are byte-identical reference templates; do not edit them by hand. The compiler will create a new strict response directory from the completed workbook. Do not edit the sealed packet.\n\n` +
+    `For every approved proposal, also assign \`development\` or \`selection\`, confirm \`bug-bearing\` or \`reviewed-comparison\`, and assign a stable duplicate-family ID. Rejected and unresolved proposals keep those three fields null. Duplicate families cannot span partitions.\n\n` +
+    `After all proposal decisions are complete, finish the workbook's \`packetDecision\`. A packet-level acknowledgment cannot convert unresolved or rejected proposals into admissions. The separate files under \`response/\` are byte-identical reference templates; do not edit them by hand. The compiler will create a new strict response directory and \`partition-attestation.json\` from the completed workbook. Do not edit the sealed packet.\n\n` +
     `## Proposals\n\n${rows}\n`);
 }
 
@@ -133,8 +135,8 @@ export function initializeHumanReviewWorkspace(input: {
     dossiers: packet.readyDossiers,
   });
   const workbook = Buffer.from(`${JSON.stringify({
-    schemaVersion: 1,
-    protocol: "r2-sole-human-review-workbook-v1",
+    schemaVersion: 2,
+    protocol: "r2-sole-human-review-workbook-v2",
     templateOnly: true,
     packetId: packet.packetId,
     packetSha256: packet.packetSha256,
@@ -146,6 +148,9 @@ export function initializeHumanReviewWorkspace(input: {
       reason: null,
       correction: null,
       acknowledgedDossierBundleSha256: null,
+      partition: null,
+      caseClass: null,
+      duplicateFamilyId: null,
       reviewedAt: null,
     })),
     packetDecision: {
@@ -155,14 +160,17 @@ export function initializeHumanReviewWorkspace(input: {
       reviewedEveryDecisionCard: null,
       decisionsBindPacketAndDossierHashes: null,
       duplicateFamiliesAccepted: null,
+      partitionedEveryApprovedDossier: null,
+      soleHumanPartitionAccepted: null,
       limitationsAccepted: null,
       independentTwoHumanConfirmationClaimed: null,
+      independentSelectionClaimed: null,
       completedAt: null,
     },
   }, null, 2)}\n`);
   const body: Omit<HumanReviewWorkspaceInitialization, "initializationSha256"> = {
-    schemaVersion: 1,
-    protocol: "r2-sole-human-review-workspace-v1",
+    schemaVersion: 2,
+    protocol: "r2-sole-human-review-workspace-v2",
     packetId: packet.packetId,
     packetSha256: packet.packetSha256,
     reviewerIdentity: {
@@ -171,6 +179,7 @@ export function initializeHumanReviewWorkspace(input: {
       claim: "operator-prepared-identity-not-a-review-decision",
     },
     responseDirectory: "response",
+    partitionAttestationFile: "partition-attestation.json",
     copiedTemplates: copiedTemplates.map((item) => item.binding),
     workbookSha256: sha256(workbook),
     guideSha256: sha256(reviewGuide),
