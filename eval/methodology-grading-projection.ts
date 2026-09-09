@@ -22,7 +22,7 @@ import { readMethodologyAttemptStart } from "./methodology-attempt-lifecycle.js"
 import type { Usage } from "../src/types.js";
 
 export const METHODOLOGY_GRADING_PROJECTION_READER_BOUNDARY =
-  "This reader authenticates a lifecycle-terminal schedule and its currently admitted case snapshots. Runner scope remains unverified, so model-completed reviews are projected as incomplete. Missing or stopped schedules require a separate outer closure seal and are never inferred from absent files.";
+  "This reader authenticates a lifecycle-terminal schedule and its currently admitted case snapshots. Version 1 runner scope remains unverified; version 2 distinguishes runner-observed incomplete from still-unverified scope and only permits completed after a future authenticated canary record. Missing or stopped schedules require a separate outer closure seal and are never inferred from absent files.";
 
 export interface AuthenticatedMethodologyGradingProjection {
   projection: MethodologyGradingProjection;
@@ -165,13 +165,20 @@ function projectAuthenticatedExecution(input: { root: string; trustedCuratorPoli
       if (terminal.outcome.status === "failed") {
         statusReason = "review-execution-failed";
       } else {
-        // The current terminal contract authenticates the model output but
-        // explicitly refuses to authenticate runner availability/scope.
-        status = "incomplete";
         reviewOutput = terminal.outcome.review;
-        statusReason = reviewOutput.status === "unable-to-complete"
-          ? "model-unable-to-complete"
-          : "runner-scope-unverified";
+        if (reviewOutput.status === "unable-to-complete") {
+          status = "incomplete";
+          statusReason = "model-unable-to-complete";
+        } else if (terminal.schemaVersion === 1 || terminal.scope.result.verdict === "unverified") {
+          status = "incomplete";
+          statusReason = "runner-scope-unverified";
+        } else if (terminal.scope.result.verdict === "incomplete") {
+          status = "incomplete";
+          statusReason = "runner-scope-incomplete";
+        } else {
+          status = "completed";
+          statusReason = "authenticated-complete";
+        }
         reviewRawOutput = terminal.stages.at(-1)!.rawOutput!;
       }
     }

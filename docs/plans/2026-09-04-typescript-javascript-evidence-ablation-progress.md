@@ -1,7 +1,7 @@
 # TypeScript and JavaScript evidence and ablation progress
 
 Updated: 2026-09-08
-Active branch: `research/ts-js-evidence-r3`
+Active branch: `research/ts-js-evidence-r3-scope`
 
 ## Current recovery notice
 
@@ -98,6 +98,20 @@ blindness remains operator-mediated and is not independently attested. These
 are structural guarantees, not model-quality evidence. See the
 [sealed-judge record](../validation/2026-09-08-r3-sealed-semantic-judge.md).
 
+The current R3 slice binds a sanitized runner-owned MCP audit and exact
+registered review scope into version-2 attempt terminals produced only through
+the trusted provider attachment. Audit readers reauthenticate ordered calls,
+aggregate counts, allowlisted status codes, and digests without retaining raw
+paths, queries, source, or unknown tool names. Finalization rejects active MCP
+requests and seals the audit against later mutation; version-2 terminal writes
+require the branded provider finalizer. Version-1 scope evidence is
+intentionally unable to certify completeness until a separately authorized
+credential-bearing canary exists; missing canary evidence stays unverified and
+observed unavailable context becomes incomplete. Both states remain
+failure-inclusive and receive no root credit. Legacy terminals retain their
+original meaning. See the
+[runner-scope record](../validation/2026-09-08-r3-runner-scope-evidence.md).
+
 ## Active objective
 
 Determine whether any Peregrine component improves consequential TS/JS bug
@@ -110,7 +124,7 @@ minimal reviewer. Production routing remains frozen.
 | --- | --- | --- |
 | R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
 | R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. A restore-tested one-shot packet now binds 30 recovered draft proposals and 10 retained losses in the private evidence repository. Sole-human v3 governance, packet verification, and non-mutating response-to-admission derivation pass structural tests without weakening R1/v2. Human decisions, sufficient admission yield/headroom, durable admission import, and partitioning remain open. |
-| R3: neutral and truthful harness | In progress | Four-arm scheduling, prompts, materialization, input/lifecycle seals, stopped-run closure, grading projections, bounded HTTP read tools, exact Sol-high/no-shell/three-tool Codex launch policy, both historical curator-policy versions, all-findings adjudication, a source-bound sealed semantic-judge path, descriptive reporting and contrasts, append-only composite analysis, authenticated resources, explicit zero retries, and source-bound post-hoc discovery-root grouping have structural proof. The accepted image reports Codex CLI 0.152.0 and parses the MCP config without credentials. Missing durations/tokens/cost remain unknown rather than zero; old artifacts remain unchanged. Inferential decision seals, runner-owned scope completeness, a trusted provider attachment, credential-bearing model/tool canary, enforced provider destination restrictions, and real human admission remain open. Curator blindness is operator-mediated, not independently attested. Diagnostic child retries are outside methodology v1. Legacy historical CLI admission still fails closed. |
+| R3: neutral and truthful harness | In progress | Four-arm scheduling, prompts, materialization, input/lifecycle seals, stopped-run closure, grading projections, bounded HTTP read tools, exact Sol-high/no-shell/three-tool Codex launch policy, both historical curator-policy versions, all-findings adjudication, a source-bound sealed semantic-judge path, descriptive reporting and contrasts, append-only composite analysis, authenticated resources, explicit zero retries, source-bound post-hoc discovery-root grouping, a trusted provider attachment, and fail-closed runner-owned scope/audit evidence have structural proof. The accepted image reports Codex CLI 0.152.0 and parses the MCP config without credentials. Missing durations/tokens/cost remain unknown rather than zero; old artifacts remain unchanged. Inferential decision seals, a credential-bearing model/tool canary, enforced provider destination restrictions, and real human admission remain open. Curator blindness is operator-mediated, not independently attested. Diagnostic child retries are outside methodology v1. Legacy historical CLI admission still fails closed. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |
 | R6: select and confirm | Not started | Requires frozen candidate and new powered confirmation corpus. |

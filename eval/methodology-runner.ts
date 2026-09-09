@@ -33,8 +33,11 @@ import {
   parseMethodologySchedule,
   type MethodologyScheduledAttempt,
 } from "./methodology-schedule.js";
+import type { MethodologyScopeRecord } from "./methodology-scope-record.js";
+import type { ModelScopeLimitation } from "./scope-completeness.js";
 
 export const METHODOLOGY_RUN_PROTOCOL = "historical-methodology-run-v1" as const;
+export const METHODOLOGY_RUN_PROTOCOL_V2 = "historical-methodology-run-v2" as const;
 
 export interface MethodologyBeforeInvocationInput {
   attemptId: string;
@@ -85,7 +88,7 @@ export interface MethodologyStageTrace {
   containmentCleanupFailed?: true;
 }
 
-export interface MethodologyAttemptResult {
+export interface MethodologyAttemptResultV1 {
   schemaVersion: 1;
   protocol: typeof METHODOLOGY_RUN_PROTOCOL;
   attempt: MethodologyScheduledAttempt;
@@ -105,6 +108,15 @@ export interface MethodologyAttemptResult {
     | { status: "failed"; failureKind: RunFailureKind; message: string };
 }
 
+export interface MethodologyAttemptResultV2 extends Omit<MethodologyAttemptResultV1,
+  "schemaVersion" | "protocol" | "scope"> {
+  schemaVersion: 2;
+  protocol: typeof METHODOLOGY_RUN_PROTOCOL_V2;
+  scope: MethodologyScopeRecord;
+}
+
+export type MethodologyAttemptResult = MethodologyAttemptResultV1 | MethodologyAttemptResultV2;
+
 export interface MethodologyRunnerInput {
   schedule: unknown;
   attemptId: string;
@@ -123,7 +135,7 @@ export interface MethodologyRunnerInput {
  * verdict. Provider/runtime identity and runner availability remain external
  * authenticated evidence even after this function completes successfully.
  */
-export async function runMethodologyAttempt(input: MethodologyRunnerInput): Promise<MethodologyAttemptResult> {
+export async function runMethodologyAttempt(input: MethodologyRunnerInput): Promise<MethodologyAttemptResultV1> {
   const now = input.now ?? Date.now;
   const started = now();
   const schedule = parseMethodologySchedule(input.schedule);
@@ -151,7 +163,7 @@ export async function runMethodologyAttempt(input: MethodologyRunnerInput): Prom
   const intentReceipts: MethodologyInvocationReceipt[] = [];
   const limitations: MethodologyModelScopeLimitation[] = [];
   const outputDirectory = mkdtempSync(join(isolation.providerOutputRoot, "methodology-"));
-  let outcome: MethodologyAttemptResult["outcome"];
+  let outcome: MethodologyAttemptResultV1["outcome"];
 
   try {
     let handoff: MethodologyDiscoveryOutput | ReturnType<typeof parseBreadthResult> | undefined;
@@ -278,6 +290,18 @@ export async function runMethodologyAttempt(input: MethodologyRunnerInput): Prom
     },
     outcome,
   };
+}
+
+export function methodologyModelScopeLimitations(
+  limitations: readonly MethodologyModelScopeLimitation[],
+  reviewStatus: MethodologyReviewOutput["status"] | null,
+): ModelScopeLimitation[] {
+  return limitations.map((limitation): ModelScopeLimitation => ({
+    kind: limitation.stage === "review" && reviewStatus === "unable-to-complete"
+      ? "unable-to-complete"
+      : "required-context-unavailable",
+    detail: limitation.detail,
+  }));
 }
 
 async function invoke(args: {

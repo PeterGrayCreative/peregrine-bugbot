@@ -40,6 +40,17 @@ default remains one. This is structural/runtime-configuration evidence, not a
 provider/model canary or an egress allowlist. See the
 [neutral launch record](../validation/2026-09-08-r3-neutral-codex-launch.md).
 
+The trusted attachment now finalizes a sanitized runner-owned MCP audit into a
+versioned attempt scope record. The record binds the registered raw scope, exact
+sealed tool policy, ordered tool-result digests, bounded availability codes,
+and model limitations. Raw tool arguments and source do not enter the terminal.
+Finalization rejects active requests, freezes later access, and the terminal
+writer requires the branded provider finalizer for version-2 results.
+The current record intentionally lacks a credential-bearing canary, so it can
+only produce `unverified` or `incomplete`; neither state receives root credit.
+Legacy result readers retain their original behavior. See the
+[runner-scope record](../validation/2026-09-08-r3-runner-scope-evidence.md).
+
 A separate schema-v2 stopped-run closure now authenticates a terminal prefix,
 an optional started/nonterminal attempt, and the exact unstarted suffix.
 Missing projections require this caller-authenticated closure; absent files
@@ -193,9 +204,10 @@ partial two-stage work. Dispatch-start is not provider contact. Composite
 execution evidence binds the input plan, registration, every scheduled
 lifecycle, actual planned inputs, and the complete review-terminal seal when
 applicable. Missing schedules cannot use this complete-only contract;
-stopped-run sealing and retry lineage remain unfinished. Scope availability
-and actual provider/model identity remain unverified. The expanded structural
-methodology suite passes 78/78.
+the separate stopped-run closure preserves nonterminal prefixes and missing
+suffixes. New methodology registrations require zero retries. Trusted v2
+lifecycles now retain runner-owned scope evidence, while actual provider/model
+identity and the credential-bearing canary remain unverified.
 
 - [x] **Versioned four-arm scheduling.** Extend the existing experiment machinery
   (`src/types.ts`, `eval/experiment.ts`) without reinterpreting legacy
@@ -209,12 +221,19 @@ methodology suite passes 78/78.
   finding schema. Current `prepareProviderAssets` copies all skills and schemas;
   a generic prompt alone does not make that mount neutral. Preserve production
   asset copying as the default. Hash actual allowed resources and compiled inputs.
-- [ ] **Topology-aware execution and artifacts.** Reuse the existing Codex stage
+- [x] **Topology-aware execution and artifacts.** Reuse the existing Codex stage
   runner for A/B single reviewer and C/D discovery plus fresh reviewer. Pin the
   registered homogeneous model/effort, share total allowance, and freeze the
   two-stage split. Version artifact validation rather than weakening existing
   mandatory two-stage records. Integrate runner-owned scope evidence so empty
   findings with unavailable context cannot become a complete review.
+
+  Current slice: A/B and C/D lifecycle paths use their registered topology and
+  retain every stage receipt. Trusted v2 attachments finalize runner-owned MCP
+  evidence into a terminal-bound scope record. Incomplete or denied reads and
+  model limitations prevent completion; missing credential-bearing canary
+  evidence remains unverified. A future canary requires a new version rather
+  than weakening this record.
 - [ ] **Pre-invocation evidence and ceilings.** Seal exact assembled prompt,
   schema, mount, model, effort, tool policy, and deadline immediately before each
   invocation. The second stage binds the first stage's output. Current source
@@ -227,8 +246,9 @@ methodology suite passes 78/78.
   policy are sealed. A trusted factory now binds the exact materialized source,
   runtime image/profile/access, assets, output, and bounded MCP service; its v2
   tool policy persists the source tree and attachment/root/limit digests.
-  Effective served-model/provider evidence and destination-restricted egress
-  remain open.
+  The provider attachment also supplies the branded, single-use scope finalizer;
+  its sanitized MCP audit is reauthenticated by terminal readers. Effective
+  served-model/provider evidence and destination-restricted egress remain open.
 - [ ] **Historical consumer integration.** Wire caller-trusted curation,
   materialized source identity, input authentication, scope evidence, shared
   metric eligibility, and arm-blinded adjudication into scheduling, grading,

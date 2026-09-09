@@ -163,6 +163,7 @@ export async function runRegisteredHistoricalMethodologyAttempt(
             ? { activatedLanes: laneActivation.activatedLanes }
             : {}),
           leakagePolicy,
+          finalizeScope: attachment.finalizeScope,
           context: {
             ...baseContext,
             evaluationIsolation: {
