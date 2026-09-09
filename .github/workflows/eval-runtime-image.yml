@@ -6,9 +6,15 @@ on:
       - .github/workflows/eval-runtime-image.yml
       - container/eval-runtime/**
       - eval/README.md
+      - scripts/eval-egress-probe-fixture.mjs
+      - scripts/run-eval-egress-probe.ts
       - scripts/run-eval-runtime-probe.ts
+      - tests/eval-runtime-egress-gateway.test.ts
+      - tests/eval-runtime-egress-probe.test.ts
       - tests/eval-runtime-image.test.ts
+      - tests/eval-runtime-mcp-forwarder.test.ts
       - package.json
+      - package-lock.json
   workflow_dispatch:
 
 permissions:
@@ -46,6 +52,9 @@ jobs:
 
       - name: Exercise the zero-credential containment probe
         run: node --import tsx scripts/run-eval-runtime-probe.ts --image peregrine-eval-runtime:pr
+
+      - name: Exercise the credential-free egress sidecar probe
+        run: node --import tsx scripts/run-eval-egress-probe.ts --image peregrine-eval-runtime:pr
 
   publish:
     name: Publish immutable candidate
@@ -112,6 +121,9 @@ jobs:
           fi
           for platform in linux/amd64 linux/arm64; do
             node --import tsx scripts/run-eval-runtime-probe.ts \
+              --image "${IMAGE_NAME}@${digest}" \
+              --platform "$platform"
+            node --import tsx scripts/run-eval-egress-probe.ts \
               --image "${IMAGE_NAME}@${digest}" \
               --platform "$platform"
           done

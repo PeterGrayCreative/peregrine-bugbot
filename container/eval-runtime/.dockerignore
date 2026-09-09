@@ -3,3 +3,5 @@
 !package.json
 !package-lock.json
 !containment-probe.mjs
+!egress-gateway.mjs
+!methodology-mcp-forwarder.mjs

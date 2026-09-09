@@ -40,6 +40,8 @@ RUN mkdir -p /home/peregrine /workspace /opt/peregrine /output \
     && chmod 0555 /workspace /opt/peregrine
 
 COPY --chmod=0555 containment-probe.mjs /usr/local/bin/peregrine-containment-probe
+COPY --chmod=0555 egress-gateway.mjs /usr/local/bin/peregrine-egress-gateway
+COPY --chmod=0555 methodology-mcp-forwarder.mjs /usr/local/bin/peregrine-methodology-mcp-forwarder
 
 USER node
 WORKDIR /workspace
