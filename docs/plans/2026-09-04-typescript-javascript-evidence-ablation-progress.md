@@ -438,3 +438,27 @@ completion, and the inferential decision seal remain open.
 - Do not expose later fixes, comments, issues, or curator answers to reviewers.
 - Do not change production prompts, topology, route, skill, or posting behavior
   as part of this research program.
+
+## 2026-09-09: operator truth/severity binding checkpoint
+
+The R2 partition implementation merged in PR #40 at `4e8ce05`. It can derive
+and append-only store the exact 36-case, 12/24 development/selection split from
+one authenticated human response and attestation. This is tooling completion,
+not a claim that the current durable packet has 36 human-approved cases.
+
+The next R3 slice now adds an operator-only truth/severity binding. It reads an
+exact admitted R2 partition by digest, re-authenticates every historical case,
+derives the same structured causal-root identity used by grading, rejects
+grouped roots with conflicting severities, binds canonical truth and all
+registration/curation/bundle/scope identities, and writes a contiguous
+append-only lineage. The parser rechecks the 36-case split, repository-family
+concentration, duplicate-family partition containment, root namespace, counts,
+claims, ordering, and artifact digest. Reviewer-visible prompt compilation has
+an explicit regression check proving the operator protocol, directory, and a
+truth canary are absent from all four experimental arms.
+
+This checkpoint does not yet make the inference surface truth-aware. Legacy
+inference remains unchanged and its severe-regression surface stays unknown.
+The next slice must add a versioned inference protocol and seal that consume the
+exact binding while preserving legacy readers and descriptive-only 2-repeat
+development semantics. No provider experiment has run.

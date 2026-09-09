@@ -17,6 +17,11 @@ import {
   type R2PartitionArtifact,
   type R2PartitionAttestation,
 } from "../eval/methodology-r2-partition.js";
+import {
+  parseR2TruthBindingArtifact,
+  readR2TruthBindingArtifact,
+  writeR2TruthBindingArtifact,
+} from "../eval/methodology-r2-truth-binding.js";
 import { canonicalJsonSha256 } from "../eval/experiment.js";
 import { historicalTruthScopeSha256 } from "../eval/historical-curation.js";
 import { historicalPermittedMetrics, parseHistoricalGroundTruth } from "../eval/historical-truth.js";
@@ -488,4 +493,87 @@ test("rejects stale sources, wrong identity, and storage tampering", () => {
     assert.throws(() => writeR2PartitionArtifact(storage.storageRoot, inputFor(storage, first.artifactSha256, "2026-09-07T18:00:00.000Z")), /already being written/);
     unlinkSync(join(storage.storageRoot, ".r2-partition.lock"));
   } finally { storage.cleanup(); }
+});
+
+test("derives and append-only stores operator truth and severity from the exact R2 partition", () => {
+  const fixture = makePartitionFixture();
+  try {
+    const partition = writeR2PartitionArtifact(fixture.storageRoot, inputFor(fixture, null));
+    const first = writeR2TruthBindingArtifact(fixture.storageRoot, {
+      partitionStorageRoot: fixture.storageRoot,
+      expectedPartitionArtifactSha256: partition.artifactSha256,
+      trustedPolicy: fixture.policy,
+      caseDirectories: fixture.caseDirectories,
+      recordedAt: "2026-09-07T18:00:00.000Z",
+      expectedPreviousBindingSha256: null,
+    });
+    assert.deepEqual(first.claims, {
+      operatorOnly: true,
+      reviewerVisible: false,
+      truthDerived: true,
+      independentVerificationClaimed: false,
+    });
+    assert.deepEqual(first.counts, {
+      cases: 36,
+      bugBearing: 24,
+      reviewedComparison: 12,
+      registeredRoots: 24,
+      highSeverityRoots: 24,
+    });
+    assert.equal(first.cases.find((item) => item.caseClass === "reviewed-comparison")?.roots.length, 0);
+    assert.match(first.cases.find((item) => item.caseClass === "bug-bearing")?.roots[0]?.rootCause ?? "", /^\["bug","bug-/);
+    assert.deepEqual(parseR2TruthBindingArtifact(first), first);
+    assert.equal(readR2TruthBindingArtifact(fixture.storageRoot, first.bindingSha256).bindingSha256, first.bindingSha256);
+
+    const second = writeR2TruthBindingArtifact(fixture.storageRoot, {
+      partitionStorageRoot: fixture.storageRoot,
+      expectedPartitionArtifactSha256: partition.artifactSha256,
+      trustedPolicy: fixture.policy,
+      caseDirectories: fixture.caseDirectories,
+      recordedAt: "2026-09-07T19:00:00.000Z",
+      expectedPreviousBindingSha256: first.bindingSha256,
+    });
+    assert.equal(second.version, 2);
+    assert.equal(second.previousBindingSha256, first.bindingSha256);
+    assert.throws(() => writeR2TruthBindingArtifact(fixture.storageRoot, {
+      partitionStorageRoot: fixture.storageRoot,
+      expectedPartitionArtifactSha256: partition.artifactSha256,
+      trustedPolicy: fixture.policy,
+      caseDirectories: fixture.caseDirectories,
+      recordedAt: "2026-09-07T20:00:00.000Z",
+      expectedPreviousBindingSha256: first.bindingSha256,
+    }), /predecessor/);
+  } finally { fixture.cleanup(); }
+});
+
+test("truth binding rejects source drift, partial coverage, and forged derived fields", () => {
+  const fixture = makePartitionFixture();
+  try {
+    const partition = writeR2PartitionArtifact(fixture.storageRoot, inputFor(fixture, null));
+    const base = {
+      partitionStorageRoot: fixture.storageRoot,
+      expectedPartitionArtifactSha256: partition.artifactSha256,
+      trustedPolicy: fixture.policy,
+      caseDirectories: fixture.caseDirectories,
+      recordedAt: "2026-09-07T18:00:00.000Z",
+      expectedPreviousBindingSha256: null,
+    };
+    assert.throws(() => writeR2TruthBindingArtifact(fixture.storageRoot, { ...base, caseDirectories: fixture.caseDirectories.slice(1) }), /exact partition/);
+
+    const truthPath = join(fixture.caseDirectories[0]!, "ground_truth.json");
+    const truthBytes = readFileSync(truthPath);
+    const truth = JSON.parse(truthBytes.toString()) as { bugs: Array<{ expectedSeverity: string }> };
+    truth.bugs[0]!.expectedSeverity = "low";
+    writeJson(truthPath, truth);
+    assert.throws(() => writeR2TruthBindingArtifact(fixture.storageRoot, base), /bundle|decision|stale|truth/i);
+    writeFileSync(truthPath, truthBytes);
+
+    const valid = writeR2TruthBindingArtifact(fixture.storageRoot, base);
+    const forged = structuredClone(valid);
+    forged.cases.find((item) => item.roots.length > 0)!.roots[0]!.expectedSeverity = "low";
+    assert.throws(() => parseR2TruthBindingArtifact(forged), /counts|digest/);
+    const leakingClaim = structuredClone(valid);
+    (leakingClaim.claims as unknown as Record<string, unknown>).reviewerVisible = true;
+    assert.throws(() => parseR2TruthBindingArtifact(leakingClaim), /claims/);
+  } finally { fixture.cleanup(); }
 });
