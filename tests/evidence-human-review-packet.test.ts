@@ -334,6 +334,31 @@ test("derives an append-only admission from an authenticated approval without mu
   }
 });
 
+test("fails closed when an approval includes a correction", () => {
+  const data = fixture();
+  const humanIdentity = "9".repeat(64);
+  try {
+    assembleHumanReviewPacket(data.request, data.output);
+    const response = join(data.root, "response");
+    writeCompletedResponse(data.output, response, humanIdentity);
+    const decisionPath = join(response, "decisions/case-alpha.json");
+    const decision = JSON.parse(readFileSync(decisionPath, "utf8")) as Record<string, unknown>;
+    decision.correction = "The dossier needs a corrected evidence reference.";
+    writeFileSync(decisionPath, `${JSON.stringify(decision, null, 2)}\n`);
+    const historical = historicalDraft(data.root, humanIdentity);
+    assert.throws(() => buildSoleHumanAdmissionFromResponse({
+      caseDirectory: historical.caseDirectory,
+      caseSpec: historical.caseSpec,
+      trustedPolicy: historical.policy,
+      packetDirectory: data.output,
+      responseDirectory: response,
+    }), /approve decision cannot include a correction.*new packet\/dossier version/i);
+    assert.equal(JSON.parse(readFileSync(join(historical.caseDirectory, "curation.json"), "utf8")).status, "draft");
+  } finally {
+    data.cleanup();
+  }
+});
+
 test("response verification rejects missing decisions, wrong identities, false attestations, and packet drift", () => {
   for (const mutate of [
     (packet: string, response: string) => rmSync(join(response, "decisions/case-alpha.json")),

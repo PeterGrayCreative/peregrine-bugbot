@@ -66,6 +66,9 @@ export function buildSoleHumanAdmissionFromResponse(input: {
       responseSha256: response.responseSha256,
     };
   }
+  if (decision.correction !== null) {
+    throw new Error(`${input.caseSpec.id} approve decision cannot include a correction; corrections require a new packet/dossier version`);
+  }
 
   const admittedWithoutDecision: HistoricalCurationV3 = {
     ...draft.curation,

@@ -1,7 +1,7 @@
 # TypeScript and JavaScript evidence and ablation progress
 
 Updated: 2026-09-09
-Active branch: `research/ts-js-evidence-r3-egress-integration`
+Active branch: `research/ts-js-evidence-r3-dependence-severity`
 
 ## Current recovery notice
 
@@ -148,6 +148,19 @@ evidence. This remains structural evidence: no provider invocation or
 credential-bearing canary has run under this slice. See the
 [integration record](../validation/2026-09-09-r3-methodology-egress-integration.md).
 
+The R2/R3 bridge now has a versioned post-admission partition contract. It
+reauthenticates the immutable packet, complete sole-human response, every
+admitted v3 case, truth scope, case bundle, registration, source-family
+identity, and the separate human partition attestation. It derives exact
+12-case development and 24-case selection counts, the 24/12 class balance,
+duplicate-family containment, and the nine-case repository-family ceiling.
+Append-only artifacts retain rejected and unresolved response counts and fail
+closed on stale inputs, lineage gaps, symlinks, extra files, and false
+independence/protection claims. This is structural readiness only: the durable
+36-card packet still contains blank decisions, so no real partition artifact
+or R2 admission exists. See the
+[partition checkpoint](../validation/2026-09-09-r2-partition-binding-checkpoint.md).
+
 ## Active objective
 
 Determine whether any Peregrine component improves consequential TS/JS bug
@@ -159,8 +172,8 @@ minimal reviewer. Production routing remains frozen.
 | Step | State | Evidence / remaining gate |
 | --- | --- | --- |
 | R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
-| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. A restore-tested v2 packet at private evidence commit `5d4969e` now binds all 36 target draft proposals (24 defect-bearing, 12 scoped comparisons) and 11 retained losses; a fresh remote clone reproduced its exact packet digest. Sole-human governance, packet verification, and non-mutating response-to-admission derivation pass structural tests. All decisions remain blank. Human review, admission-yield evaluation, durable admission import, duplicate-family verification, and partitioning remain open; no independence claim is made. |
-| R3: neutral and truthful harness | In progress | Four-arm scheduling, prompts, materialization, input/lifecycle seals, stopped-run closure, grading projections, bounded HTTP read tools, exact Sol-high/no-shell/three-tool Codex launch policy, both historical curator-policy versions, all-findings adjudication, a source-bound sealed semantic-judge path, descriptive reporting and contrasts, append-only composite analysis, authenticated resources, explicit zero retries, source-bound post-hoc discovery-root grouping, a trusted provider attachment, fail-closed runner-owned scope/audit evidence, credential-free exact-destination egress/MCP sidecar proof, and structural integration of those sidecars into the methodology lifecycle have evidence. A preregistered inference plan, grade-bound append-only adjudication resolutions, content-addressed unmatched-root ledgers, honest decision surfaces, and versioned decision-seal lineage are implemented structurally. Duplicate-family assignments and registered-root severity are not yet authenticated, so inferential intervals and severe-regression decisions remain fail-closed. The accepted image reports Codex CLI 0.152.0 and parses the MCP config without credentials. Missing durations/tokens/cost and unavailable completion subcategories remain unknown rather than zero; old artifacts remain unchanged. A separately authorized credential-bearing model/tool canary and real human admission remain open. Curator blindness is operator-mediated, not independently attested. Diagnostic child retries are outside methodology v1. Legacy historical CLI admission still fails closed. |
+| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. A restore-tested v2 packet at private evidence commit `5d4969e` binds all 36 target draft proposals (24 defect-bearing, 12 scoped comparisons) and 11 retained losses. Sole-human governance, response-to-admission derivation, and the authenticated post-admission partition/duplicate-family contract now pass structural tests. All real decisions remain blank. Human review, admission-yield evaluation, durable admission import, the real partition attestation, and the resulting partition artifact remain open; no independence or protected-selection claim is made. |
+| R3: neutral and truthful harness | In progress | Four-arm scheduling, prompts, materialization, input/lifecycle seals, stopped-run closure, grading projections, bounded HTTP read tools, exact Sol-high/no-shell/three-tool Codex launch policy, both historical curator-policy versions, all-findings adjudication, a source-bound sealed semantic-judge path, descriptive reporting and contrasts, append-only composite analysis, authenticated resources, explicit zero retries, source-bound post-hoc discovery-root grouping, a trusted provider attachment, fail-closed runner-owned scope/audit evidence, credential-free exact-destination egress/MCP sidecar proof, structural sidecar integration, and an authenticated R2 partition-artifact contract have evidence. A preregistered inference plan, grade-bound append-only adjudication resolutions, content-addressed unmatched-root ledgers, honest decision surfaces, and versioned decision-seal lineage are implemented structurally. Real duplicate-family evidence does not exist until human review and partitioning occur; registered-root severity is not yet joined to inference, so dependence-aware intervals and severe-regression decisions remain fail-closed. The accepted image reports Codex CLI 0.152.0 and parses the MCP config without credentials. Missing durations/tokens/cost and unavailable completion subcategories remain unknown rather than zero; old artifacts remain unchanged. A separately authorized credential-bearing model/tool canary and real human admission remain open. Curator blindness is operator-mediated, not independently attested. Diagnostic child retries are outside methodology v1. Legacy historical CLI admission still fails closed. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |
 | R6: select and confirm | Not started | Requires frozen candidate and new powered confirmation corpus. |
