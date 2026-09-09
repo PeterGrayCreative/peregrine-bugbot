@@ -396,7 +396,7 @@ export function buildMethodologyInferenceArtifact(
   }
   validateRootRosters(schedule, gradeByAttempt);
   const components = plan.components;
-  const caseValues = deriveCaseValues(schedule, gradeByAttempt, resourceByAttempt, unmatchedRootLedger);
+  const caseValues = deriveMethodologyInferenceCaseValues(schedule, gradeByAttempt, resourceByAttempt, unmatchedRootLedger);
   const decisionSurfaces = deriveDecisionSurfaces(
     schedule,
     gradeByAttempt,
@@ -420,7 +420,7 @@ export function buildMethodologyInferenceArtifact(
     const available = [...values.entries()].filter(([, value]) => finite(value));
     const eligibleComponents = components.filter((component) =>
       component.caseNames.some((caseName) => values.has(caseName)));
-    const pointEstimate = available.length === 0 ? null : componentBalancedEstimate(available, eligibleComponents, kind);
+    const pointEstimate = available.length === 0 ? null : methodologyComponentBalancedEstimate(available, eligibleComponents, kind);
     const counts = {
       eligibleCaseCount: available.length,
       eligibleIndependentComponentCount: eligibleComponents.length,
@@ -584,20 +584,20 @@ function parseDigestArray(value: unknown, source: string): string[] {
   return parsed;
 }
 
-type CaseValues = {
+export type MethodologyInferenceCaseValues = {
   recall: Map<string, number>;
   unsupported: Map<string, number>;
   completion: Map<string, number>;
   wall: Map<string, number>;
 };
 
-function deriveCaseValues(
+export function deriveMethodologyInferenceCaseValues(
   schedule: MethodologySchedule,
   grades: ReadonlyMap<string, MethodologyAttemptGrade>,
   resources: ReadonlyMap<string, MethodologyResourceSetArtifact["resources"][number]>,
   unmatchedRootLedger: MethodologyUnmatchedRootLedger,
-): CaseValues {
-  const output: CaseValues = { recall: new Map(), unsupported: new Map(), completion: new Map(), wall: new Map() };
+): MethodologyInferenceCaseValues {
+  const output: MethodologyInferenceCaseValues = { recall: new Map(), unsupported: new Map(), completion: new Map(), wall: new Map() };
   const unsupportedRootsByAttempt = new Map<string, Set<string>>();
   for (const root of unmatchedRootLedger.roots) {
     if (root.classification !== "unsupported") continue;
@@ -807,11 +807,11 @@ function deriveDecisionSurfaces(
   };
 }
 
-function deriveTimeMetric(caseValues: CaseValues, components: readonly MethodologyInferenceComponent[], plan: MethodologyInferencePlan, blockedReason: MethodologyInferenceMetric["reason"] | null): MethodologyInferenceMetric {
+function deriveTimeMetric(caseValues: MethodologyInferenceCaseValues, components: readonly MethodologyInferenceComponent[], plan: MethodologyInferencePlan, blockedReason: MethodologyInferenceMetric["reason"] | null): MethodologyInferenceMetric {
   const available = [...caseValues.wall.entries()].filter(([, value]) => finite(value));
   const eligibleComponents = components.filter((component) =>
     component.caseNames.some((caseName) => caseValues.wall.has(caseName)));
-  const pointEstimate = available.length === 0 ? null : componentBalancedEstimate(available, eligibleComponents, "median");
+  const pointEstimate = available.length === 0 ? null : methodologyComponentBalancedEstimate(available, eligibleComponents, "median");
   const counts = {
     eligibleCaseCount: available.length,
     eligibleIndependentComponentCount: eligibleComponents.length,
@@ -827,7 +827,7 @@ function deriveTimeMetric(caseValues: CaseValues, components: readonly Methodolo
   return { pointEstimate, interval95: null, ...counts, reason: "unauthenticated-duplicate-families" };
 }
 
-function componentBalancedEstimate(
+export function methodologyComponentBalancedEstimate(
   values: readonly [string, number][],
   components: readonly MethodologyInferenceComponent[],
   kind: "mean" | "median",
@@ -843,7 +843,7 @@ function componentBalancedEstimate(
 }
 
 /** Resample independent components while giving each component one vote. */
-function bootstrapInterval(values: readonly [string, number][], components: readonly MethodologyInferenceComponent[], samples: number, seed: number, kind: "mean" | "median"): { lower: number; upper: number } | null {
+export function methodologyBootstrapInterval(values: readonly [string, number][], components: readonly MethodologyInferenceComponent[], samples: number, seed: number, kind: "mean" | "median"): { lower: number; upper: number } | null {
   const byCase = new Map(values);
   const random = seededRandom(seed);
   const estimates: number[] = [];

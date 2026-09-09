@@ -462,3 +462,30 @@ inference remains unchanged and its severe-regression surface stays unknown.
 The next slice must add a versioned inference protocol and seal that consume the
 exact binding while preserving legacy readers and descriptive-only 2-repeat
 development semantics. No provider experiment has run.
+
+## 2026-09-09: truth-aware inference v2 and seal checkpoint
+
+Inference v2 now consumes the exact operator-only R2 truth binding instead of
+accepting duplicate-family clusters or severity labels from its caller. Its
+preregistered plan binds the invocation registration, input plan, partition,
+case registration, curation, bundle, truth scope, and canonical truth digests.
+Only opaque identities enter the reviewer-side plan; root answers and severity
+remain outside every reviewer mount and prompt.
+
+The v2 inference artifact derives clustered intervals from the authenticated
+duplicate-family structure and derives high-severity C/D repeat counts from the
+authenticated root catalog. Development results remain descriptive at two
+repeats, selection results remain exploratory at three repeats, and formal
+high-severity regression decisions remain reserved for a future confirmation
+protocol. Existing v1 readers and artifacts are unchanged.
+
+A separate append-only v2 seal rederives the complete analysis from the sealed
+schedule, inputs, grades, adjudication chain, grouped unmatched-root ledger,
+resource evidence, R2 truth binding, and an explicit implementation-source
+manifest. Stored plans and seals reject wrong digests, non-contiguous lineage,
+source drift, stale input joins, and cross-run truth bindings.
+
+This is deterministic structural infrastructure, not efficacy evidence. The
+durable R2 packet still has zero admissions until the sole human curator reviews
+it, so no real R2 truth binding, v2 preregistration, or provider experiment has
+been produced.

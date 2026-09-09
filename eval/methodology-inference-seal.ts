@@ -210,6 +210,54 @@ export function readMethodologyInferenceSeal(
   return rebuilt;
 }
 
+export interface MethodologyInferenceEvidenceSource {
+  sealedAnalysis: MethodologySealedAnalysisBindingReadInputs;
+  expectedAdjudicationResolutionHeadSha256: string | null;
+  expectedUnmatchedRootLedgerSha256: string;
+}
+
+/** Shared authenticated evidence join for versioned inference protocols. */
+export function readMethodologyInferenceEvidence(
+  analysisRoot: string,
+  input: MethodologyInferenceEvidenceSource,
+) {
+  const root = realpathSync(resolve(analysisRoot));
+  const sealedAnalysis = readMethodologySealedAnalysisBinding(root, input.sealedAnalysis);
+  const baseAnalysis = readMethodologyAnalysisBinding(root, sealedAnalysis.baseAnalysisBindingSha256);
+  const gradeSet = readMethodologyGradeSet(root, sealedAnalysis.legacyGradeSetArtifactSha256);
+  const inputPlan = readMethodologyInputPlan(input.sealedAnalysis.executionRoot, sealedAnalysis.invocationRegistrationSha256, sealedAnalysis.inputPlanSha256);
+  const adjudication = readMethodologyAdjudicationArtifact(root, { expectedLedgerSha256: baseAnalysis.adjudicationLedgerSha256, gradeSet });
+  const resourceSet = readMethodologyResourceSet(root, { expectedArtifactSha256: baseAnalysis.resourceSetArtifactSha256, schedule: gradeSet.schedule });
+  const adjudicationResolution = readMethodologyAdjudicationResolutionChain(root, {
+    baseLedger: adjudication,
+    gradeSet,
+    expectedHeadResolutionSha256: input.expectedAdjudicationResolutionHeadSha256,
+    allowHistoricalHead: true,
+  });
+  const storedUnmatchedRoots = readStoredMethodologyUnmatchedRootLedger(root, input.expectedUnmatchedRootLedgerSha256);
+  const unmatchedRootLedger = readMethodologyUnmatchedRootLedger(root, input.expectedUnmatchedRootLedgerSha256, {
+    runId: gradeSet.runId,
+    schedule: gradeSet.schedule,
+    gradeSet,
+    effectiveAdjudication: adjudicationResolution.effective,
+    assignments: storedUnmatchedRoots.roots.flatMap((rootGroup) => rootGroup.occurrences.map((occurrence) => ({ attemptId: occurrence.attemptId, findingIndex: occurrence.findingIndex, findingEvidenceSha256: occurrence.findingEvidenceSha256, rootIdentitySha256: rootGroup.rootIdentitySha256 }))),
+    roots: storedUnmatchedRoots.roots.map((rootGroup) => ({ rootIdentitySha256: rootGroup.rootIdentitySha256, reviewerIdentitySha256s: rootGroup.reviewerIdentitySha256s, reviewerIndependence: rootGroup.reviewerIndependence, source: rootGroup.source, evidence: rootGroup.evidence, rationale: rootGroup.rationale })),
+    recordedAt: storedUnmatchedRoots.recordedAt,
+    baseLedgerSha256: adjudication.ledgerSha256,
+    effectiveAdjudicationSha256: adjudicationResolution.effective.effectiveSha256,
+    headResolutionSha256: adjudicationResolution.headResolutionSha256,
+    gradeSetSha256: gradeSet.gradeSetSha256,
+    scheduleSha256: canonicalJsonSha256(gradeSet.schedule),
+  });
+  const gradesByAttempt = new Map(gradeSet.grades.map((grade) => [grade.projection.attemptId, grade]));
+  for (const resolution of adjudicationResolution.resolutions) {
+    const grade = gradesByAttempt.get(resolution.occurrence.attemptId);
+    if (!grade || grade.metricEligibility.truthVersion !== resolution.truthVersion) throw new Error("methodology adjudication resolution truth version does not match its authenticated grade");
+  }
+  if (sealedAnalysis.baseAnalysisBindingSha256 !== baseAnalysis.bindingSha256 || sealedAnalysis.legacyGradeSetArtifactSha256 !== gradeSet.artifactSha256 || sealedAnalysis.runId !== gradeSet.runId || sealedAnalysis.scheduleSha256 !== canonicalJsonSha256(gradeSet.schedule) || baseAnalysis.gradeSetArtifactSha256 !== gradeSet.artifactSha256 || baseAnalysis.adjudicationLedgerSha256 !== adjudication.ledgerSha256 || baseAnalysis.resourceSetArtifactSha256 !== resourceSet.artifactSha256) throw new Error("methodology inference source artifacts do not form one bound run");
+  return { root, sealedAnalysis, baseAnalysis, gradeSet, inputPlan, adjudication, resourceSet, adjudicationResolution, unmatchedRootLedger };
+}
+
 function buildSeal(
   analysisRoot: string,
   input: MethodologyInferenceSealSource,
@@ -477,7 +525,7 @@ function sourceManifest(repositoryRoot: string): SourceEntry[] {
   });
 }
 
-function assertNoBegunInferenceWork(executionRootValue: string): void {
+export function assertNoBegunInferenceWork(executionRootValue: string): void {
   const root = realpathSync(resolve(executionRootValue));
   const forbidden = /(?:^|\/)(?:attempt-[0-9]{6}(?:\.|\/)|methodology-(?:execution-evidence|run-|stopped-run-closure))/;
   const visit = (directory: string, prefix = ""): void => {

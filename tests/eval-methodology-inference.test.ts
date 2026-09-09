@@ -9,6 +9,16 @@ import {
   parseMethodologyInferenceArtifact,
   parseMethodologyInferencePlan,
 } from "../eval/methodology-inference.js";
+import {
+  buildMethodologyInferenceArtifactV2,
+  buildMethodologyInferencePlanV2,
+  parseMethodologyInferenceArtifactV2,
+} from "../eval/methodology-inference-plan-v2.js";
+import type { R2TruthBindingArtifact } from "../eval/methodology-r2-truth-binding.js";
+import {
+  METHODOLOGY_INFERENCE_V2_SOURCE_PATHS,
+  parseMethodologyInferenceSealV2,
+} from "../eval/methodology-inference-seal-v2.js";
 import { canonicalJsonSha256 } from "../eval/experiment.js";
 import { buildMethodologyAdjudicationLedger, type MethodologyAdjudicationClassification } from "../eval/methodology-adjudication.js";
 import { deriveMethodologyEffectiveAdjudication } from "../eval/methodology-adjudication-resolution.js";
@@ -416,6 +426,80 @@ test("registered-root inference rejects an authenticated grade with ineligible t
   }
 });
 
+test("R2-bound inference v2 produces authenticated intervals and descriptive severe-root counts", () => {
+  const data = syntheticInputs(2, { r2Shape: true });
+  try {
+    const binding = r2BindingFor(data);
+    const plan = buildMethodologyInferencePlanV2({
+      runId: data.runId,
+      schedule: data.schedule,
+      invocationRegistrationSha256: data.resourceSet.invocationRegistrationSha256,
+      inputPlanSha256: data.inputPlanSha256,
+      truthBinding: binding,
+      analysisStage: "development-screen",
+      hypothesis: "detection",
+      bootstrapSamples: 101,
+      bootstrapSeed: 77,
+      minIndependentClusters: 2,
+    });
+    const artifact = buildMethodologyInferenceArtifactV2({ plan, truthBinding: binding, ...data });
+    assert.equal(artifact.status, "defined");
+    assert.deepEqual(artifact.blockers, []);
+    for (const metric of Object.values(artifact.metrics)) {
+      assert.equal(metric.reason, "none");
+      assert.notEqual(metric.interval95, null);
+    }
+    assert.equal(artifact.severeRegressionSurface.interpretation, "descriptive-two-repeat-only");
+    assert.equal(artifact.severeRegressionSurface.formalRegressions, null);
+    assert.equal(artifact.severeRegressionSurface.roots.length, 8);
+    assert.ok(artifact.severeRegressionSurface.roots.every((root) => root.scheduledAttemptsPerArm === 2 && root.formalRegression === null));
+    assert.equal(artifact.claims.duplicateFamilyBinding, "authenticated-r2-truth-binding");
+    assert.deepEqual(parseMethodologyInferenceArtifactV2(artifact), artifact);
+
+    const inferenceSource = METHODOLOGY_INFERENCE_V2_SOURCE_PATHS.map((path, index) => ({
+      path,
+      bytes: index + 1,
+      sha256: sha(((index + 1) % 10).toString()),
+    }));
+    const sealBody = {
+      schemaVersion: 2 as const,
+      protocol: "historical-methodology-inference-seal-v2" as const,
+      version: 1,
+      previousSealSha256: null,
+      runId: data.runId,
+      inferencePlanSha256: plan.planSha256,
+      r2TruthBindingSha256: binding.bindingSha256,
+      r2PartitionArtifactSha256: binding.partitionArtifactSha256,
+      sealedAnalysisBindingSha256: sha("1"),
+      baseAnalysisBindingSha256: sha("2"),
+      effectiveAdjudicationSha256: sha("3"),
+      adjudicationResolutionHeadSha256: null,
+      unmatchedRootLedgerSha256: sha("4"),
+      inference: artifact,
+      inferenceSource,
+      inferenceSourceTreeSha256: canonicalJsonSha256(inferenceSource),
+      sealedAt: "2026-09-09T12:00:00.000Z",
+      claims: {
+        sourceClosure: "fixed-explicit-source-list" as const,
+        duplicateFamilyBinding: "authenticated-r2-truth-binding" as const,
+        rootSeverityBinding: "authenticated-r2-truth-binding" as const,
+        reviewerAnswerExposure: "none-from-operator-binding" as const,
+        providerIdentity: "inherited-not-established" as const,
+        efficacy: "not-decided" as const,
+      },
+    };
+    const seal = { ...sealBody, sealSha256: canonicalJsonSha256(sealBody) };
+    assert.deepEqual(parseMethodologyInferenceSealV2(seal), seal);
+    assert.throws(() => parseMethodologyInferenceSealV2({ ...seal, version: 2 }), /sealSha256/);
+
+    const wrongBinding = structuredClone(binding);
+    wrongBinding.cases[0]!.canonicalTruthSha256 = sha("f");
+    const { bindingSha256: _oldBindingSha256, ...wrongBody } = wrongBinding;
+    wrongBinding.bindingSha256 = canonicalJsonSha256(wrongBody);
+    assert.throws(() => buildMethodologyInferenceArtifactV2({ plan, truthBinding: wrongBinding, ...data }), /plan differs|truth binding|grade/i);
+  } finally { data.cleanup(); }
+});
+
 interface SyntheticData {
   runId: string;
   schedule: ReturnType<typeof buildMethodologySchedule>;
@@ -452,8 +536,8 @@ function planForData(data: SyntheticData, seed = 31) {
   });
 }
 
-function syntheticInputs(repeats: number, options: { includeComparison?: boolean; adjudication?: MethodologyAdjudicationClassification; duplicateComparisonFindingInTreatment?: boolean; comparisonUnsupportedArms?: readonly ("C" | "D")[] } = {}): SyntheticData {
-  const runId = `synthetic-inference-${repeats}-${options.includeComparison ? "comparison" : "bug"}`;
+function syntheticInputs(repeats: number, options: { includeComparison?: boolean; r2Shape?: boolean; adjudication?: MethodologyAdjudicationClassification; duplicateComparisonFindingInTreatment?: boolean; comparisonUnsupportedArms?: readonly ("C" | "D")[] } = {}): SyntheticData {
+  const runId = `synthetic-inference-${repeats}-${options.r2Shape ? "r2" : options.includeComparison ? "comparison" : "bug"}`;
   const executionEvidenceSha256 = sha("e");
   const inputPlanSha256 = sha("f");
   const base: Omit<MethodologyDesign, "arms"> = {
@@ -472,7 +556,13 @@ function syntheticInputs(repeats: number, options: { includeComparison?: boolean
       return { armId, configName, configIdentitySha256: methodologyArmConfigIdentitySha256({ design: base, armId, configName }) };
     }),
   };
-  const cases = options.includeComparison
+  const cases = options.r2Shape
+    ? Array.from({ length: 12 }, (_, index) => ({
+      caseName: `development/case-${(index + 1).toString(16).padStart(8, "0")}`,
+      corpus: "development" as const,
+      expectedBugCount: (index + 1) % 3 === 0 ? null : 1,
+    }))
+    : options.includeComparison
     ? [
       { caseName: "development/case-aaaaaaaa", corpus: "development" as const, expectedBugCount: 1 },
       { caseName: "validation/case-bbbbbbbb", corpus: "validation" as const, expectedBugCount: null },
@@ -559,4 +649,61 @@ function familyHex(index: number, fallback: string): string {
 
 function truthFor(item: { caseName: string; expectedBugCount: number | null }, index: number): HistoricalGroundTruth {
   return parseHistoricalGroundTruth({ schemaVersion: 2, scope: { protocol: "historical-efficacy-v1", truthVersion: "test-v1", status: item.expectedBugCount === null ? "reviewed-comparison" : "known-roots", completeness: "partial", reviewedScope: "Synthetic test case.", permittedMetrics: historicalPermittedMetrics(item.expectedBugCount === null ? "reviewed-comparison" : "known-roots") }, bugs: item.expectedBugCount === null ? [] : [{ id: `bug-${"a".repeat(7)}${String(index + 1).padStart(1, "0")}`, rootCauseGroup: `root-${"b".repeat(7)}${String(index + 1).padStart(1, "0")}`, lane: "other-unclassified", mechanismFamily: "callback-loss", proofLevel: "complete-static-trace", expectedDisposition: "fix-in-pr", expectedSeverity: "high", file: "src/worker.ts", startLine: 1, endLine: 2, description: "A callback is dropped.", reachablePreconditions: "The retry branch runs.", observableImpact: "The request remains pending.", provenance: "Synthetic fixture." }] });
+}
+
+function r2BindingFor(data: SyntheticData): R2TruthBindingArtifact {
+  const development = data.schedule.cases.map((item, index) => {
+    const grade = data.gradeSet.grades.find((candidate) => candidate.projection.caseName === item.caseName)!;
+    const roots = Object.keys(grade.rootCauseMatches).map((rootCause) => ({ rootCause, expectedSeverity: "high" as const }));
+    return {
+      caseName: item.caseName,
+      partition: "development" as const,
+      caseClass: item.expectedBugCount === null ? "reviewed-comparison" as const : "bug-bearing" as const,
+      repositoryIdentitySha256: sha(["a", "b", "c", "d"][index % 4]!),
+      duplicateFamilySha256: canonicalJsonSha256(["development", index]),
+      registrationSha256: grade.projection.caseRegistrationSha256,
+      curationSha256: canonicalJsonSha256(["curation", index]),
+      caseBundleSha256: canonicalJsonSha256(["bundle", index]),
+      truthScopeSha256: grade.projection.truthScopeSha256,
+      canonicalTruthSha256: grade.projection.truthSha256,
+      truthVersion: grade.metricEligibility.truthVersion!,
+      roots,
+    };
+  });
+  const selection = Array.from({ length: 24 }, (_, offset) => {
+    const index = offset + 12;
+    const bugBearing = (offset + 1) % 3 !== 0;
+    return {
+      caseName: `validation/case-${(index + 1).toString(16).padStart(8, "0")}`,
+      partition: "selection" as const,
+      caseClass: bugBearing ? "bug-bearing" as const : "reviewed-comparison" as const,
+      repositoryIdentitySha256: sha(["a", "b", "c", "d"][index % 4]!),
+      duplicateFamilySha256: canonicalJsonSha256(["selection", index]),
+      registrationSha256: canonicalJsonSha256(["registration", index]),
+      curationSha256: canonicalJsonSha256(["curation", index]),
+      caseBundleSha256: canonicalJsonSha256(["bundle", index]),
+      truthScopeSha256: canonicalJsonSha256(["scope", index]),
+      canonicalTruthSha256: canonicalJsonSha256(["truth", index]),
+      truthVersion: "test-v1",
+      roots: bugBearing ? [{ rootCause: JSON.stringify(["bug", `bug-${(index + 1).toString(16).padStart(8, "0")}`]), expectedSeverity: "high" as const }] : [],
+    };
+  });
+  const cases = [...development, ...selection].sort((left, right) => left.caseName.localeCompare(right.caseName));
+  const roots = cases.flatMap((item) => item.roots);
+  const body = {
+    schemaVersion: 1 as const,
+    protocol: "r2-operator-truth-binding-v1" as const,
+    version: 1,
+    previousBindingSha256: null,
+    partitionArtifactSha256: sha("8"),
+    packetSha256: sha("9"),
+    responseSha256: sha("a"),
+    partitionAttestationSelfSha256: sha("b"),
+    humanReviewerIdentitySha256: sha("c"),
+    claims: { operatorOnly: true as const, reviewerVisible: false as const, truthDerived: true as const, independentVerificationClaimed: false as const },
+    cases,
+    counts: { cases: 36, bugBearing: 24, reviewedComparison: 12, registeredRoots: roots.length, highSeverityRoots: roots.length },
+    recordedAt: "2026-09-07T18:00:00.000Z",
+  };
+  return { ...body, bindingSha256: canonicalJsonSha256(body) };
 }
