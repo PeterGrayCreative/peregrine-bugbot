@@ -299,6 +299,33 @@ test("an unexpected persistence failure after dispatch is interrupted, never pre
   }
 });
 
+test("cleanup failure after dispatch interrupts before any review terminal is written", async () => {
+  const fixture = await setup("A");
+  let cleanupCalls = 0;
+  try {
+    const receipt = await runMethodologyAttemptLifecycle({
+      ...fixture.lifecycleInput,
+      prepare: () => fixture.preparation,
+      cleanup: () => {
+        cleanupCalls++;
+        throw new Error("forced lifecycle cleanup failure");
+      },
+    });
+    assert.equal(receipt.status, "interrupted");
+    assert.equal(receipt.dispatchReceipts.length, 1);
+    assert.equal(receipt.reviewTerminalSha256, null);
+    assert.equal(cleanupCalls, 2);
+    assert.equal(existsSync(join(fixture.root, `${fixture.attemptId}.methodology-terminal.json`)), false);
+    const terminal = readMethodologyAttemptLifecycleTerminal(
+      fixture.root, fixture.registrationSha256, fixture.attemptId, receipt.lifecycleTerminalSha256,
+    );
+    assert.equal(terminal.status, "interrupted");
+    assert.match(terminal.failure?.message ?? "", /operation and cleanup failed/);
+  } finally {
+    fixture.cleanup();
+  }
+});
+
 async function setup(
   armId: MethodologyArmId,
   response?: (input: { schema: string; call: number }) =>

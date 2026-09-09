@@ -36,9 +36,10 @@ internal network. An exact-host, exact-SNI TLS gateway and a fixed tokenized MCP
 forwarder are the only dual-homed sidecars. The probe binds container
 entrypoints, IPv4-only IPAM and membership, observed source addresses, random
 per-exchange challenges, and sealed audits. Direct reviewer access fails in the
-fixture. This validates sidecar and topology mechanics only: the methodology
-provider attachment does not yet launch them, and a credential-bearing Codex
-canary remains separately gated. See the
+fixture. The trusted methodology attachment now launches this topology through
+the repository-owned Docker executor and binds it into lifecycle evidence.
+That integration is structurally tested; a credential-bearing Codex canary
+remains separately gated. See the
 [egress record](../validation/2026-09-09-r3-egress-sidecar-proof.md).
 
 The methodology runner now has an exact Codex launch profile: Sol high,
@@ -218,7 +219,9 @@ applicable. Missing schedules cannot use this complete-only contract;
 the separate stopped-run closure preserves nonterminal prefixes and missing
 suffixes. New methodology registrations require zero retries. Trusted v2
 lifecycles now retain runner-owned scope evidence, while actual provider/model
-identity and the credential-bearing canary remain unverified.
+identity and the credential-bearing canary remain unverified. Version-3 tool
+policies now bind the per-attempt sidecar attestation and version-2 scope record;
+legacy version-2 tool policies and version-1 scope records remain readable.
 
 - [x] **Versioned four-arm scheduling.** Extend the existing experiment machinery
   (`src/types.ts`, `eval/experiment.ts`) without reinterpreting legacy
@@ -260,9 +263,14 @@ identity and the credential-bearing canary remain unverified.
   The provider attachment also supplies the branded, single-use scope finalizer;
   its sanitized MCP audit is reauthenticated by terminal readers. A standalone
   synthetic Docker proof now validates exact-destination gateway and MCP-forwarder
-  policy without credentials. Integration into this provider attachment,
-  effective served-model/provider evidence, and a credential-bearing canary
-  remain open.
+  policy without credentials. The production attachment creates those sidecars,
+  gives the reviewer only the supervisor-issued internal-network capability,
+  awaits sealed cleanup during scope finalization, and binds the diagnostics
+  into the version-2 scope record. Effective served-model/provider evidence and
+  a credential-bearing canary remain open.
+
+  See the
+  [egress integration record](../validation/2026-09-09-r3-methodology-egress-integration.md).
 - [ ] **Historical consumer integration.** Wire caller-trusted curation,
   materialized source identity, input authentication, scope evidence, shared
   metric eligibility, and arm-blinded adjudication into scheduling, grading,

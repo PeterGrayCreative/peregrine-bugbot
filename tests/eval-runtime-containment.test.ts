@@ -1,16 +1,24 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import { chmodSync, linkSync, mkdirSync, mkdtempSync, realpathSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import type { ExecResult } from "../src/util/exec.js";
 import {
   ACCEPTED_EVAL_RUNTIME_IMAGE,
+  METHODOLOGY_EGRESS_RUNTIME_IMAGE,
   buildContainedProviderArgs,
   createContainedOutputReader,
   createContainedProviderExec,
   observeContainedCliVersion,
   parseContainedProviderArgs,
 } from "../eval/runtime-containment.js";
+import {
+  ACCEPTED_METHODOLOGY_EGRESS_IMAGE,
+  createStructuralMockMethodologyEgressSupervisor,
+  METHODOLOGY_EGRESS_BASE_ENV,
+} from "../eval/methodology-egress.js";
 import { parseMatrixRunManifest } from "../eval/artifacts.js";
 import type { exec } from "../src/util/exec.js";
 
@@ -49,6 +57,57 @@ const methodologyCodexCommand = (paths: ReturnType<typeof roots>) => [
   "--output-last-message", join(paths.outputDir, "methodology-test", "stage-1.json"),
   "--json", "--color", "never", "-",
 ];
+
+function fakeMethodologyEgressDocker() {
+  let internal = ""; let external = ""; let subnet = ""; let externalSubnet = "";
+  let gateway = ""; let forwarder = "";
+  const envs = new Map<string, string[]>();
+  const stopped = new Set<string>();
+  const result = (stdout = "", code = 0): ExecResult => ({ stdout, stderr: "", code, timedOut: false });
+  const digest = (protocol: string, body: Record<string, unknown>): string =>
+    createHash("sha256").update(`${protocol}\0${JSON.stringify(body)}`).digest("hex");
+  return async (_command: string, args: string[]): Promise<ExecResult> => {
+    if (args[0] === "network" && args[1] === "create") {
+      if (args.includes("--internal")) { internal = args.at(-1)!; subnet = args[7]!; }
+      else { external = args.at(-1)!; externalSubnet = args[6]!; }
+      return result(`${args.at(-1)!}\n`);
+    }
+    if (args[0] === "run") {
+      const name = args[3]!;
+      if (args.includes("/usr/local/bin/peregrine-egress-gateway")) gateway = name;
+      else forwarder = name;
+      envs.set(name, args.flatMap((value, index) => value === "--env" && args[index + 1] ? [args[index + 1]!] : []));
+      return result();
+    }
+    if (args[0] === "logs") {
+      const name = args.at(-1)!;
+      if (!stopped.has(name)) return result(JSON.stringify({ status: "ready", protocol: name === gateway ? "egress-gateway-v1" : "methodology-mcp-forwarder-v1", ready: true }) + "\n");
+      if (name === gateway) {
+        const body = { schemaVersion: 1, protocol: "egress-gateway-audit-v1", events: [] };
+        return result(JSON.stringify({ status: "sealed", protocol: "egress-gateway-v1", audit: { ...body, sealed: true, sha256: digest("egress-gateway-audit-v1", body) } }));
+      }
+      const body = { schemaVersion: 1, protocol: "methodology-mcp-forwarder-audit-v1", sealed: true, requests: { observed: 0, allowed: 0, denied: 0, forwarded: 0, budgeted: 0 }, events: [] };
+      return result(JSON.stringify({ status: "sealed", protocol: "methodology-mcp-forwarder-v1", audit: { ...body, snapshotSha256: digest("methodology-mcp-forwarder-audit-v1", body) } }));
+    }
+    if (args[0] === "stop") { stopped.add(args.at(-1)!); return result(); }
+    if (args[0] === "inspect") {
+      const homeTmpfs = "rw,noexec,nosuid,nodev,size=16m,uid=65532,gid=65532,mode=0700";
+      return result(JSON.stringify([gateway, forwarder].map((name) => ({
+        Name: `/${name}`,
+        Path: name === gateway ? "/usr/local/bin/peregrine-egress-gateway" : "/usr/local/bin/peregrine-methodology-mcp-forwarder",
+        Args: [], State: { Running: true }, Mounts: [{ Type: "tmpfs", Destination: "/tmp" }, { Type: "tmpfs", Destination: "/home/peregrine" }],
+        Config: { Image: ACCEPTED_METHODOLOGY_EGRESS_IMAGE, Entrypoint: [name === gateway ? "/usr/local/bin/peregrine-egress-gateway" : "/usr/local/bin/peregrine-methodology-mcp-forwarder"], Env: [...METHODOLOGY_EGRESS_BASE_ENV, ...(envs.get(name) ?? [])] },
+        HostConfig: { ReadonlyRootfs: true, CapDrop: ["ALL"], SecurityOpt: ["no-new-privileges"], PidsLimit: 64, User: "65532:65532", Tmpfs: { "/tmp": "rw,noexec,nosuid,nodev,size=32m,uid=65532,gid=65532,mode=1777", "/home/peregrine": homeTmpfs }, ExtraHosts: name === gateway ? [] : ["host.docker.internal:host-gateway"] },
+        NetworkSettings: { Networks: { [external]: { Aliases: [name], IPAddress: `${externalSubnet.replace(".0/28", name === gateway ? ".2" : ".3")}` }, [internal]: { Aliases: [name === gateway ? "egress-gateway" : "mcp-forwarder", name], IPAddress: `${subnet.replace(".0/28", name === gateway ? ".2" : ".3")}` } } },
+      }))));
+    }
+    if (args[0] === "network" && args[1] === "inspect") {
+      const name = args[2]!; const isInternal = name === internal; const selected = isInternal ? subnet : externalSubnet;
+      return result(JSON.stringify([{ Name: name, Driver: "bridge", Internal: isInternal, EnableIPv6: false, IPAM: { Config: [{ Subnet: selected }] }, Containers: { gateway: { Name: `/${gateway}`, IPv4Address: `${selected.replace(".0/28", ".2")}/28`, IPv6Address: "" }, forwarder: { Name: `/${forwarder}`, IPv4Address: `${selected.replace(".0/28", ".3")}/28`, IPv6Address: "" } } }]));
+    }
+    return result();
+  };
+}
 
 test("API-key launch is immutable, no-pull, narrow, and passes only a credential name", () => {
   const paths = roots();
@@ -232,6 +291,68 @@ test("methodology profile admits only Sol-high with neutral MCP reads and no bui
     assert.throws(() => parseContainedProviderArgs(
       changed, "codex", "api-key", undefined, "methodology-review",
     ));
+  }
+});
+
+test("methodology egress accepts only a supervisor-issued launch capability", async () => {
+  const paths = roots(); process.env.OPENAI_API_KEY = "x";
+  mkdirSync(join(paths.assetsDir, "schemas"));
+  mkdirSync(join(paths.outputDir, "methodology-test"));
+  const command = methodologyCodexCommand(paths).map((value) => value.replace(
+    "http://host.docker.internal:43123/mcp/",
+    "http://mcp-forwarder:8082/mcp/",
+  ));
+  const internalMcpUrl = JSON.parse(command.find((value) => value.startsWith("mcp_servers.source_read.url="))!.split("=", 2)[1]!);
+  const plainDescriptor = { network: "attacker-network", proxyUrl: "http://egress-gateway:8081", internalMcpUrl, attestationSha256: "a".repeat(64) } as const;
+  assert.throws(() => buildContainedProviderArgs(
+    { runner: "codex", providerAccess: "api-key", image: METHODOLOGY_EGRESS_RUNTIME_IMAGE, ...paths, profile: "methodology-review", methodologyEgress: plainDescriptor as never },
+    "codex", command,
+    "peregrine-eval-00000000-0000-4000-8000-000000000008",
+  ), /launch capability/);
+
+  const structuralRun = fakeMethodologyEgressDocker();
+  const supervisor = await createStructuralMockMethodologyEgressSupervisor({
+    attemptId: "attempt-000001", armId: "A", sourceHeadTree: "a".repeat(40),
+    providerAuthorities: ["api.openai.com:443"], hostMcpPort: 43123,
+    mcpLimits: { maxRequestBytes: 4096, maxResponseBytes: 8192, maxHeaderBytes: 8192, requestTimeoutMs: 500, maxConnections: 4, maxRequests: 20 },
+    run: structuralRun,
+  });
+  try {
+    const capability = supervisor.launchCapability;
+    const args = buildContainedProviderArgs(
+      { runner: "codex", providerAccess: "api-key", image: METHODOLOGY_EGRESS_RUNTIME_IMAGE, ...paths, profile: "methodology-review", methodologyEgress: capability, run: structuralRun },
+      "codex", command.map((value) => value.replace(internalMcpUrl, capability.internalMcpUrl)),
+      "peregrine-eval-00000000-0000-4000-8000-000000000008",
+    );
+    const parsed = parseContainedProviderArgs(args, "codex", "api-key", undefined, "methodology-review", capability);
+    assert.equal(parsed.network, capability.network);
+    assert.equal(parsed.methodologyEgress, capability);
+    assert.equal(args.includes("--add-host"), false);
+    assert.equal(args.includes("host.docker.internal:host-gateway"), false);
+    assert.equal(args.includes("HTTPS_PROXY=http://egress-gateway:8081"), true);
+    assert.equal(args.includes("NO_PROXY=mcp-forwarder:8082"), true);
+    assert.equal(args.some((value) => /(?:^|=)(?:HTTP|HTTPS|ALL|NO)_PROXY(?:=|$)/u.test(value) &&
+      !["HTTPS_PROXY=http://egress-gateway:8081", "NO_PROXY=mcp-forwarder:8082"].some((allowed) => value.includes(allowed))), false);
+
+    const missingAttestation = { ...plainDescriptor, network: capability.network, internalMcpUrl: capability.internalMcpUrl };
+    assert.throws(() => parseContainedProviderArgs(args, "codex", "api-key", undefined, "methodology-review", missingAttestation as never));
+
+    for (const mutate of [
+      (changed: string[]) => { changed[changed.indexOf(capability.network)] = "bridge"; },
+      (changed: string[]) => { changed[changed.indexOf("HTTPS_PROXY=http://egress-gateway:8081")] = "HTTPS_PROXY=http://user:password@egress-gateway:8081"; },
+      (changed: string[]) => { changed[changed.indexOf("NO_PROXY=mcp-forwarder:8082")] = "NO_PROXY=*"; },
+      (changed: string[]) => {
+        const index = changed.findIndex((value) => value.startsWith('mcp_servers.source_read.url='));
+        changed[index] = changed[index]!.replace("mcp-forwarder:8082", "host.docker.internal:43123");
+      },
+    ]) {
+      const changed = [...args]; mutate(changed);
+      assert.throws(() => parseContainedProviderArgs(
+        changed, "codex", "api-key", undefined, "methodology-review", capability,
+      ));
+    }
+  } finally {
+    await supervisor.close();
   }
 });
 

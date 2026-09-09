@@ -5,7 +5,6 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import {
-  createMethodologyProviderAttacher,
   createStructuralMockMethodologyProviderAttacher,
   assertMethodologyProviderScopeRecord,
   assertMethodologyProviderScopeFinalizer,
@@ -13,8 +12,14 @@ import {
   type MethodologyProviderAttachmentRequest,
   type MethodologyProviderNeutralReadMcp,
 } from "../eval/methodology-provider-attachment.js";
+import { METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "../eval/runtime-containment.js";
 import {
+  buildMethodologyScopeRecordV2,
+  validateMethodologyScopeRecordV2,
   validateMethodologyScopeRecordV1,
+  type MethodologyNeutralReadPolicyV3,
+  type MethodologySidecarAuditDiagnostic,
+  type MethodologyScopeRecordV2Input,
   type MethodologyScopeRecord,
 } from "../eval/methodology-scope-record.js";
 
@@ -139,6 +144,39 @@ function expectedFor(
   };
 }
 
+function v3Policy(providerAuthoritiesSha256 = "9".repeat(64)): MethodologyNeutralReadPolicyV3 {
+  const attachment = {
+    schemaVersion: 2 as const,
+    protocol: "methodology-provider-attachment-reference-v2" as const,
+    attemptId: "attempt-000001",
+    armId: "A" as const,
+    sourceHeadTree: TREE,
+    effectiveRootsSha256: "c".repeat(64),
+    image: METHODOLOGY_EGRESS_RUNTIME_IMAGE,
+    runner: "codex" as const,
+    providerAccess: "api-key" as const,
+    profile: "methodology-review" as const,
+    executionClass: "provider" as const,
+    outputByteLimit: 1024,
+    readLimitsSha256: "e".repeat(64),
+    mcpLimitsSha256: "f".repeat(64),
+    attestationSha256: "1".repeat(64),
+    egressProtocol: "methodology-egress-supervisor-v1" as const,
+    egressAttestationSha256: "2".repeat(64),
+    egressNetwork: "peregrine-egress-attempt-000001",
+    proxyUrl: "http://egress-gateway:8081",
+    internalMcpUrl: "http://mcp-forwarder:8082/mcp/" + "0".repeat(64),
+    providerAuthoritiesSha256,
+  };
+  return {
+    protocol: "neutral-read-mcp-v3",
+    url: attachment.internalMcpUrl,
+    serverName: "source_read",
+    enabledTools: ["list_tree", "read_file", "search_text"],
+    attachment,
+  };
+}
+
 async function structuralAttachment(): Promise<{ root: string; attachment: MethodologyProviderAttachment }> {
   const { root, paths } = fixture();
   const attacher = createStructuralMockMethodologyProviderAttacher({
@@ -171,16 +209,6 @@ test("a branded attachment finalizer produces the v1 historical methodology scop
 test("structural-mock and provider execution classes cannot produce complete scope without a canary", async () => {
   const cases = [
     ["structural-mock", async () => structuralAttachment()],
-    ["provider", async () => {
-      const { root, paths } = fixture();
-      const attachment = await createMethodologyProviderAttacher({
-        providerAccess: "api-key",
-        readToolLimits: READ_LIMITS,
-        mcpLimits: MCP_LIMITS,
-        outputByteLimit: 1024,
-      })(requestValue(paths));
-      return { root, attachment };
-    }],
   ] as const;
   for (const [executionClass, make] of cases) {
     const { root, attachment } = await make();
@@ -333,6 +361,136 @@ test("persisted audit contains digests and allowlisted status only, never raw qu
       assert.ok(!persistedAudit.includes(forbidden), `persisted audit leaked ${forbidden}`);
     }
     assert.ok(record.audit.toolCalls.every((call) => /^[a-f0-9]{64}$/.test(call.resultSha256)));
+  } finally {
+    await attachment.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("v2 binds a v3 egress policy and sealed diagnostics while remaining unverified without a canary", async () => {
+  const { root, attachment } = await structuralAttachment();
+  try {
+    const v2Input: MethodologyScopeRecordV2Input = {
+      attemptId: "attempt-000001",
+      armId: "A",
+      registeredReviewScopeSha256: REGISTERED_SCOPE,
+      toolPolicy: v3Policy("a".repeat(64)),
+      audit: attachment.finalizeScope(finalizerInput()).audit,
+      sidecarDiagnostics: [
+        { sidecar: "gateway", ready: true, sealed: true, selfDigestValid: true, lineObserved: true },
+        { sidecar: "forwarder", ready: true, sealed: true, selfDigestValid: true, lineObserved: true },
+      ],
+      modelLimitations: MODEL_LIMITATIONS,
+      findingCount: 0,
+    };
+    const record = buildMethodologyScopeRecordV2(v2Input);
+    assert.equal(record.schemaVersion, 2);
+    assert.equal(record.protocol, "historical-methodology-scope-record-v2");
+    assert.equal(record.result.verdict, "unverified");
+    assert.ok(record.result.reasons.includes("missing-runner-availability:tool.credential-bearing-canary"));
+    assert.equal(record.toolPolicyBinding.egressAttestationSha256, "2".repeat(64));
+    assert.equal(record.toolPolicyBinding.providerAuthoritiesSha256, "a".repeat(64));
+    assert.equal(record.toolPolicyBinding.internalMcpUrl, v2Input.toolPolicy.url);
+    // A pure builder result is not trusted terminal evidence by itself.
+    assert.throws(() => assertMethodologyProviderScopeRecord(record, attachment.finalizeScope), /not bound/);
+    assert.deepEqual(validateMethodologyScopeRecordV2(record, {
+      attemptId: v2Input.attemptId,
+      armId: v2Input.armId,
+      registeredReviewScopeSha256: v2Input.registeredReviewScopeSha256,
+      toolPolicy: v2Input.toolPolicy,
+      modelLimitations: v2Input.modelLimitations,
+      findingCount: v2Input.findingCount,
+    }), record);
+  } finally {
+    await attachment.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("v2 validation rejects policy, binding, and cross-policy mutations", async () => {
+  const { root, attachment } = await structuralAttachment();
+  try {
+    const policy = v3Policy();
+    const input = {
+      attemptId: "attempt-000001",
+      armId: "A" as const,
+      registeredReviewScopeSha256: REGISTERED_SCOPE,
+      toolPolicy: policy,
+      audit: attachment.finalizeScope(finalizerInput()).audit,
+      sidecarDiagnostics: [
+        { sidecar: "gateway" as const, ready: true, sealed: true, selfDigestValid: true, lineObserved: true },
+        { sidecar: "forwarder" as const, ready: true, sealed: true, selfDigestValid: true, lineObserved: true },
+      ],
+      modelLimitations: MODEL_LIMITATIONS,
+      findingCount: 0,
+    };
+    const record = buildMethodologyScopeRecordV2(input);
+    const expected = {
+      attemptId: input.attemptId,
+      armId: input.armId,
+      registeredReviewScopeSha256: input.registeredReviewScopeSha256,
+      toolPolicy: input.toolPolicy,
+      modelLimitations: input.modelLimitations,
+      findingCount: input.findingCount,
+    };
+    const changedPolicy = structuredClone(record) as unknown as { toolPolicy: { url: string } };
+    changedPolicy.toolPolicy.url = "http://mcp-forwarder:8082/mcp/" + "1".repeat(64);
+    assert.throws(() => validateMethodologyScopeRecordV2(changedPolicy, expected), /differs|trusted v3/);
+    const changedImage = structuredClone(record) as unknown as { toolPolicy: { attachment: { image: string } } };
+    changedImage.toolPolicy.attachment.image = "ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:" + "d".repeat(64);
+    assert.throws(() => validateMethodologyScopeRecordV2(changedImage, expected), /differs|trusted v3/);
+    const changedBinding = structuredClone(record) as unknown as { toolPolicyBinding: { egressNetwork: string } };
+    changedBinding.toolPolicyBinding.egressNetwork = "other-network";
+    assert.throws(() => validateMethodologyScopeRecordV2(changedBinding, expected), /differs/);
+    const crossPolicy = { ...expected, toolPolicy: v3Policy("b".repeat(64)) };
+    assert.throws(() => validateMethodologyScopeRecordV2(record, crossPolicy), /differs/);
+
+    const badOutputLimit = structuredClone(input);
+    badOutputLimit.toolPolicy.attachment.outputByteLimit = "bad" as never;
+    assert.throws(() => buildMethodologyScopeRecordV2(badOutputLimit), /trusted v3/);
+
+    const reservedNetwork = structuredClone(input);
+    reservedNetwork.toolPolicy.attachment.egressNetwork = "bridge";
+    assert.throws(() => buildMethodologyScopeRecordV2(reservedNetwork), /trusted v3/);
+
+    const badLimitation = { ...input, modelLimitations: [{ kind: "made-up", detail: "invalid" }] as never };
+    assert.throws(() => buildMethodologyScopeRecordV2(badLimitation), /observations/);
+  } finally {
+    await attachment.close();
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("v2 rejects missing, duplicate, extra, reordered, and unproven sidecar diagnostics", async () => {
+  const { root, attachment } = await structuralAttachment();
+  try {
+    const audit = attachment.finalizeScope(finalizerInput()).audit;
+    const base = {
+      attemptId: "attempt-000001" as const,
+      armId: "A" as const,
+      registeredReviewScopeSha256: REGISTERED_SCOPE,
+      toolPolicy: v3Policy(),
+      audit,
+      modelLimitations: MODEL_LIMITATIONS,
+      findingCount: 0,
+    };
+    const valid = [
+      { sidecar: "gateway" as const, ready: true, sealed: true, selfDigestValid: true, lineObserved: true },
+      { sidecar: "forwarder" as const, ready: true, sealed: true, selfDigestValid: true, lineObserved: true },
+    ];
+    for (const diagnostics of [
+      valid.slice(0, 1),
+      [valid[0], valid[0]],
+      [...valid, { sidecar: "extra" as never, ready: true, sealed: true, selfDigestValid: true, lineObserved: true }],
+      [valid[1], valid[0]],
+      [{ ...valid[0], sealed: false }, valid[1]],
+      [{ ...valid[0], extra: true }, valid[1]],
+    ]) {
+      assert.throws(() => buildMethodologyScopeRecordV2({
+        ...base,
+        sidecarDiagnostics: diagnostics as readonly MethodologySidecarAuditDiagnostic[],
+      }), /sidecar/);
+    }
   } finally {
     await attachment.close();
     rmSync(root, { recursive: true, force: true });

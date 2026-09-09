@@ -47,6 +47,12 @@ export interface MethodologyAttemptLifecycleInput {
   prepare: () => MethodologyAttemptPreparation | Promise<MethodologyAttemptPreparation>;
   /** Existing invocation-plan recorder; this wrapper does not create or replace it. */
   beforeInvocation: MethodologyBeforeInvocation;
+  /**
+   * Release attachment and materialized-case resources before a successful
+   * review terminal is written. Cleanup failure is retained as a lifecycle
+   * failure rather than contradicting an already-sealed review terminal.
+   */
+  cleanup?: () => void | Promise<void>;
   now?: () => number;
 }
 
@@ -124,6 +130,12 @@ export async function runMethodologyAttemptLifecycle(
   const start = writeStart(input.evidenceRoot, input.registrationSha256, attempt, timestamp(now()));
   const dispatchReceipts: MethodologyDispatchReceipt[] = [];
   let pendingInvocation: { stageIndex: 1 | 2; invocationSha256: string } | null = null;
+  let cleanupComplete = false;
+  const cleanup = async (): Promise<void> => {
+    if (cleanupComplete || input.cleanup === undefined) return;
+    await input.cleanup();
+    cleanupComplete = true;
+  };
 
   try {
     const prepared = await input.prepare();
@@ -132,7 +144,8 @@ export async function runMethodologyAttemptLifecycle(
     if (!isolation || typeof underlyingProvider !== "function") {
       throw new Error("methodology lifecycle preparation requires an isolated ProviderExec");
     }
-    const requiresScopeFinalizer = isolation.neutralReadMcp?.protocol === "neutral-read-mcp-v2" &&
+    const requiresScopeFinalizer = (isolation.neutralReadMcp?.protocol === "neutral-read-mcp-v2" ||
+      isolation.neutralReadMcp?.protocol === "neutral-read-mcp-v3") &&
       isolation.neutralReadMcp.attachment !== undefined;
     if (requiresScopeFinalizer) assertMethodologyProviderScopeFinalizer(prepared.finalizeScope);
     else if (prepared.finalizeScope !== undefined) {
@@ -182,7 +195,7 @@ export async function runMethodologyAttemptLifecycle(
     let result: MethodologyAttemptResult = runResult;
     if (prepared.finalizeScope && runResult.intentReceipts.length > 0) {
       const reviewStatus = runResult.outcome.status === "completed" ? runResult.outcome.review.status : null;
-      const scope = prepared.finalizeScope({
+      const scope = await prepared.finalizeScope({
         registeredReviewScopeSha256: registration.scopeSha256ByCase[attempt.caseName]!,
         modelLimitations: methodologyModelScopeLimitations(runResult.scope.modelLimitations, reviewStatus),
         findingCount: runResult.outcome.status === "completed" ? runResult.outcome.review.findings.length : 0,
@@ -194,6 +207,7 @@ export async function runMethodologyAttemptLifecycle(
         scope,
       } satisfies MethodologyAttemptResultV2;
     }
+    await cleanup();
     const reviewTerminalSha256 = writeMethodologyAttemptTerminal(
       input.evidenceRoot,
       input.registrationSha256,
@@ -212,6 +226,12 @@ export async function runMethodologyAttemptLifecycle(
     });
     return receipt(terminal);
   } catch (error) {
+    let failure = error;
+    try {
+      await cleanup();
+    } catch (cleanupError) {
+      failure = new AggregateError([error, cleanupError], "methodology lifecycle operation and cleanup failed");
+    }
     const terminal = writeLifecycleTerminal(input.evidenceRoot, {
       registrationSha256: input.registrationSha256,
       attemptId: input.attemptId,
@@ -219,8 +239,8 @@ export async function runMethodologyAttemptLifecycle(
       status: dispatchReceipts.length === 0 ? "preflight-failed" : "interrupted",
       dispatchReceipts,
       reviewTerminalSha256: null,
-      failure: { kind: runFailureKind(error), message: safeDiagnostic(
-        error instanceof Error ? error.message : "methodology lifecycle failed",
+      failure: { kind: runFailureKind(failure), message: safeDiagnostic(
+        failure instanceof Error ? failure.message : "methodology lifecycle failed",
       ) },
       finishedAt: timestamp(now()),
     });

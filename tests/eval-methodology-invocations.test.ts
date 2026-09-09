@@ -9,7 +9,7 @@ import { compileMethodologyDiscoveryPrompt, compileMethodologyReviewPrompt } fro
 import { createMethodologyInvocationRecorder, readMethodologyInvocation, registerMethodologyInvocations,
   readMethodologyInvocationRegistration, type MethodologyInvocationInput } from "../eval/methodology-invocations.js";
 import { canonicalJsonSha256 } from "../eval/experiment.js";
-import { ACCEPTED_EVAL_RUNTIME_IMAGE } from "../eval/runtime-containment.js";
+import { ACCEPTED_EVAL_RUNTIME_IMAGE, METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "../eval/runtime-containment.js";
 
 const scope = { baseRef: "a".repeat(40), headRef: "b".repeat(40), diff: "+const x = 1;",
   taskSpecification: "Preserve behavior.", rawChangedPaths: ["src/a.ts"] };
@@ -222,9 +222,65 @@ test("trusted v2 tool policy binds the attachment reference to the scheduled att
         url: "http://host.docker.internal:43123/mcp/" + "a".repeat(64),
         serverName: "source_read",
         enabledTools: ["list_tree", "read_file", "search_text"],
-        attachment: attachment as NonNullable<NonNullable<MethodologyInvocationInput["toolPolicy"]>["attachment"]>,
+        attachment: attachment as unknown as Extract<NonNullable<MethodologyInvocationInput["toolPolicy"]>, { protocol: "neutral-read-mcp-v2" }>["attachment"],
       };
       assert.throws(() => invalid.record(input), /attachment evidence/);
     } finally { invalid.cleanup(); }
   }
+});
+
+test("trusted v3 egress tool policy requires the sidecar digest and internal MCP topology", async () => {
+  const f = await fixture();
+  try {
+    const input = await f.input("A");
+    input.toolPolicy = {
+      protocol: "neutral-read-mcp-v3",
+      url: "http://mcp-forwarder:8082/mcp/" + "a".repeat(64),
+      serverName: "source_read",
+      enabledTools: ["list_tree", "read_file", "search_text"],
+      attachment: {
+        schemaVersion: 2,
+        protocol: "methodology-provider-attachment-reference-v2",
+        attemptId: input.attemptId,
+        armId: "A",
+        sourceHeadTree: "b".repeat(40),
+        effectiveRootsSha256: "1".repeat(64),
+        image: METHODOLOGY_EGRESS_RUNTIME_IMAGE,
+        runner: "codex",
+        providerAccess: "cli-session",
+        profile: "methodology-review",
+        executionClass: "provider",
+        outputByteLimit: 4_194_304,
+        readLimitsSha256: "2".repeat(64),
+        mcpLimitsSha256: "3".repeat(64),
+        attestationSha256: "4".repeat(64),
+        egressProtocol: "methodology-egress-supervisor-v1",
+        egressAttestationSha256: "5".repeat(64),
+        egressNetwork: "peregrine-egress-attempt-000001",
+        proxyUrl: "http://egress-gateway:8081",
+        internalMcpUrl: "http://mcp-forwarder:8082/mcp/" + "a".repeat(64),
+        providerAuthoritiesSha256: "6".repeat(64),
+      },
+    };
+    const receipt = f.record(input);
+    assert.equal(readMethodologyInvocation(f.root, f.registrationSha256, input.attemptId, 1, receipt).input.toolPolicy?.protocol,
+      "neutral-read-mcp-v3");
+    for (const mutate of [
+      (policy: Record<string, unknown>) => { policy.url = "http://host.docker.internal:43123/mcp/" + "a".repeat(64); },
+      (policy: Record<string, unknown>) => { (policy.attachment as Record<string, unknown>).internalMcpUrl = "http://mcp-forwarder:8082/mcp/" + "b".repeat(64); },
+      (policy: Record<string, unknown>) => { (policy.attachment as Record<string, unknown>).image = ACCEPTED_EVAL_RUNTIME_IMAGE; },
+      (policy: Record<string, unknown>) => { (policy.attachment as Record<string, unknown>).proxyUrl = "http://egress-gateway:9999"; },
+      (policy: Record<string, unknown>) => { delete (policy.attachment as Record<string, unknown>).egressAttestationSha256; },
+    ]) {
+      const invalid = await fixture();
+      try {
+        const candidate = await invalid.input("A");
+        candidate.toolPolicy = JSON.parse(JSON.stringify(input.toolPolicy)) as typeof input.toolPolicy;
+        mutate(candidate.toolPolicy as unknown as Record<string, unknown>);
+        assert.throws(() => invalid.record(candidate), /egress attachment|egress URL|tool policy URL|invalid fields/);
+      } finally {
+        invalid.cleanup();
+      }
+    }
+  } finally { f.cleanup(); }
 });
