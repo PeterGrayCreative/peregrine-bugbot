@@ -7,6 +7,7 @@
       "breadthEffort": "high",
       "investigationModel": "claude-opus-5",
       "investigationEffort": "high",
+      "investigationPromptMode": "method-packet",
       "skillName": "invariant-first-pr-review",
       "maxTurns": 40,
       "maxBudgetUsd": 3,
@@ -17,6 +18,7 @@
       "investigationModel": "gpt-5.6-sol",
       "breadthEffort": "high",
       "investigationEffort": "high",
+      "investigationPromptMode": "method-packet",
       "skillName": "invariant-first-pr-review",
       "timeoutMs": 900000
     },

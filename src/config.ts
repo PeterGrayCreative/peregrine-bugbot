@@ -32,9 +32,9 @@ export function loadConfig(path = "peregrine.config.json"): PeregrineConfig {
 function normalizeConfig(cfg: PeregrineConfig): void {
   const claude = cfg?.runners?.claude as Partial<PeregrineConfig["runners"]["claude"]> | undefined;
   if (claude && claude.breadthEffort === undefined) claude.breadthEffort = "high";
-  if (claude && claude.investigationPromptMode === undefined) claude.investigationPromptMode = "legacy";
+  if (claude && claude.investigationPromptMode === undefined) claude.investigationPromptMode = "method-packet";
   const codex = cfg?.runners?.codex as Partial<PeregrineConfig["runners"]["codex"]> | undefined;
-  if (codex && codex.investigationPromptMode === undefined) codex.investigationPromptMode = "legacy";
+  if (codex && codex.investigationPromptMode === undefined) codex.investigationPromptMode = "method-packet";
 }
 
 function applyEnvOverrides(cfg: PeregrineConfig): void {

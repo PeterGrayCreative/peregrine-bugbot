@@ -255,7 +255,7 @@ export function createCodexEngine(
       const modelConfig = `${cfg.breadthModel}/${cfg.breadthEffort}->${cfg.investigationModel}/${cfg.investigationEffort}`;
       let methodPacket;
       try {
-        methodPacket = cfg.investigationPromptMode === "method-packet"
+        methodPacket = cfg.investigationPromptMode !== "legacy"
           ? await compileInvestigatorMethodPacket({
               skillDir: ctx.evaluationIsolation
                 ? join(ctx.evaluationIsolation.providerAssetsRoot, "skills", cfg.skillName)
