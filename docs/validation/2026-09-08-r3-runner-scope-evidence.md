@@ -40,8 +40,10 @@ Focused Node 22 verification passed:
 - lifecycle integration proving the stored version-2 result is reauthenticated
   from sealed invocation records.
 
-The complete repository validation is recorded on the final committed change,
-because clean-worktree checks are part of that command.
+Complete `npm run validate` passed from clean commit `80305fc` under Node
+22.22.1. That command included typechecking, the full repository tests, all 168
+methodology tests, all 13 MCP transport tests, corpus validation, skill/package
+validation, and the eight-attempt structural smoke. No provider was invoked.
 
 Remaining R3 gates are an enforced provider-destination egress boundary, an
 explicitly authorized credential-bearing canary and its new versioned scope
