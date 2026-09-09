@@ -11,7 +11,7 @@ import {
   type MethodologyAttemptResult,
   type MethodologyModelScopeLimitation,
 } from "./methodology-runner.js";
-import { validateMethodologyScopeRecordV1 } from "./methodology-scope-record.js";
+import { validateMethodologyScopeRecordV1, validateMethodologyScopeRecordV2 } from "./methodology-scope-record.js";
 import {
   assertMethodologyProviderScopeRecord,
   type MethodologyProviderScopeFinalizer,
@@ -160,21 +160,33 @@ function validateResult(root: string, registrationSha256: string, result: Method
     }
   } else {
     const toolPolicy = inputs[0]?.input.toolPolicy;
-    if (!toolPolicy || toolPolicy.protocol !== "neutral-read-mcp-v2" || !toolPolicy.attachment ||
+    if (!toolPolicy || (toolPolicy.protocol !== "neutral-read-mcp-v2" && toolPolicy.protocol !== "neutral-read-mcp-v3") || !toolPolicy.attachment ||
         inputs.some((input) => canonicalJson(input.input.toolPolicy) !== canonicalJson(toolPolicy))) {
       throw new Error("methodology v2 scope lacks one stable sealed provider attachment");
     }
-    validateMethodologyScopeRecordV1(result.scope, {
+    const common = {
       attemptId: scheduled.id,
       armId: scheduled.armId,
       registeredReviewScopeSha256: registration.scopeSha256ByCase[scheduled.caseName]!,
-      toolPolicy: toolPolicy as typeof toolPolicy & {
-        protocol: "neutral-read-mcp-v2";
-        attachment: NonNullable<typeof toolPolicy.attachment>;
-      },
       modelLimitations: methodologyModelScopeLimitations(limitations, reviewStatus),
       findingCount: result.outcome.status === "completed" ? result.outcome.review.findings.length : 0,
-    });
+    };
+    if (toolPolicy.protocol === "neutral-read-mcp-v2") {
+      if (result.scope.schemaVersion !== 1) throw new Error("methodology v2 tool policy requires scope record v1");
+      validateMethodologyScopeRecordV1(result.scope, {
+        ...common,
+        toolPolicy: toolPolicy as typeof toolPolicy & {
+          protocol: "neutral-read-mcp-v2";
+          attachment: NonNullable<typeof toolPolicy.attachment>;
+        },
+      });
+    } else {
+      if (result.scope.schemaVersion !== 2) throw new Error("methodology v3 tool policy requires scope record v2");
+      validateMethodologyScopeRecordV2(result.scope, {
+        ...common,
+        toolPolicy: toolPolicy as Extract<typeof toolPolicy, { protocol: "neutral-read-mcp-v3" }>,
+      });
+    }
   }
 }
 

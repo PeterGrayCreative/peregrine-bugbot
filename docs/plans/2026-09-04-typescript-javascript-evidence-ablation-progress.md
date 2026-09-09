@@ -1,7 +1,7 @@
 # TypeScript and JavaScript evidence and ablation progress
 
 Updated: 2026-09-09
-Active branch: `research/ts-js-evidence-r3-egress`
+Active branch: `research/ts-js-evidence-r3-egress-integration`
 
 ## Current recovery notice
 
@@ -123,6 +123,20 @@ and synthetic topology, not Codex proxy behavior, the production methodology
 lifecycle, or real provider reachability. See the
 [egress sidecar record](../validation/2026-09-09-r3-egress-sidecar-proof.md).
 
+The current R3 integration slice wires that topology into the trusted
+methodology provider attachment and attempt lifecycle. Production attachments
+use the repository-owned Docker executor only, create fresh per-attempt
+networks and sidecars before provider launch, and pass an opaque
+supervisor-issued capability to the contained reviewer. The invocation policy
+and version-2 scope record bind the exact egress attestation, provider-authority
+digest, internal MCP route, sealed sidecar diagnostics, and runner-owned MCP
+audit. Cleanup is awaited before terminal scope evidence is written; failed
+cleanup interrupts the lifecycle instead of producing a misleading scope
+record. Structural mocks are separately branded and cannot satisfy provider
+evidence. This remains structural evidence: no provider invocation or
+credential-bearing canary has run under this slice. See the
+[integration record](../validation/2026-09-09-r3-methodology-egress-integration.md).
+
 ## Active objective
 
 Determine whether any Peregrine component improves consequential TS/JS bug
@@ -135,7 +149,7 @@ minimal reviewer. Production routing remains frozen.
 | --- | --- | --- |
 | R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
 | R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. A restore-tested one-shot packet now binds 30 recovered draft proposals and 10 retained losses in the private evidence repository. Sole-human v3 governance, packet verification, and non-mutating response-to-admission derivation pass structural tests without weakening R1/v2. Human decisions, sufficient admission yield/headroom, durable admission import, and partitioning remain open. |
-| R3: neutral and truthful harness | In progress | Four-arm scheduling, prompts, materialization, input/lifecycle seals, stopped-run closure, grading projections, bounded HTTP read tools, exact Sol-high/no-shell/three-tool Codex launch policy, both historical curator-policy versions, all-findings adjudication, a source-bound sealed semantic-judge path, descriptive reporting and contrasts, append-only composite analysis, authenticated resources, explicit zero retries, source-bound post-hoc discovery-root grouping, a trusted provider attachment, fail-closed runner-owned scope/audit evidence, and a standalone credential-free exact-destination egress/MCP sidecar proof have structural evidence. The accepted image reports Codex CLI 0.152.0 and parses the MCP config without credentials. Missing durations/tokens/cost remain unknown rather than zero; old artifacts remain unchanged. Methodology-lifecycle integration of the sidecars, inferential decision seals, a separately authorized credential-bearing model/tool canary, and real human admission remain open. Curator blindness is operator-mediated, not independently attested. Diagnostic child retries are outside methodology v1. Legacy historical CLI admission still fails closed. |
+| R3: neutral and truthful harness | In progress | Four-arm scheduling, prompts, materialization, input/lifecycle seals, stopped-run closure, grading projections, bounded HTTP read tools, exact Sol-high/no-shell/three-tool Codex launch policy, both historical curator-policy versions, all-findings adjudication, a source-bound sealed semantic-judge path, descriptive reporting and contrasts, append-only composite analysis, authenticated resources, explicit zero retries, source-bound post-hoc discovery-root grouping, a trusted provider attachment, fail-closed runner-owned scope/audit evidence, a credential-free exact-destination egress/MCP sidecar proof, and structural integration of those sidecars into the methodology lifecycle have evidence. The accepted image reports Codex CLI 0.152.0 and parses the MCP config without credentials. Missing durations/tokens/cost remain unknown rather than zero; old artifacts remain unchanged. Inferential decision seals, a separately authorized credential-bearing model/tool canary, and real human admission remain open. Curator blindness is operator-mediated, not independently attested. Diagnostic child retries are outside methodology v1. Legacy historical CLI admission still fails closed. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |
 | R6: select and confirm | Not started | Requires frozen candidate and new powered confirmation corpus. |

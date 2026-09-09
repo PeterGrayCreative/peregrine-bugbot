@@ -25,6 +25,7 @@ import {
   assertMethodologyProviderAttachment,
   assertMethodologyProviderAttacher,
   type MethodologyProviderAttachment,
+  type MethodologyProviderEgressAttachment,
   type MethodologyProviderAttacher,
 } from "./methodology-provider-attachment.js";
 
@@ -88,10 +89,32 @@ export async function runRegisteredHistoricalMethodologyAttempt(
   );
   const holder: {
     materialized: MaterializedHistoricalMethodologyCase | null;
-    attachment: MethodologyProviderAttachment | null;
+    attachment: MethodologyProviderAttachment | MethodologyProviderEgressAttachment | null;
   } = { materialized: null, attachment: null };
-  try {
-    return await runMethodologyAttemptLifecycle({
+  const cleanup = async (): Promise<void> => {
+    const cleanupErrors: unknown[] = [];
+    if (holder.attachment !== null) {
+      try {
+        await holder.attachment.close();
+        holder.attachment = null;
+      } catch (error) {
+        cleanupErrors.push(error);
+      }
+    }
+    if (holder.materialized !== null) {
+      try {
+        holder.materialized.cleanup();
+        holder.materialized = null;
+      } catch (error) {
+        cleanupErrors.push(error);
+      }
+    }
+    if (cleanupErrors.length === 1) throw cleanupErrors[0];
+    if (cleanupErrors.length > 1) {
+      throw new AggregateError(cleanupErrors, "historical methodology attachment cleanup failed");
+    }
+  };
+  return runMethodologyAttemptLifecycle({
       evidenceRoot: input.evidenceRoot,
       registrationSha256: input.invocationRegistrationSha256,
       attemptId: input.attemptId,
@@ -175,25 +198,9 @@ export async function runRegisteredHistoricalMethodologyAttempt(
           },
         };
       },
+      cleanup,
       ...(input.now ? { now: input.now } : {}),
     });
-  } finally {
-    const cleanupErrors: unknown[] = [];
-    try {
-      await holder.attachment?.close();
-    } catch (error) {
-      cleanupErrors.push(error);
-    }
-    try {
-      holder.materialized?.cleanup();
-    } catch (error) {
-      cleanupErrors.push(error);
-    }
-    if (cleanupErrors.length === 1) throw cleanupErrors[0];
-    if (cleanupErrors.length > 1) {
-      throw new AggregateError(cleanupErrors, "historical methodology attachment cleanup failed");
-    }
-  }
 }
 
 function authenticateSchedulePrefix(

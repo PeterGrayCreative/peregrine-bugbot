@@ -5,10 +5,18 @@ import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import type { ExecResult } from "../src/util/exec.js";
 import { exec } from "../src/util/exec.js";
 import type { ExperimentProviderAccess, ProviderExec, RunnerName } from "../src/types.js";
+import {
+  assertMethodologyEgressLaunchCapability,
+  METHODOLOGY_EGRESS_RUNTIME_IMAGE,
+  type MethodologyEgressLaunchCapability,
+} from "./methodology-egress.js";
 
 /** Independently accepted multi-arch runtime image; evaluation must use this exact digest. */
 export const ACCEPTED_EVAL_RUNTIME_IMAGE =
   "ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:0ad23c12cc2172a54b2b298ebde4096d3e4924efc3d3bf5c2c4f616c7d00e6b3";
+/** Sidecar-capable image reserved for the explicit methodology egress path. */
+export { METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "./methodology-egress.js";
+export const ACCEPTED_METHODOLOGY_EGRESS_IMAGE = METHODOLOGY_EGRESS_RUNTIME_IMAGE;
 
 const CONTAINER_NAME = /^peregrine-eval-[a-f0-9-]{36}$/;
 const PROVIDER_SECRET: Record<Exclude<RunnerName, "mock">, string> = {
@@ -28,6 +36,7 @@ const SESSION_TARGET: Record<Exclude<RunnerName, "mock">, string> = {
   codex: "/home/peregrine/.codex/auth.json",
 };
 const CODEX_HOME_TARGET = "/home/peregrine/.codex";
+const METHODOLOGY_MCP_FORWARDER = "mcp-forwarder:8082";
 
 export interface ContainedProviderOptions {
   runner: Exclude<RunnerName, "mock">;
@@ -39,12 +48,14 @@ export interface ContainedProviderOptions {
   run?: typeof exec;
   /** Methodology and judge launches use narrower command profiles than legacy reviews. */
   profile?: "review" | "methodology-review" | "semantic-judge";
+  /** Optional supervisor-issued methodology sidecar network capability. */
+  methodologyEgress?: MethodologyEgressLaunchCapability;
 }
 
 export interface ParsedContainedLaunch {
   image: string;
   containerName: string;
-  network: "bridge";
+  network: string;
   checkoutDir: string;
   assetsDir: string;
   outputDir: string;
@@ -55,6 +66,7 @@ export interface ParsedContainedLaunch {
   command: string;
   commandArgs: string[];
   profile: "review" | "methodology-review" | "semantic-judge";
+  methodologyEgress?: MethodologyEgressLaunchCapability;
 }
 
 export function buildContainedProviderArgs(
@@ -63,8 +75,9 @@ export function buildContainedProviderArgs(
   commandArgs: readonly string[],
   containerName = `peregrine-eval-${randomUUID()}`,
 ): string[] {
-  const image = options.image ?? ACCEPTED_EVAL_RUNTIME_IMAGE;
-  assertImmutableImage(image);
+  const methodologyEgress = resolveMethodologyEgress(options);
+  const launchImage = options.image ?? (methodologyEgress ? METHODOLOGY_EGRESS_RUNTIME_IMAGE : ACCEPTED_EVAL_RUNTIME_IMAGE);
+  assertLaunchImage(launchImage, methodologyEgress);
   if (command !== options.runner) throw new Error("provider command does not match the selected runner");
   const checkoutDir = safeDirectory(options.checkoutDir, "checkout");
   const assetsDir = safeDirectory(options.assetsDir, "assets");
@@ -93,11 +106,14 @@ export function buildContainedProviderArgs(
 
   const translated = commandArgs.map((value) => translateArgument(value, checkoutDir, assetsDir, outputDir));
   const profile = options.profile ?? "review";
+  const image = launchImage;
   const args = [
     "run", "--name", containerName, "--pull", "never",
     ...(options.runner === "codex" ? ["--interactive"] : []),
-    "--network", "bridge",
-    ...(profile === "methodology-review" ? ["--add-host", "host.docker.internal:host-gateway"] : []),
+    "--network", methodologyEgress?.network ?? "bridge",
+    ...(methodologyEgress
+      ? ["--env", `HTTPS_PROXY=${methodologyEgress.proxyUrl}`, "--env", `NO_PROXY=${METHODOLOGY_MCP_FORWARDER}`]
+      : profile === "methodology-review" ? ["--add-host", "host.docker.internal:host-gateway"] : []),
     "--read-only", "--cap-drop", "ALL",
     "--security-opt", "no-new-privileges", "--pids-limit", "256", "--user", `${identity.uid}:${identity.gid}`,
     "--workdir", "/workspace",
@@ -112,7 +128,7 @@ export function buildContainedProviderArgs(
     ...access,
     image, command, ...translated,
   ];
-  parseContainedProviderArgs(args, options.runner, options.providerAccess, identity, profile);
+  parseContainedProviderArgs(args, options.runner, options.providerAccess, identity, profile, methodologyEgress);
   return args;
 }
 
@@ -133,7 +149,9 @@ export function parseContainedProviderArgs(
   providerAccess: Exclude<ExperimentProviderAccess, "not-applicable">,
   expectedIdentity = hostIdentity(),
   profile: "review" | "methodology-review" | "semantic-judge" = "review",
+  methodologyEgress?: MethodologyEgressLaunchCapability,
 ): ParsedContainedLaunch {
+  const egress = validateMethodologyEgress(methodologyEgress, profile);
   let cursor = 0;
   const take = (expected?: string): string => {
     const value = args[cursor++];
@@ -147,8 +165,16 @@ export function parseContainedProviderArgs(
   if (!CONTAINER_NAME.test(containerName)) throw new Error("invalid opaque evaluation container name");
   take("--pull"); take("never");
   if (runner === "codex") take("--interactive");
-  take("--network"); take("bridge");
-  if (profile === "methodology-review") {
+  take("--network");
+  const network = take();
+  if (egress) {
+    if (network !== egress.network) throw new Error("methodology egress network does not match its launch descriptor");
+    take("--env"); take(`HTTPS_PROXY=${egress.proxyUrl}`);
+    take("--env"); take(`NO_PROXY=${METHODOLOGY_MCP_FORWARDER}`);
+  } else {
+    if (network !== "bridge") throw new Error("contained provider launches must use the Docker bridge");
+  }
+  if (profile === "methodology-review" && !egress) {
     take("--add-host"); take("host.docker.internal:host-gateway");
   }
   take("--read-only"); take("--cap-drop"); take("ALL");
@@ -175,20 +201,22 @@ export function parseContainedProviderArgs(
     sessionDir = runner === "codex" ? realpathSync(resolve(source, "..")) : source;
     assertSanitizedSessionDirectory(sessionDir, runner);
   }
-  const image = take(); assertImmutableImage(image);
+  const image = take(); assertLaunchImage(image, egress);
   const command = take();
   if (command !== runner) throw new Error("provider command does not match selected runner");
   const commandArgs = args.slice(cursor);
-  validateProviderCommand(runner, commandArgs, profile);
-  return { image, containerName, network: "bridge", checkoutDir, assetsDir, outputDir,
+  validateProviderCommand(runner, commandArgs, profile, egress);
+  return { image, containerName, network, checkoutDir, assetsDir, outputDir,
     uid: expectedIdentity.uid, gid: expectedIdentity.gid,
-    ...(secretName ? { secretName } : {}), ...(sessionDir ? { sessionDir } : {}), command, commandArgs, profile };
+    ...(secretName ? { secretName } : {}), ...(sessionDir ? { sessionDir } : {}), command, commandArgs, profile,
+    ...(egress ? { methodologyEgress: egress } : {}) };
 }
 
 function validateProviderCommand(
   runner: Exclude<RunnerName, "mock">,
   args: readonly string[],
   profile: "review" | "methodology-review" | "semantic-judge",
+  methodologyEgress?: MethodologyEgressLaunchCapability,
 ): void {
   if (profile === "semantic-judge") {
     if (runner !== "codex") throw new Error("semantic judge containment currently supports only Codex");
@@ -209,7 +237,7 @@ function validateProviderCommand(
     return;
   }
   if (profile === "methodology-review") {
-    validateMethodologyCodexCommand(runner, args);
+    validateMethodologyCodexCommand(runner, args, methodologyEgress);
     return;
   }
   const valueFlags = runner === "codex"
@@ -257,6 +285,7 @@ function validateProviderCommand(
 function validateMethodologyCodexCommand(
   runner: Exclude<RunnerName, "mock">,
   args: readonly string[],
+  methodologyEgress?: MethodologyEgressLaunchCapability,
 ): void {
   if (runner !== "codex") throw new Error("methodology review containment currently supports only Codex");
   const valueFlags = new Set(["--config", "--model", "--cd", "--output-schema", "--output-last-message", "--sandbox", "--color", "--disable"]);
@@ -319,10 +348,18 @@ function validateMethodologyCodexCommand(
   } catch {
     throw new Error("Codex methodology evaluation neutral read MCP URL is invalid");
   }
-  if (url.protocol !== "http:" || url.hostname !== "host.docker.internal" ||
+  const expectedHost = methodologyEgress ? "mcp-forwarder" : "host.docker.internal";
+  const expectedPort = methodologyEgress ? "8082" : undefined;
+  if (url.protocol !== "http:" || url.hostname !== expectedHost ||
       !/^[1-9][0-9]{0,4}$/.test(url.port) || Number(url.port) > 65535 ||
+      (expectedPort !== undefined && url.port !== expectedPort) ||
       !/^\/mcp\/[a-f0-9]{64}$/.test(url.pathname) || url.search || url.hash || url.username || url.password) {
-    throw new Error("Codex methodology evaluation neutral read MCP URL is outside the allowlisted shape");
+    throw new Error(methodologyEgress
+      ? "Codex methodology evaluation internal MCP URL is outside the allowlisted shape"
+      : "Codex methodology evaluation neutral read MCP URL is outside the allowlisted shape");
+  }
+  if (methodologyEgress?.internalMcpUrl !== undefined && url.href !== methodologyEgress.internalMcpUrl) {
+    throw new Error("Codex methodology evaluation internal MCP URL does not match its launch descriptor");
   }
 }
 
@@ -336,6 +373,10 @@ export function createContainedProviderExec(options: ContainedProviderOptions): 
     let primary: unknown;
     try {
       assertConfiguredAccess(options);
+      // Reparse the exact argv after all caller validation and immediately
+      // before Docker receives it. This keeps the launch boundary fail-closed
+      // if an argv array is changed between construction and execution.
+      parseContainedProviderArgs(args, options.runner, options.providerAccess, hostIdentity(), options.profile ?? "review", resolveMethodologyEgress(options));
       result = await run("docker", args, {
         timeoutMs: execOptions.timeoutMs,
         stdin: execOptions.stdin,
@@ -488,7 +529,7 @@ async function probeCliSessionMount(
 export function containedNetworkCapability() {
   return {
     status: "limited" as const,
-    mechanism: "OCI mount isolation is attested; provider egress uses the Docker bridge without an independently attested destination allowlist.",
+    mechanism: "OCI mount isolation is attested; legacy launches use Docker bridge networking, while methodology egress requires an independently attested attempt-scoped sidecar network.",
   };
 }
 
@@ -610,6 +651,42 @@ function assertImmutableImage(image: string): void {
   if (image !== ACCEPTED_EVAL_RUNTIME_IMAGE) {
     throw new Error("evaluation runtime image must equal the accepted immutable GHCR digest");
   }
+}
+
+function assertLaunchImage(
+  image: string,
+  methodologyEgress: MethodologyEgressLaunchCapability | undefined,
+): void {
+  if (methodologyEgress !== undefined) {
+    if (image !== METHODOLOGY_EGRESS_RUNTIME_IMAGE) {
+      throw new Error("methodology egress launches require the sidecar-capable immutable GHCR digest");
+    }
+    return;
+  }
+  assertImmutableImage(image);
+}
+
+function validateMethodologyEgress(
+  descriptor: MethodologyEgressLaunchCapability | undefined,
+  profile: "review" | "methodology-review" | "semantic-judge",
+): MethodologyEgressLaunchCapability | undefined {
+  if (descriptor === undefined) return undefined;
+  if (profile !== "methodology-review") {
+    throw new Error("methodology egress is only available to the methodology review profile");
+  }
+  assertMethodologyEgressLaunchCapability(descriptor);
+  return descriptor;
+}
+
+function resolveMethodologyEgress(options: Pick<ContainedProviderOptions, "profile" | "methodologyEgress" | "run">): MethodologyEgressLaunchCapability | undefined {
+  const descriptor = validateMethodologyEgress(options.methodologyEgress, options.profile ?? "review");
+  if (descriptor?.executionClass === "provider" && options.run !== undefined) {
+    throw new Error("provider methodology egress cannot use an injected Docker executor");
+  }
+  if (descriptor?.executionClass === "structural-mock" && typeof options.run !== "function") {
+    throw new Error("structural methodology egress requires an injected Docker executor");
+  }
+  return descriptor;
 }
 
 function bindMount(source: string, target: string, readOnly: boolean): string {

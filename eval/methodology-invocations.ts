@@ -8,7 +8,8 @@ import { parseMethodologyDiscoveryOutput } from "./methodology-output.js";
 import type { CompiledMethodologyPrompt } from "./methodology-prompts.js";
 import { parseMethodologySchedule, type MethodologySchedule } from "./methodology-schedule.js";
 import type { EvaluationIsolation } from "../src/types.js";
-import { ACCEPTED_EVAL_RUNTIME_IMAGE } from "./runtime-containment.js";
+import { ACCEPTED_EVAL_RUNTIME_IMAGE, METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "./runtime-containment.js";
+import { METHODOLOGY_EGRESS_PROTOCOL } from "./methodology-egress.js";
 
 export interface MethodologyInvocationInput {
   attemptId: string;
@@ -191,46 +192,98 @@ function validateToolPolicy(
   armId: "A" | "B" | "C" | "D",
 ): void {
   keys(value, ["protocol", "url", "serverName", "enabledTools"], ["attachment"]);
-  if (!(["neutral-read-mcp-v1", "neutral-read-mcp-v2"] as const).includes(value.protocol) ||
+  if (!(["neutral-read-mcp-v1", "neutral-read-mcp-v2", "neutral-read-mcp-v3"] as const).includes(value.protocol) ||
       value.serverName !== "source_read" ||
       canonicalJson(value.enabledTools) !== canonicalJson(["list_tree", "read_file", "search_text"])) {
     throw new Error("methodology invocation tool policy is invalid");
   }
   if (value.protocol === "neutral-read-mcp-v1") {
-    if (value.attachment !== undefined) throw new Error("legacy methodology tool policy cannot carry attachment evidence");
+    if ((value as { attachment?: unknown }).attachment !== undefined) throw new Error("legacy methodology tool policy cannot carry attachment evidence");
+  } else if (value.protocol === "neutral-read-mcp-v2") {
+    validateAttachmentReference((value as { attachment?: unknown }).attachment as Parameters<typeof validateAttachmentReference>[0], attemptId, armId);
   } else {
-    validateAttachmentReference(value.attachment, attemptId, armId);
+    const attachment = (value as { attachment?: unknown }).attachment;
+    validateEgressAttachmentReference(attachment as Parameters<typeof validateEgressAttachmentReference>[0], attemptId, armId);
+    if (value.url !== (attachment as Record<string, unknown>).internalMcpUrl) {
+      throw new Error("methodology invocation egress URL does not match its attachment");
+    }
   }
   let url: URL;
   try { url = new URL(value.url); }
   catch { throw new Error("methodology invocation tool policy URL is invalid"); }
-  if (url.protocol !== "http:" || url.hostname !== "host.docker.internal" ||
+  const expectedHost = value.protocol === "neutral-read-mcp-v3" ? "mcp-forwarder" : "host.docker.internal";
+  const expectedPort = value.protocol === "neutral-read-mcp-v3" ? "8082" : undefined;
+  if (url.protocol !== "http:" || url.hostname !== expectedHost ||
       !/^[1-9][0-9]{0,4}$/.test(url.port) || Number(url.port) > 65535 ||
+      (expectedPort !== undefined && url.port !== expectedPort) ||
       !/^\/mcp\/[a-f0-9]{64}$/.test(url.pathname) || url.search || url.hash || url.username || url.password) {
     throw new Error("methodology invocation tool policy URL is outside the allowed shape");
   }
 }
 
 function validateAttachmentReference(
-  value: NonNullable<NonNullable<EvaluationIsolation["neutralReadMcp"]>["attachment"]> | undefined,
+  value: unknown,
   attemptId: string,
   armId: "A" | "B" | "C" | "D",
 ): void {
-  if (!value) throw new Error("trusted methodology tool policy lacks attachment evidence");
-  keys(value, ["schemaVersion", "protocol", "attemptId", "armId", "sourceHeadTree",
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("trusted methodology tool policy lacks attachment evidence");
+  const attachment = value as Record<string, unknown>;
+  keys(attachment, ["schemaVersion", "protocol", "attemptId", "armId", "sourceHeadTree",
     "effectiveRootsSha256", "image", "runner", "providerAccess", "profile", "executionClass",
     "outputByteLimit", "readLimitsSha256",
     "mcpLimitsSha256", "attestationSha256"]);
-  if (value.schemaVersion !== 1 || value.protocol !== "methodology-provider-attachment-reference-v1" ||
-      value.attemptId !== attemptId || value.armId !== armId ||
-      !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(value.sourceHeadTree) ||
-      value.image !== ACCEPTED_EVAL_RUNTIME_IMAGE || value.runner !== "codex" ||
-      !["api-key", "cli-session"].includes(value.providerAccess) || value.profile !== "methodology-review" ||
-      !["provider", "structural-mock"].includes(value.executionClass) ||
-      !Number.isSafeInteger(value.outputByteLimit) || value.outputByteLimit < 1 || value.outputByteLimit > 100_000_000 ||
-      [value.effectiveRootsSha256, value.readLimitsSha256, value.mcpLimitsSha256,
-        value.attestationSha256].some((digest) => !isHash(digest))) {
+  if (attachment.schemaVersion !== 1 || attachment.protocol !== "methodology-provider-attachment-reference-v1" ||
+      attachment.attemptId !== attemptId || attachment.armId !== armId ||
+      !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(attachment.sourceHeadTree as string) ||
+      attachment.image !== ACCEPTED_EVAL_RUNTIME_IMAGE || attachment.runner !== "codex" ||
+      !["api-key", "cli-session"].includes(attachment.providerAccess as string) || attachment.profile !== "methodology-review" ||
+      !["provider", "structural-mock"].includes(attachment.executionClass as string) ||
+      !Number.isSafeInteger(attachment.outputByteLimit) || (attachment.outputByteLimit as number) < 1 || (attachment.outputByteLimit as number) > 100_000_000 ||
+      [attachment.effectiveRootsSha256, attachment.readLimitsSha256, attachment.mcpLimitsSha256,
+        attachment.attestationSha256].some((digest) => !isHash(digest))) {
     throw new Error("methodology invocation attachment evidence is invalid");
+  }
+}
+
+function validateEgressAttachmentReference(
+  value: unknown,
+  attemptId: string,
+  armId: "A" | "B" | "C" | "D",
+): void {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("egress methodology tool policy lacks attachment evidence");
+  const attachment = value as Record<string, unknown>;
+  keys(attachment, ["schemaVersion", "protocol", "attemptId", "armId", "sourceHeadTree",
+    "effectiveRootsSha256", "image", "runner", "providerAccess", "profile", "executionClass",
+    "outputByteLimit", "readLimitsSha256", "mcpLimitsSha256", "attestationSha256",
+    "egressProtocol", "egressAttestationSha256", "egressNetwork", "proxyUrl", "internalMcpUrl",
+    "providerAuthoritiesSha256"]);
+  if (attachment.schemaVersion !== 2 || attachment.protocol !== "methodology-provider-attachment-reference-v2" ||
+      attachment.attemptId !== attemptId || attachment.armId !== armId ||
+      !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(attachment.sourceHeadTree as string) ||
+      attachment.image !== METHODOLOGY_EGRESS_RUNTIME_IMAGE || attachment.runner !== "codex" ||
+      !["api-key", "cli-session"].includes(attachment.providerAccess as string) || attachment.profile !== "methodology-review" ||
+      attachment.executionClass !== "provider" || !Number.isSafeInteger(attachment.outputByteLimit) ||
+      (attachment.outputByteLimit as number) < 1 || (attachment.outputByteLimit as number) > 100_000_000 ||
+      [attachment.effectiveRootsSha256, attachment.readLimitsSha256, attachment.mcpLimitsSha256,
+        attachment.attestationSha256, attachment.egressAttestationSha256, attachment.providerAuthoritiesSha256].some((digest) => !isHash(digest)) ||
+      attachment.egressProtocol !== METHODOLOGY_EGRESS_PROTOCOL ||
+      typeof attachment.egressNetwork !== "string" || !/^[a-z0-9][a-z0-9_.-]{0,62}$/u.test(attachment.egressNetwork) ||
+      ["bridge", "host", "none"].includes(attachment.egressNetwork) ||
+      attachment.proxyUrl !== "http://egress-gateway:8081" ||
+      !isInternalMcpUrl(attachment.internalMcpUrl)) {
+    throw new Error("methodology invocation egress attachment evidence is invalid");
+  }
+}
+
+function isInternalMcpUrl(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  try {
+    const url = new URL(value);
+    return url.href === value && url.protocol === "http:" && url.hostname === "mcp-forwarder" &&
+      url.port === "8082" && /^\/mcp\/[a-f0-9]{64}$/.test(url.pathname) &&
+      !url.search && !url.hash && !url.username && !url.password;
+  } catch {
+    return false;
   }
 }
 

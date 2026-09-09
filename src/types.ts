@@ -229,6 +229,64 @@ export interface ReviewContext {
   config: PeregrineConfig;
 }
 
+interface MethodologyAttachmentReferenceBase {
+  attemptId: string;
+  armId: "A" | "B" | "C" | "D";
+  sourceHeadTree: string;
+  effectiveRootsSha256: string;
+  image: string;
+  runner: "codex";
+  providerAccess: "api-key" | "cli-session";
+  profile: "methodology-review";
+  executionClass: "provider" | "structural-mock";
+  outputByteLimit: number;
+  readLimitsSha256: string;
+  mcpLimitsSha256: string;
+  attestationSha256: string;
+}
+
+interface MethodologyAttachmentReferenceV1 extends MethodologyAttachmentReferenceBase {
+  schemaVersion: 1;
+  protocol: "methodology-provider-attachment-reference-v1";
+}
+
+interface MethodologyAttachmentReferenceV2 extends MethodologyAttachmentReferenceBase {
+  schemaVersion: 2;
+  protocol: "methodology-provider-attachment-reference-v2";
+  egressProtocol: "methodology-egress-supervisor-v1";
+  egressAttestationSha256: string;
+  egressNetwork: string;
+  proxyUrl: string;
+  internalMcpUrl: string;
+  /** Digest of the exact provider authority allowlist bound by the egress supervisor. */
+  providerAuthoritiesSha256: string;
+}
+
+type MethodologyAttachmentReference = MethodologyAttachmentReferenceV1 | MethodologyAttachmentReferenceV2;
+
+export type EvaluationNeutralReadMcp =
+  | {
+    protocol: "neutral-read-mcp-v1";
+    url: string;
+    serverName: "source_read";
+    enabledTools: readonly ["list_tree", "read_file", "search_text"];
+    attachment?: never;
+  }
+  | {
+    protocol: "neutral-read-mcp-v2";
+    url: string;
+    serverName: "source_read";
+    enabledTools: readonly ["list_tree", "read_file", "search_text"];
+    attachment: MethodologyAttachmentReferenceV1;
+  }
+  | {
+    protocol: "neutral-read-mcp-v3";
+    url: string;
+    serverName: "source_read";
+    enabledTools: readonly ["list_tree", "read_file", "search_text"];
+    attachment: MethodologyAttachmentReferenceV2;
+  };
+
 export interface EvaluationIsolation {
   providerHome: string;
   providerAssetsRoot: string;
@@ -239,30 +297,8 @@ export interface EvaluationIsolation {
   /** Race-resistant reader for hostile files created by a contained provider. */
   readProviderOutput?: (path: string) => string;
   /** Experimental neutral reviewer tools. Production evaluations leave this unset. */
-  neutralReadMcp?: {
-    protocol: "neutral-read-mcp-v1" | "neutral-read-mcp-v2";
-    url: string;
-    serverName: "source_read";
-    enabledTools: readonly ["list_tree", "read_file", "search_text"];
-    /** Present only when the trusted historical methodology attachment factory supplied the service. */
-    attachment?: {
-      schemaVersion: 1;
-      protocol: "methodology-provider-attachment-reference-v1";
-      attemptId: string;
-      armId: "A" | "B" | "C" | "D";
-      sourceHeadTree: string;
-      effectiveRootsSha256: string;
-      image: string;
-      runner: "codex";
-      providerAccess: "api-key" | "cli-session";
-      profile: "methodology-review";
-      executionClass: "provider" | "structural-mock";
-      outputByteLimit: number;
-      readLimitsSha256: string;
-      mcpLimitsSha256: string;
-      attestationSha256: string;
-    };
-  };
+  /** Present only when the trusted historical methodology attachment factory supplied the service. */
+  neutralReadMcp?: EvaluationNeutralReadMcp;
   validatePrompt(input: {
     prompt: string;
     stage: "breadth" | "investigation";
