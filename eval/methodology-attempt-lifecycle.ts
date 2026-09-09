@@ -14,10 +14,18 @@ import {
   readMethodologyInvocationRegistration,
 } from "./methodology-invocations.js";
 import {
+  METHODOLOGY_RUN_PROTOCOL_V2,
+  methodologyModelScopeLimitations,
   runMethodologyAttempt,
   type MethodologyBeforeInvocation,
+  type MethodologyAttemptResult,
+  type MethodologyAttemptResultV2,
 } from "./methodology-runner.js";
 import { readMethodologyAttemptTerminal, writeMethodologyAttemptTerminal } from "./methodology-terminal.js";
+import {
+  assertMethodologyProviderScopeFinalizer,
+  type MethodologyProviderScopeFinalizer,
+} from "./methodology-provider-attachment.js";
 
 const SHA256 = /^[a-f0-9]{64}$/;
 
@@ -27,6 +35,8 @@ export interface MethodologyAttemptPreparation {
   activatedLanes?: unknown;
   leakagePolicy: LeakagePolicy;
   context: ReviewContext;
+  /** Present only for the branded v2 provider attachment path. */
+  finalizeScope?: MethodologyProviderScopeFinalizer;
 }
 
 export interface MethodologyAttemptLifecycleInput {
@@ -122,6 +132,12 @@ export async function runMethodologyAttemptLifecycle(
     if (!isolation || typeof underlyingProvider !== "function") {
       throw new Error("methodology lifecycle preparation requires an isolated ProviderExec");
     }
+    const requiresScopeFinalizer = isolation.neutralReadMcp?.protocol === "neutral-read-mcp-v2" &&
+      isolation.neutralReadMcp.attachment !== undefined;
+    if (requiresScopeFinalizer) assertMethodologyProviderScopeFinalizer(prepared.finalizeScope);
+    else if (prepared.finalizeScope !== undefined) {
+      throw new Error("methodology scope finalizer requires a trusted v2 provider attachment");
+    }
     const beforeInvocation: MethodologyBeforeInvocation = async (invocation) => {
       if (pendingInvocation !== null) {
         throw new Error("methodology lifecycle has an undispatched invocation intent");
@@ -149,7 +165,7 @@ export async function runMethodologyAttemptLifecycle(
       pendingInvocation = null;
       return underlyingProvider(command, args, options);
     };
-    const result = await runMethodologyAttempt({
+    const runResult = await runMethodologyAttempt({
       schedule: registration.schedule,
       attemptId: input.attemptId,
       assetManifest: prepared.assetManifest,
@@ -163,10 +179,26 @@ export async function runMethodologyAttemptLifecycle(
       beforeInvocation,
       now,
     });
+    let result: MethodologyAttemptResult = runResult;
+    if (prepared.finalizeScope && runResult.intentReceipts.length > 0) {
+      const reviewStatus = runResult.outcome.status === "completed" ? runResult.outcome.review.status : null;
+      const scope = prepared.finalizeScope({
+        registeredReviewScopeSha256: registration.scopeSha256ByCase[attempt.caseName]!,
+        modelLimitations: methodologyModelScopeLimitations(runResult.scope.modelLimitations, reviewStatus),
+        findingCount: runResult.outcome.status === "completed" ? runResult.outcome.review.findings.length : 0,
+      });
+      result = {
+        ...runResult,
+        schemaVersion: 2,
+        protocol: METHODOLOGY_RUN_PROTOCOL_V2,
+        scope,
+      } satisfies MethodologyAttemptResultV2;
+    }
     const reviewTerminalSha256 = writeMethodologyAttemptTerminal(
       input.evidenceRoot,
       input.registrationSha256,
       result,
+      result.schemaVersion === 2 ? prepared.finalizeScope : undefined,
     );
     const terminal = writeLifecycleTerminal(input.evidenceRoot, {
       registrationSha256: input.registrationSha256,

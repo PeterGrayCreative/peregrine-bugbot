@@ -6,7 +6,16 @@ import { combineUsage, parseUsage, sha256 } from "../src/core/telemetry.js";
 import { canonicalJson, canonicalJsonSha256, readExperimentJson, writeExclusiveJson } from "./experiment.js";
 import { readMethodologyInvocation, readMethodologyInvocationRegistration } from "./methodology-invocations.js";
 import { parseMethodologyDiscoveryOutput, parseMethodologyReviewOutput } from "./methodology-output.js";
-import type { MethodologyAttemptResult } from "./methodology-runner.js";
+import {
+  methodologyModelScopeLimitations,
+  type MethodologyAttemptResult,
+  type MethodologyModelScopeLimitation,
+} from "./methodology-runner.js";
+import { validateMethodologyScopeRecordV1 } from "./methodology-scope-record.js";
+import {
+  assertMethodologyProviderScopeRecord,
+  type MethodologyProviderScopeFinalizer,
+} from "./methodology-provider-attachment.js";
 
 interface MethodologyTerminalRecord {
   schemaVersion: 1;
@@ -18,7 +27,11 @@ interface MethodologyTerminalRecord {
 
 /** Retain the returned digest in the outer run seal; local hashes are not signatures. */
 export function writeMethodologyAttemptTerminal(root: string, registrationSha256: string,
-  result: MethodologyAttemptResult): string {
+  result: MethodologyAttemptResult, scopeFinalizer?: MethodologyProviderScopeFinalizer): string {
+  if (result.schemaVersion === 2) assertMethodologyProviderScopeRecord(result.scope, scopeFinalizer);
+  else if (scopeFinalizer !== undefined) {
+    throw new Error("legacy methodology terminal cannot carry a provider scope finalizer");
+  }
   validateResult(root, registrationSha256, result);
   const body = { schemaVersion: 1 as const, kind: "methodology-attempt-terminal" as const,
     registrationSha256, result };
@@ -50,8 +63,11 @@ function validateResult(root: string, registrationSha256: string, result: Method
     "stages", "intentReceipts", "scope", "outcome"]);
   const registration = readMethodologyInvocationRegistration(root, registrationSha256);
   const scheduled = registration.schedule.attempts.find((attempt) => attempt.id === result?.attempt?.id);
-  if (!scheduled || canonicalJson(scheduled) !== canonicalJson(result.attempt) || result.schemaVersion !== 1 ||
-      result.protocol !== "historical-methodology-run-v1" || result.model !== "gpt-5.6-sol" || result.effort !== "high") {
+  const validRunIdentity = result.schemaVersion === 1
+    ? result.protocol === "historical-methodology-run-v1"
+    : result.schemaVersion === 2 && result.protocol === "historical-methodology-run-v2";
+  if (!scheduled || canonicalJson(scheduled) !== canonicalJson(result.attempt) || !validRunIdentity ||
+      result.model !== "gpt-5.6-sol" || result.effort !== "high") {
     throw new Error("methodology terminal schedule identity mismatch");
   }
   finiteDuration(result.durationMs);
@@ -67,7 +83,7 @@ function validateResult(root: string, registrationSha256: string, result: Method
   if (inputs.length === 2 && !result.stages[0]?.telemetry.completed) {
     throw new Error("methodology second invocation lacks a completed predecessor");
   }
-  const limitations: MethodologyAttemptResult["scope"]["modelLimitations"] = [];
+  const limitations: MethodologyModelScopeLimitation[] = [];
   for (const [index, stage] of result.stages.entries()) {
     onlyKeys(stage, ["stageIndex", "stage", "invocationSha256", "compiled", "assetsTreeSha256",
       "schemaSha256", "appliedTimeoutMs", "telemetry", "rawOutputSha256", "rawOutput"],
@@ -118,12 +134,6 @@ function validateResult(root: string, registrationSha256: string, result: Method
   const expectedUsage = result.stages.length ? JSON.parse(JSON.stringify(
     combineUsage(...result.stages.map((stage) => stage.telemetry.usage)))) : null;
   if (canonicalJson(result.usage) !== canonicalJson(expectedUsage)) throw new Error("methodology terminal usage differs from stages");
-  onlyKeys(result.scope, ["status", "meaning", "modelLimitations"]);
-  if (result.scope?.status !== "unverified" || result.scope.meaning !== "runner-availability-not-authenticated" ||
-      !Array.isArray(result.scope.modelLimitations)) throw new Error("methodology terminal cannot assert verified scope");
-  if (canonicalJson(limitations) !== canonicalJson(result.scope.modelLimitations)) {
-    throw new Error("methodology terminal scope limitations differ from outputs");
-  }
   const allStagesCompleted = result.stages.length === scheduled.expectedStages && result.stages.every((stage) =>
     stage.telemetry.completed && !stage.containmentCleanupFailed && stage.rawOutput !== null);
   if (result.outcome?.status === "completed") {
@@ -139,6 +149,32 @@ function validateResult(root: string, registrationSha256: string, result: Method
   } else {
     onlyKeys(result.outcome, ["status", "failureKind", "message"]);
     if (allStagesCompleted) throw new Error("methodology terminal cannot relabel completed stages as failed");
+  }
+  const reviewStatus = result.outcome.status === "completed" ? result.outcome.review.status : null;
+  if (result.schemaVersion === 1) {
+    onlyKeys(result.scope, ["status", "meaning", "modelLimitations"]);
+    if (result.scope?.status !== "unverified" || result.scope.meaning !== "runner-availability-not-authenticated" ||
+        !Array.isArray(result.scope.modelLimitations)) throw new Error("methodology terminal cannot assert verified scope");
+    if (canonicalJson(limitations) !== canonicalJson(result.scope.modelLimitations)) {
+      throw new Error("methodology terminal scope limitations differ from outputs");
+    }
+  } else {
+    const toolPolicy = inputs[0]?.input.toolPolicy;
+    if (!toolPolicy || toolPolicy.protocol !== "neutral-read-mcp-v2" || !toolPolicy.attachment ||
+        inputs.some((input) => canonicalJson(input.input.toolPolicy) !== canonicalJson(toolPolicy))) {
+      throw new Error("methodology v2 scope lacks one stable sealed provider attachment");
+    }
+    validateMethodologyScopeRecordV1(result.scope, {
+      attemptId: scheduled.id,
+      armId: scheduled.armId,
+      registeredReviewScopeSha256: registration.scopeSha256ByCase[scheduled.caseName]!,
+      toolPolicy: toolPolicy as typeof toolPolicy & {
+        protocol: "neutral-read-mcp-v2";
+        attachment: NonNullable<typeof toolPolicy.attachment>;
+      },
+      modelLimitations: methodologyModelScopeLimitations(limitations, reviewStatus),
+      findingCount: result.outcome.status === "completed" ? result.outcome.review.findings.length : 0,
+    });
   }
 }
 

@@ -15,7 +15,7 @@ import {
   readMethodologyInvocation,
   registerMethodologyInvocations,
 } from "../eval/methodology-invocations.js";
-import { runMethodologyAttempt, type MethodologyAttemptResult } from "../eval/methodology-runner.js";
+import { runMethodologyAttempt, type MethodologyAttemptResultV1 } from "../eval/methodology-runner.js";
 import {
   readMethodologyAttemptTerminal,
   writeMethodologyAttemptTerminal,
@@ -93,7 +93,7 @@ test("all four arms execute six mocked Codex dispatches with Sol-high arguments 
       assetsByArm: setups.map((setup) => setup.manifest),
     });
     const recorder = createMethodologyInvocationRecorder(ledger, registrationSha256);
-    const results: MethodologyAttemptResult[] = [];
+    const results: MethodologyAttemptResultV1[] = [];
     for (const setup of setups) {
       results.push(await run(setup, schedule, recorder));
     }
@@ -103,6 +103,26 @@ test("all four arms execute six mocked Codex dispatches with Sol-high arguments 
     assert.ok(results.every((result) => result.outcome.status === "completed"));
     assert.ok(results.every((result) => result.scope.status === "unverified"));
     assert.ok(results.every((result) => !("clean" in result) && !("findings" in result)));
+
+    const forgedV2 = {
+      ...results[0]!,
+      schemaVersion: 2,
+      protocol: "historical-methodology-run-v2",
+      scope: {},
+    } as unknown as Parameters<typeof writeMethodologyAttemptTerminal>[2];
+    assert.throws(
+      () => writeMethodologyAttemptTerminal(ledger, registrationSha256, forgedV2),
+      /scope finalizer is not trusted/,
+    );
+    assert.throws(
+      () => writeMethodologyAttemptTerminal(
+        ledger,
+        registrationSha256,
+        forgedV2,
+        (() => forgedV2.scope) as Parameters<typeof writeMethodologyAttemptTerminal>[3],
+      ),
+      /scope finalizer is not trusted/,
+    );
 
     const forgedFailure = structuredClone(results.find((result) => result.attempt.armId === "A")!);
     forgedFailure.outcome = { status: "failed", failureKind: "provider", message: "Invented failure." };

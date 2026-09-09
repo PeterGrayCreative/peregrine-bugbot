@@ -37,6 +37,7 @@ import { readMethodologyAnalysisBinding, verifyMethodologyAnalysisSource,
 import { registerMethodologyInputPlan } from "../eval/methodology-input-plan.js";
 import { registerMethodologyInvocations } from "../eval/methodology-invocations.js";
 import { prepareMethodologyLaneActivation } from "../eval/methodology-lane-activation.js";
+import { readMethodologyAttemptTerminal } from "../eval/methodology-terminal.js";
 import { historicalPermittedMetrics, parseHistoricalGroundTruth } from "../eval/historical-truth.js";
 import { buildMethodologySchedule, methodologyArmConfigIdentitySha256,
   type MethodologyDesign } from "../eval/methodology-schedule.js";
@@ -288,6 +289,19 @@ test("authenticated projection preserves all scheduled outcomes and never upgrad
     assert.equal(byArmRepeat["A-1"]!.reviewRawOutput, REVIEW);
     assert.equal(byArmRepeat["A-1"]!.projection.reviewRawOutputSha256, sha256(REVIEW));
     assert.equal(byArmRepeat["A-1"]!.projection.reviewTerminalSha256 === null, false);
+    const authenticatedA1Terminal = readMethodologyAttemptTerminal(
+      evidenceRoot,
+      registrationSha256,
+      byArmRepeat["A-1"]!.projection.attemptId,
+      byArmRepeat["A-1"]!.projection.reviewTerminalSha256!,
+    );
+    assert.equal(authenticatedA1Terminal.schemaVersion, 2);
+    assert.equal(authenticatedA1Terminal.protocol, "historical-methodology-run-v2");
+    assert.equal(authenticatedA1Terminal.scope.protocol, "historical-methodology-scope-record-v1");
+    assert.equal(authenticatedA1Terminal.scope.result.verdict, "unverified");
+    assert.ok(authenticatedA1Terminal.scope.result.reasons.includes(
+      "missing-runner-availability:tool.credential-bearing-canary",
+    ));
     assert.equal(byArmRepeat["B-1"]!.projection.reviewTerminalSha256, null);
     assert.equal(byArmRepeat["C-1"]!.projection.reviewTerminalSha256 === null, false);
     assert.equal(byArmRepeat["C-1"]!.reviewRawOutput, UNABLE_REVIEW);

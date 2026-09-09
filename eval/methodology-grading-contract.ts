@@ -37,7 +37,7 @@ function historicalRootCauseKey(bug: HistoricalTruthBug): string {
 
 export type MethodologyAttemptStatus = "completed" | "incomplete" | "failed" | "missing";
 export type MethodologyAttemptStatusReason = "authenticated-complete" | "runner-scope-unverified" |
-  "model-unable-to-complete" | "preflight-failed" | "interrupted" | "review-execution-failed" |
+  "runner-scope-incomplete" | "model-unable-to-complete" | "preflight-failed" | "interrupted" | "review-execution-failed" |
   "outer-run-missing";
 export type MethodologyPairVerdict = "same-root-cause" | "different-root-cause" | "failed";
 
@@ -209,7 +209,8 @@ function parseReviewForStatus(projection: MethodologyGradingProjection, value: u
       review.status !== "unable-to-complete") {
     throw new Error("model-unable incomplete attempt has inconsistent model completion status");
   }
-  if (projection.status === "incomplete" && projection.statusReason === "runner-scope-unverified" &&
+  if (projection.status === "incomplete" &&
+      (projection.statusReason === "runner-scope-unverified" || projection.statusReason === "runner-scope-incomplete") &&
       review.status !== "completed") {
     throw new Error("runner-scope incomplete attempt has inconsistent model completion status");
   }
@@ -252,7 +253,8 @@ function parseProjection(value: unknown): MethodologyGradingProjection {
   if (typeof item.caseName !== "string" || !CASE_NAME.test(item.caseName)) throw new Error("grading projection.caseName is invalid");
   if (item.status !== "completed" && item.status !== "incomplete" && item.status !== "failed" && item.status !== "missing") throw new Error("grading projection.status is invalid");
   const validReason = (item.status === "completed" && item.statusReason === "authenticated-complete") ||
-    (item.status === "incomplete" && (item.statusReason === "runner-scope-unverified" || item.statusReason === "model-unable-to-complete")) ||
+    (item.status === "incomplete" && (item.statusReason === "runner-scope-unverified" ||
+      item.statusReason === "runner-scope-incomplete" || item.statusReason === "model-unable-to-complete")) ||
     (item.status === "failed" && (item.statusReason === "preflight-failed" || item.statusReason === "interrupted" ||
       item.statusReason === "review-execution-failed")) ||
     (item.status === "missing" && item.statusReason === "outer-run-missing");

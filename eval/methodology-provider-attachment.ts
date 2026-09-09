@@ -14,6 +14,11 @@ import {
   type ReviewReadMcpOptions,
 } from "./methodology-read-mcp.js";
 import type { ReviewReadToolLimits } from "./methodology-read-tools.js";
+import {
+  buildMethodologyScopeRecordV1,
+  type MethodologyScopeRecord,
+} from "./methodology-scope-record.js";
+import type { ModelScopeLimitation } from "./scope-completeness.js";
 
 export { ACCEPTED_EVAL_RUNTIME_IMAGE } from "./runtime-containment.js";
 
@@ -92,8 +97,19 @@ export interface MethodologyProviderAttachment {
   readonly readProviderOutput: (path: string) => string;
   readonly neutralReadMcp: MethodologyProviderNeutralReadMcp;
   readonly attestation: MethodologyProviderAttachmentAttestation;
+  readonly finalizeScope: MethodologyProviderScopeFinalizer;
   readonly close: () => Promise<void>;
 }
+
+export interface MethodologyProviderScopeFinalizerInput {
+  readonly registeredReviewScopeSha256: string;
+  readonly modelLimitations: readonly ModelScopeLimitation[];
+  readonly findingCount: number;
+}
+
+export type MethodologyProviderScopeFinalizer = (
+  input: MethodologyProviderScopeFinalizerInput,
+) => MethodologyScopeRecord;
 
 export type MethodologyProviderAttacher = (
   request: MethodologyProviderAttachmentRequest,
@@ -109,6 +125,8 @@ const ATTACHMENT_BRAND = new WeakSet<object>();
 const ATTESTATION_BRAND = new WeakSet<object>();
 const ATTACHMENT_BINDINGS = new WeakMap<object, Binding>();
 const ATTACHER_BRAND = new WeakSet<MethodologyProviderAttacher>();
+const SCOPE_FINALIZER_BRAND = new WeakSet<MethodologyProviderScopeFinalizer>();
+const SCOPE_RECORD_BINDINGS = new WeakMap<object, MethodologyProviderScopeFinalizer>();
 
 /**
  * Build the only methodology provider adapter allowed by this protocol. Every
@@ -199,7 +217,33 @@ function createAttacher(
         mcpLimitsSha256: attestation.mcpLimitsSha256,
         attestationSha256: canonicalJsonSha256(attestation),
       });
+      const neutralReadMcp = Object.freeze({
+        protocol: "neutral-read-mcp-v2" as const,
+        url: containerUrl,
+        serverName: MCP_SERVER_NAME,
+        enabledTools: MCP_TOOLS,
+        attachment: attachmentReference,
+      });
       let closed = false;
+      let scopeFinalized = false;
+      const finalizeScope: MethodologyProviderScopeFinalizer = (input) => {
+        if (closed) throw new Error("methodology provider scope cannot be finalized after attachment cleanup");
+        if (scopeFinalized) throw new Error("methodology provider scope can only be finalized once");
+        const record = buildMethodologyScopeRecordV1({
+          attemptId: snapshot.attemptId,
+          armId: snapshot.armId,
+          registeredReviewScopeSha256: input.registeredReviewScopeSha256,
+          toolPolicy: neutralReadMcp,
+          audit: mcp!.sealAudit(),
+          modelLimitations: input.modelLimitations,
+          findingCount: input.findingCount,
+        });
+        scopeFinalized = true;
+        SCOPE_RECORD_BINDINGS.set(record, finalizeScope);
+        return record;
+      };
+      Object.freeze(finalizeScope);
+      SCOPE_FINALIZER_BRAND.add(finalizeScope);
       const close = async (): Promise<void> => {
         if (closed) return;
         closed = true;
@@ -208,19 +252,14 @@ function createAttacher(
       const attachment = {
         runProvider,
         readProviderOutput,
-        neutralReadMcp: Object.freeze({
-          protocol: "neutral-read-mcp-v2",
-          url: containerUrl,
-          serverName: MCP_SERVER_NAME,
-          enabledTools: MCP_TOOLS,
-          attachment: attachmentReference,
-        }),
+        neutralReadMcp,
       } as MethodologyProviderAttachment;
       // Keep the legacy runner-facing enumerable shape (the three execution
       // capabilities) while retaining the trust material for callers that
       // explicitly request it. Both properties remain immutable and branded.
       Object.defineProperties(attachment, {
         attestation: { value: attestation, enumerable: false, writable: false, configurable: false },
+        finalizeScope: { value: finalizeScope, enumerable: false, writable: false, configurable: false },
         close: { value: close, enumerable: false, writable: false, configurable: false },
       });
       Object.freeze(attachment);
@@ -283,6 +322,7 @@ export function assertMethodologyProviderAttachment(
   const binding = ATTACHMENT_BINDINGS.get(value)!;
   const normalized = normalizeRequest(request);
   if (binding.request !== request || binding.attestation !== expectedAttestation ||
+      typeof candidate?.finalizeScope !== "function" || !SCOPE_FINALIZER_BRAND.has(candidate.finalizeScope) ||
       canonicalRequestSha256(normalized) !== binding.requestSha256 ||
       expectedAttestation.attemptId !== normalized.attemptId ||
       expectedAttestation.armId !== normalized.armId ||
@@ -292,6 +332,24 @@ export function assertMethodologyProviderAttachment(
       canonicalJsonSha256(expectedAttestation) !== candidate.neutralReadMcp.attachment.attestationSha256 ||
       canonicalJsonSha256(expectedAttestation.effectiveRoots) !== candidate.neutralReadMcp.attachment.effectiveRootsSha256) {
     throw new Error("methodology provider attachment request or attestation mismatch");
+  }
+}
+
+export function assertMethodologyProviderScopeFinalizer(
+  value: unknown,
+): asserts value is MethodologyProviderScopeFinalizer {
+  if (typeof value !== "function" || !SCOPE_FINALIZER_BRAND.has(value as MethodologyProviderScopeFinalizer)) {
+    throw new Error("methodology scope finalizer is not trusted");
+  }
+}
+
+export function assertMethodologyProviderScopeRecord(
+  value: unknown,
+  finalizer: unknown,
+): asserts value is MethodologyScopeRecord {
+  assertMethodologyProviderScopeFinalizer(finalizer);
+  if (!value || typeof value !== "object" || SCOPE_RECORD_BINDINGS.get(value) !== finalizer) {
+    throw new Error("methodology scope record is not bound to this trusted finalizer");
   }
 }
 
