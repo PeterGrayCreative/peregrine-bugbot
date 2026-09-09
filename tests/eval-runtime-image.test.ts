@@ -50,11 +50,42 @@ test("the runtime image pins its base and provider toolchain", () => {
 test("the image context cannot copy the repository or curator data", () => {
   assert.equal(
     readFileSync(resolve(imageRoot, ".dockerignore"), "utf8"),
-    "*\n!Dockerfile\n!package.json\n!package-lock.json\n!containment-probe.mjs\n",
+    "*\n!Dockerfile\n!package.json\n!package-lock.json\n!containment-probe.mjs\n!egress-gateway.mjs\n!methodology-mcp-forwarder.mjs\n",
   );
   assert.doesNotMatch(dockerfile, /^COPY\s+\.?\.?(?:\s|$)/m);
+  assert.match(dockerfile, /^COPY --chmod=0555 egress-gateway\.mjs \/usr\/local\/bin\/peregrine-egress-gateway$/m);
+  assert.match(dockerfile, /^COPY --chmod=0555 methodology-mcp-forwarder\.mjs \/usr\/local\/bin\/peregrine-methodology-mcp-forwarder$/m);
   assert.match(dockerfile, /^USER node$/m);
   assert.match(dockerfile, /^CMD \["peregrine-containment-probe", "--check"\]$/m);
+});
+
+test("runtime sidecar fixtures are credential-free and offline", () => {
+  const env = { PATH: process.env.PATH ?? "" };
+  const gateway = spawnSync(process.execPath, [resolve(imageRoot, "egress-gateway.mjs"), "--policy-fixture"], {
+    encoding: "utf8",
+    input: JSON.stringify({ authorities: ["api.example.com:443"] }),
+    env,
+  });
+  assert.equal(gateway.status, 0, gateway.stderr);
+  assert.deepEqual(JSON.parse(gateway.stdout), { authorities: ["api.example.com:443"] });
+
+  const forwarder = spawnSync(process.execPath, [resolve(imageRoot, "methodology-mcp-forwarder.mjs"), "--fixture-config"], {
+    encoding: "utf8",
+    env,
+  });
+  assert.equal(forwarder.status, 0, forwarder.stderr);
+  assert.deepEqual(JSON.parse(forwarder.stdout), {
+    protocol: "methodology-mcp-forwarder-v1",
+    upstreamHost: "host.docker.internal",
+    tokenBytes: 32,
+  });
+
+  const probe = spawnSync(process.execPath, [resolve(imageRoot, "containment-probe.mjs"), "--describe"], {
+    encoding: "utf8",
+    env,
+  });
+  assert.equal(probe.status, 0, probe.stderr);
+  assert.equal(JSON.parse(probe.stdout).schemaVersion, 1);
 });
 
 test("the image workflow keeps pull requests unprivileged and publication manual", () => {
