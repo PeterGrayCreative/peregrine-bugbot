@@ -22,6 +22,16 @@ import {
   readR2TruthBindingArtifact,
   writeR2TruthBindingArtifact,
 } from "../eval/methodology-r2-truth-binding.js";
+import {
+  buildMethodologyInferencePlanV2,
+  parseMethodologyInferencePlanV2,
+  verifyMethodologyInferencePlanV2,
+} from "../eval/methodology-inference-plan-v2.js";
+import {
+  buildMethodologySchedule,
+  methodologyArmConfigIdentitySha256,
+  type MethodologyDesign,
+} from "../eval/methodology-schedule.js";
 import { canonicalJsonSha256 } from "../eval/experiment.js";
 import { historicalTruthScopeSha256 } from "../eval/historical-curation.js";
 import { historicalPermittedMetrics, parseHistoricalGroundTruth } from "../eval/historical-truth.js";
@@ -575,5 +585,70 @@ test("truth binding rejects source drift, partial coverage, and forged derived f
     const leakingClaim = structuredClone(valid);
     (leakingClaim.claims as unknown as Record<string, unknown>).reviewerVisible = true;
     assert.throws(() => parseR2TruthBindingArtifact(leakingClaim), /claims/);
+  } finally { fixture.cleanup(); }
+});
+
+test("inference v2 derives preregistration clusters from the operator binding without serializing roots", () => {
+  const fixture = makePartitionFixture();
+  try {
+    const partition = writeR2PartitionArtifact(fixture.storageRoot, inputFor(fixture, null));
+    const binding = writeR2TruthBindingArtifact(fixture.storageRoot, {
+      partitionStorageRoot: fixture.storageRoot,
+      expectedPartitionArtifactSha256: partition.artifactSha256,
+      trustedPolicy: fixture.policy,
+      caseDirectories: fixture.caseDirectories,
+      recordedAt: "2026-09-07T18:00:00.000Z",
+      expectedPreviousBindingSha256: null,
+    });
+    const withoutArms: Omit<MethodologyDesign, "arms"> = {
+      schemaVersion: 1,
+      protocol: "historical-methodology-v1",
+      seed: 90210,
+      repeats: 2,
+      callerConfig: { runner: "codex", model: "gpt-5.6-sol", effort: "high", identitySha256: "a".repeat(64) },
+      totalDeadlineMs: 600_000,
+      twoWorkerStageSplit: { discoveryDeadlineMs: 210_000, reviewerDeadlineMs: 390_000 },
+    };
+    const design: MethodologyDesign = {
+      ...withoutArms,
+      arms: (["A", "B", "C", "D"] as const).map((armId) => {
+        const configName = `methodology-${armId.toLowerCase()}`;
+        return { armId, configName, configIdentitySha256: methodologyArmConfigIdentitySha256({ design: withoutArms, armId, configName }) };
+      }),
+    };
+    const schedule = buildMethodologySchedule({
+      design,
+      cases: binding.cases.filter((item) => item.partition === "development").map((item) => ({
+        caseName: item.caseName,
+        corpus: "development" as const,
+        expectedBugCount: item.caseClass === "bug-bearing" ? item.roots.length : null,
+      })),
+    });
+    const input = {
+      runId: "r2-bound-inference",
+      schedule,
+      invocationRegistrationSha256: "b".repeat(64),
+      inputPlanSha256: "c".repeat(64),
+      truthBinding: binding,
+      analysisStage: "development-screen" as const,
+      hypothesis: "detection" as const,
+      bootstrapSamples: 1_001,
+      bootstrapSeed: 42,
+      minIndependentClusters: 2,
+    };
+    const plan = buildMethodologyInferencePlanV2(input);
+    assert.equal(plan.caseBindings.length, 12);
+    assert.equal(plan.r2TruthBindingSha256, binding.bindingSha256);
+    assert.equal(plan.claims.developmentSevereRegressionSemantics, "descriptive-two-repeat-only");
+    assert.equal(JSON.stringify(plan).includes("expectedSeverity"), false);
+    assert.equal(JSON.stringify(plan).includes("rootCause"), false);
+    assert.deepEqual(parseMethodologyInferencePlanV2(plan), plan);
+    assert.deepEqual(verifyMethodologyInferencePlanV2(plan, input, plan.planSha256), plan);
+
+    const callerClusters = structuredClone(plan);
+    callerClusters.caseBindings[0]!.duplicateFamilySha256 = "f".repeat(64);
+    assert.throws(() => parseMethodologyInferencePlanV2(callerClusters), /components|planSha256/);
+    assert.throws(() => buildMethodologyInferencePlanV2({ ...input, schedule: { ...schedule, cases: schedule.cases.slice(1) } }), /schedule|cover/i);
+    assert.throws(() => buildMethodologyInferencePlanV2({ ...input, analysisStage: "selection" }), /schedule|cover|repeats/i);
   } finally { fixture.cleanup(); }
 });

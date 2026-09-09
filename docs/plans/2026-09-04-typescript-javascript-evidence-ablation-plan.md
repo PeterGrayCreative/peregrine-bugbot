@@ -1,7 +1,7 @@
 # TypeScript and JavaScript evidence gathering and Peregrine ablation plan
 
 Date: 2026-09-04
-Status: active research direction; R1 complete, R2 partition tooling complete but real human review pending, R3 operator truth-binding checkpoint complete with inference v2 pending
+Status: active research direction; R1 complete, R2 partition tooling complete but real human review pending, R3 truth-aware inference v2 and append-only sealing structurally complete
 
 This program preserves the original optimization plan, its implementation
 checklist, and every prior experiment. It pauses the next production
