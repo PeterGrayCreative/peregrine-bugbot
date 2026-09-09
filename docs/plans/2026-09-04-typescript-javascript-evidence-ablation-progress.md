@@ -326,6 +326,16 @@ the alternate read-only backend printed a public canary mounted at the runner's
 rules out adopting the alternate backend alone as a credential-isolation fix;
 runtime scope cannot be upgraded on the strength of its positive read probe.
 
+A [trusted provider-attachment slice](../validation/2026-09-08-r3-trusted-provider-attachment.md)
+now binds the repository-owned containment launcher and bounded MCP reader to
+the exact materialized checkout, source head tree, arm assets, output root,
+accepted image, access mode, and limits. The invocation record retains a v2
+attachment reference. Mutable callback roots, arbitrary lookalike attachments,
+and cross-request reuse reject; MCP cleanup precedes checkout deletion. This is
+structural/mock evidence only. Provider-connected credential isolation,
+destination-restricted egress, served-model evidence, runner-owned scope
+completion, and the inferential decision seal remain open.
+
 - [Feasibility report](../validation/2026-09-04-r1-historical-reconstruction-feasibility.md)
 - [Machine-readable manifest](../validation/artifacts/2026-09-04-r1-historical-reconstructions/manifest.json)
 - [Source response hashes](../validation/artifacts/2026-09-04-r1-historical-reconstructions/source-hashes.md)

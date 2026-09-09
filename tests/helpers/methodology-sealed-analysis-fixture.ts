@@ -1,9 +1,8 @@
-import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { basename, join, resolve } from "node:path";
+import { join, resolve } from "node:path";
 import { repositoryFamilyIdentitySha256 } from "../../eval/case-isolation.js";
 import type { CuratorPolicy } from "../../eval/case-curation.js";
 import { canonicalJsonSha256 } from "../../eval/experiment.js";
@@ -68,9 +67,9 @@ import { historicalPermittedMetrics, parseHistoricalGroundTruth } from "../../ev
 import type {
   HistoricalCaseSpec,
   PeregrineConfig,
-  ProviderExec,
   ReviewContext,
 } from "../../src/types.js";
+import { createFakeMethodologyProvider } from "./fake-methodology-provider.js";
 
 const CURATORS = ["1".repeat(64), "2".repeat(64)];
 const POLICY: CuratorPolicy = {
@@ -193,9 +192,12 @@ export async function createMethodologySealedAnalysisFixture(
   const lifecycleReceipts: MethodologyLifecycleSealReceipt[] = [];
   const terminalReceipts: MethodologyTerminalReceipt[] = [];
   for (const attempt of schedule.attempts) {
-    const outputs = new Map<string, string>();
     const findings = options.findingsForArm?.(attempt.armId) ?? [DEFAULT_FINDING];
     const review = JSON.stringify({ status: "completed", limitations: [], findings });
+    const provider = createFakeMethodologyProvider({
+      response: ({ schema }) => schema === "methodology-discovery.schema.json" ? DISCOVERY :
+        schema === "breadth-result.schema.json" ? BREADTH : review,
+    });
     const lifecycle = await runRegisteredHistoricalMethodologyAttempt({
       evidenceRoot: executionRoot,
       invocationRegistrationSha256,
@@ -204,26 +206,7 @@ export async function createMethodologySealedAnalysisFixture(
       priorLifecycleReceipts: [...lifecycleReceipts],
       trustedCuratorPolicy: POLICY,
       config: config(),
-      attachProvider: () => {
-        const runProvider: ProviderExec = async (_command, args) => {
-          const outputPath = argumentAfter(args, "--output-last-message");
-          const schema = basename(argumentAfter(args, "--output-schema"));
-          outputs.set(outputPath,
-            schema === "methodology-discovery.schema.json" ? DISCOVERY :
-              schema === "breadth-result.schema.json" ? BREADTH : review);
-          return { stdout: "", stderr: "", code: 0, timedOut: false };
-        };
-        return {
-          runProvider,
-          readProviderOutput: (path: string) => outputs.get(path)!,
-          neutralReadMcp: {
-            protocol: "neutral-read-mcp-v1" as const,
-            url: "http://host.docker.internal:43123/mcp/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-            serverName: "source_read" as const,
-            enabledTools: ["list_tree", "read_file", "search_text"] as const,
-          },
-        };
-      },
+      attachProvider: provider.attachProvider,
     });
     lifecycleReceipts.push({
       attemptId: attempt.id,
@@ -564,12 +547,6 @@ function reviewContext(item: MaterializedHistoricalMethodologyCase): ReviewConte
     config: config(),
     evaluationIsolation: value.evaluationIsolation,
   };
-}
-
-function argumentAfter(args: string[], flag: string): string {
-  const index = args.indexOf(flag);
-  assert.notEqual(index, -1);
-  return args[index + 1]!;
 }
 
 function git(cwd: string, ...raw: Array<string | { trim: boolean }>): string {

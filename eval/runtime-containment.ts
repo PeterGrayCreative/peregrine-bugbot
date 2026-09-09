@@ -306,6 +306,7 @@ function validateMethodologyCodexCommand(
     'projects."/workspace".trust_level="untrusted"',
     'model_reasoning_effort="high"',
     'mcp_servers.source_read.enabled_tools=["list_tree","read_file","search_text"]',
+    "mcp_servers.source_read.required=true",
   ];
   if (configs.length !== fixed.length + 1 || fixed.some((value) => !configs.includes(value))) {
     throw new Error("Codex methodology evaluation configuration is not the exact allowlisted set");

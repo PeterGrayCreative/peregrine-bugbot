@@ -240,10 +240,28 @@ export interface EvaluationIsolation {
   readProviderOutput?: (path: string) => string;
   /** Experimental neutral reviewer tools. Production evaluations leave this unset. */
   neutralReadMcp?: {
-    protocol: "neutral-read-mcp-v1";
+    protocol: "neutral-read-mcp-v1" | "neutral-read-mcp-v2";
     url: string;
     serverName: "source_read";
     enabledTools: readonly ["list_tree", "read_file", "search_text"];
+    /** Present only when the trusted historical methodology attachment factory supplied the service. */
+    attachment?: {
+      schemaVersion: 1;
+      protocol: "methodology-provider-attachment-reference-v1";
+      attemptId: string;
+      armId: "A" | "B" | "C" | "D";
+      sourceHeadTree: string;
+      effectiveRootsSha256: string;
+      image: string;
+      runner: "codex";
+      providerAccess: "api-key" | "cli-session";
+      profile: "methodology-review";
+      executionClass: "provider" | "structural-mock";
+      outputByteLimit: number;
+      readLimitsSha256: string;
+      mcpLimitsSha256: string;
+      attestationSha256: string;
+    };
   };
   validatePrompt(input: {
     prompt: string;

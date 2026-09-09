@@ -224,7 +224,11 @@ methodology suite passes 78/78.
 
   Current slice: prompt, schema, mount, model, effort, stage/attempt deadlines,
   prior output, the exact neutral tool policy, and a zero-retry registration
-  policy are sealed. Effective served-model/provider evidence remains open.
+  policy are sealed. A trusted factory now binds the exact materialized source,
+  runtime image/profile/access, assets, output, and bounded MCP service; its v2
+  tool policy persists the source tree and attachment/root/limit digests.
+  Effective served-model/provider evidence and destination-restricted egress
+  remain open.
 - [ ] **Historical consumer integration.** Wire caller-trusted curation,
   materialized source identity, input authentication, scope evidence, shared
   metric eligibility, and arm-blinded adjudication into scheduling, grading,
@@ -269,6 +273,8 @@ methodology suite passes 78/78.
   describes the final structural join and its limits.
   The [sealed-judge record](../validation/2026-09-08-r3-sealed-semantic-judge.md)
   describes the authenticated semantic and discovery chain.
+  The [trusted attachment record](../validation/2026-09-08-r3-trusted-provider-attachment.md)
+  describes the runner/factory boundary and its remaining runtime limits.
 
 ## Zero-provider acceptance sequence
 
