@@ -12,6 +12,7 @@ interactive call uses the required two-worker topology in
 | --- | --- | --- |
 | Codex | `gpt-5.6-luna` / `high` | `gpt-5.6-sol` / `high` |
 | Claude | `claude-sonnet-5` / `high` | `claude-opus-5` / `high` |
+| Cursor | `composer-2.5[]` | `grok-4.6[effort=xhigh]` |
 
 ## Per-invocation override
 
@@ -43,6 +44,20 @@ record the requested route, the actual breadth and investigation models and
 effort, confirmation that two distinct workers ran, and the reason for every
 fallback. Never interpret missing YAML as permission for the coordinator to
 perform investigation.
+
+## Cursor native route
+
+The Cursor plugin exposes `peregrine-breadth` and `peregrine-investigation` as
+foreground, read-only custom subagents. Their installed defaults are pinned in
+agent frontmatter to `composer-2.5[]` and `grok-4.6[effort=xhigh]` respectively.
+Cursor custom subagents begin with clean context, so the coordinator must send
+the complete role-tagged worker packet on every launch.
+
+If a `peregrineRouting` override requests a different Cursor route, use an exact
+worker override only when the active Cursor runtime exposes and honors one.
+Otherwise launch the named subagent on its installed route and record the
+requested route, actual route, and fallback reason. Never replace a missing
+model override by running that stage in the coordinator.
 
 ## Operational limits
 

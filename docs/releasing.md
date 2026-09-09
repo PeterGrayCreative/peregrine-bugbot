@@ -1,6 +1,6 @@
 # Releasing
 
-1. Update the package and both plugin manifest versions together. Claude uses the manifest version as its cache update signal.
+1. Update the package and all plugin manifest versions together. Claude uses the manifest version as its cache update signal.
 2. Update pinned provider CLI versions only after checking the package registry and running live smoke tests.
 3. Activate Node 22 and run `npm ci`, then `npm run validate` and `npm run doctor`.
 4. Run one bounded Claude and one bounded Codex review without `--post`; record base/head, runner versions, result status, and target working-tree state.

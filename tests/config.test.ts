@@ -10,7 +10,7 @@ function config(): PeregrineConfig {
   return JSON.parse(readFileSync(resolve("peregrine.config.json"), "utf8")) as PeregrineConfig;
 }
 
-test("the checked-in config and both plugin manifests are internally consistent", () => {
+test("the checked-in config and plugin manifests are internally consistent", () => {
   const current = config();
   assert.doesNotThrow(() => validateConfig(current));
   assert.deepEqual(
@@ -54,15 +54,25 @@ test("the checked-in config and both plugin manifests are internally consistent"
   };
   assert.equal(lock.version, packageVersion);
   assert.equal(lock.packages[""].version, packageVersion);
-  for (const manifestPath of [".claude-plugin/plugin.json", ".codex-plugin/plugin.json"]) {
+  for (const manifestPath of [
+    ".claude-plugin/plugin.json",
+    ".codex-plugin/plugin.json",
+    ".cursor-plugin/plugin.json",
+  ]) {
     const manifest = JSON.parse(readFileSync(resolve(manifestPath), "utf8")) as {
       name?: string;
       version?: string;
       skills?: string;
+      agents?: string;
+      commands?: string;
     };
     assert.equal(manifest.name, "peregrine");
     assert.equal(manifest.version, packageVersion);
     if (manifest.skills !== undefined) assert.equal(manifest.skills, "./skills/");
+    if (manifestPath === ".cursor-plugin/plugin.json") {
+      assert.equal(manifest.agents, "./cursor/agents/");
+      assert.equal(manifest.commands, "./cursor/commands/");
+    }
   }
   const claudeManifest = JSON.parse(
     readFileSync(resolve(".claude-plugin/plugin.json"), "utf8"),
@@ -93,6 +103,8 @@ test("the checked-in config and both plugin manifests are internally consistent"
   assert.match(invocationRouting, /gpt-5\.6-sol` \/ `high/);
   assert.match(invocationRouting, /claude-sonnet-5` \/ `high/);
   assert.match(invocationRouting, /claude-opus-5` \/ `high/);
+  assert.match(invocationRouting, /composer-2\.5\[\]/);
+  assert.match(invocationRouting, /grok-4\.6\[effort=xhigh\]/);
 
   const skill = readFileSync(
     resolve("skills/invariant-first-pr-review/SKILL.md"),
@@ -110,6 +122,18 @@ test("the checked-in config and both plugin manifests are internally consistent"
     resolve("skills/invariant-first-pr-review/references/investigation-worker-packet.md"),
     "utf8",
   );
+  const cursorBreadthAgent = readFileSync(
+    resolve("cursor/agents/peregrine-breadth.md"),
+    "utf8",
+  );
+  const cursorInvestigationAgent = readFileSync(
+    resolve("cursor/agents/peregrine-investigation.md"),
+    "utf8",
+  );
+  const cursorCommand = readFileSync(
+    resolve("cursor/commands/peregrine-review.md"),
+    "utf8",
+  );
   assert.match(skill, /calling agent coordinates and renders; it does not perform either review pass/);
   assert.match(orchestration, /one breadth worker/);
   assert.match(orchestration, /one new investigation worker/);
@@ -120,6 +144,15 @@ test("the checked-in config and both plugin manifests are internally consistent"
   assert.match(investigationPacket, /PEREGRINE_ROLE: investigation-worker/);
   assert.match(breadthPacket, /must not invoke Peregrine, spawn/);
   assert.match(investigationPacket, /Do not invoke Peregrine,[\s\S]*spawn agents/);
+  assert.match(cursorBreadthAgent, /model: composer-2\.5\[\]/);
+  assert.match(cursorBreadthAgent, /readonly: true/);
+  assert.match(cursorBreadthAgent, /is_background: false/);
+  assert.match(cursorBreadthAgent, /PEREGRINE_ROLE: breadth-worker/);
+  assert.match(cursorInvestigationAgent, /model: grok-4\.6\[effort=xhigh\]/);
+  assert.match(cursorInvestigationAgent, /readonly: true/);
+  assert.match(cursorInvestigationAgent, /is_background: false/);
+  assert.match(cursorInvestigationAgent, /PEREGRINE_ROLE: investigation-worker/);
+  assert.match(cursorCommand, /peregrine-breadth[\s\S]*peregrine-investigation/);
 });
 
 test("Claude and Codex marketplaces resolve Peregrine from the canonical repository", () => {

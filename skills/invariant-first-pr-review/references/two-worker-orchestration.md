@@ -40,6 +40,13 @@ rather than a full-history fork that inherits the coordinator's route. Send the
 minimum complete packet explicitly. Use the equivalent isolated-agent controls
 on Claude when available.
 
+For Cursor, invoke the named `peregrine-breadth` and
+`peregrine-investigation` custom subagents in foreground mode. Each starts with
+clean context, so send the minimum complete role-tagged stage packet explicitly.
+The installed defaults are `composer-2.5[]` for breadth and
+`grok-4.6[effort=xhigh]` for investigation. Never launch the two Cursor workers
+in parallel.
+
 ## Routing failure
 
 Preserve the two-worker topology when a requested model or effort is
