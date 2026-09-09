@@ -23,7 +23,11 @@ import {
 import { buildSoleHumanAdmissionFromResponse } from "../scripts/evidence/build-sole-human-admission.js";
 import { buildRecoveredHumanReviewRequest } from "../scripts/evidence/build-recovered-human-review-request.js";
 import { initializeHumanReviewWorkspace } from "../scripts/evidence/initialize-human-review-workspace.js";
-import { compileHumanReviewWorkbook } from "../scripts/evidence/compile-human-review-workbook.js";
+import {
+  compileHumanReviewWorkbook,
+  compileHumanReviewWorkbookWithPartition,
+} from "../scripts/evidence/compile-human-review-workbook.js";
+import { readR2PartitionAttestation } from "../eval/methodology-r2-partition.js";
 
 const hash = (value: string | Buffer) => createHash("sha256").update(value).digest("hex");
 
@@ -180,6 +184,8 @@ test("initializes one durable all-at-once response workspace without making huma
     assert.match(guide, /dossiers\/case-alpha\/human-evidence-card\.md/);
     assert.match(guide, /response\/decisions\/case-alpha\.json/);
     assert.match(guide, /single `RESPONSE\.json` workbook/);
+    assert.match(guide, /assign `development` or `selection`/);
+    assert.match(guide, /partition-attestation\.json/);
     assert.match(guide, /do not claim independent confirmation/i);
     assert.throws(() => verifyHumanReviewResponse(data.output, join(workspace, "response"), initialized.reviewerIdentity.sha256), /template|decision/i);
     assert.throws(() => initializeHumanReviewWorkspace({ packetDirectory: data.output, destination: workspace, reviewerIdentityDescriptor: "same" }), /overwrite/);
@@ -206,6 +212,9 @@ test("compiles one complete human workbook into the strict response layout", () 
       decision: "approve",
       reason: "The exact source, reachable trigger, consequence, and partial truth scope are supported.",
       acknowledgedDossierBundleSha256: workbook.decisions[0].dossierBundleSha256,
+      partition: "development",
+      caseClass: "bug-bearing",
+      duplicateFamilyId: "case-alpha-family",
       reviewedAt: "2026-09-09T15:00:00.000Z",
     });
     Object.assign(workbook.packetDecision, {
@@ -214,21 +223,55 @@ test("compiles one complete human workbook into the strict response layout", () 
       reviewedEveryDecisionCard: true,
       decisionsBindPacketAndDossierHashes: true,
       duplicateFamiliesAccepted: true,
+      partitionedEveryApprovedDossier: true,
+      soleHumanPartitionAccepted: true,
       limitationsAccepted: true,
       independentTwoHumanConfirmationClaimed: false,
+      independentSelectionClaimed: false,
       completedAt: "2026-09-09T15:01:00.000Z",
     });
     writeFileSync(workbookPath, `${JSON.stringify(workbook, null, 2)}\n`);
+    const missingPartition = structuredClone(workbook);
+    missingPartition.decisions[0].partition = null;
+    writeFileSync(workbookPath, `${JSON.stringify(missingPartition, null, 2)}\n`);
+    assert.throws(() => compileHumanReviewWorkbookWithPartition({ packetDirectory: data.output, workbookFile: workbookPath, destination: join(data.root, "missing-partition-response"), partitionAttestationFile: join(data.root, "missing-partition-attestation.json"), expectedHumanReviewerIdentitySha256: initialized.reviewerIdentity.sha256 }), /partition fields/);
+    assert.equal(existsSync(join(data.root, "missing-partition-response")), false);
+    assert.equal(existsSync(join(data.root, "missing-partition-attestation.json")), false);
+    writeFileSync(workbookPath, `${JSON.stringify(workbook, null, 2)}\n`);
     const destination = join(data.root, "compiled-response");
-    const compiled = compileHumanReviewWorkbook({ packetDirectory: data.output, workbookFile: workbookPath, destination, expectedHumanReviewerIdentitySha256: initialized.reviewerIdentity.sha256 });
-    assert.deepEqual(compiled.counts, { approve: 1, reject: 0, unresolved: 0 });
-    assert.deepEqual(verifyHumanReviewResponse(data.output, destination, initialized.reviewerIdentity.sha256), compiled);
-    assert.throws(() => compileHumanReviewWorkbook({ packetDirectory: data.output, workbookFile: workbookPath, destination, expectedHumanReviewerIdentitySha256: initialized.reviewerIdentity.sha256 }), /overwrite/);
+    const attestationFile = join(data.root, "partition-attestation.json");
+    const compiled = compileHumanReviewWorkbookWithPartition({ packetDirectory: data.output, workbookFile: workbookPath, destination, partitionAttestationFile: attestationFile, expectedHumanReviewerIdentitySha256: initialized.reviewerIdentity.sha256 });
+    assert.deepEqual(compiled.response.counts, { approve: 1, reject: 0, unresolved: 0 });
+    assert.deepEqual(verifyHumanReviewResponse(data.output, destination, initialized.reviewerIdentity.sha256), compiled.response);
+    assert.deepEqual(readR2PartitionAttestation(attestationFile).attestation, compiled.partitionAttestation);
+    assert.deepEqual(compiled.partitionAttestation.approvedDossiers, [{
+      dossierId: "case-alpha",
+      partition: "development",
+      caseClass: "bug-bearing",
+      duplicateFamilyId: "case-alpha-family",
+    }]);
+    const legacyWorkbook = structuredClone(workbook);
+    legacyWorkbook.schemaVersion = 1;
+    legacyWorkbook.protocol = "r2-sole-human-review-workbook-v1";
+    delete legacyWorkbook.decisions[0].partition;
+    delete legacyWorkbook.decisions[0].caseClass;
+    delete legacyWorkbook.decisions[0].duplicateFamilyId;
+    delete legacyWorkbook.packetDecision.partitionedEveryApprovedDossier;
+    delete legacyWorkbook.packetDecision.soleHumanPartitionAccepted;
+    delete legacyWorkbook.packetDecision.independentSelectionClaimed;
+    const legacyWorkbookPath = join(workspace, "LEGACY-RESPONSE.json");
+    writeFileSync(legacyWorkbookPath, `${JSON.stringify(legacyWorkbook, null, 2)}\n`);
+    const legacyDestination = join(data.root, "legacy-compiled-response");
+    const legacyCompiled = compileHumanReviewWorkbook({ packetDirectory: data.output, workbookFile: legacyWorkbookPath, destination: legacyDestination, expectedHumanReviewerIdentitySha256: initialized.reviewerIdentity.sha256 });
+    assert.deepEqual(legacyCompiled.counts, { approve: 1, reject: 0, unresolved: 0 });
+    assert.deepEqual(verifyHumanReviewResponse(data.output, legacyDestination, initialized.reviewerIdentity.sha256), legacyCompiled);
+    assert.throws(() => compileHumanReviewWorkbookWithPartition({ packetDirectory: data.output, workbookFile: workbookPath, destination, partitionAttestationFile: attestationFile, expectedHumanReviewerIdentitySha256: initialized.reviewerIdentity.sha256 }), /overwrite/);
 
     workbook.decisions[0].acknowledgedDossierBundleSha256 = "f".repeat(64);
     writeFileSync(workbookPath, `${JSON.stringify(workbook, null, 2)}\n`);
-    assert.throws(() => compileHumanReviewWorkbook({ packetDirectory: data.output, workbookFile: workbookPath, destination: join(data.root, "invalid-response"), expectedHumanReviewerIdentitySha256: initialized.reviewerIdentity.sha256 }), /canonical dossier/);
+    assert.throws(() => compileHumanReviewWorkbookWithPartition({ packetDirectory: data.output, workbookFile: workbookPath, destination: join(data.root, "invalid-response"), partitionAttestationFile: join(data.root, "invalid-attestation.json"), expectedHumanReviewerIdentitySha256: initialized.reviewerIdentity.sha256 }), /canonical dossier/);
     assert.equal(existsSync(join(data.root, "invalid-response")), false);
+    assert.equal(existsSync(join(data.root, "invalid-attestation.json")), false);
   } finally {
     data.cleanup();
   }
