@@ -1,6 +1,6 @@
 # Historical runner integration checklist
 
-Status: partial integration, updated 2026-09-08. No historical
+Status: partial integration, updated 2026-09-09. No historical
 reviewer invocation is authorized or enabled by this checklist.
 
 Binding plan: [TS/JS evidence and ablation](2026-09-04-typescript-javascript-evidence-ablation-plan.md).
@@ -29,6 +29,17 @@ The underlying bounded read/list/literal-search core has deterministic tests;
 its initial [foundation record](../validation/2026-09-07-r3-read-tool-foundation.md)
 predates the HTTP integration above. Credential-bearing runtime containment,
 provider-connected network policy, and actual model tool availability remain open.
+
+A standalone credential-free Docker proof now exercises the intended network
+shape with the candidate runtime image. The reviewer is attached only to an
+internal network. An exact-host, exact-SNI TLS gateway and a fixed tokenized MCP
+forwarder are the only dual-homed sidecars. The probe binds container
+entrypoints, IPv4-only IPAM and membership, observed source addresses, random
+per-exchange challenges, and sealed audits. Direct reviewer access fails in the
+fixture. This validates sidecar and topology mechanics only: the methodology
+provider attachment does not yet launch them, and a credential-bearing Codex
+canary remains separately gated. See the
+[egress record](../validation/2026-09-09-r3-egress-sidecar-proof.md).
 
 The methodology runner now has an exact Codex launch profile: Sol high,
 read-only sandbox, no ambient config/rules, built-in shell tools disabled, and
@@ -247,8 +258,11 @@ identity and the credential-bearing canary remain unverified.
   runtime image/profile/access, assets, output, and bounded MCP service; its v2
   tool policy persists the source tree and attachment/root/limit digests.
   The provider attachment also supplies the branded, single-use scope finalizer;
-  its sanitized MCP audit is reauthenticated by terminal readers. Effective
-  served-model/provider evidence and destination-restricted egress remain open.
+  its sanitized MCP audit is reauthenticated by terminal readers. A standalone
+  synthetic Docker proof now validates exact-destination gateway and MCP-forwarder
+  policy without credentials. Integration into this provider attachment,
+  effective served-model/provider evidence, and a credential-bearing canary
+  remain open.
 - [ ] **Historical consumer integration.** Wire caller-trusted curation,
   materialized source identity, input authentication, scope evidence, shared
   metric eligibility, and arm-blinded adjudication into scheduling, grading,

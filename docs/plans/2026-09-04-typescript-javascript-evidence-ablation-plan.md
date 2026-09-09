@@ -1,7 +1,7 @@
 # TypeScript and JavaScript evidence gathering and Peregrine ablation plan
 
 Date: 2026-09-04
-Status: active research direction; R1 collection feasibility in progress
+Status: active research direction; R1 complete, R2 and R3 in progress
 
 This program preserves the original optimization plan, its implementation
 checklist, and every prior experiment. It pauses the next production
