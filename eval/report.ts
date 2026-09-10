@@ -1,9 +1,10 @@
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import type {
   EngineResult,
   CaseCorpus,
+  GroundTruth,
   GradedRun,
   MatrixRunManifest,
   RunRecord,
@@ -67,6 +68,59 @@ type FailedRun = {
   outcome: Extract<RunRecord["outcome"], { status: "failed" }>;
   attemptDurationMs?: number;
 };
+
+export type ReportReader = {
+  readJson(path: string): unknown;
+  readExperimentJson(path: string): unknown;
+  readCaseGroundTruth(casesDir: string, caseName: string): GroundTruth;
+};
+
+export type ReportReaderSources = Partial<ReportReader>;
+
+/**
+ * Caches successful file reads for one report operation. Values are cloned on
+ * both insertion and return so a parser or metric helper cannot mutate the
+ * operation's cached source data. Failed reads are deliberately never stored.
+ */
+export function createReportReader(sources: ReportReaderSources = {}): ReportReader {
+  const json = new Map<string, unknown>();
+  const experimentJson = new Map<string, unknown>();
+  const groundTruth = new Map<string, GroundTruth>();
+  const readOrdinaryJson = sources.readJson ?? ((path: string): unknown =>
+    JSON.parse(readFileSync(path, "utf8")));
+  const readJson = sources.readExperimentJson ?? readExperimentJson;
+  const readTruth = sources.readCaseGroundTruth ?? readCaseGroundTruth;
+
+  return {
+    readJson(path: string): unknown {
+      const key = resolve(path);
+      const cached = json.get(key);
+      if (cached !== undefined || json.has(key)) return structuredClone(cached);
+      const value = readOrdinaryJson(path);
+      const stored = structuredClone(value);
+      json.set(key, stored);
+      return structuredClone(stored);
+    },
+    readExperimentJson(path: string): unknown {
+      const key = resolve(path);
+      const cached = experimentJson.get(key);
+      if (cached !== undefined || experimentJson.has(key)) return structuredClone(cached);
+      const value = readJson(path);
+      const stored = structuredClone(value);
+      experimentJson.set(key, stored);
+      return structuredClone(stored);
+    },
+    readCaseGroundTruth(casesDir: string, caseName: string): GroundTruth {
+      const key = `${resolve(casesDir, caseName)}\0${caseName}`;
+      const cached = groundTruth.get(key);
+      if (cached !== undefined) return structuredClone(cached);
+      const value = readTruth(casesDir, caseName);
+      const stored = structuredClone(value);
+      groundTruth.set(key, stored);
+      return structuredClone(stored);
+    },
+  };
+}
 
 export interface ConfigStats {
   config: string;
@@ -154,25 +208,26 @@ export interface ConfigStats {
 
 export async function buildReport(
   runsDir?: string,
-  options: { casesDir?: string } = {},
+  /** `readerSources` is a test-only instrumentation seam; normal callers omit it. */
+  options: { casesDir?: string; readerSources?: ReportReaderSources } = {},
 ): Promise<ConfigStats[]> {
   const dir = resolve(runsDir ?? latestRunsDir());
   const casesDir = resolve(options.casesDir ?? "eval/cases");
   const releaseLock = experimentMetadataPresent(dir) ? acquireExperimentLock(dir) : undefined;
   try {
-    return buildReportLocked(dir, casesDir);
+    return buildReportLocked(dir, casesDir, createReportReader(options.readerSources));
   } finally {
     releaseLock?.();
   }
 }
 
-function buildReportLocked(dir: string, casesDir: string): ConfigStats[] {
+function buildReportLocked(dir: string, casesDir: string, reader: ReportReader): ConfigStats[] {
   const manifestPath = join(dir, "matrix-manifest.json");
   const hasExperimentMetadata = experimentMetadataPresent(dir);
   let stats: ConfigStats[] | undefined;
   let judgeAccounting: JudgeAccounting | undefined;
   if (existsSync(manifestPath)) {
-    const manifestValue: unknown = readExperimentJson(manifestPath);
+    const manifestValue: unknown = reader.readExperimentJson(manifestPath);
     let currentManifest: MatrixRunManifest | undefined;
     try {
       currentManifest = parseMatrixRunManifest(manifestValue, manifestPath);
@@ -185,10 +240,11 @@ function buildReportLocked(dir: string, casesDir: string): ConfigStats[] {
           dir,
           casesDir,
           parsePreTelemetryMatrixRunManifest(manifestValue, manifestPath),
+          reader,
         );
       } else if (isLegacyMatrixRunManifest(manifestValue)) {
         const legacyManifest = parseLegacyMatrixRunManifest(manifestValue, manifestPath);
-        stats = legacyStats(dir, legacyManifest);
+        stats = legacyStats(dir, legacyManifest, reader);
       } else {
         throw error;
       }
@@ -222,13 +278,14 @@ function buildReportLocked(dir: string, casesDir: string): ConfigStats[] {
         expectedJudge,
         diagnosticOnlyCaseIds,
         adjudications,
+        reader,
       );
     }
   } else {
     if (hasExperimentMetadata) {
       throw new Error("experiment metadata requires matrix-manifest.json");
     }
-    stats = legacyStats(dir);
+    stats = legacyStats(dir, undefined, reader);
   }
 
   if (!stats) throw new Error("internal error: benchmark manifest did not select a report format");
@@ -247,6 +304,7 @@ function preTelemetryStats(
   dir: string,
   casesDir: string,
   manifest: PreTelemetryMatrixRunManifest,
+  reader: ReportReader,
 ): ConfigStats[] {
   const declaredFiles = new Set(manifest.expectedAttempts.flatMap((attempt) => [
     attempt.file,
@@ -275,7 +333,7 @@ function preTelemetryStats(
         continue;
       }
       const raw = parsePreTelemetryRunRecord(
-        JSON.parse(readFileSync(rawPath, "utf8")),
+        reader.readJson(rawPath),
         rawPath,
         attempt,
       );
@@ -290,20 +348,21 @@ function preTelemetryStats(
         throw new Error(`${attempt.file} completed but has no graded artifact — run eval:grade first.`);
       }
       const graded = parsePreTelemetryGradedRun(
-        JSON.parse(readFileSync(gradedPath, "utf8")),
+        reader.readJson(gradedPath),
         gradedPath,
         attempt,
       );
       assertGradedMatchesRun(graded, raw, gradedPath);
-      const groundTruthIds = loadGroundTruthIds(casesDir, attempt.caseName);
+      const groundTruthIds = loadGroundTruthIds(reader, casesDir, attempt.caseName);
       const gradedIds = Object.keys(graded.matches);
       if (groundTruthIds.length !== gradedIds.length ||
         groundTruthIds.some((id) => !Object.prototype.hasOwnProperty.call(graded.matches, id))) {
         throw new Error(`${gradedPath}.matches does not match ground truth bug IDs`);
       }
-      assertMatchReuseMatchesRootCause(readCaseGroundTruth(casesDir, attempt.caseName), graded.matches, gradedPath);
+      const truth = reader.readCaseGroundTruth(casesDir, attempt.caseName);
+      assertMatchReuseMatchesRootCause(truth, graded.matches, gradedPath);
       if (graded.grading) assertGradingEvidenceConsistent(
-        readCaseGroundTruth(casesDir, attempt.caseName),
+        truth,
         graded.outcome.result.findings,
         graded.matches,
         graded.grading,
@@ -335,15 +394,16 @@ function trackedStats(
   expectedJudge?: NonNullable<GradedRun["grading"]>["judge"],
   diagnosticOnlyCaseIds: ReadonlySet<string> = new Set(),
   adjudications?: ReadonlyMap<string, FinalAdjudicationClassification>,
+  reader: ReportReader = createReportReader(),
 ): ConfigStats[] {
-  preflightTrackedRunSet(dir, casesDir, manifest);
+  preflightTrackedRunSet(dir, casesDir, manifest, reader);
   const byConfig = groupBy(manifest.expectedAttempts, (attempt) =>
     `${attempt.configName}\0${attempt.corpus}\0${attempt.runner}`);
   const countBugs = (attempt: MatrixRunManifest["expectedAttempts"][number]): number | null => {
     const snapshot = (attempt as { expectedBugCount?: number | null }).expectedBugCount;
     if (snapshot !== undefined) return snapshot;
     try {
-      return readCaseGroundTruth(casesDir, attempt.caseName).bugs.length;
+      return reader.readCaseGroundTruth(casesDir, attempt.caseName).bugs.length;
     } catch {
       return null;
     }
@@ -369,7 +429,7 @@ function trackedStats(
         if ((bugCount ?? 0) > 0) failureInclusiveRecalls.push(0);
         continue;
       }
-      const raw = parseRunRecord(readExperimentJson(rawPath), rawPath, attempt);
+      const raw = parseRunRecord(reader.readExperimentJson(rawPath), rawPath, attempt);
       if (raw.outcome.status === "failed") {
         failed.push({ outcome: raw.outcome, attemptDurationMs: raw.attemptDurationMs });
         if ((bugCount ?? 0) > 0) failureInclusiveRecalls.push(0);
@@ -378,17 +438,18 @@ function trackedStats(
       if (!existsSync(gradedPath)) {
         throw new Error(`${attempt.file} completed but has no graded artifact — run eval:grade first.`);
       }
-      const graded = parseGradedRun(readExperimentJson(gradedPath), gradedPath, attempt);
+      const graded = parseGradedRun(reader.readExperimentJson(gradedPath), gradedPath, attempt);
       assertGradedMatchesRun(graded, raw, gradedPath);
-      const groundTruthIds = loadGroundTruthIds(casesDir, attempt.caseName);
+      const groundTruthIds = loadGroundTruthIds(reader, casesDir, attempt.caseName);
       const gradedIds = Object.keys(graded.matches);
       if (groundTruthIds.length !== gradedIds.length ||
         groundTruthIds.some((id) => !Object.prototype.hasOwnProperty.call(graded.matches, id))) {
         throw new Error(`${gradedPath}.matches does not match ground truth bug IDs`);
       }
-      assertMatchReuseMatchesRootCause(readCaseGroundTruth(casesDir, attempt.caseName), graded.matches, gradedPath);
+      const truth = reader.readCaseGroundTruth(casesDir, attempt.caseName);
+      assertMatchReuseMatchesRootCause(truth, graded.matches, gradedPath);
       if (graded.grading) assertGradingEvidenceConsistent(
-        readCaseGroundTruth(casesDir, attempt.caseName),
+        truth,
         graded.outcome.result.findings,
         graded.matches,
         graded.grading,
@@ -432,6 +493,7 @@ export function preflightTrackedRunSet(
   dir: string,
   casesDir: string,
   manifest: MatrixRunManifest,
+  reader: ReportReader = createReportReader(),
 ): void {
   const hasExperimentMetadata = experimentMetadataPresent(dir);
   const experiment = hasExperimentMetadata
@@ -458,8 +520,8 @@ export function preflightTrackedRunSet(
   if (undeclared.length > 0) {
     throw new Error(`run artifacts not declared by matrix manifest: ${undeclared.join(", ")}`);
   }
-  assertExpectedBugCountsMatchTruth(manifest, casesDir);
-  assertCrossAttemptProvenance(dir, manifest);
+  assertExpectedBugCountsMatchTruth(manifest, casesDir, reader);
+  assertCrossAttemptProvenance(dir, manifest, reader);
   for (const attempt of manifest.expectedAttempts) {
     const rawPath = join(dir, attempt.file);
     const gradedPath = rawPath.replace(/\.json$/, ".graded.json");
@@ -469,7 +531,7 @@ export function preflightTrackedRunSet(
       }
       continue;
     }
-    const raw = parseRunRecord(readExperimentJson(rawPath), rawPath, attempt);
+    const raw = parseRunRecord(reader.readExperimentJson(rawPath), rawPath, attempt);
     assertOutcomeCapability(raw, manifest);
     if (raw.outcome.status === "failed" && existsSync(gradedPath)) {
       throw new Error(`${attempt.file} failed but its graded artifact exists`);
@@ -504,7 +566,11 @@ function experimentMetadataFiles(includeExperiment: boolean): ReadonlySet<string
   ]);
 }
 
-function assertCrossAttemptProvenance(dir: string, manifest: MatrixRunManifest): void {
+function assertCrossAttemptProvenance(
+  dir: string,
+  manifest: MatrixRunManifest,
+  reader: ReportReader = createReportReader(),
+): void {
   const canonical = new Map<string, {
     caseKind?: RunRecord["caseKind"];
     history?: NonNullable<RunRecord["evaluationProvenance"]>["history"];
@@ -514,7 +580,7 @@ function assertCrossAttemptProvenance(dir: string, manifest: MatrixRunManifest):
   for (const attempt of manifest.expectedAttempts) {
     const path = join(dir, attempt.file);
     if (!existsSync(path)) continue;
-    const record = parseRunRecord(readExperimentJson(path), path, attempt);
+    const record = parseRunRecord(reader.readExperimentJson(path), path, attempt);
     const modelConfig = record.outcome.status === "completed"
       ? record.outcome.result.modelConfig
       : record.outcome.telemetry?.modelConfig;
@@ -568,14 +634,18 @@ function assertOutcomeCapability(record: RunRecord, manifest: MatrixRunManifest)
   }
 }
 
-function assertExpectedBugCountsMatchTruth(manifest: MatrixRunManifest, casesDir: string): void {
+function assertExpectedBugCountsMatchTruth(
+  manifest: MatrixRunManifest,
+  casesDir: string,
+  reader: ReportReader = createReportReader(),
+): void {
   const checked = new Set<string>();
   for (const attempt of manifest.expectedAttempts) {
     if (checked.has(attempt.caseName)) continue;
     checked.add(attempt.caseName);
     let bugCount: number;
     try {
-      bugCount = readCaseGroundTruth(casesDir, attempt.caseName).bugs.length;
+      bugCount = reader.readCaseGroundTruth(casesDir, attempt.caseName).bugs.length;
     } catch {
       if (manifest.expectedAttempts.some((item) =>
         item.caseName === attempt.caseName && item.expectedBugCount !== null)) {
@@ -595,17 +665,21 @@ function assertExpectedBugCountsMatchTruth(manifest: MatrixRunManifest, casesDir
   }
 }
 
-function loadGroundTruthIds(casesDir: string, caseName: string): string[] {
-  return readCaseGroundTruth(casesDir, caseName).bugs.map((bug) => bug.id);
+function loadGroundTruthIds(reader: ReportReader, casesDir: string, caseName: string): string[] {
+  return reader.readCaseGroundTruth(casesDir, caseName).bugs.map((bug) => bug.id);
 }
 
-function legacyStats(dir: string, manifest?: LegacyMatrixRunManifest): ConfigStats[] {
-  if (manifest) validateLegacyManifestArtifacts(dir, manifest);
+function legacyStats(
+  dir: string,
+  manifest: LegacyMatrixRunManifest | undefined,
+  reader: ReportReader = createReportReader(),
+): ConfigStats[] {
+  if (manifest) validateLegacyManifestArtifacts(dir, manifest, reader);
   const graded = readdirSync(dir)
     .filter((file) => file.endsWith(".graded.json"))
     .map((file): LegacyGradedRun | CompatibilityGradedRun => {
       const path = join(dir, file);
-      const raw: unknown = JSON.parse(readFileSync(path, "utf8"));
+      const raw: unknown = reader.readJson(path);
       if (raw && typeof raw === "object" && !Array.isArray(raw) && "outcome" in raw) {
         if (!("caseCorpus" in raw) && !("runner" in raw)) {
           const parsed = parseLegacySchemaV1GradedRun(raw, path);
@@ -625,7 +699,7 @@ function legacyStats(dir: string, manifest?: LegacyMatrixRunManifest): ConfigSta
     const path = join(dir, attempt.file);
     if (!existsSync(path)) return [];
     const parsed = parseLegacySchemaV1RunRecord(
-      JSON.parse(readFileSync(path, "utf8")),
+      reader.readJson(path),
       path,
       attempt,
     );
@@ -678,7 +752,11 @@ function legacyStats(dir: string, manifest?: LegacyMatrixRunManifest): ConfigSta
   });
 }
 
-function validateLegacyManifestArtifacts(dir: string, manifest: LegacyMatrixRunManifest): void {
+function validateLegacyManifestArtifacts(
+  dir: string,
+  manifest: LegacyMatrixRunManifest,
+  reader: ReportReader = createReportReader(),
+): void {
   const declared = new Set(manifest.expectedAttempts.flatMap((attempt) => [
     attempt.file,
     attempt.file.replace(/\.json$/, ".graded.json"),
@@ -697,7 +775,7 @@ function validateLegacyManifestArtifacts(dir: string, manifest: LegacyMatrixRunM
       continue;
     }
     const raw = parseLegacySchemaV1RunRecord(
-      JSON.parse(readFileSync(rawPath, "utf8")),
+      reader.readJson(rawPath),
       rawPath,
       attempt,
     );
@@ -709,7 +787,7 @@ function validateLegacyManifestArtifacts(dir: string, manifest: LegacyMatrixRunM
       throw new Error(`${attempt.file} completed but has no graded artifact — run eval:grade first.`);
     }
     const graded = parseLegacySchemaV1GradedRun(
-      JSON.parse(readFileSync(gradedPath, "utf8")),
+      reader.readJson(gradedPath),
       gradedPath,
       attempt,
     );

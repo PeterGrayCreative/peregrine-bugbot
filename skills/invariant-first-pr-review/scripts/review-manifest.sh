@@ -503,6 +503,8 @@ cat "$stat_text"
 
 diff_cache="${work_dir}/diffs"
 mkdir -p "$diff_cache"
+path_cache="${work_dir}/paths"
+mkdir -p "$path_cache"
 activation_records="${work_dir}/activations.tsv"
 : > "$activation_records"
 lane_text_records="${work_dir}/lane-text.z"
@@ -514,6 +516,10 @@ core_lane_records="${work_dir}/core-lanes.z"
 index=0
 while [[ "$index" -lt "$changed_count" ]]; do
   changed_path="${changed_files[$index]}"
+  # Keep the exact line-oriented input used by the old per-path rg call. A
+  # separate numeric file also means unusual names (including newlines and
+  # pathspec-looking bytes) never become shell or rg path arguments.
+  printf '%s\n' "$changed_path" > "${path_cache}/${index}.path"
   git --literal-pathspecs diff --no-ext-diff --unified=0 "$merge_base" "$head_commit" -- "$changed_path" \
     > "${diff_cache}/${index}.diff" 2>/dev/null || true
   index=$((index + 1))
@@ -563,11 +569,39 @@ validate_regex() {
   exit 1
 }
 
+batch_lane_matches() {
+  local pattern="$1" input_dir="$2" input_suffix="$3" marker_dir="$4" match_list="$5"
+  local result match_file marker_name
+
+  mkdir -p "$marker_dir"
+  : > "$match_list"
+  if [[ -z "$pattern" || "$changed_count" -eq 0 ]]; then
+    return 0
+  fi
+
+  # Search all cached inputs for one lane/pattern, then consume numeric
+  # markers below in the original changed-file order. This avoids one rg
+  # process for every lane/file pair without changing each input's rg bytes.
+  if rg -l -0 -e "$pattern" -- "$input_dir" > "$match_list"; then
+    result=0
+  else
+    result=$?
+  fi
+  if [[ "$result" -ne 0 && "$result" -ne 1 ]]; then
+    return 0
+  fi
+  while IFS= read -r -d '' match_file; do
+    marker_name="${match_file##*/}"
+    marker_name="${marker_name%.${input_suffix}}"
+    : > "${marker_dir}/${marker_name}"
+  done < "$match_list"
+}
+
 emit_lane() {
   local lane_file="$1"
   local fname id label path_pattern content_pattern base_path_pattern base_content_pattern extra_path extra_content found path_matches content_matches
   local base_path_matches base_content_matches extension_path_matches extension_content_matches
-  local path_declarations content_declarations
+  local path_declarations content_declarations lane_match_dir lane_match_list
 
   fname="${lane_file##*/}"
   id="${fname%.md}"
@@ -624,6 +658,18 @@ emit_lane() {
     return 0
   fi
 
+  lane_match_counter=$((lane_match_counter + 1))
+  lane_match_dir="${work_dir}/lane-matches/${lane_match_counter}"
+  mkdir -p "$lane_match_dir"
+  lane_match_list="${lane_match_dir}/base-path.list"
+  batch_lane_matches "$base_path_pattern" "$path_cache" path "${lane_match_dir}/base-path" "$lane_match_list"
+  lane_match_list="${lane_match_dir}/base-content.list"
+  batch_lane_matches "$base_content_pattern" "$diff_cache" diff "${lane_match_dir}/base-content" "$lane_match_list"
+  lane_match_list="${lane_match_dir}/extension-path.list"
+  batch_lane_matches "$extra_path" "$path_cache" path "${lane_match_dir}/extension-path" "$lane_match_list"
+  lane_match_list="${lane_match_dir}/extension-content.list"
+  batch_lane_matches "$extra_content" "$diff_cache" diff "${lane_match_dir}/extension-content" "$lane_match_list"
+
   found=0
   index=0
   while [[ "$index" -lt "$changed_count" ]]; do
@@ -634,31 +680,28 @@ emit_lane() {
     base_content_matches=0
     extension_path_matches=0
     extension_content_matches=0
-    if [[ -n "$path_pattern" ]] && printf '%s\n' "$changed_path" | rg -q -e "$path_pattern" --; then
+    if [[ -f "${lane_match_dir}/base-path/${index}" || -f "${lane_match_dir}/extension-path/${index}" ]]; then
       path_matches=1
     fi
-    if [[ -n "$content_pattern" && -s "${diff_cache}/${index}.diff" ]] && \
-       rg -q -e "$content_pattern" -- "${diff_cache}/${index}.diff"; then
+    if [[ -f "${lane_match_dir}/base-content/${index}" || -f "${lane_match_dir}/extension-content/${index}" ]]; then
       content_matches=1
     fi
     if [[ "$path_matches" -eq 1 || "$content_matches" -eq 1 ]]; then
       printf -- '- %q\n' "$changed_path"
       printf -v quoted_path '%q' "$changed_path"
       printf '%s\0%s\0%s\0' "$id" "$changed_path" "$quoted_path" >> "$lane_text_records"
-      if [[ -n "$base_path_pattern" ]] && printf '%s\n' "$changed_path" | rg -q -e "$base_path_pattern" --; then
+      if [[ -f "${lane_match_dir}/base-path/${index}" ]]; then
         base_path_matches=1
         printf '%s\0%s\0path\0' "$changed_path" "$id" >> "$activation_records"
       fi
-      if [[ -n "$base_content_pattern" && -s "${diff_cache}/${index}.diff" ]] && \
-         rg -q -e "$base_content_pattern" -- "${diff_cache}/${index}.diff"; then
+      if [[ -f "${lane_match_dir}/base-content/${index}" ]]; then
         base_content_matches=1
         printf '%s\0%s\0content\0' "$changed_path" "$id" >> "$activation_records"
       fi
-      if [[ -n "$extra_path" ]] && printf '%s\n' "$changed_path" | rg -q -e "$extra_path" --; then
+      if [[ -f "${lane_match_dir}/extension-path/${index}" ]]; then
         extension_path_matches=1
       fi
-      if [[ -n "$extra_content" && -s "${diff_cache}/${index}.diff" ]] && \
-         rg -q -e "$extra_content" -- "${diff_cache}/${index}.diff"; then
+      if [[ -f "${lane_match_dir}/extension-content/${index}" ]]; then
         extension_content_matches=1
       fi
       if [[ "$extension_path_matches" -eq 1 || "$extension_content_matches" -eq 1 ]]; then
@@ -675,6 +718,7 @@ emit_lane() {
 }
 
 lane_source_hint=""
+lane_match_counter=0
 for lane_file in "$lanes_dir"/[0-9]*.md; do
   if [[ -e "$lane_file" ]]; then
     core_lane_name="${lane_file##*/}"
