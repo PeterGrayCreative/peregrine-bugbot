@@ -1,7 +1,7 @@
 # Evidence-audit correction goal
 
 Date: 2026-09-12
-Status: replacement goal; Section 1 complete, Section 2 not started
+Status: active replacement goal; Section 1 complete, Section 2 in progress
 
 ## Goal
 
@@ -16,6 +16,28 @@ independent selection, a sealed holdout, or confirmation evidence.
 This goal is a research-integrity correction, not a provider or product
 rollout. Provider runs, production routes, automatic posting, and efficacy
 claims remain unauthorized throughout.
+
+## Implementation and review orchestration
+
+Judgment-heavy implementation, evidence interpretation, corpus semantics,
+protocol changes, and shared-contract decisions are owned by a
+`gpt-6-astra` agent at medium effort or stronger when a documented ambiguity
+requires it. A different, fresh `gpt-6-astra` medium-effort agent performs the
+read-only quality/adherence gate after each section. The implementer cannot
+approve its own section.
+
+Luna agents may be used only for tightly bounded mechanical work with explicit
+inputs, file ownership, invariants, and acceptance tests. Luna output remains a
+proposal until the Astra implementer or primary integrator verifies the actual
+diff and evidence. Repeated redesign, provenance ambiguity, semantic evidence
+claims, or a required shared-contract change ends the Luna assignment and
+returns the decision to Astra or the primary integrator. Passing structural
+tests alone never authenticates an evidence claim.
+
+The primary integrator retains scope, architecture, integration, durable
+records, repository delivery, and final verification. No implementation or
+gate agent may admit cases, convert AI advice into human curation, run a
+provider experiment, or change production routing under this goal.
 
 ## Delivery sections and gates
 

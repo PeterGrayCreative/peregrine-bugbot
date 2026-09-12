@@ -597,3 +597,11 @@ collection rules, durable audit provenance, two terminal paths, truthful
 completion rule, and external-execution authorization boundary. The gate is
 recorded in the [Section 1 Astra medium gate](../validation/2026-09-12-section-1-astra-medium-gate.md).
 This approval does not admit corpus cases or authorize provider execution.
+
+Section 2 is now in progress under the durable orchestration rule recorded in
+the correction goal: Astra medium owns judgment-heavy implementation, and a
+different fresh Astra medium agent must perform the section gate. Luna is
+limited to bounded mechanical work whose actual diff and evidence are
+independently verified. This change responds to repeated successor-packet
+redesign and does not itself approve the current generated packet, admit any
+case, or authorize provider execution.
