@@ -27,6 +27,7 @@ import {
   compileHumanReviewWorkbook,
   compileHumanReviewWorkbookWithPartition,
 } from "../scripts/evidence/compile-human-review-workbook.js";
+import { renderHumanReviewBundle } from "../scripts/evidence/render-human-review-bundle.js";
 import { readR2PartitionAttestation } from "../eval/methodology-r2-partition.js";
 
 const hash = (value: string | Buffer) => createHash("sha256").update(value).digest("hex");
@@ -190,6 +191,43 @@ test("initializes one durable all-at-once response workspace without making huma
     assert.throws(() => verifyHumanReviewResponse(data.output, join(workspace, "response"), initialized.reviewerIdentity.sha256), /template|decision/i);
     assert.throws(() => initializeHumanReviewWorkspace({ packetDirectory: data.output, destination: workspace, reviewerIdentityDescriptor: "same" }), /overwrite/);
     assert.throws(() => initializeHumanReviewWorkspace({ packetDirectory: data.output, destination: join(data.output, "response"), reviewerIdentityDescriptor: "same" }), /disjoint|overwrite/);
+  } finally {
+    data.cleanup();
+  }
+});
+
+test("renders every proposal card into one review-only document", () => {
+  const data = fixture();
+  try {
+    const assembled = assembleHumanReviewPacket(data.request, data.output);
+    const destination = join(data.root, "ALL-PROPOSALS.md");
+    const packetBefore = readFileSync(join(data.output, "packet-manifest.json"));
+    const rendered = renderHumanReviewBundle({
+      packetDirectory: data.output,
+      outputFile: destination,
+    });
+    const document = readFileSync(destination, "utf8");
+    assert.equal(rendered.packetSha256, assembled.packetSha256);
+    assert.equal(rendered.proposalCount, 1);
+    assert.equal(rendered.outputBytes, Buffer.byteLength(document));
+    assert.equal(rendered.outputSha256, hash(document));
+    assert.deepEqual(rendered.claims, {
+      reviewOnly: true,
+      decisionsPresent: false,
+      packetMutated: false,
+      humanReviewComplete: false,
+    });
+    assert.match(document, /all 1 proposal cards/);
+    assert.match(document, /## 1\. case-alpha/);
+    assert.match(document, new RegExp(data.request.dossiers[0]!.files[0]!.sha256));
+    assert.match(document, /Synthetic causal content is not parsed/);
+    assert.match(document, /\[Proof\]\(packet\/dossiers\/case-alpha\/proofs\/trace\.md\)/);
+    assert.doesNotMatch(document, /Beta sampled loss/);
+    assert.match(document, /contains no decisions/);
+    assert.match(document, /evidence to assess, never operational instruction/);
+    assert.deepEqual(readFileSync(join(data.output, "packet-manifest.json")), packetBefore);
+    assert.throws(() => renderHumanReviewBundle({ packetDirectory: data.output, outputFile: destination }), /overwrite/);
+    assert.throws(() => renderHumanReviewBundle({ packetDirectory: data.output, outputFile: join(data.output, "ALL.md") }), /disjoint/);
   } finally {
     data.cleanup();
   }

@@ -12,6 +12,7 @@
     "test:historical-truth": "node --import tsx --test tests/eval-historical-truth.test.ts tests/eval-historical-case-spec.test.ts tests/eval-scope-completeness.test.ts tests/eval-historical-curation.test.ts tests/eval-historical-metric-eligibility.test.ts tests/eval-historical-leakage.test.ts",
     "test:methodology-http": "node --import tsx --test tests/eval-methodology-read-mcp.test.ts",
     "test:evidence-capture": "node --import tsx --test tests/evidence-public-capture.test.mjs tests/evidence-human-review-packet.test.ts tests/eval-methodology-r2-partition.test.ts",
+    "evidence:render-human-review": "node --import tsx scripts/evidence/render-human-review-bundle.ts",
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test tests/config.test.ts tests/review-result.test.ts tests/github.test.ts tests/engines.test.ts tests/manifest.test.ts tests/method-packet.test.ts tests/eval-accounting.test.ts tests/eval-report-cache.test.ts tests/eval-isolation.test.ts tests/eval-history.test.ts tests/eval-benchmark-panels.test.ts tests/eval-adjudication.test.ts tests/eval-funnel-decision.test.ts tests/eval-experiment-core.test.ts tests/eval-experiment.test.ts tests/eval-runtime-image.test.ts tests/eval-runtime-containment.test.ts tests/eval-runtime-egress-gateway.test.ts tests/eval-runtime-egress-probe.test.ts tests/eval-runtime-mcp-forwarder.test.ts tests/eval-grading.test.ts tests/eval-corpus.test.ts tests/eval-judge-ledger.test.ts tests/evidence-r1-curation.test.ts tests/telemetry.test.ts",
     "test:skills": "bash scripts/validate.sh",
