@@ -1,7 +1,7 @@
 # TypeScript and JavaScript evidence gathering and Peregrine ablation plan
 
-Date: 2026-09-04
-Status: active research direction; R1 complete, R2 partition tooling complete but real human review pending, R3 truth-aware inference v2 and append-only sealing structurally complete
+Date: 2026-09-04; prospective correction addendum dated 2026-09-12
+Status: active research direction; R1 complete, R2 correction/successor-corpus work pending under the prospective protocol, R3 truth-aware inference v2 and append-only sealing structurally complete. The dated correction addendum at the end prospectively governs future corpus work and does not rewrite prior artifacts.
 
 This program preserves the original optimization plan, its implementation
 checklist, and every prior experiment. It pauses the next production
@@ -51,9 +51,25 @@ Collection proceeds in two bounded stages:
 - R1: attempt five reconstructions spanning TypeScript, JavaScript, a
   review-caught defect, a post-merge defect, and a plausible reviewed
   comparison. Do not run reviewers.
-- R2: only after R1 succeeds, inventory at most 100 candidates across at least
-  six repository families and target 36 admitted cases: 24 bug-bearing and 12
-  reviewed comparisons, with no family above 25%.
+- R2: only after R1 succeeds, inventory candidates across repository families
+  and evaluate a corrected corpus under the prospective labeling protocol;
+  preserve duplicate-family boundaries and do not create a protected split
+  until the audit, uncertainty, and access gates pass. The former 36-case
+  target remains historical planning context, not a readiness claim.
+
+Collection governance remains bounded unless a replacement batch is
+prospectively registered before collection resumes: at most 100 candidate
+slots, a target spanning at least six repository families, and no more than
+25% of an admitted initial corpus from one family. Freeze the candidate
+ceiling, family target, concentration rule, admitted-corpus size, and stopping
+conditions before further collection. If a future design replaces the former
+36-case target, record that decision, its rationale, and its new budget in a
+versioned protocol before using the replacement; do not silently expand,
+shrink, or rebalance the corpus after outcomes are visible. Stop and publish a
+yield/loss report when the ceiling or family-balance rule cannot be met, when
+authentic review opportunities cannot be recovered, or when the audit and
+uncertainty gates remain unresolved. A reviewed termination or inconclusive
+report is a valid terminal path and does not authorize an R4 run.
 
 Bug/fix pairs, backports, forks, clones, and related symptoms remain one
 statistical family and one partition. Reverse-applying a fix is synthetic, not
@@ -151,10 +167,10 @@ Small zero-event samples do not certify tight non-inferiority bounds.
 | Step | Deliverable and stop condition |
 | --- | --- |
 | R1 | Five exact historical reconstructions and a source/yield report. Stop if authentic review opportunities are not recoverable. |
-| R2 | A 100-candidate inventory, 36 explicitly sole-human-curated cases, duplicate groups, and a frozen split; no independent-confirmation claim. |
+| R2 | A corrected candidate inventory and corpus evaluated under the prospective labeling protocol, with duplicate groups and a frozen split only after its audit/uncertainty gate; no independent-confirmation claim. |
 | R3 | Neutral and truthful harness prerequisites with deterministic integrity tests. |
-| R4 | Four frozen prompts, caps, routes, runtime, corpus, rubric, analysis, hashes, and a zero-provider dry run. This is the next provider-authorization checkpoint. |
-| R5 | Authorized 96-attempt methodology comparison and at most three registered component screens. |
+| R4 | Corrected frozen candidate/baseline prompts, caps, routes, runtime, corpus, rubric, analysis, hashes, and a zero-provider dry run; retain four arms only for explicit instruction/topology attribution. This is the next provider-authorization checkpoint. |
+| R5 | An explicitly exploratory 96-attempt methodology comparison, authorized only after the corrected R4 freeze, and at most three registered component screens. |
 | R6 | One frozen candidate, reserved selection, then separately powered confirmation. |
 | R7 | Deployment-route bridge and authorized prospective private shadow cohort. |
 | R8 | Component decision report: retain for detection, noise, or efficiency; simplify/remove; not tested; or inconclusive. |
@@ -172,3 +188,55 @@ counts, paired effects and intervals, high-severity losses, confirmed new
 discoveries, unsupported findings, and evidence-class limits. Completion is a
 defensible decision, including an inconclusive or removal decision, not a
 required positive result.
+
+## 2026-09-12 prospective evidence-audit correction addendum
+
+This addendum prospectively revises the labeling, baseline, and confirmation
+contracts. It preserves this plan, its earlier checkpoints, and every sealed
+v2 packet/workbook as historical artifacts. The sealed v2 packet/workbook
+remain unchanged, contain no admitted cases, and are unadmitted. Earlier
+references to a 36-case target, a consolidated human-review workflow, or
+collection progress are historical records; none is a claim of 36-case
+readiness, protected selection, independent confirmation, or R4 readiness.
+
+The replacement goal and delivery gates are recorded in the
+[evidence-audit correction goal](2026-09-12-evidence-audit-correction-goal.md)
+and the future labeling contract is recorded in the
+[calibrated evidence-audit protocol](2026-09-12-calibrated-evidence-audit-protocol.md).
+The R2 review and methodology findings are recorded in the
+[Astra xhigh evaluation and methodology audit](../validation/2026-09-12-astra-evaluation-methodology-audit.md).
+
+For any future corpus path, AI labels are proposals, not human verification.
+Use a frozen representative probability/stratified audit sample plus
+exhaustive review of materially disputed or high-impact cases; record
+sampling probabilities, initial judgments, disagreement, resolution, and
+label-error uncertainty. Trigger expanded audit or an inconclusive result
+when the protocol's error or safety conditions fire. Full human review remains
+a valid simpler option for a small corrected corpus. Do not claim unaudited
+individual cases are human-verified, and do not claim a precise confirmatory
+sample size until a preregistered power/error analysis selects it.
+
+The competent baseline must receive an exact frozen minimal prompt and the
+same raw scope, tools, pinned model, effort, output schema, and comparable
+total allowances as the candidate. No baseline input may contain Peregrine
+packets, lanes, profiles, examples, answer-bearing annotations, or other
+Peregrine leakage. A two-arm candidate-versus-baseline test is sufficient for
+a product-value claim; retain four arms only when instruction and topology
+attribution is an explicit exploratory objective.
+
+The 12-case/96-attempt design is exploratory, and repeats are repeated runs on
+the same cases rather than independent cases. Before confirmation, preregister
+a numerical, simulation-based, or otherwise design-appropriate power/error
+plan with an explicit estimand, dependence unit, practical margins, interval
+method, multiplicity policy, and failure/zero-denominator rules. The 2-of-3
+severe rule is a stop/investigation safeguard only. The 50-PR cohort is
+feasibility and signal collection only; neither establishes efficacy,
+non-inferiority, safety, or exhaustive recall.
+
+Provider runs, production routes, automatic posting, and efficacy claims
+remain unauthorized. Deterministic implementation, artifact repair, and
+zero-provider R4 preparation are authorized work under this correction
+program; credential-bearing canaries, provider execution, and other external
+execution require separate explicit authorization. No future section may
+advance to provider execution or an efficacy claim on documentation or
+structural evidence alone.
