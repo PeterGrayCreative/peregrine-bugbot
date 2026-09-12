@@ -75,11 +75,12 @@ This reaches the collection target for one consolidated human review; none of
 the drafts is admitted or partitioned yet, and sole-human review will not be
 described as independent verification.
 
-A durable blank response workspace is now initialized on private evidence PR
-[#1](https://github.com/PeterGrayCreative/peregrine-evidence-backup/pull/1)
-at commit `bf5af2b`. Its generated guide links all 36 authenticated dossiers to
-one consolidated `RESPONSE.json` workbook and the strict per-dossier reference
-templates. A deterministic compiler expands only a complete, exact-order,
+A durable blank response workspace is now stored on the private evidence
+repository's default `main` branch. Commit `5f32493` adds a byte-bound
+`ALL-PROPOSALS.md` containing all 36 cards in one scrollable document, with
+relative proof links relocated to the exact packet copies. Decisions remain
+exclusive to one consolidated `RESPONSE.json` workbook and the strict
+per-dossier reference templates. A deterministic compiler expands only a complete, exact-order,
 packet- and identity-bound workbook into the pre-existing 37-file verifier
 format. The declared reviewer identity remains operator-prepared metadata, not
 a human decision. The workspace starts with zero decisions and remains a draft
@@ -182,7 +183,7 @@ minimal reviewer. Production routing remains frozen.
 | Step | State | Evidence / remaining gate |
 | --- | --- | --- |
 | R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
-| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. A restore-tested v2 packet at private evidence commit `5d4969e` binds all 36 target draft proposals (24 defect-bearing, 12 scoped comparisons) and 11 retained losses. Private draft PR #1 now provides one blank v2 workbook at `b2e1bce` covering all human approval, class, partition, and duplicate-family decisions. Sole-human governance, one-pass response/attestation compilation, response-to-admission derivation, and the authenticated post-admission partition contract pass structural tests. Human decisions, admission-yield evaluation, durable admission import, and the resulting real partition artifact remain open; no independence or protected-selection claim is made. |
+| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. A restore-tested v2 packet at private evidence commit `5d4969e` binds all 36 target draft proposals (24 defect-bearing, 12 scoped comparisons) and 11 retained losses. Private evidence `main` at `5f32493` provides one blank v2 workbook plus a byte-bound, one-file view of all 36 cards covering human approval, class, partition, and duplicate-family decisions. Sole-human governance, one-pass response/attestation compilation, response-to-admission derivation, and the authenticated post-admission partition contract pass structural tests. Human decisions, admission-yield evaluation, durable admission import, and the resulting real partition artifact remain open; no independence or protected-selection claim is made. |
 | R3: neutral and truthful harness | Structurally complete; runtime canary separately gated | Four-arm scheduling, neutral prompts and mounts, input/lifecycle/stop seals, honest grading projections, all-finding adjudication, grouped discovery roots, resource accounting, exact Sol-high launch policy, bounded read tools, fail-closed scope evidence, destination-restricted egress, semantic judge, authenticated analysis joins, operator-only R2 truth/severity binding, clustered inference v2, and append-only decision lineage have deterministic evidence. Development severity remains descriptive and selection remains exploratory. Old artifacts and production behavior are unchanged. A credential-bearing model/tool canary requires separate authorization and is not historical efficacy evidence. Real execution still depends on completed R2 human admission. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |
@@ -502,7 +503,8 @@ been produced.
 
 ## 2026-09-09: one-pass R2 curation and partition workbook
 
-Private evidence draft PR #1 now holds workbook protocol v2 at `b2e1bce`.
+Private evidence `main` holds workbook protocol v2 and the merged history of
+the former draft PR #1. Commit `5f32493` adds the consolidated review-only view.
 The same blank `RESPONSE.json` covers all 36 proposal decisions and, for every
 approval, its development/selection placement, bug/comparison class, and
 duplicate-family ID. No field is prefilled with a human judgment.
@@ -513,3 +515,20 @@ It rejects missing or contradictory partition fields, duplicate families that
 span partitions, wrong packet or reviewer bindings, false independence claims,
 and existing or overlapping destinations. This removes a second manual
 attestation step but does not satisfy the human gate or authorize provider work.
+
+## 2026-09-12: consolidated R2 human review view
+
+A deterministic renderer now verifies the sealed packet before and after
+reading its cards and writes all 36 proposal cards to one review-only Markdown
+file. Each section includes the dossier, card, and packet digests. Relative
+supporting-evidence links are relocated from the nested card location to the
+exact durable packet copy; links outside the packet reject. The renderer
+refuses packet/output overlap and overwrite, does not read or prefill decisions,
+and does not claim completed or independent review.
+
+The generated `ALL-PROPOSALS.md` is durable on private evidence `main` at
+`5f32493`; SHA-256 is
+`2dcd12dfa192416b0ef056ca644f830526e46e3df8df951b34d8c75fd95b21e5`.
+All 138 relocated local links resolve in the durable checkout. Typecheck and
+all 27 evidence-capture tests pass. Human review of the companion
+`RESPONSE.json` remains the R2 gate.

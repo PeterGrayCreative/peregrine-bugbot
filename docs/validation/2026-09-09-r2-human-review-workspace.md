@@ -62,6 +62,17 @@ Only the user may complete `RESPONSE.json`. Every proposal must be marked
 identity. Every approved proposal also needs its development/selection,
 bug/comparison, and duplicate-family assignment. The packet acknowledgment
 comes last and records the sole-human partition acceptance without claiming
-independent selection. The draft PR must not be merged until the complete
-response and generated partition attestation verify. One-person review remains
-explicitly non-independent and does not create a sealed holdout.
+independent selection. The evidence branch history is now merged to private
+`main`; direct storage does not satisfy the incomplete human gate. One-person
+review remains explicitly non-independent and does not create a sealed holdout.
+
+## 2026-09-12 durable update
+
+The private evidence repository now uses `main` directly. Commit `5f32493` adds
+`review-workspaces/r2-recovered-human-review-v2/ALL-PROPOSALS.md`, a
+review-only one-file view of all 36 bound cards. Its SHA-256 is
+`2dcd12dfa192416b0ef056ca644f830526e46e3df8df951b34d8c75fd95b21e5`.
+All 138 relocated local links resolve to durable packet files. The renderer's
+focused test is part of `npm run test:evidence-capture`; typecheck and all 27
+evidence-capture tests passed. The workbook remains blank and no human gate was
+satisfied by this presentation change.
