@@ -1,7 +1,7 @@
 # TypeScript and JavaScript evidence and ablation progress
 
-Updated: 2026-09-09
-Active branch: `research/ts-js-evidence-r2-review-workspace`
+Updated: 2026-09-12 (prospective correction addendum; historical entries preserved)
+Active branch: `research/evidence-audit-corrections`
 
 ## Current recovery notice
 
@@ -71,9 +71,10 @@ The private evidence repository now holds the restore-tested
 reconstruction losses, and blank human-decision templates. A fresh clone from
 that exact remote commit reproduced packet SHA-256
 `2b73535d50524c256bf26223b9f577d94cb1110e47745b6ebc0a06893ed89574`.
-This reaches the collection target for one consolidated human review; none of
-the drafts is admitted or partitioned yet, and sole-human review will not be
-described as independent verification.
+This historical snapshot records reaching a collection target for one
+consolidated human review; it did not establish corpus readiness. None of the
+drafts is admitted or partitioned, and sole-human review will not be described
+as independent verification.
 
 A durable blank response workspace is now stored on the private evidence
 repository's default `main` branch. Commit `5f32493` adds a byte-bound
@@ -183,8 +184,8 @@ minimal reviewer. Production routing remains frozen.
 | Step | State | Evidence / remaining gate |
 | --- | --- | --- |
 | R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
-| R2: gather and partition | In progress | Frozen 100 attempted candidate slots across eight repository families. A restore-tested v2 packet at private evidence commit `5d4969e` binds all 36 target draft proposals (24 defect-bearing, 12 scoped comparisons) and 11 retained losses. Private evidence `main` at `5f32493` provides one blank v2 workbook plus a byte-bound, one-file view of all 36 cards covering human approval, class, partition, and duplicate-family decisions. Sole-human governance, one-pass response/attestation compilation, response-to-admission derivation, and the authenticated post-admission partition contract pass structural tests. Human decisions, admission-yield evaluation, durable admission import, and the resulting real partition artifact remain open; no independence or protected-selection claim is made. |
-| R3: neutral and truthful harness | Structurally complete; runtime canary separately gated | Four-arm scheduling, neutral prompts and mounts, input/lifecycle/stop seals, honest grading projections, all-finding adjudication, grouped discovery roots, resource accounting, exact Sol-high launch policy, bounded read tools, fail-closed scope evidence, destination-restricted egress, semantic judge, authenticated analysis joins, operator-only R2 truth/severity binding, clustered inference v2, and append-only decision lineage have deterministic evidence. Development severity remains descriptive and selection remains exploratory. Old artifacts and production behavior are unchanged. A credential-bearing model/tool canary requires separate authorization and is not historical efficacy evidence. Real execution still depends on completed R2 human admission. |
+| R2: gather and partition | Correction required; no admission or protected selection | The sealed v2 packet/workbook and its 36 blank decisions remain unchanged and unadmitted. A read-only Astra xhigh audit recommends 15 approvals (8 bug-bearing, 7 comparisons), 1 rejection, and 20 unresolved proposals; all approvals are development-only advisory recommendations, not human decisions. The current usable pool is short by 16 bug-bearing and 5 comparison approvals, and no R2 selection partition or R4 readiness exists. Repair the successor packet/corpus under the [correction goal](2026-09-12-evidence-audit-correction-goal.md) and [calibrated protocol](2026-09-12-calibrated-evidence-audit-protocol.md). |
+| R3: neutral and truthful harness | Structurally complete; runtime canary separately gated | Four-arm scheduling, neutral prompts and mounts, input/lifecycle/stop seals, honest grading projections, all-finding adjudication, grouped discovery roots, resource accounting, exact Sol-high launch policy, bounded read tools, fail-closed scope evidence, destination-restricted egress, semantic judge, authenticated analysis joins, operator-only R2 truth/severity binding, clustered inference v2, and append-only decision lineage have deterministic evidence. Development severity remains descriptive and selection remains exploratory. Old artifacts and production behavior are unchanged. A credential-bearing model/tool canary requires separate authorization and is not historical efficacy evidence. Real execution depends on corrected R2 acceptance/partition under the prospective protocol, which does not yet exist. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |
 | R6: select and confirm | Not started | Requires frozen candidate and new powered confirmation corpus. |
@@ -532,3 +533,67 @@ The generated `ALL-PROPOSALS.md` is durable on private evidence `main` at
 All 138 relocated local links resolve in the durable checkout. Typecheck and
 all 27 evidence-capture tests pass. Human review of the companion
 `RESPONSE.json` remains the R2 gate.
+
+## 2026-09-12: evidence-audit correction status
+
+This dated entry is prospective and does not rewrite the historical snapshots
+above. The replacement correction goal has four delivery sections: (1)
+prospective protocol/design, (2) successor packet repairs, (3) corpus
+repair/replacement, and (4) corrected R4 freeze. Each completed section
+requires a `gpt-6-astra` medium-effort read-only quality/adherence gate before the next
+section starts. The gate is a quality/adherence review, not human curation,
+independent selection, provider evidence, or efficacy evidence.
+
+The methodology audit found that universal per-item human signatures are not a
+research-wide requirement, but it also found that AI consensus is not human
+confirmation and that unaudited individual labels must not be called
+human-verified. Future paths therefore use the calibrated probability/stratified
+audit protocol, with full human review retained as the simpler small-corpus
+option. The protocol requires a frozen minimal competent-baseline prompt,
+identical raw scope/tools/model/effort/schema, comparable total allowances,
+and no Peregrine leakage. A two-arm candidate-versus-baseline comparison is
+enough for product value; four arms remain only for instruction/topology
+attribution.
+
+The 12-case/96-attempt study is explicitly exploratory. Its repeats are not
+independent cases. Confirmation remains blocked until a preregistered
+numerical or simulation/design-appropriate power and error plan names the
+estimand, dependence unit, practical margins, interval method, multiplicity
+policy, and failure handling. The 2-of-3 severe rule is only a stop/investigation
+rule, and the 50-PR cohort is only feasibility/signal collection.
+
+The [Astra xhigh evaluation and methodology audit](../validation/2026-09-12-astra-evaluation-methodology-audit.md)
+records five repair classes: the alpha-025 base/diff mismatch; alpha-021
+attribution; alpha-010 dossier binding; exposed-07's stale recovery status;
+and incomplete or blank rendered proposal content. It also records the
+RxJS duplicate-family link between alpha-025 and random-007. These are repair
+inputs, not admissions. Provider runs, production routes, automatic posting,
+and efficacy claims remain unauthorized; no exact 36-case readiness claim is
+created by this status update.
+
+The correction keeps collection bounded at at most 100 candidate slots, a
+target of at least six repository families, and no more than 25% of an admitted
+initial corpus from one family unless a replacement batch is prospectively
+registered first. The candidate ceiling, family balance, admitted-corpus size,
+and stopping conditions must be frozen before further collection. The valid
+terminal outcomes are a corpus-ready zero-provider R4 freeze or a reviewed
+termination/inconclusive report with yield, losses, unresolved reasons, and
+the R4 boundary. Deterministic implementation, archival, and zero-provider
+preparation are authorized by the correction program; credential-bearing
+canaries, provider runs, and other external execution still require separate
+authorization.
+
+The Astra xhigh methodology report is durably archived in
+`../validation/artifacts/2026-09-12-astra-methodology-research-review.md`.
+The private Astra xhigh corpus report is archived at
+`PeterGrayCreative/peregrine-evidence-backup/audit-reports/2026-09-12-r2-corpus-audit.md`;
+source and archive SHA-256 values plus Git blob identities are recorded in the
+[correction goal](2026-09-12-evidence-audit-correction-goal.md). The private
+backup commit is `d04cce4`; neither archive is a corpus admission.
+
+Section 1 is complete. A separate `gpt-6-astra` reviewer at medium effort
+approved the corrected prospective protocol after verifying the bounded
+collection rules, durable audit provenance, two terminal paths, truthful
+completion rule, and external-execution authorization boundary. The gate is
+recorded in the [Section 1 Astra medium gate](../validation/2026-09-12-section-1-astra-medium-gate.md).
+This approval does not admit corpus cases or authorize provider execution.
