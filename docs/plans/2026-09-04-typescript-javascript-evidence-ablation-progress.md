@@ -723,3 +723,20 @@ the independent gate. It does not prove an authorized CLI-agent/provider canary,
 exact served identity, assessor blinding or experimental readiness. General
 review routing is unchanged; all prior failures and scientific registrations
 remain preserved; provider authorization is false and 64/64 slots unstarted.
+
+## 2026-09-13: exact R4 preauthorization package, no dispatch authority
+
+The [preauthorization checkpoint](../validation/2026-09-13-prediction-r4-preauthorization.md)
+reconstructs and replays all 16 repository-only mounts, 32 unchanged A/B prompts
+and 64 fixed slots against the original preparation and prospective CLI caps.
+It binds the accepted runtime and exact source/tool/route/cap/rubric/analysis
+bytes, plus a separate one-attempt infrastructure-only canary registration.
+Node22 typecheck and 44 prediction, 13 HTTP and 155 affected tests passed.
+
+This is a gate-ready zero-provider package, not a passed canary or an R4
+experiment authorization. A separately gated supported four-tool CLI bridge,
+exact canary authorization and subsequent independent evidence review remain
+required; normal completion cannot certify an elapsed timeout. Assessor and
+blinding receipts remain absent, and batch authorization is separate. All 64
+review slots and the canary are unstarted; both readiness/authorization flags
+remain false. Prior failures and registrations are unchanged.
