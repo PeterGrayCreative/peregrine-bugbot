@@ -82,7 +82,9 @@ function fakeMethodologyEgressDocker() {
     }
     if (args[0] === "logs") {
       const name = args.at(-1)!;
-      if (!stopped.has(name)) return result(JSON.stringify({ status: "ready", protocol: name === gateway ? "egress-gateway-v1" : "methodology-mcp-forwarder-v1", ready: true }) + "\n");
+      if (!stopped.has(name)) return result(JSON.stringify(name === gateway
+        ? { status: "ready", protocol: "egress-gateway-v1", host: "0.0.0.0", port: 8081 }
+        : { status: "ready", protocol: "methodology-mcp-forwarder-v1", ready: true, host: "0.0.0.0", port: 8082 }) + "\n");
       if (name === gateway) {
         const body = { schemaVersion: 1, protocol: "egress-gateway-audit-v1", events: [] };
         return result(JSON.stringify({ status: "sealed", protocol: "egress-gateway-v1", audit: { ...body, sealed: true, sha256: digest("egress-gateway-audit-v1", body) } }));
