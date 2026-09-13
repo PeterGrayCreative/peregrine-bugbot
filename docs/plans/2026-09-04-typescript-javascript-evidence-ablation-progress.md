@@ -756,3 +756,15 @@ coexist identically across arms; disallowed exposure/use must be excluded by the
 separately authorized canary and independent review. This prospective clarification
 does not reinterpret previous failures. The actual canary and all 64 review slots
 remain unstarted, readiness/authorization false, production routing unchanged.
+
+## 2026-09-13: deterministic post-canary assessment
+
+The [post-canary gate](../validation/2026-09-13-prediction-canary-assessment.md)
+authenticates exact registration/mount/package/runtime/bridge bindings and requires
+complete independently observed and reviewed terminal, tool, capability, lifecycle
+and cleanup evidence. It can recommend eligibility only for a separate authorization
+decision; its batch-authorization guard always rejects. Synthetic positive and
+mutation controls are not actual canary evidence. Without an actual authenticated
+canary receipt the decision remains `not-eligible`; no provider or batch work is
+started and all 64 review slots remain unstarted. Exact backend-version uncertainty
+retains its preregistered limitation; unknown capability exposure still rejects.

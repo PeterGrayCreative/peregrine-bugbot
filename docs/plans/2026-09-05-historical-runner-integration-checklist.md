@@ -371,5 +371,8 @@ AI-prediction development path now has an exact
   observations preserved rather than inferred.
 - [ ] Independent canary review, separate batch authorization and authenticated
   assessor identity/arm-blinding receipts before adjudication.
+- [x] Implement deterministic post-canary assessment with authenticated artifact
+  closure, synthetic positive/mutation controls, immutable two-outcome decisions
+  and an always-deny batch-authorization guard. This is not actual canary evidence.
 
 Provider calls remain zero; `providerAuthorized` and `executionReady` are false.
