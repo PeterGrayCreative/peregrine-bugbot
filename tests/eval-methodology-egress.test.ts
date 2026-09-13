@@ -77,6 +77,25 @@ test("provider supervisor rejects an injected executor", async () => {
   assert.deepEqual(calls, []);
 });
 
+test("prediction source endpoint token is exact and setup cancellation cannot cancel cleanup", async () => {
+  const deadline = new AbortController(), calls: { args: string[]; signal: AbortSignal | undefined }[] = [];
+  const run = async (_command: string, args: string[], options?: { deadlineSignal?: AbortSignal }) => {
+    calls.push({ args, signal: options?.deadlineSignal });
+    if (args[0] === "network" && args[1] === "create") deadline.abort();
+    return result();
+  };
+  await assert.rejects(createStructuralMockMethodologyEgressSupervisor({ attemptId: "attempt-000004", armId: "A", sourceHeadTree: "a".repeat(40),
+    providerAuthorities: ["zero-provider.invalid:443"], hostMcpPort: 43123, hostMcpToken: "a".repeat(64), deadlineSignal: deadline.signal, mcpLimits: limits, run }), /deadline/);
+  assert.equal(calls.filter(call => call.args[1] === "create").length, 1);
+  assert.strictEqual(calls[0]!.signal, deadline.signal);
+  assert.ok(calls.some(call => call.args[1] === "rm")); assert.ok(calls.some(call => call.args[1] === "ls"));
+  assert.ok(calls.slice(1).every(call => call.signal === undefined));
+  const before = calls.length;
+  await assert.rejects(createStructuralMockMethodologyEgressSupervisor({ attemptId: "attempt-000004", armId: "A", sourceHeadTree: "a".repeat(40),
+    providerAuthorities: ["zero-provider.invalid:443"], hostMcpPort: 43123, hostMcpToken: "../bad", mcpLimits: limits, run }), /endpoint token/);
+  assert.equal(calls.length, before);
+});
+
 test("supervisor rejects limits the bundled forwarder cannot honor", async () => {
   const calls: string[][] = [];
   const run = async (_command: string, args: string[]): Promise<ExecResult> => {
@@ -122,11 +141,13 @@ test("supervisor uses only injected Docker and closes idempotently", async () =>
     if (args[0] === "run" && args.includes("/usr/local/bin/peregrine-egress-gateway")) { gateway = args[3]!; sidecarEnvs.set(gateway, [...METHODOLOGY_EGRESS_BASE_ENV, ...args.flatMap((value, index) => value === "--env" && args[index + 1] ? [args[index + 1]!] : [])]); }
     if (args[0] === "run" && args.includes("/usr/local/bin/peregrine-methodology-mcp-forwarder")) { forwarder = args[3]!; sidecarEnvs.set(forwarder, [...METHODOLOGY_EGRESS_BASE_ENV, ...args.flatMap((value, index) => value === "--env" && args[index + 1] ? [args[index + 1]!] : [])]); }
     if (args[0] === "logs") {
+      // A ready record emitted before this query is absent from --since 0s.
+      if (args.includes("--since")) return result();
       const name = args[args.length - 1]!;
       if (stopped && name === gateway) { const body = { schemaVersion: 1, protocol: "egress-gateway-audit-v1", events: [] }; return result(JSON.stringify({ status: "sealed", protocol: "egress-gateway-v1", audit: { ...body, sealed: true, sha256: digest("egress-gateway-audit-v1", body) } })); }
       if (stopped && name === forwarder) { const body = { schemaVersion: 1, protocol: "methodology-mcp-forwarder-audit-v1", sealed: true, requests: { observed: 0, allowed: 0, denied: 0, forwarded: 0, budgeted: 0 }, events: [] }; return result(JSON.stringify({ status: "sealed", protocol: "methodology-mcp-forwarder-v1", audit: { ...body, snapshotSha256: digest("methodology-mcp-forwarder-audit-v1", body) } })); }
-      if (name.includes("gateway")) return result(JSON.stringify({ status: "ready", protocol: "egress-gateway-v1", ready: true }) + "\n");
-      if (name.includes("forwarder")) return result(JSON.stringify({ status: "ready", protocol: "methodology-mcp-forwarder-v1", ready: true }) + "\n");
+      if (name.includes("gateway")) return result(JSON.stringify({ status: "ready", protocol: "egress-gateway-v1", host: "0.0.0.0", port: 8081 }) + "\n");
+      if (name.includes("forwarder")) return result(JSON.stringify({ status: "ready", protocol: "methodology-mcp-forwarder-v1", ready: true, host: "0.0.0.0", port: 8082 }) + "\n");
       return result();
     }
     if (args[0] === "inspect" && args[1] !== undefined) return result(JSON.stringify([
@@ -136,8 +157,9 @@ test("supervisor uses only injected Docker and closes idempotently", async () =>
     if (args[0] === "stop") { stopped = true; return result(); }
     return result();
   };
-  const supervisor = await createStructuralMockMethodologyEgressSupervisor({ attemptId: "attempt-000001", armId: "A", sourceHeadTree: "a".repeat(40), providerAuthorities: ["api.openai.com:443"], hostMcpPort: 43123, mcpLimits: limits, run });
+  const supervisor = await createStructuralMockMethodologyEgressSupervisor({ attemptId: "attempt-000001", armId: "A", sourceHeadTree: "a".repeat(40), providerAuthorities: ["api.openai.com:443"], hostMcpPort: 43123, hostMcpToken: "b".repeat(64), mcpLimits: limits, run });
   assert.match(supervisor.internalMcpUrl, /^http:\/\/mcp-forwarder:8082\/mcp\/[a-f0-9]{64}$/u);
+  assert.equal(new URL(supervisor.internalMcpUrl).pathname, `/mcp/${"b".repeat(64)}`);
   assert.equal(supervisor.attestation.image, ACCEPTED_METHODOLOGY_EGRESS_IMAGE);
   assert.equal(supervisor.attestation.executionClass, "structural-mock");
   assert.equal(supervisor.attestation.externalNetwork, supervisor.names.externalNetwork);

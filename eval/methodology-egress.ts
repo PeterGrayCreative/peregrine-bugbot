@@ -1,6 +1,7 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { isIP } from "node:net";
 import { exec, type ExecResult } from "../src/util/exec.js";
+import { safeDiagnostic } from "../src/security/secrets.js";
 import { canonicalJsonSha256 } from "./experiment.js";
 
 /**
@@ -15,6 +16,7 @@ export type DockerExec = (
     env?: Record<string, string>;
     inheritEnv?: boolean;
     timeoutMs?: number;
+    deadlineSignal?: AbortSignal;
   },
 ) => Promise<ExecResult>;
 
@@ -87,6 +89,10 @@ export interface MethodologyEgressSupervisorOptions {
   readonly providerAuthorities: readonly string[];
   /** Port on the host-bound MCP server. */
   readonly hostMcpPort: number;
+  /** Bind forwarding to the already-created source endpoint, not a second token. */
+  readonly hostMcpToken?: string;
+  /** Applies to setup only; mandatory cleanup must never inherit cancellation. */
+  readonly deadlineSignal?: AbortSignal;
   readonly mcpLimits: MethodologyMcpLimits;
   readonly image?: string;
   readonly readyTimeoutMs?: number;
@@ -355,16 +361,24 @@ async function waitForReady(run: DockerExec, name: string, protocol: string, dea
   const deadline = Date.now() + deadlineMs;
   let seen = "";
   while (Date.now() <= deadline) {
-    const result = await dockerCall(run, ["logs", "--tail", READINESS_LOG_TAIL, "--since", "0s", name], undefined, Math.min(5_000, Math.max(1, deadline - Date.now())));
+    // These containers have fresh names. Read retained startup output: --since
+    // 0s means "from now" and can permanently exclude their one ready record.
+    const result = await dockerCall(run, ["logs", "--tail", READINESS_LOG_TAIL, name], undefined, Math.min(5_000, Math.max(1, deadline - Date.now())));
     if (successful(result)) {
-      seen = `${seen}\n${result.stdout}`.slice(-MAX_READINESS_LOG_BYTES);
+      seen = `${seen}\n${result.stdout}\n${result.stderr}`.slice(-MAX_READINESS_LOG_BYTES);
       if (seen.split(/\r?\n/u).some((line) => {
-        try { const value = JSON.parse(line) as Record<string, unknown>; return value.status === "ready" && value.protocol === protocol && value.ready === true; } catch { return false; }
+        try {
+          const value = JSON.parse(line) as Record<string, unknown>;
+          // Match the two pinned entrypoints' actual wire contracts. Only the
+          // forwarder emits ready:true; the gateway emits status/host/port.
+          return value.status === "ready" && value.protocol === protocol && value.host === "0.0.0.0" &&
+            (protocol === "egress-gateway-v1" ? value.port === 8081 && value.ready === undefined : value.port === 8082 && value.ready === true);
+        } catch { return false; }
       })) return;
     }
     await new Promise((resolve) => setTimeout(resolve, Math.min(25, Math.max(1, deadline - Date.now()))));
   }
-  throw new Error(`timed out waiting for ${protocol} readiness`);
+  throw new Error(`timed out waiting for ${protocol} readiness`, { cause: new Error(safeDiagnostic(seen || "No readiness output observed", 2000)) });
 }
 
 function parseJsonLines(stdout: string): Record<string, unknown>[] {
@@ -545,7 +559,8 @@ async function createSupervisor(
   if (!Number.isSafeInteger(stopTimeoutMs) || stopTimeoutMs < 1 || stopTimeoutMs > 120_000) fail("invalid sidecar stop timeout");
   const n = names(options.attemptId); const subnet = networkSubnet(); let externalSubnet = networkSubnet();
   while (externalSubnet === subnet) externalSubnet = networkSubnet();
-  const token = randomBytes(32).toString("hex");
+  const token = options.hostMcpToken ?? randomBytes(32).toString("hex");
+  if (!/^[a-f0-9]{64}$/.test(token)) fail("invalid host MCP endpoint token");
   const gatewayEnv = topologyEnvForGateway(authorities);
   const forwarderEnv = topologyEnvForForwarder(token, options.hostMcpPort, limits);
   const created: Array<"gateway" | "forwarder"> = [];
@@ -554,35 +569,39 @@ async function createSupervisor(
   let primary: unknown;
   const diagnostics: SidecarAuditDiagnostic[] = [];
   const cleanupProgress = createCleanupProgress();
+  const setupRun: DockerExec = options.deadlineSignal ? (command, args, settings) => {
+    if (options.deadlineSignal!.aborted) throw new Error("whole-attempt deadline closed sidecar setup");
+    return run(command, args, { ...settings, deadlineSignal: options.deadlineSignal });
+  } : run;
   try {
     const externalNetworkArgs = ["network", "create", "--ipv6=false", "--driver", "bridge", "--subnet", externalSubnet, n.externalNetwork];
     externalNetworkCreated = true;
-    requireSuccess(await dockerCall(run, externalNetworkArgs, () => { parseNetworkCreateArgs(externalNetworkArgs, false); }), "external network creation");
+    requireSuccess(await dockerCall(setupRun, externalNetworkArgs, () => { parseNetworkCreateArgs(externalNetworkArgs, false); }), "external network creation");
     const networkArgs = ["network", "create", "--internal", "--ipv6=false", "--driver", "bridge", "--subnet", subnet, n.network];
     internalNetworkCreated = true;
-    requireSuccess(await dockerCall(run, networkArgs, () => { parseNetworkCreateArgs(networkArgs, true); }), "internal network creation");
+    requireSuccess(await dockerCall(setupRun, networkArgs, () => { parseNetworkCreateArgs(networkArgs, true); }), "internal network creation");
     const gatewayArgs = sidecarCommon(n.gateway, n.externalNetwork, image, GATEWAY_ENTRYPOINT, gatewayEnv);
     created.push("gateway");
-    requireSuccess(await dockerCall(run, gatewayArgs, () => { parseSidecarRunArgs(gatewayArgs, { name: n.gateway, network: n.externalNetwork, image, entrypoint: GATEWAY_ENTRYPOINT, role: "gateway" }); }), "gateway sidecar start");
+    requireSuccess(await dockerCall(setupRun, gatewayArgs, () => { parseSidecarRunArgs(gatewayArgs, { name: n.gateway, network: n.externalNetwork, image, entrypoint: GATEWAY_ENTRYPOINT, role: "gateway" }); }), "gateway sidecar start");
     const forwarderArgs = sidecarCommon(n.forwarder, n.externalNetwork, image, FORWARDER_ENTRYPOINT, forwarderEnv, "host.docker.internal:host-gateway");
     created.push("forwarder");
-    requireSuccess(await dockerCall(run, forwarderArgs, () => { parseSidecarRunArgs(forwarderArgs, { name: n.forwarder, network: n.externalNetwork, image, entrypoint: FORWARDER_ENTRYPOINT, role: "forwarder" }); }), "forwarder sidecar start");
-    await waitForReady(run, n.gateway, "egress-gateway-v1", readyTimeoutMs);
-    await waitForReady(run, n.forwarder, "methodology-mcp-forwarder-v1", readyTimeoutMs);
+    requireSuccess(await dockerCall(setupRun, forwarderArgs, () => { parseSidecarRunArgs(forwarderArgs, { name: n.forwarder, network: n.externalNetwork, image, entrypoint: FORWARDER_ENTRYPOINT, role: "forwarder" }); }), "forwarder sidecar start");
+    await waitForReady(setupRun, n.gateway, "egress-gateway-v1", readyTimeoutMs);
+    await waitForReady(setupRun, n.forwarder, "methodology-mcp-forwarder-v1", readyTimeoutMs);
     const gatewayConnect = ["network", "connect", "--alias", "egress-gateway", n.network, n.gateway];
-    requireSuccess(await dockerCall(run, gatewayConnect, () => { parseConnectArgs(gatewayConnect, { network: n.network, container: n.gateway, alias: "egress-gateway" }); }), "gateway internal network attach");
+    requireSuccess(await dockerCall(setupRun, gatewayConnect, () => { parseConnectArgs(gatewayConnect, { network: n.network, container: n.gateway, alias: "egress-gateway" }); }), "gateway internal network attach");
     const forwarderConnect = ["network", "connect", "--alias", "mcp-forwarder", n.network, n.forwarder];
-    requireSuccess(await dockerCall(run, forwarderConnect, () => { parseConnectArgs(forwarderConnect, { network: n.network, container: n.forwarder, alias: "mcp-forwarder" }); }), "forwarder internal network attach");
-    const inspect = requireSuccess(await dockerCall(run, ["inspect", n.gateway, n.forwarder], undefined), "sidecar inspect");
+    requireSuccess(await dockerCall(setupRun, forwarderConnect, () => { parseConnectArgs(forwarderConnect, { network: n.network, container: n.forwarder, alias: "mcp-forwarder" }); }), "forwarder internal network attach");
+    const inspect = requireSuccess(await dockerCall(setupRun, ["inspect", n.gateway, n.forwarder], undefined), "sidecar inspect");
     // Docker's default JSON output is one array; test executors may return one
     // JSON object per line. Both are accepted, but every sidecar is checked.
     const inspectValues = inspect.stdout.trim().startsWith("[") ? JSON.parse(inspect.stdout) as unknown[] : parseJsonLines(inspect.stdout);
     if (!Array.isArray(inspectValues) || inspectValues.length !== 2) throw new Error("sidecar inspect did not return both containers");
     parseInspect(JSON.stringify(inspectValues[0]), { name: n.gateway, network: n.network, externalNetwork: n.externalNetwork, subnet, externalSubnet, image, entrypoint: GATEWAY_ENTRYPOINT, alias: "egress-gateway", env: gatewayEnv });
     parseInspect(JSON.stringify(inspectValues[1]), { name: n.forwarder, network: n.network, externalNetwork: n.externalNetwork, subnet, externalSubnet, image, entrypoint: FORWARDER_ENTRYPOINT, alias: "mcp-forwarder", env: forwarderEnv, addHost: "host.docker.internal:host-gateway" });
-    const networkInspect = requireSuccess(await dockerCall(run, ["network", "inspect", n.network], undefined), "internal network inspect");
+    const networkInspect = requireSuccess(await dockerCall(setupRun, ["network", "inspect", n.network], undefined), "internal network inspect");
     parseNetworkInspect(networkInspect.stdout, { name: n.network, network: n.network, subnet, sidecars: [n.gateway, n.forwarder] });
-    const externalInspect = requireSuccess(await dockerCall(run, ["network", "inspect", n.externalNetwork], undefined), "external network inspect");
+    const externalInspect = requireSuccess(await dockerCall(setupRun, ["network", "inspect", n.externalNetwork], undefined), "external network inspect");
     parseNetworkInspect(externalInspect.stdout, { name: n.externalNetwork, network: n.externalNetwork, subnet: externalSubnet, sidecars: [n.gateway, n.forwarder], internal: false });
   } catch (error) { primary = error; }
   if (primary !== undefined) {

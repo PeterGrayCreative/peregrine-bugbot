@@ -24,7 +24,7 @@ export interface ReviewReadMcpOptions {
   /** Distinct initialized reviewer sessions allowed before shutdown. Defaults to one. */
   maxSessions?: number;
 }
-export type ReviewReadMcpAuditToolName = "list_tree" | "read_file" | "search_text" | "unrecognized";
+export type ReviewReadMcpAuditToolName = "list_tree" | "read_file" | "search_text" | "read_link" | "unrecognized";
 export type ReviewReadMcpAuditToolStatus = "complete-for-indexed-export" | "incomplete" | "denied";
 export interface ReviewReadMcpAuditCodeCount {
   readonly code: string;
@@ -85,6 +85,11 @@ const TOOL_DEFINITIONS = [
     inputSchema: { type: "object", properties: { query: { type: "string", minLength: 1, maxLength: 1024 }, path: PATH_SCHEMA },
       required: ["query"], additionalProperties: false } },
 ];
+const PREDICTION_TOOL_DEFINITIONS = [...TOOL_DEFINITIONS, {
+  name: "read_link", description: "Read an inventoried native symlink as literal link text; never follow its target.",
+  inputSchema: { type: "object", properties: { path: { ...PATH_SCHEMA, minLength: 1 } }, required: ["path"], additionalProperties: false },
+}];
+export const predictionMcpToolDefinitions = () => structuredClone(PREDICTION_TOOL_DEFINITIONS);
 const INCOMPLETE_RESULT_CODES = new Set([
   "binary-content",
   "directory-unavailable",
@@ -168,6 +173,20 @@ const TRANSPORT_FAILURE_CODES = new Set([
 /** One initialization per server lifetime. Close and create a fresh service for
  * another client/run. No SSE, outgoing requests, resources, prompts, or shell. */
 export async function startReviewReadMcpServer(exportRoot: string, readLimits: ReviewReadToolLimits,
+  options: ReviewReadMcpOptions) {
+  const tools = createReviewReadTools(exportRoot, readLimits);
+  return startMcpTransport((name, args) => JSON.stringify(name === "list_tree" ? tools.list_tree(args) : name === "read_file"
+    ? tools.read_file(args as { path: string }) : tools.search_text(args as { query: string; path?: string })), false, options);
+}
+
+/** Transport reuse only: the prediction attachment must authenticate its reader.
+ * This supplies no filesystem access, execution authority or provider interface. */
+export async function startPredictionReadMcpTransport(call: (name: string, args: Record<string, unknown>) => string,
+  options: ReviewReadMcpOptions) {
+  return startMcpTransport(call, true, options);
+}
+
+async function startMcpTransport(readCall: (name: string, args: Record<string, unknown>) => string, prediction: boolean,
   options: ReviewReadMcpOptions): Promise<{
     url: string;
     authorizeHost(authority: string): void;
@@ -200,7 +219,7 @@ export async function startReviewReadMcpServer(exportRoot: string, readLimits: R
     }
   }
   const limits = { ...options };
-  const tools = createReviewReadTools(exportRoot, readLimits);
+  const definitions = prediction ? PREDICTION_TOOL_DEFINITIONS : TOOL_DEFINITIONS;
   const endpoint = `/mcp/${randomBytes(32).toString("hex")}`;
   const sessions = new Map<string, "initializing" | "ready">();
   let closed = false;
@@ -236,7 +255,7 @@ export async function startReviewReadMcpServer(exportRoot: string, readLimits: R
     if (!auditSealed) count(audit.transportFailures, code);
   };
   const safeToolName = (value: unknown): ReviewReadMcpAuditToolName =>
-    value === "list_tree" || value === "read_file" || value === "search_text" ? value : "unrecognized";
+    value === "list_tree" || value === "read_file" || value === "search_text" || (prediction && value === "read_link") ? value : "unrecognized";
   const toolDigest = (value: unknown): string => createHash("sha256")
     .update("review-read-mcp-tool-result-v1\0").update(JSON.stringify(value)).digest("hex");
   const recordTool = (sequence: number, name: unknown, status: ReviewReadMcpAuditToolStatus, digestValue: unknown,
@@ -425,20 +444,25 @@ export async function startReviewReadMcpServer(exportRoot: string, readLimits: R
         deny("pagination-not-supported");
         send(res, 200, rpcError(id, -32602, "Pagination is not supported")); return;
       }
-      send(res, 200, { jsonrpc: "2.0", id, result: { tools: TOOL_DEFINITIONS } }); return;
+      send(res, 200, { jsonrpc: "2.0", id, result: { tools: definitions } }); return;
     }
     if (message.method !== "tools/call") { deny("method-not-found"); send(res, 200, rpcError(id, -32601, "Method not found")); return; }
     if (!fields(params, ["name"], ["arguments", "_meta"]) || typeof params.name !== "string" ||
-        !TOOL_DEFINITIONS.some((tool) => tool.name === params.name) ||
+        !definitions.some((tool) => tool.name === params.name) ||
         (params.arguments !== undefined && !object(params.arguments))) {
+      // Authenticated malformed/forbidden prediction calls consume the same
+      // reader budget as failed source reads, without exposing their contents.
+      if (prediction) { try { readCall("__invalid__", {}); } catch { /* budget already closed */ } }
       deny("invalid-tool-call"); recordTool(requestSequence, params.name, "denied", { status: "denied", code: "invalid-tool-call" });
       send(res, 200, rpcError(id, -32602, "Invalid tool call")); return;
     }
-    let result;
+    let result: Record<string, unknown>, rawResult: string;
     try {
       const args = params.arguments ?? {};
-      result = params.name === "list_tree" ? tools.list_tree(args) : params.name === "read_file"
-        ? tools.read_file(args as { path: string }) : tools.search_text(args as { query: string; path?: string });
+      rawResult = readCall(params.name, args);
+      const parsed: unknown = JSON.parse(rawResult);
+      if (!object(parsed)) throw new Error("invalid read result");
+      result = parsed;
     } catch {
       deny("invalid-tool-arguments"); recordTool(requestSequence, params.name, "denied", { status: "denied", code: "invalid-tool-arguments" });
       send(res, 200, rpcError(id, -32602, "Tool arguments or source path are invalid")); return;
@@ -447,17 +471,18 @@ export async function startReviewReadMcpServer(exportRoot: string, readLimits: R
       recordTool(requestSequence, params.name, "denied", { status: "denied", code: "request-deadline" });
       transportError(res, 408, "Request deadline exceeded", "request-deadline"); return;
     }
-    let response = { jsonrpc: "2.0", id, result: { content: [{ type: "text", text: JSON.stringify(result) }],
+    const toolResult: ToolResult = { status: result.status === "incomplete" ? "incomplete" : "complete-for-indexed-export",
+      limitations: Array.isArray(result.limitations) ? result.limitations as string[] : [] };
+    let response = { jsonrpc: "2.0", id, result: { content: [{ type: "text", text: rawResult }],
       isError: result.status === "incomplete" } };
     let responseCompacted = false;
     if (Buffer.byteLength(JSON.stringify(response)) > limits.maxResponseBytes) {
       responseCompacted = true;
       response = { jsonrpc: "2.0", id, result: { content: [{ type: "text", text: JSON.stringify({
-        status: "incomplete", truncated: true, limitations: [...new Set([...result.limitations, "transport-response-byte-limit"])],
+        status: "incomplete", truncated: true, limitations: [...new Set([...toolResult.limitations, "transport-response-byte-limit"])],
         unavailable: [{ path: "", reason: "transport-response-byte-limit" }],
       }) }], isError: true } };
     }
-    const toolResult = result as ToolResult;
     const incompleteCodes = responseCompacted
       ? [...toolResult.limitations, "transport-response-byte-limit"] : toolResult.limitations;
     recordTool(requestSequence, params.name, responseCompacted ? "incomplete" : toolResult.status, response.result, incompleteCodes);
@@ -501,6 +526,12 @@ export function parseReviewReadMcpAuditSnapshot(
   value: unknown,
   label = "review read MCP audit snapshot",
 ): ReviewReadMcpAuditSnapshot {
+  return parseReadMcpAuditSnapshot(value, label, false);
+}
+export function parsePredictionReadMcpAuditSnapshot(value: unknown): ReviewReadMcpAuditSnapshot {
+  return parseReadMcpAuditSnapshot(value, "prediction read MCP audit snapshot", true);
+}
+function parseReadMcpAuditSnapshot(value: unknown, label: string, prediction: boolean): ReviewReadMcpAuditSnapshot {
   if (!fields(value, ["schemaVersion", "protocol", "requests", "sessions", "tools", "toolCalls",
     "incompleteResultCodes", "denialCodes", "transportFailures", "snapshotSha256"])) {
     throw new Error(`${label} has invalid fields`);
@@ -521,7 +552,7 @@ export function parseReviewReadMcpAuditSnapshot(
       throw new Error(`${label}.toolCalls[${index}] has invalid fields`);
     }
     const sequence = positiveAuditCount(entry.sequence, `${label}.toolCalls[${index}].sequence`);
-    if (entry.name !== "list_tree" && entry.name !== "read_file" && entry.name !== "search_text" && entry.name !== "unrecognized") {
+    if (entry.name !== "list_tree" && entry.name !== "read_file" && entry.name !== "search_text" && entry.name !== "unrecognized" && !(prediction && entry.name === "read_link")) {
       throw new Error(`${label}.toolCalls[${index}].name is invalid`);
     }
     if (entry.status !== "complete-for-indexed-export" && entry.status !== "incomplete" && entry.status !== "denied") {

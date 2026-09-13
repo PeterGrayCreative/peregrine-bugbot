@@ -36,6 +36,7 @@ function rejectionEvidence(error: unknown) {
   try { visit(error, "execution", 0); } catch { truncated = true; cleanupUnproven = true; }
   return { primaryError: primaryError ?? diagnostics[0]?.message ?? "execution rejection diagnostic unavailable", diagnostics, truncated, cleanupUnproven };
 }
+export { rejectionEvidence as predictionFailureEvidence };
 /** Create before any preparation. Wrap the existing contained runProvider; its
  * cleanup is not cancelled by the deadline. This does not authorize dispatch. */
 export function createPredictionCliDeadline(options: Options) { return deadline(options, PREDICTION_LIMITS.wallMs, "whole-attempt"); }

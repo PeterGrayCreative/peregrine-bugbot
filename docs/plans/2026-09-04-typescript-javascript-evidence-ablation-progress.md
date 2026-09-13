@@ -672,3 +672,20 @@ contains the implementation. This is the next exploratory design checkpoint,
 not a Section 4 pass or provider authorization. Exact raw mounts, assembled
 prompt hashes, served route/cap enforcement, and prediction-aware execution and
 adjudication remain required before an execution-readiness decision.
+
+## 2026-09-13: prediction reader attachment and blocked runtime probe
+
+The registered four-tool neutral reader now attaches through the existing HTTP
+MCP transport with authenticated repository-only mounts, literal `read_link`,
+shared read ceilings and whole-attempt cancellation. The accepted image was
+pulled using existing authentication and its Node/Codex/sidecar bytes inventoried
+without credentials or network access from the inventory container. Four failed
+zero-provider topology probes and their source versions are preserved. Gateway
+readiness mismatches were corrected; the pinned forwarder still fails startup
+and cannot supply its sealed audit. No probe reached an agent or provider.
+
+This is a deterministic-attachment checkpoint awaiting independent review, not
+an R4 runtime pass. Container termination and complete authenticated cleanup
+remain unproved, all 64 review slots remain unstarted, and execution readiness
+and provider authorization remain false. See the
+[runtime-boundary validation record](../validation/2026-09-13-prediction-runtime-boundary.md).

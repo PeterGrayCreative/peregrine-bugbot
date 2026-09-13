@@ -310,7 +310,8 @@ function digestAudit(protocol, body, field) {
 function sidecarLogs(container, readinessOnly) {
   const gateway = container.role === "gateway";
   const protocol = gateway ? "egress-gateway-v1" : "methodology-mcp-forwarder-v1";
-  const lines = [{ status: "ready", protocol, ready: true }];
+  const lines = [gateway ? { status: "ready", protocol, host: "0.0.0.0", port: 8081 }
+    : { status: "ready", protocol, ready: true, host: "0.0.0.0", port: 8082 }];
   if (!readinessOnly) {
     const auditProtocol = gateway ? "egress-gateway-audit-v1" : "methodology-mcp-forwarder-audit-v1";
     const field = gateway ? "sha256" : "snapshotSha256";
@@ -353,9 +354,8 @@ if (args[0] === "network" && args[1] === "create") {
 } else if (args[0] === "logs") {
   const name = args[args.length - 1];
   const container = state.containers[name];
-  if (!container || (args.length !== 6 && args.length !== 4) || args[1] !== "--tail" || args[2] !== "64") fail("unexpected logs command");
-  if (args.length === 6 && (args[3] !== "--since" || args[4] !== "0s")) fail("unexpected readiness logs command");
-  out(sidecarLogs(container, args.length === 6));
+  if (!container || args.length !== 4 || args[1] !== "--tail" || args[2] !== "64") fail("unexpected logs command");
+  out(sidecarLogs(container, container.running));
 } else if (args[0] === "network" && args[1] === "connect") {
   exact(["network", "connect", "--alias", args[3], args[4], args[5]], "network connect");
   const network = state.networks[args[4]];

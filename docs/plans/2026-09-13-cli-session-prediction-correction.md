@@ -1,5 +1,11 @@
 # Prospective CLI-session prediction correction v1
 
+Later runtime availability and attachment evidence is recorded additively in
+the [runtime-boundary record](../validation/2026-09-13-prediction-runtime-boundary.md).
+The historical unavailable-image statements below describe the original capture;
+they are not the current image-availability result. The scientific contract is
+unchanged and the actual runtime gate remains blocked.
+
 Decision: retain the non-API Sol/high CLI-session route under a new, prospectively
 registered resource contract. The original registration and approved execution
 freeze remain unchanged. Their 120,000 aggregate / 16,000 output-token per-attempt
