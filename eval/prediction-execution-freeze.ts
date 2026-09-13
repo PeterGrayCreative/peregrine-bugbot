@@ -11,7 +11,7 @@ import { verifyPredictionDryRun, type PredictionDryRun, type PredictionPreparati
 import { PREDICTION_CODEX_SUPPORT, PREDICTION_RUNTIME_REQUIREMENTS, predictionRuntimePreflight } from "./prediction-execution-contract.js";
 import { METHODOLOGY_RUNTIME_IMAGE_ACCEPTANCE } from "./methodology-runtime-image.js";
 
-const ROOTS = ["eval/prediction-cli-bridge.ts", "eval/prediction-execution-freeze.ts", "eval/prediction-preauthorization.ts", "eval/prediction-attempt-monitor.ts", "eval/prediction-adjudication-gate.ts", "eval/prediction-cli-session.ts", "eval/prediction-runtime-probe.ts", "eval/prediction-runtime-client.mjs", "src/engines/codex.ts", "src/security/provider-env.ts"];
+const ROOTS = ["eval/prediction-canary-assessment.ts", "eval/prediction-cli-bridge.ts", "eval/prediction-execution-freeze.ts", "eval/prediction-preauthorization.ts", "eval/prediction-attempt-monitor.ts", "eval/prediction-adjudication-gate.ts", "eval/prediction-cli-session.ts", "eval/prediction-runtime-probe.ts", "eval/prediction-runtime-client.mjs", "src/engines/codex.ts", "src/security/provider-env.ts"];
 export interface PredictionPrivateBinding { role: string; path: string; sha256: string; commit: string }
 export interface PredictionExecutionFreezeInput {
   authority: PredictionPreparationAuthority; mountsRoot: string;

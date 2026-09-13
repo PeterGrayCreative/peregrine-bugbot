@@ -371,5 +371,19 @@ AI-prediction development path now has an exact
   observations preserved rather than inferred.
 - [ ] Independent canary review, separate batch authorization and authenticated
   assessor identity/arm-blinding receipts before adjudication.
+- [x] Implement deterministic post-canary assessment with authenticated artifact
+  closure, synthetic positive/mutation controls, immutable two-outcome decisions
+  and an always-deny batch-authorization guard. This is not actual canary evidence.
 
 Provider calls remain zero; `providerAuthorized` and `executionReady` are false.
+
+- [x] Reproduce and correct the independently rejected assessment-v1 read-start
+  closure and extra-search-hit integrity defects without modifying its evidence.
+- [ ] Independent re-review of the additive assessment-v2 correction before any
+  canary amendment or launch. Deterministic pass fixtures confer no authority.
+- [x] Reproduce the second assessor rejection and add global first-occurrence
+  item-ID ownership plus cross-type and ordering regressions in assessment v3.
+- [ ] Independent re-review of v3; v2's rejected result is not a pass.
+- [x] Reproduce the third rejection and enforce one ordered turn and closure of
+  every started item, with missing/duplicate/order/terminal regressions in v4.
+- [ ] Independent re-review of v4; v3's rejected result is not a pass.

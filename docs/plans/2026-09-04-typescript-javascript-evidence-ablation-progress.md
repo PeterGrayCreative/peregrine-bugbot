@@ -756,3 +756,41 @@ coexist identically across arms; disallowed exposure/use must be excluded by the
 separately authorized canary and independent review. This prospective clarification
 does not reinterpret previous failures. The actual canary and all 64 review slots
 remain unstarted, readiness/authorization false, production routing unchanged.
+
+## 2026-09-13: deterministic post-canary assessment
+
+The [post-canary gate](../validation/2026-09-13-prediction-canary-assessment.md)
+authenticates exact registration/mount/package/runtime/bridge bindings and requires
+complete independently observed and reviewed terminal, tool, capability, lifecycle
+and cleanup evidence. It can recommend eligibility only for a separate authorization
+decision; its batch-authorization guard always rejects. Synthetic positive and
+mutation controls are not actual canary evidence. Without an actual authenticated
+canary receipt the decision remains `not-eligible`; no provider or batch work is
+started and all 64 review slots remain unstarted. Exact backend-version uncertainty
+retains its preregistered limitation; unknown capability exposure still rejects.
+
+## 2026-09-13: assessment integrity correction, pending re-review
+
+Independent review rejected assessment v1 for incomplete read-lifecycle closure
+and unauthenticated additional search hits. The [v2 correction](../validation/2026-09-13-prediction-canary-assessment-correction.md)
+reproduces both failures, correlates every started read and checks every returned
+search line against authenticated mounted-byte witnesses and requested scope.
+Predecessor commits/evidence remain immutable. No canary ran, no review slot
+changed and no readiness or provider/batch authorization is inferred.
+
+## 2026-09-13: global item-ID ownership correction, pending re-review
+
+The second assessor gate rejected v2 for order-dependent cross-capability ID
+reuse. The [v3 correction](../validation/2026-09-13-prediction-canary-assessment-id-ownership.md)
+tracks ownership across all item types from first occurrence and adds both-order
+collision controls with synchronized evidence hashes. Rejected v1/v2 and failed
+fixture runs remain preserved. No Sol-low amendment or provider work has begun.
+
+## 2026-09-13: turn and item closure correction, pending re-review
+
+The third assessor gate rejected v3 for missing turn-start enforcement and open
+non-MCP items. The [v4 correction](../validation/2026-09-13-prediction-canary-assessment-turn-closure.md)
+requires one correctly ordered turn and completion of every started item before
+terminal. It preserves only the documented completion-only agent-message case.
+Predecessors and failures remain unchanged; no amendment, provider run or review
+slot consumption is inferred from deterministic fixture results.
