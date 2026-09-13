@@ -777,3 +777,11 @@ reproduces both failures, correlates every started read and checks every returne
 search line against authenticated mounted-byte witnesses and requested scope.
 Predecessor commits/evidence remain immutable. No canary ran, no review slot
 changed and no readiness or provider/batch authorization is inferred.
+
+## 2026-09-13: global item-ID ownership correction, pending re-review
+
+The second assessor gate rejected v2 for order-dependent cross-capability ID
+reuse. The [v3 correction](../validation/2026-09-13-prediction-canary-assessment-id-ownership.md)
+tracks ownership across all item types from first occurrence and adds both-order
+collision controls with synchronized evidence hashes. Rejected v1/v2 and failed
+fixture runs remain preserved. No Sol-low amendment or provider work has begun.

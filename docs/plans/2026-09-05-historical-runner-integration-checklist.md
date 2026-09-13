@@ -381,3 +381,6 @@ Provider calls remain zero; `providerAuthorized` and `executionReady` are false.
   closure and extra-search-hit integrity defects without modifying its evidence.
 - [ ] Independent re-review of the additive assessment-v2 correction before any
   canary amendment or launch. Deterministic pass fixtures confer no authority.
+- [x] Reproduce the second assessor rejection and add global first-occurrence
+  item-ID ownership plus cross-type and ordering regressions in assessment v3.
+- [ ] Independent re-review of v3; v2's rejected result is not a pass.

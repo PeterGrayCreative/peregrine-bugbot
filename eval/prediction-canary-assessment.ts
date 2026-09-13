@@ -119,7 +119,7 @@ export function assessPredictionCanary(input: PredictionCanaryAssessmentInput) {
         if (item.type === "mcp_tool_call") fail(item.server === "source_read" && PREDICTION_CLI_BRIDGE_POLICY.repositoryTools.includes(item.tool), "disallowed tool use");
       }
     }
-    const calls = validateToolLifecycles(events);
+    const calls = validateItemLifecycles(events);
     tokens = observePredictionCliTokens(events, true); fail((tokens as any).status === "known", "token telemetry unknown");
     same(terminal.tokens, tokens, "terminal token telemetry mismatch"); same(terminal.terminal.events, events, "terminal stream mismatch");
     const output = raw("canary/output/result.json"); fail(Buffer.byteLength(output) > 0 && Buffer.byteLength(output) <= canary.outputPolicy.maximumBytes, "raw output missing or truncated");
@@ -162,26 +162,35 @@ export function assessPredictionCanary(input: PredictionCanaryAssessmentInput) {
   return freezeAssessment("eligible-for-separate-batch-authorization", input, binding, checks, limitations, null, tokens, identity);
 }
 
-function validateToolLifecycles(events: any[]) {
-  const reads = new Map<string, { identity: unknown; completed: boolean }>(), calls: any[] = [];
+function validateItemLifecycles(events: any[]) {
+  // ID ownership starts at the first event for every capability, including
+  // completion-only non-I/O items. It cannot depend on seeing an MCP read first.
+  const items = new Map<string, { type: string; identity: unknown; completed: boolean }>(), calls: any[] = [];
   for (const event of events) {
     if (!event.type.startsWith("item.")) continue;
     const item = event.item;
-    if (item.type !== "mcp_tool_call") { fail(!reads.has(item.id), "tool lifecycle changed capability type"); continue; }
     fail(typeof item.id === "string" && item.id.length > 0, "tool lifecycle requires a unique id");
     const identity = { server: item.server, tool: item.tool, arguments: item.arguments };
-    if (event.type === "item.started") {
-      fail(!reads.has(item.id), "tool lifecycle duplicate start"); reads.set(item.id, { identity, completed: false });
+    let owner = items.get(item.id);
+    if (owner) {
+      same(item.type, owner.type, "tool lifecycle changed capability type");
+      fail(event.type !== "item.started" && !owner.completed, "tool lifecycle duplicate start or terminal disposition");
+      if (item.type === "mcp_tool_call") same(identity, owner.identity, "tool lifecycle identity mismatch");
     } else {
-      const read = reads.get(item.id); fail(read && !read.completed, "tool lifecycle missing start or duplicate terminal disposition");
-      same(identity, read!.identity, "tool lifecycle identity mismatch");
-      if (event.type === "item.completed") {
+      // Non-I/O items may be emitted complete without streaming updates. Reads
+      // require an observed start; updates require an already-open same-type ID.
+      fail(event.type === "item.started" || item.type !== "mcp_tool_call" && event.type === "item.completed", "tool lifecycle missing start");
+      owner = { type: item.type, identity, completed: false }; items.set(item.id, owner);
+    }
+    if (event.type === "item.completed") {
+      owner.completed = true;
+      if (item.type === "mcp_tool_call") {
         fail((item.status === undefined || item.status === "completed") && (item.error === undefined || item.error === null), "tool disposition failed or unknown");
-        read!.completed = true; calls.push(event);
+        calls.push(event);
       }
     }
   }
-  fail([...reads.values()].every(read => read.completed), "tool lifecycle has unfinished source reads");
+  fail([...items.values()].every(item => item.type !== "mcp_tool_call" || item.completed), "tool lifecycle has unfinished source reads");
   return calls;
 }
 
@@ -247,7 +256,7 @@ function validateCanaryReads(cleanup: any, modelCalls: any[], evidence: any, mou
   }
 }
 function freezeAssessment(recommendation: string, input: PredictionCanaryAssessmentInput, binding: unknown, checks: string[], limitations: string[], failure: unknown, tokens: unknown, identity: unknown) {
-  const body = { kind: "prediction-canary-assessment-v2", recommendation, inputSha256: digest(input), binding, checks, limitations, failure, tokens, identity,
+  const body = { kind: "prediction-canary-assessment-v3", recommendation, inputSha256: digest(input), binding, checks, limitations, failure, tokens, identity,
     providerAuthorized: false, executionReady: false, batchAuthorized: false, providerCalls: 0,
     boundary: "Deterministic validation of externally authenticated evidence, not independent observation, dispatch authority, efficacy evidence or an R5 pass." };
   return freeze({ ...body, sha256: digest(body) });

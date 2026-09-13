@@ -4,6 +4,14 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { assessPredictionCanary, persistPredictionCanaryAssessment, requirePredictionBatchAuthorization } from "../eval/prediction-canary-assessment.js";
 import { predictionCanaryAssessmentFixture, trustedFixture, sealFixture } from "./eval-prediction-canary-assessment-fixture.js";
+import { observePredictionCliTokens } from "../eval/prediction-cli-session.js";
+
+function repinEventStream(f: Awaited<ReturnType<typeof predictionCanaryAssessmentFixture>>) {
+  const events = f.files["canary/terminal.json"].terminal.events;
+  f.files["canary/execution.json"].stdout = events.map((e: any) => JSON.stringify(e)).join("\n");
+  f.files["canary/terminal.json"].tokens = observePredictionCliTokens(events, true);
+  return f.repin();
+}
 
 test("synthetic complete refusal and literal-link observations can recommend eligibility without authorizing anything", async t => {
   for (const native of [false, true]) {
@@ -143,4 +151,37 @@ test("authenticated multi-file search and matching in-progress read updates rema
   const events = f.files["canary/terminal.json"].terminal.events;
   events.splice(3, 0, { ...structuredClone(events[2]), type: "item.updated" });
   assert.equal(assessPredictionCanary(f.syncReads()).recommendation, "eligible-for-separate-batch-authorization");
+});
+
+test("all item types reserve IDs before, during and after a source-read lifecycle", async t => {
+  const f = await predictionCanaryAssessmentFixture(t), original = structuredClone(f.files), accepted: string[] = [];
+  for (const type of ["agent_message", "reasoning", "plan", "todo_list"]) for (const phase of ["item.started", "item.completed"]) for (const position of [2, 3, -1]) {
+    for (const key of Object.keys(f.files)) f.files[key] = structuredClone(original[key]);
+    f.files["observer/catalog.json"].bookkeeping = ["plan", "todo_list"].map(name => ({ name, effects: [], identicalAcrossArms: true }));
+    const events = f.files["canary/terminal.json"].terminal.events;
+    events.splice(position, 0, { type: phase, item: { id: "tool-1", type, text: "synthetic collision" } });
+    if (assessPredictionCanary(repinEventStream(f)).recommendation !== "not-eligible") accepted.push(`${type}/${phase}/${position}`);
+  }
+  assert.deepEqual(accepted, [], "cross-capability IDs must reject in every ordering");
+});
+
+test("completed non-MCP IDs cannot be duplicated or reassigned to any permitted item type", async t => {
+  const f = await predictionCanaryAssessmentFixture(t), original = structuredClone(f.files), accepted: string[] = [];
+  for (const first of ["agent_message", "reasoning", "plan", "todo_list"]) for (const second of ["agent_message", "reasoning", "plan", "todo_list"]) {
+    for (const key of Object.keys(f.files)) f.files[key] = structuredClone(original[key]);
+    f.files["observer/catalog.json"].bookkeeping = ["plan", "todo_list"].map(name => ({ name, effects: [], identicalAcrossArms: true }));
+    const events = f.files["canary/terminal.json"].terminal.events;
+    events.splice(2, 0, ...[first, second].map(type => ({ type: "item.completed", item: { id: "shared-non-mcp", type, text: "synthetic collision" } })));
+    if (assessPredictionCanary(repinEventStream(f)).recommendation !== "not-eligible") accepted.push(`${first}/${second}`);
+  }
+  assert.deepEqual(accepted, [], "duplicate/cross-type ownership must reject without an MCP participant");
+});
+
+test("distinct non-MCP IDs allow completion-only items and same-type start/update/completion", async t => {
+  const f = await predictionCanaryAssessmentFixture(t), events = f.files["canary/terminal.json"].terminal.events;
+  f.files["observer/catalog.json"].bookkeeping = ["plan", "todo_list"].map(name => ({ name, effects: [], identicalAcrossArms: true }));
+  events.splice(2, 0, { type: "item.completed", item: { id: "reasoning-unique", type: "reasoning", text: "synthetic reasoning" } },
+    ...["agent_message", "plan", "todo_list"].flatMap(type => ["item.started", "item.updated", "item.completed"].map(phase => ({ type: phase, item: { id: `${type}-unique`, type, text: phase } }))));
+  const result = assessPredictionCanary(repinEventStream(f));
+  assert.equal(result.recommendation, "eligible-for-separate-batch-authorization", JSON.stringify(result.failure));
 });
