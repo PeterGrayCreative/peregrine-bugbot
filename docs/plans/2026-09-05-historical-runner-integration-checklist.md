@@ -376,3 +376,8 @@ AI-prediction development path now has an exact
   and an always-deny batch-authorization guard. This is not actual canary evidence.
 
 Provider calls remain zero; `providerAuthorized` and `executionReady` are false.
+
+- [x] Reproduce and correct the independently rejected assessment-v1 read-start
+  closure and extra-search-hit integrity defects without modifying its evidence.
+- [ ] Independent re-review of the additive assessment-v2 correction before any
+  canary amendment or launch. Deterministic pass fixtures confer no authority.

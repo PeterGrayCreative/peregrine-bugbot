@@ -108,7 +108,7 @@ export function assessPredictionCanary(input: PredictionCanaryAssessmentInput) {
     const bookkeeping = array(catalog.bookkeeping).map(value => { const item = exact(value, ["name", "effects", "identicalAcrossArms"], "bookkeeping capability"); fail(["plan", "todo_list"].includes(text(item.name)), "unknown bookkeeping capability"); same([item.effects, item.identicalAcrossArms], [[], true], "bookkeeping has unknown or disallowed effects"); return text(item.name); }); unique(bookkeeping);
     same(execution.code, 0, "canary execution failed"); same(execution.timedOut, false, "canary timed out"); same(execution.cleanupErrors ?? [], [], "execution cleanup failed");
     const parsed = parseCodexEvents(execution.stdout); fail(parsed.malformedEventLines === 0, "malformed terminal stream");
-    const events = parsed.events.map(record), calls = events.filter(e => e.type === "item.completed" && e.item?.type === "mcp_tool_call");
+    const events = parsed.events.map(record);
     fail(events.filter(e => e.type === "thread.started").length === 1 && events[0].type === "thread.started" && events[0].thread_id === observer.modelSessionId, "one fresh observed model session required");
     fail(events.filter(e => e.type === "turn.completed").length === 1 && events.at(-1).type === "turn.completed", "ambiguous or missing terminal usage");
     for (const event of events) {
@@ -119,6 +119,7 @@ export function assessPredictionCanary(input: PredictionCanaryAssessmentInput) {
         if (item.type === "mcp_tool_call") fail(item.server === "source_read" && PREDICTION_CLI_BRIDGE_POLICY.repositoryTools.includes(item.tool), "disallowed tool use");
       }
     }
+    const calls = validateToolLifecycles(events);
     tokens = observePredictionCliTokens(events, true); fail((tokens as any).status === "known", "token telemetry unknown");
     same(terminal.tokens, tokens, "terminal token telemetry mismatch"); same(terminal.terminal.events, events, "terminal stream mismatch");
     const output = raw("canary/output/result.json"); fail(Buffer.byteLength(output) > 0 && Buffer.byteLength(output) <= canary.outputPolicy.maximumBytes, "raw output missing or truncated");
@@ -161,12 +162,47 @@ export function assessPredictionCanary(input: PredictionCanaryAssessmentInput) {
   return freezeAssessment("eligible-for-separate-batch-authorization", input, binding, checks, limitations, null, tokens, identity);
 }
 
+function validateToolLifecycles(events: any[]) {
+  const reads = new Map<string, { identity: unknown; completed: boolean }>(), calls: any[] = [];
+  for (const event of events) {
+    if (!event.type.startsWith("item.")) continue;
+    const item = event.item;
+    if (item.type !== "mcp_tool_call") { fail(!reads.has(item.id), "tool lifecycle changed capability type"); continue; }
+    fail(typeof item.id === "string" && item.id.length > 0, "tool lifecycle requires a unique id");
+    const identity = { server: item.server, tool: item.tool, arguments: item.arguments };
+    if (event.type === "item.started") {
+      fail(!reads.has(item.id), "tool lifecycle duplicate start"); reads.set(item.id, { identity, completed: false });
+    } else {
+      const read = reads.get(item.id); fail(read && !read.completed, "tool lifecycle missing start or duplicate terminal disposition");
+      same(identity, read!.identity, "tool lifecycle identity mismatch");
+      if (event.type === "item.completed") {
+        fail((item.status === undefined || item.status === "completed") && (item.error === undefined || item.error === null), "tool disposition failed or unknown");
+        read!.completed = true; calls.push(event);
+      }
+    }
+  }
+  fail([...reads.values()].every(read => read.completed), "tool lifecycle has unfinished source reads");
+  return calls;
+}
+
 function validateCanaryReads(cleanup: any, modelCalls: any[], evidence: any, mount: PredictionMount, sessionId: string) {
   const reader = cleanup.reader, audit = parsePredictionReadMcpAuditSnapshot(cleanup.audit);
   same([reader.inputDigest, reader.closed, reader.pending, reader.stopped], [mount.inputDigest, true, [], false], "reader lifecycle/scope mismatch");
   fail(integer(reader.calls) <= 100 && integer(reader.bytes) <= 2000000, "read budget exceeded");
   same([audit.sessions.attempted, audit.sessions.initialized, audit.sessions.ready, audit.sessions.denied, audit.denialCodes, audit.transportFailures], [1, 1, 1, 0, [], []], "reader session/transport failure");
   same(evidence.modelSessionId, sessionId, "tool provenance session mismatch");
+  // Search results are only line excerpts. Authenticate full byte witnesses
+  // against the frozen mount; an observer assertion or a hit's own hash is not
+  // sufficient to establish that the excerpt was present in mounted source.
+  const searchSources = new Map<string, string[]>();
+  for (const value of array(evidence.searchSources)) {
+    const witness = exact(value, ["path", "bytes"], "search source witness"), path = text(witness.path);
+    fail(!searchSources.has(path), "duplicate search source witness");
+    const source = mount.allowedFiles.find(f => f.path === path);
+    fail(source && source.mode !== "120000" && typeof witness.bytes === "string", "search source outside authenticated regular-file mount");
+    same([Buffer.byteLength(witness.bytes as string), sha(witness.bytes as string)], [source!.bytes, source!.sha256], "search source bytes differ from authenticated mount");
+    searchSources.set(path, (witness.bytes as string).split("\n"));
+  }
   const transcript = array(reader.transcript).map(record); fail(transcript.length >= 4 && transcript.length === reader.calls && transcript.length === audit.toolCalls.length, "missing reader transcript");
   same(transcript.reduce((sum, t) => sum + Buffer.byteLength(t.response), 0), reader.bytes, "returned-byte accounting mismatch");
   same(evidence.calls.length, transcript.length, "model/reader call closure incomplete"); same(modelCalls.length, transcript.length, "unmatched model tool calls"); unique(modelCalls.map(e => text(e.item.id)));
@@ -179,7 +215,18 @@ function validateCanaryReads(cleanup: any, modelCalls: any[], evidence: any, mou
       const source = mount.allowedFiles.find(f => f.path === t.arguments.path); fail(source, "read outside authenticated mounted scope");
       if (t.tool === "read_file" && parsed.text !== null && parsed.text !== undefined) { fail(source!.mode !== "120000" && typeof parsed.text === "string", "file read followed a link or returned malformed text"); same(sha(parsed.text), source!.sha256, "read contents differ from mounted source"); }
     }
-    if (t.tool === "search_text" && t.arguments.path !== undefined) fail(t.arguments.path === "head" || mount.allowedFiles.some(f => f.path === t.arguments.path || f.path.startsWith(t.arguments.path + "/")), "search outside authenticated mounted scope");
+    if (t.tool === "search_text") {
+      const args = t.arguments, scope = args.path ?? "";
+      fail(Object.keys(args).every(k => ["query", "path"].includes(k)) && (args.path === undefined || typeof args.path === "string") &&
+        typeof args.query === "string" && args.query.length > 0 && Buffer.byteLength(args.query) <= 1024 && !/[\r\n\0]/.test(args.query), "invalid literal search arguments");
+      fail(scope === "" || mount.allowedFiles.some(f => f.path === scope || f.path.startsWith(scope + "/")), "search outside authenticated mounted scope");
+      for (const value of array(parsed.matches)) {
+        const hit = exact(value, ["path", "line", "text"], "search hit"), path = text(hit.path), source = searchSources.get(path);
+        fail(source !== undefined && (scope === "" || path === scope || path.startsWith(scope + "/")), "search hit outside authenticated source or requested scope");
+        fail(Number.isSafeInteger(hit.line) && (hit.line as number) > 0 && typeof hit.text === "string" && hit.text.includes(args.query), "search hit line or literal mismatch");
+        same(hit.text, source![(hit.line as number) - 1], "search hit content differs from authenticated source line");
+      }
+    }
     same(event.result.content, [{ type: "text", text: t.response }], "model did not receive authenticated reader result");
     const rpcResult = { content: [{ type: "text", text: t.response }], isError: parsed.status === "incomplete" };
     same([audit.toolCalls[index]!.name, audit.toolCalls[index]!.resultSha256], [t.tool, sha("review-read-mcp-tool-result-v1\0" + JSON.stringify(rpcResult))], "reader audit/result mismatch");
@@ -200,7 +247,7 @@ function validateCanaryReads(cleanup: any, modelCalls: any[], evidence: any, mou
   }
 }
 function freezeAssessment(recommendation: string, input: PredictionCanaryAssessmentInput, binding: unknown, checks: string[], limitations: string[], failure: unknown, tokens: unknown, identity: unknown) {
-  const body = { kind: "prediction-canary-assessment-v1", recommendation, inputSha256: digest(input), binding, checks, limitations, failure, tokens, identity,
+  const body = { kind: "prediction-canary-assessment-v2", recommendation, inputSha256: digest(input), binding, checks, limitations, failure, tokens, identity,
     providerAuthorized: false, executionReady: false, batchAuthorized: false, providerCalls: 0,
     boundary: "Deterministic validation of externally authenticated evidence, not independent observation, dispatch authority, efficacy evidence or an R5 pass." };
   return freeze({ ...body, sha256: digest(body) });

@@ -83,3 +83,64 @@ test("consistently resealed tool records cannot hide missing required operations
   const transcript = f.files["canary/cleanup.json"].reader.transcript, value = JSON.parse(transcript[1].response); value.text += "injected secret"; transcript[1].response = JSON.stringify(value);
   assert.match(JSON.stringify(assessPredictionCanary(f.syncReads()).failure), /mounted source/);
 });
+
+test("every started source read has one matching completion with unique identity", async t => {
+  const f = await predictionCanaryAssessmentFixture(t), original = structuredClone(f.files);
+  const mutations: [string, (events: any[]) => void][] = [
+    ["unfinished read", events => { const item = structuredClone(events[2].item); item.id = "unfinished"; events.splice(-1, 0, { type: "item.started", item }); }],
+    ["duplicate start", events => { events.splice(3, 0, structuredClone(events[2])); }],
+    ["mismatched arguments", events => { events[2].item.arguments = { path: "head" }; }],
+    ["mismatched tool", events => { events[2].item.tool = "read_file"; }],
+    ["completion without start", events => { events.splice(2, 1); }],
+    ["completion before start", events => { [events[2], events[3]] = [events[3], events[2]]; }],
+    ["duplicate completion", events => { events.splice(4, 0, structuredClone(events[3])); }],
+    ["unmatched update", events => { const item = structuredClone(events[2].item); item.id = "unknown"; events.splice(3, 0, { type: "item.updated", item }); }],
+    ["update after completion", events => { events.splice(4, 0, { ...structuredClone(events[2]), type: "item.updated" }); }],
+    ["failed completion", events => { events[3].item.status = "failed"; }],
+    ["completion changes capability type", events => { events[3].item.type = "reasoning"; }],
+  ];
+  for (const [name, mutate] of mutations) {
+    for (const key of Object.keys(f.files)) f.files[key] = structuredClone(original[key]);
+    const events = f.files["canary/terminal.json"].terminal.events; mutate(events);
+    f.files["canary/execution.json"].stdout = events.map((e: any) => JSON.stringify(e)).join("\n");
+    const result = assessPredictionCanary(f.repin());
+    assert.equal(result.recommendation, "not-eligible", name); assert.match(JSON.stringify(result.failure), /tool (lifecycle|disposition)/, name);
+  }
+});
+
+test("every search hit is bound to authenticated source bytes, line and requested scope", async t => {
+  const f = await predictionCanaryAssessmentFixture(t), original = structuredClone(f.files);
+  const mutations: [string, (search: any, args: any, evidence: any) => void][] = [
+    ["extra curator hit", search => { search.matches.push({ path: "curator/predictions.json", line: 1, text: "diff --git secret" }); }],
+    ["injected mounted line", search => { search.matches.push({ path: "review.diff", line: 1, text: "diff --git injected prediction" }); }],
+    ["wrong line number", search => { search.matches[0].line = 2; }],
+    ["invalid line number", search => { search.matches[0].line = 0; }],
+    ["extra result field", search => { search.matches[0].hint = "prediction"; }],
+    ["outside requested subtree", (_search, args) => { args.path = "head"; }],
+    ["outside requested file", (_search, args) => { args.path = "head/index.ts"; }],
+    ["literal not on returned line", (_search, args) => { args.query = "not-in-source"; }],
+    ["source witness missing", (_search, _args, evidence) => { evidence.searchSources = []; }],
+    ["source witness drift", (_search, _args, evidence) => { evidence.searchSources[0].bytes += "injected"; }],
+    ["duplicate source witness", (_search, _args, evidence) => { evidence.searchSources.push(evidence.searchSources[0]); }],
+  ];
+  for (const [name, mutate] of mutations) {
+    for (const key of Object.keys(f.files)) f.files[key] = structuredClone(original[key]);
+    const transcript = f.files["canary/cleanup.json"].reader.transcript, search = JSON.parse(transcript[2].response);
+    mutate(search, transcript[2].arguments, f.files["observer/tool-calls.json"]); transcript[2].response = JSON.stringify(search);
+    const result = assessPredictionCanary(f.syncReads());
+    assert.equal(result.recommendation, "not-eligible", name); assert.match(JSON.stringify(result.failure), /search/, name);
+  }
+});
+
+test("authenticated multi-file search and matching in-progress read updates remain eligible", async t => {
+  const f = await predictionCanaryAssessmentFixture(t), transcript = f.files["canary/cleanup.json"].reader.transcript;
+  transcript[2].arguments = { query: "export const value" };
+  const search = JSON.parse(transcript[2].response), diff = JSON.parse(transcript[1].response).text;
+  search.matches = diff.split("\n").flatMap((text: string, index: number) => text.includes(transcript[2].arguments.query) ? [{ path: "review.diff", line: index + 1, text }] : []);
+  search.matches.push({ path: "head/index.ts", line: 1, text: "export const value = 1;" });
+  transcript[2].response = JSON.stringify(search);
+  f.files["observer/tool-calls.json"].searchSources.push({ path: "head/index.ts", bytes: "export const value = 1;\n" });
+  const events = f.files["canary/terminal.json"].terminal.events;
+  events.splice(3, 0, { ...structuredClone(events[2]), type: "item.updated" });
+  assert.equal(assessPredictionCanary(f.syncReads()).recommendation, "eligible-for-separate-batch-authorization");
+});

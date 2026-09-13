@@ -768,3 +768,12 @@ mutation controls are not actual canary evidence. Without an actual authenticate
 canary receipt the decision remains `not-eligible`; no provider or batch work is
 started and all 64 review slots remain unstarted. Exact backend-version uncertainty
 retains its preregistered limitation; unknown capability exposure still rejects.
+
+## 2026-09-13: assessment integrity correction, pending re-review
+
+Independent review rejected assessment v1 for incomplete read-lifecycle closure
+and unauthenticated additional search hits. The [v2 correction](../validation/2026-09-13-prediction-canary-assessment-correction.md)
+reproduces both failures, correlates every started read and checks every returned
+search line against authenticated mounted-byte witnesses and requested scope.
+Predecessor commits/evidence remain immutable. No canary ran, no review slot
+changed and no readiness or provider/batch authorization is inferred.

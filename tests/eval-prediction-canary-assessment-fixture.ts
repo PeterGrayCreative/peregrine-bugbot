@@ -52,7 +52,10 @@ export async function predictionCanaryAssessmentFixture(t: TestContext, native =
   const auditBody = { schemaVersion: 1, protocol: "review-read-mcp-audit-v1", requests: { observed: 7, budgeted: 7, parsed: 7, denied: 0 }, sessions: { attempted: 1, initialized: 1, ready: 1, denied: 0 },
     tools: { attempted: 4, complete: native ? 4 : 3, incomplete: native ? 0 : 1, denied: 0 }, toolCalls, incompleteResultCodes: [], denialCodes: [], transportFailures: [] };
   const audit = { ...auditBody, snapshotSha256: sha("review-read-mcp-audit-snapshot-v1\0" + JSON.stringify(auditBody)) };
-  const events = [{ type: "thread.started", thread_id: session }, { type: "turn.started" }, ...transcript.map(v => ({ type: "item.completed", item: { id: `tool-${v.ticket}`, type: "mcp_tool_call", server: "source_read", tool: v.tool, arguments: v.arguments, result: { content: [{ type: "text", text: v.response }] } } })), { type: "turn.completed", usage: { input_tokens: 20, output_tokens: 5 } }];
+  const events = [{ type: "thread.started", thread_id: session }, { type: "turn.started" }, ...transcript.flatMap(v => {
+    const item = { id: `tool-${v.ticket}`, type: "mcp_tool_call", server: "source_read", tool: v.tool, arguments: v.arguments };
+    return [{ type: "item.started", item: { ...item } }, { type: "item.completed", item: { ...item, result: { content: [{ type: "text", text: v.response }] } } }];
+  }), { type: "turn.completed", usage: { input_tokens: 20, output_tokens: 5 } }];
   const deadline = sealFixture({ kind: "prediction-cli-deadline-terminal-v1", attemptId: canary.canaryId, executionClass: "whole-attempt", wallMs: 1200000, deadlineExceeded: false,
     cancellationReason: null, elapsedMs: 40, executionError: null, cleanupError: null, readCloseError: null, evidenceError: null, teardownCompleted: true,
     events: ["start", "exec-start", "exec-closed", "teardown-complete"].map((kind, i) => ({ kind, elapsedMs: i * 10,
@@ -79,7 +82,7 @@ export async function predictionCanaryAssessmentFixture(t: TestContext, native =
     "observer/identity.json": { modelSessionId: session, requested: route, observedRequest: { model: route.model, effort: route.effort }, servedModel: null, servedVersion: null, provenance: "unavailable", providerEvidenceReference: null },
     "observer/lifecycle.json": { modelSessionId: session, clientProcessId: 12345, clientContainer: "peregrine-eval-synthetic-client", deadlineSha256: deadline.sha256, guardStartedBeforePreparation: true, deadlineSignalAttached: true, clientClosed: true, cleanupUncancelled: true, elapsedTimeoutObserved: false, forcedTerminationObserved: false },
     "observer/absence.json": { modelSessionId: session, deadlineSha256: deadline.sha256, clientContainer: "peregrine-eval-synthetic-client", resources: [["process", "12345"], ["container", "peregrine-eval-synthetic-client"], ["container", egress.gateway.name], ["container", egress.forwarder.name], ["network", egress.network], ["network", egress.externalNetwork]].map(([kind, id]) => ({ kind, id, observedAbsent: true, afterClientClosed: true, uncancelled: true, queryResult: { code: 0, stdout: "", timedOut: false } })) },
-    "observer/tool-calls.json": { modelSessionId: session, nativeLinkMode: native ? "literal-native-link" : "no-native-link-refusal", calls: transcript.map(t => ({ eventId: `tool-${t.ticket}`, ticket: t.ticket, source: "model", responseSha256: sha(t.response) })) },
+    "observer/tool-calls.json": { modelSessionId: session, nativeLinkMode: native ? "literal-native-link" : "no-native-link-refusal", searchSources: [{ path: "review.diff", bytes: diff }], calls: transcript.map(t => ({ eventId: `tool-${t.ticket}`, ticket: t.ticket, source: "model", responseSha256: sha(t.response) })) },
     "observer/gateway-audit.json": { ...gatewayBody, sealed: true, sha256: sha("egress-gateway-audit-v1\0" + JSON.stringify(gatewayBody)) },
     "observer/forwarder-audit.json": { ...forwarderBody, snapshotSha256: sha("methodology-mcp-forwarder-audit-v1\0" + JSON.stringify(forwarderBody)) },
   };
@@ -96,7 +99,11 @@ export async function predictionCanaryAssessmentFixture(t: TestContext, native =
     const transcript = files["canary/cleanup.json"].reader.transcript;
     const events = files["canary/terminal.json"].terminal.events;
     const calls = events.filter((e: any) => e.type === "item.completed");
-    transcript.forEach((v: any, i: number) => { Object.assign(calls[i].item, { tool: v.tool, arguments: v.arguments, result: { content: [{ type: "text", text: v.response }] } }); });
+    transcript.forEach((v: any, i: number) => {
+      const start = events.find((e: any) => e.type === "item.started" && e.item.id === calls[i].item.id);
+      if (start) Object.assign(start.item, { tool: v.tool, arguments: v.arguments });
+      Object.assign(calls[i].item, { tool: v.tool, arguments: v.arguments, result: { content: [{ type: "text", text: v.response }] } });
+    });
     files["canary/execution.json"].stdout = events.map((e: any) => JSON.stringify(e)).join("\n");
     files["canary/terminal.json"].tokens = observePredictionCliTokens(events, true);
     const cleanup = files["canary/cleanup.json"], audit = cleanup.audit;
