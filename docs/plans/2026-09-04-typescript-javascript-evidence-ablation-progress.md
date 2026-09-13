@@ -740,3 +740,19 @@ required; normal completion cannot certify an elapsed timeout. Assessor and
 blinding receipts remain absent, and batch authorization is separate. All 64
 review slots and the canary are unstarted; both readiness/authorization flags
 remain false. Prior failures and registrations are unchanged.
+
+## 2026-09-13: scoped CLI bridge, synthetic executor only
+
+The [bridge checkpoint](../validation/2026-09-13-prediction-cli-bridge.md) adds
+one-use run/package/canary/scope-bound authority to the existing experimental
+containment path, with exact Sol/high command validation, four authenticated
+repository tools, deadline propagation, uncancelled cleanup and retained partial
+evidence. Node22 typecheck and 52 prediction, 13 HTTP and 155 affected tests pass.
+The new executor fixture uses real local HTTP but synthetic Docker/CLI results;
+it is not pinned-client or provider support evidence.
+
+The built-in tool catalog is explicitly unknown. Only non-I/O bookkeeping may
+coexist identically across arms; disallowed exposure/use must be excluded by the
+separately authorized canary and independent review. This prospective clarification
+does not reinterpret previous failures. The actual canary and all 64 review slots
+remain unstarted, readiness/authorization false, production routing unchanged.

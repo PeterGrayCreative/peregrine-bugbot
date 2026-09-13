@@ -5,6 +5,7 @@ import { isAbsolute, join, relative, resolve, sep } from "node:path";
 import type { ExecResult } from "../src/util/exec.js";
 import { exec } from "../src/util/exec.js";
 import type { ExperimentProviderAccess, ProviderExec, RunnerName } from "../src/types.js";
+import { validatePredictionCliCommand } from "./prediction-cli-command.js";
 import {
   assertMethodologyEgressLaunchCapability,
   METHODOLOGY_EGRESS_RUNTIME_IMAGE,
@@ -47,7 +48,7 @@ export interface ContainedProviderOptions {
   image?: string;
   run?: typeof exec;
   /** Methodology and judge launches use narrower command profiles than legacy reviews. */
-  profile?: "review" | "methodology-review" | "semantic-judge";
+  profile?: "review" | "methodology-review" | "semantic-judge" | "prediction-cli";
   /** Optional supervisor-issued methodology sidecar network capability. */
   methodologyEgress?: MethodologyEgressLaunchCapability;
 }
@@ -65,7 +66,7 @@ export interface ParsedContainedLaunch {
   sessionDir?: string;
   command: string;
   commandArgs: string[];
-  profile: "review" | "methodology-review" | "semantic-judge";
+  profile: "review" | "methodology-review" | "semantic-judge" | "prediction-cli";
   methodologyEgress?: MethodologyEgressLaunchCapability;
 }
 
@@ -76,6 +77,7 @@ export function buildContainedProviderArgs(
   containerName = `peregrine-eval-${randomUUID()}`,
 ): string[] {
   const methodologyEgress = resolveMethodologyEgress(options);
+  if (options.profile === "prediction-cli" && options.providerAccess !== "cli-session") throw new Error("prediction CLI forbids API-key fallback");
   const launchImage = options.image ?? (methodologyEgress ? METHODOLOGY_EGRESS_RUNTIME_IMAGE : ACCEPTED_EVAL_RUNTIME_IMAGE);
   assertLaunchImage(launchImage, methodologyEgress);
   if (command !== options.runner) throw new Error("provider command does not match the selected runner");
@@ -148,10 +150,11 @@ export function parseContainedProviderArgs(
   runner: Exclude<RunnerName, "mock">,
   providerAccess: Exclude<ExperimentProviderAccess, "not-applicable">,
   expectedIdentity = hostIdentity(),
-  profile: "review" | "methodology-review" | "semantic-judge" = "review",
+  profile: "review" | "methodology-review" | "semantic-judge" | "prediction-cli" = "review",
   methodologyEgress?: MethodologyEgressLaunchCapability,
 ): ParsedContainedLaunch {
   const egress = validateMethodologyEgress(methodologyEgress, profile);
+  if (profile === "prediction-cli" && providerAccess !== "cli-session") throw new Error("prediction CLI forbids API-key fallback");
   let cursor = 0;
   const take = (expected?: string): string => {
     const value = args[cursor++];
@@ -215,9 +218,14 @@ export function parseContainedProviderArgs(
 function validateProviderCommand(
   runner: Exclude<RunnerName, "mock">,
   args: readonly string[],
-  profile: "review" | "methodology-review" | "semantic-judge",
+  profile: "review" | "methodology-review" | "semantic-judge" | "prediction-cli",
   methodologyEgress?: MethodologyEgressLaunchCapability,
 ): void {
+  if (profile === "prediction-cli") {
+    if (runner !== "codex" || !methodologyEgress) throw new Error("prediction CLI requires scoped Codex egress");
+    validatePredictionCliCommand(args, methodologyEgress.internalMcpUrl);
+    return;
+  }
   if (profile === "semantic-judge") {
     if (runner !== "codex") throw new Error("semantic judge containment currently supports only Codex");
     const expected = [
@@ -669,10 +677,13 @@ function assertLaunchImage(
 
 function validateMethodologyEgress(
   descriptor: MethodologyEgressLaunchCapability | undefined,
-  profile: "review" | "methodology-review" | "semantic-judge",
+  profile: "review" | "methodology-review" | "semantic-judge" | "prediction-cli",
 ): MethodologyEgressLaunchCapability | undefined {
-  if (descriptor === undefined) return undefined;
-  if (profile !== "methodology-review") {
+  if (descriptor === undefined) {
+    if (profile === "prediction-cli") throw new Error("prediction CLI requires scoped egress");
+    return undefined;
+  }
+  if (profile !== "methodology-review" && profile !== "prediction-cli") {
     throw new Error("methodology egress is only available to the methodology review profile");
   }
   assertMethodologyEgressLaunchCapability(descriptor);
