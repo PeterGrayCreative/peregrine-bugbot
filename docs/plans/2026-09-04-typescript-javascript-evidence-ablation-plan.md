@@ -268,3 +268,10 @@ non-I/O bookkeeping must be identical across arms, and the pinned built-in
 catalog remains unknown until an independently reviewed authorized canary.
 No package, synthetic token receipt or normal completion implies provider
 authorization, exact served identity, elapsed timeout or efficacy evidence.
+
+The consumed-canary failure and rejected redaction correction are preserved.
+The [prospective private-stream successor](../validation/2026-09-13-prediction-private-canary-stream.md)
+uses an enum-only in-memory JSON protocol, metadata-only receipts and a nonsecret
+internal reader endpoint. It remains structural-only pending new immutable
+image/helper acceptance, independent live observation and fresh authorization;
+the consumed approval and all 64 unstarted review slots are unchanged.

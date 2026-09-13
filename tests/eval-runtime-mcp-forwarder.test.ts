@@ -81,6 +81,21 @@ test("forwards only the exact POST endpoint and fixed upstream destination", asy
   assert.equal(seen.length, 1);
 });
 
+test("prospective fixed endpoint keeps the upstream capability out of client configuration", async (t) => {
+  const requests: ForwardRequest[] = [];
+  const service = await fixture(request => { requests.push(request); return { statusCode: 200, body: "{}" }; }, { fixedClientPath: true });
+  t.after(() => service.close());
+  assert.equal(new URL(service.url).pathname, "/mcp");
+  assert.equal(service.endpoint, "/mcp");
+  assert.equal(JSON.stringify({ url: service.url, endpoint: service.endpoint, readiness: service.readiness() }).includes(token), false);
+  assert.equal((await call(service.url, { headers: { "content-type": "application/json" } })).status, 200);
+  assert.equal(requests.length, 1); assert.equal(requests[0]!.path, "/mcp/" + token);
+  for (const path of ["/mcp/" + token, "/mcp/other", "/mcp?token=" + token, "/mcp/"])
+    assert.equal((await call(new URL(path, service.url).href, { headers: { "content-type": "application/json" } })).status, 404);
+  assert.equal(requests.length, 1);
+  assert.equal(JSON.stringify(service.auditSnapshot()).includes(token), false);
+});
+
 test("strips arbitrary headers, refuses redirects, and never performs a second request", async (t) => {
   let calls = 0;
   const service = await fixture(() => {

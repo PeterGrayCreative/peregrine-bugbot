@@ -7,6 +7,7 @@ import { exec } from "../src/util/exec.js";
 import type { ExperimentProviderAccess, ProviderExec, RunnerName } from "../src/types.js";
 import { validatePredictionCliCommand } from "./prediction-cli-command.js";
 import { validatePredictionSolLowCanaryCommand } from "./prediction-sol-low-command.js";
+import { validatePredictionSafeCanaryCommand, SAFE_CANARY_MCP_URL } from "./prediction-safe-canary-command.js";
 import { observePredictionExec, type MechanicalEvidenceBinding } from "./prediction-mechanical-evidence.js";
 import {
   assertMethodologyEgressLaunchCapability,
@@ -40,6 +41,8 @@ const SESSION_TARGET: Record<Exclude<RunnerName, "mock">, string> = {
 };
 const CODEX_HOME_TARGET = "/home/peregrine/.codex";
 const METHODOLOGY_MCP_FORWARDER = "mcp-forwarder:8082";
+type ContainedProfile = "review" | "methodology-review" | "semantic-judge" | "prediction-cli" | "prediction-sol-low-canary" | "prediction-safe-canary";
+const predictionProfile = (profile: unknown) => ["prediction-cli", "prediction-sol-low-canary", "prediction-safe-canary"].includes(profile as string);
 
 export interface ContainedProviderOptions {
   mechanicalEvidenceDirectory?: string;
@@ -53,7 +56,7 @@ export interface ContainedProviderOptions {
   image?: string;
   run?: typeof exec;
   /** Methodology and judge launches use narrower command profiles than legacy reviews. */
-  profile?: "review" | "methodology-review" | "semantic-judge" | "prediction-cli" | "prediction-sol-low-canary";
+  profile?: ContainedProfile;
   /** Optional supervisor-issued methodology sidecar network capability. */
   methodologyEgress?: MethodologyEgressLaunchCapability;
 }
@@ -71,7 +74,7 @@ export interface ParsedContainedLaunch {
   sessionDir?: string;
   command: string;
   commandArgs: string[];
-  profile: "review" | "methodology-review" | "semantic-judge" | "prediction-cli" | "prediction-sol-low-canary";
+  profile: ContainedProfile;
   methodologyEgress?: MethodologyEgressLaunchCapability;
 }
 
@@ -82,16 +85,16 @@ export function buildContainedProviderArgs(
   containerName = `peregrine-eval-${randomUUID()}`,
 ): string[] {
   const methodologyEgress = resolveMethodologyEgress(options);
-  if ((options.profile === "prediction-cli" || options.profile === "prediction-sol-low-canary") && options.providerAccess !== "cli-session") throw new Error("prediction CLI forbids API-key fallback");
+  if (predictionProfile(options.profile) && options.providerAccess !== "cli-session") throw new Error("prediction CLI forbids API-key fallback");
   const launchImage = options.image ?? (methodologyEgress ? METHODOLOGY_EGRESS_RUNTIME_IMAGE : ACCEPTED_EVAL_RUNTIME_IMAGE);
   assertLaunchImage(launchImage, methodologyEgress);
   if (command !== options.runner) throw new Error("provider command does not match the selected runner");
   const checkoutDir = safeDirectory(options.checkoutDir, "checkout");
   const assetsDir = safeDirectory(options.assetsDir, "assets");
-  const outputDir = safeDirectory(options.outputDir, "output");
+  const outputDir = options.profile === "prediction-safe-canary" ? resolve(options.outputDir) : safeDirectory(options.outputDir, "output");
   const identity = hostIdentity();
-  const outputStat = lstatSync(outputDir);
-  if (outputStat.uid !== identity.uid || (outputStat.mode & 0o077) !== 0) {
+  const outputStat = options.profile === "prediction-safe-canary" ? null : lstatSync(outputDir);
+  if (outputStat && (outputStat.uid !== identity.uid || (outputStat.mode & 0o077) !== 0)) {
     throw new Error("attempt-owned output directory must be private and owned by the evaluator");
   }
   if (!CONTAINER_NAME.test(containerName)) throw new Error("invalid opaque evaluation container name");
@@ -140,7 +143,7 @@ export function renderContainedProviderArgs(input: {
     "--workdir", "/workspace",
     "--mount", bindMount(checkoutDir, "/workspace", true),
     "--mount", bindMount(assetsDir, "/opt/peregrine", true),
-    "--mount", bindMount(outputDir, "/output", false),
+    ...(profile === "prediction-safe-canary" ? [] : ["--mount", bindMount(outputDir, "/output", false)]),
     "--tmpfs", `/tmp:rw,noexec,nosuid,nodev,size=64m,uid=${identity.uid},gid=${identity.gid}`,
     "--tmpfs", `/home/peregrine:rw,noexec,nosuid,nodev,size=128m,uid=${identity.uid},gid=${identity.gid}`,
     // Codex 0.152.0 opens state_5.sqlite under CODEX_HOME even for ephemeral
@@ -173,11 +176,11 @@ export function parseContainedProviderArgs(
   runner: Exclude<RunnerName, "mock">,
   providerAccess: Exclude<ExperimentProviderAccess, "not-applicable">,
   expectedIdentity = hostIdentity(),
-  profile: "review" | "methodology-review" | "semantic-judge" | "prediction-cli" | "prediction-sol-low-canary" = "review",
+  profile: ContainedProfile = "review",
   methodologyEgress?: MethodologyEgressLaunchCapability,
 ): ParsedContainedLaunch {
   const egress = validateMethodologyEgress(methodologyEgress, profile);
-  if ((profile === "prediction-cli" || profile === "prediction-sol-low-canary") && providerAccess !== "cli-session") throw new Error("prediction CLI forbids API-key fallback");
+  if (predictionProfile(profile) && providerAccess !== "cli-session") throw new Error("prediction CLI forbids API-key fallback");
   let cursor = 0;
   const take = (expected?: string): string => {
     const value = args[cursor++];
@@ -208,7 +211,8 @@ export function parseContainedProviderArgs(
   take("--user"); take(`${expectedIdentity.uid}:${expectedIdentity.gid}`); take("--workdir"); take("/workspace");
   take("--mount"); const checkoutDir = parseBindMount(take(), "/workspace", true);
   take("--mount"); const assetsDir = parseBindMount(take(), "/opt/peregrine", true);
-  take("--mount"); const outputDir = parseBindMount(take(), "/output", false);
+  let outputDir = ""; // Explicitly unmounted in the file-free prospective profile.
+  if (profile !== "prediction-safe-canary") { take("--mount"); outputDir = parseBindMount(take(), "/output", false); }
   take("--tmpfs"); take(`/tmp:rw,noexec,nosuid,nodev,size=64m,uid=${expectedIdentity.uid},gid=${expectedIdentity.gid}`);
   take("--tmpfs"); take(`/home/peregrine:rw,noexec,nosuid,nodev,size=128m,uid=${expectedIdentity.uid},gid=${expectedIdentity.gid}`);
   if (runner === "codex") {
@@ -241,9 +245,13 @@ export function parseContainedProviderArgs(
 function validateProviderCommand(
   runner: Exclude<RunnerName, "mock">,
   args: readonly string[],
-  profile: "review" | "methodology-review" | "semantic-judge" | "prediction-cli" | "prediction-sol-low-canary",
+  profile: ContainedProfile,
   methodologyEgress?: MethodologyEgressLaunchCapability,
 ): void {
+  if (profile === "prediction-safe-canary") {
+    if (runner !== "codex" || methodologyEgress?.internalMcpUrl !== SAFE_CANARY_MCP_URL) throw new Error("safe canary requires a nonsecret fixed endpoint");
+    validatePredictionSafeCanaryCommand(args); return;
+  }
   if (profile === "prediction-cli" || profile === "prediction-sol-low-canary") {
     if (runner !== "codex" || !methodologyEgress) throw new Error("prediction CLI requires scoped Codex egress");
     if (profile === "prediction-sol-low-canary") validatePredictionSolLowCanaryCommand(args, methodologyEgress.internalMcpUrl);
@@ -396,6 +404,7 @@ function validateMethodologyCodexCommand(
 }
 
 export function createContainedProviderExec(options: ContainedProviderOptions): ProviderExec {
+  if (options.profile === "prediction-safe-canary" && (!options.run || options.mechanicalEvidenceDirectory)) throw new Error("safe canary runtime acceptance unavailable; injected private-evidence path only");
   const run = options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.mechanicalEvidenceBinding!, options.run ?? exec, options.mechanicalForwarderToken) : options.run ?? exec;
   return async (command, commandArgs, execOptions = {}) => {
     if (execOptions.inheritEnv !== false) throw new Error("contained provider execution requires an explicit isolated environment");
@@ -415,6 +424,7 @@ export function createContainedProviderExec(options: ContainedProviderOptions): 
         stdin: execOptions.stdin,
         env: dockerClientEnvironment(options, true),
         inheritEnv: false,
+        ...(options.profile === "prediction-safe-canary" ? { maximumOutputBytes: 4_194_304 } : {}),
       });
     } catch (error) {
       primary = error;
@@ -701,13 +711,13 @@ function assertLaunchImage(
 
 function validateMethodologyEgress(
   descriptor: MethodologyEgressLaunchCapability | undefined,
-  profile: "review" | "methodology-review" | "semantic-judge" | "prediction-cli" | "prediction-sol-low-canary",
+  profile: ContainedProfile,
 ): MethodologyEgressLaunchCapability | undefined {
   if (descriptor === undefined) {
-    if (profile === "prediction-cli" || profile === "prediction-sol-low-canary") throw new Error("prediction CLI requires scoped egress");
+    if (predictionProfile(profile)) throw new Error("prediction CLI requires scoped egress");
     return undefined;
   }
-  if (profile !== "methodology-review" && profile !== "prediction-cli" && profile !== "prediction-sol-low-canary") {
+  if (profile !== "methodology-review" && !predictionProfile(profile)) {
     throw new Error("methodology egress is only available to the methodology review profile");
   }
   assertMethodologyEgressLaunchCapability(descriptor);

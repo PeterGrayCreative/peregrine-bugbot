@@ -23,7 +23,7 @@ export interface PredictionExecutionFreezeInput {
  * complete source closure. Runtime data files are explicitly included below.
  * npm dependencies are lockfile-bound; installed package bytes are not attested. */
 export function predictionExecutionSourceManifest(root = packageRoot()) {
-  const pending = [...ROOTS], found = new Set<string>(), packageImports = new Set<string>();
+  const pending = [...ROOTS, "eval/prediction-safe-canary.ts"], found = new Set<string>(), packageImports = new Set<string>();
   for (let i = 0; i < pending.length; i++) {
     const path = pending[i]!;
     if (found.has(path)) continue;

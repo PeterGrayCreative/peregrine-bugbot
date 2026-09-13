@@ -13,6 +13,7 @@ import { METHODOLOGY_RUNTIME_IMAGE_ACCEPTANCE } from "./methodology-runtime-imag
 import { bindSolLowOperator, type CanaryTrustedBytes } from "./prediction-sol-low-operator-contract.js";
 import { predictionSolLowCanaryCommand } from "./prediction-sol-low-command.js";
 import { MECHANICAL_RECEIPT_PATH, validateMechanicalReceipts } from "./prediction-mechanical-receipts.js";
+import { validateItemLifecycles } from "./prediction-canary-item-lifecycle.js";
 // @ts-expect-error Pinned built-in ESM runtime parser has no declaration file.
 import { parseAuditSnapshot } from "../container/eval-runtime/egress-gateway.mjs";
 // @ts-expect-error Pinned built-in ESM runtime parser has no declaration file.
@@ -214,38 +215,6 @@ function validateLowOperatorRecords(operator: ReturnType<typeof bindSolLowOperat
     same(retained.inventory.find((v: any) => v.path === path), { path, bytes: Buffer.byteLength(raw(path)), sha256: sha(raw(path)) }, "retained mechanical artifact mismatch");
   }
   validateMechanicalReceipts(input.artifacts, retained, scope, get, { directory: operator.execution.directory, session: preflight.session });
-}
-
-function validateItemLifecycles(events: any[]) {
-  // ID ownership starts at the first event for every capability, including
-  // completion-only non-I/O items. It cannot depend on seeing an MCP read first.
-  const items = new Map<string, { type: string; identity: unknown; completed: boolean }>(), calls: any[] = [];
-  for (const event of events) {
-    if (!event.type.startsWith("item.")) continue;
-    const item = event.item;
-    fail(typeof item.id === "string" && item.id.length > 0, "tool lifecycle requires a unique id");
-    const identity = { server: item.server, tool: item.tool, arguments: item.arguments };
-    let owner = items.get(item.id);
-    if (owner) {
-      same(item.type, owner.type, "tool lifecycle changed capability type");
-      fail(event.type !== "item.started" && !owner.completed, "tool lifecycle duplicate start or terminal disposition");
-      if (item.type === "mcp_tool_call") same(identity, owner.identity, "tool lifecycle identity mismatch");
-    } else {
-      // The documented JSONL example permits a completion-only agent message.
-      // Other types need an observed start; unknown protocol variants fail closed.
-      fail(event.type === "item.started" || item.type === "agent_message" && event.type === "item.completed", "tool lifecycle missing start");
-      owner = { type: item.type, identity, completed: false }; items.set(item.id, owner);
-    }
-    if (event.type === "item.completed") {
-      owner.completed = true;
-      if (item.type === "mcp_tool_call") {
-        fail((item.status === undefined || item.status === "completed") && (item.error === undefined || item.error === null), "tool disposition failed or unknown");
-        calls.push(event);
-      }
-    }
-  }
-  fail([...items.values()].every(item => item.completed), "tool lifecycle has unfinished items before turn terminal");
-  return calls;
 }
 
 function validateCanaryReads(cleanup: any, modelCalls: any[], evidence: any, mount: PredictionMount, sessionId: string) {
