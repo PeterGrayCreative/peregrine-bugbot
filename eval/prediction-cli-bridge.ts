@@ -13,12 +13,11 @@ import { attachPredictionReadTools, PREDICTION_MCP_LIMITS } from "./prediction-r
 import { createMethodologyEgressSupervisor, createStructuralMockMethodologyEgressSupervisor, type DockerExec, type MethodologyEgressSupervisor } from "./methodology-egress.js";
 import { createContainedOutputReader, createContainedProviderExec } from "./runtime-containment.js";
 import { predictionCliCommand } from "./prediction-cli-command.js";
+import { PREDICTION_CLI_BRIDGE_POLICY } from "./prediction-cli-policy.js";
+import { predictionSolLowCanaryCommand } from "./prediction-sol-low-command.js";
+import { preparePredictionSolLowCanary, type PredictionSolLowCanaryAuthority } from "./prediction-sol-low-canary.js";
 
-export const PREDICTION_CLI_BRIDGE_POLICY = freeze({ protocol: "prediction-cli-bridge-v1", providerAuthorities: ["chatgpt.com:443", "auth.openai.com:443"],
-  repositoryTools: ["list_tree", "read_file", "search_text", "read_link"], disabledFeatures: ["shell_tool", "unified_exec", "multi_agent"], webSearch: "disabled",
-  builtInCatalog: null, builtInCatalogVerified: false,
-  bookkeeping: "Only non-I/O bookkeeping may coexist identically across arms. No execution, external state access/write, web/history, delegation or resource mutation is permitted. Authorized canary must verify exposure and use; unknown catalog never proves compliance.",
-  maximumOutputBytes: 4_194_304, providerAccess: "cli-session", requestedModel: "gpt-5.6-sol", requestedEffort: "high" });
+export { PREDICTION_CLI_BRIDGE_POLICY } from "./prediction-cli-policy.js";
 interface Options {
   authority: PredictionPreauthorizationAuthority; mountsRoot: string;
   freezeBytes: string; freezeSha256: string; directory: string; runId: string;
@@ -31,19 +30,35 @@ interface Scope {
 }
 interface Approval { scope: Scope; permission: "one-provider-cli-attempt" | "synthetic-only"; approvalEvidenceSha256: string; independentGateSha256: string; reviewedCanaryEvidenceSha256?: string }
 export interface PredictionCliAuthorization { readonly kind: "prediction-cli-authorization"; toJSON(): never }
+interface SolLowAmendment { authority: PredictionSolLowCanaryAuthority; freezeBytes: string; freezeSha256: string }
+export interface PredictionSolLowCanaryBridgeOptions extends Options { solLowAmendment: SolLowAmendment }
 
 export function createPredictionCliBridge(options: Options) {
+  if (Object.hasOwn(options, "solLowAmendment")) throw new Error("use the separate Sol/low canary bridge");
   if (Object.hasOwn(options, "run") || Object.hasOwn(options, "wallMs")) throw new Error("provider bridge cannot inject execution or alter the deadline");
   return createBridge(options);
 }
 /** Inject only the existing Docker boundary. No injected executor can acquire
  * a provider-class capability or become evidence of actual client support. */
 export function createStructuralPredictionCliBridge(options: Options & { run: DockerExec; wallMs?: number }) {
+  if (Object.hasOwn(options, "solLowAmendment")) throw new Error("use the separate Sol/low canary bridge");
   if (typeof options.run !== "function") throw new Error("structural bridge requires an injected executor");
   return createBridge(options, { run: options.run, wallMs: options.wallMs });
 }
-async function createBridge(input: Options, structural?: { run: DockerExec; wallMs?: number }) {
+export function createPredictionSolLowCanaryBridge(options: PredictionSolLowCanaryBridgeOptions) {
+  if (!options.solLowAmendment) throw new Error("explicit Sol/low canary amendment required");
+  if (Object.hasOwn(options, "run") || Object.hasOwn(options, "wallMs")) throw new Error("provider bridge cannot inject execution or alter the deadline");
+  return createBridge(options, undefined, options.solLowAmendment);
+}
+export function createStructuralPredictionSolLowCanaryBridge(options: PredictionSolLowCanaryBridgeOptions & { run: DockerExec; wallMs?: number }) {
+  if (!options.solLowAmendment) throw new Error("explicit Sol/low canary amendment required");
+  if (typeof options.run !== "function") throw new Error("structural bridge requires an injected executor");
+  return createBridge(options, { run: options.run, wallMs: options.wallMs }, options.solLowAmendment);
+}
+async function createBridge(input: Options, structural?: { run: DockerExec; wallMs?: number }, amendmentInput?: SolLowAmendment) {
   const options = { ...input, authority: freeze(input.authority), mountsRoot: resolve(input.mountsRoot), directory: resolve(input.directory) };
+  const amendment = amendmentInput ? freeze(amendmentInput) : null, low = amendment ? preparePredictionSolLowCanary(amendment.authority) : null;
+  const policy = low?.policy ?? PREDICTION_CLI_BRIDGE_POLICY;
   text(options.runId); hash(options.freezeSha256);
   same(sha(options.freezeBytes), options.freezeSha256, "trusted preauthorization freeze digest mismatch");
   const predecessor = JSON.parse(options.freezeBytes) as { kind: string; package: PredictionPreauthorizationPackage; providerCalls: number; executionReady: boolean; providerAuthorized: boolean };
@@ -60,23 +75,36 @@ async function createBridge(input: Options, structural?: { run: DockerExec; wall
   same(digest({ preauthorization: frozen.preauthorization, canary: frozen.canary }), frozen.sha256, "predecessor package seal drift");
   same(frozen.canary.preauthorizationSha256, frozen.preauthorization.sha256, "canary/package cross-binding drift");
   const source = predictionExecutionSourceManifest(), executionClass = structural ? "structural-mock" as const : "provider" as const;
+  if (amendment) {
+    same(amendment.authority.r4Freeze, { bytes: options.freezeBytes, expectedSha256: options.freezeSha256 }, "low amendment original freeze mismatch");
+    same(sha(amendment.freezeBytes), hash(amendment.freezeSha256), "low amendment freeze byte drift");
+    const f = JSON.parse(amendment.freezeBytes);
+    same([f.kind, f.amendment, f.source, f.execution, f.providerAuthorized, f.executionReady, f.batchAuthorized, f.providerCalls],
+      ["prediction-sol-low-canary-freeze-v1", low, source, { runId: options.runId, directory: options.directory }, false, false, false, 0], "low amendment freeze, execution ledger or source mismatch");
+  }
+  const selectedCanary = low ?? frozen.canary;
   const p = frozen.preauthorization, registration = registerPredictionCliSession(options.authority.preparation.registrationBytes, options.authority.preparation.registrationSha256, p.scientificRegistration.predecessorFreezeSha256);
-  const bindings = freeze({ runId: options.runId, freezeSha256: options.freezeSha256, packageSha256: frozen.sha256, canarySha256: frozen.canary.sha256,
-    sourceSha256: source.sourceSha256, policySha256: digest(PREDICTION_CLI_BRIDGE_POLICY), executionClass });
+  const bindings = freeze({ runId: options.runId, freezeSha256: options.freezeSha256, packageSha256: frozen.sha256, canarySha256: selectedCanary.sha256,
+    sourceSha256: source.sourceSha256, policySha256: digest(policy), executionClass,
+    ...(low ? { amendmentFreezeSha256: amendment!.freezeSha256, userAuthorizationSha256: low.userAuthorization.sha256,
+      predecessorCanarySha256: low.predecessor.canarySha256, predecessorBridgeFreezeSha256: low.predecessor.bridgeFreezeSha256, predecessorAssessmentFreezeSha256: low.predecessor.assessmentFreezeSha256 } : {}) });
   mkdirSync(options.directory, { mode: 0o700 });
   const write = (path: string, value: unknown) => writeFileSync(path, canonicalJson(value) + "\n", { flag: "wx", mode: 0o600 });
-  write(join(options.directory, "bridge.json"), { bindings, source, policy: PREDICTION_CLI_BRIDGE_POLICY, providerAuthorized: false, executionReady: false });
+  write(join(options.directory, "bridge.json"), { bindings, source, policy, providerAuthorized: false, executionReady: false });
+  if (low) write(join(options.directory, "canary-ledger-start.json"), { bindings, ...low.separateLedger, batchAuthorized: false });
   const authorizations = new WeakMap<object, Approval>(), terminals: PredictionCliTerminal[] = [];
   let active = false, blocked = false, canaryUsed = false;
+  let canaryLedger: unknown = low?.separateLedger ?? null;
   const freshSource = () => same(predictionExecutionSourceManifest(), source, "stale bridge runtime source");
   const scope = (purpose: Purpose, attemptId: string): Scope => {
     if (purpose !== "canary" && purpose !== "review") throw new Error("invalid prediction purpose");
-    if (purpose === "canary" && attemptId !== frozen.canary.canaryId) throw new Error("canary cannot consume a review slot");
-    const sourceAttemptId = purpose === "canary" ? frozen.canary.sourceAttemptId : attemptId;
+    if (low && purpose !== "canary") throw new Error("Sol/low amendment authorizes no review or batch slots");
+    if (purpose === "canary" && attemptId !== selectedCanary.canaryId) throw new Error("canary cannot consume a review slot");
+    const sourceAttemptId = purpose === "canary" ? selectedCanary.sourceAttemptId : attemptId;
     const slot = p.attempts.find(a => a.id === sourceAttemptId);
     if (!slot) throw new Error("unregistered review slot");
-    return freeze({ ...bindings, purpose, attemptId, sourceAttemptId, promptSha256: purpose === "canary" ? frozen.canary.promptSha256 : slot.promptSha256,
-      mountSha256: slot.mountSha256, rawScopeSha256: slot.rawScopeSha256, model: "gpt-5.6-sol", effort: "high", providerAccess: "cli-session" });
+    return freeze({ ...bindings, purpose, attemptId, sourceAttemptId, promptSha256: purpose === "canary" ? selectedCanary.promptSha256 : slot.promptSha256,
+      mountSha256: slot.mountSha256, rawScopeSha256: slot.rawScopeSha256, model: "gpt-5.6-sol", effort: low ? "low" : "high", providerAccess: "cli-session" });
   };
   const admissible = (s: Scope) => {
     if (active || blocked) throw new Error("bridge is active or stopped");
@@ -91,16 +119,18 @@ async function createBridge(input: Options, structural?: { run: DockerExec; wall
       admissible(approval.scope);
       same(approval.permission, structural ? "synthetic-only" : "one-provider-cli-attempt", "execution-class authorization mismatch");
       hash(approval.approvalEvidenceSha256); hash(approval.independentGateSha256);
+      if (low) same(approval.approvalEvidenceSha256, low.userAuthorization.sha256, "low canary user authorization mismatch");
       if (approval.scope.purpose === "review") hash(approval.reviewedCanaryEvidenceSha256);
       const token = Object.freeze({ kind: "prediction-cli-authorization" as const, toJSON(): never { throw new Error("authorization is nonserializable"); } });
       authorizations.set(token, freeze(approval)); return token;
     },
-    snapshot() { return freeze({ bindings, active, blocked, canaryUsed, batch: assessPredictionCliBatch(registration, terminals), executionReady: false, builtInCatalogVerified: false }); },
+    snapshot() { return freeze({ bindings, active, blocked, canaryUsed, ...(low ? { canaryLedger } : {}), batch: assessPredictionCliBatch(registration, terminals), executionReady: false, builtInCatalogVerified: false }); },
     async run(token: PredictionCliAuthorization) {
       const approval = authorizations.get(token);
       if (!approval) throw new Error("explicit nonserializable scoped authorization required");
       admissible(approval.scope); authorizations.delete(token); active = true;
       const s = approval.scope; if (s.purpose === "canary") canaryUsed = true;
+      if (low) canaryLedger = freeze({ ...low.separateLedger, status: "started", providerCalls: null });
       const ordinal = terminals.length + 1, directory = join(options.directory, s.purpose === "canary" ? "canary" : `review-${String(ordinal).padStart(6, "0")}`);
       let attachment: Awaited<ReturnType<typeof attachPredictionReadTools>> | undefined, egress: MethodologyEgressSupervisor | undefined;
       let setup: Promise<MethodologyEgressSupervisor> | undefined;
@@ -125,7 +155,7 @@ async function createBridge(input: Options, structural?: { run: DockerExec; wall
         const endpoint = new URL(attachment.url); attachment.replaceAuthorizedHosts([`host.docker.internal:${endpoint.port}`]);
         const { maxSessions: _, ...limits } = PREDICTION_MCP_LIMITS;
         const egressOptions = { attemptId: `attempt-${String(ordinal).padStart(6, "0")}`, armId: p.attempts.find(a => a.id === s.sourceAttemptId)!.arm, sourceHeadTree: mount.headTree,
-          providerAuthorities: PREDICTION_CLI_BRIDGE_POLICY.providerAuthorities, hostMcpPort: Number(endpoint.port), hostMcpToken: endpoint.pathname.slice("/mcp/".length), deadlineSignal: guard.signal, mcpLimits: { ...limits, maxHeaderBytes: 8192 } };
+          providerAuthorities: policy.providerAuthorities, hostMcpPort: Number(endpoint.port), hostMcpToken: endpoint.pathname.slice("/mcp/".length), deadlineSignal: guard.signal, mcpLimits: { ...limits, maxHeaderBytes: 8192 } };
         setup = structural ? createStructuralMockMethodologyEgressSupervisor({ ...egressOptions, run: structural.run }) : createMethodologyEgressSupervisor(egressOptions);
         egress = await setup;
         const checkout = join(directory, "workspace"), assets = join(directory, "assets"), output = join(directory, "output");
@@ -137,21 +167,21 @@ async function createBridge(input: Options, structural?: { run: DockerExec; wall
             writeFileSync(join(assets, "methodology-review.schema.json"), schema, { flag: "wx", mode: 0o600 });
           }
         });
-        const prompt = s.purpose === "canary" ? frozen.canary.prompt : item.prompts[p.attempts.find(a => a.id === s.attemptId)!.arm].prompt;
-        const args = predictionCliCommand(egress.internalMcpUrl, s.purpose === "review");
+        const prompt = s.purpose === "canary" ? selectedCanary.prompt : item.prompts[p.attempts.find(a => a.id === s.attemptId)!.arm].prompt;
+        const args = low ? predictionSolLowCanaryCommand(egress.internalMcpUrl) : predictionCliCommand(egress.internalMcpUrl, s.purpose === "review");
         guard.read(() => { freshSource(); same(sha(prompt), s.promptSha256, "prompt drift"); same(readdirSync(checkout), [], "unexpected agent workspace"); same(readdirSync(assets), s.purpose === "review" ? ["methodology-review.schema.json"] : [], "unexpected method resources"); });
         write(join(directory, "invocation.json"), { scope: s, args, prompt, attachment: attachment.binding, egress: egress.attestation, assets: readdirSync(assets), providerImage: p.runtimeAcceptance.image });
         const run = createContainedProviderExec({ runner: "codex", providerAccess: "cli-session", checkoutDir: checkout, assetsDir: assets, outputDir: output,
-          profile: "prediction-cli", image: p.runtimeAcceptance.image, methodologyEgress: egress.launchCapability, ...(structural ? { run: structural.run } : {}) });
+          profile: low ? "prediction-sol-low-canary" : "prediction-cli", image: p.runtimeAcceptance.image, methodologyEgress: egress.launchCapability, ...(structural ? { run: structural.run } : {}) });
         const hostArgs = args.map(value => value === "/workspace" ? checkout : value === "/opt/peregrine/methodology-review.schema.json" ? join(assets, "methodology-review.schema.json") : value === "/output/result.json" ? join(output, "result.json") : value);
         try { execution = await guard.run(run, "codex", hostArgs, { stdin: prompt, inheritEnv: false, env: {} }); write(join(directory, "execution.json"), execution); }
         catch (error) { failure = predictionFailureEvidence(error); write(join(directory, "execution-failure.json"), failure); }
-        try { rawOutput = createContainedOutputReader(output, PREDICTION_CLI_BRIDGE_POLICY.maximumOutputBytes)(join(output, "result.json")); }
+        try { rawOutput = createContainedOutputReader(output, policy.maximumOutputBytes)(join(output, "result.json")); }
         catch (error) { failure ??= predictionFailureEvidence(error); write(join(directory, "output-failure.json"), predictionFailureEvidence(error)); }
         const deadline = await guard.finish(), parsed = parseCodexEvents(execution?.stdout ?? "");
         const disallowed = parsed.events.filter((event: any) => {
           const item = event?.item;
-          return item && (["command_execution", "file_change", "web_search", "collab_tool_call"].includes(item.type) || item.type === "mcp_tool_call" && (item.server !== "source_read" || !PREDICTION_CLI_BRIDGE_POLICY.repositoryTools.includes(item.tool)));
+          return item && (["command_execution", "file_change", "web_search", "collab_tool_call"].includes(item.type) || item.type === "mcp_tool_call" && (item.server !== "source_read" || !policy.repositoryTools.includes(item.tool)));
         });
         const completeEventStream = execution?.code === 0 && !execution.timedOut && parsed.malformedEventLines === 0;
         const cleanupProven = deadline.teardownCompleted && deadline.evidenceError === null;
@@ -161,6 +191,10 @@ async function createBridge(input: Options, structural?: { run: DockerExec; wall
           disallowed, builtInCatalog: null, builtInCatalogVerified: false, executionReady: false, providerCalls: structural ? 0 : execution ? 1 : null,
           qualification: structural ? "Injected executor only; no provider, client support or containment proof." : "Observed attempt only; catalog, canary and independent review gates remain separate." });
         write(join(directory, "terminal.json"), record);
+        if (low) {
+          canaryLedger = freeze({ ...low.separateLedger, status: terminal.status, providerCalls: record.providerCalls, terminalSha256: digest(record), terminal, batchAuthorized: false });
+          write(join(options.directory, "canary-ledger-terminal.json"), { bindings, ledger: canaryLedger });
+        }
         if (s.purpose === "review") terminals.push(terminal);
         if (!cleanupProven || disallowed.length || s.purpose === "canary" && (terminal.status !== "completed" || record.tokens.status === "unknown")) blocked = true;
         return record;
@@ -170,7 +204,12 @@ async function createBridge(input: Options, structural?: { run: DockerExec; wall
         try { deadline = await guard?.finish() ?? null; } catch (cleanup) { cleanupError = cleanup; }
         if (s.purpose === "review" && !terminals.some(t => t.attemptId === s.attemptId)) terminals.push({ attemptId: s.attemptId, status: "failed", events: [], completeEventStream: false, rawOutput,
           cleanupProven: false, deadlineExceeded: deadline?.deadlineExceeded ?? false });
-        write(join(directory, "failure.json"), { scope: s, failure: predictionFailureEvidence(error), cleanupFailure: cleanupError === undefined ? null : predictionFailureEvidence(cleanupError), deadline, executionReady: false });
+        const failed = { scope: s, failure: predictionFailureEvidence(error), cleanupFailure: cleanupError === undefined ? null : predictionFailureEvidence(cleanupError), deadline, executionReady: false };
+        write(join(directory, "failure.json"), failed);
+        if (low) {
+          canaryLedger = freeze({ ...low.separateLedger, status: "failed", providerCalls: structural ? 0 : execution ? 1 : null, failure: failed, batchAuthorized: false });
+          write(join(options.directory, "canary-ledger-failure.json"), { bindings, ledger: canaryLedger });
+        }
         if (cleanupError !== undefined) throw new AggregateError([error, cleanupError], "prediction bridge operation and cleanup failed");
         throw error;
       } finally { active = false; }

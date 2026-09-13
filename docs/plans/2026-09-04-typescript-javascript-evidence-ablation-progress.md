@@ -794,3 +794,15 @@ requires one correctly ordered turn and completion of every started item before
 terminal. It preserves only the documented completion-only agent-message case.
 Predecessors and failures remain unchanged; no amendment, provider run or review
 slot consumption is inferred from deterministic fixture results.
+
+## 2026-09-13: prospective Sol-low canary-only amendment
+
+The [Sol-low checkpoint](../validation/2026-09-13-prediction-sol-low-canary.md)
+binds the operator-relayed canary-only authorization to one low-reasoning Sol
+infrastructure session and a separate exclusive ledger. Shared containment,
+four repository readers, 20-minute deadline and cleanup remain unchanged; the
+new low profile cannot consume review slots. Original high registrations,
+preauthorization, command and assessor remain preserved. Node22 typecheck and
+73 prediction, 13 HTTP and 101 affected tests pass. No provider/client/image run
+occurred; 64 review slots and the new canary remain unstarted, pending a fresh
+independent gate. No batch authorization or readiness is inferred.

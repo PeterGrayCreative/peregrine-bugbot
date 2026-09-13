@@ -387,3 +387,10 @@ Provider calls remain zero; `providerAuthorized` and `executionReady` are false.
 - [x] Reproduce the third rejection and enforce one ordered turn and closure of
   every started item, with missing/duplicate/order/terminal regressions in v4.
 - [ ] Independent re-review of v4; v3's rejected result is not a pass.
+- [x] Prospectively register the user's Sol-low canary-only request and add a
+  route-compatible entry/profile using the shared bridge, without changing the
+  original high package or 64 review slots.
+- [ ] Independent gate of the exact low amendment freeze, then separately issue
+  its one-use runtime capability. The user-text assertion is not a capability.
+- [ ] Independently observe/review the actual low canary; neither structural
+  tests nor the unchanged high-only assessor constitute a low-canary pass.
