@@ -68,7 +68,15 @@ function deadline(options: Options, wallMs: number, executionClass: string) {
         event("evidence-cancellation", { error: evidenceError }); void teardown();
         throw new Error("execution blocked: exec-start evidence persistence failed");
       }
-      active = Promise.resolve().then(() => run(command, args, { ...opts, timeoutMs: Math.min(opts.timeoutMs ?? remaining, remaining), deadlineSignal: controller.signal }))
+      active = Promise.resolve().then(() => {
+        // Timer callbacks cannot run while this turn is blocked. Recheck at
+        // invocation, while still allowing finish to await an admitted run.
+        const elapsed = performance.now() - start;
+        if (elapsed >= wallMs) expire();
+        if (controller.signal.aborted || evidenceError) throw new Error("execution cancelled at whole-attempt deadline or evidence failure");
+        const remainingAtInvocation = Math.max(1, Math.floor(wallMs - elapsed));
+        return run(command, args, { ...opts, timeoutMs: Math.min(opts.timeoutMs ?? remainingAtInvocation, remainingAtInvocation), deadlineSignal: controller.signal });
+      })
         .then(result => { event("exec-closed", { code: result.code, timedOut: result.timedOut, cleanupErrors: result.cleanupErrors ?? [] }); if (result.cleanupErrors?.length) cleanupError = result.cleanupErrors.join("; "); return result; });
       return active;
     },

@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtempSync, readFileSync, writeFileSync, rmSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { performance } from "node:perf_hooks";
 import { exec } from "../src/util/exec.js";
 import { sha } from "../eval/prediction-contract.js";
 import { registerPredictionCliSession, assessPredictionCliBatch, observePredictionCliTokens, type PredictionCliTerminal } from "../eval/prediction-cli-session.js";
@@ -122,4 +123,26 @@ test("exec-start record collision cancels and tears down with zero runner invoca
   assert.match(terminal.evidenceError, /EEXIST/); assert.equal(terminal.deadlineExceeded, false);
   assert.equal(terminal.teardownCompleted, true); assert.ok(terminal.events.some((event: { kind: string }) => event.kind === "evidence-cancellation"));
   assert.equal(readFileSync(join(directory, "000001.json"), "utf8"), "preserved conflicting start record\n");
+});
+
+test("a blocked event loop past the 25ms deadline cancels before the deferred runner can start", async t => {
+  const root = mkdtempSync(join(tmpdir(), "prediction-cli-deferred-deadline-")); t.after(() => rmSync(root, { recursive: true, force: true }));
+  const directory = join(root, "evidence"); let invoked = 0, cleanups = 0, closes = 0;
+  const guard = createStructuralPredictionCliDeadline({ directory, attemptId: "deferred-deadline",
+    closeReads: () => { closes++; }, teardown: async () => { cleanups++; } }, 25);
+  const running = guard.run(async () => { invoked++; return { stdout: "must never exist", stderr: "", code: 0, timedOut: false }; }, "must-not-run", []);
+  // Hold this turn beyond the absolute deadline, before either the queued
+  // invocation or the timer callback has an opportunity to run.
+  const blockedAt = performance.now(); while (performance.now() - blockedAt < 60) { /* intentional event-loop block */ }
+  const first = guard.finish(), second = guard.finish();
+  try { await assert.rejects(running, /deadline|cancelled/); } finally { await first; }
+  assert.strictEqual(first, second); assert.strictEqual(guard.finish(), first);
+  const terminal = await first;
+  assert.equal(invoked, 0); assert.equal(cleanups, 1); assert.equal(closes, 1);
+  assert.equal(guard.signal.aborted, true); assert.equal(terminal.deadlineExceeded, true);
+  assert.equal(terminal.cancellationReason, "whole-attempt-deadline"); assert.equal(terminal.teardownCompleted, true);
+  assert.equal(terminal.events.filter(event => event.kind === "deadline-cancellation").length, 1);
+  assert.equal(terminal.events.filter(event => event.kind === "teardown-complete").length, 1);
+  assert.equal(terminal.events.some(event => event.kind === "exec-closed"), false);
+  assert.deepEqual(JSON.parse(readFileSync(join(directory, "terminal.json"), "utf8")), terminal);
 });

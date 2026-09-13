@@ -92,3 +92,18 @@ Node 22 typecheck, all 34 prediction tests and the same 61 affected tests pass.
 Private `cli-session-correction-v2/` preserves the rejected baseline test output
 and adds versioned closure/collision probes and a successor source-bound freeze.
 The scientific registration, batch thresholds and readiness boundary are unchanged.
+
+## Deferred invocation deadline successor
+
+The next independent gate rejected public `da9fd66` / private `3ac6dad`: a
+blocked event loop could delay the queued runner past the absolute deadline,
+before the timer callback ran. The exact 25 ms deadline / 60 ms blocked-loop
+regression failed on that preserved version. The successor rechecks elapsed
+time and cancellation immediately before invoking the runner and recomputes its
+remaining timeout there. Expiry invokes no runner and retains one cancellation,
+read closure, teardown and shared finish result.
+
+Node 22 typecheck, all 35 prediction tests and the same 61 affected tests pass.
+Private `cli-session-correction-v3/` retains the rejected test output and adds a
+durable deferred-deadline probe and successor source-bound freeze. No scientific
+rule, original limit, production route or readiness condition changed.
