@@ -110,6 +110,7 @@ export function assessPredictionCanary(input: PredictionCanaryAssessmentInput) {
     const parsed = parseCodexEvents(execution.stdout); fail(parsed.malformedEventLines === 0, "malformed terminal stream");
     const events = parsed.events.map(record);
     fail(events.filter(e => e.type === "thread.started").length === 1 && events[0].type === "thread.started" && events[0].thread_id === observer.modelSessionId, "one fresh observed model session required");
+    fail(events.filter(e => e.type === "turn.started").length === 1 && events[1]?.type === "turn.started", "exactly one ordered turn start required before items");
     fail(events.filter(e => e.type === "turn.completed").length === 1 && events.at(-1).type === "turn.completed", "ambiguous or missing terminal usage");
     for (const event of events) {
       fail(["thread.started", "turn.started", "turn.completed", "item.started", "item.updated", "item.completed"].includes(event.type), "unknown or failed event");
@@ -177,9 +178,9 @@ function validateItemLifecycles(events: any[]) {
       fail(event.type !== "item.started" && !owner.completed, "tool lifecycle duplicate start or terminal disposition");
       if (item.type === "mcp_tool_call") same(identity, owner.identity, "tool lifecycle identity mismatch");
     } else {
-      // Non-I/O items may be emitted complete without streaming updates. Reads
-      // require an observed start; updates require an already-open same-type ID.
-      fail(event.type === "item.started" || item.type !== "mcp_tool_call" && event.type === "item.completed", "tool lifecycle missing start");
+      // The documented JSONL example permits a completion-only agent message.
+      // Other types need an observed start; unknown protocol variants fail closed.
+      fail(event.type === "item.started" || item.type === "agent_message" && event.type === "item.completed", "tool lifecycle missing start");
       owner = { type: item.type, identity, completed: false }; items.set(item.id, owner);
     }
     if (event.type === "item.completed") {
@@ -190,7 +191,7 @@ function validateItemLifecycles(events: any[]) {
       }
     }
   }
-  fail([...items.values()].every(item => item.type !== "mcp_tool_call" || item.completed), "tool lifecycle has unfinished source reads");
+  fail([...items.values()].every(item => item.completed), "tool lifecycle has unfinished items before turn terminal");
   return calls;
 }
 
@@ -256,7 +257,7 @@ function validateCanaryReads(cleanup: any, modelCalls: any[], evidence: any, mou
   }
 }
 function freezeAssessment(recommendation: string, input: PredictionCanaryAssessmentInput, binding: unknown, checks: string[], limitations: string[], failure: unknown, tokens: unknown, identity: unknown) {
-  const body = { kind: "prediction-canary-assessment-v3", recommendation, inputSha256: digest(input), binding, checks, limitations, failure, tokens, identity,
+  const body = { kind: "prediction-canary-assessment-v4", recommendation, inputSha256: digest(input), binding, checks, limitations, failure, tokens, identity,
     providerAuthorized: false, executionReady: false, batchAuthorized: false, providerCalls: 0,
     boundary: "Deterministic validation of externally authenticated evidence, not independent observation, dispatch authority, efficacy evidence or an R5 pass." };
   return freeze({ ...body, sha256: digest(body) });

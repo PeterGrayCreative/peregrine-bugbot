@@ -180,8 +180,55 @@ test("completed non-MCP IDs cannot be duplicated or reassigned to any permitted 
 test("distinct non-MCP IDs allow completion-only items and same-type start/update/completion", async t => {
   const f = await predictionCanaryAssessmentFixture(t), events = f.files["canary/terminal.json"].terminal.events;
   f.files["observer/catalog.json"].bookkeeping = ["plan", "todo_list"].map(name => ({ name, effects: [], identicalAcrossArms: true }));
-  events.splice(2, 0, { type: "item.completed", item: { id: "reasoning-unique", type: "reasoning", text: "synthetic reasoning" } },
-    ...["agent_message", "plan", "todo_list"].flatMap(type => ["item.started", "item.updated", "item.completed"].map(phase => ({ type: phase, item: { id: `${type}-unique`, type, text: phase } }))));
+  events.splice(2, 0, { type: "item.completed", item: { id: "agent-message-unique", type: "agent_message", text: "synthetic message" } },
+    ...["reasoning", "plan", "todo_list"].flatMap(type => ["item.started", "item.updated", "item.completed"].map(phase => ({ type: phase, item: { id: `${type}-unique`, type, text: phase } }))));
   const result = assessPredictionCanary(repinEventStream(f));
   assert.equal(result.recommendation, "eligible-for-separate-batch-authorization", JSON.stringify(result.failure));
+});
+
+test("one complete ordered turn encloses every item event", async t => {
+  const f = await predictionCanaryAssessmentFixture(t), original = structuredClone(f.files), accepted: string[] = [];
+  const mutations: [string, (events: any[]) => void][] = [
+    ["missing turn.started", events => { events.splice(1, 1); }],
+    ["duplicate turn.started", events => { events.splice(2, 0, { type: "turn.started" }); }],
+    ["late duplicate turn.started", events => { events.splice(-1, 0, { type: "turn.started" }); }],
+    ["turn starts before thread", events => { [events[0], events[1]] = [events[1], events[0]]; }],
+    ["item starts before turn", events => { [events[1], events[2]] = [events[2], events[1]]; }],
+    ["all reads before turn", events => { const [start] = events.splice(1, 1); events.splice(-1, 0, start); }],
+    ["turn starts after terminal", events => { const [start] = events.splice(1, 1); events.push(start); }],
+    ["missing turn.completed", events => { events.pop(); }],
+    ["duplicate turn.completed", events => { events.push(structuredClone(events.at(-1))); }],
+    ["terminal precedes all items", events => { const terminal = events.pop(); events.splice(2, 0, terminal); }],
+    ["item completion after terminal", events => { const [completed] = events.splice(-2, 1); events.push(completed); }],
+    ["non-I/O item after terminal", events => { events.push({ type: "item.completed", item: { id: "late", type: "agent_message", text: "synthetic" } }); }],
+  ];
+  for (const [name, mutate] of mutations) {
+    for (const key of Object.keys(f.files)) f.files[key] = structuredClone(original[key]);
+    mutate(f.files["canary/terminal.json"].terminal.events);
+    if (assessPredictionCanary(repinEventStream(f)).recommendation !== "not-eligible") accepted.push(name);
+  }
+  assert.deepEqual(accepted, [], "turn boundary or ordering defect accepted");
+});
+
+test("every started non-I/O item must finish before the turn terminal", async t => {
+  const f = await predictionCanaryAssessmentFixture(t), original = structuredClone(f.files), accepted: string[] = [];
+  for (const type of ["agent_message", "reasoning", "plan", "todo_list"]) for (const updated of [false, true]) {
+    for (const key of Object.keys(f.files)) f.files[key] = structuredClone(original[key]);
+    f.files["observer/catalog.json"].bookkeeping = ["plan", "todo_list"].map(name => ({ name, effects: [], identicalAcrossArms: true }));
+    const item = { id: "unfinished-non-io", type, text: "synthetic" }, events = f.files["canary/terminal.json"].terminal.events;
+    events.splice(-1, 0, { type: "item.started", item }, ...(updated ? [{ type: "item.updated", item }] : []));
+    if (assessPredictionCanary(repinEventStream(f)).recommendation !== "not-eligible") accepted.push(`${type}/${updated ? "updated" : "started"}`);
+  }
+  assert.deepEqual(accepted, [], "unfinished non-I/O item accepted");
+});
+
+test("completion-only items outside the documented agent_message exception fail closed", async t => {
+  const f = await predictionCanaryAssessmentFixture(t), original = structuredClone(f.files), accepted: string[] = [];
+  for (const type of ["reasoning", "plan", "todo_list"]) {
+    for (const key of Object.keys(f.files)) f.files[key] = structuredClone(original[key]);
+    f.files["observer/catalog.json"].bookkeeping = ["plan", "todo_list"].map(name => ({ name, effects: [], identicalAcrossArms: true }));
+    f.files["canary/terminal.json"].terminal.events.splice(-1, 0, { type: "item.completed", item: { id: "unstarted-non-io", type, text: "synthetic" } });
+    if (assessPredictionCanary(repinEventStream(f)).recommendation !== "not-eligible") accepted.push(type);
+  }
+  assert.deepEqual(accepted, [], "unestablished completion-only protocol accepted");
 });

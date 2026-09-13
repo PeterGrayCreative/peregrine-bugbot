@@ -785,3 +785,12 @@ reuse. The [v3 correction](../validation/2026-09-13-prediction-canary-assessment
 tracks ownership across all item types from first occurrence and adds both-order
 collision controls with synchronized evidence hashes. Rejected v1/v2 and failed
 fixture runs remain preserved. No Sol-low amendment or provider work has begun.
+
+## 2026-09-13: turn and item closure correction, pending re-review
+
+The third assessor gate rejected v3 for missing turn-start enforcement and open
+non-MCP items. The [v4 correction](../validation/2026-09-13-prediction-canary-assessment-turn-closure.md)
+requires one correctly ordered turn and completion of every started item before
+terminal. It preserves only the documented completion-only agent-message case.
+Predecessors and failures remain unchanged; no amendment, provider run or review
+slot consumption is inferred from deterministic fixture results.

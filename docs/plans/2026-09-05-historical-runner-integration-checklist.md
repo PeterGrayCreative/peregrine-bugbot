@@ -384,3 +384,6 @@ Provider calls remain zero; `providerAuthorized` and `executionReady` are false.
 - [x] Reproduce the second assessor rejection and add global first-occurrence
   item-ID ownership plus cross-type and ordering regressions in assessment v3.
 - [ ] Independent re-review of v3; v2's rejected result is not a pass.
+- [x] Reproduce the third rejection and enforce one ordered turn and closure of
+  every started item, with missing/duplicate/order/terminal regressions in v4.
+- [ ] Independent re-review of v4; v3's rejected result is not a pass.
