@@ -535,6 +535,18 @@ test("resealed phase assessment binds every stage and refuses missing or mismatc
   }
 });
 
+test("resealed execution phase cannot borrow a separate millisecond at every endpoint", async t => {
+  const f = await solLowAssessmentFixture(t), deadline = f.files["canary/deadline/terminal.json"];
+  deadline.events[2].elapsedMs = 100.1; sealFixture(deadline); f.files["canary/terminal.json"].deadline = deadline;
+  for (const path of ["observer/lifecycle.json", "observer/absence.json"]) f.files[path].deadlineSha256 = deadline.sha256;
+  for (let i = 1; i <= 3; i++) for (const part of ["start", "terminal"]) {
+    const record = f.files[`canary/mechanical-client/00000${i}-${part}.json`];
+    record.clock.monotonicMs = 100; record.clock.unixMs = 98 + i;
+    record[part === "start" ? "startedAt" : "closedAt"] = 98 + i;
+  }
+  const result = assessPredictionSolLowCanary(f.repin()); assert.equal(result.recommendation, "not-eligible"); assert.ok(result.failure);
+});
+
 test("resealed assessor evidence reconciles command identities, both inspect graphs and final cleanup chronology", async t => {
   const f = await solLowAssessmentFixture(t), original = structuredClone(f.files);
   const editStream = (path: string, mutate: (value: any) => void) => {

@@ -23,7 +23,9 @@ with wall/monotonic samples and the same-process PID/time-origin identity.
 Profile `methodology-observation-graph-v3` requires those samples; missing legacy
 clock evidence cannot be repaired by guessing an origin. Each sample must match
 its receipt's wall timestamp and the guard's clock source. Wall versus monotonic
-differences retain the existing one-millisecond quantization bound. Monotonic
+differences retain one shared one-millisecond quantization envelope; opposite
+endpoint errors cannot accumulate into a larger allowance. Every phase's wall
+span also fits its duration plus that same bound. Monotonic
 samples are not rounded and receive no added phase-order tolerance.
 
 Every receipt must lie inside its assigned phase and the whole attempt. Ordered

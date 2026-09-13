@@ -89,7 +89,20 @@ test("phase clock quantization is exactly 1ms and cannot justify a zero positive
   }
   const f = phaseFixture(); f.deadline.events[2]!.elapsedMs = 100; f.phases.execution = [f.row(100, 100)];
   f.phases.execution[0]!.terminal.clock.unixMs++; f.phases.execution[0]!.terminal.closedAt++;
-  assert.throws(() => validateMethodologyDeadlinePhases(f.deadline, f.phases), /zero deadline phase/);
+  assert.throws(() => validateMethodologyDeadlinePhases(f.deadline, f.phases), /positive wall span/);
+});
+test("shared quantization cannot accumulate opposite endpoint errors into a wider phase", () => {
+  const f = phaseFixture(); f.deadline.events[2]!.elapsedMs = 100.1; f.phases.execution = [f.row(100, 100)];
+  const row = f.phases.execution[0]!;
+  row.start.startedAt--; row.start.clock.unixMs--; row.terminal.closedAt++; row.terminal.clock.unixMs++;
+  assert.throws(() => validateMethodologyDeadlinePhases(f.deadline, f.phases), /positive wall span/);
+  const spread = phaseFixture(); spread.phases.preparation[0]!.start.startedAt--; spread.phases.preparation[0]!.start.clock.unixMs--;
+  spread.phases.teardown[1]!.terminal.closedAt++; spread.phases.teardown[1]!.terminal.clock.unixMs++;
+  assert.throws(() => validateMethodologyDeadlinePhases(spread.deadline, spread.phases), /shared 1ms quantization/);
+  const zero = phaseFixture(); zero.deadline.events[2]!.elapsedMs = 100; zero.phases.execution = [zero.row(100,100), zero.row(100,100)];
+  zero.phases.execution[1]!.start.startedAt++; zero.phases.execution[1]!.start.clock.unixMs++;
+  zero.phases.execution[1]!.terminal.closedAt++; zero.phases.execution[1]!.terminal.clock.unixMs++;
+  assert.throws(() => validateMethodologyDeadlinePhases(zero.deadline, zero.phases), /positive wall span/);
 });
 test("phase evidence fails closed on missing source, impossible whole intervals and source-origin drift", () => {
   for (const mutation of [(d: any) => { delete d.clock; }, (d: any) => { d.kind = "prediction-cli-deadline-terminal-v1"; }, (d: any) => { d.clock.unixMs += 2; }, (d: any) => { d.clock.monotonicMs = NaN; }, (d: any) => { d.clock.timeOriginMs = -1; }, (d: any) => { d.clock.processId = 0; }, (d: any) => { d.elapsedMs = 1200000; }, (d: any) => { d.elapsedMs = 100; }, (d: any) => { d.events.reverse(); }]) {
