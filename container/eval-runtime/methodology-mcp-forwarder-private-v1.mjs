@@ -36,7 +36,7 @@ const DENIAL_CODES = new Set([
 ]);
 
 /** @typedef {{
- *   host: string, port: number, allowedHost?: string, token: string,
+ *   host: string, port: number, allowedHost?: string, token: string, fixedClientPath?: boolean,
  *   upstreamPort: number, maxRequestBytes: number, maxResponseBytes: number,
  *   maxHeaderBytes: number, requestTimeoutMs: number, maxConnections: number,
  *   maxRequests: number, fixtureMode?: boolean, lookup?: Function,
@@ -58,6 +58,9 @@ export async function startMethodologyMcpForwarder(options) {
   const pinnedGateway = config.fixtureRequest && !config.lookup ? null
     : await resolveHostGatewayAddress(METHODOLOGY_MCP_FORWARDER_UPSTREAM_HOST, config.lookup, 4);
   const endpoint = `/mcp/${config.token}`;
+  // Prospective opt-in profile: only the forwarder holds the upstream bearer.
+  // Old accepted-image behavior remains the default until a new image is gated.
+  const clientEndpoint = config.fixedClientPath ? "/mcp" : endpoint;
   const upstreamHostHeader = `${METHODOLOGY_MCP_FORWARDER_UPSTREAM_HOST}:${config.upstreamPort}`;
   let allowedHost = config.allowedHost;
 
@@ -179,7 +182,7 @@ export async function startMethodologyMcpForwarder(options) {
     observed = increment(observed);
     if (closed) { deny("forwarder-closed"); sendError(response, 404, "Forwarder is closed"); return; }
     if (observed > config.maxRequests) { deny("request-limit"); sendError(response, 429, "Request limit reached"); return; }
-    if (request.url !== endpoint) {
+    if (request.url !== clientEndpoint) {
       deny(request.url?.startsWith("/") ? "path-not-allowed" : "absolute-form-not-supported");
       sendError(response, 404, "Endpoint not found"); return;
     }
@@ -272,8 +275,8 @@ export async function startMethodologyMcpForwarder(options) {
 
   return Object.freeze({
     protocol: METHODOLOGY_MCP_FORWARDER_PROTOCOL,
-    url: `http://${boundAuthority}${endpoint}`,
-    endpoint,
+    url: `http://${boundAuthority}${clientEndpoint}`,
+    endpoint: clientEndpoint,
     boundHost: config.host,
     boundPort: address.port,
     upstreamPort: config.upstreamPort,
@@ -310,6 +313,7 @@ const ENV_NAMES = Object.freeze({
   maxRequestBytes: "MCP_FORWARDER_MAX_REQUEST_BYTES", maxResponseBytes: "MCP_FORWARDER_MAX_RESPONSE_BYTES",
   maxHeaderBytes: "MCP_FORWARDER_MAX_HEADER_BYTES", requestTimeoutMs: "MCP_FORWARDER_REQUEST_TIMEOUT_MS",
   maxConnections: "MCP_FORWARDER_MAX_CONNECTIONS", maxRequests: "MCP_FORWARDER_MAX_REQUESTS",
+  fixedClientPath: "MCP_FORWARDER_FIXED_CLIENT_PATH",
 });
 
 /** Parse only the explicit production environment contract; no credential or target overrides are accepted. */
@@ -347,6 +351,11 @@ export function parseMethodologyMcpForwarderConfig(env = process.env) {
   };
   const configuredAllowedHost = value(ENV_NAMES.allowedHost, false);
   if (configuredAllowedHost !== undefined) config.allowedHost = configuredAllowedHost;
+  const fixedClientPath = value(ENV_NAMES.fixedClientPath, false);
+  if (fixedClientPath !== undefined) {
+    if (fixedClientPath !== "1") throw new TypeError("invalid fixed client endpoint profile");
+    config.fixedClientPath = true;
+  }
   return Object.freeze(config);
 }
 
@@ -385,13 +394,14 @@ export function parseMethodologyMcpForwarderAuditSnapshot(value) {
 function normalizeOptions(options) {
   if (!options || typeof options !== "object" || Array.isArray(options)) throw new Error("invalid forwarder configuration");
   const allowed = new Set(["host", "port", "allowedHost", "token", "upstreamPort", "maxRequestBytes", "maxResponseBytes",
-    "maxHeaderBytes", "requestTimeoutMs", "maxConnections", "maxRequests", "fixtureMode", "fixtureRequest", "lookup"]);
+    "maxHeaderBytes", "requestTimeoutMs", "maxConnections", "maxRequests", "fixtureMode", "fixtureRequest", "lookup", "fixedClientPath"]);
   if (Object.keys(options).some((key) => !allowed.has(key))) throw new Error("unsupported forwarder configuration");
   for (const key of ["host", "token", "upstreamPort", "maxRequestBytes", "maxResponseBytes", "maxHeaderBytes",
     "requestTimeoutMs", "maxConnections", "maxRequests"]) if (!(key in options)) throw new Error("incomplete forwarder configuration");
   if (typeof options.host !== "string" || !isIP(options.host)) throw new Error("invalid forwarder host");
   if (!Number.isSafeInteger(options.port) || options.port < 0 || options.port > 65535) throw new Error("invalid forwarder port");
   if (typeof options.token !== "string" || !/^[a-f0-9]{64}$/.test(options.token)) throw new Error("invalid MCP capability token");
+  if (options.fixedClientPath !== undefined && options.fixedClientPath !== true) throw new Error("invalid fixed client endpoint profile");
   if (!Number.isSafeInteger(options.upstreamPort) || options.upstreamPort < 1 || options.upstreamPort > 65535) throw new Error("invalid upstream port");
   if (options.allowedHost !== undefined && !isValidAuthority(options.allowedHost)) throw new Error("invalid allowedHost");
   for (const key of ["maxRequestBytes", "maxResponseBytes", "maxHeaderBytes", "requestTimeoutMs", "maxConnections", "maxRequests"]) {

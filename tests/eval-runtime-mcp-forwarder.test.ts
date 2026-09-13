@@ -7,7 +7,11 @@ import { connect } from "node:net";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 // @ts-expect-error The runtime fixture is intentionally a built-in ESM module without a declaration file.
-import * as forwarder from "../container/eval-runtime/methodology-mcp-forwarder.mjs";
+import * as acceptedForwarder from "../container/eval-runtime/methodology-mcp-forwarder.mjs";
+// @ts-expect-error Prospective versioned built-in ESM candidate, never an accepted image.
+import * as privateForwarder from "../container/eval-runtime/methodology-mcp-forwarder-private-v1.mjs";
+const privateProfile = process.env.PEREGRINE_TEST_FORWARDER_PROFILE === "private-v1";
+const forwarder = privateProfile ? privateForwarder : acceptedForwarder;
 const {
   METHODOLOGY_MCP_FORWARDER_UPSTREAM_HOST,
   parseMethodologyMcpForwarderAuditSnapshot,
@@ -50,7 +54,8 @@ async function fixture(
   callback: (request: { method: string; hostname: string; port: number; path: string; headers: Readonly<Record<string, string>>; body: Buffer }) => unknown,
   options: Record<string, unknown> = {},
 ) {
-  const service = await startMethodologyMcpForwarder({ ...baseOptions, ...options, fixtureMode: true,
+  const start = options.fixedClientPath ? privateForwarder.startMethodologyMcpForwarder : startMethodologyMcpForwarder;
+  const service = await start({ ...baseOptions, ...options, fixtureMode: true,
     fixtureRequest: async (request: ForwardRequest) => callback(request) as never });
   return service;
 }
@@ -168,7 +173,7 @@ test("production environment parsing is strict and never accepts target override
   assert.equal(parseMethodologyMcpForwarderConfig(env).port, 43124);
   assert.throws(() => parseMethodologyMcpForwarderConfig({ ...env, MCP_FORWARDER_UPSTREAM_URL: "http://evil.invalid" }), /unknown/);
   assert.throws(() => parseMethodologyMcpForwarderConfig({ ...env, MCP_FORWARDER_BIND_PORT: "0" }), /out of bounds/);
-  const fixtureOutput = execFileSync(process.execPath, [fileURLToPath(new URL("../container/eval-runtime/methodology-mcp-forwarder.mjs", import.meta.url)), "--fixture-config"], { encoding: "utf8" });
+  const fixtureOutput = execFileSync(process.execPath, [fileURLToPath(new URL(privateProfile ? "../container/eval-runtime/methodology-mcp-forwarder-private-v1.mjs" : "../container/eval-runtime/methodology-mcp-forwarder.mjs", import.meta.url)), "--fixture-config"], { encoding: "utf8" });
   assert.deepEqual(JSON.parse(fixtureOutput), { protocol: "methodology-mcp-forwarder-v1", upstreamHost: "host.docker.internal", tokenBytes: 32 });
 });
 

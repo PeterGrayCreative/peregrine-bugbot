@@ -42,6 +42,11 @@ no sidecar environment/PID/socket mount, and the existing isolated internal
 network. Exact network membership and authenticated mounted-source binding are
 unchanged; the nonsecret endpoint is not intended as a public Internet service.
 This opt-in forwarder source is **not in the accepted predecessor image**.
+The accepted forwarder and Dockerfile stay byte-identical. The new versioned
+`methodology-mcp-forwarder-private-v1.mjs` and `Dockerfile.private-stream-v1`
+preserve the tested base implementation; the full forwarder security suite runs
+against both modules. This deliberate source fork preserves immutable acceptance
+instead of changing its digest or weakening the existing source-pin test.
 Real successor dispatch is blocked pending a new immutable image/helper
 acceptance and fresh independent review plus explicit user authorization.
 
@@ -73,3 +78,5 @@ Focused and full applicable validation logs/hashes are recorded in the additive
 private V2 package. The initial invalid synthetic reasoning lifecycle and a
 wrong lifecycle-helper return-shape assumption were corrected, not hidden by
 loosening the retained validator.
+Full validation also caught the accepted-source pin; the prospective change was
+moved into the additive module/recipe, leaving the original assertion intact.
