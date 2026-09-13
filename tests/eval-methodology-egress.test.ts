@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
 import type { ExecResult } from "../src/util/exec.js";
+import { readFileSync } from "node:fs";
+import { ACCEPTED_EVAL_RUNTIME_IMAGE } from "../eval/runtime-containment.js";
+import { isRecordedMethodologyEgressImage, METHODOLOGY_RUNTIME_IMAGE_ACCEPTANCE, PREVIOUS_METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "../eval/methodology-runtime-image.js";
 import {
   ACCEPTED_METHODOLOGY_EGRESS_IMAGE,
   createMethodologyEgressSupervisor,
@@ -83,9 +86,27 @@ test("local zero-provider candidate cannot replace the accepted provider image o
   const options = { attemptId: "attempt-000001", armId: "A", sourceHeadTree: "a".repeat(40),
     providerAuthorities: ["zero-provider.invalid:443"], hostMcpPort: 43123, mcpLimits: limits };
   await assert.rejects(createMethodologyEgressSupervisor({ ...options, image: ZERO_PROVIDER_FORWARDER_CANDIDATE_IMAGE }), /accepted immutable digest/);
+  await assert.rejects(createMethodologyEgressSupervisor({ ...options, image: PREVIOUS_METHODOLOGY_EGRESS_RUNTIME_IMAGE }), /accepted immutable digest/);
   await assert.rejects(createZeroProviderCandidateEgressSupervisor({ ...options, providerAuthorities: ["api.openai.com:443"] }), /candidate options/);
   await assert.rejects(createZeroProviderCandidateEgressSupervisor({ ...options, image: ZERO_PROVIDER_FORWARDER_CANDIDATE_IMAGE }), /candidate options/);
   await assert.rejects(createZeroProviderCandidateEgressSupervisor({ ...options, run: async () => result() } as never), /candidate options/);
+});
+
+test("published experimental image acceptance binds source bytes without accepting a provider canary or changing general review runtime", () => {
+  const acceptance = METHODOLOGY_RUNTIME_IMAGE_ACCEPTANCE;
+  assert.equal(ACCEPTED_METHODOLOGY_EGRESS_IMAGE, "ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:ccad8c4087d95936231b9c0ac38f4db0782e74da7183c08eee59b71114e15826");
+  assert.equal(acceptance.image, ACCEPTED_METHODOLOGY_EGRESS_IMAGE);
+  assert.equal(acceptance.workflowRunId, 34758654512);
+  assert.equal(acceptance.sourceCommit, "b01d15680705ff7e8d28047f5b529298acbb1c95");
+  assert.deepEqual(Object.keys(acceptance.platforms), ["linux/amd64", "linux/arm64"]);
+  for (const [path, expected] of Object.entries(acceptance.sourceSha256)) {
+    assert.equal(createHash("sha256").update(readFileSync(path)).digest("hex"), expected, path);
+  }
+  assert.equal(ACCEPTED_EVAL_RUNTIME_IMAGE, "ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:0ad23c12cc2172a54b2b298ebde4096d3e4924efc3d3bf5c2c4f616c7d00e6b3");
+  assert.deepEqual([acceptance.providerAuthorized, acceptance.cliAgentCanaryProven, acceptance.exactServedModel, acceptance.exactServedVersion], [false, false, null, null]);
+  assert.equal(isRecordedMethodologyEgressImage(PREVIOUS_METHODOLOGY_EGRESS_RUNTIME_IMAGE), true);
+  assert.equal(isRecordedMethodologyEgressImage(acceptance.image), true);
+  for (const invalid of [ZERO_PROVIDER_FORWARDER_CANDIDATE_IMAGE, ACCEPTED_EVAL_RUNTIME_IMAGE, acceptance.image.replace(/@.*/, ":latest"), null]) assert.equal(isRecordedMethodologyEgressImage(invalid), false);
 });
 
 test("prediction source endpoint token is exact and setup cancellation cannot cancel cleanup", async () => {

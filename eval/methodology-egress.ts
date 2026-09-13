@@ -3,6 +3,7 @@ import { isIP } from "node:net";
 import { exec, type ExecResult } from "../src/util/exec.js";
 import { safeDiagnostic } from "../src/security/secrets.js";
 import { canonicalJsonSha256 } from "./experiment.js";
+import { METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "./methodology-runtime-image.js";
 
 /**
  * Docker is deliberately kept behind this small adapter.  In particular, a
@@ -21,8 +22,7 @@ export type DockerExec = (
 ) => Promise<ExecResult>;
 
 /** Sidecar-capable image accepted by the methodology egress supervisor. */
-export const METHODOLOGY_EGRESS_RUNTIME_IMAGE =
-  "ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:d62b740e61ef05f0813531544e5de89ce76e2eb4a8d55248d9f364b9afd7a171" as const;
+export { METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "./methodology-runtime-image.js";
 export const METHODOLOGY_EGRESS_PROTOCOL = "methodology-egress-supervisor-v1" as const;
 export const GATEWAY_ENTRYPOINT = "/usr/local/bin/peregrine-egress-gateway" as const;
 export const FORWARDER_ENTRYPOINT = "/usr/local/bin/peregrine-methodology-mcp-forwarder" as const;

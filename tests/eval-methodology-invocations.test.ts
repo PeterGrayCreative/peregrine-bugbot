@@ -10,6 +10,7 @@ import { createMethodologyInvocationRecorder, readMethodologyInvocation, registe
   readMethodologyInvocationRegistration, type MethodologyInvocationInput } from "../eval/methodology-invocations.js";
 import { canonicalJsonSha256 } from "../eval/experiment.js";
 import { ACCEPTED_EVAL_RUNTIME_IMAGE, METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "../eval/runtime-containment.js";
+import { PREVIOUS_METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "../eval/methodology-runtime-image.js";
 
 const scope = { baseRef: "a".repeat(40), headRef: "b".repeat(40), diff: "+const x = 1;",
   taskSpecification: "Preserve behavior.", rawChangedPaths: ["src/a.ts"] };
@@ -265,6 +266,14 @@ test("trusted v3 egress tool policy requires the sidecar digest and internal MCP
     const receipt = f.record(input);
     assert.equal(readMethodologyInvocation(f.root, f.registrationSha256, input.attemptId, 1, receipt).input.toolPolicy?.protocol,
       "neutral-read-mcp-v3");
+    const historical = await fixture();
+    try {
+      const oldInput = await historical.input("A");
+      oldInput.toolPolicy = structuredClone(input.toolPolicy);
+      oldInput.toolPolicy.attachment.image = PREVIOUS_METHODOLOGY_EGRESS_RUNTIME_IMAGE;
+      const oldReceipt = historical.record(oldInput);
+      assert.equal(readMethodologyInvocation(historical.root, historical.registrationSha256, oldInput.attemptId, 1, oldReceipt).input.toolPolicy?.attachment?.image, PREVIOUS_METHODOLOGY_EGRESS_RUNTIME_IMAGE);
+    } finally { historical.cleanup(); }
     for (const mutate of [
       (policy: Record<string, unknown>) => { policy.url = "http://host.docker.internal:43123/mcp/" + "a".repeat(64); },
       (policy: Record<string, unknown>) => { (policy.attachment as Record<string, unknown>).internalMcpUrl = "http://mcp-forwarder:8082/mcp/" + "b".repeat(64); },

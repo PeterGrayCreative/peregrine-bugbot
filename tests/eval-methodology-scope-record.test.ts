@@ -13,6 +13,7 @@ import {
   type MethodologyProviderNeutralReadMcp,
 } from "../eval/methodology-provider-attachment.js";
 import { METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "../eval/runtime-containment.js";
+import { PREVIOUS_METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "../eval/methodology-runtime-image.js";
 import {
   buildMethodologyScopeRecordV2,
   validateMethodologyScopeRecordV2,
@@ -401,6 +402,12 @@ test("v2 binds a v3 egress policy and sealed diagnostics while remaining unverif
       modelLimitations: v2Input.modelLimitations,
       findingCount: v2Input.findingCount,
     }), record);
+    const historicalInput = structuredClone(v2Input);
+    historicalInput.toolPolicy.attachment.image = PREVIOUS_METHODOLOGY_EGRESS_RUNTIME_IMAGE;
+    const historical = buildMethodologyScopeRecordV2(historicalInput);
+    assert.deepEqual(validateMethodologyScopeRecordV2(historical, historicalInput), historical);
+    assert.equal(historical.toolPolicy.attachment.image, PREVIOUS_METHODOLOGY_EGRESS_RUNTIME_IMAGE);
+    assert.equal(historical.result.verdict, "unverified");
   } finally {
     await attachment.close();
     rmSync(root, { recursive: true, force: true });

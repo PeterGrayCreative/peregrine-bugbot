@@ -8,7 +8,8 @@ import { parseMethodologyDiscoveryOutput } from "./methodology-output.js";
 import type { CompiledMethodologyPrompt } from "./methodology-prompts.js";
 import { parseMethodologySchedule, type MethodologySchedule } from "./methodology-schedule.js";
 import type { EvaluationIsolation } from "../src/types.js";
-import { ACCEPTED_EVAL_RUNTIME_IMAGE, METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "./runtime-containment.js";
+import { ACCEPTED_EVAL_RUNTIME_IMAGE } from "./runtime-containment.js";
+import { isRecordedMethodologyEgressImage } from "./methodology-runtime-image.js";
 import { METHODOLOGY_EGRESS_PROTOCOL } from "./methodology-egress.js";
 
 export interface MethodologyInvocationInput {
@@ -260,7 +261,7 @@ function validateEgressAttachmentReference(
   if (attachment.schemaVersion !== 2 || attachment.protocol !== "methodology-provider-attachment-reference-v2" ||
       attachment.attemptId !== attemptId || attachment.armId !== armId ||
       !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(attachment.sourceHeadTree as string) ||
-      attachment.image !== METHODOLOGY_EGRESS_RUNTIME_IMAGE || attachment.runner !== "codex" ||
+      !isRecordedMethodologyEgressImage(attachment.image) || attachment.runner !== "codex" ||
       !["api-key", "cli-session"].includes(attachment.providerAccess as string) || attachment.profile !== "methodology-review" ||
       attachment.executionClass !== "provider" || !Number.isSafeInteger(attachment.outputByteLimit) ||
       (attachment.outputByteLimit as number) < 1 || (attachment.outputByteLimit as number) > 100_000_000 ||

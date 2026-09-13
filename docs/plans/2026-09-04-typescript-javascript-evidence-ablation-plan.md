@@ -246,3 +246,9 @@ records a credential-free candidate-image cancellation/cleanup proof after
 preserving the accepted-image failures. It does not change the registration,
 accepted image, production route or provider-authorization boundary; actual
 non-API CLI attachment remains a separately gated external requirement.
+
+The successor [published-runtime acceptance checkpoint](../validation/2026-09-13-prediction-runtime-acceptance.md)
+binds the manually published, attested multi-platform image for the explicit
+experimental runtime. Image acceptance is distinct from an authorized non-API
+CLI-agent/provider canary, exact served identity or experiment readiness; those
+boundaries remain unchanged.

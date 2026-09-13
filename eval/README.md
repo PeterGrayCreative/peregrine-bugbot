@@ -511,6 +511,15 @@ manual `main`-only operation with `packages: write`. Changed image source lands
 first, then is manually published and probed, followed by a separate acceptance
 change for the newly attested digest.
 
+The explicit methodology/prediction egress path now accepts
+`ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:ccad8c4087d95936231b9c0ac38f4db0782e74da7183c08eee59b71114e15826`,
+bound to manual run `34758654512` and source commit `b01d15680705ff7e8d28047f5b529298acbb1c95`.
+The [acceptance evidence](../docs/validation/2026-09-13-prediction-runtime-acceptance.md)
+separates image/platform/native zero-provider proof from the still-unproven
+authorized CLI-agent/provider canary and exact served identity. The general
+review image and production routing are unchanged. Historical records retain
+their old digest; accepting them as evidence never authorizes a new launch.
+
 ## Running
 
 ```bash
