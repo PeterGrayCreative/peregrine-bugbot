@@ -92,7 +92,8 @@ export async function createStructuralSafeCanary(options: { authority: Predictio
           try {
             const result = await contained(...input), reduced = privateResultBinding(result);
             write("execution.json", { kind: "prediction-safe-canary-execution-v1", binding, result: reduced });
-            if (result.code !== 0 || result.timedOut || reduced.cleanupFailed || reduced.outputLimitExceeded) throw new Error("canary execution did not complete safely");
+            if (reduced.cleanupFailed) throw new AggregateError([], "private client cleanup unproven");
+            if (result.code !== 0 || result.timedOut || reduced.outputLimitExceeded) throw new Error("canary execution did not complete safely");
             stream = reduceSafeCanaryStream(result.stdout);
             write("output.json", { binding, stream });
             return { stdout: "", stderr: "", code: result.code, timedOut: false };

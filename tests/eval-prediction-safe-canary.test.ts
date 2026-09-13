@@ -182,6 +182,24 @@ test("cross-run/copied authority and resealed route/scope/authorization changes 
   assert.equal(calls, 0); for (const path of ["one", "two", "changed"]) assert.equal(existsSync(join(f.root, path)), false);
 });
 
+test("known returned client cleanup failure cannot certify successful teardown", async t => {
+  const f = await predictionSolLowFixture(t), registration = await preparePredictionSafeCanary(f.options.authority, f.root), directory = join(f.root, "cleanup-failed-safe");
+  const fake = predictionDockerFixture(async () => ({ stdout: jsonl(events()), stderr: "", code: 0, timedOut: false }));
+  let cleanupFailures = 0;
+  const run: typeof fake.run = async (command, args, options) => {
+    if (args[0] === "rm" && /^peregrine-eval-[a-f0-9-]{36}$/.test(args.at(-1)!)) {
+      cleanupFailures++; return { stdout: encodings(token)[1]!, stderr: encodings(token)[2]!, code: 1, timedOut: false };
+    }
+    return fake.run(command, args, options);
+  };
+  const harness = await createStructuralSafeCanary({ ...f.options, registration, directory, run });
+  const result = await harness.run(harness.authorizeSynthetic(SAFE_CANARY_ID));
+  assert.equal(cleanupFailures, 1); assert.equal(result.status, "failed");
+  assert.equal(result.deadline.teardownCompleted, false); assert.ok(result.deadline.cleanupError);
+  assert.equal(result.failure?.cleanupUnproven, true); noSecrets(directory, encodings(token));
+  assert.equal(existsSync(join(directory, "output.json")), false);
+});
+
 test("invalid provider status retains hashes only, including encoded diagnostics and companion schema fields", async t => {
   const f = await predictionSolLowFixture(t), registration = await preparePredictionSafeCanary(f.options.authority, f.root);
   for (const [index, encoded] of encodings(token).entries()) {
