@@ -27,6 +27,8 @@ export const METHODOLOGY_EGRESS_PROTOCOL = "methodology-egress-supervisor-v1" as
 export const GATEWAY_ENTRYPOINT = "/usr/local/bin/peregrine-egress-gateway" as const;
 export const FORWARDER_ENTRYPOINT = "/usr/local/bin/peregrine-methodology-mcp-forwarder" as const;
 export const ACCEPTED_METHODOLOGY_EGRESS_IMAGE = METHODOLOGY_EGRESS_RUNTIME_IMAGE;
+/** Local immutable repair candidate. Never accepted for provider dispatch. */
+export const ZERO_PROVIDER_FORWARDER_CANDIDATE_IMAGE = "sha256:c7296f363efb44c6d48357e6c65dfcb9fac5c550e83b2c917ca7753adddbfa55" as const;
 export const METHODOLOGY_MCP_LIMIT_MAXIMA = Object.freeze({
   maxRequestBytes: 50 * 1024 * 1024,
   maxResponseBytes: 50 * 1024 * 1024,
@@ -119,7 +121,7 @@ export interface MethodologyEgressAttestation {
   readonly attemptId: string;
   readonly armId: string;
   readonly sourceHeadTree: string;
-  readonly image: typeof ACCEPTED_METHODOLOGY_EGRESS_IMAGE;
+  readonly image: typeof ACCEPTED_METHODOLOGY_EGRESS_IMAGE | typeof ZERO_PROVIDER_FORWARDER_CANDIDATE_IMAGE;
   readonly providerAuthorities: readonly string[];
   readonly providerAuthoritiesSha256: string;
   readonly network: string;
@@ -131,7 +133,7 @@ export interface MethodologyEgressAttestation {
   readonly hostMcpPort: number;
   readonly mcpLimitsSha256: string;
   readonly topology: "gateway-and-forwarder-only-before-provider";
-  readonly executionClass: "provider" | "structural-mock";
+  readonly executionClass: "provider" | "structural-mock" | "zero-provider-candidate";
   readonly attestationSha256: string;
 }
 
@@ -152,7 +154,7 @@ export interface MethodologyEgressLaunchCapability {
   readonly network: string;
   readonly proxyUrl: string;
   readonly internalMcpUrl: string;
-  readonly executionClass: "provider" | "structural-mock";
+  readonly executionClass: "provider" | "structural-mock" | "zero-provider-candidate";
   readonly attestationSha256: string;
 }
 
@@ -449,8 +451,8 @@ function parseInspect(stdout: string, expected: { name: string; network: string;
   const hostConfig = value.HostConfig as Record<string, unknown> | undefined;
   if (!hostConfig || hostConfig.ReadonlyRootfs !== true || JSON.stringify(hostConfig.CapDrop) !== JSON.stringify(["ALL"]) ||
       !Array.isArray(hostConfig.SecurityOpt) || !hostConfig.SecurityOpt.includes("no-new-privileges") ||
-      hostConfig.PidsLimit !== 64 || hostConfig.User !== "65532:65532" ||
-      JSON.stringify(hostConfig.Tmpfs) !== JSON.stringify({
+      hostConfig.PidsLimit !== 64 || (value.Config as Record<string, unknown>).User !== "65532:65532" ||
+      canonicalJsonSha256(hostConfig.Tmpfs) !== canonicalJsonSha256({
         "/tmp": "rw,noexec,nosuid,nodev,size=32m,uid=65532,gid=65532,mode=1777",
         "/home/peregrine": "rw,noexec,nosuid,nodev,size=16m,uid=65532,gid=65532,mode=0700",
       })) fail(`${expected.name} inspect does not attest the sidecar containment policy`);
@@ -542,17 +544,28 @@ export async function createStructuralMockMethodologyEgressSupervisor(
   return createSupervisor(options, options.run, "structural-mock");
 }
 
+/** Uses the real supervisor, but returns no provider launch capability. The
+ * fixed credential-free prediction probe is its only execution consumer. */
+export async function createZeroProviderCandidateEgressSupervisor(options: MethodologyEgressSupervisorOptions) {
+  if (Object.prototype.hasOwnProperty.call(options, "run") || options.image !== undefined ||
+      JSON.stringify(options.providerAuthorities) !== JSON.stringify(["zero-provider.invalid:443"])) fail("invalid zero-provider candidate options");
+  const { launchCapability: _, ...supervisor } = await createSupervisor(options, exec, "zero-provider-candidate");
+  return Object.freeze(supervisor);
+}
+
 async function createSupervisor(
   options: MethodologyEgressSupervisorOptions,
   run: DockerExec,
-  executionClass: "provider" | "structural-mock",
+  executionClass: "provider" | "structural-mock" | "zero-provider-candidate",
 ): Promise<MethodologyEgressSupervisor> {
   validateAttemptId(options.attemptId); validateTree(options.sourceHeadTree);
   if (typeof options.armId !== "string" || !/^[A-D]$/u.test(options.armId)) fail("invalid methodology arm id");
   const authorities = validateProviderAuthorities(options.providerAuthorities);
   validatePort(options.hostMcpPort, "host MCP port");
   const limits = validateLimits(options.mcpLimits);
-  const image = options.image ?? ACCEPTED_METHODOLOGY_EGRESS_IMAGE; assertImage(image);
+  let image: MethodologyEgressAttestation["image"];
+  if (executionClass === "zero-provider-candidate") image = ZERO_PROVIDER_FORWARDER_CANDIDATE_IMAGE;
+  else { const requested = options.image ?? ACCEPTED_METHODOLOGY_EGRESS_IMAGE; assertImage(requested); image = requested; }
   const readyTimeoutMs = options.readyTimeoutMs ?? 10_000;
   if (!Number.isSafeInteger(readyTimeoutMs) || readyTimeoutMs < 100 || readyTimeoutMs > 120_000) fail("invalid sidecar readiness timeout");
   const stopTimeoutMs = options.stopTimeoutMs ?? 15_000;
@@ -633,7 +646,7 @@ async function createSupervisor(
     executionClass,
     attestationSha256: attestation.attestationSha256,
   });
-  LAUNCH_CAPABILITIES.add(launchCapability);
+  if (executionClass !== "zero-provider-candidate") LAUNCH_CAPABILITIES.add(launchCapability);
   return Object.freeze({
     network: n.network,
     proxyUrl,

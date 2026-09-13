@@ -240,3 +240,9 @@ program; credential-bearing canaries, provider execution, and other external
 execution require separate explicit authorization. No future section may
 advance to provider execution or an efficacy claim on documentation or
 structural evidence alone.
+
+The additive [2026-09-13 forwarder startup checkpoint](../validation/2026-09-13-prediction-forwarder-startup.md)
+records a credential-free candidate-image cancellation/cleanup proof after
+preserving the accepted-image failures. It does not change the registration,
+accepted image, production route or provider-authorization boundary; actual
+non-API CLI attachment remains a separately gated external requirement.

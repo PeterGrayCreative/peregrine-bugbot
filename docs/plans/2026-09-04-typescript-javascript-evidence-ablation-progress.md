@@ -689,3 +689,21 @@ an R4 runtime pass. Container termination and complete authenticated cleanup
 remain unproved, all 64 review slots remain unstarted, and execution readiness
 and provider authorization remain false. See the
 [runtime-boundary validation record](../validation/2026-09-13-prediction-runtime-boundary.md).
+
+## 2026-09-13: forwarder repair and candidate-only runtime proof
+
+The successor [forwarder startup checkpoint](../validation/2026-09-13-prediction-forwarder-startup.md)
+proves the accepted forwarder rejected Docker Desktop's dual-stack host alias
+before listening. An additive local candidate requests the supervisor's IPv4
+family while preserving one-address validation. Two subsequent failed probes
+identified and preserved Docker inspect field/order mismatches before minimal
+correction. The third candidate probe passed actual credential-free Node
+reader attachment, accelerated whole-attempt cancellation, forced client and
+descendant removal, sealed sidecar audits and container/network absence checks.
+
+The accepted image and production defaults remain unchanged. The candidate
+has no provider launch capability and is not distributed or accepted. All
+prior failures remain immutable. This closes the reproduced zero-provider
+startup/cleanup defect, subject to independent review; it does not establish
+CLI-agent containment, provider authorization, served identity, corpus
+admission or an R4 experiment pass. All 64 review slots remain unstarted.
