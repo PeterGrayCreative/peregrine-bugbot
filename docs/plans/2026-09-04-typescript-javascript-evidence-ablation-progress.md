@@ -654,3 +654,21 @@ The current corpus-dependent Section 4 freeze is prohibited. No provider run,
 admission, protected selection, human-verification claim, or efficacy claim
 resulted. See the
 [Section 3 termination gate](../validation/2026-09-13-section-3-astra-xhigh-fail-gate.md).
+
+An additive [AI-prediction development registration](2026-09-13-ai-prediction-development-registration.md)
+now preserves all 16 accepted bounded AI proposals and all 31 exclusions
+without claiming the failed corpus passed. It freezes a descriptive A/B
+single-session comparison with two repeats and 64 scheduled attempts, explicit
+prediction/matching sensitivity, all-output adjudication, failure-inclusive
+accounting, dependence handling, and prohibited claims. It contains no
+provider interface and reports incomplete materialization.
+
+The first Astra medium gate withheld unconditional approval after finding a
+lossy Markdown parser that truncated exposed-11 at `transform || strip ||
+reject` while its self-reconstruction test still passed. The failed manifest
+was preserved, parsing and full-contract tests were corrected, and a rereview
+approved durable registration storage. Private evidence commit `ca2d8e1`
+contains the implementation. This is the next exploratory design checkpoint,
+not a Section 4 pass or provider authorization. Exact raw mounts, assembled
+prompt hashes, served route/cap enforcement, and prediction-aware execution and
+adjudication remain required before an execution-readiness decision.
