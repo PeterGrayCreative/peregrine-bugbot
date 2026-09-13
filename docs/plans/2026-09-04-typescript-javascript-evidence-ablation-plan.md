@@ -252,3 +252,10 @@ binds the manually published, attested multi-platform image for the explicit
 experimental runtime. Image acceptance is distinct from an authorized non-API
 CLI-agent/provider canary, exact served identity or experiment readiness; those
 boundaries remain unchanged.
+
+The additive [R4 preauthorization checkpoint](../validation/2026-09-13-prediction-r4-preauthorization.md)
+reconstructs the unchanged 16-source/64-slot AI-prediction preparation and
+separately registers one infrastructure-only CLI canary. It is not a revival
+of the failed corpus path or dispatch authorization. A supported gated bridge,
+explicit canary approval, observed evidence and independent review remain
+required; all slots are unstarted and readiness/authorization remain false.

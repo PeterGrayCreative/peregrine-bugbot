@@ -349,3 +349,23 @@ found that nested Codex read-only sandbox execution fails at namespace creation
 under the tested accepted-image restrictions. Direct reads succeed. This is a
 runtime-readiness blocker, not an excuse to disable sandboxing; passing existing
 image smoke checks alone does not establish working review-agent tools.
+
+## 2026-09-13 additive AI-prediction R4 checkpoint
+
+The historical corpus-dependent sequence above remains unpassed. The separate
+AI-prediction development path now has an exact
+[zero-provider preauthorization package](../validation/2026-09-13-prediction-r4-preauthorization.md):
+
+- [x] Reconstruct and replay 16 repository-only mounts, 32 unchanged A/B prompts
+  and 64 unstarted fixed slots, with source/tool/runtime/route/cap/rubric/analysis
+  hashes and deterministic tamper/default-deny tests.
+- [x] Freeze a separate neutral one-attempt infrastructure canary registration;
+  no scored review slot, retries, delegation or inferred batch authorization.
+- [ ] Independent gate on this exact package and supported four-tool CLI bridge.
+- [ ] Separate explicit canary authorization, actual client/model attachment
+  and terminal identity/usage/deadline/cleanup/leakage evidence, with unavailable
+  observations preserved rather than inferred.
+- [ ] Independent canary review, separate batch authorization and authenticated
+  assessor identity/arm-blinding receipts before adjudication.
+
+Provider calls remain zero; `providerAuthorized` and `executionReady` are false.
