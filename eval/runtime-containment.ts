@@ -44,6 +44,7 @@ const METHODOLOGY_MCP_FORWARDER = "mcp-forwarder:8082";
 export interface ContainedProviderOptions {
   mechanicalEvidenceDirectory?: string;
   mechanicalEvidenceBinding?: MechanicalEvidenceBinding;
+  mechanicalForwarderToken?: string;
   runner: Exclude<RunnerName, "mock">;
   providerAccess: Exclude<ExperimentProviderAccess, "not-applicable">;
   checkoutDir: string;
@@ -395,7 +396,7 @@ function validateMethodologyCodexCommand(
 }
 
 export function createContainedProviderExec(options: ContainedProviderOptions): ProviderExec {
-  const run = options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.mechanicalEvidenceBinding!, options.run ?? exec) : options.run ?? exec;
+  const run = options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.mechanicalEvidenceBinding!, options.run ?? exec, options.mechanicalForwarderToken) : options.run ?? exec;
   return async (command, commandArgs, execOptions = {}) => {
     if (execOptions.inheritEnv !== false) throw new Error("contained provider execution requires an explicit isolated environment");
     const containerName = `peregrine-eval-${randomUUID()}`;

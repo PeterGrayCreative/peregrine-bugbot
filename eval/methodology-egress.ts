@@ -462,7 +462,7 @@ export async function createMethodologyEgressSupervisor(options: MethodologyEgre
   if (options && typeof options === "object" && Object.prototype.hasOwnProperty.call(options, "run")) {
     fail("provider egress supervisor cannot inject a Docker executor");
   }
-  return createSupervisor(options, options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.mechanicalEvidenceBinding!) : exec, "provider");
+  return createSupervisor(options, options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.mechanicalEvidenceBinding!, exec, options.hostMcpToken) : exec, "provider");
 }
 
 /**
@@ -472,7 +472,7 @@ export async function createMethodologyEgressSupervisor(options: MethodologyEgre
 export async function createStructuralMockMethodologyEgressSupervisor(
   options: StructuralMockMethodologyEgressSupervisorOptions,
 ): Promise<MethodologyEgressSupervisor> {
-  return createSupervisor(options, options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.mechanicalEvidenceBinding!, options.run) : options.run, "structural-mock");
+  return createSupervisor(options, options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.mechanicalEvidenceBinding!, options.run, options.hostMcpToken) : options.run, "structural-mock");
 }
 
 /** Uses the real supervisor, but returns no provider launch capability. The

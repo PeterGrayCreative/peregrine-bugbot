@@ -80,11 +80,12 @@ test("preflight failures retain separate evidence and never construct or dispatc
 });
 
 test("supported operator dispatch runs one synthetic low client, retains mechanical receipts and denies restart", async t => {
-  const f = await solLowOperatorFixture(t); let calls = 0;
+  const f = await solLowOperatorFixture(t); let calls = 0, token = "";
   const docker = predictionDockerFixture(async (args, settings) => {
     calls++; assert.ok(args.includes('model_reasoning_effort="low"')); assert.ok(settings?.deadlineSignal); assert.ok(settings!.timeoutMs! <= 1200000);
-    const out = args.find(a => a.includes("target=/output"))!.split("source=")[1]!.split(",target=")[0]!; writeFileSync(join(out, "result.json"), "synthetic canary");
-    return { code: 0, timedOut: false, stdout: JSON.stringify({ type: "turn.completed", usage: { input_tokens: 20, output_tokens: 5 } }), stderr: "", processId: 12345 };
+    token = JSON.parse(args.find(a => a.startsWith("mcp_servers.source_read.url="))!.split("=").slice(1).join("=")).slice(-64);
+    const out = args.find(a => a.includes("target=/output"))!.split("source=")[1]!.split(",target=")[0]!; writeFileSync(join(out, "result.json"), "synthetic canary " + token);
+    return { code: 0, timedOut: false, stdout: JSON.stringify({ type: "turn.completed", usage: { input_tokens: 20, output_tokens: 5 }, echoedCapability: token }), stderr: token, processId: 12345 };
   });
   const executor: typeof docker.run = async (command, args, settings) => args[0] === "image" ? { code: 0, timedOut: false, stdout: JSON.stringify([f.amendment.runtimeAcceptance.image]), stderr: "" } : { processId: 20000, ...await docker.run(command, args, settings) };
   const result = await runStructuralSolLowOperator(f.request, executor);
@@ -92,10 +93,13 @@ test("supported operator dispatch runs one synthetic low client, retains mechani
   for (const part of ["client", "sidecars"]) assert.ok(readdirSync(join(f.options.directory, `canary/mechanical-${part}`)).some(n => n.endsWith("-terminal.json")));
   const retained = JSON.parse(readFileSync(join(f.request.reportDirectory, "retained-inventory.json"), "utf8"));
   const artifacts = retained.inventory.map((v: any) => ({ path: v.path, bytes: readFileSync(join(f.options.directory, v.path), "utf8") }));
+  assert.match(token, /^[a-f0-9]{64}$/);
+  for (const artifact of artifacts) assert.equal(artifact.bytes.includes(token), false, artifact.path);
+  assert.equal(readFileSync(join(f.options.directory, "canary/output/result.json"), "utf8"), "synthetic canary " + sha(token));
   const records: Record<string, any> = Object.fromEntries(artifacts.filter((v: any) => v.path !== "canary/output/result.json").map((v: any) => [v.path, JSON.parse(v.bytes)]));
   const launch = records["canary/mechanical-client/000001-start.json"];
   records["observer/lifecycle.json"] = { clientProcessId: 12345, clientContainer: launch.args[launch.args.indexOf("--name") + 1] };
-  for (const value of Object.values(records)) if (value.kind === "prediction-mechanical-terminal-v2" && value.binding.channel === "sidecars") {
+  for (const value of Object.values(records)) if (value.kind === "prediction-mechanical-terminal-v3" && value.binding.channel === "sidecars") {
     for (const line of value.result.stdout.bytes.split("\n")) { let item: any; try { item = JSON.parse(line); } catch { continue; }
       if (item.status === "sealed") records[item.protocol === "egress-gateway-v1" ? "observer/gateway-audit.json" : "observer/forwarder-audit.json"] = item.audit;
     }
@@ -116,6 +120,20 @@ test("exact operator arguments default deny route, retry, batch and absent autho
   assert.equal(parseSolLowOperatorArgs(args).action, "preflight");
   for (const a of [args.slice(0, -1), [...args, "--retry"], [...args.slice(0, -1), "--batch"], [...args.slice(0, -1), "--effort=high"]]) assert.throws(() => parseSolLowOperatorArgs(a));
   assert.equal(existsSync(f.options.directory), false);
+});
+
+test("cleanup diagnostics are redacted before the deadline guard persists them", async t => {
+  const f = await solLowOperatorFixture(t); let token = "";
+  const docker = predictionDockerFixture(async args => {
+    token = JSON.parse(args.find(a => a.startsWith("mcp_servers.source_read.url="))!.split("=").slice(1).join("=")).slice(-64);
+    return { code: 1, timedOut: false, stdout: "", stderr: token, processId: 12345, cleanupErrors: ["cleanup " + token] };
+  });
+  await runStructuralSolLowOperator(f.request, async (command, args, options) => args[0] === "image" ? { code: 0, timedOut: false, stdout: JSON.stringify([f.amendment.runtimeAcceptance.image]), stderr: "" } : { processId: 20000, ...await docker.run(command, args, options) });
+  assert.match(token, /^[a-f0-9]{64}$/);
+  const inventory = JSON.parse(readFileSync(join(f.request.reportDirectory, "retained-inventory.json"), "utf8")).inventory;
+  for (const entry of inventory) assert.equal(readFileSync(join(f.options.directory, entry.path), "utf8").includes(token), false, entry.path);
+  const deadline = JSON.parse(readFileSync(join(f.options.directory, "canary/deadline/terminal.json"), "utf8"));
+  assert.notEqual(deadline.cleanupError, null); assert.equal(deadline.teardownCompleted, false);
 });
 
 test("runtime preflight failure cannot consume the one-shot ledger or pull an image", async t => {
@@ -162,9 +180,24 @@ test("opt-in PID capture uses the existing child executor and does not alter its
 test("low assessor independently validates the explicit low route without high/batch promotion", async t => {
   const f = await solLowAssessmentFixture(t), result = assessPredictionSolLowCanary(f.input);
   assert.equal(result.recommendation, "infrastructure-canary-observed-no-batch-eligibility", JSON.stringify(result.failure));
-  assert.equal(result.kind, "prediction-sol-low-canary-assessment-v8"); assert.equal(result.batchAuthorized, false); assert.equal(result.executionReady, false);
+  assert.equal(result.kind, "prediction-sol-low-canary-assessment-v9"); assert.equal(result.batchAuthorized, false); assert.equal(result.executionReady, false);
   assert.equal(assessPredictionCanary(f.input).recommendation, "not-eligible"); assert.throws(() => requirePredictionBatchAuthorization(result));
   assert.equal(assessPredictionSolLowCanary({ ...f.input, observer: null }).recommendation, "not-eligible");
+});
+
+test("successor rejects inconsistent helper defaults and missing or cross-record redaction evidence", async t => {
+  const mutations: ((f: Awaited<ReturnType<typeof solLowAssessmentFixture>>) => void)[] = [
+    f => { delete f.files["canary/invocation.json"].forwarderCapability; },
+    f => { f.files["canary/mechanical-sidecars/000004-start.json"].forwarderCapability = { kind: "forwarding-capability-sha256-v1", sha256: sha("foreign") }; },
+    f => { f.files["canary/mechanical-client/000001-terminal.json"].forwarderCapability = null; },
+    f => { f.files["canary/mechanical-sidecars/000009-terminal.json"].kind = "prediction-mechanical-terminal-v2"; },
+    f => { f.files["canary/terminal.json"].outputRedaction.persistedSha256 = sha("foreign output"); },
+    ...[0, 1].map(index => (f: Awaited<ReturnType<typeof solLowAssessmentFixture>>) => {
+      const stream = f.files["canary/mechanical-sidecars/000009-terminal.json"].result.stdout, containers = JSON.parse(stream.bytes);
+      containers[index].HostConfig.OomKillDisable = false; stream.bytes = JSON.stringify(containers); stream.sha256 = sha(stream.bytes);
+    }),
+  ];
+  for (const mutate of mutations) { const f = await solLowAssessmentFixture(t); mutate(f); assert.equal(assessPredictionSolLowCanary(f.repin()).recommendation, "not-eligible"); }
 });
 
 test("low assessor rejects route/identity/catalog/cleanup/slot/gate and inventory mutations", async t => {

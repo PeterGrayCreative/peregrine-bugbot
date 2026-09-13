@@ -14,7 +14,7 @@ const INERT_CONTAINER_KEYS = ["ResolvConfPath", "HostnamePath", "HostsPath", "Lo
 /** Exact required running/network profile. Container key names/defaults derive
  * from retained create-only inspect; running/network conformance is prospective,
  * not a claim that archived network output exists. Unknown fields fail closed. */
-export const METHODOLOGY_OBSERVATION_PROFILE = "methodology-observation-graph-v3";
+export const METHODOLOGY_OBSERVATION_PROFILE = "methodology-observation-graph-v4";
 
 export function parseObservationRecords(stdout: string): any[] {
   let value: unknown; try { value = JSON.parse(stdout); } catch { throw new Error("malformed complete inspect JSON"); }

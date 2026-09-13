@@ -117,7 +117,12 @@ function assessCanaryEvidence(input: PredictionCanaryAssessmentInput, lowInput?:
     for (const value of [start, invocation, terminal]) same(value.scope, scope, "attempt scope mismatch");
     same(start.approval.scope, scope, "approval scope mismatch"); same(start.approval.permission, "one-provider-cli-attempt", "synthetic or unauthorized attempt");
     hash(start.approval.approvalEvidenceSha256); hash(start.approval.independentGateSha256);
-    if (operator) validateLowOperatorRecords(operator, lowInput!, get, raw, start, scope, bindings, terminal);
+    if (operator) {
+      validateLowOperatorRecords(operator, lowInput!, get, raw, start, scope, bindings, terminal);
+      const redaction = exact(terminal.outputRedaction, ["kind", "originalSha256", "persistedSha256"], "contained output redaction binding");
+      same(redaction.kind, "forwarding-capability-sha256-v1", "output redaction kind mismatch"); hash(redaction.originalSha256);
+      same(redaction.persistedSha256, sha(raw("canary/output/result.json")), "output redaction persisted bytes mismatch");
+    }
     same(invocation.providerImage, runtime.acceptance.image, "client image mismatch"); same(invocation.assets, [], "ambient canary assets exposed");
     same(invocation.prompt, canary.prompt, "canary prompt drift"); same(sha(invocation.prompt), canary.promptSha256, "canary prompt seal mismatch");
     const urlArg = array(invocation.args).map(text).find(v => v.startsWith("mcp_servers.source_read.url="));
@@ -305,7 +310,7 @@ function validateCanaryReads(cleanup: any, modelCalls: any[], evidence: any, mou
   }
 }
 function freezeAssessment(recommendation: string, input: PredictionCanaryAssessmentInput, binding: unknown, checks: string[], limitations: string[], failure: unknown, tokens: unknown, identity: unknown, low = false) {
-  const body = { kind: low ? "prediction-sol-low-canary-assessment-v8" : "prediction-canary-assessment-v4", recommendation, inputSha256: digest(input), binding, checks, limitations, failure, tokens, identity,
+  const body = { kind: low ? "prediction-sol-low-canary-assessment-v9" : "prediction-canary-assessment-v4", recommendation, inputSha256: digest(input), binding, checks, limitations, failure, tokens, identity,
     providerAuthorized: false, executionReady: false, batchAuthorized: false, providerCalls: 0,
     boundary: "Deterministic validation of externally authenticated evidence, not independent observation, dispatch authority, efficacy evidence or an R5 pass." };
   return freeze({ ...body, sha256: digest(body) });

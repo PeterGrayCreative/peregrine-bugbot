@@ -16,6 +16,7 @@ import { predictionCliCommand } from "./prediction-cli-command.js";
 import { PREDICTION_CLI_BRIDGE_POLICY } from "./prediction-cli-policy.js";
 import { predictionSolLowCanaryCommand } from "./prediction-sol-low-command.js";
 import { preparePredictionSolLowCanary, type PredictionSolLowCanaryAuthority } from "./prediction-sol-low-canary.js";
+import { predictionEvidenceRedactor, redactPredictionOutput } from "./prediction-evidence-redaction.js";
 
 export { PREDICTION_CLI_BRIDGE_POLICY } from "./prediction-cli-policy.js";
 interface Options {
@@ -90,7 +91,8 @@ async function createBridge(input: Options, structural?: { run: DockerExec; wall
     ...(low ? { amendmentFreezeSha256: amendment!.freezeSha256, userAuthorizationSha256: low.userAuthorization.sha256,
       predecessorCanarySha256: low.predecessor.canarySha256, predecessorBridgeFreezeSha256: low.predecessor.bridgeFreezeSha256, predecessorAssessmentFreezeSha256: low.predecessor.assessmentFreezeSha256 } : {}) });
   mkdirSync(options.directory, { mode: 0o700 });
-  const write = (path: string, value: unknown) => writeFileSync(path, canonicalJson(value) + "\n", { flag: "wx", mode: 0o600 });
+  let evidenceRedaction: ReturnType<typeof predictionEvidenceRedactor> | undefined;
+  const write = (path: string, value: unknown) => writeFileSync(path, canonicalJson(evidenceRedaction?.value(value) ?? value) + "\n", { flag: "wx", mode: 0o600 });
   write(join(options.directory, "bridge.json"), { bindings, source, policy, providerAuthorized: false, executionReady: false });
   if (low) write(join(options.directory, "canary-ledger-start.json"), { bindings, ...low.separateLedger, batchAuthorized: false });
   const authorizations = new WeakMap<object, Approval>(), terminals: PredictionCliTerminal[] = [];
@@ -136,6 +138,7 @@ async function createBridge(input: Options, structural?: { run: DockerExec; wall
       let attachment: Awaited<ReturnType<typeof attachPredictionReadTools>> | undefined, egress: MethodologyEgressSupervisor | undefined;
       let setup: Promise<MethodologyEgressSupervisor> | undefined;
       let execution: Awaited<ReturnType<ProviderExec>> | null = null, failure: ReturnType<typeof predictionFailureEvidence> | null = null, rawOutput: string | null = null;
+      let outputRedaction: ReturnType<typeof redactPredictionOutput>["binding"] | null = null;
       let guard: ReturnType<typeof createPredictionCliDeadline> | undefined;
       try {
         mkdirSync(directory, { mode: 0o700 }); write(join(directory, "start.json"), { bindings, scope: s, approval });
@@ -154,6 +157,7 @@ async function createBridge(input: Options, structural?: { run: DockerExec; wall
         attachment = await attachPredictionReadTools(options.authority.preparation, options.mountsRoot, s.sourceAttemptId, guard, { host: "0.0.0.0", allowedHosts: ["host.docker.internal:1"] });
         same(attachment.binding.inputDigest, s.mountSha256, "reader mount scope mismatch");
         const endpoint = new URL(attachment.url); attachment.replaceAuthorizedHosts([`host.docker.internal:${endpoint.port}`]);
+        evidenceRedaction = predictionEvidenceRedactor(endpoint.pathname.slice("/mcp/".length));
         const { maxSessions: _, ...limits } = PREDICTION_MCP_LIMITS;
         const egressOptions = { attemptId: `attempt-${String(ordinal).padStart(6, "0")}`, armId: p.attempts.find(a => a.id === s.sourceAttemptId)!.arm, sourceHeadTree: mount.headTree,
           providerAuthorities: policy.providerAuthorities, hostMcpPort: Number(endpoint.port), hostMcpToken: endpoint.pathname.slice("/mcp/".length), deadlineSignal: guard.signal, mcpLimits: { ...limits, maxHeaderBytes: 8192 },
@@ -172,14 +176,22 @@ async function createBridge(input: Options, structural?: { run: DockerExec; wall
         const prompt = s.purpose === "canary" ? selectedCanary.prompt : item.prompts[p.attempts.find(a => a.id === s.attemptId)!.arm].prompt;
         const args = low ? predictionSolLowCanaryCommand(egress.internalMcpUrl) : predictionCliCommand(egress.internalMcpUrl, s.purpose === "review");
         guard.read(() => { freshSource(); same(sha(prompt), s.promptSha256, "prompt drift"); same(readdirSync(checkout), [], "unexpected agent workspace"); same(readdirSync(assets), s.purpose === "review" ? ["methodology-review.schema.json"] : [], "unexpected method resources"); });
-        write(join(directory, "invocation.json"), { scope: s, args, prompt, attachment: attachment.binding, egress: egress.attestation, assets: readdirSync(assets), providerImage: p.runtimeAcceptance.image });
+        evidenceRedaction.validate(args);
+        write(join(directory, "invocation.json"), { scope: s, args, forwarderCapability: evidenceRedaction.capability, prompt, attachment: attachment.binding, egress: egress.attestation, assets: readdirSync(assets), providerImage: p.runtimeAcceptance.image });
         const run = createContainedProviderExec({ runner: "codex", providerAccess: "cli-session", checkoutDir: checkout, assetsDir: assets, outputDir: output,
           profile: low ? "prediction-sol-low-canary" : "prediction-cli", image: p.runtimeAcceptance.image, methodologyEgress: egress.launchCapability,
-          ...(mechanical ? { mechanicalEvidenceDirectory: join(directory, "mechanical-client"), mechanicalEvidenceBinding: { runId: options.runId, attemptId: s.attemptId, scopeSha256: digest(s), sourceSha256: source.sourceSha256, channel: "client" as const } } : {}), ...(structural ? { run: structural.run } : {}) });
+          ...(mechanical ? { mechanicalEvidenceDirectory: join(directory, "mechanical-client"), mechanicalForwarderToken: endpoint.pathname.slice("/mcp/".length), mechanicalEvidenceBinding: { runId: options.runId, attemptId: s.attemptId, scopeSha256: digest(s), sourceSha256: source.sourceSha256, channel: "client" as const } } : {}), ...(structural ? { run: structural.run } : {}) });
         const hostArgs = args.map(value => value === "/workspace" ? checkout : value === "/opt/peregrine/methodology-review.schema.json" ? join(assets, "methodology-review.schema.json") : value === "/output/result.json" ? join(output, "result.json") : value);
-        try { execution = await guard.run(run, "codex", hostArgs, { stdin: prompt, inheritEnv: false, env: {} }); write(join(directory, "execution.json"), execution); }
+        // The deadline writes cleanup diagnostics before returning the result;
+        // sanitize that handoff too, not only the bridge's later serialization.
+        const redactedRun: ProviderExec = async (...input) => {
+          try { return evidenceRedaction!.value(await run(...input)); }
+          catch (error) { throw evidenceRedaction!.error(error); }
+        };
+        try { execution = await guard.run(redactedRun, "codex", hostArgs, { stdin: prompt, inheritEnv: false, env: {} }); write(join(directory, "execution.json"), execution); }
         catch (error) { failure = predictionFailureEvidence(error); write(join(directory, "execution-failure.json"), failure); }
-        try { rawOutput = createContainedOutputReader(output, policy.maximumOutputBytes)(join(output, "result.json")); }
+        try { const path = join(output, "result.json"), original = createContainedOutputReader(output, policy.maximumOutputBytes)(path);
+          const redacted = redactPredictionOutput(path, original, evidenceRedaction); rawOutput = redacted.safe; outputRedaction = redacted.binding; }
         catch (error) { failure ??= predictionFailureEvidence(error); write(join(directory, "output-failure.json"), predictionFailureEvidence(error)); }
         const deadline = await guard.finish(), parsed = parseCodexEvents(execution?.stdout ?? "");
         const disallowed = parsed.events.filter((event: any) => {
@@ -190,7 +202,7 @@ async function createBridge(input: Options, structural?: { run: DockerExec; wall
         const cleanupProven = deadline.teardownCompleted && deadline.evidenceError === null;
         const terminal: PredictionCliTerminal = { attemptId: s.attemptId, status: !failure && execution?.code === 0 && !deadline.deadlineExceeded && cleanupProven && !disallowed.length ? "completed" : rawOutput ? "partial" : "failed",
           events: parsed.events, completeEventStream, rawOutput, cleanupProven, deadlineExceeded: deadline.deadlineExceeded };
-        const record = freeze({ kind: "prediction-cli-bridge-terminal-v1", bindings, scope: s, terminal, deadline, failure, tokens: observePredictionCliTokens(parsed.events, completeEventStream),
+        const record = freeze({ kind: "prediction-cli-bridge-terminal-v1", bindings, scope: s, terminal, deadline, failure, outputRedaction, tokens: observePredictionCliTokens(parsed.events, completeEventStream),
           disallowed, builtInCatalog: null, builtInCatalogVerified: false, executionReady: false, providerCalls: structural ? 0 : execution ? 1 : null,
           qualification: structural ? "Injected executor only; no provider, client support or containment proof." : "Observed attempt only; catalog, canary and independent review gates remain separate." });
         write(join(directory, "terminal.json"), record);
