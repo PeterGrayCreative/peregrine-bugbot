@@ -1,4 +1,5 @@
-import { sidecarHostFixture } from "./eval-methodology-inspect-fixture.js";
+import { ipv4EndpointFixture, sidecarHostFixture } from "./eval-methodology-inspect-fixture.js";
+import { validateIpv4OnlyEndpoint } from "../eval/methodology-inspect-policy.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import test from "node:test";
@@ -184,7 +185,7 @@ test("supervisor uses only injected Docker and closes idempotently", async () =>
       return result();
     }
     if (args[0] === "inspect" && args[1] !== undefined) return result(JSON.stringify([
-      ...[args[1]!, args[2]!].map((name) => ({ Name: `/${name}`, Path: name === gateway ? "/usr/local/bin/peregrine-egress-gateway" : "/usr/local/bin/peregrine-methodology-mcp-forwarder", Args: [], State: { Running: true }, Mounts: [], Config: { Cmd: null, Volumes: null, WorkingDir: "/workspace", Tty: false, OpenStdin: false, StdinOnce: false, User: "65532:65532", Image: ACCEPTED_METHODOLOGY_EGRESS_IMAGE, Entrypoint: [name === gateway ? "/usr/local/bin/peregrine-egress-gateway" : "/usr/local/bin/peregrine-methodology-mcp-forwarder"], Env: sidecarEnvs.get(name) }, HostConfig: sidecarHostFixture(externalNetwork, name === gateway ? undefined : "host.docker.internal:host-gateway"), NetworkSettings: { Ports: {}, Networks: { [externalNetwork]: { Aliases: [name], IPAddress: `${externalSubnet.replace(".0/28", name === gateway ? ".2" : ".3")}` }, [network]: { Aliases: [name === gateway ? "egress-gateway" : "mcp-forwarder", name], IPAddress: `${subnet.replace(".0/28", name === gateway ? ".2" : ".3")}` } } } }))
+      ...[args[1]!, args[2]!].map((name) => ({ Name: `/${name}`, Path: name === gateway ? "/usr/local/bin/peregrine-egress-gateway" : "/usr/local/bin/peregrine-methodology-mcp-forwarder", Args: [], State: { Running: true }, Mounts: [], Config: { Cmd: null, Volumes: null, WorkingDir: "/workspace", Tty: false, OpenStdin: false, StdinOnce: false, User: "65532:65532", Image: ACCEPTED_METHODOLOGY_EGRESS_IMAGE, Entrypoint: [name === gateway ? "/usr/local/bin/peregrine-egress-gateway" : "/usr/local/bin/peregrine-methodology-mcp-forwarder"], Env: sidecarEnvs.get(name) }, HostConfig: sidecarHostFixture(externalNetwork, name === gateway ? undefined : "host.docker.internal:host-gateway"), NetworkSettings: { Ports: {}, Networks: { [externalNetwork]: { ...ipv4EndpointFixture(), Aliases: [name], IPAddress: `${externalSubnet.replace(".0/28", name === gateway ? ".2" : ".3")}` }, [network]: { ...ipv4EndpointFixture(), Aliases: [name === gateway ? "egress-gateway" : "mcp-forwarder", name], IPAddress: `${subnet.replace(".0/28", name === gateway ? ".2" : ".3")}` } } } }))
     ]));
     if (args[0] === "network" && args[1] === "inspect") { const target = args[2]!; const isInternal = target === network; const selectedSubnet = isInternal ? subnet : externalSubnet; return result(JSON.stringify([{ Name: target, Driver: "bridge", Internal: isInternal, EnableIPv6: false, IPAM: { Config: [{ Subnet: selectedSubnet }] }, Containers: { a: { Name: `/${gateway}`, IPv4Address: `${selectedSubnet.replace(".0/28", ".2")}/28`, IPv6Address: "" }, b: { Name: `/${forwarder}`, IPv4Address: `${selectedSubnet.replace(".0/28", ".3")}/28`, IPv6Address: "" } } }])); }
     if (args[0] === "stop") { stopped = true; return result(); }
@@ -277,7 +278,7 @@ test("container inspect uses Docker Config.User and rejects environment addition
     Name: "/gateway", Path: expected.entrypoint, Args: [], State: { Running: true }, Mounts: [],
     Config: { Cmd: null, Volumes: null, WorkingDir: "/workspace", Tty: false, OpenStdin: false, StdinOnce: false, Image: expected.image, User: "65532:65532", Entrypoint: [expected.entrypoint], Env: [...METHODOLOGY_EGRESS_BASE_ENV, "EGRESS_ALLOWED_AUTHORITIES=api.openai.com:443"] },
     HostConfig: sidecarHostFixture("external"),
-    NetworkSettings: { Ports: {}, Networks: { external: { Aliases: ["gateway"], IPAddress: "10.254.2.2" }, internal: { Aliases: ["egress-gateway", "gateway"], IPAddress: "10.254.1.2" } } },
+    NetworkSettings: { Ports: {}, Networks: { external: { ...ipv4EndpointFixture(), Aliases: ["gateway"], IPAddress: "10.254.2.2" }, internal: { ...ipv4EndpointFixture(), Aliases: ["egress-gateway", "gateway"], IPAddress: "10.254.1.2" } } },
   };
   assert.doesNotThrow(() => parseMethodologyEgressContainerInspect(JSON.stringify(base), expected));
   const spoofed = structuredClone(base); spoofed.Config.User = "0:0"; Object.assign(spoofed.HostConfig, { User: "65532:65532" });
@@ -307,7 +308,7 @@ test("sidecar inspect rejects every unknown, missing or mutated HostConfig field
     Name: "/gateway", Path: expected.entrypoint, Args: [], State: { Running: true }, Mounts: [],
     Config: { Image: expected.image, User: "65532:65532", Entrypoint: [expected.entrypoint], Cmd: null, Volumes: null, WorkingDir: "/workspace", Tty: false, OpenStdin: false, StdinOnce: false, Env: [...METHODOLOGY_EGRESS_BASE_ENV] },
     HostConfig: sidecarHostFixture("external"),
-    NetworkSettings: { Ports: {}, Networks: { external: { Aliases: ["gateway"], IPAddress: "10.254.2.2" }, internal: { Aliases: ["egress-gateway", "gateway"], IPAddress: "10.254.1.2" } } },
+    NetworkSettings: { Ports: {}, Networks: { external: { ...ipv4EndpointFixture(), Aliases: ["gateway"], IPAddress: "10.254.2.2" }, internal: { ...ipv4EndpointFixture(), Aliases: ["egress-gateway", "gateway"], IPAddress: "10.254.1.2" } } },
   };
   const verify = (value: any) => parseMethodologyEgressContainerInspect(JSON.stringify(value), expected);
   assert.doesNotThrow(() => verify(base));
@@ -357,4 +358,35 @@ test("sidecar inspect rejects every unknown, missing or mutated HostConfig field
   ];
   for (const [label, mutate] of variants) { const value = structuredClone(base); mutate(value); assert.throws(() => verify(value), Error, label); }
   assert.throws(() => verify([base, base]), /nonunique/);
+});
+
+test("IPv6 endpoint defaults are explicit and missing, malformed or unknown representations reject", () => {
+  const defaults = ipv4EndpointFixture();
+  assert.doesNotThrow(() => validateIpv4OnlyEndpoint(defaults));
+  for (const key of Object.keys(defaults)) {
+    const missing = structuredClone(defaults); delete missing[key];
+    assert.throws(() => validateIpv4OnlyEndpoint(missing), /IPv4-only/, "missing " + key);
+    for (const value of [undefined, {}, [], false, "unknown", "0", null, 1, -1, "2001:db8::1", "::"]) {
+      if (value === defaults[key]) continue;
+      assert.throws(() => validateIpv4OnlyEndpoint({ ...defaults, [key]: value }), /IPv4-only/, key + ":" + JSON.stringify(value));
+    }
+  }
+  for (const key of ["IPv6Address", "LinkLocalIPv6Address", "LinkLocalIPv6PrefixLen", "IPv6Enabled", "LinkLocalIPs"])
+    for (const value of ["", 0, false, null, []])
+      assert.throws(() => validateIpv4OnlyEndpoint({ ...defaults, [key]: value }), /IPv4-only/, "unknown " + key);
+  for (const override of [{ IPv6Address: "2001:db8::1" }, { IPv6Address: "" }, { LinkLocalIPs: ["fe80::1"] }])
+    assert.throws(() => validateIpv4OnlyEndpoint({ ...defaults, IPAMConfig: override }), /IPv4-only/);
+});
+
+test("IPv6 network-member evidence must be an explicit empty address", () => {
+  const expected = { name: "internal", network: "internal", subnet: "10.254.1.0/28", sidecars: ["gateway", "forwarder"] };
+  const base: any = { Name: "internal", Driver: "bridge", Internal: true, EnableIPv6: false, IPAM: { Config: [{ Subnet: expected.subnet }] }, Containers: {
+    gateway: { Name: "gateway", IPv4Address: "10.254.1.2/28", IPv6Address: "" },
+    forwarder: { Name: "forwarder", IPv4Address: "10.254.1.3/28", IPv6Address: "" },
+  } };
+  assert.doesNotThrow(() => parseMethodologyEgressNetworkInspect(JSON.stringify(base), expected));
+  for (const name of expected.sidecars) for (const address of [undefined, null, false, 0, [], {}, "2001:db8::1"]) {
+    const value = structuredClone(base); value.Containers[name].IPv6Address = address;
+    assert.throws(() => parseMethodologyEgressNetworkInspect(JSON.stringify(value), expected), /IPv4-only/);
+  }
 });

@@ -5,7 +5,7 @@ import { safeDiagnostic } from "../src/security/secrets.js";
 import { canonicalJsonSha256 } from "./experiment.js";
 import { METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "./methodology-runtime-image.js";
 import { observePredictionExec, type MechanicalEvidenceBinding } from "./prediction-mechanical-evidence.js";
-import { validateSidecarHostInspect } from "./methodology-inspect-policy.js";
+import { validateIpv4OnlyEndpoint, validateSidecarHostInspect } from "./methodology-inspect-policy.js";
 
 /**
  * Docker is deliberately kept behind this small adapter.  In particular, a
@@ -468,6 +468,8 @@ function parseInspect(stdout: string, expected: { name: string; network: string;
   if (!networks || JSON.stringify(Object.keys(networks).sort()) !== JSON.stringify([expected.externalNetwork, expected.network].sort())) fail(`${expected.name} inspect has an unexpected network topology`);
   const internalEndpoint = networks[expected.network] as Record<string, unknown> | undefined;
   const externalEndpoint = networks[expected.externalNetwork] as Record<string, unknown> | undefined;
+  validateIpv4OnlyEndpoint(internalEndpoint);
+  validateIpv4OnlyEndpoint(externalEndpoint);
   const aliases = internalEndpoint?.Aliases;
   if (!Array.isArray(aliases) || !aliases.includes(expected.alias) || aliases.some((item) => item !== expected.alias && item !== expected.name)) fail(`${expected.name} inspect has an unexpected internal alias`);
   if (typeof internalEndpoint?.IPAddress !== "string" || !ipv4InCidr(internalEndpoint.IPAddress, expected.subnet) ||
@@ -500,7 +502,7 @@ function parseNetworkInspect(stdout: string, expected: { name: string; network: 
   const addresses: string[] = [];
   const observed = Object.values(containers).map((entry) => {
     const item = entry as Record<string, unknown>;
-    if (typeof item.Name !== "string" || typeof item.IPv4Address !== "string" || item.IPv6Address) fail("network member is not IPv4-only");
+    if (typeof item.Name !== "string" || typeof item.IPv4Address !== "string" || item.IPv6Address !== "") fail("network member is not IPv4-only");
     const address = item.IPv4Address.split("/", 1)[0]!;
     if (!ipv4InCidr(address, expected.subnet)) fail("network member address is outside the attested subnet");
     addresses.push(address);

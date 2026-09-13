@@ -118,3 +118,14 @@ export function validateSidecarHostInspect(host: unknown, network: string, addHo
   if (canonicalJsonSha256(actual) !== canonicalJsonSha256(expected))
     throw new Error("sidecar inspect does not attest the exact containment policy");
 }
+
+/** The archived endpoint schema represents disabled IPv6 as "", 0, "" and
+ * no explicit IPAM override. Missing evidence is not an empty address. */
+export function validateIpv4OnlyEndpoint(value: unknown): void {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("missing IPv4-only endpoint evidence");
+  const endpoint = value as Record<string, unknown>;
+  if (endpoint.GlobalIPv6Address !== "" || endpoint.GlobalIPv6PrefixLen !== 0 ||
+      endpoint.IPv6Gateway !== "" || endpoint.IPAMConfig !== null ||
+      Object.keys(endpoint).some(key => /ipv6|linklocal/iu.test(key) && !["GlobalIPv6Address", "GlobalIPv6PrefixLen", "IPv6Gateway"].includes(key)))
+    throw new Error("container endpoint contradicts the IPv4-only network policy");
+}

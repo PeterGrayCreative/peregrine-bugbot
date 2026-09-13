@@ -1,4 +1,4 @@
-import { sidecarHostFixture } from "./eval-methodology-inspect-fixture.js";
+import { ipv4EndpointFixture, sidecarHostFixture } from "./eval-methodology-inspect-fixture.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
@@ -260,7 +260,7 @@ function containerNetworks(container) {
   return Object.fromEntries(Object.entries(container.networks).map(([name, network]) => [name, {
     Aliases: network.aliases,
     IPAddress: network.ip,
-    IPv6Address: "",
+    ...${JSON.stringify(ipv4EndpointFixture())},
   }]));
 }
 function inspectContainer(container) {

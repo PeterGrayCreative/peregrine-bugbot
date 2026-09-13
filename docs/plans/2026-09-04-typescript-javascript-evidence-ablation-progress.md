@@ -846,3 +846,13 @@ and adds exact and systematic resealed-state regressions. All rejected versions
 remain immutable. No runtime/provider operation or attempt occurred; all 64
 review slots remain unstarted, with readiness and batch authorization false.
 A fresh independent exact-freeze review remains required.
+
+## 2026-09-13: IPv6 evidence consistency correction, pending re-review
+
+The v4 gate found contradictory IPv6 container endpoints despite disabled
+networks. The [v5 correction](../validation/2026-09-13-prediction-sol-low-operator-ipv6.md)
+checks both helpers on both networks against explicit archived IPv4-only
+defaults, including unknown/missing forms and resealed endpoint attacks.
+V4 and all predecessor evidence remain unchanged. No runtime/provider operation
+or attempt occurred; 64 slots remain unstarted and authorization/readiness stay
+false. A fresh independent exact-freeze review remains required.

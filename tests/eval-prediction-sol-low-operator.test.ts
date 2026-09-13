@@ -161,7 +161,7 @@ test("opt-in PID capture uses the existing child executor and does not alter its
 test("low assessor independently validates the explicit low route without high/batch promotion", async t => {
   const f = await solLowAssessmentFixture(t), result = assessPredictionSolLowCanary(f.input);
   assert.equal(result.recommendation, "infrastructure-canary-observed-no-batch-eligibility", JSON.stringify(result.failure));
-  assert.equal(result.kind, "prediction-sol-low-canary-assessment-v4"); assert.equal(result.batchAuthorized, false); assert.equal(result.executionReady, false);
+  assert.equal(result.kind, "prediction-sol-low-canary-assessment-v5"); assert.equal(result.batchAuthorized, false); assert.equal(result.executionReady, false);
   assert.equal(assessPredictionCanary(f.input).recommendation, "not-eligible"); assert.throws(() => requirePredictionBatchAuthorization(result));
   assert.equal(assessPredictionSolLowCanary({ ...f.input, observer: null }).recommendation, "not-eligible");
 });
@@ -347,4 +347,46 @@ test("low assessor rejects resealed observed containment contradictions for eith
     mutate(values[index]); const bytes = JSON.stringify(values); result.stdout = { bytes, complete: true, sha256: sha(bytes) };
     assert.equal(assessPredictionSolLowCanary(f.repin()).recommendation, "not-eligible", index + ": " + name);
   }
+});
+
+for (const [index, role] of [[0, "gateway"], [1, "forwarder"]] as const)
+  test(`gate v5 reproduction: ${role} IPv6 contradicts disabled network`, async t => {
+    const f = await solLowAssessmentFixture(t), original = structuredClone(f.files);
+    const source = JSON.parse(f.files["canary/mechanical-sidecars/000009-terminal.json"].result.stdout.bytes);
+    for (const network of Object.keys(source[index].NetworkSettings.Networks)) {
+      Object.assign(f.files, structuredClone(original));
+      const result = f.files["canary/mechanical-sidecars/000009-terminal.json"].result, inspected = JSON.parse(result.stdout.bytes);
+      Object.assign(inspected[index].NetworkSettings.Networks[network], {
+        GlobalIPv6Address: "2001:db8::2", GlobalIPv6PrefixLen: 64, IPv6Gateway: "2001:db8::1",
+      });
+      const bytes = JSON.stringify(inspected); result.stdout = { bytes, complete: true, sha256: sha(bytes) };
+      assert.equal(assessPredictionSolLowCanary(f.repin()).recommendation, "not-eligible", network);
+    }
+  });
+
+test("low assessor reconciles IPv6 endpoint evidence for every helper/network pair", async t => {
+  const f = await solLowAssessmentFixture(t), original = structuredClone(f.files);
+  const source = JSON.parse(f.files["canary/mechanical-sidecars/000009-terminal.json"].result.stdout.bytes);
+  const mutations: [string, (v: any) => void][] = [
+    ["address only", v => { v.GlobalIPv6Address = "2001:db8::2"; }],
+    ["prefix only", v => { v.GlobalIPv6PrefixLen = 64; }],
+    ["gateway only", v => { v.IPv6Gateway = "2001:db8::1"; }],
+    ["missing address", v => { delete v.GlobalIPv6Address; }],
+    ["missing prefix", v => { delete v.GlobalIPv6PrefixLen; }],
+    ["missing gateway", v => { delete v.IPv6Gateway; }],
+    ["missing IPAM", v => { delete v.IPAMConfig; }],
+    ["null unknown", v => { v.GlobalIPv6Address = null; }],
+    ["string zero", v => { v.GlobalIPv6PrefixLen = "0"; }],
+    ["IPAM IPv6 override", v => { v.IPAMConfig = { IPv6Address: "2001:db8::2" }; }],
+    ["unknown empty field", v => { v.IPv6Address = ""; }],
+    ["link-local override", v => { v.LinkLocalIPv6Address = "fe80::2"; }],
+  ];
+  for (const index of [0, 1]) for (const network of Object.keys(source[index].NetworkSettings.Networks))
+    for (const [name, mutate] of mutations) {
+      Object.assign(f.files, structuredClone(original));
+      const result = f.files["canary/mechanical-sidecars/000009-terminal.json"].result, inspected = JSON.parse(result.stdout.bytes);
+      mutate(inspected[index].NetworkSettings.Networks[network]);
+      const bytes = JSON.stringify(inspected); result.stdout = { bytes, complete: true, sha256: sha(bytes) };
+      assert.equal(assessPredictionSolLowCanary(f.repin()).recommendation, "not-eligible", index + ":" + network + ":" + name);
+    }
 });
