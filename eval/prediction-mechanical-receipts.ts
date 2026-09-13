@@ -136,9 +136,6 @@ function validateSidecarPreparation(rows: any[], invocation: any, clientStarted:
   for (let i = 0; i < 2; i++) {
     parseMethodologyEgressContainerInspect(JSON.stringify(inspected[i]), { name: names[i], network: e.network, externalNetwork: e.externalNetwork, subnet: e.networkSubnet,
       externalSubnet: e.externalNetworkSubnet, image: invocation.providerImage, entrypoint: entrypoints[i]!, alias: aliases[i]!, env: environments[i]!, ...(i ? { addHost: "host.docker.internal:host-gateway" } : {}) });
-    const host = inspected[i].HostConfig;
-    same([host.Privileged, host.CapAdd === null ? [] : host.CapAdd, host.NetworkMode, host.SecurityOpt, host.ExtraHosts === null ? [] : host.ExtraHosts],
-      [false, [], e.externalNetwork, ["no-new-privileges"], i ? ["host.docker.internal:host-gateway"] : []], "sidecar inspected capability or topology drift");
   }
   for (const [network, subnet, internal] of [[e.network, e.networkSubnet, true], [e.externalNetwork, e.externalNetworkSubnet, false]] as const)
     parseMethodologyEgressNetworkInspect(take(["network", "inspect", network]).result.stdout, { name: network, network, subnet, sidecars: names, internal });

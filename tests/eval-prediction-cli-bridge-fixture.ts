@@ -1,3 +1,4 @@
+import { sidecarHostFixture } from "./eval-methodology-inspect-fixture.js";
 import { createHash } from "node:crypto";
 import { request } from "node:http";
 import type { ProviderExec } from "../src/types.js";
@@ -37,10 +38,10 @@ export function predictionDockerFixture(agent: (args: string[], options: Paramet
     }
     if (args[0] === "inspect") return result(JSON.stringify([gateway, forwarder].map(name => {
       const gatewayRole = name === gateway, entrypoint = gatewayRole ? "/usr/local/bin/peregrine-egress-gateway" : "/usr/local/bin/peregrine-methodology-mcp-forwarder";
-      return { Name: `/${name}`, Path: entrypoint, Args: [], State: { Running: true }, Mounts: [{ Type: "tmpfs", Destination: "/tmp" }, { Type: "tmpfs", Destination: "/home/peregrine" }],
-        Config: { User: "65532:65532", Image: ACCEPTED_METHODOLOGY_EGRESS_IMAGE, Entrypoint: [entrypoint], Env: envs.get(name) },
-        HostConfig: { ReadonlyRootfs: true, CapDrop: ["ALL"], CapAdd: null, Privileged: false, NetworkMode: external, SecurityOpt: ["no-new-privileges"], PidsLimit: 64, Tmpfs: { "/tmp": "rw,noexec,nosuid,nodev,size=32m,uid=65532,gid=65532,mode=1777", "/home/peregrine": "rw,noexec,nosuid,nodev,size=16m,uid=65532,gid=65532,mode=0700" }, ExtraHosts: gatewayRole ? [] : ["host.docker.internal:host-gateway"] },
-        NetworkSettings: { Networks: { [external]: { Aliases: [name], IPAddress: externalSubnet.replace(".0/28", gatewayRole ? ".2" : ".3") }, [network]: { Aliases: [gatewayRole ? "egress-gateway" : "mcp-forwarder", name], IPAddress: subnet.replace(".0/28", gatewayRole ? ".2" : ".3") } } } };
+      return { Name: `/${name}`, Path: entrypoint, Args: [], State: { Running: true }, Mounts: [],
+        Config: { Cmd: null, Volumes: null, WorkingDir: "/workspace", Tty: false, OpenStdin: false, StdinOnce: false, User: "65532:65532", Image: ACCEPTED_METHODOLOGY_EGRESS_IMAGE, Entrypoint: [entrypoint], Env: envs.get(name) },
+        HostConfig: sidecarHostFixture(external, gatewayRole ? undefined : "host.docker.internal:host-gateway"),
+        NetworkSettings: { Ports: {}, Networks: { [external]: { Aliases: [name], IPAddress: externalSubnet.replace(".0/28", gatewayRole ? ".2" : ".3") }, [network]: { Aliases: [gatewayRole ? "egress-gateway" : "mcp-forwarder", name], IPAddress: subnet.replace(".0/28", gatewayRole ? ".2" : ".3") } } } };
     })));
     if (args[0] === "network" && args[1] === "inspect") {
       const internal = args[2] === network, selected = internal ? subnet : externalSubnet;

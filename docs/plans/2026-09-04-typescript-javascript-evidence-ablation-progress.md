@@ -836,3 +836,13 @@ and authenticated preflight session/path/identity metadata. V1/v2 and the five
 failing regressions remain immutable. No provider/client/container operation,
 canary attempt, review-slot consumption or batch authorization occurred; another
 fresh independent gate is required.
+
+## 2026-09-13: observed containment correction, pending re-review
+
+The v3 gate reproduced host publication, PID sharing and device-access bypasses
+in authenticated inspect receipts. The [v4 correction](../validation/2026-09-13-prediction-sol-low-operator-inspect.md)
+reuses a shared fail-closed inspect profile, bound to archived producer defaults,
+and adds exact and systematic resealed-state regressions. All rejected versions
+remain immutable. No runtime/provider operation or attempt occurred; all 64
+review slots remain unstarted, with readiness and batch authorization false.
+A fresh independent exact-freeze review remains required.

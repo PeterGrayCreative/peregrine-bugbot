@@ -5,6 +5,7 @@ import { safeDiagnostic } from "../src/security/secrets.js";
 import { canonicalJsonSha256 } from "./experiment.js";
 import { METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "./methodology-runtime-image.js";
 import { observePredictionExec, type MechanicalEvidenceBinding } from "./prediction-mechanical-evidence.js";
+import { validateSidecarHostInspect } from "./methodology-inspect-policy.js";
 
 /**
  * Docker is deliberately kept behind this small adapter.  In particular, a
@@ -434,34 +435,35 @@ function ipv4InCidr(value: string, cidr: string): boolean {
 function parseInspect(stdout: string, expected: { name: string; network: string; externalNetwork: string; subnet: string; externalSubnet: string; image: string; entrypoint: string; alias: string; env: Record<string, string>; addHost?: string }): Record<string, unknown> {
   const values = parseJsonLines(stdout);
   const value = values[0];
-  if (!value) fail(`missing ${expected.name} Docker inspect evidence`);
-  if (value.Name !== `/${expected.name}` || value.Path !== expected.entrypoint || JSON.stringify(value.Args ?? []) !== "[]") fail(`invalid ${expected.name} entrypoint inspect evidence`);
+  if (!value || values.length !== 1) fail(`missing or nonunique ${expected.name} Docker inspect evidence`);
+  if (value.Name !== `/${expected.name}` || value.Path !== expected.entrypoint || JSON.stringify(value.Args) !== "[]") fail(`invalid ${expected.name} entrypoint inspect evidence`);
   if (!value.Config || typeof value.Config !== "object" || Array.isArray(value.Config)) fail(`invalid ${expected.name} config inspect evidence`);
   {
     const config = value.Config as Record<string, unknown>;
     if (config.Image !== expected.image) fail(`invalid ${expected.name} image inspect evidence`);
-    if (config.Entrypoint !== undefined && JSON.stringify(config.Entrypoint) !== JSON.stringify([expected.entrypoint])) fail(`invalid ${expected.name} configured entrypoint`);
+    if (JSON.stringify(config.Entrypoint) !== JSON.stringify([expected.entrypoint]) ||
+        (config.Cmd !== null && JSON.stringify(config.Cmd) !== "[]")) fail(`invalid ${expected.name} configured entrypoint/command`);
+    if (config.WorkingDir !== "/workspace" || config.Volumes !== null ||
+        config.ExposedPorts !== undefined || config.Healthcheck !== undefined || config.OnBuild !== undefined ||
+        config.Tty !== false || config.OpenStdin !== false || config.StdinOnce !== false)
+      fail(`invalid ${expected.name} config containment policy`);
     if (!Array.isArray(config.Env) || new Set(config.Env).size !== config.Env.length || config.Env.some((item) => typeof item !== "string" || !item.includes("=") || PROXY_ENV_NAMES.has(item.split("=", 1)[0]!) || SECRET_ENV.test(item.split("=", 1)[0]!) && item.split("=", 1)[0] !== "MCP_FORWARDER_TOKEN")) fail(`invalid ${expected.name} credential/proxy environment`);
     const expectedEnv = [...METHODOLOGY_EGRESS_BASE_ENV, ...Object.entries(expected.env).map(([key, value]) => `${key}=${value}`)].sort();
     const actualEnv = (config.Env as string[]).slice().sort();
     if (JSON.stringify(actualEnv) !== JSON.stringify(expectedEnv)) fail(`invalid ${expected.name} environment policy`);
   }
   const mounts = value.Mounts;
-  if (!Array.isArray(mounts) || mounts.some((mount) => {
-    if (!mount || typeof mount !== "object") return true;
-    const item = mount as Record<string, unknown>;
-    return item.Type !== "tmpfs" || (item.Destination !== "/tmp" && item.Destination !== "/home/peregrine");
-  }) || new Set(mounts.map((mount) => (mount as Record<string, unknown>).Destination)).size !== mounts.length) fail(`${expected.name} must not have host mounts`);
+  // Docker's --tmpfs entries live in HostConfig.Tmpfs; the archived producer
+  // emits an empty Mounts array. Never treat an unverified mount as equivalent.
+  if (!Array.isArray(mounts) || mounts.length !== 0) fail(`${expected.name} must not have host mounts`);
   const hostConfig = value.HostConfig as Record<string, unknown> | undefined;
-  if (!hostConfig || hostConfig.ReadonlyRootfs !== true || JSON.stringify(hostConfig.CapDrop) !== JSON.stringify(["ALL"]) ||
-      !Array.isArray(hostConfig.SecurityOpt) || !hostConfig.SecurityOpt.includes("no-new-privileges") ||
-      hostConfig.PidsLimit !== 64 || (value.Config as Record<string, unknown>).User !== "65532:65532" ||
-      canonicalJsonSha256(hostConfig.Tmpfs) !== canonicalJsonSha256({
-        "/tmp": "rw,noexec,nosuid,nodev,size=32m,uid=65532,gid=65532,mode=1777",
-        "/home/peregrine": "rw,noexec,nosuid,nodev,size=16m,uid=65532,gid=65532,mode=0700",
-      })) fail(`${expected.name} inspect does not attest the sidecar containment policy`);
+  validateSidecarHostInspect(hostConfig, expected.externalNetwork, expected.addHost);
+  if ((value.Config as Record<string, unknown>).User !== "65532:65532") fail(`${expected.name} inspect does not attest the sidecar containment policy`);
   const state = value.State as Record<string, unknown> | undefined;
   if (!state || state.Running !== true) fail(`${expected.name} inspect does not prove a running sidecar`);
+  const networkSettings = value.NetworkSettings as Record<string, unknown> | undefined;
+  if (!networkSettings || canonicalJsonSha256(networkSettings.Ports) !== canonicalJsonSha256({}))
+    fail(`${expected.name} inspect contradicts the no published ports policy`);
   const networks = (value.NetworkSettings as Record<string, unknown> | undefined)?.Networks as Record<string, unknown> | undefined;
   if (!networks || JSON.stringify(Object.keys(networks).sort()) !== JSON.stringify([expected.externalNetwork, expected.network].sort())) fail(`${expected.name} inspect has an unexpected network topology`);
   const internalEndpoint = networks[expected.network] as Record<string, unknown> | undefined;
@@ -470,10 +472,6 @@ function parseInspect(stdout: string, expected: { name: string; network: string;
   if (!Array.isArray(aliases) || !aliases.includes(expected.alias) || aliases.some((item) => item !== expected.alias && item !== expected.name)) fail(`${expected.name} inspect has an unexpected internal alias`);
   if (typeof internalEndpoint?.IPAddress !== "string" || !ipv4InCidr(internalEndpoint.IPAddress, expected.subnet) ||
       typeof externalEndpoint?.IPAddress !== "string" || !ipv4InCidr(externalEndpoint.IPAddress, expected.externalSubnet)) fail(`${expected.name} inspect has no IPv4 address in its attempt networks`);
-  const extraHosts = (hostConfig?.ExtraHosts ?? []) as unknown;
-  if (expected.addHost === undefined) {
-    if (Array.isArray(extraHosts) && extraHosts.length !== 0) fail(`${expected.name} must not receive host-gateway access`);
-  } else if (!Array.isArray(extraHosts) || !extraHosts.includes(expected.addHost)) fail(`${expected.name} is missing host-gateway access`);
   return value;
 }
 

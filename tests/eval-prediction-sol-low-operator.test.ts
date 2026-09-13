@@ -161,7 +161,7 @@ test("opt-in PID capture uses the existing child executor and does not alter its
 test("low assessor independently validates the explicit low route without high/batch promotion", async t => {
   const f = await solLowAssessmentFixture(t), result = assessPredictionSolLowCanary(f.input);
   assert.equal(result.recommendation, "infrastructure-canary-observed-no-batch-eligibility", JSON.stringify(result.failure));
-  assert.equal(result.kind, "prediction-sol-low-canary-assessment-v3"); assert.equal(result.batchAuthorized, false); assert.equal(result.executionReady, false);
+  assert.equal(result.kind, "prediction-sol-low-canary-assessment-v4"); assert.equal(result.batchAuthorized, false); assert.equal(result.executionReady, false);
   assert.equal(assessPredictionCanary(f.input).recommendation, "not-eligible"); assert.throws(() => requirePredictionBatchAuthorization(result));
   assert.equal(assessPredictionSolLowCanary({ ...f.input, observer: null }).recommendation, "not-eligible");
 });
@@ -291,6 +291,17 @@ test("complete Docker argv rejects nearby insertions, substitutions, duplicates 
   }
 });
 
+for (const [name, mutate] of [
+  ["published gateway port", (v: any) => { v.HostConfig.PortBindings = { "8081/tcp": [{ HostIp: "0.0.0.0", HostPort: "8081" }] }; v.NetworkSettings.Ports = structuredClone(v.HostConfig.PortBindings); }],
+  ["host PID namespace", (v: any) => { v.HostConfig.PidMode = "host"; }],
+  ["host device", (v: any) => { v.HostConfig.Devices = [{ PathOnHost: "/dev/sda", PathInContainer: "/dev/sda", CgroupPermissions: "rwm" }]; }],
+] as const) test(`gate v4 reproduction: ${name}`, async t => {
+  const f = await solLowAssessmentFixture(t), result = f.files["canary/mechanical-sidecars/000009-terminal.json"].result;
+  const inspected = JSON.parse(result.stdout.bytes); mutate(inspected[0]); const bytes = JSON.stringify(inspected);
+  result.stdout = { bytes, complete: true, sha256: sha(bytes) };
+  assert.equal(assessPredictionSolLowCanary(f.repin()).recommendation, "not-eligible");
+});
+
 test("low assessor retains all previous turn/item/read/search closure regressions", async t => {
   const f = await solLowAssessmentFixture(t), original = structuredClone(f.files);
   for (const mutate of [
@@ -308,4 +319,32 @@ test("low assessor retains all previous turn/item/read/search closure regression
   Object.assign(f.files, structuredClone(original)); const transcript = f.files["canary/cleanup.json"].reader.transcript;
   const search = JSON.parse(transcript[2].response); search.matches.push({ path: "secret/ground-truth.json", line: 1, text: "diff --git injected" }); transcript[2].response = JSON.stringify(search);
   f.syncReads(); f.syncMechanicalExecution(); assert.equal(assessPredictionSolLowCanary(f.repin()).recommendation, "not-eligible");
+});
+
+test("low assessor rejects resealed observed containment contradictions for either sidecar", async t => {
+  const f = await solLowAssessmentFixture(t), original = structuredClone(f.files);
+  const mutations: [string, (v: any) => void][] = [
+    ["publication only in network state", v => { v.NetworkSettings.Ports = { "8081/tcp": [{ HostIp: "0.0.0.0", HostPort: "8081" }] }; }],
+    ["publication only in host config", v => { v.HostConfig.PortBindings = { "8081/tcp": [{ HostIp: "::", HostPort: "8081" }] }; }],
+    ["PID sharing", v => { v.HostConfig.PidMode = "container:other"; }],
+    ["IPC sharing", v => { v.HostConfig.IpcMode = "host"; }],
+    ["UTS sharing", v => { v.HostConfig.UTSMode = "host"; }],
+    ["user namespace", v => { v.HostConfig.UsernsMode = "host"; }],
+    ["device request", v => { v.HostConfig.DeviceRequests = [{ Capabilities: [["gpu"]] }]; }],
+    ["device cgroup", v => { v.HostConfig.DeviceCgroupRules = ["a *:* rwm"]; }],
+    ["capability drop drift", v => { v.HostConfig.CapDrop = []; }],
+    ["security drift", v => { v.HostConfig.SecurityOpt.push("apparmor=unconfined"); }],
+    ["host bind", v => { v.HostConfig.Binds = ["/:/host"]; }],
+    ["additional mount", v => { v.HostConfig.Mounts = [{ Type: "bind", Source: "/", Target: "/host" }]; }],
+    ["writable root", v => { v.HostConfig.ReadonlyRootfs = false; }],
+    ["host network", v => { v.HostConfig.NetworkMode = "host"; }],
+    ["command drift", v => { v.Config.Cmd = ["/malicious"]; }],
+    ["entrypoint drift", v => { v.Config.Entrypoint = ["/malicious"]; }],
+  ];
+  for (const index of [0, 1]) for (const [name, mutate] of mutations) {
+    Object.assign(f.files, structuredClone(original));
+    const result = f.files["canary/mechanical-sidecars/000009-terminal.json"].result, values = JSON.parse(result.stdout.bytes);
+    mutate(values[index]); const bytes = JSON.stringify(values); result.stdout = { bytes, complete: true, sha256: sha(bytes) };
+    assert.equal(assessPredictionSolLowCanary(f.repin()).recommendation, "not-eligible", index + ": " + name);
+  }
 });

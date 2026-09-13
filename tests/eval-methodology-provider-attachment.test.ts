@@ -1,3 +1,4 @@
+import { sidecarHostFixture } from "./eval-methodology-inspect-fixture.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
@@ -268,13 +269,16 @@ function inspectContainer(container) {
     Path: container.entrypoint,
     Args: [],
     Config: {
+      Cmd: null, Volumes: null, WorkingDir: "/workspace", Tty: false, OpenStdin: false, StdinOnce: false,
       Image: container.image,
       User: "65532:65532",
       Entrypoint: [container.entrypoint],
       Env: [...baseEnv, ...container.env],
     },
-    Mounts: [{ Type: "tmpfs", Destination: "/tmp" }, { Type: "tmpfs", Destination: "/home/peregrine" }],
+    Mounts: [],
     HostConfig: {
+      ...${JSON.stringify(sidecarHostFixture("replaced"))},
+      NetworkMode: Object.keys(container.networks)[0],
       ReadonlyRootfs: true,
       CapDrop: ["ALL"],
       SecurityOpt: ["no-new-privileges"],
@@ -283,7 +287,7 @@ function inspectContainer(container) {
       ExtraHosts: container.addHost === undefined ? [] : [container.addHost],
     },
     State: { Running: container.running },
-    NetworkSettings: { Networks: containerNetworks(container) },
+    NetworkSettings: { Ports: {}, Networks: containerNetworks(container) },
   };
 }
 function inspectNetwork(name) {

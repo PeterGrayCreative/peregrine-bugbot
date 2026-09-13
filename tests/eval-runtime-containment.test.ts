@@ -1,3 +1,4 @@
+import { sidecarHostFixture } from "./eval-methodology-inspect-fixture.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { chmodSync, linkSync, mkdirSync, mkdtempSync, realpathSync, symlinkSync, writeFileSync } from "node:fs";
@@ -98,10 +99,10 @@ function fakeMethodologyEgressDocker() {
       return result(JSON.stringify([gateway, forwarder].map((name) => ({
         Name: `/${name}`,
         Path: name === gateway ? "/usr/local/bin/peregrine-egress-gateway" : "/usr/local/bin/peregrine-methodology-mcp-forwarder",
-        Args: [], State: { Running: true }, Mounts: [{ Type: "tmpfs", Destination: "/tmp" }, { Type: "tmpfs", Destination: "/home/peregrine" }],
-        Config: { User: "65532:65532", Image: ACCEPTED_METHODOLOGY_EGRESS_IMAGE, Entrypoint: [name === gateway ? "/usr/local/bin/peregrine-egress-gateway" : "/usr/local/bin/peregrine-methodology-mcp-forwarder"], Env: [...METHODOLOGY_EGRESS_BASE_ENV, ...(envs.get(name) ?? [])] },
-        HostConfig: { ReadonlyRootfs: true, CapDrop: ["ALL"], SecurityOpt: ["no-new-privileges"], PidsLimit: 64, Tmpfs: { "/tmp": "rw,noexec,nosuid,nodev,size=32m,uid=65532,gid=65532,mode=1777", "/home/peregrine": homeTmpfs }, ExtraHosts: name === gateway ? [] : ["host.docker.internal:host-gateway"] },
-        NetworkSettings: { Networks: { [external]: { Aliases: [name], IPAddress: `${externalSubnet.replace(".0/28", name === gateway ? ".2" : ".3")}` }, [internal]: { Aliases: [name === gateway ? "egress-gateway" : "mcp-forwarder", name], IPAddress: `${subnet.replace(".0/28", name === gateway ? ".2" : ".3")}` } } },
+        Args: [], State: { Running: true }, Mounts: [],
+        Config: { Cmd: null, Volumes: null, WorkingDir: "/workspace", Tty: false, OpenStdin: false, StdinOnce: false, User: "65532:65532", Image: ACCEPTED_METHODOLOGY_EGRESS_IMAGE, Entrypoint: [name === gateway ? "/usr/local/bin/peregrine-egress-gateway" : "/usr/local/bin/peregrine-methodology-mcp-forwarder"], Env: [...METHODOLOGY_EGRESS_BASE_ENV, ...(envs.get(name) ?? [])] },
+        HostConfig: sidecarHostFixture(external, name === gateway ? undefined : "host.docker.internal:host-gateway"),
+        NetworkSettings: { Ports: {}, Networks: { [external]: { Aliases: [name], IPAddress: `${externalSubnet.replace(".0/28", name === gateway ? ".2" : ".3")}` }, [internal]: { Aliases: [name === gateway ? "egress-gateway" : "mcp-forwarder", name], IPAddress: `${subnet.replace(".0/28", name === gateway ? ".2" : ".3")}` } } },
       }))));
     }
     if (args[0] === "network" && args[1] === "inspect") {
