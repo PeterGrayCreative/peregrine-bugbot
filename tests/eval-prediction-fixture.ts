@@ -1,0 +1,18 @@
+import { sha } from "../eval/prediction-contract.js";
+import { buildSyntheticPredictionPlan, type PredictionSource } from "../eval/prediction-plan.js";
+export function syntheticRegistration() {
+  const repositories = [0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 0, 1, 2, 0, 1, 0];
+  const cases = Array.from({ length: 36 }, (_, index) => ({ caseId: `synthetic-${index}`, disposition: index < 16 ? "approve" : index < 35 ? "unresolved" : "reject", proposedClass: index < 9 ? "bug-bearing" : "reviewed-comparison", proof: index < 16 ? "static" : "unresolved", contract: `Synthetic bounded contract ${index}; does not assert complete correctness.`, repository: `synthetic-repo-${repositories[index] ?? 6}`, family: `synthetic-family-${index === 9 ? 3 : index}`, exposure: "visible-historical-development", label: "uncalibrated-ai-prediction", included: index < 16 }));
+  const included = cases.filter(item => item.included);
+  return { schemaVersion: 1, protocol: "ai-prediction-development-v1", evidenceClass: "registration-and-synthetic-analysis-only", parentOutcome: "Section3-FAIL-preserved", supersedesFailedManifest: { path: "synthetic-failed.json", sha256: sha("failed"), reason: "Synthetic preserved failure" }, sources: { "synthetic-a": sha("a"), "synthetic-b": sha("b"), "synthetic-c": sha("c") }, cases,
+    retainedLosses: Array.from({ length: 11 }, (_, i) => ({ caseId: `synthetic-loss-${i}`, classification: "reconstruction-loss", evidencePath: `synthetic/${i}.json` })),
+    repositoryCounts: Object.fromEntries([0, 1, 2, 3, 4, 5].map(i => [`synthetic-repo-${i}`, repositories.filter(item => item === i).length])), caseCount: 16, sourceFamilyCount: 15, repeats: 2,
+    schedule: included.flatMap((item, index) => [1, 2].flatMap(repeat => ((index + repeat) % 2 ? ["A", "B"] : ["B", "A"]).map(arm => ({ id: `${item.caseId}/${repeat}/${arm}`, caseId: item.caseId, repeat, arm, status: "not-executed", providerCalls: 0 })))),
+    concentrationPolicy: { scope: "this-fixed-development-set-only", maximumCasesFromOneRepository: 5, maximumShare: 0.3125, priorCapSatisfied: false, resamplingOrRebalancingAllowed: false }, contrast: "B-minus-A-single-session-method-portability", outcomeUnit: "bounded-predicted-contract-bundle-per-case", incompleteAttemptCoverage: 0, retryCount: 0, allowedLabelInvalidationCounts: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], status: "registration-integrity-only", providerExecutionAuthorized: false, historicalRunnerMaterializationComplete: false, providerCalls: 0, blockers: ["Synthetic only"], forbiddenClaims: ["human-verified", "calibrated-label-accuracy", "known-root-recall", "whole-PR-cleanliness", "independent-confirmation", "holdout", "efficacy", "superiority", "safety"] };
+}
+export async function syntheticPlan(version: string | null = "synthetic-pinned-version") {
+  const registration = syntheticRegistration();
+  const bytes = JSON.stringify(registration);
+  const sources: PredictionSource[] = registration.cases.filter(item => item.included).map((item, index) => ({ caseId: item.caseId, scope: { baseRef: "a".repeat(40), headRef: "b".repeat(40), diff: "diff --git a/example.ts b/example.ts\n--- a/example.ts\n+++ b/example.ts\n@@ -1 +1 @@\n-export const value = 0;\n+export const value = 1;", taskSpecification: "Review the supplied change.", rawChangedPaths: ["example.ts"] }, inventorySha256: sha(`synthetic-inventory-${index}`), toolPolicySha256: sha("synthetic-tools"), conditions: index === 0 ? [{ id: "condition-a", text: "Synthetic first condition" }, { id: "condition-b", text: "Synthetic second condition" }] : [{ id: "condition-a", text: "Synthetic bounded condition" }] }));
+  return buildSyntheticPredictionPlan(bytes, sha(bytes), sources, version);
+}
