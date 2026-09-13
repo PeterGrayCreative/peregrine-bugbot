@@ -4,7 +4,7 @@ import { fixtureContainer, fixtureIdentity, fixtureNetwork, sidecarHostFixture }
 import { ACCEPTED_METHODOLOGY_EGRESS_IMAGE, METHODOLOGY_EGRESS_BASE_ENV } from "../eval/methodology-egress.js";
 import { METHODOLOGY_RUNTIME_IMAGE_ACCEPTANCE } from "../eval/methodology-runtime-image.js";
 import { parseObservationRecords, parseStrictIpv4, parseStrictIpv4Cidr, observationSubnet, observationTimestamp, observationReceiptTimestamp,
-  validateMethodologyObservationGraph, type ObservationGraph, type ContainerExpectation } from "../eval/methodology-observation.js";
+  validateMethodologyObservationGraph, validateMethodologyDeadlinePhases, type ObservationGraph, type ContainerExpectation } from "../eval/methodology-observation.js";
 
 // An independently assembled prospective profile, not real running evidence.
 function fixture(): ObservationGraph {
@@ -37,6 +37,65 @@ test("gate v7 reproduction: distinct SandboxIDs cannot alias one namespace path"
     target.SandboxKey = other.SandboxKey;
     assert.notEqual(target.SandboxID, other.SandboxID);
   }, "distinct full IDs sharing validated prefix/path");
+});
+
+function phaseFixture() {
+  const clock = (elapsed: number) => ({ kind: "node-performance-clock-v1", processId: 4242, timeOriginMs: 1_700_000_000_000,
+    monotonicMs: 1000.25 + elapsed, unixMs: 1_700_000_001_000 + Math.floor(0.25 + elapsed) });
+  const row = (a: number, b: number) => ({ start: { startedAt: clock(a).unixMs, clock: clock(a) }, terminal: { closedAt: clock(b).unixMs, clock: clock(b) } });
+  const deadline = { kind: "prediction-cli-deadline-terminal-v2", clock: clock(0), elapsedMs: 310,
+    events: ["start", "exec-start", "exec-closed", "teardown-complete"].map((kind, i) => ({ kind, elapsedMs: i * 100 })) };
+  return { deadline, phases: { preparation: [row(10, 11), row(30, 33)], execution: [row(100, 101), row(105, 106), row(110, 111)], teardown: [row(220, 221), row(243, 244)] }, clock, row };
+}
+const phaseNames = ["preparation", "execution", "teardown"] as const;
+test("deadline phases follow setup, contained client plus remove/absence, then sidecar teardown", () => {
+  const f = phaseFixture(); validateMethodologyDeadlinePhases(f.deadline, f.phases);
+  for (let phase = 0; phase < 3; phase++) {
+    const exact = phaseFixture(); exact.phases[phaseNames[phase]!] = [exact.row(phase * 100, (phase + 1) * 100)];
+    if (phase === 0) exact.phases.execution[0] = exact.row(100, 101);
+    validateMethodologyDeadlinePhases(exact.deadline, exact.phases);
+  }
+  for (const times of [[0,100,100,300], [0,100,200,200], [0,0,200,300], [0,101,100,300], [100,0,200,300], [0,100,301,300]]) {
+    const invalid = phaseFixture(); invalid.deadline.events.forEach((e, i) => { e.elapsedMs = times[i]!; });
+    assert.throws(() => validateMethodologyDeadlinePhases(invalid.deadline, invalid.phases), Error, String(times));
+  }
+});
+test("every clocked receipt rejects out-of-phase endpoints, overlap and foreign clock identities", () => {
+  let cases = 0;
+  for (const [phase, name] of phaseNames.entries()) for (let rowIndex = 0; rowIndex < phaseFixture().phases[name].length; rowIndex++) {
+    const check = (mutate: (f: ReturnType<typeof phaseFixture>) => void) => { const f = phaseFixture(); mutate(f); assert.throws(() => validateMethodologyDeadlinePhases(f.deadline, f.phases)); cases++; };
+    for (const point of ["start", "terminal"] as const) {
+      const key = point === "start" ? "startedAt" : "closedAt";
+      check(f => { const r = f.phases[name][rowIndex]![point] as any; const at = point === "start" ? phase * 100 - 0.000001 : (phase + 1) * 100 + 0.000001; r.clock = f.clock(at); r[key] = r.clock.unixMs; });
+      for (const mutation of [(c: any) => { c.processId++; }, (c: any) => { c.timeOriginMs++; }, (c: any) => { c.kind = "other-clock"; }, (c: any) => { c.unixMs += 2; }, (c: any) => { c.monotonicMs += 2; }, (c: any) => { delete c.monotonicMs; }, (c: any) => { c.extra = 0; }])
+        check(f => mutation(f.phases[name][rowIndex]![point].clock));
+      check(f => { const r = f.phases[name][rowIndex]![point] as any; r.clock.unixMs += 5000; r[key] += 5000; });
+    }
+    check(f => { const r = f.phases[name][rowIndex]!; r.terminal.clock = f.clock(r.start.clock.monotonicMs - f.deadline.clock.monotonicMs - 0.000001); r.terminal.closedAt = r.terminal.clock.unixMs; });
+    if (rowIndex) check(f => { const r = f.phases[name][rowIndex]!, previous = f.phases[name][rowIndex - 1]!; r.start.clock = f.clock(previous.terminal.clock.monotonicMs - f.deadline.clock.monotonicMs - 0.000001); r.start.startedAt = r.start.clock.unixMs; });
+  }
+  assert.equal(cases, 137);
+});
+test("phase clock quantization is exactly 1ms and cannot justify a zero positive-duration phase", () => {
+  for (const delta of [-1, 1]) {
+    const f = phaseFixture(), r = f.phases.execution[1]!;
+    r.start.clock.unixMs += delta; r.start.startedAt += delta;
+    validateMethodologyDeadlinePhases(f.deadline, f.phases);
+  }
+  for (const delta of [-2, 2]) {
+    const f = phaseFixture(), r = f.phases.execution[1]!;
+    r.start.clock.unixMs += delta; r.start.startedAt += delta;
+    assert.throws(() => validateMethodologyDeadlinePhases(f.deadline, f.phases), /quantization/);
+  }
+  const f = phaseFixture(); f.deadline.events[2]!.elapsedMs = 100; f.phases.execution = [f.row(100, 100)];
+  f.phases.execution[0]!.terminal.clock.unixMs++; f.phases.execution[0]!.terminal.closedAt++;
+  assert.throws(() => validateMethodologyDeadlinePhases(f.deadline, f.phases), /zero deadline phase/);
+});
+test("phase evidence fails closed on missing source, impossible whole intervals and source-origin drift", () => {
+  for (const mutation of [(d: any) => { delete d.clock; }, (d: any) => { d.kind = "prediction-cli-deadline-terminal-v1"; }, (d: any) => { d.clock.unixMs += 2; }, (d: any) => { d.clock.monotonicMs = NaN; }, (d: any) => { d.clock.timeOriginMs = -1; }, (d: any) => { d.clock.processId = 0; }, (d: any) => { d.elapsedMs = 1200000; }, (d: any) => { d.elapsedMs = 100; }, (d: any) => { d.events.reverse(); }]) {
+    const f = phaseFixture(); mutation(f.deadline); assert.throws(() => validateMethodologyDeadlinePhases(f.deadline, f.phases));
+  }
+  for (const name of phaseNames) { const f = phaseFixture(); f.phases[name] = []; assert.throws(() => validateMethodologyDeadlinePhases(f.deadline, f.phases)); }
 });
 
 test("gate v7 reproduction: one-nanosecond producer inversions cannot collapse to equal milliseconds", () => {

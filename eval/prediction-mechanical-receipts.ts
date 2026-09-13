@@ -3,7 +3,7 @@ import { isAbsolute, join, normalize } from "node:path";
 import { renderContainedProviderArgs } from "./runtime-containment.js";
 import { renderMethodologySidecarArgs, methodologyGatewayEnvironment, methodologyForwarderEnvironment, GATEWAY_ENTRYPOINT, FORWARDER_ENTRYPOINT,
   METHODOLOGY_EGRESS_BASE_ENV, parseMethodologyEgressNetworkCreateArgs, parseMethodologyEgressExternalNetworkCreateArgs } from "./methodology-egress.js";
-import { validateMethodologyObservationGraph, type ObservationReceipt, type ContainerExpectation } from "./methodology-observation.js";
+import { validateMethodologyObservationGraph, validateMethodologyDeadlinePhases, type ObservationReceipt, type ContainerExpectation } from "./methodology-observation.js";
 import { PREDICTION_MCP_LIMITS } from "./prediction-runtime-attachment.js";
 import { canonicalJsonSha256 } from "./experiment.js";
 
@@ -33,11 +33,11 @@ export function validateMechanicalReceipts(artifacts: { path: string; bytes: str
       const startRaw = selected.find(v => v.path === prefix + "-start.json"), terminalRaw = selected.find(v => v.path === prefix + "-terminal.json");
       fail(startRaw && terminalRaw, "missing, duplicate, failed or noncontiguous mechanical disposition");
       const start = JSON.parse(startRaw!.bytes), terminal = JSON.parse(terminalRaw!.bytes);
-      exact(start, ["kind", "binding", "sequence", "command", "args", "stdinSha256", "deadlineAttached", "aborted", "timeoutMs", "cleanup", "startedAt"], "mechanical start");
-      exact(terminal, ["kind", "binding", "sequence", "result", "closedAt", "evidenceError"], "mechanical terminal");
+      exact(start, ["kind", "clock", "binding", "sequence", "command", "args", "stdinSha256", "deadlineAttached", "aborted", "timeoutMs", "cleanup", "startedAt"], "mechanical start");
+      exact(terminal, ["kind", "clock", "binding", "sequence", "result", "closedAt", "evidenceError"], "mechanical terminal");
       const binding = { runId: scope.runId, attemptId: scope.attemptId, scopeSha256: digest(scope), sourceSha256: scope.sourceSha256, channel };
       same([start.kind, terminal.kind, start.binding, terminal.binding, start.sequence, terminal.sequence, start.command, start.aborted, terminal.evidenceError],
-        ["prediction-mechanical-start-v1", "prediction-mechanical-terminal-v1", binding, binding, sequence, sequence, "docker", false, null], "mechanical binding, completion or persistence failure");
+        ["prediction-mechanical-start-v2", "prediction-mechanical-terminal-v2", binding, binding, sequence, sequence, "docker", false, null], "mechanical binding, completion or persistence failure");
       const args = array(start.args).map(text); fail(args.length > 0 && args.length <= 1000, "mechanical argv bound");
       fail(typeof start.deadlineAttached === "boolean" && typeof start.cleanup === "boolean" && Number.isFinite(start.timeoutMs) && start.timeoutMs > 0 && start.timeoutMs <= 1200000, "mechanical deadline metadata gap");
       if (start.stdinSha256 !== null) hash(start.stdinSha256);
@@ -75,6 +75,7 @@ export function validateMechanicalReceipts(artifacts: { path: string; bytes: str
   cleanup(absent, ["ps", "--all", "--quiet", "--filter", `name=^/${lifecycle.clientContainer}$`], true);
   const sidecars = channels.sidecars;
   const deadline = get("canary/deadline/terminal.json");
+  validateMethodologyDeadlinePhases(deadline, { preparation: sidecars.filter(r => !r.start.cleanup), execution: channels.client, teardown: sidecars.filter(r => r.start.cleanup) });
   fail(sidecars.at(-1).terminal.closedAt - sidecars[0].start.startedAt <= deadline.elapsedMs + 1, "mechanical chronology exceeds whole-attempt duration");
   fail(absent.terminal.closedAt <= sidecars.find(r => r.start.cleanup)?.start.startedAt, "sidecar teardown preceded client cleanup/absence");
   const only = (predicate: (r: any) => boolean) => { const rows = sidecars.filter(predicate); fail(rows.length === 1, "mechanical sidecar operation missing or duplicated"); return rows[0]; };

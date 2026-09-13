@@ -95,7 +95,7 @@ test("supported operator dispatch runs one synthetic low client, retains mechani
   const records: Record<string, any> = Object.fromEntries(artifacts.filter((v: any) => v.path !== "canary/output/result.json").map((v: any) => [v.path, JSON.parse(v.bytes)]));
   const launch = records["canary/mechanical-client/000001-start.json"];
   records["observer/lifecycle.json"] = { clientProcessId: 12345, clientContainer: launch.args[launch.args.indexOf("--name") + 1] };
-  for (const value of Object.values(records)) if (value.kind === "prediction-mechanical-terminal-v1" && value.binding.channel === "sidecars") {
+  for (const value of Object.values(records)) if (value.kind === "prediction-mechanical-terminal-v2" && value.binding.channel === "sidecars") {
     for (const line of value.result.stdout.bytes.split("\n")) { let item: any; try { item = JSON.parse(line); } catch { continue; }
       if (item.status === "sealed") records[item.protocol === "egress-gateway-v1" ? "observer/gateway-audit.json" : "observer/forwarder-audit.json"] = item.audit;
     }
@@ -162,7 +162,7 @@ test("opt-in PID capture uses the existing child executor and does not alter its
 test("low assessor independently validates the explicit low route without high/batch promotion", async t => {
   const f = await solLowAssessmentFixture(t), result = assessPredictionSolLowCanary(f.input);
   assert.equal(result.recommendation, "infrastructure-canary-observed-no-batch-eligibility", JSON.stringify(result.failure));
-  assert.equal(result.kind, "prediction-sol-low-canary-assessment-v7"); assert.equal(result.batchAuthorized, false); assert.equal(result.executionReady, false);
+  assert.equal(result.kind, "prediction-sol-low-canary-assessment-v8"); assert.equal(result.batchAuthorized, false); assert.equal(result.executionReady, false);
   assert.equal(assessPredictionCanary(f.input).recommendation, "not-eligible"); assert.throws(() => requirePredictionBatchAuthorization(result));
   assert.equal(assessPredictionSolLowCanary({ ...f.input, observer: null }).recommendation, "not-eligible");
 });
@@ -472,6 +472,16 @@ test("gate v7 reproduction: resealed one-nanosecond producer inversions reject",
   }
 });
 
+for (const [phase, times] of [["execution", [0,100,100,300]], ["teardown", [0,100,200,200]], ["preparation", [0,0,200,300]]] as const)
+  test(`gate v8 reproduction: zero ${phase} phase cannot contain positive receipts`, async t => {
+    const f = await solLowAssessmentFixture(t), deadline = f.files["canary/deadline/terminal.json"];
+    deadline.events.forEach((e: any, i: number) => { e.elapsedMs = times[i]; }); sealFixture(deadline);
+    f.files["canary/terminal.json"].deadline = deadline;
+    for (const path of ["observer/lifecycle.json", "observer/absence.json"]) f.files[path].deadlineSha256 = deadline.sha256;
+    const result = assessPredictionSolLowCanary(f.repin());
+    assert.equal(result.recommendation, "not-eligible"); assert.ok(result.failure);
+  });
+
 test("resealed deadline and receipt boundaries retain producer precision without rounding", async t => {
   const f = await solLowAssessmentFixture(t), original = structuredClone(f.files);
   const sealDeadline = () => {
@@ -481,7 +491,7 @@ test("resealed deadline and receipt boundaries retain producer precision without
     return f.repin();
   };
   const deadline = f.files["canary/deadline/terminal.json"];
-  deadline.elapsedMs += 0.123456; deadline.events.slice(1).forEach((e: any) => { e.elapsedMs += 0.123456; });
+  deadline.elapsedMs += 0.123456; deadline.events.slice(1).forEach((e: any, i: number) => { e.elapsedMs += i ? 0.123456 : -0.123456; });
   assert.equal(assessPredictionSolLowCanary(sealDeadline()).recommendation, "infrastructure-canary-observed-no-batch-eligibility");
   for (const mutate of [
     (d: any) => { d.events[2].elapsedMs = d.events[1].elapsedMs - 0.000001; },
@@ -496,6 +506,32 @@ test("resealed deadline and receipt boundaries retain producer precision without
   for (const [path, key] of [["canary/mechanical-sidecars/000001-start.json", "startedAt"], ["canary/mechanical-sidecars/000023-terminal.json", "closedAt"], ["canary/mechanical-client/000001-start.json", "startedAt"], ["canary/mechanical-client/000003-terminal.json", "closedAt"]]) {
     Object.assign(f.files, structuredClone(original)); f.files[path!][key!] += 0.000001;
     assert.equal(assessPredictionSolLowCanary(f.repin()).recommendation, "not-eligible", path);
+  }
+});
+
+test("resealed phase assessment binds every stage and refuses missing or mismatched clock provenance", async t => {
+  const f = await solLowAssessmentFixture(t), original = structuredClone(f.files);
+  const deadlinePath = "canary/deadline/terminal.json", client = "canary/mechanical-client/000001-start.json";
+  const mutations: [string, () => void][] = [
+    ["missing deadline clock", () => { delete f.files[deadlinePath].clock; }],
+    ["legacy deadline", () => { f.files[deadlinePath].kind = "prediction-cli-deadline-terminal-v1"; }],
+    ["foreign process", () => { f.files[client].clock.processId++; }],
+    ["foreign time origin", () => { f.files[client].clock.timeOriginMs++; }],
+    ["missing sidecar clock", () => { delete f.files["canary/mechanical-sidecars/000009-terminal.json"].clock; }],
+    ["receipt wall mismatch", () => { f.files[client].clock.unixMs++; }],
+    ["wall and monotonic drift", () => { f.files[client].clock.monotonicMs += 5; }],
+    ["client removal outside execution", () => { f.files[deadlinePath].events[2].elapsedMs = 105; }],
+    ["client absence outside execution", () => { f.files[deadlinePath].events[2].elapsedMs = 110; }],
+    ["preparation inspect outside phase", () => { f.files[deadlinePath].events[1].elapsedMs = 30; }],
+    ["preparation before guard start", () => { f.files[deadlinePath].events[0].elapsedMs = 15; }],
+    ["network absence outside teardown", () => { f.files[deadlinePath].events[3].elapsedMs = 240; }],
+  ];
+  for (const [name, mutate] of mutations) {
+    Object.assign(f.files, structuredClone(original)); mutate();
+    const deadline = sealFixture(f.files[deadlinePath]); f.files["canary/terminal.json"].deadline = deadline;
+    for (const path of ["observer/lifecycle.json", "observer/absence.json"]) f.files[path].deadlineSha256 = deadline.sha256;
+    const assessment = assessPredictionSolLowCanary(f.repin());
+    assert.equal(assessment.recommendation, "not-eligible", name); assert.ok(assessment.failure, name);
   }
 });
 

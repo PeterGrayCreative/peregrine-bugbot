@@ -53,6 +53,8 @@ export async function solLowAssessmentFixture(t: TestContext) {
   Object.assign(f.files["observer/identity.json"], { requested: route, observedRequest: { model: route.model, effort: route.effort } });
   f.files["observer/runtime.json"].sourceSha256 = op.contract.source.sourceSha256;
   const deadline = f.files["canary/deadline/terminal.json"]; deadline.attemptId = amendment.canaryId; deadline.events[0].detail.attemptId = amendment.canaryId;
+  const clock = (at: number) => ({ kind: "node-performance-clock-v1", processId: 4242, timeOriginMs: 0.5, monotonicMs: at, unixMs: at });
+  deadline.kind = "prediction-cli-deadline-terminal-v2"; deadline.clock = clock(0);
   deadline.elapsedMs = 310; deadline.events.forEach((e: any, i: number) => { e.elapsedMs = i * 100; }); deadline.events[1].detail.remainingMs = 1199899; sealFixture(deadline);
   f.files["canary/terminal.json"].deadline = deadline;
   for (const path of ["observer/lifecycle.json", "observer/absence.json"]) f.files[path].deadlineSha256 = deadline.sha256;
@@ -82,10 +84,10 @@ export async function solLowAssessmentFixture(t: TestContext) {
   const receipt = (channel: "client" | "sidecars", args: string[], startedAt: number, cleanup = false, stdout = "", client = false) => {
     const sequence = ++ordinals[channel], prefix = `canary/mechanical-${channel}/${String(sequence).padStart(6, "0")}`;
     const binding = { runId, attemptId: scope.attemptId, scopeSha256: digest(scope), sourceSha256: scope.sourceSha256, channel };
-    f.files[prefix + "-start.json"] = { kind: "prediction-mechanical-start-v1", binding, sequence, command: "docker", args,
+    f.files[prefix + "-start.json"] = { kind: "prediction-mechanical-start-v2", clock: clock(startedAt), binding, sequence, command: "docker", args,
       stdinSha256: client ? scope.promptSha256 : null, deadlineAttached: !cleanup, aborted: false, timeoutMs: 10000, cleanup, startedAt };
     const result = client ? f.files["canary/execution.json"] : { code: 0, timedOut: false, processId: 20000 + sequence, stdout, stderr: "" };
-    f.files[prefix + "-terminal.json"] = { kind: "prediction-mechanical-terminal-v1", binding, sequence, result: { ...result, stdout: captured(result.stdout), stderr: captured(result.stderr) }, closedAt: startedAt + 1, evidenceError: null };
+    f.files[prefix + "-terminal.json"] = { kind: "prediction-mechanical-terminal-v2", clock: clock(startedAt + 1), binding, sequence, result: { ...result, stdout: captured(result.stdout), stderr: captured(result.stderr) }, closedAt: startedAt + 1, evidenceError: null };
   };
   receipt("client", renderContainedProviderArgs({ runner: "codex", profile: "prediction-sol-low-canary", image, containerName: clientName, identity: session.identity,
     checkoutDir: join(op.contract.execution.directory, "canary/workspace"), assetsDir: join(op.contract.execution.directory, "canary/assets"), outputDir: join(op.contract.execution.directory, "canary/output"),

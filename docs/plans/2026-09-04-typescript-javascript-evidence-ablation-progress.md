@@ -881,3 +881,14 @@ V6 and all predecessors remain unchanged. No runtime/provider operation or
 attempt occurred; 64 slots remain unstarted and readiness/batch authorization
 remain false. Real-producer conformance is still prospective; fresh review is
 required before the separately authorized single canary can proceed.
+
+## 2026-09-13: clock-bound phase chronology, pending re-review
+
+The V7 gate found zero-length phases accepted alongside positive mechanical
+spans. The [V8 correction](../validation/2026-09-13-prediction-sol-low-operator-phases.md)
+binds preparation, contained execution (including client remove/absence), and
+sidecar/network teardown to shared-clock evidence from the existing producers.
+Missing clock provenance fails closed; the one-millisecond wall/monotonic bound
+is unchanged. V7 and all failures remain immutable. No provider/runtime operation
+or attempt occurred; all 64 review slots remain unstarted, with readiness and
+batch authorization false. Fresh independent exact-freeze review remains required.

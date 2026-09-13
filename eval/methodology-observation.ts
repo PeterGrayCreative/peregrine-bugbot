@@ -14,7 +14,7 @@ const INERT_CONTAINER_KEYS = ["ResolvConfPath", "HostnamePath", "HostsPath", "Lo
 /** Exact required running/network profile. Container key names/defaults derive
  * from retained create-only inspect; running/network conformance is prospective,
  * not a claim that archived network output exists. Unknown fields fail closed. */
-export const METHODOLOGY_OBSERVATION_PROFILE = "methodology-observation-graph-v2";
+export const METHODOLOGY_OBSERVATION_PROFILE = "methodology-observation-graph-v3";
 
 export function parseObservationRecords(stdout: string): any[] {
   let value: unknown; try { value = JSON.parse(stdout); } catch { throw new Error("malformed complete inspect JSON"); }
@@ -68,6 +68,48 @@ export function observationTimestamp(value: unknown): bigint {
 /** Receipts originate as integer Date.now milliseconds. Convert exactly,
  * without pretending they contain sub-millisecond observations. */
 export const observationReceiptTimestamp = (value: unknown): bigint => BigInt(integer(value)) * 1_000_000n;
+
+interface ClockedReceipt { start: { startedAt: number; clock: unknown }; terminal: { closedAt: number; clock: unknown } }
+/** Exact successful producer await order: setup; contained run INCLUDING its
+ * remove/absence; then sidecar/network teardown. No inferred clock origins. */
+export function validateMethodologyDeadlinePhases(deadline: any, phases: { preparation: ClockedReceipt[]; execution: ClockedReceipt[]; teardown: ClockedReceipt[] }): void {
+  const finite = (v: unknown): number => { requireFact(typeof v === "number" && Number.isFinite(v) && v >= 0, "invalid monotonic clock value"); return v as number; };
+  const clock = (raw: unknown) => {
+    const c = exact(raw, ["kind", "processId", "timeOriginMs", "monotonicMs", "unixMs"], "mechanical clock sample");
+    same(c.kind, "node-performance-clock-v1", "unregistered clock source"); requireFact(integer(c.processId) > 0 && finite(c.timeOriginMs) > 0, "invalid clock identity");
+    finite(c.monotonicMs); integer(c.unixMs); return c as { kind: string; processId: number; timeOriginMs: number; monotonicMs: number; unixMs: number };
+  };
+  same(deadline.kind, "prediction-cli-deadline-terminal-v2", "clock-bound deadline required");
+  const origin = clock(deadline.clock), events = deadline.events;
+  requireFact(Array.isArray(events), "deadline phases missing");
+  same(events.map((e: any) => e.kind), ["start", "exec-start", "exec-closed", "teardown-complete"], "deadline phase order missing");
+  const total = finite(deadline.elapsedMs), times: number[] = events.map((e: any) => finite(e.elapsedMs));
+  requireFact(total < 1200000 && times.every((v, i) => v >= (times[i - 1] ?? 0) && v <= total), "deadline phase order/duration contradiction");
+  // Subtract the integer wall epochs before comparing fractions; adding a
+  // fractional monotonic value to a large Unix epoch would discard precision.
+  const originWhole = Math.trunc(origin.timeOriginMs), originFraction = origin.timeOriginMs - originWhole;
+  requireFact(Math.abs((origin.unixMs - originWhole) - origin.monotonicMs - originFraction) <= 1, "wall/monotonic origin contradiction");
+  const elapsed = (raw: unknown, wall: number): number => {
+    const c = clock(raw);
+    same([c.processId, c.timeOriginMs], [origin.processId, origin.timeOriginMs], "mismatched wall/monotonic clock source");
+    same(c.unixMs, integer(wall), "receipt wall/clock mismatch");
+    const relative = c.monotonicMs - origin.monotonicMs;
+    requireFact(relative >= 0 && relative <= total, "receipt outside whole monotonic interval");
+    requireFact(Math.abs((c.unixMs - origin.unixMs) - relative) <= 1, "wall/monotonic receipt drift exceeds 1ms quantization");
+    return relative;
+  };
+  let prior = 0;
+  for (const [i, name] of (["preparation", "execution", "teardown"] as const).entries()) {
+    const rows = phases[name], begin = times[i]!, end = times[i + 1]!;
+    requireFact(Array.isArray(rows) && rows.length > 0, "missing mechanical phase receipts");
+    for (const row of rows) {
+      const a = elapsed(row.start.clock, row.start.startedAt), b = elapsed(row.terminal.clock, row.terminal.closedAt);
+      requireFact(a >= prior && b >= a && a >= begin && b <= end, "mechanical receipt outside assigned deadline phase or order");
+      requireFact(end > begin || b === a && row.terminal.closedAt === row.start.startedAt, "zero deadline phase with positive receipt duration");
+      prior = b;
+    }
+  }
+}
 function mac(value: unknown): string {
   requireFact(typeof value === "string" && /^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$/.test(value) && value !== "00:00:00:00:00:00" && (parseInt(value.slice(0, 2), 16) & 1) === 0, "invalid endpoint MAC");
   return value as string;
