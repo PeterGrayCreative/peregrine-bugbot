@@ -3,7 +3,7 @@ import test from "node:test";
 import { fixtureContainer, fixtureIdentity, fixtureNetwork, sidecarHostFixture } from "./eval-methodology-inspect-fixture.js";
 import { ACCEPTED_METHODOLOGY_EGRESS_IMAGE, METHODOLOGY_EGRESS_BASE_ENV } from "../eval/methodology-egress.js";
 import { METHODOLOGY_RUNTIME_IMAGE_ACCEPTANCE } from "../eval/methodology-runtime-image.js";
-import { parseObservationRecords, parseStrictIpv4, parseStrictIpv4Cidr, observationSubnet, observationTimestamp,
+import { parseObservationRecords, parseStrictIpv4, parseStrictIpv4Cidr, observationSubnet, observationTimestamp, observationReceiptTimestamp,
   validateMethodologyObservationGraph, type ObservationGraph, type ContainerExpectation } from "../eval/methodology-observation.js";
 
 // An independently assembled prospective profile, not real running evidence.
@@ -29,6 +29,23 @@ function repin(f: ObservationGraph) {
 function reject(mutate: (f: any) => void, label: string) {
   const f = fixture(); mutate(f); repin(f); assert.throws(() => validateMethodologyObservationGraph(f), Error, label);
 }
+
+test("gate v7 reproduction: distinct SandboxIDs cannot alias one namespace path", () => {
+  for (const index of [0, 1]) reject(f => {
+    const target = f.containers[index].NetworkSettings, other = f.containers[1 - index].NetworkSettings;
+    target.SandboxID = other.SandboxID.slice(0, 12) + "f".repeat(52);
+    target.SandboxKey = other.SandboxKey;
+    assert.notEqual(target.SandboxID, other.SandboxID);
+  }, "distinct full IDs sharing validated prefix/path");
+});
+
+test("gate v7 reproduction: one-nanosecond producer inversions cannot collapse to equal milliseconds", () => {
+  for (const index of [0, 1]) {
+    reject(f => { f.containers[index].Created = new Date(f.launches[index].startedAt).toISOString().replace("Z", "000001Z"); }, "created one ns after started");
+    reject(f => { f.containers[index].State.StartedAt = new Date(f.launches[index].closedAt).toISOString().replace("Z", "000001Z"); }, "started one ns after launch closed");
+    reject(f => { f.networks[index].Created = new Date(f.networkCreates[index].closedAt).toISOString().replace("Z", "000001Z"); }, "network created one ns after receipt closed");
+  }
+});
 
 test("canonical running graph accepts the registered two-helper topology and pretty complete JSON", () => {
   const f = fixture(); validateMethodologyObservationGraph(f);
@@ -109,7 +126,37 @@ test("IPv4 CIDR and producer timestamps parse canonically without suffix loss or
   for (const value of ["10.0.0.0/0", "10.0.0.1/28", "10.0.0.0/32"]) assert.throws(() => observationSubnet(value));
   for (const value of [null, "1.2.3", "1.2.3.4.5", "01.2.3.4", "1.2.3.256", "1.2.3.-1", "1.2.3.4\n"]) assert.throws(() => parseStrictIpv4(value));
   for (const value of [null, 0, "0001-01-01T00:00:00Z", "1970-01-01T00:00:00Z", "2026-02-31T00:00:00Z", "2026-09-13", "2026-09-13T00:00:00+00:00", "2026-09-13T24:00:00Z", "2026-09-13T00:00:00.1234567890Z"]) assert.throws(() => observationTimestamp(value));
-  assert.equal(observationTimestamp("2026-09-13T00:00:00.123456789Z"), Date.parse("2026-09-13T00:00:00.123Z"));
+  assert.equal(observationTimestamp("2026-09-13T00:00:00.123456789Z"), BigInt(Date.parse("2026-09-13T00:00:00Z")) * 1_000_000n + 123_456_789n);
+});
+
+test("nanosecond chronology preserves accepted producer forms and rejects strict boundary inversions", () => {
+  const second = "2026-09-13T12:00:00", base = observationTimestamp(second + "Z");
+  for (let digits = 1; digits <= 9; digits++) {
+    const fraction = "123456789".slice(0, digits);
+    assert.equal(observationTimestamp(second + "." + fraction + "Z"), base + BigInt(fraction.padEnd(9, "0")));
+    assert.equal(observationTimestamp(second + "." + "0".repeat(digits) + "Z"), base);
+  }
+  assert.equal(observationTimestamp(second + ".999999999Z") + 1n, observationTimestamp("2026-09-13T12:00:01Z"));
+  assert.equal(observationTimestamp("2024-02-29T23:59:59.999999999Z") + 1n, observationTimestamp("2024-03-01T00:00:00Z"));
+  for (const value of [second + "Z\n", second + "Z\r\n", " " + second + "Z", second + ".Z", second + ".0000000001Z", second + ".1e-9Z", second + ".000000001+00:00", "2026-02-29T00:00:00Z", "2026-09-13T12:00:60Z", "2026-09-13t12:00:00z"]) assert.throws(() => observationTimestamp(value), Error, value);
+  for (const value of [NaN, Infinity, -1, 1.000001, "1", Number.MAX_SAFE_INTEGER + 1]) assert.throws(() => observationReceiptTimestamp(value));
+  assert.equal(observationReceiptTimestamp(Number.MAX_SAFE_INTEGER), BigInt(Number.MAX_SAFE_INTEGER) * 1_000_000n);
+  for (const index of [0, 1]) {
+    const f: any = fixture(), time = new Date(f.launches[index].startedAt).toISOString();
+    f.containers[index].Created = time.replace("Z", "000001Z");
+    f.containers[index].State.StartedAt = time.replace("Z", "999999Z");
+    repin(f); validateMethodologyObservationGraph(f);
+    f.containers[index].State.StartedAt = f.containers[index].Created;
+    repin(f); validateMethodologyObservationGraph(f);
+    reject(f => { f.containers[index].State.FinishedAt = "0001-01-01T00:00:00.000000001Z"; }, "finished sentinel must remain exact");
+    reject(f => { f.containers[index].State.FinishedAt = "0001-01-01T00:00:00.000000000Z"; }, "unregistered alternate finished sentinel");
+    reject(f => { f.containers[index].Created = new Date(f.launches[index].startedAt - 1).toISOString().replace("Z", "999999Z"); }, "created one ns before launch start");
+    reject(f => { f.networks[index].Created = new Date(f.networkCreates[index].startedAt - 1).toISOString().replace("Z", "999999Z"); }, "network one ns before create start");
+    for (const kind of ["launches", "networkCreates", "networkInspects"] as const) {
+      reject(f => { f[kind][index].startedAt += 0.000244140625; }, "fractional receipt start is not a producer millisecond");
+      reject(f => { f[kind][index].closedAt += 0.000244140625; }, "fractional receipt close is not a producer millisecond");
+    }
+  }
 });
 
 test("every helper endpoint is cross-bound to static address, prefix, gateway, network/member identity and MAC", () => {

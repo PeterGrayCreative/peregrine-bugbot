@@ -14,7 +14,7 @@ const INERT_CONTAINER_KEYS = ["ResolvConfPath", "HostnamePath", "HostsPath", "Lo
 /** Exact required running/network profile. Container key names/defaults derive
  * from retained create-only inspect; running/network conformance is prospective,
  * not a claim that archived network output exists. Unknown fields fail closed. */
-export const METHODOLOGY_OBSERVATION_PROFILE = "methodology-observation-graph-v1";
+export const METHODOLOGY_OBSERVATION_PROFILE = "methodology-observation-graph-v2";
 
 export function parseObservationRecords(stdout: string): any[] {
   let value: unknown; try { value = JSON.parse(stdout); } catch { throw new Error("malformed complete inspect JSON"); }
@@ -55,12 +55,19 @@ export function observationSubnet(value: string) {
   const at = (offset: number) => { const n = parsed.value + offset; return [24, 16, 8, 0].map(shift => (n >>> shift) & 255).join("."); };
   return { ...parsed, gateway: at(1), helper: (index: number) => at(index + 2) };
 }
-export function observationTimestamp(value: unknown): number {
-  requireFact(typeof value === "string" && /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\.[0-9]{1,9})?Z$/.test(value), "invalid observation timestamp");
-  const ms = Date.parse(value as string);
-  requireFact(Number.isFinite(ms) && ms > 0 && new Date(ms).toISOString().slice(0, 19) === (value as string).slice(0, 19), "invalid observation time");
-  return ms;
+/** Preserve every supported RFC3339Nano digit. Date only validates the whole
+ * UTC second/calendar; it must never round the authenticated fraction. */
+export function observationTimestamp(value: unknown): bigint {
+  const parsed = typeof value === "string" ? /^([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2})(?:\.([0-9]{1,9}))?Z$/.exec(value) : null;
+  requireFact(parsed && parsed[0] === value, "invalid observation timestamp");
+  const second = parsed![1]!, ms = Date.parse(second + "Z");
+  requireFact(Number.isSafeInteger(ms) && new Date(ms).toISOString().slice(0, 19) === second, "invalid observation time");
+  const ns = BigInt(ms) * 1_000_000n + BigInt((parsed![2] ?? "").padEnd(9, "0"));
+  requireFact(ns > 0n, "invalid observation time"); return ns;
 }
+/** Receipts originate as integer Date.now milliseconds. Convert exactly,
+ * without pretending they contain sub-millisecond observations. */
+export const observationReceiptTimestamp = (value: unknown): bigint => BigInt(integer(value)) * 1_000_000n;
 function mac(value: unknown): string {
   requireFact(typeof value === "string" && /^(?:[0-9a-f]{2}:){5}[0-9a-f]{2}$/.test(value) && value !== "00:00:00:00:00:00" && (parseInt(value.slice(0, 2), 16) & 1) === 0, "invalid endpoint MAC");
   return value as string;
@@ -166,7 +173,7 @@ export function validateMethodologyObservationGraph(input: ObservationGraph): vo
   requireFact(first.network !== first.externalNetwork && first.subnet !== first.externalSubnet, "network graph collision");
   const names = input.helpers.map(h => h.name);
   const networks = input.networks.map((v, i) => validateObservedNetwork(v, { network: i ? first.externalNetwork : first.network, subnet: i ? first.externalSubnet : first.subnet, internal: !i, sidecars: names }));
-  const receipt = (r: ObservationReceipt) => { requireFact(integer(r.closedAt) >= integer(r.startedAt), "invalid observation receipt interval"); };
+  const receipt = (r: ObservationReceipt) => { requireFact(observationReceiptTimestamp(r.closedAt) >= observationReceiptTimestamp(r.startedAt), "invalid observation receipt interval"); };
   const resourceId = (r: ObservationReceipt): string => { receipt(r); requireFact(/^[a-f0-9]{64}\n$/.test(r.stdout), "resource creation identity receipt missing"); return r.stdout.trim(); };
   input.networkInspects.forEach(receipt); receipt(input.containerInspect);
   same(parseObservationRecords(input.containerInspect.stdout), input.containers, "container inspect receipt/body mismatch");
@@ -176,17 +183,18 @@ export function validateMethodologyObservationGraph(input: ObservationGraph): vo
   same(containers[0].Image, containers[1].Image, "helper image identity disagreement");
   same(containers[0].ImageManifestDescriptor ?? null, containers[1].ImageManifestDescriptor ?? null, "helper image descriptor disagreement");
   unique([...containers.map(c => c.Id), ...networks.map(n => n.Id), ...containers.map(c => c.NetworkSettings.SandboxID)]);
+  unique(containers.map(c => c.NetworkSettings.SandboxKey));
   unique(containers.map(c => String(c.State.Pid)));
   const endpoints: string[] = [], macs: string[] = [];
   for (const [i, c] of containers.entries()) {
     const launch = input.launches[i]!; same(c.Id, resourceId(launch), "container differs from launched identity");
     const created = observationTimestamp(c.Created), started = observationTimestamp(c.State.StartedAt);
-    requireFact(created >= launch.startedAt && started <= launch.closedAt && launch.closedAt <= input.containerInspect.startedAt, "container creation/start/inspect chronology contradiction");
+    requireFact(created >= observationReceiptTimestamp(launch.startedAt) && started <= observationReceiptTimestamp(launch.closedAt) && launch.closedAt <= input.containerInspect.startedAt, "container creation/start/inspect chronology contradiction");
     for (const [j, n] of networks.entries()) {
       const create = input.networkCreates[j]!, inspect = input.networkInspects[j]!;
       same(n.Id, resourceId(create), "network differs from created identity");
       const networkCreated = observationTimestamp(n.Created);
-      requireFact(networkCreated >= create.startedAt && networkCreated <= create.closedAt && create.closedAt <= launch.startedAt &&
+      requireFact(networkCreated >= observationReceiptTimestamp(create.startedAt) && networkCreated <= observationReceiptTimestamp(create.closedAt) && create.closedAt <= launch.startedAt &&
         input.containerInspect.closedAt <= inspect.startedAt, "network creation/launch/inspect chronology contradiction");
       const endpoint = c.NetworkSettings.Networks[n.Name], member = n.Containers[c.Id];
       requireFact(member, "container missing from its inspected network");

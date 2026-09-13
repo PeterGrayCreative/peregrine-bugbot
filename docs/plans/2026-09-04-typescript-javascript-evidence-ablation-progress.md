@@ -869,3 +869,15 @@ producer mismatch, with no same-attempt relaxation or retry. All predecessors
 are preserved. No runtime/provider operation or attempt occurred; 64 review
 slots remain unstarted and authorization/readiness remain false. Fresh review
 of the exact successor freeze remains required.
+
+## 2026-09-13: namespace and nanosecond correction, pending re-review
+
+The V6 gate found full SandboxIDs could alias one derived namespace path; its
+timestamp parser also lost sub-millisecond ordering. The [V7 correction](../validation/2026-09-13-prediction-sol-low-operator-namespace-time.md)
+requires unique validated SandboxKeys and exact nanosecond producer-time
+comparisons, with direct and fully resealed assessor regressions. Millisecond
+receipts and monotonic deadline telemetry retain their actual producer precision.
+V6 and all predecessors remain unchanged. No runtime/provider operation or
+attempt occurred; 64 slots remain unstarted and readiness/batch authorization
+remain false. Real-producer conformance is still prospective; fresh review is
+required before the separately authorized single canary can proceed.

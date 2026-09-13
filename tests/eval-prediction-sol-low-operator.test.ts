@@ -13,6 +13,7 @@ import { solLowOperatorFixture, solLowAssessmentFixture } from "./eval-predictio
 import { trustedLowFixture as trusted } from "./eval-prediction-sol-low-canary-fixture.js";
 import { predictionDockerFixture } from "./eval-prediction-cli-bridge-fixture.js";
 import { exec } from "../src/util/exec.js";
+import { sealFixture } from "./eval-prediction-canary-assessment-fixture.js";
 
 test("operator preflight authenticates gates/source/mounts without consuming a canary or reading session content", async t => {
   const f = await solLowOperatorFixture(t);
@@ -161,7 +162,7 @@ test("opt-in PID capture uses the existing child executor and does not alter its
 test("low assessor independently validates the explicit low route without high/batch promotion", async t => {
   const f = await solLowAssessmentFixture(t), result = assessPredictionSolLowCanary(f.input);
   assert.equal(result.recommendation, "infrastructure-canary-observed-no-batch-eligibility", JSON.stringify(result.failure));
-  assert.equal(result.kind, "prediction-sol-low-canary-assessment-v6"); assert.equal(result.batchAuthorized, false); assert.equal(result.executionReady, false);
+  assert.equal(result.kind, "prediction-sol-low-canary-assessment-v7"); assert.equal(result.batchAuthorized, false); assert.equal(result.executionReady, false);
   assert.equal(assessPredictionCanary(f.input).recommendation, "not-eligible"); assert.throws(() => requirePredictionBatchAuthorization(result));
   assert.equal(assessPredictionSolLowCanary({ ...f.input, observer: null }).recommendation, "not-eligible");
 });
@@ -435,6 +436,67 @@ test("canonical profile mismatch fails before client invocation and retains mand
   assert.equal(JSON.parse(readFileSync(join(f.options.directory, "canary-ledger-failure.json"), "utf8")).ledger.unstartedReviewAttempts, 64);
   await assert.rejects(runStructuralSolLowOperator({ ...f.request, reportDirectory: join(f.root, "retry-blocked") }, executor), /ledger already exists/);
   assert.equal(clientCalls, 0);
+});
+
+test("gate v7 reproduction: resealed distinct SandboxIDs cannot alias one namespace path", async t => {
+  const f = await solLowAssessmentFixture(t), original = structuredClone(f.files);
+  for (const index of [0, 1]) {
+    Object.assign(f.files, structuredClone(original));
+    const result = f.files["canary/mechanical-sidecars/000009-terminal.json"].result, inspected = JSON.parse(result.stdout.bytes);
+    const target = inspected[index].NetworkSettings, other = inspected[1 - index].NetworkSettings;
+    target.SandboxID = other.SandboxID.slice(0, 12) + "f".repeat(52); target.SandboxKey = other.SandboxKey;
+    assert.notEqual(target.SandboxID, other.SandboxID);
+    const bytes = JSON.stringify(inspected); result.stdout = { bytes, complete: true, sha256: sha(bytes) };
+    const assessment = assessPredictionSolLowCanary(f.repin());
+    assert.equal(assessment.recommendation, "not-eligible", String(index)); assert.ok(assessment.failure);
+  }
+});
+
+test("gate v7 reproduction: resealed one-nanosecond producer inversions reject", async t => {
+  const f = await solLowAssessmentFixture(t), original = structuredClone(f.files);
+  for (const index of [0, 1]) for (const mode of ["created-after-started", "started-after-close", "network-after-close"]) {
+    Object.assign(f.files, structuredClone(original));
+    const network = mode === "network-after-close", path = `canary/mechanical-sidecars/${network ? (index ? "000011" : "000010") : "000009"}-terminal.json`;
+    const result = f.files[path].result, inspected = JSON.parse(result.stdout.bytes);
+    if (network) {
+      const sequence = index ? "000001" : "000002", closed = f.files[`canary/mechanical-sidecars/${sequence}-terminal.json`].closedAt;
+      inspected[0].Created = new Date(closed).toISOString().replace("Z", "000001Z");
+    } else if (mode === "created-after-started") inspected[index].Created = inspected[index].State.StartedAt.replace("Z", "000001Z");
+    else {
+      const closed = f.files[`canary/mechanical-sidecars/${index ? "000004" : "000003"}-terminal.json`].closedAt;
+      inspected[index].State.StartedAt = new Date(closed).toISOString().replace("Z", "000001Z");
+    }
+    const bytes = JSON.stringify(inspected); result.stdout = { bytes, complete: true, sha256: sha(bytes) };
+    const assessment = assessPredictionSolLowCanary(f.repin());
+    assert.equal(assessment.recommendation, "not-eligible", index + ":" + mode); assert.ok(assessment.failure);
+  }
+});
+
+test("resealed deadline and receipt boundaries retain producer precision without rounding", async t => {
+  const f = await solLowAssessmentFixture(t), original = structuredClone(f.files);
+  const sealDeadline = () => {
+    const deadline = sealFixture(f.files["canary/deadline/terminal.json"]);
+    f.files["canary/terminal.json"].deadline = deadline;
+    for (const path of ["observer/lifecycle.json", "observer/absence.json"]) f.files[path].deadlineSha256 = deadline.sha256;
+    return f.repin();
+  };
+  const deadline = f.files["canary/deadline/terminal.json"];
+  deadline.elapsedMs += 0.123456; deadline.events.slice(1).forEach((e: any) => { e.elapsedMs += 0.123456; });
+  assert.equal(assessPredictionSolLowCanary(sealDeadline()).recommendation, "infrastructure-canary-observed-no-batch-eligibility");
+  for (const mutate of [
+    (d: any) => { d.events[2].elapsedMs = d.events[1].elapsedMs - 0.000001; },
+    (d: any) => { d.events[3].elapsedMs = d.events[2].elapsedMs - 0.000001; },
+    (d: any) => { d.elapsedMs = d.events[3].elapsedMs - 0.000001; },
+    (d: any) => { d.elapsedMs = 1200000; },
+    (d: any) => { d.elapsedMs = 1200000.000001; },
+  ]) {
+    Object.assign(f.files, structuredClone(original)); mutate(f.files["canary/deadline/terminal.json"]);
+    assert.equal(assessPredictionSolLowCanary(sealDeadline()).recommendation, "not-eligible");
+  }
+  for (const [path, key] of [["canary/mechanical-sidecars/000001-start.json", "startedAt"], ["canary/mechanical-sidecars/000023-terminal.json", "closedAt"], ["canary/mechanical-client/000001-start.json", "startedAt"], ["canary/mechanical-client/000003-terminal.json", "closedAt"]]) {
+    Object.assign(f.files, structuredClone(original)); f.files[path!][key!] += 0.000001;
+    assert.equal(assessPredictionSolLowCanary(f.repin()).recommendation, "not-eligible", path);
+  }
 });
 
 test("resealed assessor evidence reconciles command identities, both inspect graphs and final cleanup chronology", async t => {
