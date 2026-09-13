@@ -707,3 +707,19 @@ prior failures remain immutable. This closes the reproduced zero-provider
 startup/cleanup defect, subject to independent review; it does not establish
 CLI-agent containment, provider authorization, served identity, corpus
 admission or an R4 experiment pass. All 64 review slots remain unstarted.
+
+## 2026-09-13: published experimental runtime acceptance
+
+Manual main workflow run `34758654512` published and attested the immutable
+multi-platform `ccad8c40…` image after both platform containment/egress probes
+passed. The [acceptance checkpoint](../validation/2026-09-13-prediction-runtime-acceptance.md)
+binds the exact workflow/source/digest and raw evidence, accepts that image
+only for the explicit experimental methodology/prediction path, and preserves
+old-image historical readers. The exact published native image also passed
+authenticated reader access, accelerated deadline and mandatory cleanup proof.
+
+This removes image distribution/acceptance as a technical blocker, subject to
+the independent gate. It does not prove an authorized CLI-agent/provider canary,
+exact served identity, assessor blinding or experimental readiness. General
+review routing is unchanged; all prior failures and scientific registrations
+remain preserved; provider authorization is false and 64/64 slots unstarted.

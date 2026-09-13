@@ -1,6 +1,6 @@
 import type { EvaluationIsolation } from "../src/types.js";
 import { canonicalJson, canonicalJsonSha256 } from "./experiment.js";
-import { METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "./runtime-containment.js";
+import { isRecordedMethodologyEgressImage } from "./methodology-runtime-image.js";
 import {
   parseReviewReadMcpAuditSnapshot,
   type ReviewReadMcpAuditSnapshot,
@@ -388,7 +388,7 @@ function identityV2(input: MethodologyScopeRecordV2StaticInput): void {
       !/^[a-f0-9]{64}$/.test(attachment.effectiveRootsSha256) ||
       !/^[a-f0-9]{64}$/.test(attachment.readLimitsSha256) ||
       !/^[a-f0-9]{64}$/.test(attachment.mcpLimitsSha256) ||
-      attachment.image !== METHODOLOGY_EGRESS_RUNTIME_IMAGE ||
+      !isRecordedMethodologyEgressImage(attachment.image) ||
       typeof attachment.sourceHeadTree !== "string" || !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(attachment.sourceHeadTree)) {
     throw new Error("methodology scope record tool policy is not the trusted v3 attachment shape");
   }

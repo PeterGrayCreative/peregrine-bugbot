@@ -9,6 +9,7 @@ import { PREDICTION_TOOL_POLICY } from "./prediction-mounts.js";
 import { PREDICTION_RUBRIC } from "./prediction-adjudication.js";
 import { verifyPredictionDryRun, type PredictionDryRun, type PredictionPreparationAuthority } from "./prediction-preparation.js";
 import { PREDICTION_CODEX_SUPPORT, PREDICTION_RUNTIME_REQUIREMENTS, predictionRuntimePreflight } from "./prediction-execution-contract.js";
+import { METHODOLOGY_RUNTIME_IMAGE_ACCEPTANCE } from "./methodology-runtime-image.js";
 
 const ROOTS = ["eval/prediction-execution-freeze.ts", "eval/prediction-attempt-monitor.ts", "eval/prediction-adjudication-gate.ts", "eval/prediction-cli-session.ts", "eval/prediction-runtime-probe.ts", "eval/prediction-runtime-client.mjs", "src/engines/codex.ts", "src/security/provider-env.ts"];
 export interface PredictionPrivateBinding { role: string; path: string; sha256: string; commit: string }
@@ -69,6 +70,7 @@ export async function buildPredictionExecutionFreeze(input: PredictionExecutionF
     privateBindings: input.privateBindings, predecessorFileSha256: input.predecessorFileSha256, predecessorResultSha256: predecessor.sha256,
     preparation: p, source, limits: PREDICTION_LIMITS, toolPolicy: PREDICTION_TOOL_POLICY,
     runtimeRequirements: PREDICTION_RUNTIME_REQUIREMENTS, runtimeSupport: PREDICTION_CODEX_SUPPORT,
+    runtimeImageAcceptance: METHODOLOGY_RUNTIME_IMAGE_ACCEPTANCE,
     rubric: PREDICTION_RUBRIC, rubricSha256: digest(PREDICTION_RUBRIC), analysisImplementationSha256: source.files.find(f => f.path === "eval/prediction-analysis.ts")!.sha256,
     schedule: p.plan.registration.schedule.map((a, index) => ({ ...a, runtimeAttemptId: `attempt-${String(index + 1).padStart(6, "0")}` })),
     authorization: "absent-default-deny", observedServedRoute: null, assessorIdentityReceipts: null, reviewedBlindingReceipt: null,
