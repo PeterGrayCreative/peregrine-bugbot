@@ -633,3 +633,24 @@ preparation readiness only. Section 3, corpus readiness, admission, and
 protected selection remain incomplete until the actual human review and its
 later semantic gate. See the
 [Section 3 preparation gate](../validation/2026-09-12-section-3-astra-medium-preparation-gate.md).
+
+The user declined the prepared human census and authorized a single
+`gpt-6-astra` xhigh subject review with an explicit pass/fail decision. That
+review did not populate or impersonate the human response contract. It
+returned **FAIL** for corpus readiness: 16 bounded static AI proposals were
+accepted for development use (9 bug-bearing and 7 reviewed comparisons), 19
+remained unresolved, 1 attribution was rejected, and all 11 retained losses
+remained excluded. The accepted set also violates the registered 25%
+repository-family concentration cap: Next.js contributes 5/16 cases (31.25%).
+
+A separate Astra medium gate verified the full 36-case ledger, source hashes,
+counts, concentration arithmetic, decisive semantic findings, and AI-only claim
+boundaries. It approved closure through the correction goal's reviewed
+termination/inconclusive path. The report is durably stored in private evidence
+`main` at commit `c753eb2` as
+`audit-reports/2026-09-13-section3-astra-xhigh-subject-review.md` with SHA-256
+`ba4690e21c4b0661460253a8fd4d387231bdde61595baefbf28d61dbdf6bb38b`.
+The current corpus-dependent Section 4 freeze is prohibited. No provider run,
+admission, protected selection, human-verification claim, or efficacy claim
+resulted. See the
+[Section 3 termination gate](../validation/2026-09-13-section-3-astra-xhigh-fail-gate.md).
