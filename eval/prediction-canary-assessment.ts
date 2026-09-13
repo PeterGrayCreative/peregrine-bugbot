@@ -12,6 +12,7 @@ import { parsePredictionReadMcpAuditSnapshot } from "./methodology-read-mcp.js";
 import { METHODOLOGY_RUNTIME_IMAGE_ACCEPTANCE } from "./methodology-runtime-image.js";
 import { bindSolLowOperator, type CanaryTrustedBytes } from "./prediction-sol-low-operator-contract.js";
 import { predictionSolLowCanaryCommand } from "./prediction-sol-low-command.js";
+import { MECHANICAL_RECEIPT_PATH, validateMechanicalReceipts } from "./prediction-mechanical-receipts.js";
 // @ts-expect-error Pinned built-in ESM runtime parser has no declaration file.
 import { parseAuditSnapshot } from "../container/eval-runtime/egress-gateway.mjs";
 // @ts-expect-error Pinned built-in ESM runtime parser has no declaration file.
@@ -103,7 +104,7 @@ function assessCanaryEvidence(input: PredictionCanaryAssessmentInput, lowInput?:
     binding = { ...scope, bridgeFreezeSha256: input.bridgeFreeze.expectedSha256, runtimeFreezeSha256: input.runtimeFreeze.expectedSha256,
       ...(operator ? { operatorFreezeSha256: lowInput!.operatorFreeze.expectedSha256, operatorGateSha256: lowInput!.operatorGate.expectedSha256 } : {}) };
     same(observer.binding, binding, "stale or cross-run observer binding");
-    const requiredPaths = [...CANARY_EVIDENCE_PATHS, ...(operator ? SOL_LOW_OPERATOR_EVIDENCE_PATHS : [])];
+    const requiredPaths = [...CANARY_EVIDENCE_PATHS, ...(operator ? [...SOL_LOW_OPERATOR_EVIDENCE_PATHS, ...input.artifacts.filter(a => MECHANICAL_RECEIPT_PATH.test(a.path)).map(a => a.path)] : [])];
     fail(input.artifacts.length === requiredPaths.length, "complete exact artifact inventory required");
     unique(input.artifacts.map(a => a.path)); same(input.artifacts.map(a => a.path).sort(), [...requiredPaths].sort(), "unexpected or missing evidence path");
     const inventory = input.artifacts.map(a => { fail(typeof a.bytes === "string" && Buffer.byteLength(a.bytes) <= 16_777_216, "artifact byte limit"); return { path: a.path, bytes: Buffer.byteLength(a.bytes), sha256: sha(a.bytes) }; }).sort((a, b) => a.path.localeCompare(b.path));
@@ -205,7 +206,7 @@ function validateLowOperatorRecords(operator: ReturnType<typeof bindSolLowOperat
   for (const path of [...CANARY_EVIDENCE_PATHS.filter(p => !p.startsWith("observer/")), "canary-ledger-start.json", "canary-ledger-terminal.json"]) {
     same(retained.inventory.find((v: any) => v.path === path), { path, bytes: Buffer.byteLength(raw(path)), sha256: sha(raw(path)) }, "retained mechanical artifact mismatch");
   }
-  for (const part of ["client", "sidecars"]) fail(retained.inventory.some((v: any) => v.path.startsWith(`canary/mechanical-${part}/`) && v.path.endsWith("-terminal.json")), "missing mechanical execution receipts");
+  validateMechanicalReceipts(input.artifacts, retained, scope, get);
 }
 
 function validateItemLifecycles(events: any[]) {
@@ -302,7 +303,7 @@ function validateCanaryReads(cleanup: any, modelCalls: any[], evidence: any, mou
   }
 }
 function freezeAssessment(recommendation: string, input: PredictionCanaryAssessmentInput, binding: unknown, checks: string[], limitations: string[], failure: unknown, tokens: unknown, identity: unknown, low = false) {
-  const body = { kind: low ? "prediction-sol-low-canary-assessment-v1" : "prediction-canary-assessment-v4", recommendation, inputSha256: digest(input), binding, checks, limitations, failure, tokens, identity,
+  const body = { kind: low ? "prediction-sol-low-canary-assessment-v2" : "prediction-canary-assessment-v4", recommendation, inputSha256: digest(input), binding, checks, limitations, failure, tokens, identity,
     providerAuthorized: false, executionReady: false, batchAuthorized: false, providerCalls: 0,
     boundary: "Deterministic validation of externally authenticated evidence, not independent observation, dispatch authority, efficacy evidence or an R5 pass." };
   return freeze({ ...body, sha256: digest(body) });

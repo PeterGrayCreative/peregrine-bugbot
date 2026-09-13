@@ -816,3 +816,13 @@ assessor. Mechanical evidence is retained; missing independent observations fail
 closed. All prior freezes and failures remain immutable. The canary and all 64
 review slots remain unstarted; no provider, client, Docker/image operation or
 batch authorization occurred. A fresh exact-freeze gate remains required.
+
+## 2026-09-13: Sol-low operator integrity successor, pending re-review
+
+The operator gate rejected pre-authentication report loss and receipt-name-only
+acceptance. The [integrity correction](../validation/2026-09-13-prediction-sol-low-operator-integrity.md)
+preserves both exact failing reproductions and the rejected v1 freeze, adds an
+independent untrusted-input intake, and requires actual run-bound mechanical
+receipt bytes and complete cleanup/audit correlation. External observer gates
+remain mandatory. No provider/client/image operation or canary/review attempt
+occurred; this successor awaits a different independent exact-freeze gate.

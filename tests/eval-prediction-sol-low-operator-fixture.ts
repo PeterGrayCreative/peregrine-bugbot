@@ -53,6 +53,41 @@ export async function solLowAssessmentFixture(t: TestContext) {
   f.observer.kind = "authenticated-prediction-sol-low-canary-observer-v1";
   f.observer.binding = { ...scope, bridgeFreezeSha256: f.input.bridgeFreeze.expectedSha256, runtimeFreezeSha256: f.input.runtimeFreeze.expectedSha256, operatorFreezeSha256: op.frozen.expectedSha256, operatorGateSha256: op.gate.expectedSha256 };
   const batch = f.pack.preauthorization.batch;
+  // Actual synthetic receipt bytes, not inventory-name witnesses. Kept separate
+  // from repin so resealing an attack cannot silently repair its receipt.
+  const captured = (bytes: string) => ({ bytes, complete: true, sha256: sha(bytes) });
+  const egress = f.files["canary/invocation.json"].egress, image = f.files["canary/invocation.json"].providerImage;
+  const clientName = f.files["observer/lifecycle.json"].clientContainer;
+  f.files["canary/execution.json"].processId = 12345;
+  const ordinals = { client: 0, sidecars: 0 };
+  const receipt = (channel: "client" | "sidecars", args: string[], startedAt: number, cleanup = false, stdout = "", client = false) => {
+    const sequence = ++ordinals[channel], prefix = `canary/mechanical-${channel}/${String(sequence).padStart(6, "0")}`;
+    const binding = { runId, attemptId: scope.attemptId, scopeSha256: digest(scope), sourceSha256: scope.sourceSha256, channel };
+    f.files[prefix + "-start.json"] = { kind: "prediction-mechanical-start-v1", binding, sequence, command: "docker", args,
+      stdinSha256: client ? scope.promptSha256 : null, deadlineAttached: !cleanup, aborted: false, timeoutMs: 10000, cleanup, startedAt };
+    const result = client ? f.files["canary/execution.json"] : { code: 0, timedOut: false, processId: 20000 + sequence, stdout, stderr: "" };
+    f.files[prefix + "-terminal.json"] = { kind: "prediction-mechanical-terminal-v1", binding, sequence, result: { ...result, stdout: captured(result.stdout), stderr: captured(result.stderr) }, closedAt: startedAt + 1, evidenceError: null };
+  };
+  receipt("client", ["run", "--name", clientName, "--network", egress.network, image, "codex", ...f.files["canary/invocation.json"].args], 100, false, "", true);
+  receipt("client", ["rm", "--force", clientName], 105, true);
+  receipt("client", ["ps", "--all", "--quiet", "--filter", `name=^/${clientName}$`], 110, true);
+  let at = 10;
+  for (const name of [egress.externalNetwork, egress.network]) receipt("sidecars", ["network", "create", name], at += 2);
+  for (const role of ["gateway", "forwarder"]) receipt("sidecars", ["run", "--name", egress[role].name, "--entrypoint", `/synthetic/${role}`, image], at += 2);
+  at = 220;
+  for (const role of ["gateway", "forwarder"]) {
+    const name = egress[role].name;
+    receipt("sidecars", ["stop", "--time", "15", name], at += 2, true);
+    receipt("sidecars", ["logs", "--tail", "64", name], at += 2, true, JSON.stringify({ status: "sealed", protocol: role === "gateway" ? "egress-gateway-v1" : "methodology-mcp-forwarder-v1", audit: f.files[`observer/${role}-audit.json`] }));
+    receipt("sidecars", ["rm", "--force", name], at += 2, true);
+    receipt("sidecars", ["ps", "--all", "--quiet", "--filter", `name=^/${name}$`], at += 2, true);
+  }
+  for (const name of [egress.externalNetwork, egress.network]) {
+    receipt("sidecars", ["network", "rm", name], at += 2, true);
+    receipt("sidecars", ["network", "ls", "--quiet", "--filter", `name=^${name}$`], at += 2, true);
+  }
+  const syncMechanicalExecution = () => { const result = f.files["canary/execution.json"];
+    f.files["canary/mechanical-client/000001-terminal.json"].result = { ...result, stdout: captured(result.stdout), stderr: captured(result.stderr) }; };
   const repin = () => {
     const terminal = f.files["canary/terminal.json"];
     f.files["operator/preflight.json"] = { contractSha256: digest(op.contract), sourceSha256: op.contract.source.sourceSha256, predecessorGateSha256: op.contract.predecessor.gateSha256, freshGateSha256: op.gate.expectedSha256, executionDirectoryAbsent: true, providerCalls: 0, executionStateCreated: false, batch };
@@ -62,9 +97,8 @@ export async function solLowAssessmentFixture(t: TestContext) {
     f.files["canary-ledger-terminal.json"] = { bindings, ledger: { ...amendment.separateLedger, status: terminal.terminal.status, providerCalls: 1, terminalSha256: digest(terminal), terminal: terminal.terminal, batchAuthorized: false } };
     const inventory = Object.entries(f.files).filter(([path]) => !path.startsWith("operator/") && !path.startsWith("observer/")).map(([path, value]) => {
       const bytes = path === "canary/output/result.json" ? value : JSON.stringify(value); return { path, bytes: Buffer.byteLength(bytes), sha256: sha(bytes) }; });
-    for (const part of ["client", "sidecars"]) inventory.push({ path: `canary/mechanical-${part}/000001-terminal.json`, bytes: 1, sha256: sha("synthetic mechanical witness only") });
     f.files["operator/retained-inventory.json"] = { inventory, sha256: digest(inventory), independentObservation: false };
     return Object.assign(f.repin(), { operatorFreeze: op.frozen, operatorGate: op.gate }) as PredictionSolLowAssessmentInput;
   };
-  return { ...f, op, input: repin(), repin };
+  return { ...f, op, input: repin(), repin, syncMechanicalExecution };
 }

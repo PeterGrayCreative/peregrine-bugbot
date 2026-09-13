@@ -4,7 +4,7 @@ import { exec, type ExecResult } from "../src/util/exec.js";
 import { safeDiagnostic } from "../src/security/secrets.js";
 import { canonicalJsonSha256 } from "./experiment.js";
 import { METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "./methodology-runtime-image.js";
-import { observePredictionExec } from "./prediction-mechanical-evidence.js";
+import { observePredictionExec, type MechanicalEvidenceBinding } from "./prediction-mechanical-evidence.js";
 
 /**
  * Docker is deliberately kept behind this small adapter.  In particular, a
@@ -87,6 +87,7 @@ export interface MethodologyMcpLimits {
 export interface MethodologyEgressSupervisorOptions {
   /** Additive private mechanical receipts; no external identity claims. */
   readonly mechanicalEvidenceDirectory?: string;
+  readonly mechanicalEvidenceBinding?: MechanicalEvidenceBinding;
   readonly attemptId: string;
   readonly armId: string;
   readonly sourceHeadTree: string;
@@ -534,7 +535,7 @@ export async function createMethodologyEgressSupervisor(options: MethodologyEgre
   if (options && typeof options === "object" && Object.prototype.hasOwnProperty.call(options, "run")) {
     fail("provider egress supervisor cannot inject a Docker executor");
   }
-  return createSupervisor(options, options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory) : exec, "provider");
+  return createSupervisor(options, options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.mechanicalEvidenceBinding!) : exec, "provider");
 }
 
 /**
@@ -544,7 +545,7 @@ export async function createMethodologyEgressSupervisor(options: MethodologyEgre
 export async function createStructuralMockMethodologyEgressSupervisor(
   options: StructuralMockMethodologyEgressSupervisorOptions,
 ): Promise<MethodologyEgressSupervisor> {
-  return createSupervisor(options, options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.run) : options.run, "structural-mock");
+  return createSupervisor(options, options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.mechanicalEvidenceBinding!, options.run) : options.run, "structural-mock");
 }
 
 /** Uses the real supervisor, but returns no provider launch capability. The

@@ -1,5 +1,6 @@
-import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, writeFileSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
+import { tmpdir } from "node:os";
 import { digest, freeze, same, sha } from "./prediction-contract.js";
 import { createPredictionSolLowCanaryBridge, createStructuralPredictionSolLowCanaryBridge } from "./prediction-cli-bridge.js";
 import { predictionFailureEvidence } from "./prediction-cli-deadline.js";
@@ -8,24 +9,43 @@ import { canaryTrusted, preflightSolLowOperator, type CanaryTrustedBytes } from 
 import type { DockerExec } from "./methodology-egress.js";
 import { exec } from "../src/util/exec.js";
 
-interface Request { freeze: CanaryTrustedBytes; gate: CanaryTrustedBytes; reportDirectory: string; action: "preflight" | "authorize-one-canary" }
+interface Request { freeze: CanaryTrustedBytes; gate: CanaryTrustedBytes; reportDirectory: string; action: "preflight" | "authorize-one-canary"; sourcePaths?: { freeze: string; gate: string } }
 export function runSolLowOperator(request: Request) { return run(request); }
 /** Test seam cannot mint a provider-class capability. */
 export function runStructuralSolLowOperator(request: Request, executor: DockerExec) { return run(request, executor); }
 async function run(input: Request, executor?: DockerExec) {
-  const request = freeze(input);
-  if (!["preflight", "authorize-one-canary"].includes(request.action)) throw new Error("explicit one-canary action required; no review, retry or batch action exists");
-  const packet = canaryTrusted(request.freeze, "prediction-sol-low-operator-freeze-v1");
-  const destination = resolve(packet.contract.execution.directory), report = resolve(request.reportDirectory);
-  if (report === destination || report.startsWith(destination + "/") || destination.startsWith(report + "/")) throw new Error("preflight evidence must be separate from execution state");
-  mkdirSync(report, { mode: 0o700 });
-  const write = (name: string, value: unknown) => writeFileSync(join(report, name), JSON.stringify(value) + "\n", { flag: "wx", mode: 0o600 });
-  write("start.json", { kind: "prediction-sol-low-operator-start-v1", freezeSha256: request.freeze.expectedSha256, gateSha256: request.gate.expectedSha256,
-    action: request.action, executionDirectory: destination, providerCalls: 0, executionStateCreated: false });
+  // Intake is outside every caller/packet-selected directory. In particular an
+  // unauthenticated payload cannot choose the path that rejection handling reads
+  // or writes. The caller-selected report is not created until authentication.
+  const intake = mkdtempSync(join(realpathSync(tmpdir()), "peregrine-canary-preflight-"));
+  const intakeWrite = (name: string, value: unknown) => writeFileSync(join(intake, name), JSON.stringify(value) + "\n", { flag: "wx", mode: 0o600 });
+  let destination: string | undefined, report: string | undefined;
+  const write = (name: string, value: unknown) => writeFileSync(join(report!, name), JSON.stringify(value) + "\n", { flag: "wx", mode: 0o600 });
   let bridge: Awaited<ReturnType<typeof createPredictionSolLowCanaryBridge>> | undefined;
   let primary: unknown;
   try {
+    const supplied = {} as Record<string, unknown>;
+    for (const name of ["freeze", "gate"] as const) {
+      const value = input?.[name], bytes = typeof value?.bytes === "string" ? value.bytes : null;
+      const captured = bytes !== null && Buffer.byteLength(bytes) <= 64 * 1024 * 1024;
+      if (captured) writeFileSync(join(intake, name + ".supplied.utf8"), bytes!, { flag: "wx", mode: 0o600 });
+      supplied[name] = { expectedSha256: value?.expectedSha256 ?? null, actualSha256: bytes === null ? null : sha(bytes), bytes: bytes === null ? null : Buffer.byteLength(bytes), captured,
+        operatorSuppliedPath: input?.sourcePaths?.[name] ?? null };
+    }
+    intakeWrite("request.json", { kind: "prediction-sol-low-operator-intake-v1", action: input?.action ?? null, requestedReportDirectory: input?.reportDirectory ?? null, supplied,
+      providerCalls: 0, executionStateCreated: false, embeddedIdentitiesTrusted: false });
+    if (Object.values(supplied).some((v: any) => !v.captured)) throw new Error("missing or oversized canary input bytes");
+    const request = freeze(input);
+    if (!["preflight", "authorize-one-canary"].includes(request.action)) throw new Error("explicit one-canary action required; no review, retry or batch action exists");
+    const packet = canaryTrusted(request.freeze, "prediction-sol-low-operator-freeze-v1");
+    const selectedDestination = resolve(packet.contract.execution.directory), selectedReport = resolve(request.reportDirectory);
+    if (selectedReport === selectedDestination || selectedReport.startsWith(selectedDestination + "/") || selectedDestination.startsWith(selectedReport + "/")) throw new Error("preflight evidence must be separate from execution state");
+    // Full gate/source/mount validation still precedes execution state creation.
+    mkdirSync(selectedReport, { mode: 0o700 }); report = selectedReport;
+    write("start.json", { kind: "prediction-sol-low-operator-start-v1", freezeSha256: request.freeze.expectedSha256, gateSha256: request.gate.expectedSha256,
+      action: request.action, executionDirectory: selectedDestination, intakeReportDirectory: intake, providerCalls: 0, executionStateCreated: false });
     const contract = await preflightSolLowOperator(request.freeze, request.gate), session = preflightPredictionCliSession();
+    destination = selectedDestination;
     const image = contract.amendment.runtimeAcceptance.image;
     const imageResult = await (executor ?? exec)("docker", ["image", "inspect", "--format", "{{json .RepoDigests}}", image], { timeoutMs: 15_000, inheritEnv: false, env: { PATH: process.env.PATH ?? "" } });
     write("runtime-preflight.json", { image, result: imageResult, credentialContentsRead: false, imagePulled: false });
@@ -55,19 +75,21 @@ async function run(input: Request, executor?: DockerExec) {
     return { status: "awaiting-independent-observations", terminal };
   } catch (error) {
     primary = error;
-    write("failure.json", { status: "operator-failed-closed", failure: predictionFailureEvidence(error), snapshot: bridge?.snapshot() ?? null,
-      providerCalls: existsSync(destination) ? null : 0, executionReady: false, batchAuthorized: false });
-    throw error;
+    const failed = { status: "operator-failed-closed", failure: predictionFailureEvidence(error), snapshot: bridge?.snapshot() ?? null,
+      providerCalls: bridge ? null : 0, executionReady: false, batchAuthorized: false };
+    intakeWrite("failure.json", failed);
+    if (report) write("failure.json", failed);
+    throw Object.assign(new Error(predictionFailureEvidence(error).primaryError + "; retained preflight report: " + intake, { cause: error }), { preflightReportDirectory: intake });
   } finally {
     // Immutable inventory of every retained partial/start/terminal/cleanup byte.
     // Observer interpretation remains separate and externally pinned.
-    if (existsSync(destination)) {
+    if (bridge && destination && report && existsSync(destination)) {
       const inventory: { path: string; bytes: number; sha256: string }[] = [];
       let totalBytes = 0, entries = 0;
       const visit = (path: string) => { if (++entries > 10000) throw new Error("evidence entry limit exceeded"); const stat = lstatSync(path); if (stat.isSymbolicLink()) throw new Error("evidence symlink rejected");
         if (stat.isDirectory()) for (const name of readdirSync(path).sort()) visit(join(path, name));
         else if (stat.isFile()) { if (stat.nlink !== 1 || stat.size > 32_000_000 || (totalBytes += stat.size) > 64_000_000) throw new Error("evidence byte or hard-link limit exceeded");
-          const bytes = readFileSync(path); inventory.push({ path: relative(destination, path), bytes: bytes.length, sha256: sha(bytes) }); }
+          const bytes = readFileSync(path); inventory.push({ path: relative(destination!, path), bytes: bytes.length, sha256: sha(bytes) }); }
         else throw new Error("unsupported evidence entry"); };
       try { visit(destination); write("retained-inventory.json", { inventory, sha256: digest(inventory), independentObservation: false }); }
       catch (error) {

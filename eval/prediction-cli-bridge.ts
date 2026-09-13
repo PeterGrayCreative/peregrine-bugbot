@@ -157,7 +157,7 @@ async function createBridge(input: Options, structural?: { run: DockerExec; wall
         const { maxSessions: _, ...limits } = PREDICTION_MCP_LIMITS;
         const egressOptions = { attemptId: `attempt-${String(ordinal).padStart(6, "0")}`, armId: p.attempts.find(a => a.id === s.sourceAttemptId)!.arm, sourceHeadTree: mount.headTree,
           providerAuthorities: policy.providerAuthorities, hostMcpPort: Number(endpoint.port), hostMcpToken: endpoint.pathname.slice("/mcp/".length), deadlineSignal: guard.signal, mcpLimits: { ...limits, maxHeaderBytes: 8192 },
-          ...(mechanical ? { mechanicalEvidenceDirectory: join(directory, "mechanical-sidecars") } : {}) };
+          ...(mechanical ? { mechanicalEvidenceDirectory: join(directory, "mechanical-sidecars"), mechanicalEvidenceBinding: { runId: options.runId, attemptId: s.attemptId, scopeSha256: digest(s), sourceSha256: source.sourceSha256, channel: "sidecars" as const } } : {}) };
         setup = structural ? createStructuralMockMethodologyEgressSupervisor({ ...egressOptions, run: structural.run }) : createMethodologyEgressSupervisor(egressOptions);
         egress = await setup;
         const checkout = join(directory, "workspace"), assets = join(directory, "assets"), output = join(directory, "output");
@@ -175,7 +175,7 @@ async function createBridge(input: Options, structural?: { run: DockerExec; wall
         write(join(directory, "invocation.json"), { scope: s, args, prompt, attachment: attachment.binding, egress: egress.attestation, assets: readdirSync(assets), providerImage: p.runtimeAcceptance.image });
         const run = createContainedProviderExec({ runner: "codex", providerAccess: "cli-session", checkoutDir: checkout, assetsDir: assets, outputDir: output,
           profile: low ? "prediction-sol-low-canary" : "prediction-cli", image: p.runtimeAcceptance.image, methodologyEgress: egress.launchCapability,
-          ...(mechanical ? { mechanicalEvidenceDirectory: join(directory, "mechanical-client") } : {}), ...(structural ? { run: structural.run } : {}) });
+          ...(mechanical ? { mechanicalEvidenceDirectory: join(directory, "mechanical-client"), mechanicalEvidenceBinding: { runId: options.runId, attemptId: s.attemptId, scopeSha256: digest(s), sourceSha256: source.sourceSha256, channel: "client" as const } } : {}), ...(structural ? { run: structural.run } : {}) });
         const hostArgs = args.map(value => value === "/workspace" ? checkout : value === "/opt/peregrine/methodology-review.schema.json" ? join(assets, "methodology-review.schema.json") : value === "/output/result.json" ? join(output, "result.json") : value);
         try { execution = await guard.run(run, "codex", hostArgs, { stdin: prompt, inheritEnv: false, env: {} }); write(join(directory, "execution.json"), execution); }
         catch (error) { failure = predictionFailureEvidence(error); write(join(directory, "execution-failure.json"), failure); }

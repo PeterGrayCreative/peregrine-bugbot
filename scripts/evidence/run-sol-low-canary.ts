@@ -10,9 +10,11 @@ export function parseSolLowOperatorArgs(args: string[]) {
   for (let i = 0; i < keys.length; i++) if (args[i * 2] !== keys[i] || !args[i * 2 + 1]) throw new Error("exact one-canary command required; no alternate route, batch or retry flags");
   return { freeze: { bytes: readFileSync(resolve(args[1]!), "utf8"), expectedSha256: hash(args[3]) },
     gate: { bytes: readFileSync(resolve(args[5]!), "utf8"), expectedSha256: hash(args[7]) }, reportDirectory: resolve(args[9]!),
+    sourcePaths: { freeze: resolve(args[1]!), gate: resolve(args[5]!) },
     action: args[10] === "--preflight" ? "preflight" as const : "authorize-one-canary" as const };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   try { const result = await runSolLowOperator(parseSolLowOperatorArgs(process.argv.slice(2))); process.stdout.write(JSON.stringify(result) + "\n"); }
-  catch { process.stderr.write("Sol-low operator stopped; inspect the separate retained evidence report. No retry is authorized.\n"); process.exitCode = 1; }
+  catch (error) { const report = (error as { preflightReportDirectory?: string }).preflightReportDirectory;
+    process.stderr.write("Sol-low operator stopped. " + (report ? "Retained preflight report: " + report + ". " : "No report location was available. ") + "No retry is authorized.\n"); process.exitCode = 1; }
 }

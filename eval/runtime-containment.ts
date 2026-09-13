@@ -7,7 +7,7 @@ import { exec } from "../src/util/exec.js";
 import type { ExperimentProviderAccess, ProviderExec, RunnerName } from "../src/types.js";
 import { validatePredictionCliCommand } from "./prediction-cli-command.js";
 import { validatePredictionSolLowCanaryCommand } from "./prediction-sol-low-command.js";
-import { observePredictionExec } from "./prediction-mechanical-evidence.js";
+import { observePredictionExec, type MechanicalEvidenceBinding } from "./prediction-mechanical-evidence.js";
 import {
   assertMethodologyEgressLaunchCapability,
   METHODOLOGY_EGRESS_RUNTIME_IMAGE,
@@ -43,6 +43,7 @@ const METHODOLOGY_MCP_FORWARDER = "mcp-forwarder:8082";
 
 export interface ContainedProviderOptions {
   mechanicalEvidenceDirectory?: string;
+  mechanicalEvidenceBinding?: MechanicalEvidenceBinding;
   runner: Exclude<RunnerName, "mock">;
   providerAccess: Exclude<ExperimentProviderAccess, "not-applicable">;
   checkoutDir: string;
@@ -382,7 +383,7 @@ function validateMethodologyCodexCommand(
 }
 
 export function createContainedProviderExec(options: ContainedProviderOptions): ProviderExec {
-  const run = options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.run ?? exec) : options.run ?? exec;
+  const run = options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.mechanicalEvidenceBinding!, options.run ?? exec) : options.run ?? exec;
   return async (command, commandArgs, execOptions = {}) => {
     if (execOptions.inheritEnv !== false) throw new Error("contained provider execution requires an explicit isolated environment");
     const containerName = `peregrine-eval-${randomUUID()}`;
