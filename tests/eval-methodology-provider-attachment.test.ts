@@ -269,6 +269,7 @@ function inspectContainer(container) {
     Args: [],
     Config: {
       Image: container.image,
+      User: "65532:65532",
       Entrypoint: [container.entrypoint],
       Env: [...baseEnv, ...container.env],
     },
@@ -278,7 +279,6 @@ function inspectContainer(container) {
       CapDrop: ["ALL"],
       SecurityOpt: ["no-new-privileges"],
       PidsLimit: 64,
-      User: "65532:65532",
       Tmpfs: tmpfs,
       ExtraHosts: container.addHost === undefined ? [] : [container.addHost],
     },

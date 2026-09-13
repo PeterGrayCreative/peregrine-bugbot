@@ -5,6 +5,8 @@ import type { ExecResult } from "../src/util/exec.js";
 import {
   ACCEPTED_METHODOLOGY_EGRESS_IMAGE,
   createMethodologyEgressSupervisor,
+  createZeroProviderCandidateEgressSupervisor,
+  ZERO_PROVIDER_FORWARDER_CANDIDATE_IMAGE,
   createStructuralMockMethodologyEgressSupervisor,
   METHODOLOGY_EGRESS_BASE_ENV,
   parseMethodologyEgressNetworkConnectArgs,
@@ -75,6 +77,15 @@ test("provider supervisor rejects an injected executor", async () => {
     run,
   } as never), /cannot inject/);
   assert.deepEqual(calls, []);
+});
+
+test("local zero-provider candidate cannot replace the accepted provider image or choose a provider destination", async () => {
+  const options = { attemptId: "attempt-000001", armId: "A", sourceHeadTree: "a".repeat(40),
+    providerAuthorities: ["zero-provider.invalid:443"], hostMcpPort: 43123, mcpLimits: limits };
+  await assert.rejects(createMethodologyEgressSupervisor({ ...options, image: ZERO_PROVIDER_FORWARDER_CANDIDATE_IMAGE }), /accepted immutable digest/);
+  await assert.rejects(createZeroProviderCandidateEgressSupervisor({ ...options, providerAuthorities: ["api.openai.com:443"] }), /candidate options/);
+  await assert.rejects(createZeroProviderCandidateEgressSupervisor({ ...options, image: ZERO_PROVIDER_FORWARDER_CANDIDATE_IMAGE }), /candidate options/);
+  await assert.rejects(createZeroProviderCandidateEgressSupervisor({ ...options, run: async () => result() } as never), /candidate options/);
 });
 
 test("prediction source endpoint token is exact and setup cancellation cannot cancel cleanup", async () => {
@@ -151,7 +162,7 @@ test("supervisor uses only injected Docker and closes idempotently", async () =>
       return result();
     }
     if (args[0] === "inspect" && args[1] !== undefined) return result(JSON.stringify([
-      ...[args[1]!, args[2]!].map((name) => ({ Name: `/${name}`, Path: name === gateway ? "/usr/local/bin/peregrine-egress-gateway" : "/usr/local/bin/peregrine-methodology-mcp-forwarder", Args: [], State: { Running: true }, Mounts: [{ Type: "tmpfs", Destination: "/tmp" }, { Type: "tmpfs", Destination: "/home/peregrine" }], Config: { Image: ACCEPTED_METHODOLOGY_EGRESS_IMAGE, Entrypoint: [name === gateway ? "/usr/local/bin/peregrine-egress-gateway" : "/usr/local/bin/peregrine-methodology-mcp-forwarder"], Env: sidecarEnvs.get(name) }, HostConfig: { ReadonlyRootfs: true, CapDrop: ["ALL"], SecurityOpt: ["no-new-privileges"], PidsLimit: 64, User: "65532:65532", Tmpfs: { "/tmp": "rw,noexec,nosuid,nodev,size=32m,uid=65532,gid=65532,mode=1777", "/home/peregrine": "rw,noexec,nosuid,nodev,size=16m,uid=65532,gid=65532,mode=0700" }, ExtraHosts: name === gateway ? [] : ["host.docker.internal:host-gateway"] }, NetworkSettings: { Networks: { [externalNetwork]: { Aliases: [name], IPAddress: `${externalSubnet.replace(".0/28", name === gateway ? ".2" : ".3")}` }, [network]: { Aliases: [name === gateway ? "egress-gateway" : "mcp-forwarder", name], IPAddress: `${subnet.replace(".0/28", name === gateway ? ".2" : ".3")}` } } } }))
+      ...[args[1]!, args[2]!].map((name) => ({ Name: `/${name}`, Path: name === gateway ? "/usr/local/bin/peregrine-egress-gateway" : "/usr/local/bin/peregrine-methodology-mcp-forwarder", Args: [], State: { Running: true }, Mounts: [{ Type: "tmpfs", Destination: "/tmp" }, { Type: "tmpfs", Destination: "/home/peregrine" }], Config: { User: "65532:65532", Image: ACCEPTED_METHODOLOGY_EGRESS_IMAGE, Entrypoint: [name === gateway ? "/usr/local/bin/peregrine-egress-gateway" : "/usr/local/bin/peregrine-methodology-mcp-forwarder"], Env: sidecarEnvs.get(name) }, HostConfig: { ReadonlyRootfs: true, CapDrop: ["ALL"], SecurityOpt: ["no-new-privileges"], PidsLimit: 64, Tmpfs: { "/tmp": "rw,noexec,nosuid,nodev,size=32m,uid=65532,gid=65532,mode=1777", "/home/peregrine": "rw,noexec,nosuid,nodev,size=16m,uid=65532,gid=65532,mode=0700" }, ExtraHosts: name === gateway ? [] : ["host.docker.internal:host-gateway"] }, NetworkSettings: { Networks: { [externalNetwork]: { Aliases: [name], IPAddress: `${externalSubnet.replace(".0/28", name === gateway ? ".2" : ".3")}` }, [network]: { Aliases: [name === gateway ? "egress-gateway" : "mcp-forwarder", name], IPAddress: `${subnet.replace(".0/28", name === gateway ? ".2" : ".3")}` } } } }))
     ]));
     if (args[0] === "network" && args[1] === "inspect") { const target = args[2]!; const isInternal = target === network; const selectedSubnet = isInternal ? subnet : externalSubnet; return result(JSON.stringify([{ Name: target, Driver: "bridge", Internal: isInternal, EnableIPv6: false, IPAM: { Config: [{ Subnet: selectedSubnet }] }, Containers: { a: { Name: `/${gateway}`, IPv4Address: `${selectedSubnet.replace(".0/28", ".2")}/28`, IPv6Address: "" }, b: { Name: `/${forwarder}`, IPv4Address: `${selectedSubnet.replace(".0/28", ".3")}/28`, IPv6Address: "" } } }])); }
     if (args[0] === "stop") { stopped = true; return result(); }
@@ -238,15 +249,26 @@ test("container inspect parser rejects missing containment topology", () => {
   assert.throws(() => parseMethodologyEgressContainerInspect(JSON.stringify({ Name: "/gateway", Path: "/usr/local/bin/peregrine-egress-gateway", Args: [], Mounts: [] }), { name: "gateway", network: "network", externalNetwork: "external", subnet: "10.254.1.0/28", externalSubnet: "10.254.2.0/28", image: ACCEPTED_METHODOLOGY_EGRESS_IMAGE, entrypoint: "/usr/local/bin/peregrine-egress-gateway", alias: "egress-gateway", env: {} }), /config/);
 });
 
-test("container inspect parser rejects environment additions, duplicates, stopped sidecars, and out-of-subnet endpoints", () => {
+test("container inspect uses Docker Config.User and rejects environment additions, stopped sidecars, and out-of-subnet endpoints", () => {
   const expected = { name: "gateway", network: "internal", externalNetwork: "external", subnet: "10.254.1.0/28", externalSubnet: "10.254.2.0/28", image: ACCEPTED_METHODOLOGY_EGRESS_IMAGE, entrypoint: "/usr/local/bin/peregrine-egress-gateway", alias: "egress-gateway", env: { EGRESS_ALLOWED_AUTHORITIES: "api.openai.com:443" } };
   const base = {
     Name: "/gateway", Path: expected.entrypoint, Args: [], State: { Running: true }, Mounts: [{ Type: "tmpfs", Destination: "/tmp" }, { Type: "tmpfs", Destination: "/home/peregrine" }],
-    Config: { Image: expected.image, Entrypoint: [expected.entrypoint], Env: [...METHODOLOGY_EGRESS_BASE_ENV, "EGRESS_ALLOWED_AUTHORITIES=api.openai.com:443"] },
-    HostConfig: { ReadonlyRootfs: true, CapDrop: ["ALL"], SecurityOpt: ["no-new-privileges"], PidsLimit: 64, User: "65532:65532", Tmpfs: { "/tmp": "rw,noexec,nosuid,nodev,size=32m,uid=65532,gid=65532,mode=1777", "/home/peregrine": "rw,noexec,nosuid,nodev,size=16m,uid=65532,gid=65532,mode=0700" }, ExtraHosts: [] },
+    Config: { Image: expected.image, User: "65532:65532", Entrypoint: [expected.entrypoint], Env: [...METHODOLOGY_EGRESS_BASE_ENV, "EGRESS_ALLOWED_AUTHORITIES=api.openai.com:443"] },
+    HostConfig: { ReadonlyRootfs: true, CapDrop: ["ALL"], SecurityOpt: ["no-new-privileges"], PidsLimit: 64, Tmpfs: { "/tmp": "rw,noexec,nosuid,nodev,size=32m,uid=65532,gid=65532,mode=1777", "/home/peregrine": "rw,noexec,nosuid,nodev,size=16m,uid=65532,gid=65532,mode=0700" }, ExtraHosts: [] },
     NetworkSettings: { Networks: { external: { Aliases: ["gateway"], IPAddress: "10.254.2.2" }, internal: { Aliases: ["egress-gateway", "gateway"], IPAddress: "10.254.1.2" } } },
   };
   assert.doesNotThrow(() => parseMethodologyEgressContainerInspect(JSON.stringify(base), expected));
+  const spoofed = structuredClone(base); spoofed.Config.User = "0:0"; Object.assign(spoofed.HostConfig, { User: "65532:65532" });
+  assert.throws(() => parseMethodologyEgressContainerInspect(JSON.stringify(spoofed), expected), /containment policy/);
+  const absentUser = structuredClone(base); delete (absentUser.Config as { User?: string }).User;
+  assert.throws(() => parseMethodologyEgressContainerInspect(JSON.stringify(absentUser), expected), /containment policy/);
+  const dockerMapOrder = structuredClone(base);
+  dockerMapOrder.HostConfig.Tmpfs = Object.fromEntries(Object.entries(base.HostConfig.Tmpfs).reverse()) as typeof base.HostConfig.Tmpfs;
+  assert.doesNotThrow(() => parseMethodologyEgressContainerInspect(JSON.stringify(dockerMapOrder), expected));
+  const extraMount = structuredClone(base); Object.assign(extraMount.HostConfig.Tmpfs, { "/unexpected": "rw" });
+  assert.throws(() => parseMethodologyEgressContainerInspect(JSON.stringify(extraMount), expected), /containment policy/);
+  const weakerMount = structuredClone(base); weakerMount.HostConfig.Tmpfs["/tmp"] = "rw";
+  assert.throws(() => parseMethodologyEgressContainerInspect(JSON.stringify(weakerMount), expected), /containment policy/);
   const added = structuredClone(base); added.Config.Env.push("EXTRA=value");
   assert.throws(() => parseMethodologyEgressContainerInspect(JSON.stringify(added), expected), /environment/);
   const duplicate = structuredClone(base); duplicate.Config.Env.push("EGRESS_ALLOWED_AUTHORITIES=api.openai.com:443");

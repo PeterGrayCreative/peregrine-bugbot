@@ -10,19 +10,21 @@ import { bindPredictionRegistration } from "./prediction-plan.js";
 import { bindPredictionMounts } from "./prediction-mounts.js";
 import { createStructuralPredictionCliDeadline, predictionFailureEvidence } from "./prediction-cli-deadline.js";
 import { attachPredictionReadTools, PREDICTION_MCP_LIMITS, type PredictionRuntimeAuthority } from "./prediction-runtime-attachment.js";
-import { ACCEPTED_METHODOLOGY_EGRESS_IMAGE, createMethodologyEgressSupervisor } from "./methodology-egress.js";
+import { ACCEPTED_METHODOLOGY_EGRESS_IMAGE, ZERO_PROVIDER_FORWARDER_CANDIDATE_IMAGE, createMethodologyEgressSupervisor, createZeroProviderCandidateEgressSupervisor } from "./methodology-egress.js";
 
 /** Fixed credential-free Node probe, never a configurable provider dispatcher.
  * The accepted image must already be local. Pull/authentication is an external
  * explicitly authorized preparation step, never an automatic fallback. */
-export async function runPredictionRuntimeProbe(directory: string, authority: PredictionRuntimeAuthority, mountsRoot: string, attemptId: string) {
+export async function runPredictionRuntimeProbe(directory: string, authority: PredictionRuntimeAuthority, mountsRoot: string, attemptId: string, candidate = false) {
+  if (typeof candidate !== "boolean") throw new Error("invalid zero-provider candidate selection");
+  const runtimeImage = candidate ? ZERO_PROVIDER_FORWARDER_CANDIDATE_IMAGE : ACCEPTED_METHODOLOGY_EGRESS_IMAGE;
   mkdirSync(directory, { mode: 0o700 });
   const write = (name: string, value: unknown) => writeFileSync(join(directory, name), canonicalJson(value) + "\n", { flag: "wx", mode: 0o600 });
-  write("start.json", { kind: "zero-provider-runtime-boundary-probe", attemptId, image: ACCEPTED_METHODOLOGY_EGRESS_IMAGE, providerCalls: 0 });
+  write("start.json", { kind: "zero-provider-runtime-boundary-probe", attemptId, image: runtimeImage, candidate, providerCalls: 0 });
   const docker = (args: string[]) => exec("docker", args, { inheritEnv: false, env: { PATH: process.env.PATH ?? "" }, timeoutMs: 15_000 });
   let attachment: Awaited<ReturnType<typeof attachPredictionReadTools>> | undefined;
-  let egress: Awaited<ReturnType<typeof createMethodologyEgressSupervisor>> | undefined;
-  let setup: ReturnType<typeof createMethodologyEgressSupervisor> | undefined, running: Promise<ExecResult> | undefined;
+  let egress: Awaited<ReturnType<typeof createZeroProviderCandidateEgressSupervisor>> | undefined;
+  let setup: ReturnType<typeof createZeroProviderCandidateEgressSupervisor> | undefined, running: Promise<ExecResult> | undefined;
   const containerName = `peregrine-prediction-probe-${randomUUID()}`, output = join(directory, "client-output");
   let clientStarted = false;
   const cleanupEvidence: { resource: string; result: ExecResult }[] = [];
@@ -51,7 +53,7 @@ export async function runPredictionRuntimeProbe(directory: string, authority: Pr
       if (failures.length) throw new AggregateError(failures, "zero-provider runtime cleanup failed");
     } }, 20_000);
   try {
-    const image = await docker(["image", "inspect", ACCEPTED_METHODOLOGY_EGRESS_IMAGE]); write("image-inspect.json", image);
+    const image = await docker(["image", "inspect", runtimeImage]); write("image-inspect.json", image);
     if (image.code !== 0 || image.timedOut) throw new Error("pinned image unavailable; no automatic pull");
     const registration = guard.read(() => bindPredictionRegistration(authority.registrationBytes, authority.registrationSha256));
     const mounts = guard.read(() => bindPredictionMounts(authority.manifestBytes, authority.manifestSha256, registration));
@@ -62,7 +64,7 @@ export async function runPredictionRuntimeProbe(directory: string, authority: Pr
     const endpoint = new URL(attachment.url);
     attachment.replaceAuthorizedHosts([`host.docker.internal:${endpoint.port}`]);
     const { maxSessions: _, ...limits } = PREDICTION_MCP_LIMITS;
-    setup = createMethodologyEgressSupervisor({ attemptId: "attempt-000001", armId: scheduled.arm, sourceHeadTree: mount.headTree,
+    setup = (candidate ? createZeroProviderCandidateEgressSupervisor : createMethodologyEgressSupervisor)({ attemptId: "attempt-000001", armId: scheduled.arm, sourceHeadTree: mount.headTree,
       providerAuthorities: ["zero-provider.invalid:443"], hostMcpPort: Number(endpoint.port), hostMcpToken: endpoint.pathname.slice("/mcp/".length),
       deadlineSignal: guard.signal, mcpLimits: { ...limits, maxHeaderBytes: 8192 }, stopTimeoutMs: 5000 });
     egress = await setup; guard.read(() => undefined);
@@ -74,7 +76,7 @@ export async function runPredictionRuntimeProbe(directory: string, authority: Pr
       "--pids-limit", "32", "--user", `${uid}:${gid}`, "--tmpfs", `/tmp:rw,noexec,nosuid,nodev,size=16m,uid=${uid},gid=${gid},mode=1777`,
       "--tmpfs", `/home/peregrine:rw,noexec,nosuid,nodev,size=16m,uid=${uid},gid=${gid},mode=0700`,
       "--mount", `type=bind,source=${clientPath},target=/probe/client.mjs,readonly`, "--mount", `type=bind,source=${output},target=/output`,
-      "--entrypoint", "node", ACCEPTED_METHODOLOGY_EGRESS_IMAGE, "/probe/client.mjs", egress.internalMcpUrl,
+      "--entrypoint", "node", runtimeImage, "/probe/client.mjs", egress.internalMcpUrl,
       mount.allowedFiles.find(entry => entry.mode === "120000")?.path ?? "unavailable-native-link"];
     write("client-launch.json", { args, credentialMounts: 0, providerCommands: 0, clientScriptSha256: sha(readFileSync(clientPath)) });
     clientStarted = true;
@@ -87,7 +89,7 @@ export async function runPredictionRuntimeProbe(directory: string, authority: Pr
     const terminal = await guard.finish();
     if (!existsSync(join(output, "ready.json")) || !execution.timedOut || !terminal.deadlineExceeded || !terminal.teardownCompleted) throw new Error("zero-provider reader/deadline/cleanup proof incomplete");
     const client = JSON.parse(readFileSync(join(output, "ready.json"), "utf8"));
-    const body = { kind: "prediction-runtime-boundary-probe-v1", image: ACCEPTED_METHODOLOGY_EGRESS_IMAGE, client, binding: attachment.binding,
+    const body = { kind: "prediction-runtime-boundary-probe-v1", image: runtimeImage, candidate, client, binding: attachment.binding,
       deadline: terminal, mcpAudit: attachment.sealAudit(), reader: attachment.readerSnapshot(), cleanupEvidence, sidecarAudit: egress.auditDiagnostics,
       providerCalls: 0, reviewAttemptsStarted: 0, executionReady: false, providerAuthorized: false,
       qualification: "Actual credential-free Node client and sidecar/container cleanup only; not a Codex agent, served model, or provider experiment." };

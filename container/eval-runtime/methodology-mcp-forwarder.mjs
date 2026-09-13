@@ -56,7 +56,7 @@ const DENIAL_CODES = new Set([
 export async function startMethodologyMcpForwarder(options) {
   const config = normalizeOptions(options);
   const pinnedGateway = config.fixtureRequest && !config.lookup ? null
-    : await resolveHostGatewayAddress(METHODOLOGY_MCP_FORWARDER_UPSTREAM_HOST, config.lookup);
+    : await resolveHostGatewayAddress(METHODOLOGY_MCP_FORWARDER_UPSTREAM_HOST, config.lookup, 4);
   const endpoint = `/mcp/${config.token}`;
   const upstreamHostHeader = `${METHODOLOGY_MCP_FORWARDER_UPSTREAM_HOST}:${config.upstreamPort}`;
   let allowedHost = config.allowedHost;
@@ -419,19 +419,25 @@ function isValidAuthority(value) {
 function formatAuthority(host, port) { return host.includes(":") ? `[${host}]:${port}` : `${host}:${port}`; }
 
 /** Resolve once and pin the Docker host-gateway address for the process lifetime. */
-export async function resolveHostGatewayAddress(host = METHODOLOGY_MCP_FORWARDER_UPSTREAM_HOST, lookup = dnsLookup) {
+export async function resolveHostGatewayAddress(host = METHODOLOGY_MCP_FORWARDER_UPSTREAM_HOST, lookup = dnsLookup, family = 0) {
+  // The supervisor creates IPv4-only networks. Docker Desktop can nevertheless
+  // put both families in its host-gateway alias. Ask the resolver for the needed
+  // family, then retain the one-address/non-loopback checks; never pick the
+  // first member of an ambiguous returned set. The generic helper keeps its
+  // existing all-family default for callers outside the supervisor startup.
+  if (![0, 4, 6].includes(family)) throw new TypeError("invalid gateway address family");
   let answers;
   try {
     const result = lookup.length >= 3
-      ? new Promise((resolve, reject) => lookup(host, { all: true, verbatim: true }, (error, value) => error ? reject(error) : resolve(value)))
-      : lookup(host, { all: true, verbatim: true });
+      ? new Promise((resolve, reject) => lookup(host, { all: true, verbatim: true, family }, (error, value) => error ? reject(error) : resolve(value)))
+      : lookup(host, { all: true, verbatim: true, family });
     answers = await Promise.resolve(result);
   } catch {
     throw new Error("host gateway could not be resolved");
   }
   if (!Array.isArray(answers)) throw new Error("host gateway lookup returned no addresses");
   const addresses = [...new Set(answers.map((answer) => typeof answer === "string" ? answer : answer?.address))];
-  if (addresses.length !== 1 || !isValidGatewayAddress(addresses[0])) throw new Error("host gateway must resolve to one valid address");
+  if (addresses.length !== 1 || !isValidGatewayAddress(addresses[0]) || family !== 0 && isIP(addresses[0]) !== family) throw new Error("host gateway must resolve to one valid address");
   return Object.freeze({ address: addresses[0], family: isIP(addresses[0]) });
 }
 

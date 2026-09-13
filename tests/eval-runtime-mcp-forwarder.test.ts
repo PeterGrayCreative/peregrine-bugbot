@@ -196,6 +196,27 @@ test("rejects every textual IPv6 unspecified and loopback gateway form", async (
   }
 });
 
+test("IPv4 supervisor startup selects one IPv4 gateway from a dual-stack alias without accepting ambiguous selected addresses", async () => {
+  const answers = [{ address: "fdc4:f303:9324::254", family: 6 }, { address: "192.168.65.254", family: 4 }];
+  const observed: unknown[] = [];
+  const lookup = async (_host: string, options: { family?: number }) => {
+    observed.push(options);
+    return options.family === 4 ? answers.filter(answer => answer.family === 4) : answers;
+  };
+  const service = await startMethodologyMcpForwarder({ ...baseOptions, fixtureMode: true, lookup });
+  try {
+    assert.deepEqual(observed, [{ all: true, verbatim: true, family: 4 }]);
+    assert.equal(service.readiness().ready, true);
+  } finally { await service.close(); }
+  assert.equal(parseMethodologyMcpForwarderAuditSnapshot(service.sealAudit()).sealed, true);
+  await assert.rejects(() => resolveHostGatewayAddress("ignored", async () => [answers[1], { address: "192.168.65.253", family: 4 }], 4), /one valid/);
+  await assert.rejects(() => resolveHostGatewayAddress("ignored", async () => [answers[0]], 4), /one valid/);
+  const callback = (_host: string, options: { family?: number }, done: (error: null, result: unknown) => void) => {
+    assert.equal(options.family, 4); done(null, [answers[1]]);
+  };
+  assert.deepEqual(await resolveHostGatewayAddress("ignored", callback, 4), { address: "192.168.65.254", family: 4 });
+});
+
 test("accepts compressed and expanded non-loopback IPv6 gateway addresses", async () => {
   assert.deepEqual(
     await resolveHostGatewayAddress("ignored", async () => [{ address: "172.18.0.1", family: 4 }]),
