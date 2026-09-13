@@ -315,6 +315,7 @@ export type ProviderExec = (
     env?: Record<string, string>;
     inheritEnv?: boolean;
     timeoutMs?: number;
+    deadlineSignal?: AbortSignal;
     stdin?: string;
   },
 ) => Promise<{

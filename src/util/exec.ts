@@ -18,10 +18,16 @@ export function exec(
     env?: Record<string, string>;
     inheritEnv?: boolean;
     timeoutMs?: number;
+    /** Optional outer whole-attempt deadline; cleanup must use a separate signal. */
+    deadlineSignal?: AbortSignal;
     stdin?: string;
   } = {},
 ): Promise<ExecResult> {
   return new Promise((res) => {
+    if (opts.deadlineSignal?.aborted) {
+      res({ stdout: "", stderr: "whole-attempt deadline elapsed before spawn", code: -1, timedOut: true });
+      return;
+    }
     const child = spawn(cmd, args, {
       cwd: opts.cwd,
       env: opts.inheritEnv === false ? opts.env : { ...process.env, ...opts.env },
@@ -35,14 +41,18 @@ export function exec(
       if (settled) return;
       settled = true;
       if (timer) clearTimeout(timer);
+      opts.deadlineSignal?.removeEventListener("abort", abortAtDeadline);
       res(result);
     };
+    const abortAtDeadline = () => { timedOut = true; child.kill("SIGKILL"); };
     const timer = opts.timeoutMs
       ? setTimeout(() => {
           timedOut = true;
           child.kill("SIGKILL");
         }, opts.timeoutMs)
       : undefined;
+    opts.deadlineSignal?.addEventListener("abort", abortAtDeadline, { once: true });
+    if (opts.deadlineSignal?.aborted) abortAtDeadline();
 
     child.stdout?.on("data", (d) => (stdout += d));
     child.stderr?.on("data", (d) => (stderr += d));

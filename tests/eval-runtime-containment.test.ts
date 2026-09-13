@@ -371,6 +371,21 @@ test("timed-out provider containers are force-removed and checked for survivors"
   assert.deepEqual(calls.map((args) => args.slice(0, 2)), [["run", "--name"], ["rm", "--force"], ["ps", "--all"]]);
 });
 
+test("outer attempt deadline reaches provider exec but cannot cancel containment cleanup", async () => {
+  const paths = roots(); process.env.OPENAI_API_KEY = "synthetic-only";
+  const deadline = new AbortController(), signals: (AbortSignal | undefined)[] = [];
+  const fake: typeof exec = async (_cmd, args, options = {}) => {
+    signals.push(options.deadlineSignal);
+    if (args[0] === "run") { deadline.abort(); return { stdout: "retained partial", stderr: "", code: null, timedOut: true }; }
+    return { stdout: "", stderr: "", code: 0, timedOut: false };
+  };
+  const run = createContainedProviderExec({ runner: "codex", providerAccess: "api-key", image, ...paths, run: fake });
+  const result = await run("codex", codexCommand(paths), { inheritEnv: false, deadlineSignal: deadline.signal });
+  assert.equal(result.stdout, "retained partial"); assert.equal(result.timedOut, true);
+  assert.deepEqual(signals, [deadline.signal, undefined, undefined]);
+  assert.equal(result.cleanupErrors, undefined);
+});
+
 test("provider and version probes preserve primary failures while proving cleanup", async () => {
   const paths = roots(); process.env.OPENAI_API_KEY = "x";
   const fake = async (_cmd: string, args: string[]) => {
