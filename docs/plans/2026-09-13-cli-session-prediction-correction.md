@@ -77,3 +77,18 @@ accepted runtime availability, exact four-tool MCP attachment, authenticated
 container/network cleanup and separate explicit dispatch authorization remain
 required. `providerAuthorized` and `executionReady` stay false. Prior freezes,
 rejections and the original Section 3 failure remain preserved.
+
+## Deadline implementation successor
+
+Independent review rejected public `b2ef213` / private `c464030`: `finish()`
+could race a new invocation or another `finish()`, and failed `exec-start`
+persistence could still invoke the runner. All three exact regressions failed
+against that preserved version. The successor closes admission synchronously,
+shares one terminal promise across concurrent/repeated finishes, and cancels
+with zero runner invocations if the start record cannot be persisted. Cancellation
+and cleanup records survive; the conflicting file is not overwritten.
+
+Node 22 typecheck, all 34 prediction tests and the same 61 affected tests pass.
+Private `cli-session-correction-v2/` preserves the rejected baseline test output
+and adds versioned closure/collision probes and a successor source-bound freeze.
+The scientific registration, batch thresholds and readiness boundary are unchanged.

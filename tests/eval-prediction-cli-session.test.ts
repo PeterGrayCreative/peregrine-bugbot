@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, readFileSync, rmSync, existsSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync, rmSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { exec } from "../src/util/exec.js";
@@ -79,4 +79,47 @@ test("default timer stays 20 minutes, one attempt cannot invoke twice, and clean
   await guard.run(exec, process.execPath, ["--version"], { inheritEnv: false, env: {} });
   assert.throws(() => guard.run(exec, process.execPath, ["--version"]), /cannot retry or delegate/);
   const closed = await guard.finish(); assert.equal(closed.wallMs, 1200000); assert.equal(closed.teardownCompleted, false); assert.match(closed.cleanupError!, /not proved/);
+});
+
+test("finish closes reads and rejects a new run synchronously while teardown is pending", async t => {
+  const root = mkdtempSync(join(tmpdir(), "prediction-cli-close-race-")); t.after(() => rmSync(root, { recursive: true, force: true }));
+  let release!: () => void, invoked = 0, readsClosed = false;
+  const pending = new Promise<void>(resolve => { release = resolve; });
+  const guard = createPredictionCliDeadline({ directory: join(root, "evidence"), attemptId: "finish-run-race",
+    closeReads: () => { readsClosed = true; }, teardown: () => pending });
+  const finishing = guard.finish();
+  try {
+    assert.equal(readsClosed, true);
+    assert.throws(() => guard.run(async () => { invoked++; return { stdout: "", stderr: "", code: 0, timedOut: false }; }, "must-not-run", []), /closed|closing/);
+    assert.throws(() => guard.read(() => "late source"), /closed|closing/);
+    await Promise.resolve(); assert.equal(invoked, 0);
+  } finally { release(); await finishing; }
+});
+
+test("concurrent and repeated finish calls share one terminal promise and one teardown", async t => {
+  const root = mkdtempSync(join(tmpdir(), "prediction-cli-finish-once-")); t.after(() => rmSync(root, { recursive: true, force: true }));
+  let release!: () => void, cleanups = 0, closes = 0;
+  const pending = new Promise<void>(resolve => { release = resolve; });
+  const directory = join(root, "evidence");
+  const guard = createPredictionCliDeadline({ directory, attemptId: "concurrent-finish", closeReads: () => { closes++; }, teardown: async () => { cleanups++; await pending; } });
+  const first = guard.finish(), second = guard.finish();
+  try { assert.strictEqual(first, second); } finally { release(); await Promise.allSettled([first, second]); }
+  assert.strictEqual(await first, await second); assert.strictEqual(guard.finish(), first);
+  assert.equal(cleanups, 1); assert.equal(closes, 1);
+  assert.equal(readdirSync(directory).filter(path => path === "terminal.json").length, 1);
+});
+
+test("exec-start record collision cancels and tears down with zero runner invocations", async t => {
+  const root = mkdtempSync(join(tmpdir(), "prediction-cli-start-collision-")); t.after(() => rmSync(root, { recursive: true, force: true }));
+  const directory = join(root, "evidence"); let invoked = 0, cleanups = 0, readsClosed = false;
+  const guard = createPredictionCliDeadline({ directory, attemptId: "start-collision", closeReads: () => { readsClosed = true; }, teardown: async () => { cleanups++; } });
+  writeFileSync(join(directory, "000001.json"), "preserved conflicting start record\n", { flag: "wx" });
+  try {
+    assert.throws(() => guard.run(async () => { invoked++; return { stdout: "must never exist", stderr: "", code: 0, timedOut: false }; }, "must-not-run", []), /evidence/);
+  } finally { await guard.finish(); }
+  assert.equal(invoked, 0); assert.equal(cleanups, 1); assert.equal(readsClosed, true); assert.equal(guard.signal.aborted, true);
+  const terminal = JSON.parse(readFileSync(join(directory, "terminal.json"), "utf8"));
+  assert.match(terminal.evidenceError, /EEXIST/); assert.equal(terminal.deadlineExceeded, false);
+  assert.equal(terminal.teardownCompleted, true); assert.ok(terminal.events.some((event: { kind: string }) => event.kind === "evidence-cancellation"));
+  assert.equal(readFileSync(join(directory, "000001.json"), "utf8"), "preserved conflicting start record\n");
 });

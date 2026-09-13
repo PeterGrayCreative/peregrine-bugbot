@@ -27,9 +27,9 @@ function deadline(options: Options, wallMs: number, executionClass: string) {
     events.push(value);
   };
   const controller = new AbortController();
-  let used = false, sealed = false, cleanup: Promise<void> | undefined, active: Promise<Awaited<ReturnType<ProviderExec>>> | undefined;
+  let used = false, closing = false, sealed = false, readsClosed = false, cleanup: Promise<void> | undefined, active: Promise<Awaited<ReturnType<ProviderExec>>> | undefined;
   let cleanupError: string | null = null, readCloseError: string | null = null;
-  const closeReads = () => { try { options.closeReads(); } catch (error) { readCloseError = String(error); } };
+  const closeReads = () => { if (readsClosed) return; readsClosed = true; try { options.closeReads(); } catch (error) { readCloseError = String(error); } };
   const teardown = () => cleanup ??= (async () => {
     if (active) await active.catch(() => undefined);
     try { await options.teardown(); event("teardown-complete", null); }
@@ -43,7 +43,19 @@ function deadline(options: Options, wallMs: number, executionClass: string) {
   const timer = setTimeout(expire, Math.max(0, wallMs - (performance.now() - start)));
   timer.unref();
   event("start", { attemptId: options.attemptId, wallMs, executionClass, providerAuthorization: "not-issued-by-this-primitive" });
-  const check = () => { if (performance.now() - start >= wallMs) expire(); if (sealed || controller.signal.aborted || evidenceError) throw new Error("attempt closed at whole-attempt deadline or evidence failure"); };
+  const check = () => { if (performance.now() - start >= wallMs) expire(); if (closing || sealed || controller.signal.aborted || evidenceError) throw new Error("attempt closed at whole-attempt deadline or evidence failure"); };
+  async function finalize() {
+    if (active) await active.catch(() => undefined);
+    await teardown();
+    if (performance.now() - start >= wallMs && !controller.signal.aborted) expire();
+    clearTimeout(timer); sealed = true;
+    const body = { kind: "prediction-cli-deadline-terminal-v1", attemptId: options.attemptId, executionClass, wallMs,
+      deadlineExceeded: controller.signal.reason === "whole-attempt-deadline", cancellationReason: controller.signal.aborted ? String(controller.signal.reason) : null,
+      elapsedMs: performance.now() - start, cleanupError, readCloseError, evidenceError,
+      teardownCompleted: cleanupError === null && readCloseError === null, events, providerContainmentProven: false, providerAuthorized: false };
+    const result = freeze({ ...body, sha256: digest(body) }); write("terminal.json", result); return result;
+  }
+  let finishing: ReturnType<typeof finalize> | undefined;
   return {
     signal: controller.signal,
     read<T>(operation: () => T): T { check(); const result = operation(); check(); return result; },
@@ -51,20 +63,22 @@ function deadline(options: Options, wallMs: number, executionClass: string) {
       check(); if (used) throw new Error("single-session attempt cannot retry or delegate"); used = true;
       const remaining = Math.max(1, Math.floor(wallMs - (performance.now() - start)));
       event("exec-start", { command, remainingMs: remaining });
+      if (evidenceError) {
+        closing = true; controller.abort("evidence-persistence-failed"); closeReads();
+        event("evidence-cancellation", { error: evidenceError }); void teardown();
+        throw new Error("execution blocked: exec-start evidence persistence failed");
+      }
       active = Promise.resolve().then(() => run(command, args, { ...opts, timeoutMs: Math.min(opts.timeoutMs ?? remaining, remaining), deadlineSignal: controller.signal }))
         .then(result => { event("exec-closed", { code: result.code, timedOut: result.timedOut, cleanupErrors: result.cleanupErrors ?? [] }); if (result.cleanupErrors?.length) cleanupError = result.cleanupErrors.join("; "); return result; });
       return active;
     },
-    async finish() {
-      if (sealed) throw new Error("attempt evidence already sealed");
-      if (active) await active.catch(() => undefined);
-      closeReads(); await teardown();
-      if (performance.now() - start >= wallMs && !controller.signal.aborted) expire();
-      clearTimeout(timer); sealed = true;
-      const body = { kind: "prediction-cli-deadline-terminal-v1", attemptId: options.attemptId, executionClass, wallMs,
-        deadlineExceeded: controller.signal.aborted, elapsedMs: performance.now() - start, cleanupError, readCloseError, evidenceError,
-        teardownCompleted: cleanupError === null && readCloseError === null, events, providerContainmentProven: false, providerAuthorized: false };
-      const result = freeze({ ...body, sha256: digest(body) }); write("terminal.json", result); return result;
+    finish() {
+      if (!finishing) {
+        // Seal admission before any callback/await; install the shared promise
+        // before closeReads so even reentrant finish calls observe it.
+        closing = true; finishing = Promise.resolve().then(finalize); closeReads();
+      }
+      return finishing;
     },
   };
 }
