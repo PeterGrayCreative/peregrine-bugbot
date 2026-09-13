@@ -618,3 +618,18 @@ Post-commit validation passed with 22/22 semantic tests under Node 22. This is
 repair readiness only: no case was admitted, partitioned, run through a
 provider, or used for an efficacy claim. See the
 [Section 2 Astra medium gate](../validation/2026-09-12-section-2-astra-medium-gate.md).
+
+Section 3's all-at-once human audit package is prepared and stored in the
+private evidence repository at commit `86ee7d9`. It presents all 36 proposals
+and 11 retained losses as a full-human census, keeps curator, verifier,
+resolution, AI-assessment, and audit-conclusion fields blank, and discloses
+that two passes by the same person are not independent confirmation. The first
+Astra medium preparation gate rejected premature corpus readiness, incomplete
+alpha-010 evidence permissions, and missing AI-versus-human disagreement
+records. After correction, the independent gate approved the package for human
+review. Node 22 build/check and 33/33 adversarial tests passed; the completion
+command correctly fails while the 36 decisions remain blank. This is
+preparation readiness only. Section 3, corpus readiness, admission, and
+protected selection remain incomplete until the actual human review and its
+later semantic gate. See the
+[Section 3 preparation gate](../validation/2026-09-12-section-3-astra-medium-preparation-gate.md).

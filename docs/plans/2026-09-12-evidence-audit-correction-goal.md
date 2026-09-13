@@ -1,7 +1,7 @@
 # Evidence-audit correction goal
 
 Date: 2026-09-12
-Status: active replacement goal; Sections 1–2 complete, Section 3 next
+Status: active replacement goal; Sections 1–2 complete, Section 3 human review prepared
 
 ## Goal
 
