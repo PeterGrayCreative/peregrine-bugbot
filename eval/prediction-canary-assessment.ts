@@ -126,6 +126,8 @@ function assessCanaryEvidence(input: PredictionCanaryAssessmentInput, lowInput?:
     same([invocation.attachment.inputDigest, invocation.attachment.attemptId, invocation.attachment.registrationSha256, invocation.attachment.mountManifestSha256, invocation.attachment.toolDefinitionsSha256],
       [first.mountSha256, first.id, p.authoritySha256.registration, p.authoritySha256.mounts, digest(p.toolBinding.definitions)], "reader attachment mismatch");
     const egress = invocation.egress; seal(egress, "attestationSha256");
+    if (operator) same([egress.schemaVersion, egress.protocol, egress.attemptId, egress.armId, egress.sourceHeadTree],
+      [1, "methodology-egress-supervisor-v1", "attempt-000001", first.arm, mount.headTree], "low sidecar source/attempt binding drift");
     same([egress.executionClass, egress.image, egress.providerAuthorities, egress.topology], ["provider", runtime.acceptance.image, bridge.bridgePolicy.providerAuthorities, "gateway-and-forwarder-only-before-provider"], "egress scope mismatch");
     same(get("observer/runtime.json"), { image: runtime.acceptance.image, tools: runtime.tools, sourceSha256: selectedSource.sourceSha256, configurationSupported: true, modelSessionId: observer.modelSessionId }, "client/runtime/tool bytes or support unknown");
     same(get("observer/batch-before.json"), p.batch, "review ledger changed before canary"); same(get("observer/batch-after.json"), p.batch, "canary mutated review ledger");
@@ -206,7 +208,7 @@ function validateLowOperatorRecords(operator: ReturnType<typeof bindSolLowOperat
   for (const path of [...CANARY_EVIDENCE_PATHS.filter(p => !p.startsWith("observer/")), "canary-ledger-start.json", "canary-ledger-terminal.json"]) {
     same(retained.inventory.find((v: any) => v.path === path), { path, bytes: Buffer.byteLength(raw(path)), sha256: sha(raw(path)) }, "retained mechanical artifact mismatch");
   }
-  validateMechanicalReceipts(input.artifacts, retained, scope, get);
+  validateMechanicalReceipts(input.artifacts, retained, scope, get, { directory: operator.execution.directory, session: preflight.session });
 }
 
 function validateItemLifecycles(events: any[]) {
@@ -303,7 +305,7 @@ function validateCanaryReads(cleanup: any, modelCalls: any[], evidence: any, mou
   }
 }
 function freezeAssessment(recommendation: string, input: PredictionCanaryAssessmentInput, binding: unknown, checks: string[], limitations: string[], failure: unknown, tokens: unknown, identity: unknown, low = false) {
-  const body = { kind: low ? "prediction-sol-low-canary-assessment-v2" : "prediction-canary-assessment-v4", recommendation, inputSha256: digest(input), binding, checks, limitations, failure, tokens, identity,
+  const body = { kind: low ? "prediction-sol-low-canary-assessment-v3" : "prediction-canary-assessment-v4", recommendation, inputSha256: digest(input), binding, checks, limitations, failure, tokens, identity,
     providerAuthorized: false, executionReady: false, batchAuthorized: false, providerCalls: 0,
     boundary: "Deterministic validation of externally authenticated evidence, not independent observation, dispatch authority, efficacy evidence or an R5 pass." };
   return freeze({ ...body, sha256: digest(body) });

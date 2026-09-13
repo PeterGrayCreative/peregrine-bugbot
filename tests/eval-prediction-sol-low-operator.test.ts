@@ -101,7 +101,8 @@ test("supported operator dispatch runs one synthetic low client, retains mechani
   }
   // Uses emitted bytes from the actual producer. These local synthesized
   // observer fields test compatibility only, never external provenance.
-  assert.doesNotThrow(() => validateMechanicalReceipts(artifacts, retained, records["canary/start.json"].scope, path => records[path]));
+  assert.doesNotThrow(() => validateMechanicalReceipts(artifacts, retained, records["canary/start.json"].scope, path => records[path],
+    { directory: f.contract.execution.directory, session: JSON.parse(readFileSync(join(f.request.reportDirectory, "preflight.json"), "utf8")).session }));
   assert.equal(JSON.parse(readFileSync(join(f.request.reportDirectory, "terminal.json"), "utf8")).snapshot.batch.unstartedAttemptIds.length, 64);
   await assert.rejects(runStructuralSolLowOperator({ ...f.request, reportDirectory: join(f.root, "restart-report") }, executor), /ledger already exists/); assert.equal(calls, 1);
   assert.ok(docker.calls.filter(c => ["rm", "stop", "ps"].includes(c.args[0]!) || c.args[0] === "network" && ["rm", "ls"].includes(c.args[1]!)).every(c => c.signal === undefined));
@@ -160,7 +161,7 @@ test("opt-in PID capture uses the existing child executor and does not alter its
 test("low assessor independently validates the explicit low route without high/batch promotion", async t => {
   const f = await solLowAssessmentFixture(t), result = assessPredictionSolLowCanary(f.input);
   assert.equal(result.recommendation, "infrastructure-canary-observed-no-batch-eligibility", JSON.stringify(result.failure));
-  assert.equal(result.kind, "prediction-sol-low-canary-assessment-v2"); assert.equal(result.batchAuthorized, false); assert.equal(result.executionReady, false);
+  assert.equal(result.kind, "prediction-sol-low-canary-assessment-v3"); assert.equal(result.batchAuthorized, false); assert.equal(result.executionReady, false);
   assert.equal(assessPredictionCanary(f.input).recommendation, "not-eligible"); assert.throws(() => requirePredictionBatchAuthorization(result));
   assert.equal(assessPredictionSolLowCanary({ ...f.input, observer: null }).recommendation, "not-eligible");
 });
@@ -206,7 +207,7 @@ test("low assessor rejects resealed missing, substituted, truncated, duplicate a
     ["cancelled cleanup", () => { f.files["canary/mechanical-client/000002-start.json"].deadlineAttached = true; }],
     ["resource remains", () => { const r = f.files["canary/mechanical-client/000003-terminal.json"].result; r.stdout = { bytes: "remaining", complete: true, sha256: sha("remaining") }; }],
     ["late sidecar", () => { f.files["canary/mechanical-sidecars/000004-terminal.json"].closedAt = 1000; }],
-    ["audit substitution", () => { const r = f.files["canary/mechanical-sidecars/000006-terminal.json"].result; const bytes = JSON.stringify({ status: "sealed", audit: {} }); r.stdout = { bytes, complete: true, sha256: sha(bytes) }; }],
+    ["audit substitution", () => { const r = f.files["canary/mechanical-sidecars/000013-terminal.json"].result; const bytes = JSON.stringify({ status: "sealed", audit: {} }); r.stdout = { bytes, complete: true, sha256: sha(bytes) }; }],
   ];
   for (const [name, mutate] of mutations) {
     for (const key of Object.keys(f.files)) delete f.files[key]; Object.assign(f.files, structuredClone(original));
@@ -225,6 +226,68 @@ test("receipt raw size/digest authentication cannot be bypassed by resealing obs
     observer.inventory = input.artifacts.map(a => ({ path: a.path, bytes: Buffer.byteLength(a.bytes), sha256: sha(a.bytes) })).sort((a, b) => a.path.localeCompare(b.path));
     observer.review.inventorySha256 = digest(observer.inventory); input.observer = trusted(observer);
     assert.equal(assessPredictionSolLowCanary(input).recommendation, "not-eligible");
+  }
+});
+
+for (const [name, channel, change] of [
+  ["client privileged", "client", (a: string[]) => a.splice(1, 0, "--privileged")],
+  ["client host root mount", "client", (a: string[]) => a.splice(1, 0, "--mount", "type=bind,source=/,target=/host")],
+  ["client additional network", "client", (a: string[]) => a.splice(a.indexOf("--network") + 2, 0, "--network", "host")],
+  ["sidecar arbitrary entrypoint", "sidecars", (a: string[]) => { a[a.indexOf("--entrypoint") + 1] = "/malicious/entrypoint"; }],
+  ["sidecar host root mount", "sidecars", (a: string[]) => a.splice(1, 0, "--mount", "type=bind,source=/,target=/host")],
+] as const) test(`gate v3 reproduction: ${name}`, async t => {
+  const f = await solLowAssessmentFixture(t);
+  const receipt = Object.entries(f.files).find(([path, value]) => path.startsWith(`canary/mechanical-${channel}/`) && path.endsWith("-start.json") && value.args[0] === "run")![1];
+  change(receipt.args); assert.equal(assessPredictionSolLowCanary(f.repin()).recommendation, "not-eligible");
+});
+
+test("complete Docker argv rejects nearby insertions, substitutions, duplicates and ordering tricks", async t => {
+  const f = await solLowAssessmentFixture(t), original = structuredClone(f.files);
+  assert.equal(assessPredictionSolLowCanary(f.repin()).recommendation, "infrastructure-canary-observed-no-batch-eligibility");
+  const insert = (...extra: string[]) => (a: string[]) => a.splice(1, 0, ...extra);
+  const replace = (flag: string, value: string) => (a: string[]) => { a[a.indexOf(flag) + 1] = value; };
+  const mutations: [string, string, (a: string[]) => void][] = [
+    ["privilege equals form", "client", insert("--privileged=true")], ["short volume", "client", insert("-v", "/:/host")],
+    ["volume equals form", "client", insert("--volume=/:/host")], ["extra network equals", "client", insert("--network=host")],
+    ["extra entrypoint", "client", insert("--entrypoint", "/bin/sh")], ["capability addition", "client", insert("--cap-add", "SYS_ADMIN")],
+    ["security option addition", "client", insert("--security-opt", "seccomp=unconfined")], ["environment addition", "client", insert("--env", "OPENAI_API_KEY=synthetic")],
+    ["environment file", "client", insert("--env-file", "/host/env")], ["duplicate name", "client", insert("--name", "other-container")],
+    ["root UID", "client", replace("--user", "0:0")], ["working directory", "client", replace("--workdir", "/")],
+    ["altered proxy", "client", replace("--env", "HTTPS_PROXY=http://evil:8081")],
+    ["writable source", "client", a => { const i = a.findIndex(v => v.includes("target=/workspace,")); a[i] = a[i]!.replace(",readonly", ""); }],
+    ["substituted source", "client", a => { const i = a.findIndex(v => v.includes("target=/workspace,")); a[i] = "type=bind,source=/,target=/workspace,readonly"; }],
+    ["substituted session", "client", a => { const i = a.findIndex(v => v.includes("target=/home/peregrine/.codex/auth.json")); a[i] = "type=bind,source=/other/auth.json,target=/home/peregrine/.codex/auth.json,readonly"; }],
+    ["executable tmpfs", "client", a => { const i = a.indexOf("--tmpfs") + 1; a[i] = a[i]!.replace("noexec", "exec"); }],
+    ["removed read-only", "client", a => { a.splice(a.indexOf("--read-only"), 1); }],
+    ["mount option order", "client", a => { const i = a.indexOf("--mount") + 1; a[i] = a[i]!.split(",").reverse().join(","); }],
+    ["sidecar short mount", "gateway", insert("-v", "/:/host")], ["sidecar volume equals", "gateway", insert("--volume=/:/host")],
+    ["sidecar second network", "gateway", insert("--network", "host")], ["sidecar replacement network", "gateway", replace("--network", "host")],
+    ["sidecar port publish", "gateway", insert("--publish", "8081:8081")], ["sidecar host gateway", "gateway", insert("--add-host", "host.docker.internal:host-gateway")],
+    ["sidecar capability", "gateway", insert("--cap-add", "NET_ADMIN")], ["sidecar security", "gateway", replace("--security-opt", "seccomp=unconfined")],
+    ["sidecar duplicate environment", "gateway", insert("--env", "EGRESS_BIND_PORT=8081")],
+    ["sidecar expanded authority", "gateway", a => { const i = a.findIndex(v => v.startsWith("EGRESS_ALLOWED_AUTHORITIES=")); a[i] += ",evil.example:443"; }],
+    ["sidecar extra command", "gateway", a => { a.push("/bin/sh"); }],
+    ["forwarder token", "forwarder", a => { const i = a.findIndex(v => v.startsWith("MCP_FORWARDER_TOKEN=")); a[i] = "MCP_FORWARDER_TOKEN=" + "b".repeat(64); }],
+    ["forwarder limit", "forwarder", a => { const i = a.findIndex(v => v.startsWith("MCP_FORWARDER_MAX_REQUESTS=")); a[i] = "MCP_FORWARDER_MAX_REQUESTS=99999"; }],
+    ["external driver", "network", replace("--driver", "host")], ["network extra option", "network", insert("--attachable")],
+  ];
+  for (const [name, target, mutate] of mutations) {
+    Object.assign(f.files, structuredClone(original));
+    const row = Object.entries(f.files).find(([path, value]) => path.endsWith("-start.json") &&
+      (target === "client" ? path.startsWith("canary/mechanical-client/") && value.args[0] === "run" :
+        path.startsWith("canary/mechanical-sidecars/") && (target === "network" ? value.args[0] === "network" && value.args[1] === "create" : value.args[0] === "run" && value.args[value.args.indexOf("--name") + 1].includes(target))))![1];
+    mutate(row.args); assert.equal(assessPredictionSolLowCanary(f.repin()).recommendation, "not-eligible", name);
+  }
+  for (const [name, change] of [
+    ["privileged inspect", (v: any) => { v[0].HostConfig.Privileged = true; }],
+    ["capability inspect", (v: any) => { v[0].HostConfig.CapAdd = ["SYS_ADMIN"]; }],
+    ["host mount inspect", (v: any) => { v[0].Mounts.push({ Type: "bind", Source: "/", Destination: "/host" }); }],
+    ["extra topology inspect", (v: any) => { v[0].NetworkSettings.Networks.host = {}; }],
+  ] as const) {
+    Object.assign(f.files, structuredClone(original));
+    const result = f.files["canary/mechanical-sidecars/000009-terminal.json"].result, inspected = JSON.parse(result.stdout.bytes); change(inspected);
+    const bytes = JSON.stringify(inspected); result.stdout = { bytes, complete: true, sha256: sha(bytes) };
+    assert.equal(assessPredictionSolLowCanary(f.repin()).recommendation, "not-eligible", name);
   }
 });
 

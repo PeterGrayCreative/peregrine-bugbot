@@ -8,6 +8,11 @@ import { predictionCanaryAssessmentFixture, sealFixture } from "./eval-predictio
 import { preparePredictionSolLowCanary, SOL_LOW_CANARY_USER_AUTHORIZATION } from "../eval/prediction-sol-low-canary.js";
 import { predictionSolLowCanaryCommand } from "../eval/prediction-sol-low-command.js";
 import type { PredictionSolLowAssessmentInput } from "../eval/prediction-canary-assessment.js";
+import { renderContainedProviderArgs } from "../eval/runtime-containment.js";
+import { renderMethodologySidecarArgs, methodologyGatewayEnvironment, methodologyForwarderEnvironment, GATEWAY_ENTRYPOINT, FORWARDER_ENTRYPOINT } from "../eval/methodology-egress.js";
+import { PREDICTION_MCP_LIMITS } from "../eval/prediction-runtime-attachment.js";
+import { canonicalJsonSha256 } from "../eval/experiment.js";
+import { predictionDockerFixture } from "./eval-prediction-cli-bridge-fixture.js";
 
 function operator(options: any, prior: any) {
   options = { ...options, directory: join(realpathSync(dirname(options.directory)), basename(options.directory)) };
@@ -57,7 +62,20 @@ export async function solLowAssessmentFixture(t: TestContext) {
   // from repin so resealing an attack cannot silently repair its receipt.
   const captured = (bytes: string) => ({ bytes, complete: true, sha256: sha(bytes) });
   const egress = f.files["canary/invocation.json"].egress, image = f.files["canary/invocation.json"].providerImage;
-  const clientName = f.files["observer/lifecycle.json"].clientContainer;
+  const suffix = "12345678-1234-1234-1234-123456789abc";
+  egress.network = `peregrine-egress-${suffix}`; egress.externalNetwork = `peregrine-egress-x-${suffix}`;
+  egress.gateway.name = `peregrine-egress-gateway-000001-${suffix}`; egress.forwarder.name = `peregrine-egress-forwarder-000001-${suffix}`;
+  f.files["observer/absence.json"].resources.slice(2).forEach((r: any, i: number) => { r.id = [egress.gateway.name, egress.forwarder.name, egress.network, egress.externalNetwork][i]; });
+  Object.assign(egress, { schemaVersion: 1, protocol: "methodology-egress-supervisor-v1", attemptId: "attempt-000001", armId: f.pack.preauthorization.attempts[0].arm,
+    sourceHeadTree: f.pack.preauthorization.dryRun.preparation.sourceBindings.find((m: any) => m.caseId === f.pack.preauthorization.attempts[0].caseId).headTree,
+    providerAuthoritiesSha256: canonicalJsonSha256(egress.providerAuthorities) });
+  const clientName = "peregrine-eval-12345678-1234-1234-1234-123456789abc";
+  f.files["observer/lifecycle.json"].clientContainer = clientName; f.files["observer/absence.json"].clientContainer = clientName;
+  f.files["observer/absence.json"].resources[1].id = clientName;
+  const session = { providerAccess: "cli-session", directory: join(f.root, "synthetic-session"), identity: { uid: 501, gid: 20 }, credentialContentsRead: false };
+  const { maxSessions: _, ...transport } = PREDICTION_MCP_LIMITS, limits = { ...transport, maxHeaderBytes: 8192 };
+  Object.assign(egress, { networkSubnet: "10.254.1.0/28", externalNetworkSubnet: "10.254.2.0/28", hostMcpPort: 31337, mcpLimitsSha256: canonicalJsonSha256(limits) });
+  Object.assign(egress.gateway, { alias: "egress-gateway", entrypoint: GATEWAY_ENTRYPOINT }); Object.assign(egress.forwarder, { alias: "mcp-forwarder", entrypoint: FORWARDER_ENTRYPOINT }); sealFixture(egress, "attestationSha256");
   f.files["canary/execution.json"].processId = 12345;
   const ordinals = { client: 0, sidecars: 0 };
   const receipt = (channel: "client" | "sidecars", args: string[], startedAt: number, cleanup = false, stdout = "", client = false) => {
@@ -68,12 +86,23 @@ export async function solLowAssessmentFixture(t: TestContext) {
     const result = client ? f.files["canary/execution.json"] : { code: 0, timedOut: false, processId: 20000 + sequence, stdout, stderr: "" };
     f.files[prefix + "-terminal.json"] = { kind: "prediction-mechanical-terminal-v1", binding, sequence, result: { ...result, stdout: captured(result.stdout), stderr: captured(result.stderr) }, closedAt: startedAt + 1, evidenceError: null };
   };
-  receipt("client", ["run", "--name", clientName, "--network", egress.network, image, "codex", ...f.files["canary/invocation.json"].args], 100, false, "", true);
+  receipt("client", renderContainedProviderArgs({ runner: "codex", profile: "prediction-sol-low-canary", image, containerName: clientName, identity: session.identity,
+    checkoutDir: join(op.contract.execution.directory, "canary/workspace"), assetsDir: join(op.contract.execution.directory, "canary/assets"), outputDir: join(op.contract.execution.directory, "canary/output"),
+    access: ["--mount", `type=bind,source=${session.directory}/auth.json,target=/home/peregrine/.codex/auth.json,readonly`], command: "codex", commandArgs: f.files["canary/invocation.json"].args,
+    methodologyEgress: { network: egress.network, proxyUrl: "http://egress-gateway:8081" } }), 100, false, "", true);
   receipt("client", ["rm", "--force", clientName], 105, true);
   receipt("client", ["ps", "--all", "--quiet", "--filter", `name=^/${clientName}$`], 110, true);
   let at = 10;
-  for (const name of [egress.externalNetwork, egress.network]) receipt("sidecars", ["network", "create", name], at += 2);
-  for (const role of ["gateway", "forwarder"]) receipt("sidecars", ["run", "--name", egress[role].name, "--entrypoint", `/synthetic/${role}`, image], at += 2);
+  const docker = predictionDockerFixture(async () => { throw new Error("fixture setup never invokes client"); });
+  const setupReceipt = async (args: string[]) => { const result = await docker.run("docker", args); receipt("sidecars", args, at += 2, false, result.stdout); };
+  await setupReceipt(["network", "create", "--ipv6=false", "--driver", "bridge", "--subnet", egress.externalNetworkSubnet, egress.externalNetwork]);
+  await setupReceipt(["network", "create", "--internal", "--ipv6=false", "--driver", "bridge", "--subnet", egress.networkSubnet, egress.network]);
+  await setupReceipt(renderMethodologySidecarArgs(egress.gateway.name, egress.externalNetwork, image, GATEWAY_ENTRYPOINT, methodologyGatewayEnvironment(egress.providerAuthorities)));
+  await setupReceipt(renderMethodologySidecarArgs(egress.forwarder.name, egress.externalNetwork, image, FORWARDER_ENTRYPOINT, methodologyForwarderEnvironment("a".repeat(64), egress.hostMcpPort, limits), "host.docker.internal:host-gateway"));
+  for (const role of ["gateway", "forwarder"]) await setupReceipt(["logs", "--tail", "64", egress[role].name]);
+  for (const role of ["gateway", "forwarder"]) await setupReceipt(["network", "connect", "--alias", egress[role].alias, egress.network, egress[role].name]);
+  await setupReceipt(["inspect", egress.gateway.name, egress.forwarder.name]);
+  for (const name of [egress.network, egress.externalNetwork]) await setupReceipt(["network", "inspect", name]);
   at = 220;
   for (const role of ["gateway", "forwarder"]) {
     const name = egress[role].name;
@@ -90,7 +119,7 @@ export async function solLowAssessmentFixture(t: TestContext) {
     f.files["canary/mechanical-client/000001-terminal.json"].result = { ...result, stdout: captured(result.stdout), stderr: captured(result.stderr) }; };
   const repin = () => {
     const terminal = f.files["canary/terminal.json"];
-    f.files["operator/preflight.json"] = { contractSha256: digest(op.contract), sourceSha256: op.contract.source.sourceSha256, predecessorGateSha256: op.contract.predecessor.gateSha256, freshGateSha256: op.gate.expectedSha256, executionDirectoryAbsent: true, providerCalls: 0, executionStateCreated: false, batch };
+    f.files["operator/preflight.json"] = { contractSha256: digest(op.contract), sourceSha256: op.contract.source.sourceSha256, predecessorGateSha256: op.contract.predecessor.gateSha256, freshGateSha256: op.gate.expectedSha256, executionDirectoryAbsent: true, providerCalls: 0, executionStateCreated: false, batch, session };
     f.files["operator/dispatch.json"] = { scope, freezeSha256: op.frozen.expectedSha256, freshGateSha256: op.gate.expectedSha256, before: { batch } };
     f.files["operator/terminal.json"] = { status: "awaiting-independent-observations", terminalSha256: digest(terminal), providerCalls: 1, executionReady: false, batchAuthorized: false, snapshot: { batch } };
     f.files["canary-ledger-start.json"] = { bindings, ...amendment.separateLedger, batchAuthorized: false };

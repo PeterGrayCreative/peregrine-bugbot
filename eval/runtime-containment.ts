@@ -113,9 +113,23 @@ export function buildContainedProviderArgs(
   const translated = commandArgs.map((value) => translateArgument(value, checkoutDir, assetsDir, outputDir));
   const profile = options.profile ?? "review";
   const image = launchImage;
-  const args = [
+  const args = renderContainedProviderArgs({ runner: options.runner, profile, image, containerName, identity, checkoutDir, assetsDir, outputDir, access,
+    command, commandArgs: translated, methodologyEgress });
+  parseContainedProviderArgs(args, options.runner, options.providerAccess, identity, profile, methodologyEgress);
+  return args;
+}
+
+/** Pure byte construction shared with offline receipt verification. This does
+ * not validate host paths, grant a launch capability, or invoke an executor. */
+export function renderContainedProviderArgs(input: {
+  runner: Exclude<RunnerName, "mock">; profile: NonNullable<ContainedProviderOptions["profile"]>; image: string; containerName: string;
+  identity: { uid: number; gid: number }; checkoutDir: string; assetsDir: string; outputDir: string; access: readonly string[];
+  command: string; commandArgs: readonly string[]; methodologyEgress?: { network: string; proxyUrl: string };
+}): string[] {
+  const { runner, profile, image, containerName, identity, checkoutDir, assetsDir, outputDir, access, command, commandArgs, methodologyEgress } = input;
+  return [
     "run", "--name", containerName, "--pull", "never",
-    ...(options.runner === "codex" ? ["--interactive"] : []),
+    ...(runner === "codex" ? ["--interactive"] : []),
     "--network", methodologyEgress?.network ?? "bridge",
     ...(methodologyEgress
       ? ["--env", `HTTPS_PROXY=${methodologyEgress.proxyUrl}`, "--env", `NO_PROXY=${METHODOLOGY_MCP_FORWARDER}`]
@@ -130,12 +144,10 @@ export function buildContainedProviderArgs(
     "--tmpfs", `/home/peregrine:rw,noexec,nosuid,nodev,size=128m,uid=${identity.uid},gid=${identity.gid}`,
     // Codex 0.152.0 opens state_5.sqlite under CODEX_HOME even for ephemeral
     // runs. Keep that state writable but container-only; expose only auth.json.
-    ...(options.runner === "codex" ? ["--tmpfs", codexHomeTmpfs(identity, "128m")] : []),
+    ...(runner === "codex" ? ["--tmpfs", codexHomeTmpfs(identity, "128m")] : []),
     ...access,
-    image, command, ...translated,
+    image, command, ...commandArgs,
   ];
-  parseContainedProviderArgs(args, options.runner, options.providerAccess, identity, profile, methodologyEgress);
-  return args;
 }
 
 function assertConfiguredAccess(options: Pick<ContainedProviderOptions, "runner" | "providerAccess">): void {
@@ -151,7 +163,7 @@ function assertConfiguredAccess(options: Pick<ContainedProviderOptions, "runner"
 /** Metadata-only preflight: never reads credential bytes or starts a process. */
 export function preflightPredictionCliSession() {
   assertConfiguredAccess({ runner: "codex", providerAccess: "cli-session" });
-  return { providerAccess: "cli-session", directory: realpathSync(process.env.PEREGRINE_CODEX_SESSION_DIR!), credentialContentsRead: false };
+  return { providerAccess: "cli-session", directory: realpathSync(process.env.PEREGRINE_CODEX_SESSION_DIR!), identity: hostIdentity(), credentialContentsRead: false };
 }
 
 /** Strict parser used by tests and immediately before every provider launch. */

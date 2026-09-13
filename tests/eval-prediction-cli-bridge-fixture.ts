@@ -39,7 +39,7 @@ export function predictionDockerFixture(agent: (args: string[], options: Paramet
       const gatewayRole = name === gateway, entrypoint = gatewayRole ? "/usr/local/bin/peregrine-egress-gateway" : "/usr/local/bin/peregrine-methodology-mcp-forwarder";
       return { Name: `/${name}`, Path: entrypoint, Args: [], State: { Running: true }, Mounts: [{ Type: "tmpfs", Destination: "/tmp" }, { Type: "tmpfs", Destination: "/home/peregrine" }],
         Config: { User: "65532:65532", Image: ACCEPTED_METHODOLOGY_EGRESS_IMAGE, Entrypoint: [entrypoint], Env: envs.get(name) },
-        HostConfig: { ReadonlyRootfs: true, CapDrop: ["ALL"], SecurityOpt: ["no-new-privileges"], PidsLimit: 64, Tmpfs: { "/tmp": "rw,noexec,nosuid,nodev,size=32m,uid=65532,gid=65532,mode=1777", "/home/peregrine": "rw,noexec,nosuid,nodev,size=16m,uid=65532,gid=65532,mode=0700" }, ExtraHosts: gatewayRole ? [] : ["host.docker.internal:host-gateway"] },
+        HostConfig: { ReadonlyRootfs: true, CapDrop: ["ALL"], CapAdd: null, Privileged: false, NetworkMode: external, SecurityOpt: ["no-new-privileges"], PidsLimit: 64, Tmpfs: { "/tmp": "rw,noexec,nosuid,nodev,size=32m,uid=65532,gid=65532,mode=1777", "/home/peregrine": "rw,noexec,nosuid,nodev,size=16m,uid=65532,gid=65532,mode=0700" }, ExtraHosts: gatewayRole ? [] : ["host.docker.internal:host-gateway"] },
         NetworkSettings: { Networks: { [external]: { Aliases: [name], IPAddress: externalSubnet.replace(".0/28", gatewayRole ? ".2" : ".3") }, [network]: { Aliases: [gatewayRole ? "egress-gateway" : "mcp-forwarder", name], IPAddress: subnet.replace(".0/28", gatewayRole ? ".2" : ".3") } } } };
     })));
     if (args[0] === "network" && args[1] === "inspect") {

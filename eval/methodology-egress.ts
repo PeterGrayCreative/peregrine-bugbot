@@ -522,8 +522,12 @@ function topologyEnvForGateway(authorities: readonly string[]): Record<string, s
 }
 
 function topologyEnvForForwarder(token: string, hostMcpPort: number, limits: MethodologyMcpLimits): Record<string, string> {
-  return { MCP_FORWARDER_BIND_HOST: "0.0.0.0", MCP_FORWARDER_BIND_PORT: "8082", MCP_FORWARDER_ALLOWED_HOST: "mcp-forwarder:8082", MCP_FORWARDER_TOKEN: token, MCP_FORWARDER_UPSTREAM_PORT: String(hostMcpPort), ...Object.fromEntries(Object.entries(limits).map(([key, value]) => [`MCP_FORWARDER_${key.replace(/[A-Z]/gu, (letter) => `_${letter}`).toUpperCase()}`, String(value)])) };
+  return { MCP_FORWARDER_BIND_HOST: "0.0.0.0", MCP_FORWARDER_BIND_PORT: "8082", MCP_FORWARDER_ALLOWED_HOST: "mcp-forwarder:8082", MCP_FORWARDER_TOKEN: token, MCP_FORWARDER_UPSTREAM_PORT: String(hostMcpPort), ...Object.fromEntries(Object.entries(validateLimits(limits)).map(([key, value]) => [`MCP_FORWARDER_${key.replace(/[A-Z]/gu, (letter) => `_${letter}`).toUpperCase()}`, String(value)])) };
 }
+
+// Pure, shared argv/environment construction for offline receipt verification.
+// Exporting these functions cannot mint the supervisor's launch capability.
+export { sidecarCommon as renderMethodologySidecarArgs, topologyEnvForGateway as methodologyGatewayEnvironment, topologyEnvForForwarder as methodologyForwarderEnvironment };
 
 function aggregate(primary: unknown, cleanup: readonly Error[]): never {
   if (cleanup.length) throw new AggregateError([primary, ...cleanup], "methodology egress operation and cleanup both failed");

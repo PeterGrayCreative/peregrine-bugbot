@@ -826,3 +826,13 @@ independent untrusted-input intake, and requires actual run-bound mechanical
 receipt bytes and complete cleanup/audit correlation. External observer gates
 remain mandatory. No provider/client/image operation or canary/review attempt
 occurred; this successor awaits a different independent exact-freeze gate.
+
+## 2026-09-13: complete Docker invocation correction, pending re-review
+
+The v2 gate reproduced five extra-capability/entrypoint bypasses in receipt
+assessment. The [v3 correction](../validation/2026-09-13-prediction-sol-low-operator-argv.md)
+uses shared complete runtime argv construction, exact ordered sidecar topology
+and authenticated preflight session/path/identity metadata. V1/v2 and the five
+failing regressions remain immutable. No provider/client/container operation,
+canary attempt, review-slot consumption or batch authorization occurred; another
+fresh independent gate is required.
