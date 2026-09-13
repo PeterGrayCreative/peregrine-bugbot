@@ -190,7 +190,7 @@ function withCleanupDetail(message: string, result: ExecResult): string {
     : message;
 }
 
-function parseCodexEvents(stdout: string): { events: unknown[]; malformedEventLines: number } {
+export function parseCodexEvents(stdout: string): { events: unknown[]; malformedEventLines: number } {
   let malformedEventLines = 0;
   const events = stdout.split("\n").filter((line) => line.trim().length > 0).flatMap((line) => {
     try {

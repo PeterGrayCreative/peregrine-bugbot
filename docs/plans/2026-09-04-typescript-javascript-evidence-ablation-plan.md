@@ -259,3 +259,12 @@ separately registers one infrastructure-only CLI canary. It is not a revival
 of the failed corpus path or dispatch authorization. A supported gated bridge,
 explicit canary approval, observed evidence and independent review remain
 required; all slots are unstarted and readiness/authorization remain false.
+
+The additive [experimental CLI bridge checkpoint](../validation/2026-09-13-prediction-cli-bridge.md)
+attaches that exact package to the existing containment/deadline runtime through
+one-use scoped authority. Its injected-executor proof is zero-provider only.
+Prospectively, the four-tool restriction concerns repository access; harmless
+non-I/O bookkeeping must be identical across arms, and the pinned built-in
+catalog remains unknown until an independently reviewed authorized canary.
+No package, synthetic token receipt or normal completion implies provider
+authorization, exact served identity, elapsed timeout or efficacy evidence.

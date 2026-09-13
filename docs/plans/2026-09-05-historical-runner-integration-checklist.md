@@ -362,6 +362,10 @@ AI-prediction development path now has an exact
 - [x] Freeze a separate neutral one-attempt infrastructure canary registration;
   no scored review slot, retries, delegation or inferred batch authorization.
 - [ ] Independent gate on this exact package and supported four-tool CLI bridge.
+- [x] Implement a scoped experimental bridge and injected-executor tests for
+  four repository tools, equal raw scope, one-use authority, retained failures,
+  whole-attempt cancellation propagation and uncancelled cleanup. This is
+  structural evidence only; the full pinned built-in catalog remains unknown.
 - [ ] Separate explicit canary authorization, actual client/model attachment
   and terminal identity/usage/deadline/cleanup/leakage evidence, with unavailable
   observations preserved rather than inferred.
