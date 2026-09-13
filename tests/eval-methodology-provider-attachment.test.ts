@@ -1,3 +1,4 @@
+import { fixtureContainer, fixtureNetwork, sidecarHostFixture } from "./eval-methodology-inspect-fixture.js";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { chmodSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
@@ -233,6 +234,11 @@ function installPersistentDockerStub(root: string): { bin: string; statePath: st
   const source = `#!${process.execPath}
 const fs = require("node:fs");
 const crypto = require("node:crypto");
+const createHash = crypto.createHash;
+const __name = (value, name) => Object.defineProperty(value, "name", { value: name, configurable: true });
+const fixtureContainer = ${fixtureContainer.toString()};
+const fixtureNetwork = ${fixtureNetwork.toString()};
+const identity = name => createHash("sha256").update(name).digest("hex");
 const statePath = ${JSON.stringify(statePath)};
 const baseEnv = ${JSON.stringify(METHODOLOGY_EGRESS_BASE_ENV)};
 const tmpfs = {
@@ -255,51 +261,21 @@ function exact(expected, label) {
 function subnetHost(subnet, index) {
   return subnet.split(".").slice(0, 3).join(".") + "." + String(index);
 }
-function containerNetworks(container) {
-  return Object.fromEntries(Object.entries(container.networks).map(([name, network]) => [name, {
-    Aliases: network.aliases,
-    IPAddress: network.ip,
-    IPv6Address: "",
-  }]));
-}
 function inspectContainer(container) {
-  return {
-    Name: "/" + container.name,
-    Path: container.entrypoint,
-    Args: [],
-    Config: {
-      Image: container.image,
-      User: "65532:65532",
-      Entrypoint: [container.entrypoint],
-      Env: [...baseEnv, ...container.env],
-    },
-    Mounts: [{ Type: "tmpfs", Destination: "/tmp" }, { Type: "tmpfs", Destination: "/home/peregrine" }],
-    HostConfig: {
-      ReadonlyRootfs: true,
-      CapDrop: ["ALL"],
-      SecurityOpt: ["no-new-privileges"],
-      PidsLimit: 64,
-      Tmpfs: tmpfs,
-      ExtraHosts: container.addHost === undefined ? [] : [container.addHost],
-    },
-    State: { Running: container.running },
-    NetworkSettings: { Networks: containerNetworks(container) },
-  };
+  const network = Object.keys(container.networks).find(name => state.networks[name].internal);
+  const external = Object.keys(container.networks).find(name => !state.networks[name].internal);
+  const index = container.role === "gateway" ? 0 : 1;
+  const host = { ...${JSON.stringify(sidecarHostFixture("replaced"))}, NetworkMode: external, ExtraHosts: container.addHost === undefined ? null : [container.addHost] };
+  const value = fixtureContainer({ name: container.name, index, at: container.at, network, external, subnet: state.networks[network].subnet, externalSubnet: state.networks[external].subnet,
+    alias: index === 0 ? "egress-gateway" : "mcp-forwarder", image: container.image, entrypoint: container.entrypoint, env: [...baseEnv, ...container.env] }, host);
+  if (!container.running) { value.State.Running = false; value.State.Status = "exited"; }
+  return value;
 }
 function inspectNetwork(name) {
   const network = state.networks[name];
   if (!network) fail("unknown network");
-  const containers = {};
-  for (const container of Object.values(state.containers)) {
-    const member = container.networks[name];
-    if (member) containers[container.id] = {
-      Name: "/" + container.name,
-      IPv4Address: member.ip + "/28",
-      IPv6Address: "",
-    };
-  }
-  return { Name: name, Driver: "bridge", Internal: network.internal, EnableIPv6: false,
-    IPAM: { Config: [{ Subnet: network.subnet }] }, Containers: containers };
+  const names = Object.values(state.containers).filter(container => container.networks[name]).sort((a,b) => a.role === b.role ? 0 : a.role === "gateway" ? -1 : 1).map(container => container.name);
+  return fixtureNetwork({ name, subnet: network.subnet, internal: network.internal, names, at: network.at });
 }
 function digestAudit(protocol, body, field) {
   const copy = { ...body };
@@ -331,8 +307,8 @@ if (args[0] === "network" && args[1] === "create") {
     fail("unexpected network create command");
   }
   const name = internal ? args[8] : args[7];
-  state.networks[name] = { internal, subnet: internal ? args[7] : args[6] };
-  out(name + "\\n");
+  state.networks[name] = { internal, subnet: internal ? args[7] : args[6], at: Date.now() };
+  out(identity(name) + "\\n");
 } else if (args[0] === "run") {
   if (args[1] !== "--detach" || args[2] !== "--name" || args[4] !== "--pull" || args[5] !== "never" || args[6] !== "--network") fail("unexpected sidecar run command");
   const name = args[3];
@@ -348,9 +324,9 @@ if (args[0] === "network" && args[1] === "create") {
   const addHostIndex = args.indexOf("--add-host");
   const addHost = addHostIndex === -1 ? undefined : args[addHostIndex + 1];
   const network = state.networks[networkName];
-  state.containers[name] = { id: "id-" + name, name, image, entrypoint, role, env, addHost, running: true,
+  state.containers[name] = { id: identity(name), at: Date.now(), name, image, entrypoint, role, env, addHost, running: true,
     networks: { [networkName]: { ip: subnetHost(network.subnet, role === "gateway" ? 2 : 3), aliases: [name] } } };
-  out("id-" + name + "\\n");
+  out(identity(name) + "\\n");
 } else if (args[0] === "logs") {
   const name = args[args.length - 1];
   const container = state.containers[name];

@@ -8,6 +8,12 @@ import { digest, freeze, integer, text } from "./prediction-contract.js";
 import { PREDICTION_LIMITS } from "./prediction-plan.js";
 
 interface Options { directory: string; attemptId: string; closeReads: () => void; teardown: () => Promise<void> }
+/** Same-process clock provenance for offline phase/receipt correlation. The
+ * wall sample is millisecond-quantized; monotonic values are never rounded. */
+export function samplePredictionClock() {
+  return { kind: "node-performance-clock-v1", processId: process.pid, timeOriginMs: performance.timeOrigin,
+    monotonicMs: performance.now(), unixMs: Date.now() };
+}
 const diagnostic = (error: unknown) => safeDiagnostic(error instanceof Error ? error.message : typeof error === "string" ? error : "non-Error rejection", 500).replace(/[\x00-\x1f\x7f]/g, " ");
 function rejectionEvidence(error: unknown) {
   type Role = "execution" | "cleanup" | "unknown";
@@ -46,7 +52,7 @@ export function createStructuralPredictionCliDeadline(options: Options, wallMs: 
   return deadline(options, wallMs, "accelerated-structural");
 }
 function deadline(options: Options, wallMs: number, executionClass: string) {
-  const start = performance.now(); text(options.attemptId);
+  const clock = samplePredictionClock(), start = clock.monotonicMs; text(options.attemptId);
   mkdirSync(options.directory, { mode: 0o700 });
   const events: { kind: string; elapsedMs: number; detail: unknown }[] = [];
   let evidenceError: string | null = null;
@@ -81,7 +87,7 @@ function deadline(options: Options, wallMs: number, executionClass: string) {
     await teardown();
     if (performance.now() - start >= wallMs && !controller.signal.aborted) expire();
     clearTimeout(timer); sealed = true;
-    const body = { kind: "prediction-cli-deadline-terminal-v1", attemptId: options.attemptId, executionClass, wallMs,
+    const body = { kind: "prediction-cli-deadline-terminal-v2", clock, attemptId: options.attemptId, executionClass, wallMs,
       deadlineExceeded: controller.signal.reason === "whole-attempt-deadline", cancellationReason: controller.signal.aborted ? String(controller.signal.reason) : null,
       elapsedMs: performance.now() - start, executionError, cleanupError, readCloseError, evidenceError,
       teardownCompleted: cleanupError === null && readCloseError === null, events, providerContainmentProven: false, providerAuthorized: false };

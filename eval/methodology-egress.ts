@@ -4,6 +4,8 @@ import { exec, type ExecResult } from "../src/util/exec.js";
 import { safeDiagnostic } from "../src/security/secrets.js";
 import { canonicalJsonSha256 } from "./experiment.js";
 import { METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "./methodology-runtime-image.js";
+import { observePredictionExec, type MechanicalEvidenceBinding } from "./prediction-mechanical-evidence.js";
+import { parseObservationRecords, validateMethodologyObservationGraph, validateObservedContainer, validateObservedNetwork, type ObservationReceipt } from "./methodology-observation.js";
 
 /**
  * Docker is deliberately kept behind this small adapter.  In particular, a
@@ -84,6 +86,9 @@ export interface MethodologyMcpLimits {
 }
 
 export interface MethodologyEgressSupervisorOptions {
+  /** Additive private mechanical receipts; no external identity claims. */
+  readonly mechanicalEvidenceDirectory?: string;
+  readonly mechanicalEvidenceBinding?: MechanicalEvidenceBinding;
   readonly attemptId: string;
   readonly armId: string;
   readonly sourceHeadTree: string;
@@ -413,64 +418,10 @@ function sealedDiagnostic(sidecar: "gateway" | "forwarder", stdout: string): Sid
   return Object.freeze({ sidecar, ready, sealed, selfDigestValid, lineObserved: sealed });
 }
 
-function ipv4InCidr(value: string, cidr: string): boolean {
-  const address = value.split("/", 1)[0]!;
-  const [ip, maskText] = cidr.split("/");
-  const toInt = (candidate: string): number | undefined => {
-    const octets = candidate.split(".").map(Number);
-    if (octets.length !== 4 || octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)) return undefined;
-    return (((octets[0]! << 24) >>> 0) | (octets[1]! << 16) | (octets[2]! << 8) | octets[3]!) >>> 0;
-  };
-  const actual = toInt(address); const base = toInt(ip ?? ""); const mask = Number(maskText);
-  if (actual === undefined || base === undefined || !Number.isInteger(mask) || mask < 0 || mask > 32) return false;
-  const bits = mask === 0 ? 0 : (0xffffffff << (32 - mask)) >>> 0;
-  return (actual & bits) === (base & bits);
-}
-
 function parseInspect(stdout: string, expected: { name: string; network: string; externalNetwork: string; subnet: string; externalSubnet: string; image: string; entrypoint: string; alias: string; env: Record<string, string>; addHost?: string }): Record<string, unknown> {
-  const values = parseJsonLines(stdout);
-  const value = values[0];
-  if (!value) fail(`missing ${expected.name} Docker inspect evidence`);
-  if (value.Name !== `/${expected.name}` || value.Path !== expected.entrypoint || JSON.stringify(value.Args ?? []) !== "[]") fail(`invalid ${expected.name} entrypoint inspect evidence`);
-  if (!value.Config || typeof value.Config !== "object" || Array.isArray(value.Config)) fail(`invalid ${expected.name} config inspect evidence`);
-  {
-    const config = value.Config as Record<string, unknown>;
-    if (config.Image !== expected.image) fail(`invalid ${expected.name} image inspect evidence`);
-    if (config.Entrypoint !== undefined && JSON.stringify(config.Entrypoint) !== JSON.stringify([expected.entrypoint])) fail(`invalid ${expected.name} configured entrypoint`);
-    if (!Array.isArray(config.Env) || new Set(config.Env).size !== config.Env.length || config.Env.some((item) => typeof item !== "string" || !item.includes("=") || PROXY_ENV_NAMES.has(item.split("=", 1)[0]!) || SECRET_ENV.test(item.split("=", 1)[0]!) && item.split("=", 1)[0] !== "MCP_FORWARDER_TOKEN")) fail(`invalid ${expected.name} credential/proxy environment`);
-    const expectedEnv = [...METHODOLOGY_EGRESS_BASE_ENV, ...Object.entries(expected.env).map(([key, value]) => `${key}=${value}`)].sort();
-    const actualEnv = (config.Env as string[]).slice().sort();
-    if (JSON.stringify(actualEnv) !== JSON.stringify(expectedEnv)) fail(`invalid ${expected.name} environment policy`);
-  }
-  const mounts = value.Mounts;
-  if (!Array.isArray(mounts) || mounts.some((mount) => {
-    if (!mount || typeof mount !== "object") return true;
-    const item = mount as Record<string, unknown>;
-    return item.Type !== "tmpfs" || (item.Destination !== "/tmp" && item.Destination !== "/home/peregrine");
-  }) || new Set(mounts.map((mount) => (mount as Record<string, unknown>).Destination)).size !== mounts.length) fail(`${expected.name} must not have host mounts`);
-  const hostConfig = value.HostConfig as Record<string, unknown> | undefined;
-  if (!hostConfig || hostConfig.ReadonlyRootfs !== true || JSON.stringify(hostConfig.CapDrop) !== JSON.stringify(["ALL"]) ||
-      !Array.isArray(hostConfig.SecurityOpt) || !hostConfig.SecurityOpt.includes("no-new-privileges") ||
-      hostConfig.PidsLimit !== 64 || (value.Config as Record<string, unknown>).User !== "65532:65532" ||
-      canonicalJsonSha256(hostConfig.Tmpfs) !== canonicalJsonSha256({
-        "/tmp": "rw,noexec,nosuid,nodev,size=32m,uid=65532,gid=65532,mode=1777",
-        "/home/peregrine": "rw,noexec,nosuid,nodev,size=16m,uid=65532,gid=65532,mode=0700",
-      })) fail(`${expected.name} inspect does not attest the sidecar containment policy`);
-  const state = value.State as Record<string, unknown> | undefined;
-  if (!state || state.Running !== true) fail(`${expected.name} inspect does not prove a running sidecar`);
-  const networks = (value.NetworkSettings as Record<string, unknown> | undefined)?.Networks as Record<string, unknown> | undefined;
-  if (!networks || JSON.stringify(Object.keys(networks).sort()) !== JSON.stringify([expected.externalNetwork, expected.network].sort())) fail(`${expected.name} inspect has an unexpected network topology`);
-  const internalEndpoint = networks[expected.network] as Record<string, unknown> | undefined;
-  const externalEndpoint = networks[expected.externalNetwork] as Record<string, unknown> | undefined;
-  const aliases = internalEndpoint?.Aliases;
-  if (!Array.isArray(aliases) || !aliases.includes(expected.alias) || aliases.some((item) => item !== expected.alias && item !== expected.name)) fail(`${expected.name} inspect has an unexpected internal alias`);
-  if (typeof internalEndpoint?.IPAddress !== "string" || !ipv4InCidr(internalEndpoint.IPAddress, expected.subnet) ||
-      typeof externalEndpoint?.IPAddress !== "string" || !ipv4InCidr(externalEndpoint.IPAddress, expected.externalSubnet)) fail(`${expected.name} inspect has no IPv4 address in its attempt networks`);
-  const extraHosts = (hostConfig?.ExtraHosts ?? []) as unknown;
-  if (expected.addHost === undefined) {
-    if (Array.isArray(extraHosts) && extraHosts.length !== 0) fail(`${expected.name} must not receive host-gateway access`);
-  } else if (!Array.isArray(extraHosts) || !extraHosts.includes(expected.addHost)) fail(`${expected.name} is missing host-gateway access`);
-  return value;
+  const values = parseObservationRecords(stdout);
+  if (values.length !== 1) fail("missing or nonunique container inspect evidence");
+  return validateObservedContainer(values[0], { ...expected, baseEnv: METHODOLOGY_EGRESS_BASE_ENV });
 }
 
 export function parseMethodologyEgressContainerInspect(
@@ -479,33 +430,9 @@ export function parseMethodologyEgressContainerInspect(
 ): Record<string, unknown> { return parseInspect(stdout, expected); }
 
 function parseNetworkInspect(stdout: string, expected: { name: string; network: string; subnet: string; sidecars: readonly string[]; internal?: boolean }): void {
-  const trimmed = stdout.trim();
-  let values: unknown[];
-  try {
-    const parsed = JSON.parse(trimmed) as unknown;
-    values = Array.isArray(parsed) ? parsed : [parsed];
-  } catch {
-    values = parseJsonLines(stdout);
-  }
+  const values = parseObservationRecords(stdout);
   if (values.length !== 1) fail("network inspect must return exactly one network");
-  const value = values[0] as Record<string, unknown> | undefined;
-  if (!value || value.Name !== expected.network || value.Driver !== "bridge" || value.Internal !== (expected.internal ?? true) || value.EnableIPv6 !== false) fail("network inspect evidence is not exact");
-  const ipam = value.IPAM as Record<string, unknown> | undefined;
-  const configs = ipam?.Config;
-  if (!Array.isArray(configs) || configs.length !== 1 || (configs[0] as Record<string, unknown>).Subnet !== expected.subnet) fail("internal network IPv4 IPAM is not exact");
-  const containers = value.Containers as Record<string, unknown> | undefined;
-  if (!containers || Object.keys(containers).length !== expected.sidecars.length) fail("internal network has unexpected members");
-  const addresses: string[] = [];
-  const observed = Object.values(containers).map((entry) => {
-    const item = entry as Record<string, unknown>;
-    if (typeof item.Name !== "string" || typeof item.IPv4Address !== "string" || item.IPv6Address) fail("network member is not IPv4-only");
-    const address = item.IPv4Address.split("/", 1)[0]!;
-    if (!ipv4InCidr(address, expected.subnet)) fail("network member address is outside the attested subnet");
-    addresses.push(address);
-    return item.Name.replace(/^\//u, "");
-  }).sort();
-  if (JSON.stringify(observed) !== JSON.stringify([...expected.sidecars].sort())) fail("internal network members are not the two sidecars");
-  if (new Set(addresses).size !== addresses.length) fail("network member addresses are not distinct");
+  validateObservedNetwork(values[0], expected);
 }
 
 export function parseMethodologyEgressNetworkInspect(
@@ -518,8 +445,12 @@ function topologyEnvForGateway(authorities: readonly string[]): Record<string, s
 }
 
 function topologyEnvForForwarder(token: string, hostMcpPort: number, limits: MethodologyMcpLimits): Record<string, string> {
-  return { MCP_FORWARDER_BIND_HOST: "0.0.0.0", MCP_FORWARDER_BIND_PORT: "8082", MCP_FORWARDER_ALLOWED_HOST: "mcp-forwarder:8082", MCP_FORWARDER_TOKEN: token, MCP_FORWARDER_UPSTREAM_PORT: String(hostMcpPort), ...Object.fromEntries(Object.entries(limits).map(([key, value]) => [`MCP_FORWARDER_${key.replace(/[A-Z]/gu, (letter) => `_${letter}`).toUpperCase()}`, String(value)])) };
+  return { MCP_FORWARDER_BIND_HOST: "0.0.0.0", MCP_FORWARDER_BIND_PORT: "8082", MCP_FORWARDER_ALLOWED_HOST: "mcp-forwarder:8082", MCP_FORWARDER_TOKEN: token, MCP_FORWARDER_UPSTREAM_PORT: String(hostMcpPort), ...Object.fromEntries(Object.entries(validateLimits(limits)).map(([key, value]) => [`MCP_FORWARDER_${key.replace(/[A-Z]/gu, (letter) => `_${letter}`).toUpperCase()}`, String(value)])) };
 }
+
+// Pure, shared argv/environment construction for offline receipt verification.
+// Exporting these functions cannot mint the supervisor's launch capability.
+export { sidecarCommon as renderMethodologySidecarArgs, topologyEnvForGateway as methodologyGatewayEnvironment, topologyEnvForForwarder as methodologyForwarderEnvironment };
 
 function aggregate(primary: unknown, cleanup: readonly Error[]): never {
   if (cleanup.length) throw new AggregateError([primary, ...cleanup], "methodology egress operation and cleanup both failed");
@@ -531,7 +462,7 @@ export async function createMethodologyEgressSupervisor(options: MethodologyEgre
   if (options && typeof options === "object" && Object.prototype.hasOwnProperty.call(options, "run")) {
     fail("provider egress supervisor cannot inject a Docker executor");
   }
-  return createSupervisor(options, exec, "provider");
+  return createSupervisor(options, options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.mechanicalEvidenceBinding!) : exec, "provider");
 }
 
 /**
@@ -541,7 +472,7 @@ export async function createMethodologyEgressSupervisor(options: MethodologyEgre
 export async function createStructuralMockMethodologyEgressSupervisor(
   options: StructuralMockMethodologyEgressSupervisorOptions,
 ): Promise<MethodologyEgressSupervisor> {
-  return createSupervisor(options, options.run, "structural-mock");
+  return createSupervisor(options, options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.mechanicalEvidenceBinding!, options.run) : options.run, "structural-mock");
 }
 
 /** Uses the real supervisor, but returns no provider launch capability. The
@@ -586,36 +517,49 @@ async function createSupervisor(
     if (options.deadlineSignal!.aborted) throw new Error("whole-attempt deadline closed sidecar setup");
     return run(command, args, { ...settings, deadlineSignal: options.deadlineSignal });
   } : run;
+  const observations = new Map<string, ObservationReceipt>();
+  const observe = async (key: string, args: string[], validate: (() => void) | undefined, label: string) => {
+    const startedAt = Date.now(), result = requireSuccess(await dockerCall(setupRun, args, validate), label);
+    observations.set(key, { startedAt, closedAt: Date.now(), stdout: result.stdout }); return result;
+  };
   try {
     const externalNetworkArgs = ["network", "create", "--ipv6=false", "--driver", "bridge", "--subnet", externalSubnet, n.externalNetwork];
     externalNetworkCreated = true;
-    requireSuccess(await dockerCall(setupRun, externalNetworkArgs, () => { parseNetworkCreateArgs(externalNetworkArgs, false); }), "external network creation");
+    await observe("external-create", externalNetworkArgs, () => { parseNetworkCreateArgs(externalNetworkArgs, false); }, "external network creation");
     const networkArgs = ["network", "create", "--internal", "--ipv6=false", "--driver", "bridge", "--subnet", subnet, n.network];
     internalNetworkCreated = true;
-    requireSuccess(await dockerCall(setupRun, networkArgs, () => { parseNetworkCreateArgs(networkArgs, true); }), "internal network creation");
+    await observe("internal-create", networkArgs, () => { parseNetworkCreateArgs(networkArgs, true); }, "internal network creation");
     const gatewayArgs = sidecarCommon(n.gateway, n.externalNetwork, image, GATEWAY_ENTRYPOINT, gatewayEnv);
     created.push("gateway");
-    requireSuccess(await dockerCall(setupRun, gatewayArgs, () => { parseSidecarRunArgs(gatewayArgs, { name: n.gateway, network: n.externalNetwork, image, entrypoint: GATEWAY_ENTRYPOINT, role: "gateway" }); }), "gateway sidecar start");
+    await observe("gateway-launch", gatewayArgs, () => { parseSidecarRunArgs(gatewayArgs, { name: n.gateway, network: n.externalNetwork, image, entrypoint: GATEWAY_ENTRYPOINT, role: "gateway" }); }, "gateway sidecar start");
     const forwarderArgs = sidecarCommon(n.forwarder, n.externalNetwork, image, FORWARDER_ENTRYPOINT, forwarderEnv, "host.docker.internal:host-gateway");
     created.push("forwarder");
-    requireSuccess(await dockerCall(setupRun, forwarderArgs, () => { parseSidecarRunArgs(forwarderArgs, { name: n.forwarder, network: n.externalNetwork, image, entrypoint: FORWARDER_ENTRYPOINT, role: "forwarder" }); }), "forwarder sidecar start");
+    await observe("forwarder-launch", forwarderArgs, () => { parseSidecarRunArgs(forwarderArgs, { name: n.forwarder, network: n.externalNetwork, image, entrypoint: FORWARDER_ENTRYPOINT, role: "forwarder" }); }, "forwarder sidecar start");
     await waitForReady(setupRun, n.gateway, "egress-gateway-v1", readyTimeoutMs);
     await waitForReady(setupRun, n.forwarder, "methodology-mcp-forwarder-v1", readyTimeoutMs);
     const gatewayConnect = ["network", "connect", "--alias", "egress-gateway", n.network, n.gateway];
     requireSuccess(await dockerCall(setupRun, gatewayConnect, () => { parseConnectArgs(gatewayConnect, { network: n.network, container: n.gateway, alias: "egress-gateway" }); }), "gateway internal network attach");
     const forwarderConnect = ["network", "connect", "--alias", "mcp-forwarder", n.network, n.forwarder];
     requireSuccess(await dockerCall(setupRun, forwarderConnect, () => { parseConnectArgs(forwarderConnect, { network: n.network, container: n.forwarder, alias: "mcp-forwarder" }); }), "forwarder internal network attach");
-    const inspect = requireSuccess(await dockerCall(setupRun, ["inspect", n.gateway, n.forwarder], undefined), "sidecar inspect");
-    // Docker's default JSON output is one array; test executors may return one
-    // JSON object per line. Both are accepted, but every sidecar is checked.
-    const inspectValues = inspect.stdout.trim().startsWith("[") ? JSON.parse(inspect.stdout) as unknown[] : parseJsonLines(inspect.stdout);
+    const inspect = await observe("container-inspect", ["inspect", n.gateway, n.forwarder], undefined, "sidecar inspect");
+    // The exact profile accepts one complete Docker JSON array, never skipped
+    // malformed lines or a partial parse of concatenated records.
+    const inspectValues = parseObservationRecords(inspect.stdout);
     if (!Array.isArray(inspectValues) || inspectValues.length !== 2) throw new Error("sidecar inspect did not return both containers");
     parseInspect(JSON.stringify(inspectValues[0]), { name: n.gateway, network: n.network, externalNetwork: n.externalNetwork, subnet, externalSubnet, image, entrypoint: GATEWAY_ENTRYPOINT, alias: "egress-gateway", env: gatewayEnv });
     parseInspect(JSON.stringify(inspectValues[1]), { name: n.forwarder, network: n.network, externalNetwork: n.externalNetwork, subnet, externalSubnet, image, entrypoint: FORWARDER_ENTRYPOINT, alias: "mcp-forwarder", env: forwarderEnv, addHost: "host.docker.internal:host-gateway" });
-    const networkInspect = requireSuccess(await dockerCall(setupRun, ["network", "inspect", n.network], undefined), "internal network inspect");
+    const networkInspect = await observe("internal-inspect", ["network", "inspect", n.network], undefined, "internal network inspect");
     parseNetworkInspect(networkInspect.stdout, { name: n.network, network: n.network, subnet, sidecars: [n.gateway, n.forwarder] });
-    const externalInspect = requireSuccess(await dockerCall(setupRun, ["network", "inspect", n.externalNetwork], undefined), "external network inspect");
+    const externalInspect = await observe("external-inspect", ["network", "inspect", n.externalNetwork], undefined, "external network inspect");
     parseNetworkInspect(externalInspect.stdout, { name: n.externalNetwork, network: n.externalNetwork, subnet: externalSubnet, sidecars: [n.gateway, n.forwarder], internal: false });
+    validateMethodologyObservationGraph({ containers: inspectValues, networks: [parseObservationRecords(networkInspect.stdout)[0], parseObservationRecords(externalInspect.stdout)[0]],
+      helpers: [
+        { name: n.gateway, network: n.network, externalNetwork: n.externalNetwork, subnet, externalSubnet, image, entrypoint: GATEWAY_ENTRYPOINT, alias: "egress-gateway", env: gatewayEnv, baseEnv: METHODOLOGY_EGRESS_BASE_ENV },
+        { name: n.forwarder, network: n.network, externalNetwork: n.externalNetwork, subnet, externalSubnet, image, entrypoint: FORWARDER_ENTRYPOINT, alias: "mcp-forwarder", env: forwarderEnv, addHost: "host.docker.internal:host-gateway", baseEnv: METHODOLOGY_EGRESS_BASE_ENV },
+      ], networkCreates: [observations.get("internal-create")!, observations.get("external-create")!],
+      launches: [observations.get("gateway-launch")!, observations.get("forwarder-launch")!], containerInspect: observations.get("container-inspect")!,
+      networkInspects: [observations.get("internal-inspect")!, observations.get("external-inspect")!],
+    });
   } catch (error) { primary = error; }
   if (primary !== undefined) {
     const cleanup = await cleanupSidecars(run, n, created, externalNetworkCreated, internalNetworkCreated, diagnostics, 15_000, cleanupProgress);

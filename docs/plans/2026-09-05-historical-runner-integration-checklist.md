@@ -394,3 +394,9 @@ Provider calls remain zero; `providerAuthorized` and `executionReady` are false.
   its one-use runtime capability. The user-text assertion is not a capability.
 - [ ] Independently observe/review the actual low canary; neither structural
   tests nor the unchanged high-only assessor constitute a low-canary pass.
+- [x] Preserve the mechanically stopped pre-dispatch report and canonical
+  coordinator-relayed amendment PASS as separate versioned private artifacts.
+- [x] Add the preflight-first one-shot operator, private mechanical receipts and
+  explicit low-route post-assessor with synthetic gate/retention regressions.
+- [ ] Fresh independent gate of the exact operator/source freeze before dispatch;
+  actual independent observations and low-route assessment remain outstanding.

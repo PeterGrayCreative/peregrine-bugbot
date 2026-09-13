@@ -1,3 +1,4 @@
+import { fixtureContainer, fixtureNetwork, fixtureIdentity, sidecarHostFixture } from "./eval-methodology-inspect-fixture.js";
 import { createHash } from "node:crypto";
 import { request } from "node:http";
 import type { ProviderExec } from "../src/types.js";
@@ -5,7 +6,8 @@ import { METHODOLOGY_EGRESS_BASE_ENV, ACCEPTED_METHODOLOGY_EGRESS_IMAGE } from "
 
 /** Same strict sidecar observations as the existing egress supervisor fixture.
  * Every Docker call is injected; HTTP reaches only the local real reader. */
-export function predictionDockerFixture(agent: (args: string[], options: Parameters<ProviderExec>[2], endpoint: string) => ReturnType<ProviderExec>) {
+export function predictionDockerFixture(agent: (args: string[], options: Parameters<ProviderExec>[2], endpoint: string) => ReturnType<ProviderExec>, clock = () => Date.now()) {
+  const created = new Map<string, number>();
   const calls: { args: string[]; signal?: AbortSignal }[] = [], envs = new Map<string, string[]>();
   let network = "", external = "", subnet = "", externalSubnet = "", gateway = "", forwarder = "", stopped = false, endpoint = "";
   const result = (stdout = "") => ({ stdout, stderr: "", code: 0, timedOut: false });
@@ -16,17 +18,19 @@ export function predictionDockerFixture(agent: (args: string[], options: Paramet
     if (args[0] === "network" && args[1] === "create") {
       if (args.includes("--internal")) { network = args.at(-1)!; subnet = args[7]!; stopped = false; }
       else { external = args.at(-1)!; externalSubnet = args[6]!; }
-      return result();
+      created.set(args.at(-1)!, clock()); return result(fixtureIdentity(args.at(-1)!) + "\n");
     }
     if (args[0] === "run" && args.includes("codex")) return agent(args, options, endpoint);
     if (args[0] === "run") {
       const name = args[3]!, env = args.flatMap((v, i) => v === "--env" ? [args[i + 1]!] : []);
+      created.set(name, clock());
       envs.set(name, [...METHODOLOGY_EGRESS_BASE_ENV, ...env]);
       if (name.includes("gateway")) gateway = name;
       else {
         forwarder = name; const values = Object.fromEntries(env.map(v => [v.slice(0, v.indexOf("=")), v.slice(v.indexOf("=") + 1)]));
         endpoint = `http://host.docker.internal:${values.MCP_FORWARDER_UPSTREAM_PORT}/mcp/${values.MCP_FORWARDER_TOKEN}`;
       }
+      return result(fixtureIdentity(name) + "\n");
     }
     if (args[0] === "logs") {
       const isGateway = args.at(-1) === gateway, protocol = isGateway ? "egress-gateway-v1" : "methodology-mcp-forwarder-v1";
@@ -37,15 +41,13 @@ export function predictionDockerFixture(agent: (args: string[], options: Paramet
     }
     if (args[0] === "inspect") return result(JSON.stringify([gateway, forwarder].map(name => {
       const gatewayRole = name === gateway, entrypoint = gatewayRole ? "/usr/local/bin/peregrine-egress-gateway" : "/usr/local/bin/peregrine-methodology-mcp-forwarder";
-      return { Name: `/${name}`, Path: entrypoint, Args: [], State: { Running: true }, Mounts: [{ Type: "tmpfs", Destination: "/tmp" }, { Type: "tmpfs", Destination: "/home/peregrine" }],
-        Config: { User: "65532:65532", Image: ACCEPTED_METHODOLOGY_EGRESS_IMAGE, Entrypoint: [entrypoint], Env: envs.get(name) },
-        HostConfig: { ReadonlyRootfs: true, CapDrop: ["ALL"], SecurityOpt: ["no-new-privileges"], PidsLimit: 64, Tmpfs: { "/tmp": "rw,noexec,nosuid,nodev,size=32m,uid=65532,gid=65532,mode=1777", "/home/peregrine": "rw,noexec,nosuid,nodev,size=16m,uid=65532,gid=65532,mode=0700" }, ExtraHosts: gatewayRole ? [] : ["host.docker.internal:host-gateway"] },
-        NetworkSettings: { Networks: { [external]: { Aliases: [name], IPAddress: externalSubnet.replace(".0/28", gatewayRole ? ".2" : ".3") }, [network]: { Aliases: [gatewayRole ? "egress-gateway" : "mcp-forwarder", name], IPAddress: subnet.replace(".0/28", gatewayRole ? ".2" : ".3") } } } };
+      return fixtureContainer({ name, index: gatewayRole ? 0 : 1, entrypoint, alias: gatewayRole ? "egress-gateway" : "mcp-forwarder",
+        image: ACCEPTED_METHODOLOGY_EGRESS_IMAGE, env: envs.get(name), at: created.get(name), network, external, subnet, externalSubnet },
+        sidecarHostFixture(external, gatewayRole ? undefined : "host.docker.internal:host-gateway"));
     })));
     if (args[0] === "network" && args[1] === "inspect") {
       const internal = args[2] === network, selected = internal ? subnet : externalSubnet;
-      return result(JSON.stringify([{ Name: args[2], Driver: "bridge", Internal: internal, EnableIPv6: false, IPAM: { Config: [{ Subnet: selected }] }, Containers: {
-        a: { Name: gateway, IPv4Address: selected.replace(".0/28", ".2/28"), IPv6Address: "" }, b: { Name: forwarder, IPv4Address: selected.replace(".0/28", ".3/28"), IPv6Address: "" } } }]));
+      return result(JSON.stringify([fixtureNetwork({ name: args[2], subnet: selected, internal, names: [gateway, forwarder], at: created.get(args[2]!) })]));
     }
     if (args[0] === "stop") stopped = true;
     return result();

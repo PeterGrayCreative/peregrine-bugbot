@@ -115,5 +115,5 @@ export async function predictionCanaryAssessmentFixture(t: TestContext, native =
     files["observer/tool-calls.json"].calls = transcript.map((t: any) => ({ eventId: `tool-${t.ticket}`, ticket: t.ticket, source: "model", responseSha256: sha(t.response) }));
     return repin();
   };
-  return { input: repin(), repin, syncReads, files, observer, root: f.root };
+  return { input: repin(), repin, syncReads, files, observer, root: f.root, authority, pack };
 }

@@ -806,3 +806,89 @@ preauthorization, command and assessor remain preserved. Node22 typecheck and
 73 prediction, 13 HTTP and 101 affected tests pass. No provider/client/image run
 occurred; 64 review slots and the new canary remain unstarted, pending a fresh
 independent gate. No batch authorization or readiness is inferred.
+
+## 2026-09-13: Sol-low operator and post-attempt assessment, pending gate
+
+The [operator checkpoint](../validation/2026-09-13-prediction-sol-low-operator.md)
+preserves the pre-dispatch stop and relayed independent PASS, adds preflight-first
+one-shot dispatch through the existing bridge, and supplies a separate low-route
+assessor. Mechanical evidence is retained; missing independent observations fail
+closed. All prior freezes and failures remain immutable. The canary and all 64
+review slots remain unstarted; no provider, client, Docker/image operation or
+batch authorization occurred. A fresh exact-freeze gate remains required.
+
+## 2026-09-13: Sol-low operator integrity successor, pending re-review
+
+The operator gate rejected pre-authentication report loss and receipt-name-only
+acceptance. The [integrity correction](../validation/2026-09-13-prediction-sol-low-operator-integrity.md)
+preserves both exact failing reproductions and the rejected v1 freeze, adds an
+independent untrusted-input intake, and requires actual run-bound mechanical
+receipt bytes and complete cleanup/audit correlation. External observer gates
+remain mandatory. No provider/client/image operation or canary/review attempt
+occurred; this successor awaits a different independent exact-freeze gate.
+
+## 2026-09-13: complete Docker invocation correction, pending re-review
+
+The v2 gate reproduced five extra-capability/entrypoint bypasses in receipt
+assessment. The [v3 correction](../validation/2026-09-13-prediction-sol-low-operator-argv.md)
+uses shared complete runtime argv construction, exact ordered sidecar topology
+and authenticated preflight session/path/identity metadata. V1/v2 and the five
+failing regressions remain immutable. No provider/client/container operation,
+canary attempt, review-slot consumption or batch authorization occurred; another
+fresh independent gate is required.
+
+## 2026-09-13: observed containment correction, pending re-review
+
+The v3 gate reproduced host publication, PID sharing and device-access bypasses
+in authenticated inspect receipts. The [v4 correction](../validation/2026-09-13-prediction-sol-low-operator-inspect.md)
+reuses a shared fail-closed inspect profile, bound to archived producer defaults,
+and adds exact and systematic resealed-state regressions. All rejected versions
+remain immutable. No runtime/provider operation or attempt occurred; all 64
+review slots remain unstarted, with readiness and batch authorization false.
+A fresh independent exact-freeze review remains required.
+
+## 2026-09-13: IPv6 evidence consistency correction, pending re-review
+
+The v4 gate found contradictory IPv6 container endpoints despite disabled
+networks. The [v5 correction](../validation/2026-09-13-prediction-sol-low-operator-ipv6.md)
+checks both helpers on both networks against explicit archived IPv4-only
+defaults, including unknown/missing forms and resealed endpoint attacks.
+V4 and all predecessor evidence remain unchanged. No runtime/provider operation
+or attempt occurred; 64 slots remain unstarted and authorization/readiness stay
+false. A fresh independent exact-freeze review remains required.
+
+## 2026-09-13: canonical observed-state graph, pending re-review
+
+The V5 gate found address/identity/lifecycle contradictions that selected-field
+checks missed. The [V6 correction](../validation/2026-09-13-prediction-sol-low-operator-observation-graph.md)
+uses one exact-schema and cross-record graph for runtime preparation and offline
+assessment, with preserved reproductions and exhaustive nested-key mutations.
+Only archived create/inspect fields and image metadata are historical proof;
+the full running/network profile is prospective and must fail closed on real
+producer mismatch, with no same-attempt relaxation or retry. All predecessors
+are preserved. No runtime/provider operation or attempt occurred; 64 review
+slots remain unstarted and authorization/readiness remain false. Fresh review
+of the exact successor freeze remains required.
+
+## 2026-09-13: namespace and nanosecond correction, pending re-review
+
+The V6 gate found full SandboxIDs could alias one derived namespace path; its
+timestamp parser also lost sub-millisecond ordering. The [V7 correction](../validation/2026-09-13-prediction-sol-low-operator-namespace-time.md)
+requires unique validated SandboxKeys and exact nanosecond producer-time
+comparisons, with direct and fully resealed assessor regressions. Millisecond
+receipts and monotonic deadline telemetry retain their actual producer precision.
+V6 and all predecessors remain unchanged. No runtime/provider operation or
+attempt occurred; 64 slots remain unstarted and readiness/batch authorization
+remain false. Real-producer conformance is still prospective; fresh review is
+required before the separately authorized single canary can proceed.
+
+## 2026-09-13: clock-bound phase chronology, pending re-review
+
+The V7 gate found zero-length phases accepted alongside positive mechanical
+spans. The [V8 correction](../validation/2026-09-13-prediction-sol-low-operator-phases.md)
+binds preparation, contained execution (including client remove/absence), and
+sidecar/network teardown to shared-clock evidence from the existing producers.
+Missing clock provenance fails closed; the one-millisecond wall/monotonic bound
+is unchanged. V7 and all failures remain immutable. No provider/runtime operation
+or attempt occurred; all 64 review slots remain unstarted, with readiness and
+batch authorization false. Fresh independent exact-freeze review remains required.
