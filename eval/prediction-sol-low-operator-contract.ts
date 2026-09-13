@@ -5,6 +5,7 @@ import { predictionExecutionSourceManifest } from "./prediction-execution-freeze
 import { preparePredictionPreauthorization } from "./prediction-preauthorization.js";
 import { preparePredictionSolLowCanary } from "./prediction-sol-low-canary.js";
 import type { PredictionSolLowCanaryBridgeOptions } from "./prediction-cli-bridge.js";
+import { METHODOLOGY_OBSERVATION_PROFILE } from "./methodology-observation.js";
 
 export interface CanaryTrustedBytes { bytes: string; expectedSha256: string }
 export interface SolLowOperatorRegistration {
@@ -43,6 +44,9 @@ export function compileSolLowOperator(registration: SolLowOperatorRegistration, 
     bridgeFreeze: { bytes, expectedSha256: sha(bytes) },
     predecessor: { freezeSha256: r.predecessorFreeze.expectedSha256, gateSha256: r.predecessorGate.expectedSha256, publicCommit: gate.publicCommit, privateCommit: gate.privateCommit },
     execution: prior.execution, maximumAttempts: 1, reviewAttemptsAllowed: 0, batchAuthorized: false, providerAuthorized: false, executionReady: false,
+    observationProfile: { id: METHODOLOGY_OBSERVATION_PROFILE, requiredBeforeClient: true, realProducerConformance: null,
+      provenance: "Archived create-only fields/defaults and accepted image metadata; complete running/network profile is prospective, not archived proof.",
+      mismatch: "Fail closed, retain failed attempt and cleanup evidence; no in-attempt relaxation. A successor profile and new authorization are required before any retry." },
     observerBoundary: "Mechanical artifacts are not independent catalog, model-originated tool, identity, or leakage observations. Missing independently pinned observations make the low-route assessment not-eligible." });
 }
 export type SolLowOperatorContract = ReturnType<typeof compileSolLowOperator>;

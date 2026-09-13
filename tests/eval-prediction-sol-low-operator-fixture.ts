@@ -52,7 +52,8 @@ export async function solLowAssessmentFixture(t: TestContext) {
   const route = { model: "gpt-5.6-sol", effort: "low", providerAccess: "cli-session" };
   Object.assign(f.files["observer/identity.json"], { requested: route, observedRequest: { model: route.model, effort: route.effort } });
   f.files["observer/runtime.json"].sourceSha256 = op.contract.source.sourceSha256;
-  const deadline = f.files["canary/deadline/terminal.json"]; deadline.attemptId = amendment.canaryId; deadline.events[0].detail.attemptId = amendment.canaryId; sealFixture(deadline);
+  const deadline = f.files["canary/deadline/terminal.json"]; deadline.attemptId = amendment.canaryId; deadline.events[0].detail.attemptId = amendment.canaryId;
+  deadline.elapsedMs = 310; deadline.events.forEach((e: any, i: number) => { e.elapsedMs = i * 100; }); deadline.events[1].detail.remainingMs = 1199899; sealFixture(deadline);
   f.files["canary/terminal.json"].deadline = deadline;
   for (const path of ["observer/lifecycle.json", "observer/absence.json"]) f.files[path].deadlineSha256 = deadline.sha256;
   f.observer.kind = "authenticated-prediction-sol-low-canary-observer-v1";
@@ -93,8 +94,8 @@ export async function solLowAssessmentFixture(t: TestContext) {
   receipt("client", ["rm", "--force", clientName], 105, true);
   receipt("client", ["ps", "--all", "--quiet", "--filter", `name=^/${clientName}$`], 110, true);
   let at = 10;
-  const docker = predictionDockerFixture(async () => { throw new Error("fixture setup never invokes client"); });
-  const setupReceipt = async (args: string[]) => { const result = await docker.run("docker", args); receipt("sidecars", args, at += 2, false, result.stdout); };
+  const docker = predictionDockerFixture(async () => { throw new Error("fixture setup never invokes client"); }, () => at);
+  const setupReceipt = async (args: string[]) => { at += 2; const result = await docker.run("docker", args); receipt("sidecars", args, at, false, result.stdout); };
   await setupReceipt(["network", "create", "--ipv6=false", "--driver", "bridge", "--subnet", egress.externalNetworkSubnet, egress.externalNetwork]);
   await setupReceipt(["network", "create", "--internal", "--ipv6=false", "--driver", "bridge", "--subnet", egress.networkSubnet, egress.network]);
   await setupReceipt(renderMethodologySidecarArgs(egress.gateway.name, egress.externalNetwork, image, GATEWAY_ENTRYPOINT, methodologyGatewayEnvironment(egress.providerAuthorities)));

@@ -161,7 +161,7 @@ test("opt-in PID capture uses the existing child executor and does not alter its
 test("low assessor independently validates the explicit low route without high/batch promotion", async t => {
   const f = await solLowAssessmentFixture(t), result = assessPredictionSolLowCanary(f.input);
   assert.equal(result.recommendation, "infrastructure-canary-observed-no-batch-eligibility", JSON.stringify(result.failure));
-  assert.equal(result.kind, "prediction-sol-low-canary-assessment-v5"); assert.equal(result.batchAuthorized, false); assert.equal(result.executionReady, false);
+  assert.equal(result.kind, "prediction-sol-low-canary-assessment-v6"); assert.equal(result.batchAuthorized, false); assert.equal(result.executionReady, false);
   assert.equal(assessPredictionCanary(f.input).recommendation, "not-eligible"); assert.throws(() => requirePredictionBatchAuthorization(result));
   assert.equal(assessPredictionSolLowCanary({ ...f.input, observer: null }).recommendation, "not-eligible");
 });
@@ -389,4 +389,75 @@ test("low assessor reconciles IPv6 endpoint evidence for every helper/network pa
       const bytes = JSON.stringify(inspected); result.stdout = { bytes, complete: true, sha256: sha(bytes) };
       assert.equal(assessPredictionSolLowCanary(f.repin()).recommendation, "not-eligible", index + ":" + network + ":" + name);
     }
+});
+
+for (const [index, role] of [[0, "gateway"], [1, "forwarder"]] as const) {
+  for (const [field, value] of [["IPAddress", "10.254.2.14"], ["IPPrefixLen", 0], ["NetworkID", "f".repeat(64)], ["EndpointID", "f".repeat(64)], ["Gateway", "192.0.2.1"]] as const)
+    test(`gate v6 reproduction: ${role} endpoint ${field}`, async t => {
+      const f = await solLowAssessmentFixture(t), result = f.files["canary/mechanical-sidecars/000009-terminal.json"].result;
+      const inspected = JSON.parse(result.stdout.bytes), endpoint = Object.values(inspected[index].NetworkSettings.Networks)[0] as any;
+      endpoint[field] = value; const bytes = JSON.stringify(inspected); result.stdout = { bytes, complete: true, sha256: sha(bytes) };
+      assert.equal(assessPredictionSolLowCanary(f.repin()).recommendation, "not-eligible");
+    });
+  for (const [flag, status] of [["Paused", "paused"], ["Restarting", "restarting"]] as const)
+    test(`gate v6 reproduction: ${role} ${flag}`, async t => {
+      const f = await solLowAssessmentFixture(t), result = f.files["canary/mechanical-sidecars/000009-terminal.json"].result;
+      const inspected = JSON.parse(result.stdout.bytes); Object.assign(inspected[index].State, { [flag]: true, Status: status });
+      const bytes = JSON.stringify(inspected); result.stdout = { bytes, complete: true, sha256: sha(bytes) };
+      assert.equal(assessPredictionSolLowCanary(f.repin()).recommendation, "not-eligible");
+    });
+  for (const suffix of ["/0", "", "/28/garbage"])
+    test(`gate v6 reproduction: ${role} malformed member CIDR ${suffix || "missing"}`, async t => {
+      const f = await solLowAssessmentFixture(t), result = f.files["canary/mechanical-sidecars/000010-terminal.json"].result;
+      const inspected = JSON.parse(result.stdout.bytes), member = Object.values(inspected[0].Containers)[index] as any;
+      member.IPv4Address = `10.254.1.${index + 2}` + suffix;
+      const bytes = JSON.stringify(inspected); result.stdout = { bytes, complete: true, sha256: sha(bytes) };
+      assert.equal(assessPredictionSolLowCanary(f.repin()).recommendation, "not-eligible");
+    });
+}
+
+test("canonical profile mismatch fails before client invocation and retains mandatory uncancelled cleanup without retry", async t => {
+  const f = await solLowOperatorFixture(t); let clientCalls = 0;
+  const docker = predictionDockerFixture(async () => { clientCalls++; throw new Error("must not invoke client"); });
+  const executor: typeof docker.run = async (command, args, settings) => {
+    if (args[0] === "image") return { code: 0, timedOut: false, stdout: JSON.stringify([f.amendment.runtimeAcceptance.image]), stderr: "" };
+    const result = await docker.run(command, args, settings);
+    if (args[0] === "inspect") { const values = JSON.parse(result.stdout); values[0].State.UnknownProducerField = false; result.stdout = JSON.stringify(values); }
+    return { processId: 20000, ...result };
+  };
+  await assert.rejects(runStructuralSolLowOperator(f.request, executor), /container state: unexpected or missing field/);
+  assert.equal(clientCalls, 0);
+  const cleanup = docker.calls.filter(c => ["stop", "rm", "ps"].includes(c.args[0]!) || c.args[0] === "network" && ["rm", "ls"].includes(c.args[1]!));
+  assert.equal(cleanup.length, 10); assert.ok(cleanup.every(c => c.signal === undefined));
+  assert.ok(existsSync(join(f.options.directory, "canary/failure.json")));
+  const retained = JSON.parse(readFileSync(join(f.request.reportDirectory, "retained-inventory.json"), "utf8"));
+  assert.ok(retained.inventory.some((v: any) => v.path === "canary/mechanical-sidecars/000009-terminal.json"));
+  assert.equal(JSON.parse(readFileSync(join(f.options.directory, "canary-ledger-failure.json"), "utf8")).ledger.unstartedReviewAttempts, 64);
+  await assert.rejects(runStructuralSolLowOperator({ ...f.request, reportDirectory: join(f.root, "retry-blocked") }, executor), /ledger already exists/);
+  assert.equal(clientCalls, 0);
+});
+
+test("resealed assessor evidence reconciles command identities, both inspect graphs and final cleanup chronology", async t => {
+  const f = await solLowAssessmentFixture(t), original = structuredClone(f.files);
+  const editStream = (path: string, mutate: (value: any) => void) => {
+    const result = f.files[path].result, value = JSON.parse(result.stdout.bytes); mutate(value);
+    const bytes = JSON.stringify(value); result.stdout = { bytes, sha256: sha(bytes), complete: true };
+  };
+  const mutations: [string, () => void][] = [
+    ["network create ID", () => { const bytes = "a".repeat(64) + "\n"; f.files["canary/mechanical-sidecars/000001-terminal.json"].result.stdout = { bytes, complete: true, sha256: sha(bytes) }; }],
+    ["container launch ID", () => { const bytes = "b".repeat(64) + "\n"; f.files["canary/mechanical-sidecars/000003-terminal.json"].result.stdout = { bytes, complete: true, sha256: sha(bytes) }; }],
+    ["container order", () => editStream("canary/mechanical-sidecars/000009-terminal.json", v => v.reverse())],
+    ["coherent static address substitution", () => {
+      editStream("canary/mechanical-sidecars/000009-terminal.json", v => { const n = f.files["canary/invocation.json"].egress.network; v[0].NetworkSettings.Networks[n].IPAddress = "10.254.1.14"; });
+      editStream("canary/mechanical-sidecars/000010-terminal.json", v => { (Object.values(v[0].Containers)[0] as any).IPv4Address = "10.254.1.14/28"; });
+    }],
+    ["member endpoint identity", () => editStream("canary/mechanical-sidecars/000011-terminal.json", v => { (Object.values(v[0].Containers)[1] as any).EndpointID = "c".repeat(64); })],
+    ["container created before command", () => editStream("canary/mechanical-sidecars/000009-terminal.json", v => { v[0].Created = "1970-01-01T00:00:00.001Z"; })],
+    ["unclosed inspect interval", () => { f.files["canary/mechanical-sidecars/000009-terminal.json"].closedAt = 150; }],
+    ["setup after client", () => { f.files["canary/mechanical-client/000001-start.json"].startedAt = 20; }],
+    ["client absence after sidecar teardown", () => { f.files["canary/mechanical-client/000003-terminal.json"].closedAt = 250; }],
+    ["cleanup exceeds whole attempt", () => { f.files["canary/mechanical-sidecars/000023-terminal.json"].closedAt = 100000; }],
+    ["cleanup resource substitution", () => { f.files["canary/mechanical-sidecars/000014-start.json"].args[2] = "foreign"; }],
+  ];
+  for (const [label, mutate] of mutations) { Object.assign(f.files, structuredClone(original)); mutate(); const assessment = assessPredictionSolLowCanary(f.repin()); assert.equal(assessment.recommendation, "not-eligible", label); assert.ok(assessment.failure, label); }
 });

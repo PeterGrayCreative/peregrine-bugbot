@@ -2,7 +2,8 @@ import { array, digest, exact, hash, integer, same, sha, text, unique } from "./
 import { isAbsolute, join, normalize } from "node:path";
 import { renderContainedProviderArgs } from "./runtime-containment.js";
 import { renderMethodologySidecarArgs, methodologyGatewayEnvironment, methodologyForwarderEnvironment, GATEWAY_ENTRYPOINT, FORWARDER_ENTRYPOINT,
-  parseMethodologyEgressNetworkCreateArgs, parseMethodologyEgressExternalNetworkCreateArgs, parseMethodologyEgressContainerInspect, parseMethodologyEgressNetworkInspect } from "./methodology-egress.js";
+  METHODOLOGY_EGRESS_BASE_ENV, parseMethodologyEgressNetworkCreateArgs, parseMethodologyEgressExternalNetworkCreateArgs } from "./methodology-egress.js";
+import { validateMethodologyObservationGraph, type ObservationReceipt, type ContainerExpectation } from "./methodology-observation.js";
 import { PREDICTION_MCP_LIMITS } from "./prediction-runtime-attachment.js";
 import { canonicalJsonSha256 } from "./experiment.js";
 
@@ -73,6 +74,9 @@ export function validateMechanicalReceipts(artifacts: { path: string; bytes: str
   cleanup(removed, ["rm", "--force", lifecycle.clientContainer]);
   cleanup(absent, ["ps", "--all", "--quiet", "--filter", `name=^/${lifecycle.clientContainer}$`], true);
   const sidecars = channels.sidecars;
+  const deadline = get("canary/deadline/terminal.json");
+  fail(sidecars.at(-1).terminal.closedAt - sidecars[0].start.startedAt <= deadline.elapsedMs + 1, "mechanical chronology exceeds whole-attempt duration");
+  fail(absent.terminal.closedAt <= sidecars.find(r => r.start.cleanup)?.start.startedAt, "sidecar teardown preceded client cleanup/absence");
   const only = (predicate: (r: any) => boolean) => { const rows = sidecars.filter(predicate); fail(rows.length === 1, "mechanical sidecar operation missing or duplicated"); return rows[0]; };
   const named = [egress.gateway.name, egress.forwarder.name], networks = [egress.network, egress.externalNetwork];
   validateSidecarPreparation(sidecars.filter(r => !r.start.cleanup), invocation, client.start.startedAt);
@@ -114,15 +118,17 @@ function validateSidecarPreparation(rows: any[], invocation: any, clientStarted:
   same(e.mcpLimitsSha256, canonicalJsonSha256(limits), "forwarder budget binding drift");
   const environments = [methodologyGatewayEnvironment(e.providerAuthorities), methodologyForwarderEnvironment(endpoint.slice(-64), e.hostMcpPort, limits)];
   for (const r of rows) same([r.start.stdinSha256, r.start.deadlineAttached, r.start.cleanup, r.terminal.closedAt <= clientStarted], [null, true, false, true], "sidecar preparation lifecycle gap");
+  const creates: any[] = [], launches: any[] = [];
   let cursor = 0;
   const take = (args: string[]) => { const row = rows[cursor++]; fail(row, "missing sidecar preparation receipt"); same(row.args, args, "complete sidecar preparation argv/order drift"); return row; };
   for (const [name, subnet, internal] of [[e.externalNetwork, e.externalNetworkSubnet, false], [e.network, e.networkSubnet, true]] as const) {
     const args = ["network", "create", ...(internal ? ["--internal"] : []), "--ipv6=false", "--driver", "bridge", "--subnet", subnet, name];
-    same((internal ? parseMethodologyEgressNetworkCreateArgs : parseMethodologyEgressExternalNetworkCreateArgs)(take(args).args), { name, subnet, internal }, "network identity drift");
+    const row = take(args); creates.push(row);
+    same((internal ? parseMethodologyEgressNetworkCreateArgs : parseMethodologyEgressExternalNetworkCreateArgs)(row.args), { name, subnet, internal }, "network identity drift");
   }
   for (let i = 0; i < 2; i++) {
     same([e[i ? "forwarder" : "gateway"].entrypoint, e[i ? "forwarder" : "gateway"].alias], [entrypoints[i], aliases[i]], "sidecar identity drift");
-    take(renderMethodologySidecarArgs(names[i], e.externalNetwork, invocation.providerImage, entrypoints[i]!, environments[i]!, i ? "host.docker.internal:host-gateway" : undefined));
+    launches.push(take(renderMethodologySidecarArgs(names[i], e.externalNetwork, invocation.providerImage, entrypoints[i]!, environments[i]!, i ? "host.docker.internal:host-gateway" : undefined)));
   }
   for (let i = 0; i < 2; i++) {
     let last: any;
@@ -132,12 +138,16 @@ function validateSidecarPreparation(rows: any[], invocation: any, clientStarted:
     fail(last.result.stdout.split("\n").some((line: string) => { try { const v = JSON.parse(line); return v.status === "ready" && v.protocol === protocol && v.host === "0.0.0.0" && v.port === (i ? 8082 : 8081) && (i ? v.ready === true : v.ready === undefined); } catch { return false; } }), "sidecar readiness missing");
   }
   for (let i = 0; i < 2; i++) take(["network", "connect", "--alias", aliases[i]!, e.network, names[i]]);
-  const inspected = JSON.parse(take(["inspect", ...names]).result.stdout); fail(Array.isArray(inspected) && inspected.length === 2, "sidecar inspect closure missing");
-  for (let i = 0; i < 2; i++) {
-    parseMethodologyEgressContainerInspect(JSON.stringify(inspected[i]), { name: names[i], network: e.network, externalNetwork: e.externalNetwork, subnet: e.networkSubnet,
-      externalSubnet: e.externalNetworkSubnet, image: invocation.providerImage, entrypoint: entrypoints[i]!, alias: aliases[i]!, env: environments[i]!, ...(i ? { addHost: "host.docker.internal:host-gateway" } : {}) });
-  }
-  for (const [network, subnet, internal] of [[e.network, e.networkSubnet, true], [e.externalNetwork, e.externalNetworkSubnet, false]] as const)
-    parseMethodologyEgressNetworkInspect(take(["network", "inspect", network]).result.stdout, { name: network, network, subnet, sidecars: names, internal });
+  const inspectedRow = take(["inspect", ...names]), inspected = JSON.parse(inspectedRow.result.stdout);
+  fail(Array.isArray(inspected) && inspected.length === 2, "sidecar inspect closure missing");
+  const networkRows = [e.network, e.externalNetwork].map(network => take(["network", "inspect", network]));
+  const networks = networkRows.map(row => { const values = JSON.parse(row.result.stdout); fail(Array.isArray(values) && values.length === 1, "exact network inspect required"); return values[0]; });
+  const receipt = (row: any): ObservationReceipt => ({ startedAt: row.start.startedAt, closedAt: row.terminal.closedAt, stdout: row.result.stdout });
+  const helper = (i: 0 | 1): ContainerExpectation => ({ name: names[i], network: e.network, externalNetwork: e.externalNetwork, subnet: e.networkSubnet, externalSubnet: e.externalNetworkSubnet,
+    image: invocation.providerImage, entrypoint: entrypoints[i]!, alias: aliases[i]!, env: environments[i]!, baseEnv: METHODOLOGY_EGRESS_BASE_ENV,
+    ...(i ? { addHost: "host.docker.internal:host-gateway" } : {}) });
+  const helpers: [ContainerExpectation, ContainerExpectation] = [helper(0), helper(1)];
+  validateMethodologyObservationGraph({ containers: inspected, networks, helpers, networkCreates: [receipt(creates[1]), receipt(creates[0])],
+    launches: [receipt(launches[0]), receipt(launches[1])], containerInspect: receipt(inspectedRow), networkInspects: [receipt(networkRows[0]), receipt(networkRows[1])] });
   same(cursor, rows.length, "extra sidecar preparation operation");
 }

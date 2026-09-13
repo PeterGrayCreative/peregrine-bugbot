@@ -856,3 +856,16 @@ defaults, including unknown/missing forms and resealed endpoint attacks.
 V4 and all predecessor evidence remain unchanged. No runtime/provider operation
 or attempt occurred; 64 slots remain unstarted and authorization/readiness stay
 false. A fresh independent exact-freeze review remains required.
+
+## 2026-09-13: canonical observed-state graph, pending re-review
+
+The V5 gate found address/identity/lifecycle contradictions that selected-field
+checks missed. The [V6 correction](../validation/2026-09-13-prediction-sol-low-operator-observation-graph.md)
+uses one exact-schema and cross-record graph for runtime preparation and offline
+assessment, with preserved reproductions and exhaustive nested-key mutations.
+Only archived create/inspect fields and image metadata are historical proof;
+the full running/network profile is prospective and must fail closed on real
+producer mismatch, with no same-attempt relaxation or retry. All predecessors
+are preserved. No runtime/provider operation or attempt occurred; 64 review
+slots remain unstarted and authorization/readiness remain false. Fresh review
+of the exact successor freeze remains required.
