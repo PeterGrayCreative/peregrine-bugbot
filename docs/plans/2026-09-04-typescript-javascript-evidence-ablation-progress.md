@@ -597,3 +597,24 @@ collection rules, durable audit provenance, two terminal paths, truthful
 completion rule, and external-execution authorization boundary. The gate is
 recorded in the [Section 1 Astra medium gate](../validation/2026-09-12-section-1-astra-medium-gate.md).
 This approval does not admit corpus cases or authorize provider execution.
+
+Section 2 is now in progress under the durable orchestration rule recorded in
+the correction goal: Astra medium owns judgment-heavy implementation, and a
+different fresh Astra medium agent must perform the section gate. Luna is
+limited to bounded mechanical work whose actual diff and evidence are
+independently verified. This change responds to repeated successor-packet
+redesign and does not itself approve the current generated packet, admit any
+case, or authorize provider execution.
+
+Section 2 completed after an Astra medium implementation pass and a separate
+Astra medium quality gate. The first gate rejected the packet because three
+final PR revisions were mislabeled as recorded review opportunities, AI
+proposal provenance was incomplete, and rendered human-decision fields were
+not semantically protected. Those defects were corrected and the same
+independent gate approved the rebuilt packet. The private evidence repository
+stores the additive successor at commit `56e2191`; its 61-file packet aggregate
+is `d22a47c82ce3168921df0f48d81c01210b7c4db41885963578647a2764f4d802`.
+Post-commit validation passed with 22/22 semantic tests under Node 22. This is
+repair readiness only: no case was admitted, partitioned, run through a
+provider, or used for an efficacy claim. See the
+[Section 2 Astra medium gate](../validation/2026-09-12-section-2-astra-medium-gate.md).
