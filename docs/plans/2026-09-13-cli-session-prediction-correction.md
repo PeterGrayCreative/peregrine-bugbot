@@ -107,3 +107,21 @@ Node 22 typecheck, all 35 prediction tests and the same 61 affected tests pass.
 Private `cli-session-correction-v3/` retains the rejected test output and adds a
 durable deferred-deadline probe and successor source-bound freeze. No scientific
 rule, original limit, production route or readiness condition changed.
+
+## Execution rejection evidence successor
+
+Independent review rejected public `a7b60b7` / private `9069e65`: a rejected
+contained execution lost its primary/cleanup errors and could certify teardown
+despite failed removal and a surviving container. Three new regressions failed
+on that preserved version. The guard now durably records rejected execution,
+distinguishes the containment aggregate's primary and cleanup errors, and
+rethrows the original rejection. Successful outer teardown cannot erase a known
+cleanup failure; unproven cleanup stops the batch. Nested diagnostics are capped
+at 16 entries / 500 characters each, use the existing secret-pattern sanitizer,
+and fail closed for unknown aggregates or incomplete diagnostic traversal.
+
+Node 22 typecheck, all 37 prediction tests and 62 affected tests pass, including
+the actual containment wrapper with an injected executor, plain rejection, and
+nested/redacted failure evidence. Private `cli-session-correction-v4/` adds the
+rejected baseline, durable rejection probes and successor freeze. No provider,
+image, production-route, scientific-registration or readiness change was made.

@@ -146,3 +146,37 @@ test("a blocked event loop past the 25ms deadline cancels before the deferred ru
   assert.equal(terminal.events.some(event => event.kind === "exec-closed"), false);
   assert.deepEqual(JSON.parse(readFileSync(join(directory, "terminal.json"), "utf8")), terminal);
 });
+
+test("plain execution rejection remains durable and propagates unchanged after the caller catches it", async t => {
+  const root = mkdtempSync(join(tmpdir(), "prediction-cli-rejection-")); t.after(() => rmSync(root, { recursive: true, force: true }));
+  const directory = join(root, "evidence"), primary = new Error("primary failure " + "x".repeat(2000)); let cleanups = 0;
+  const guard = createPredictionCliDeadline({ directory, attemptId: "plain-rejection", closeReads() {}, teardown: async () => { cleanups++; } });
+  await assert.rejects(guard.run(async () => { throw primary; }, "synthetic-rejection", []), error => error === primary);
+  const rejectedEvent = JSON.parse(readFileSync(join(directory, "000002.json"), "utf8"));
+  assert.equal(rejectedEvent.kind, "exec-rejected"); assert.equal(rejectedEvent.detail.primaryError, primary.message.slice(0, 500));
+  const first = guard.finish(), second = guard.finish(); assert.strictEqual(first, second);
+  const terminal = await first;
+  assert.equal(terminal.executionError!.primaryError, primary.message.slice(0, 500));
+  assert.equal(terminal.cleanupError, null); assert.equal(terminal.teardownCompleted, true); assert.equal(cleanups, 1);
+  assert.deepEqual(JSON.parse(readFileSync(join(directory, "terminal.json"), "utf8")), terminal);
+});
+
+test("nested aggregate rejection has bounded sanitized evidence and stops the batch on unproven cleanup", async t => {
+  const root = mkdtempSync(join(tmpdir(), "prediction-cli-nested-rejection-")); t.after(() => rmSync(root, { recursive: true, force: true }));
+  const directory = join(root, "evidence"), secret = "sk-proj-" + "a".repeat(32);
+  const nested = new AggregateError([new Error("primary " + secret), new Error("nested removal failure")], "evaluation operation and cleanup both failed");
+  const failure = new AggregateError([nested, ...Array.from({ length: 30 }, () => new Error("cleanup " + "x".repeat(2000)))], "evaluation operation and cleanup both failed");
+  const guard = createPredictionCliDeadline({ directory, attemptId: "nested-rejection", closeReads() {}, teardown: async () => { throw new Error("outer teardown " + secret); } });
+  await assert.rejects(guard.run(async () => { throw failure; }, "synthetic-rejection", []), error => error === failure);
+  const terminal = await guard.finish(), raw = readFileSync(join(directory, "terminal.json"), "utf8");
+  assert.equal(terminal.teardownCompleted, false); assert.notEqual(terminal.cleanupError, null);
+  assert.equal(terminal.executionError!.cleanupUnproven, true); assert.equal(terminal.executionError!.truncated, true);
+  assert.ok(terminal.executionError!.diagnostics.length <= 16);
+  assert.ok(terminal.executionError!.diagnostics.every(item => item.message.length <= 500));
+  assert.match(terminal.executionError!.primaryError, /omitted/); assert.ok(terminal.cleanupError!.length <= 500);
+  for (const path of readdirSync(directory)) assert.equal(readFileSync(join(directory, path), "utf8").includes(secret), false);
+  assert.ok(raw.length < 20000);
+  const r = registration(), batch = assessPredictionCliBatch(r, [terminalForBatch(r.schedule[0]!.id)]);
+  function terminalForBatch(attemptId: string): PredictionCliTerminal { return { attemptId, status: "failed", events: events(), completeEventStream: true, rawOutput: null, cleanupProven: terminal.teardownCompleted, deadlineExceeded: terminal.deadlineExceeded }; }
+  assert.equal(batch.stopReason, "cleanup-unproven"); assert.equal(batch.nextAttemptId, null);
+});
