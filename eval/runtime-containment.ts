@@ -379,6 +379,7 @@ export function createContainedProviderExec(options: ContainedProviderOptions): 
       parseContainedProviderArgs(args, options.runner, options.providerAccess, hostIdentity(), options.profile ?? "review", resolveMethodologyEgress(options));
       result = await run("docker", args, {
         timeoutMs: execOptions.timeoutMs,
+        ...(execOptions.deadlineSignal ? { deadlineSignal: execOptions.deadlineSignal } : {}),
         stdin: execOptions.stdin,
         env: dockerClientEnvironment(options, true),
         inheritEnv: false,

@@ -21,6 +21,7 @@ import {
 } from "../eval/methodology-egress.js";
 import { parseMatrixRunManifest } from "../eval/artifacts.js";
 import type { exec } from "../src/util/exec.js";
+import { createPredictionCliDeadline } from "../eval/prediction-cli-deadline.js";
 
 const image = ACCEPTED_EVAL_RUNTIME_IMAGE;
 
@@ -371,6 +372,21 @@ test("timed-out provider containers are force-removed and checked for survivors"
   assert.deepEqual(calls.map((args) => args.slice(0, 2)), [["run", "--name"], ["rm", "--force"], ["ps", "--all"]]);
 });
 
+test("outer attempt deadline reaches provider exec but cannot cancel containment cleanup", async () => {
+  const paths = roots(); process.env.OPENAI_API_KEY = "synthetic-only";
+  const deadline = new AbortController(), signals: (AbortSignal | undefined)[] = [];
+  const fake: typeof exec = async (_cmd, args, options = {}) => {
+    signals.push(options.deadlineSignal);
+    if (args[0] === "run") { deadline.abort(); return { stdout: "retained partial", stderr: "", code: null, timedOut: true }; }
+    return { stdout: "", stderr: "", code: 0, timedOut: false };
+  };
+  const run = createContainedProviderExec({ runner: "codex", providerAccess: "api-key", image, ...paths, run: fake });
+  const result = await run("codex", codexCommand(paths), { inheritEnv: false, deadlineSignal: deadline.signal });
+  assert.equal(result.stdout, "retained partial"); assert.equal(result.timedOut, true);
+  assert.deepEqual(signals, [deadline.signal, undefined, undefined]);
+  assert.equal(result.cleanupErrors, undefined);
+});
+
 test("provider and version probes preserve primary failures while proving cleanup", async () => {
   const paths = roots(); process.env.OPENAI_API_KEY = "x";
   const fake = async (_cmd: string, args: string[]) => {
@@ -391,6 +407,30 @@ test("provider and version probes preserve primary failures while proving cleanu
     assert.equal(error.errors.length, 3);
     return true;
   });
+});
+
+test("deadline terminal preserves contained execution rejection and its known cleanup failures", async () => {
+  const paths = roots(); process.env.OPENAI_API_KEY = "x";
+  const primary = new Error("primary execution sentinel"); let cleanups = 0;
+  const fake: typeof exec = async (_cmd, args) => {
+    if (args[0] === "run") throw primary;
+    if (args[0] === "rm") return { stdout: "", stderr: "rm failed", code: 1, timedOut: false };
+    return { stdout: "container-id\n", stderr: "", code: 0, timedOut: false };
+  };
+  const provider = createContainedProviderExec({ runner: "codex", providerAccess: "api-key", image, ...paths, run: fake });
+  const guard = createPredictionCliDeadline({ directory: join(paths.root, "deadline"), attemptId: "contained-rejection", closeReads() {}, teardown: async () => { cleanups++; } });
+  await assert.rejects(guard.run(provider, "codex", codexCommand(paths), { inheritEnv: false }), (error: unknown) => {
+    assert.ok(error instanceof AggregateError); assert.strictEqual(error.errors[0], primary); assert.equal(error.errors.length, 3); return true;
+  });
+  const first = guard.finish(), second = guard.finish(); assert.strictEqual(first, second);
+  const terminal = await first;
+  assert.equal(terminal.teardownCompleted, false); assert.equal(cleanups, 1);
+  assert.equal(terminal.executionError!.primaryError, "primary execution sentinel");
+  assert.deepEqual(terminal.executionError!.diagnostics.filter(item => item.role === "cleanup").map(item => item.message), [
+    "force-removing evaluation container failed", "evaluation container survived force-removal",
+  ]);
+  assert.match(terminal.cleanupError!, /force-removing/);
+  assert.equal(terminal.events.filter(event => event.kind === "exec-rejected").length, 1);
 });
 
 test("returned provider timeouts retain their result when cleanup also fails", async () => {
