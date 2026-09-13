@@ -7,6 +7,8 @@ export interface ExecResult {
   timedOut: boolean;
   /** Secondary outer-containment cleanup failures; the provider result remains primary. */
   cleanupErrors?: readonly string[];
+  /** Opt-in mechanical observation; unavailable if no child was spawned. */
+  processId?: number | null;
 }
 
 /** Run a subprocess, capture output, kill on timeout. Never throws on non-zero exit. */
@@ -21,6 +23,7 @@ export function exec(
     /** Optional outer whole-attempt deadline; cleanup must use a separate signal. */
     deadlineSignal?: AbortSignal;
     stdin?: string;
+    captureProcessId?: boolean;
   } = {},
 ): Promise<ExecResult> {
   return new Promise((res) => {
@@ -42,7 +45,7 @@ export function exec(
       settled = true;
       if (timer) clearTimeout(timer);
       opts.deadlineSignal?.removeEventListener("abort", abortAtDeadline);
-      res(result);
+      res(opts.captureProcessId ? { ...result, processId: child.pid ?? null } : result);
     };
     const abortAtDeadline = () => { timedOut = true; child.kill("SIGKILL"); };
     const timer = opts.timeoutMs

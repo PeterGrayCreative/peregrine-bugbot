@@ -806,3 +806,13 @@ preauthorization, command and assessor remain preserved. Node22 typecheck and
 73 prediction, 13 HTTP and 101 affected tests pass. No provider/client/image run
 occurred; 64 review slots and the new canary remain unstarted, pending a fresh
 independent gate. No batch authorization or readiness is inferred.
+
+## 2026-09-13: Sol-low operator and post-attempt assessment, pending gate
+
+The [operator checkpoint](../validation/2026-09-13-prediction-sol-low-operator.md)
+preserves the pre-dispatch stop and relayed independent PASS, adds preflight-first
+one-shot dispatch through the existing bridge, and supplies a separate low-route
+assessor. Mechanical evidence is retained; missing independent observations fail
+closed. All prior freezes and failures remain immutable. The canary and all 64
+review slots remain unstarted; no provider, client, Docker/image operation or
+batch authorization occurred. A fresh exact-freeze gate remains required.

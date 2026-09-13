@@ -7,6 +7,7 @@ import { exec } from "../src/util/exec.js";
 import type { ExperimentProviderAccess, ProviderExec, RunnerName } from "../src/types.js";
 import { validatePredictionCliCommand } from "./prediction-cli-command.js";
 import { validatePredictionSolLowCanaryCommand } from "./prediction-sol-low-command.js";
+import { observePredictionExec } from "./prediction-mechanical-evidence.js";
 import {
   assertMethodologyEgressLaunchCapability,
   METHODOLOGY_EGRESS_RUNTIME_IMAGE,
@@ -41,6 +42,7 @@ const CODEX_HOME_TARGET = "/home/peregrine/.codex";
 const METHODOLOGY_MCP_FORWARDER = "mcp-forwarder:8082";
 
 export interface ContainedProviderOptions {
+  mechanicalEvidenceDirectory?: string;
   runner: Exclude<RunnerName, "mock">;
   providerAccess: Exclude<ExperimentProviderAccess, "not-applicable">;
   checkoutDir: string;
@@ -143,6 +145,12 @@ function assertConfiguredAccess(options: Pick<ContainedProviderOptions, "runner"
   const configured = process.env[SESSION_ENV[options.runner]];
   if (!configured) throw new Error(`selected ${options.runner} CLI session is unavailable`);
   assertSanitizedSessionDirectory(safeDirectory(configured, `${options.runner} CLI session`), options.runner);
+}
+
+/** Metadata-only preflight: never reads credential bytes or starts a process. */
+export function preflightPredictionCliSession() {
+  assertConfiguredAccess({ runner: "codex", providerAccess: "cli-session" });
+  return { providerAccess: "cli-session", directory: realpathSync(process.env.PEREGRINE_CODEX_SESSION_DIR!), credentialContentsRead: false };
 }
 
 /** Strict parser used by tests and immediately before every provider launch. */
@@ -374,7 +382,7 @@ function validateMethodologyCodexCommand(
 }
 
 export function createContainedProviderExec(options: ContainedProviderOptions): ProviderExec {
-  const run = options.run ?? exec;
+  const run = options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.run ?? exec) : options.run ?? exec;
   return async (command, commandArgs, execOptions = {}) => {
     if (execOptions.inheritEnv !== false) throw new Error("contained provider execution requires an explicit isolated environment");
     const containerName = `peregrine-eval-${randomUUID()}`;

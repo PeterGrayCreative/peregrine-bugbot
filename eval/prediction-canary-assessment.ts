@@ -10,6 +10,8 @@ import { PREDICTION_CLI_BRIDGE_POLICY } from "./prediction-cli-bridge.js";
 import { predictionCliCommand } from "./prediction-cli-command.js";
 import { parsePredictionReadMcpAuditSnapshot } from "./methodology-read-mcp.js";
 import { METHODOLOGY_RUNTIME_IMAGE_ACCEPTANCE } from "./methodology-runtime-image.js";
+import { bindSolLowOperator, type CanaryTrustedBytes } from "./prediction-sol-low-operator-contract.js";
+import { predictionSolLowCanaryCommand } from "./prediction-sol-low-command.js";
 // @ts-expect-error Pinned built-in ESM runtime parser has no declaration file.
 import { parseAuditSnapshot } from "../container/eval-runtime/egress-gateway.mjs";
 // @ts-expect-error Pinned built-in ESM runtime parser has no declaration file.
@@ -28,6 +30,8 @@ export const CANARY_EVIDENCE_PATHS = ["bridge.json", "canary/start.json", "canar
   "observer/lifecycle.json", "observer/absence.json", "observer/tool-calls.json", "observer/batch-before.json", "observer/batch-after.json", "observer/runtime.json",
   "observer/gateway-audit.json", "observer/forwarder-audit.json"] as const;
 const route = { model: "gpt-5.6-sol", effort: "high", providerAccess: "cli-session" };
+export interface PredictionSolLowAssessmentInput extends PredictionCanaryAssessmentInput { operatorFreeze: CanaryTrustedBytes; operatorGate: CanaryTrustedBytes }
+export const SOL_LOW_OPERATOR_EVIDENCE_PATHS = ["operator/preflight.json", "operator/dispatch.json", "operator/terminal.json", "operator/retained-inventory.json", "canary-ledger-start.json", "canary-ledger-terminal.json"] as const;
 const fail = (condition: unknown, label: string) => { if (!condition) throw new Error(label); };
 const record = (value: unknown): any => { fail(value && typeof value === "object" && !Array.isArray(value), "record required"); return value; };
 function trusted(input: TrustedBytes | null, kind: string): any {
@@ -42,12 +46,22 @@ const seal = (value: any, field = "sha256") => { const { [field]: expected, ...b
  * Semantic exposure/leakage observations require an independently trusted
  * observer receipt. A self-hashed model answer cannot satisfy this contract. */
 export function assessPredictionCanary(input: PredictionCanaryAssessmentInput) {
+  return assessCanaryEvidence(input);
+}
+/** Separate low-route decision; never promotes an infrastructure canary into a
+ * high-route batch-eligibility result or rewrites any submitted evidence. */
+export function assessPredictionSolLowCanary(input: PredictionSolLowAssessmentInput) {
+  return assessCanaryEvidence(input, input);
+}
+function assessCanaryEvidence(input: PredictionCanaryAssessmentInput, lowInput?: PredictionSolLowAssessmentInput) {
   const checks: string[] = [], limitations = ["No batch authorization or dispatch is granted.", "Normal completion is not an elapsed timeout or forced-termination observation."];
   let binding: unknown = null, tokens: unknown = null, identity: unknown = null;
   try {
     text(input.runId);
     const r4 = trusted(input.r4Freeze, "prediction-r4-preauthorization-freeze-v1"), bridge = trusted(input.bridgeFreeze, "prediction-cli-bridge-freeze-v1"), runtime = trusted(input.runtimeFreeze, "prediction-runtime-acceptance-freeze-v1");
-    const pack = r4.package, p = pack.preauthorization, canary = pack.canary, first = p.attempts[0];
+    const operator = lowInput ? bindSolLowOperator(lowInput.operatorFreeze, lowInput.operatorGate) : null;
+    const pack = r4.package, p = pack.preauthorization, originalCanary = pack.canary, first = p.attempts[0];
+    let canary = originalCanary;
     same([input.registration.expectedSha256, input.mountManifest.expectedSha256], [p.authoritySha256.registration, p.authoritySha256.mounts], "original registration or mount authority drift");
     const registration = bindPredictionRegistration(input.registration.bytes, input.registration.expectedSha256);
     const mounts = bindPredictionMounts(input.mountManifest.bytes, input.mountManifest.expectedSha256, registration), mount = mounts.find(m => m.caseId === first.caseId)!;
@@ -69,38 +83,50 @@ export function assessPredictionCanary(input: PredictionCanaryAssessmentInput) {
     same([p.route.model, p.route.effort, p.route.providerAccess, p.caps.hard.wallMs, p.caps.hard.readCalls, p.caps.hard.returnedBytes], [route.model, route.effort, route.providerAccess, 1200000, 100, 2000000], "registered route/cap mismatch");
     fail(p.attempts.length === 64 && p.attempts.every((a: any) => a.status === "unstarted" && a.output === null && a.servedIdentity === null), "review-slot mutation");
     checks.push("frozen-authorities");
-    const observer = trusted(input.observer, "authenticated-prediction-canary-observer-v1");
+    if (operator) {
+      same([operator.options.freezeBytes, operator.options.freezeSha256, operator.options.runId], [input.r4Freeze.bytes, input.r4Freeze.expectedSha256, input.runId], "operator R4/run mismatch");
+      same(operator.amendment.predecessor.bridgeFreezeSha256, input.bridgeFreeze.expectedSha256, "operator predecessor bridge mismatch");
+      canary = { ...operator.amendment, outputPolicy: originalCanary.outputPolicy };
+    }
+    const selectedRoute = operator ? { ...route, effort: "low" } : route;
+    const selectedPolicy = operator?.amendment.policy ?? bridge.bridgePolicy, selectedSource = operator?.source ?? bridge.source;
+    const observer = trusted(input.observer, operator ? "authenticated-prediction-sol-low-canary-observer-v1" : "authenticated-prediction-canary-observer-v1");
     exact(observer, ["kind", "binding", "observerReference", "observerSessionId", "modelSessionId", "reviewSessionId", "inventory", "review"], "observer receipt");
     for (const key of ["observerReference", "observerSessionId", "modelSessionId", "reviewSessionId"]) text(observer[key]);
     unique([observer.observerSessionId, observer.modelSessionId, observer.reviewSessionId]);
     const bindings = { runId: input.runId, freezeSha256: input.r4Freeze.expectedSha256, packageSha256: pack.sha256, canarySha256: canary.sha256,
-      sourceSha256: bridge.source.sourceSha256, policySha256: bridge.bridgePolicySha256, executionClass: "provider" };
+      sourceSha256: selectedSource.sourceSha256, policySha256: digest(selectedPolicy), executionClass: "provider",
+      ...(operator ? { amendmentFreezeSha256: operator.bridgeFreeze.expectedSha256, userAuthorizationSha256: canary.userAuthorization.sha256,
+        predecessorCanarySha256: canary.predecessor.canarySha256, predecessorBridgeFreezeSha256: canary.predecessor.bridgeFreezeSha256, predecessorAssessmentFreezeSha256: canary.predecessor.assessmentFreezeSha256 } : {}) };
     const scope = { ...bindings, purpose: "canary", attemptId: canary.canaryId, sourceAttemptId: first.id, promptSha256: canary.promptSha256,
-      mountSha256: first.mountSha256, rawScopeSha256: first.rawScopeSha256, ...route };
-    binding = { ...scope, bridgeFreezeSha256: input.bridgeFreeze.expectedSha256, runtimeFreezeSha256: input.runtimeFreeze.expectedSha256 };
+      mountSha256: first.mountSha256, rawScopeSha256: first.rawScopeSha256, ...selectedRoute };
+    binding = { ...scope, bridgeFreezeSha256: input.bridgeFreeze.expectedSha256, runtimeFreezeSha256: input.runtimeFreeze.expectedSha256,
+      ...(operator ? { operatorFreezeSha256: lowInput!.operatorFreeze.expectedSha256, operatorGateSha256: lowInput!.operatorGate.expectedSha256 } : {}) };
     same(observer.binding, binding, "stale or cross-run observer binding");
-    fail(input.artifacts.length === CANARY_EVIDENCE_PATHS.length, "complete exact artifact inventory required");
-    unique(input.artifacts.map(a => a.path)); same(input.artifacts.map(a => a.path).sort(), [...CANARY_EVIDENCE_PATHS].sort(), "unexpected or missing evidence path");
+    const requiredPaths = [...CANARY_EVIDENCE_PATHS, ...(operator ? SOL_LOW_OPERATOR_EVIDENCE_PATHS : [])];
+    fail(input.artifacts.length === requiredPaths.length, "complete exact artifact inventory required");
+    unique(input.artifacts.map(a => a.path)); same(input.artifacts.map(a => a.path).sort(), [...requiredPaths].sort(), "unexpected or missing evidence path");
     const inventory = input.artifacts.map(a => { fail(typeof a.bytes === "string" && Buffer.byteLength(a.bytes) <= 16_777_216, "artifact byte limit"); return { path: a.path, bytes: Buffer.byteLength(a.bytes), sha256: sha(a.bytes) }; }).sort((a, b) => a.path.localeCompare(b.path));
     same(inventory, observer.inventory, "authenticated inventory mismatch");
     same(observer.review, { inventorySha256: digest(inventory), completeCapabilityExposureReviewed: true, leakageAbsent: true, unsupportedIdentityClaimsAbsent: true, noScoredReview: true }, "independent semantic/capability review absent or failed");
     const raw = (path: string) => input.artifacts.find(a => a.path === path)!.bytes, get = (path: string): any => record(JSON.parse(raw(path)));
     const bridgeRecord = get("bridge.json"), start = get("canary/start.json"), invocation = get("canary/invocation.json"), terminal = get("canary/terminal.json"), execution = get("canary/execution.json");
     for (const value of [bridgeRecord, start, terminal]) same(value.bindings, bindings, "run binding mismatch");
-    same(bridgeRecord.source, bridge.source, "stale bridge bytes"); same(bridgeRecord.policy, bridge.bridgePolicy, "run policy drift");
+    same(bridgeRecord.source, selectedSource, "stale bridge bytes"); same(bridgeRecord.policy, selectedPolicy, "run policy drift");
     for (const value of [start, invocation, terminal]) same(value.scope, scope, "attempt scope mismatch");
     same(start.approval.scope, scope, "approval scope mismatch"); same(start.approval.permission, "one-provider-cli-attempt", "synthetic or unauthorized attempt");
     hash(start.approval.approvalEvidenceSha256); hash(start.approval.independentGateSha256);
+    if (operator) validateLowOperatorRecords(operator, lowInput!, get, raw, start, scope, bindings, terminal);
     same(invocation.providerImage, runtime.acceptance.image, "client image mismatch"); same(invocation.assets, [], "ambient canary assets exposed");
     same(invocation.prompt, canary.prompt, "canary prompt drift"); same(sha(invocation.prompt), canary.promptSha256, "canary prompt seal mismatch");
     const urlArg = array(invocation.args).map(text).find(v => v.startsWith("mcp_servers.source_read.url="));
     fail(urlArg, "scoped MCP endpoint missing"); const url = JSON.parse(urlArg!.slice("mcp_servers.source_read.url=".length));
-    same(invocation.args, predictionCliCommand(url, false), "requested CLI route/configuration mismatch");
+    same(invocation.args, operator ? predictionSolLowCanaryCommand(url) : predictionCliCommand(url, false), "requested CLI route/configuration mismatch");
     same([invocation.attachment.inputDigest, invocation.attachment.attemptId, invocation.attachment.registrationSha256, invocation.attachment.mountManifestSha256, invocation.attachment.toolDefinitionsSha256],
       [first.mountSha256, first.id, p.authoritySha256.registration, p.authoritySha256.mounts, digest(p.toolBinding.definitions)], "reader attachment mismatch");
     const egress = invocation.egress; seal(egress, "attestationSha256");
     same([egress.executionClass, egress.image, egress.providerAuthorities, egress.topology], ["provider", runtime.acceptance.image, bridge.bridgePolicy.providerAuthorities, "gateway-and-forwarder-only-before-provider"], "egress scope mismatch");
-    same(get("observer/runtime.json"), { image: runtime.acceptance.image, tools: runtime.tools, sourceSha256: bridge.source.sourceSha256, configurationSupported: true, modelSessionId: observer.modelSessionId }, "client/runtime/tool bytes or support unknown");
+    same(get("observer/runtime.json"), { image: runtime.acceptance.image, tools: runtime.tools, sourceSha256: selectedSource.sourceSha256, configurationSupported: true, modelSessionId: observer.modelSessionId }, "client/runtime/tool bytes or support unknown");
     same(get("observer/batch-before.json"), p.batch, "review ledger changed before canary"); same(get("observer/batch-after.json"), p.batch, "canary mutated review ledger");
     checks.push("exact-run-and-artifacts");
     const catalog = get("observer/catalog.json"); exact(catalog, ["modelSessionId", "complete", "repositoryTools", "bookkeeping"], "capability catalog");
@@ -127,7 +153,7 @@ export function assessPredictionCanary(input: PredictionCanaryAssessmentInput) {
     same([terminal.providerCalls, terminal.failure, terminal.disallowed, terminal.terminal.status, terminal.terminal.completeEventStream, terminal.terminal.rawOutput, terminal.terminal.cleanupProven, terminal.terminal.deadlineExceeded], [1, null, [], "completed", true, output, true, false], "terminal failure or partial evidence");
     checks.push("observed-client-and-capabilities");
     const observedIdentity = get("observer/identity.json"); exact(observedIdentity, ["modelSessionId", "requested", "observedRequest", "servedModel", "servedVersion", "provenance", "providerEvidenceReference"], "identity receipt");
-    same([observedIdentity.modelSessionId, observedIdentity.requested, observedIdentity.observedRequest], [observer.modelSessionId, route, { model: route.model, effort: route.effort }], "requested Sol/high not observed");
+    same([observedIdentity.modelSessionId, observedIdentity.requested, observedIdentity.observedRequest], [observer.modelSessionId, selectedRoute, { model: selectedRoute.model, effort: selectedRoute.effort }], "requested Sol route not observed");
     fail(observedIdentity.servedModel === null || observedIdentity.servedModel === route.model, "known served-model mismatch");
     if (observedIdentity.servedModel === null && observedIdentity.servedVersion === null) { same([observedIdentity.provenance, observedIdentity.providerEvidenceReference], ["unavailable", null], "untrusted identity claim"); limitations.push("Exact served model/version remain unavailable under the preregistered CLI contract."); }
     else { same(observedIdentity.provenance, "independently-authenticated-provider-metadata", "untrusted positive identity claim"); text(observedIdentity.providerEvidenceReference); if (observedIdentity.servedVersion !== null) text(observedIdentity.servedVersion); }
@@ -158,9 +184,28 @@ export function assessPredictionCanary(input: PredictionCanaryAssessmentInput) {
     for (const value of absence.resources) { const r = exact(value, ["kind", "id", "observedAbsent", "afterClientClosed", "uncancelled", "queryResult"], "absence observation"); same([r.observedAbsent, r.afterClientClosed, r.uncancelled], [true, true, true], "cleanup absence unproven"); same(r.queryResult, { code: 0, stdout: "", timedOut: false }, "cleanup query failed or found resources"); }
     checks.push("deadline-and-complete-cleanup");
   } catch (error) {
-    return freezeAssessment("not-eligible", input, binding, checks, limitations, predictionFailureEvidence(error), tokens, identity);
+    return freezeAssessment("not-eligible", input, binding, checks, limitations, predictionFailureEvidence(error), tokens, identity, Boolean(lowInput));
   }
-  return freezeAssessment("eligible-for-separate-batch-authorization", input, binding, checks, limitations, null, tokens, identity);
+  return freezeAssessment(lowInput ? "infrastructure-canary-observed-no-batch-eligibility" : "eligible-for-separate-batch-authorization", input, binding, checks, limitations, null, tokens, identity, Boolean(lowInput));
+}
+
+function validateLowOperatorRecords(operator: ReturnType<typeof bindSolLowOperator>, input: PredictionSolLowAssessmentInput, get: (path: string) => any,
+  raw: (path: string) => string, start: any, scope: any, bindings: any, terminal: any) {
+  same([start.approval.approvalEvidenceSha256, start.approval.independentGateSha256], [operator.amendment.userAuthorization.sha256, operator.predecessor.gateSha256], "low authorization or predecessor gate drift");
+  const preflight = get("operator/preflight.json"), dispatch = get("operator/dispatch.json"), end = get("operator/terminal.json"), retained = get("operator/retained-inventory.json");
+  same([preflight.contractSha256, preflight.sourceSha256, preflight.predecessorGateSha256, preflight.freshGateSha256, preflight.executionDirectoryAbsent, preflight.providerCalls, preflight.executionStateCreated],
+    [digest(operator), operator.source.sourceSha256, operator.predecessor.gateSha256, input.operatorGate.expectedSha256, true, 0, false], "preflight incomplete or stale");
+  same([dispatch.scope, dispatch.freezeSha256, dispatch.freshGateSha256], [scope, input.operatorFreeze.expectedSha256, input.operatorGate.expectedSha256], "operator dispatch mismatch");
+  same([end.status, end.terminalSha256, end.providerCalls, end.executionReady, end.batchAuthorized], ["awaiting-independent-observations", digest(terminal), 1, false, false], "operator terminal mismatch");
+  const batch = JSON.parse(operator.options.freezeBytes).package.preauthorization.batch;
+  same([preflight.batch, dispatch.before.batch, end.snapshot.batch], [batch, batch, batch], "operator mutated review slots");
+  same(get("canary-ledger-start.json"), { bindings, ...operator.amendment.separateLedger, batchAuthorized: false }, "low start ledger mismatch");
+  same(get("canary-ledger-terminal.json"), { bindings, ledger: { ...operator.amendment.separateLedger, status: terminal.terminal.status, providerCalls: 1, terminalSha256: digest(terminal), terminal: terminal.terminal, batchAuthorized: false } }, "low terminal ledger mismatch");
+  same(retained.sha256, digest(retained.inventory), "retained inventory seal drift"); unique(retained.inventory.map((v: any) => text(v.path)));
+  for (const path of [...CANARY_EVIDENCE_PATHS.filter(p => !p.startsWith("observer/")), "canary-ledger-start.json", "canary-ledger-terminal.json"]) {
+    same(retained.inventory.find((v: any) => v.path === path), { path, bytes: Buffer.byteLength(raw(path)), sha256: sha(raw(path)) }, "retained mechanical artifact mismatch");
+  }
+  for (const part of ["client", "sidecars"]) fail(retained.inventory.some((v: any) => v.path.startsWith(`canary/mechanical-${part}/`) && v.path.endsWith("-terminal.json")), "missing mechanical execution receipts");
 }
 
 function validateItemLifecycles(events: any[]) {
@@ -256,8 +301,8 @@ function validateCanaryReads(cleanup: any, modelCalls: any[], evidence: any, mou
     fail(responses.some(r => r.tool === "read_link" && r.parsed.kind === "literal-symlink-source" && r.parsed.followed === false && nativeLinks.some(l => l.path === r.arguments.path && typeof r.parsed.target === "string" && sha(r.parsed.target) === l.sha256)), "required literal-link evidence missing");
   }
 }
-function freezeAssessment(recommendation: string, input: PredictionCanaryAssessmentInput, binding: unknown, checks: string[], limitations: string[], failure: unknown, tokens: unknown, identity: unknown) {
-  const body = { kind: "prediction-canary-assessment-v4", recommendation, inputSha256: digest(input), binding, checks, limitations, failure, tokens, identity,
+function freezeAssessment(recommendation: string, input: PredictionCanaryAssessmentInput, binding: unknown, checks: string[], limitations: string[], failure: unknown, tokens: unknown, identity: unknown, low = false) {
+  const body = { kind: low ? "prediction-sol-low-canary-assessment-v1" : "prediction-canary-assessment-v4", recommendation, inputSha256: digest(input), binding, checks, limitations, failure, tokens, identity,
     providerAuthorized: false, executionReady: false, batchAuthorized: false, providerCalls: 0,
     boundary: "Deterministic validation of externally authenticated evidence, not independent observation, dispatch authority, efficacy evidence or an R5 pass." };
   return freeze({ ...body, sha256: digest(body) });

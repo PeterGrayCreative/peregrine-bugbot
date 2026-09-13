@@ -31,7 +31,7 @@ interface Scope {
 interface Approval { scope: Scope; permission: "one-provider-cli-attempt" | "synthetic-only"; approvalEvidenceSha256: string; independentGateSha256: string; reviewedCanaryEvidenceSha256?: string }
 export interface PredictionCliAuthorization { readonly kind: "prediction-cli-authorization"; toJSON(): never }
 interface SolLowAmendment { authority: PredictionSolLowCanaryAuthority; freezeBytes: string; freezeSha256: string }
-export interface PredictionSolLowCanaryBridgeOptions extends Options { solLowAmendment: SolLowAmendment }
+export interface PredictionSolLowCanaryBridgeOptions extends Options { solLowAmendment: SolLowAmendment; recordMechanicalEvidence?: true }
 
 export function createPredictionCliBridge(options: Options) {
   if (Object.hasOwn(options, "solLowAmendment")) throw new Error("use the separate Sol/low canary bridge");
@@ -58,6 +58,7 @@ export function createStructuralPredictionSolLowCanaryBridge(options: Prediction
 async function createBridge(input: Options, structural?: { run: DockerExec; wallMs?: number }, amendmentInput?: SolLowAmendment) {
   const options = { ...input, authority: freeze(input.authority), mountsRoot: resolve(input.mountsRoot), directory: resolve(input.directory) };
   const amendment = amendmentInput ? freeze(amendmentInput) : null, low = amendment ? preparePredictionSolLowCanary(amendment.authority) : null;
+  const mechanical = low && (input as PredictionSolLowCanaryBridgeOptions).recordMechanicalEvidence === true;
   const policy = low?.policy ?? PREDICTION_CLI_BRIDGE_POLICY;
   text(options.runId); hash(options.freezeSha256);
   same(sha(options.freezeBytes), options.freezeSha256, "trusted preauthorization freeze digest mismatch");
@@ -155,7 +156,8 @@ async function createBridge(input: Options, structural?: { run: DockerExec; wall
         const endpoint = new URL(attachment.url); attachment.replaceAuthorizedHosts([`host.docker.internal:${endpoint.port}`]);
         const { maxSessions: _, ...limits } = PREDICTION_MCP_LIMITS;
         const egressOptions = { attemptId: `attempt-${String(ordinal).padStart(6, "0")}`, armId: p.attempts.find(a => a.id === s.sourceAttemptId)!.arm, sourceHeadTree: mount.headTree,
-          providerAuthorities: policy.providerAuthorities, hostMcpPort: Number(endpoint.port), hostMcpToken: endpoint.pathname.slice("/mcp/".length), deadlineSignal: guard.signal, mcpLimits: { ...limits, maxHeaderBytes: 8192 } };
+          providerAuthorities: policy.providerAuthorities, hostMcpPort: Number(endpoint.port), hostMcpToken: endpoint.pathname.slice("/mcp/".length), deadlineSignal: guard.signal, mcpLimits: { ...limits, maxHeaderBytes: 8192 },
+          ...(mechanical ? { mechanicalEvidenceDirectory: join(directory, "mechanical-sidecars") } : {}) };
         setup = structural ? createStructuralMockMethodologyEgressSupervisor({ ...egressOptions, run: structural.run }) : createMethodologyEgressSupervisor(egressOptions);
         egress = await setup;
         const checkout = join(directory, "workspace"), assets = join(directory, "assets"), output = join(directory, "output");
@@ -172,7 +174,8 @@ async function createBridge(input: Options, structural?: { run: DockerExec; wall
         guard.read(() => { freshSource(); same(sha(prompt), s.promptSha256, "prompt drift"); same(readdirSync(checkout), [], "unexpected agent workspace"); same(readdirSync(assets), s.purpose === "review" ? ["methodology-review.schema.json"] : [], "unexpected method resources"); });
         write(join(directory, "invocation.json"), { scope: s, args, prompt, attachment: attachment.binding, egress: egress.attestation, assets: readdirSync(assets), providerImage: p.runtimeAcceptance.image });
         const run = createContainedProviderExec({ runner: "codex", providerAccess: "cli-session", checkoutDir: checkout, assetsDir: assets, outputDir: output,
-          profile: low ? "prediction-sol-low-canary" : "prediction-cli", image: p.runtimeAcceptance.image, methodologyEgress: egress.launchCapability, ...(structural ? { run: structural.run } : {}) });
+          profile: low ? "prediction-sol-low-canary" : "prediction-cli", image: p.runtimeAcceptance.image, methodologyEgress: egress.launchCapability,
+          ...(mechanical ? { mechanicalEvidenceDirectory: join(directory, "mechanical-client") } : {}), ...(structural ? { run: structural.run } : {}) });
         const hostArgs = args.map(value => value === "/workspace" ? checkout : value === "/opt/peregrine/methodology-review.schema.json" ? join(assets, "methodology-review.schema.json") : value === "/output/result.json" ? join(output, "result.json") : value);
         try { execution = await guard.run(run, "codex", hostArgs, { stdin: prompt, inheritEnv: false, env: {} }); write(join(directory, "execution.json"), execution); }
         catch (error) { failure = predictionFailureEvidence(error); write(join(directory, "execution-failure.json"), failure); }
