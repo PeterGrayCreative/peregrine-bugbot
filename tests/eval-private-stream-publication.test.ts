@@ -102,3 +102,20 @@ test("publication input binds committed transitive sources and rejects drift and
   writeFileSync(path, Buffer.concat([original, Buffer.from("\n// drift")]));
   assert.throws(() => preparePrivateStreamRuntimePublication(root, revision), /differs/);
 });
+
+test("auto-removed containment container needs explicit absence proof, not a false cleanup failure", () => {
+  const name = "peregrine-image-smoke-00000000-0000-4000-8000-000000000000";
+  for (const absent of [true, false]) {
+    const calls: string[][] = [], receipts: unknown[] = [];
+    const runtime = privateProbeRuntime({ spawn(_command, args) {
+      calls.push([...args]);
+      if (args[0] === "rm") return { status: 1, stderr: `Error response from daemon: No such container: ${name}` };
+      assert.deepEqual(args, ["container", "inspect", name]);
+      return absent ? { status: 1, stderr: `Error: No such object: ${name}` } : { status: 0, stdout: "[]" };
+    } }, receipts);
+    runtime.spawn("docker", ["rm", "--force", name], {});
+    assert.equal(runtime.cleanupFailed(), !absent);
+    assert.equal(calls.length, 2);
+    assert.equal(receipts.length, 2);
+  }
+});

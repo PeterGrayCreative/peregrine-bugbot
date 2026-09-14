@@ -12,18 +12,26 @@ const MAX_BYTES = 4 * 1024 * 1024;
  * escape this wrapper. Existing probe validators inspect live bytes in memory. */
 export function privateProbeRuntime(runtime: ProbeRuntime, receipts: unknown[]): ProbeRuntime & { cleanupFailed(): boolean } {
   let failedCleanup = false;
-  return { cleanupFailed: () => failedCleanup, spawn(command, args) {
+  const observer: ProbeRuntime & { cleanupFailed(): boolean } = { cleanupFailed: () => failedCleanup, spawn(command, args) {
     const cleanup = args[0] === "rm" || (args[0] === "network" || args[0] === "image") && args[1] === "rm";
     const environment = { PATH: process.env.PATH ?? "", HOME: process.env.HOME ?? "" };
     const start = { sequence: receipts.length + 1, invocation: privateCommandBinding(command, args, environment), startedAt: Date.now() };
     const settings = { encoding: "utf8", stdio: "pipe", timeout: 120000, maxBuffer: MAX_BYTES, env: environment };
     try {
       const result = runtime.spawn(command, args, settings);
-      if (cleanup && (result.error || result.status !== 0)) failedCleanup = true;
       const stream = (value: ProbeProcessResult["stdout"]) => { if (value !== undefined && value !== null && typeof value !== "string" && !Buffer.isBuffer(value)) throw new Error("invalid probe stream"); return Buffer.from(value ?? ""); };
       const stdout = stream(result.stdout), stderr = stream(result.stderr);
       if (stdout.length + stderr.length > MAX_BYTES || result.status !== null && (!Number.isInteger(result.status) || result.status < 0 || result.status > 255)) throw new Error("invalid bounded probe result");
       receipts.push({ ...start, closedAt: Date.now(), status: result.status, stdout: privateByteBinding(stdout), stderr: privateByteBinding(stderr), failure: result.error ? privateFailureBinding(result.error) : null });
+      if (cleanup && (result.error || result.status !== 0)) {
+        // The containment probe uses --rm, then defensively removes its exact
+        // name. Reconcile that known producer case with a separate absence query.
+        const name = args[2] ?? "";
+        const missing = (value: ProbeProcessResult) => value.status === 1 && !value.error &&
+          [`Error response from daemon: No such container: ${name}`, `Error: No such object: ${name}`].includes(String(value.stderr ?? "").trim());
+        const autoRemoved = args.length === 3 && args[0] === "rm" && args[1] === "--force" && /^peregrine-image-smoke-[a-f0-9-]{36}$/.test(name) && missing(result);
+        if (!autoRemoved || !missing(observer.spawn("docker", ["container", "inspect", name], settings))) failedCleanup = true;
+      }
       // Do not spread extra fields, arbitrary result properties or native errors.
       return { status: result.status, stdout, stderr, ...(result.error ? { error: new Error("probe subprocess failed") } : {}) };
     } catch (error) {
@@ -32,6 +40,7 @@ export function privateProbeRuntime(runtime: ProbeRuntime, receipts: unknown[]):
       return { status: null, error: new Error("private probe subprocess failed") };
     }
   } };
+  return observer;
 }
 
 export function runPrivateStreamRuntimeProbe(options: { image: string; platform?: "linux/amd64" | "linux/arm64" }, runtime: ProbeRuntime = { spawn: (command, args, settings) => spawnSync(command, args, settings) }) {

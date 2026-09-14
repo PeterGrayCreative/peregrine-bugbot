@@ -55,3 +55,7 @@ checkpoint can be reverted without rewriting any predecessor evidence.
 Affected validation caught the initial in-place workflow edit against that
 unchanged acceptance pin. The failed draft and run remain private evidence;
 the correction uses a separate workflow rather than changing the accepted hash.
+Self-review also reproduced an auto-removal false failure in the private wrapper:
+the containment fixture uses `--rm`. A subsequent missing-container removal now
+requires a separately recorded exact-name absence query; unknown/remnant cleanup
+still fails. The failed regression and first source freeze remain predecessors.
