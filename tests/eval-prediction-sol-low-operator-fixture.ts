@@ -48,7 +48,10 @@ export async function solLowAssessmentFixture(t: TestContext) {
   for (const path of ["canary/start.json", "canary/invocation.json", "canary/terminal.json"]) f.files[path].scope = scope;
   f.files["bridge.json"].source = op.contract.source; f.files["bridge.json"].policy = amendment.policy;
   f.files["canary/start.json"].approval = { scope, permission: "one-provider-cli-attempt", approvalEvidenceSha256: amendment.userAuthorization.sha256, independentGateSha256: op.contract.predecessor.gateSha256 };
-  f.files["canary/invocation.json"].args = predictionSolLowCanaryCommand("http://mcp-forwarder:8082/mcp/" + "a".repeat(64));
+  const capability = { kind: "forwarding-capability-sha256-v1", sha256: sha("a".repeat(64)) };
+  f.files["canary/terminal.json"].outputRedaction = { kind: capability.kind, originalSha256: sha(f.files["canary/output/result.json"]), persistedSha256: sha(f.files["canary/output/result.json"]) };
+  f.files["canary/invocation.json"].forwarderCapability = capability;
+  f.files["canary/invocation.json"].args = predictionSolLowCanaryCommand("http://mcp-forwarder:8082/mcp/" + capability.sha256);
   const route = { model: "gpt-5.6-sol", effort: "low", providerAccess: "cli-session" };
   Object.assign(f.files["observer/identity.json"], { requested: route, observedRequest: { model: route.model, effort: route.effort } });
   f.files["observer/runtime.json"].sourceSha256 = op.contract.source.sourceSha256;
@@ -84,10 +87,10 @@ export async function solLowAssessmentFixture(t: TestContext) {
   const receipt = (channel: "client" | "sidecars", args: string[], startedAt: number, cleanup = false, stdout = "", client = false) => {
     const sequence = ++ordinals[channel], prefix = `canary/mechanical-${channel}/${String(sequence).padStart(6, "0")}`;
     const binding = { runId, attemptId: scope.attemptId, scopeSha256: digest(scope), sourceSha256: scope.sourceSha256, channel };
-    f.files[prefix + "-start.json"] = { kind: "prediction-mechanical-start-v2", clock: clock(startedAt), binding, sequence, command: "docker", args,
+    f.files[prefix + "-start.json"] = { kind: "prediction-mechanical-start-v3", clock: clock(startedAt), binding, forwarderCapability: capability, sequence, command: "docker", args,
       stdinSha256: client ? scope.promptSha256 : null, deadlineAttached: !cleanup, aborted: false, timeoutMs: 10000, cleanup, startedAt };
     const result = client ? f.files["canary/execution.json"] : { code: 0, timedOut: false, processId: 20000 + sequence, stdout, stderr: "" };
-    f.files[prefix + "-terminal.json"] = { kind: "prediction-mechanical-terminal-v2", clock: clock(startedAt + 1), binding, sequence, result: { ...result, stdout: captured(result.stdout), stderr: captured(result.stderr) }, closedAt: startedAt + 1, evidenceError: null };
+    f.files[prefix + "-terminal.json"] = { kind: "prediction-mechanical-terminal-v3", clock: clock(startedAt + 1), binding, forwarderCapability: capability, sequence, result: { ...result, stdout: captured(result.stdout), stderr: captured(result.stderr) }, closedAt: startedAt + 1, evidenceError: null };
   };
   receipt("client", renderContainedProviderArgs({ runner: "codex", profile: "prediction-sol-low-canary", image, containerName: clientName, identity: session.identity,
     checkoutDir: join(op.contract.execution.directory, "canary/workspace"), assetsDir: join(op.contract.execution.directory, "canary/assets"), outputDir: join(op.contract.execution.directory, "canary/output"),
@@ -101,7 +104,7 @@ export async function solLowAssessmentFixture(t: TestContext) {
   await setupReceipt(["network", "create", "--ipv6=false", "--driver", "bridge", "--subnet", egress.externalNetworkSubnet, egress.externalNetwork]);
   await setupReceipt(["network", "create", "--internal", "--ipv6=false", "--driver", "bridge", "--subnet", egress.networkSubnet, egress.network]);
   await setupReceipt(renderMethodologySidecarArgs(egress.gateway.name, egress.externalNetwork, image, GATEWAY_ENTRYPOINT, methodologyGatewayEnvironment(egress.providerAuthorities)));
-  await setupReceipt(renderMethodologySidecarArgs(egress.forwarder.name, egress.externalNetwork, image, FORWARDER_ENTRYPOINT, methodologyForwarderEnvironment("a".repeat(64), egress.hostMcpPort, limits), "host.docker.internal:host-gateway"));
+  await setupReceipt(renderMethodologySidecarArgs(egress.forwarder.name, egress.externalNetwork, image, FORWARDER_ENTRYPOINT, methodologyForwarderEnvironment(capability.sha256, egress.hostMcpPort, limits), "host.docker.internal:host-gateway"));
   for (const role of ["gateway", "forwarder"]) await setupReceipt(["logs", "--tail", "64", egress[role].name]);
   for (const role of ["gateway", "forwarder"]) await setupReceipt(["network", "connect", "--alias", egress[role].alias, egress.network, egress[role].name]);
   await setupReceipt(["inspect", egress.gateway.name, egress.forwarder.name]);

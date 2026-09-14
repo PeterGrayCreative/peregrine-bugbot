@@ -6,6 +6,7 @@ import { canonicalJsonSha256 } from "./experiment.js";
 import { METHODOLOGY_EGRESS_RUNTIME_IMAGE } from "./methodology-runtime-image.js";
 import { observePredictionExec, type MechanicalEvidenceBinding } from "./prediction-mechanical-evidence.js";
 import { parseObservationRecords, validateMethodologyObservationGraph, validateObservedContainer, validateObservedNetwork, type ObservationReceipt } from "./methodology-observation.js";
+import { privateByteBinding } from "./prediction-typed-evidence.js";
 
 /**
  * Docker is deliberately kept behind this small adapter.  In particular, a
@@ -86,6 +87,8 @@ export interface MethodologyMcpLimits {
 }
 
 export interface MethodologyEgressSupervisorOptions {
+  /** Prospective source-only profile; no accepted provider image supports it yet. */
+  readonly fixedClientPath?: true;
   /** Additive private mechanical receipts; no external identity claims. */
   readonly mechanicalEvidenceDirectory?: string;
   readonly mechanicalEvidenceBinding?: MechanicalEvidenceBinding;
@@ -164,6 +167,7 @@ export interface MethodologyEgressLaunchCapability {
 }
 
 export interface MethodologyEgressSupervisor {
+  readonly privateObservation?: { kind: "prediction-private-topology-validation-v1"; graph: ReturnType<typeof privateByteBinding>; checks: readonly string[] };
   readonly network: string;
   readonly proxyUrl: string;
   readonly internalMcpUrl: string;
@@ -296,7 +300,7 @@ function parseNetworkCreateArgs(args: readonly string[], internal: boolean): Par
 export function parseMethodologyEgressNetworkCreateArgs(args: readonly string[]): ParsedNetworkCreate { return parseNetworkCreateArgs(args, true); }
 export function parseMethodologyEgressExternalNetworkCreateArgs(args: readonly string[]): ParsedNetworkCreate { return parseNetworkCreateArgs(args, false); }
 
-function parseSidecarRunArgs(args: readonly string[], expected: { name: string; network: string; image: string; entrypoint: string; role: "gateway" | "forwarder" }): ParsedRun {
+function parseSidecarRunArgs(args: readonly string[], expected: { name: string; network: string; image: string; entrypoint: string; role: "gateway" | "forwarder"; fixedClientPath?: true }): ParsedRun {
   let i = 0;
   const take = (expectedValue?: string): string => {
     const value = args[i++];
@@ -322,6 +326,10 @@ function parseSidecarRunArgs(args: readonly string[], expected: { name: string; 
   const expectedEnvironment = expected.role === "gateway"
     ? ["EGRESS_ALLOWED_AUTHORITIES", "EGRESS_BIND_HOST", "EGRESS_BIND_PORT", "EGRESS_MAX_CONNECTIONS", "EGRESS_MAX_REQUESTS", "EGRESS_MAX_HEADER_BYTES", "EGRESS_MAX_TUNNEL_BYTES", "EGRESS_DEADLINE_MS", "EGRESS_MAX_CLIENT_HELLO_BYTES"]
     : ["MCP_FORWARDER_BIND_HOST", "MCP_FORWARDER_BIND_PORT", "MCP_FORWARDER_ALLOWED_HOST", "MCP_FORWARDER_TOKEN", "MCP_FORWARDER_UPSTREAM_PORT", "MCP_FORWARDER_MAX_REQUEST_BYTES", "MCP_FORWARDER_MAX_RESPONSE_BYTES", "MCP_FORWARDER_MAX_HEADER_BYTES", "MCP_FORWARDER_REQUEST_TIMEOUT_MS", "MCP_FORWARDER_MAX_CONNECTIONS", "MCP_FORWARDER_MAX_REQUESTS"];
+  if (expected.fixedClientPath) {
+    if (expected.role !== "forwarder" || !env.includes("MCP_FORWARDER_FIXED_CLIENT_PATH=1")) fail("fixed forwarder client profile mismatch");
+    expectedEnvironment.push("MCP_FORWARDER_FIXED_CLIENT_PATH");
+  }
   const actualEnvironment = env.map((item) => item.slice(0, item.indexOf("="))).sort();
   if (JSON.stringify(actualEnvironment) !== JSON.stringify([...expectedEnvironment].sort())) fail("sidecar environment is not the exact allowlist");
   return { name, network, image, entrypoint, env: Object.freeze(env), ...(addHost ? { addHost } : {}) };
@@ -444,8 +452,8 @@ function topologyEnvForGateway(authorities: readonly string[]): Record<string, s
   return { EGRESS_ALLOWED_AUTHORITIES: authorities.join(","), EGRESS_BIND_HOST: "0.0.0.0", EGRESS_BIND_PORT: "8081", EGRESS_MAX_CONNECTIONS: "32", EGRESS_MAX_REQUESTS: "64", EGRESS_MAX_HEADER_BYTES: "16384", EGRESS_MAX_TUNNEL_BYTES: "16777216", EGRESS_DEADLINE_MS: "15000", EGRESS_MAX_CLIENT_HELLO_BYTES: "65536" };
 }
 
-function topologyEnvForForwarder(token: string, hostMcpPort: number, limits: MethodologyMcpLimits): Record<string, string> {
-  return { MCP_FORWARDER_BIND_HOST: "0.0.0.0", MCP_FORWARDER_BIND_PORT: "8082", MCP_FORWARDER_ALLOWED_HOST: "mcp-forwarder:8082", MCP_FORWARDER_TOKEN: token, MCP_FORWARDER_UPSTREAM_PORT: String(hostMcpPort), ...Object.fromEntries(Object.entries(validateLimits(limits)).map(([key, value]) => [`MCP_FORWARDER_${key.replace(/[A-Z]/gu, (letter) => `_${letter}`).toUpperCase()}`, String(value)])) };
+function topologyEnvForForwarder(token: string, hostMcpPort: number, limits: MethodologyMcpLimits, fixedClientPath?: true): Record<string, string> {
+  return { MCP_FORWARDER_BIND_HOST: "0.0.0.0", MCP_FORWARDER_BIND_PORT: "8082", MCP_FORWARDER_ALLOWED_HOST: "mcp-forwarder:8082", MCP_FORWARDER_TOKEN: token, MCP_FORWARDER_UPSTREAM_PORT: String(hostMcpPort), ...Object.fromEntries(Object.entries(validateLimits(limits)).map(([key, value]) => [`MCP_FORWARDER_${key.replace(/[A-Z]/gu, (letter) => `_${letter}`).toUpperCase()}`, String(value)])), ...(fixedClientPath ? { MCP_FORWARDER_FIXED_CLIENT_PATH: "1" } : {}) };
 }
 
 // Pure, shared argv/environment construction for offline receipt verification.
@@ -459,10 +467,11 @@ function aggregate(primary: unknown, cleanup: readonly Error[]): never {
 
 /** Start and authenticate the provider sidecars using the built-in Docker executor. */
 export async function createMethodologyEgressSupervisor(options: MethodologyEgressSupervisorOptions): Promise<MethodologyEgressSupervisor> {
+  if (Object.hasOwn(options, "fixedClientPath")) throw new Error("fixed-endpoint forwarder image acceptance unavailable");
   if (options && typeof options === "object" && Object.prototype.hasOwnProperty.call(options, "run")) {
     fail("provider egress supervisor cannot inject a Docker executor");
   }
-  return createSupervisor(options, options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.mechanicalEvidenceBinding!) : exec, "provider");
+  return createSupervisor(options, options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.mechanicalEvidenceBinding!, exec, options.hostMcpToken) : exec, "provider");
 }
 
 /**
@@ -472,7 +481,7 @@ export async function createMethodologyEgressSupervisor(options: MethodologyEgre
 export async function createStructuralMockMethodologyEgressSupervisor(
   options: StructuralMockMethodologyEgressSupervisorOptions,
 ): Promise<MethodologyEgressSupervisor> {
-  return createSupervisor(options, options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.mechanicalEvidenceBinding!, options.run) : options.run, "structural-mock");
+  return createSupervisor(options, options.mechanicalEvidenceDirectory ? observePredictionExec(options.mechanicalEvidenceDirectory, options.mechanicalEvidenceBinding!, options.run, options.hostMcpToken) : options.run, "structural-mock");
 }
 
 /** Uses the real supervisor, but returns no provider launch capability. The
@@ -489,6 +498,7 @@ async function createSupervisor(
   run: DockerExec,
   executionClass: "provider" | "structural-mock" | "zero-provider-candidate",
 ): Promise<MethodologyEgressSupervisor> {
+  if (Object.hasOwn(options, "fixedClientPath") && (options.fixedClientPath !== true || executionClass !== "structural-mock" || options.mechanicalEvidenceDirectory)) fail("fixed-endpoint profile requires private structural evidence and new runtime acceptance");
   validateAttemptId(options.attemptId); validateTree(options.sourceHeadTree);
   if (typeof options.armId !== "string" || !/^[A-D]$/u.test(options.armId)) fail("invalid methodology arm id");
   const authorities = validateProviderAuthorities(options.providerAuthorities);
@@ -506,7 +516,7 @@ async function createSupervisor(
   const token = options.hostMcpToken ?? randomBytes(32).toString("hex");
   if (!/^[a-f0-9]{64}$/.test(token)) fail("invalid host MCP endpoint token");
   const gatewayEnv = topologyEnvForGateway(authorities);
-  const forwarderEnv = topologyEnvForForwarder(token, options.hostMcpPort, limits);
+  const forwarderEnv = topologyEnvForForwarder(token, options.hostMcpPort, limits, options.fixedClientPath);
   const created: Array<"gateway" | "forwarder"> = [];
   let externalNetworkCreated = false;
   let internalNetworkCreated = false;
@@ -518,6 +528,7 @@ async function createSupervisor(
     return run(command, args, { ...settings, deadlineSignal: options.deadlineSignal });
   } : run;
   const observations = new Map<string, ObservationReceipt>();
+  let privateObservation: MethodologyEgressSupervisor["privateObservation"];
   const observe = async (key: string, args: string[], validate: (() => void) | undefined, label: string) => {
     const startedAt = Date.now(), result = requireSuccess(await dockerCall(setupRun, args, validate), label);
     observations.set(key, { startedAt, closedAt: Date.now(), stdout: result.stdout }); return result;
@@ -534,7 +545,7 @@ async function createSupervisor(
     await observe("gateway-launch", gatewayArgs, () => { parseSidecarRunArgs(gatewayArgs, { name: n.gateway, network: n.externalNetwork, image, entrypoint: GATEWAY_ENTRYPOINT, role: "gateway" }); }, "gateway sidecar start");
     const forwarderArgs = sidecarCommon(n.forwarder, n.externalNetwork, image, FORWARDER_ENTRYPOINT, forwarderEnv, "host.docker.internal:host-gateway");
     created.push("forwarder");
-    await observe("forwarder-launch", forwarderArgs, () => { parseSidecarRunArgs(forwarderArgs, { name: n.forwarder, network: n.externalNetwork, image, entrypoint: FORWARDER_ENTRYPOINT, role: "forwarder" }); }, "forwarder sidecar start");
+    await observe("forwarder-launch", forwarderArgs, () => { parseSidecarRunArgs(forwarderArgs, { name: n.forwarder, network: n.externalNetwork, image, entrypoint: FORWARDER_ENTRYPOINT, role: "forwarder", ...(options.fixedClientPath ? { fixedClientPath: true } : {}) }); }, "forwarder sidecar start");
     await waitForReady(setupRun, n.gateway, "egress-gateway-v1", readyTimeoutMs);
     await waitForReady(setupRun, n.forwarder, "methodology-mcp-forwarder-v1", readyTimeoutMs);
     const gatewayConnect = ["network", "connect", "--alias", "egress-gateway", n.network, n.gateway];
@@ -552,14 +563,17 @@ async function createSupervisor(
     parseNetworkInspect(networkInspect.stdout, { name: n.network, network: n.network, subnet, sidecars: [n.gateway, n.forwarder] });
     const externalInspect = await observe("external-inspect", ["network", "inspect", n.externalNetwork], undefined, "external network inspect");
     parseNetworkInspect(externalInspect.stdout, { name: n.externalNetwork, network: n.externalNetwork, subnet: externalSubnet, sidecars: [n.gateway, n.forwarder], internal: false });
-    validateMethodologyObservationGraph({ containers: inspectValues, networks: [parseObservationRecords(networkInspect.stdout)[0], parseObservationRecords(externalInspect.stdout)[0]],
+    const observationGraph: Parameters<typeof validateMethodologyObservationGraph>[0] = { containers: inspectValues, networks: [parseObservationRecords(networkInspect.stdout)[0], parseObservationRecords(externalInspect.stdout)[0]],
       helpers: [
         { name: n.gateway, network: n.network, externalNetwork: n.externalNetwork, subnet, externalSubnet, image, entrypoint: GATEWAY_ENTRYPOINT, alias: "egress-gateway", env: gatewayEnv, baseEnv: METHODOLOGY_EGRESS_BASE_ENV },
         { name: n.forwarder, network: n.network, externalNetwork: n.externalNetwork, subnet, externalSubnet, image, entrypoint: FORWARDER_ENTRYPOINT, alias: "mcp-forwarder", env: forwarderEnv, addHost: "host.docker.internal:host-gateway", baseEnv: METHODOLOGY_EGRESS_BASE_ENV },
       ], networkCreates: [observations.get("internal-create")!, observations.get("external-create")!],
       launches: [observations.get("gateway-launch")!, observations.get("forwarder-launch")!], containerInspect: observations.get("container-inspect")!,
       networkInspects: [observations.get("internal-inspect")!, observations.get("external-inspect")!],
-    });
+    };
+    validateMethodologyObservationGraph(observationGraph);
+    if (options.fixedClientPath) privateObservation = Object.freeze({ kind: "prediction-private-topology-validation-v1", graph: privateByteBinding(JSON.stringify(observationGraph)),
+      checks: Object.freeze(["exact-container-schema", "exact-network-schema", "cross-record-identities", "running-lifecycle", "receipt-chronology"]) });
   } catch (error) { primary = error; }
   if (primary !== undefined) {
     const cleanup = await cleanupSidecars(run, n, created, externalNetworkCreated, internalNetworkCreated, diagnostics, 15_000, cleanupProgress);
@@ -582,7 +596,7 @@ async function createSupervisor(
     return closePromise;
   };
   const proxyUrl = "http://egress-gateway:8081";
-  const internalMcpUrl = `http://mcp-forwarder:8082/mcp/${token}`;
+  const internalMcpUrl = options.fixedClientPath ? "http://mcp-forwarder:8082/mcp" : `http://mcp-forwarder:8082/mcp/${token}`;
   const launchCapability = Object.freeze({
     network: n.network,
     proxyUrl,
@@ -598,6 +612,7 @@ async function createSupervisor(
     names: Object.freeze(n),
     attestation,
     auditDiagnostics: diagnostics,
+    ...(privateObservation ? { privateObservation } : {}),
     launchCapability,
     close,
   });

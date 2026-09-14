@@ -13,6 +13,7 @@ import { METHODOLOGY_RUNTIME_IMAGE_ACCEPTANCE } from "./methodology-runtime-imag
 import { bindSolLowOperator, type CanaryTrustedBytes } from "./prediction-sol-low-operator-contract.js";
 import { predictionSolLowCanaryCommand } from "./prediction-sol-low-command.js";
 import { MECHANICAL_RECEIPT_PATH, validateMechanicalReceipts } from "./prediction-mechanical-receipts.js";
+import { validateItemLifecycles } from "./prediction-canary-item-lifecycle.js";
 // @ts-expect-error Pinned built-in ESM runtime parser has no declaration file.
 import { parseAuditSnapshot } from "../container/eval-runtime/egress-gateway.mjs";
 // @ts-expect-error Pinned built-in ESM runtime parser has no declaration file.
@@ -117,7 +118,12 @@ function assessCanaryEvidence(input: PredictionCanaryAssessmentInput, lowInput?:
     for (const value of [start, invocation, terminal]) same(value.scope, scope, "attempt scope mismatch");
     same(start.approval.scope, scope, "approval scope mismatch"); same(start.approval.permission, "one-provider-cli-attempt", "synthetic or unauthorized attempt");
     hash(start.approval.approvalEvidenceSha256); hash(start.approval.independentGateSha256);
-    if (operator) validateLowOperatorRecords(operator, lowInput!, get, raw, start, scope, bindings, terminal);
+    if (operator) {
+      validateLowOperatorRecords(operator, lowInput!, get, raw, start, scope, bindings, terminal);
+      const redaction = exact(terminal.outputRedaction, ["kind", "originalSha256", "persistedSha256"], "contained output redaction binding");
+      same(redaction.kind, "forwarding-capability-sha256-v1", "output redaction kind mismatch"); hash(redaction.originalSha256);
+      same(redaction.persistedSha256, sha(raw("canary/output/result.json")), "output redaction persisted bytes mismatch");
+    }
     same(invocation.providerImage, runtime.acceptance.image, "client image mismatch"); same(invocation.assets, [], "ambient canary assets exposed");
     same(invocation.prompt, canary.prompt, "canary prompt drift"); same(sha(invocation.prompt), canary.promptSha256, "canary prompt seal mismatch");
     const urlArg = array(invocation.args).map(text).find(v => v.startsWith("mcp_servers.source_read.url="));
@@ -211,38 +217,6 @@ function validateLowOperatorRecords(operator: ReturnType<typeof bindSolLowOperat
   validateMechanicalReceipts(input.artifacts, retained, scope, get, { directory: operator.execution.directory, session: preflight.session });
 }
 
-function validateItemLifecycles(events: any[]) {
-  // ID ownership starts at the first event for every capability, including
-  // completion-only non-I/O items. It cannot depend on seeing an MCP read first.
-  const items = new Map<string, { type: string; identity: unknown; completed: boolean }>(), calls: any[] = [];
-  for (const event of events) {
-    if (!event.type.startsWith("item.")) continue;
-    const item = event.item;
-    fail(typeof item.id === "string" && item.id.length > 0, "tool lifecycle requires a unique id");
-    const identity = { server: item.server, tool: item.tool, arguments: item.arguments };
-    let owner = items.get(item.id);
-    if (owner) {
-      same(item.type, owner.type, "tool lifecycle changed capability type");
-      fail(event.type !== "item.started" && !owner.completed, "tool lifecycle duplicate start or terminal disposition");
-      if (item.type === "mcp_tool_call") same(identity, owner.identity, "tool lifecycle identity mismatch");
-    } else {
-      // The documented JSONL example permits a completion-only agent message.
-      // Other types need an observed start; unknown protocol variants fail closed.
-      fail(event.type === "item.started" || item.type === "agent_message" && event.type === "item.completed", "tool lifecycle missing start");
-      owner = { type: item.type, identity, completed: false }; items.set(item.id, owner);
-    }
-    if (event.type === "item.completed") {
-      owner.completed = true;
-      if (item.type === "mcp_tool_call") {
-        fail((item.status === undefined || item.status === "completed") && (item.error === undefined || item.error === null), "tool disposition failed or unknown");
-        calls.push(event);
-      }
-    }
-  }
-  fail([...items.values()].every(item => item.completed), "tool lifecycle has unfinished items before turn terminal");
-  return calls;
-}
-
 function validateCanaryReads(cleanup: any, modelCalls: any[], evidence: any, mount: PredictionMount, sessionId: string) {
   const reader = cleanup.reader, audit = parsePredictionReadMcpAuditSnapshot(cleanup.audit);
   same([reader.inputDigest, reader.closed, reader.pending, reader.stopped], [mount.inputDigest, true, [], false], "reader lifecycle/scope mismatch");
@@ -305,7 +279,7 @@ function validateCanaryReads(cleanup: any, modelCalls: any[], evidence: any, mou
   }
 }
 function freezeAssessment(recommendation: string, input: PredictionCanaryAssessmentInput, binding: unknown, checks: string[], limitations: string[], failure: unknown, tokens: unknown, identity: unknown, low = false) {
-  const body = { kind: low ? "prediction-sol-low-canary-assessment-v8" : "prediction-canary-assessment-v4", recommendation, inputSha256: digest(input), binding, checks, limitations, failure, tokens, identity,
+  const body = { kind: low ? "prediction-sol-low-canary-assessment-v9" : "prediction-canary-assessment-v4", recommendation, inputSha256: digest(input), binding, checks, limitations, failure, tokens, identity,
     providerAuthorized: false, executionReady: false, batchAuthorized: false, providerCalls: 0,
     boundary: "Deterministic validation of externally authenticated evidence, not independent observation, dispatch authority, efficacy evidence or an R5 pass." };
   return freeze({ ...body, sha256: digest(body) });

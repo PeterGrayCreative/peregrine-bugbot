@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Prospective infrastructure canary status",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status", "tools"],
+  "properties": {
+    "status": { "enum": ["completed", "unable-to-complete"] },
+    "tools": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["list_tree", "read_file", "search_text", "read_link"],
+      "properties": {
+        "list_tree": { "enum": ["succeeded", "unavailable"] },
+        "read_file": { "enum": ["succeeded", "unavailable"] },
+        "search_text": { "enum": ["succeeded", "unavailable"] },
+        "read_link": { "enum": ["refused-no-link", "literal-link-read", "unavailable"] }
+      }
+    }
+  }
+}

@@ -9,6 +9,8 @@ export interface ExecResult {
   cleanupErrors?: readonly string[];
   /** Opt-in mechanical observation; unavailable if no child was spawned. */
   processId?: number | null;
+  /** Set only by opt-in bounded capture; raw bytes never exceed its memory cap. */
+  outputLimitExceeded?: boolean;
 }
 
 /** Run a subprocess, capture output, kill on timeout. Never throws on non-zero exit. */
@@ -24,9 +26,11 @@ export function exec(
     deadlineSignal?: AbortSignal;
     stdin?: string;
     captureProcessId?: boolean;
+    maximumOutputBytes?: number;
   } = {},
 ): Promise<ExecResult> {
   return new Promise((res) => {
+    if (opts.maximumOutputBytes !== undefined && (!Number.isSafeInteger(opts.maximumOutputBytes) || opts.maximumOutputBytes < 1 || opts.maximumOutputBytes > 16_777_216)) throw new Error("invalid subprocess capture limit");
     if (opts.deadlineSignal?.aborted) {
       res({ stdout: "", stderr: "whole-attempt deadline elapsed before spawn", code: -1, timedOut: true });
       return;
@@ -40,12 +44,22 @@ export function exec(
     let stderr = "";
     let timedOut = false;
     let settled = false;
+    let capturedBytes = 0, outputLimitExceeded = false;
+    const bounded: Record<"stdout" | "stderr", Buffer[]> = { stdout: [], stderr: [] };
     const settle = (result: ExecResult) => {
       if (settled) return;
       settled = true;
       if (timer) clearTimeout(timer);
       opts.deadlineSignal?.removeEventListener("abort", abortAtDeadline);
-      res(opts.captureProcessId ? { ...result, processId: child.pid ?? null } : result);
+      if (opts.maximumOutputBytes !== undefined) {
+        try {
+          const decoder = new TextDecoder("utf-8", { fatal: true });
+          result.stdout = decoder.decode(Buffer.concat(bounded.stdout));
+          result.stderr = decoder.decode(Buffer.concat(bounded.stderr));
+        } catch { result.stdout = result.stderr = ""; outputLimitExceeded = true; }
+      }
+      res({ ...result, ...(opts.captureProcessId ? { processId: child.pid ?? null } : {}),
+        ...(opts.maximumOutputBytes !== undefined ? { outputLimitExceeded } : {}) });
     };
     const abortAtDeadline = () => { timedOut = true; child.kill("SIGKILL"); };
     const timer = opts.timeoutMs
@@ -57,8 +71,19 @@ export function exec(
     opts.deadlineSignal?.addEventListener("abort", abortAtDeadline, { once: true });
     if (opts.deadlineSignal?.aborted) abortAtDeadline();
 
-    child.stdout?.on("data", (d) => (stdout += d));
-    child.stderr?.on("data", (d) => (stderr += d));
+    const capture = (data: Buffer, stream: "stdout" | "stderr") => {
+      let bytes = data;
+      if (opts.maximumOutputBytes !== undefined) {
+        const remaining = Math.max(0, opts.maximumOutputBytes - capturedBytes);
+        if (data.length > remaining) { bytes = data.subarray(0, remaining); outputLimitExceeded = true; child.kill("SIGKILL"); }
+        capturedBytes += bytes.length;
+        if (bytes.length) bounded[stream].push(Buffer.from(bytes));
+        return;
+      }
+      if (stream === "stdout") stdout += bytes; else stderr += bytes;
+    };
+    child.stdout?.on("data", (d: Buffer) => capture(d, "stdout"));
+    child.stderr?.on("data", (d: Buffer) => capture(d, "stderr"));
     if (opts.stdin !== undefined) child.stdin?.end(opts.stdin);
     // Spawn failures (e.g. command not found) emit "error" and may never emit
     // "close" — without this handler the promise would hang forever. code -1

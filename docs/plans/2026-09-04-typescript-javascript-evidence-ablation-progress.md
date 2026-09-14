@@ -1,7 +1,25 @@
 # TypeScript and JavaScript evidence and ablation progress
 
-Updated: 2026-09-12 (prospective correction addendum; historical entries preserved)
+Updated: 2026-09-13 (private-stream successor; historical entries preserved)
 Active branch: `research/evidence-audit-corrections`
+
+## Current canary status (2026-09-13)
+
+- [x] The separately authorized single Sol/low canary was consumed; independent
+  evidence-integrity assessment PASS, canary FAIL / not-eligible.
+- [x] Retained receipts support zero provider client/model launches; ledger
+  `providerCalls` remains null. Cleanup completed; 64 review slots stay unstarted.
+- [x] Raw forwarding-token receipts quarantined outside Git; sanitized derivatives
+  retain original hashes and an explicit transformation record.
+- [x] The redacted-evidence V1 correction was rejected: encoded producer streams
+  and pre-validation host output did not establish the required secret boundary.
+- [ ] The [file-free private-stream successor](../validation/2026-09-13-prediction-private-canary-stream.md)
+  awaits independent review, new image/helper acceptance and fresh authorization.
+  Metadata integrity cannot replace independent live semantic observation.
+- [ ] No retry, provider readiness, batch eligibility or batch authorization.
+
+See the [consumed-canary correction](../validation/2026-09-13-prediction-consumed-canary-correction.md).
+Earlier unstarted-canary statements below are preserved historical checkpoints.
 
 ## Current recovery notice
 

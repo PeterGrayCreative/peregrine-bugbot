@@ -3,7 +3,8 @@ import { canonicalJsonSha256 } from "./experiment.js";
 /**
  * Supported Docker inspect profile, taken from the archived credential-free
  * create/inspect probe (forwarder-startup-v1/inspect-tmpfs.json). This is a
- * producer-shape constraint, not proof that a sidecar or provider ran.
+ * producer-shape constraint. The consumed V8 running inspect supplies the
+ * successor's null OomKillDisable representation; false is create-only history.
  * Unknown/default drift fails closed; do not silently expand this allowlist.
  */
 const HOST_DEFAULTS = {
@@ -78,7 +79,7 @@ const HOST_DEFAULTS = {
   "MemoryReservation": 0,
   "MemorySwap": 0,
   "MemorySwappiness": null,
-  "OomKillDisable": false,
+  "OomKillDisable": null,
   "PidsLimit": 64,
   "Ulimits": [],
   "CpuCount": 0,

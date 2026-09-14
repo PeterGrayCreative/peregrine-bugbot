@@ -323,6 +323,7 @@ export type ProviderExec = (
   stderr: string;
   code: number | null;
   timedOut: boolean;
+  outputLimitExceeded?: boolean;
   cleanupErrors?: readonly string[];
 }>;
 

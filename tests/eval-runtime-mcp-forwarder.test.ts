@@ -7,7 +7,11 @@ import { connect } from "node:net";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 // @ts-expect-error The runtime fixture is intentionally a built-in ESM module without a declaration file.
-import * as forwarder from "../container/eval-runtime/methodology-mcp-forwarder.mjs";
+import * as acceptedForwarder from "../container/eval-runtime/methodology-mcp-forwarder.mjs";
+// @ts-expect-error Prospective versioned built-in ESM candidate, never an accepted image.
+import * as privateForwarder from "../container/eval-runtime/methodology-mcp-forwarder-private-v1.mjs";
+const privateProfile = process.env.PEREGRINE_TEST_FORWARDER_PROFILE === "private-v1";
+const forwarder = privateProfile ? privateForwarder : acceptedForwarder;
 const {
   METHODOLOGY_MCP_FORWARDER_UPSTREAM_HOST,
   parseMethodologyMcpForwarderAuditSnapshot,
@@ -50,7 +54,8 @@ async function fixture(
   callback: (request: { method: string; hostname: string; port: number; path: string; headers: Readonly<Record<string, string>>; body: Buffer }) => unknown,
   options: Record<string, unknown> = {},
 ) {
-  const service = await startMethodologyMcpForwarder({ ...baseOptions, ...options, fixtureMode: true,
+  const start = options.fixedClientPath ? privateForwarder.startMethodologyMcpForwarder : startMethodologyMcpForwarder;
+  const service = await start({ ...baseOptions, ...options, fixtureMode: true,
     fixtureRequest: async (request: ForwardRequest) => callback(request) as never });
   return service;
 }
@@ -79,6 +84,21 @@ test("forwards only the exact POST endpoint and fixed upstream destination", asy
   assert.equal((await call(service.url, { method: "DELETE" })).status, 405);
   assert.equal((await call(service.url, { headers: { Host: "attacker.invalid", "content-type": "application/json" } })).status, 403);
   assert.equal(seen.length, 1);
+});
+
+test("prospective fixed endpoint keeps the upstream capability out of client configuration", async (t) => {
+  const requests: ForwardRequest[] = [];
+  const service = await fixture(request => { requests.push(request); return { statusCode: 200, body: "{}" }; }, { fixedClientPath: true });
+  t.after(() => service.close());
+  assert.equal(new URL(service.url).pathname, "/mcp");
+  assert.equal(service.endpoint, "/mcp");
+  assert.equal(JSON.stringify({ url: service.url, endpoint: service.endpoint, readiness: service.readiness() }).includes(token), false);
+  assert.equal((await call(service.url, { headers: { "content-type": "application/json" } })).status, 200);
+  assert.equal(requests.length, 1); assert.equal(requests[0]!.path, "/mcp/" + token);
+  for (const path of ["/mcp/" + token, "/mcp/other", "/mcp?token=" + token, "/mcp/"])
+    assert.equal((await call(new URL(path, service.url).href, { headers: { "content-type": "application/json" } })).status, 404);
+  assert.equal(requests.length, 1);
+  assert.equal(JSON.stringify(service.auditSnapshot()).includes(token), false);
 });
 
 test("strips arbitrary headers, refuses redirects, and never performs a second request", async (t) => {
@@ -153,7 +173,7 @@ test("production environment parsing is strict and never accepts target override
   assert.equal(parseMethodologyMcpForwarderConfig(env).port, 43124);
   assert.throws(() => parseMethodologyMcpForwarderConfig({ ...env, MCP_FORWARDER_UPSTREAM_URL: "http://evil.invalid" }), /unknown/);
   assert.throws(() => parseMethodologyMcpForwarderConfig({ ...env, MCP_FORWARDER_BIND_PORT: "0" }), /out of bounds/);
-  const fixtureOutput = execFileSync(process.execPath, [fileURLToPath(new URL("../container/eval-runtime/methodology-mcp-forwarder.mjs", import.meta.url)), "--fixture-config"], { encoding: "utf8" });
+  const fixtureOutput = execFileSync(process.execPath, [fileURLToPath(new URL(privateProfile ? "../container/eval-runtime/methodology-mcp-forwarder-private-v1.mjs" : "../container/eval-runtime/methodology-mcp-forwarder.mjs", import.meta.url)), "--fixture-config"], { encoding: "utf8" });
   assert.deepEqual(JSON.parse(fixtureOutput), { protocol: "methodology-mcp-forwarder-v1", upstreamHost: "host.docker.internal", tokenBytes: 32 });
 });
 

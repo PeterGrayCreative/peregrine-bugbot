@@ -6,6 +6,7 @@ import { renderMethodologySidecarArgs, methodologyGatewayEnvironment, methodolog
 import { validateMethodologyObservationGraph, validateMethodologyDeadlinePhases, type ObservationReceipt, type ContainerExpectation } from "./methodology-observation.js";
 import { PREDICTION_MCP_LIMITS } from "./prediction-runtime-attachment.js";
 import { canonicalJsonSha256 } from "./experiment.js";
+import { FORWARDER_REDACTION_KIND } from "./prediction-evidence-redaction.js";
 
 export const MECHANICAL_RECEIPT_PATH = /^canary\/mechanical-(client|sidecars)\/([0-9]{6})-(start|terminal|failure)\.json$/;
 const fail = (condition: unknown, message: string) => { if (!condition) throw new Error(message); };
@@ -13,6 +14,8 @@ const fail = (condition: unknown, message: string) => { if (!condition) throw ne
 /** Offline validation of the actual independently inventoried receipt bytes.
  * Names, self-hashes or an observer assertion alone cannot replace these bytes. */
 export function validateMechanicalReceipts(artifacts: { path: string; bytes: string }[], retained: any, scope: any, get: (path: string) => any, context: { directory: string; session: any }) {
+  const capability = exact(get("canary/invocation.json").forwarderCapability, ["kind", "sha256"], "forwarding capability redaction");
+  same(capability.kind, FORWARDER_REDACTION_KIND, "raw forwarding capability evidence prohibited"); hash(capability.sha256);
   const receipts = artifacts.filter(a => MECHANICAL_RECEIPT_PATH.test(a.path));
   const listed = array(retained.inventory).filter((v: any) => typeof v.path === "string" && v.path.startsWith("canary/mechanical-")) as any[];
   fail(receipts.length > 0 && receipts.length <= 1000, "bounded actual mechanical receipts required");
@@ -33,11 +36,12 @@ export function validateMechanicalReceipts(artifacts: { path: string; bytes: str
       const startRaw = selected.find(v => v.path === prefix + "-start.json"), terminalRaw = selected.find(v => v.path === prefix + "-terminal.json");
       fail(startRaw && terminalRaw, "missing, duplicate, failed or noncontiguous mechanical disposition");
       const start = JSON.parse(startRaw!.bytes), terminal = JSON.parse(terminalRaw!.bytes);
-      exact(start, ["kind", "clock", "binding", "sequence", "command", "args", "stdinSha256", "deadlineAttached", "aborted", "timeoutMs", "cleanup", "startedAt"], "mechanical start");
-      exact(terminal, ["kind", "clock", "binding", "sequence", "result", "closedAt", "evidenceError"], "mechanical terminal");
+      exact(start, ["kind", "clock", "binding", "forwarderCapability", "sequence", "command", "args", "stdinSha256", "deadlineAttached", "aborted", "timeoutMs", "cleanup", "startedAt"], "mechanical start");
+      exact(terminal, ["kind", "clock", "binding", "forwarderCapability", "sequence", "result", "closedAt", "evidenceError"], "mechanical terminal");
+      same([start.forwarderCapability, terminal.forwarderCapability], [capability, capability], "cross-record forwarding digest mismatch");
       const binding = { runId: scope.runId, attemptId: scope.attemptId, scopeSha256: digest(scope), sourceSha256: scope.sourceSha256, channel };
       same([start.kind, terminal.kind, start.binding, terminal.binding, start.sequence, terminal.sequence, start.command, start.aborted, terminal.evidenceError],
-        ["prediction-mechanical-start-v2", "prediction-mechanical-terminal-v2", binding, binding, sequence, sequence, "docker", false, null], "mechanical binding, completion or persistence failure");
+        ["prediction-mechanical-start-v3", "prediction-mechanical-terminal-v3", binding, binding, sequence, sequence, "docker", false, null], "mechanical binding, completion or persistence failure");
       const args = array(start.args).map(text); fail(args.length > 0 && args.length <= 1000, "mechanical argv bound");
       fail(typeof start.deadlineAttached === "boolean" && typeof start.cleanup === "boolean" && Number.isFinite(start.timeoutMs) && start.timeoutMs > 0 && start.timeoutMs <= 1200000, "mechanical deadline metadata gap");
       if (start.stdinSha256 !== null) hash(start.stdinSha256);
@@ -114,6 +118,7 @@ function validateSidecarPreparation(rows: any[], invocation: any, clientStarted:
   const urlArg = array(invocation.args).map(text).find(v => v.startsWith("mcp_servers.source_read.url=")); fail(urlArg, "missing forwarder endpoint");
   const endpoint = JSON.parse(urlArg!.slice("mcp_servers.source_read.url=".length));
   fail(/^http:\/\/mcp-forwarder:8082\/mcp\/[a-f0-9]{64}$/.test(endpoint), "unregistered forwarder endpoint");
+  same(endpoint.slice(-64), invocation.forwarderCapability.sha256, "endpoint forwarding digest mismatch");
   fail(Number.isSafeInteger(e.hostMcpPort) && e.hostMcpPort > 0 && e.hostMcpPort <= 65535, "invalid host MCP port");
   const { maxSessions: _, ...transport } = PREDICTION_MCP_LIMITS, limits = { ...transport, maxHeaderBytes: 8192 };
   same(e.mcpLimitsSha256, canonicalJsonSha256(limits), "forwarder budget binding drift");
