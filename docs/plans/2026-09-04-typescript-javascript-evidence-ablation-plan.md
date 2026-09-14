@@ -275,3 +275,9 @@ uses an enum-only in-memory JSON protocol, metadata-only receipts and a nonsecre
 internal reader endpoint. It remains structural-only pending new immutable
 image/helper acceptance, independent live observation and fresh authorization;
 the consumed approval and all 64 unstarted review slots are unchanged.
+
+Its [publication preparation](../validation/2026-09-13-private-stream-runtime-publication.md)
+adds a separate commit-tagged, digest-attested private-stream workflow and
+credential-free fixed-endpoint proof. Source/acceptance inputs remain readiness
+denied until a real successful workflow digest and artifacts receive independent
+review. Neither publication nor image acceptance can authorize a canary or batch.
