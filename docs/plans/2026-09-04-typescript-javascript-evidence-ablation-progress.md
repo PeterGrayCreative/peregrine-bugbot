@@ -1,6 +1,6 @@
 # TypeScript and JavaScript evidence and ablation progress
 
-Updated: 2026-09-13 (private-stream successor; historical entries preserved)
+Updated: 2026-09-13 (private-stream publication preparation; historical entries preserved)
 Active branch: `research/evidence-audit-corrections`
 
 ## Current canary status (2026-09-13)
@@ -13,9 +13,14 @@ Active branch: `research/evidence-audit-corrections`
   retain original hashes and an explicit transformation record.
 - [x] The redacted-evidence V1 correction was rejected: encoded producer streams
   and pre-validation host output did not establish the required secret boundary.
-- [ ] The [file-free private-stream successor](../validation/2026-09-13-prediction-private-canary-stream.md)
-  awaits independent review, new image/helper acceptance and fresh authorization.
+- [x] The [file-free private-stream successor](../validation/2026-09-13-prediction-private-canary-stream.md)
+  passed independent review and merged in PR64. New image/helper acceptance and
+  fresh exact canary authorization are still required.
   Metadata integrity cannot replace independent live semantic observation.
+- [x] A [separate publication path](../validation/2026-09-13-private-stream-runtime-publication.md)
+  prepares a commit-tagged candidate, digest-attested dual-platform proof and
+  typed-only artifacts. Local deterministic proof only; no workflow dispatched.
+- [ ] Published private-stream digest, real platform proof and independent acceptance.
 - [ ] No retry, provider readiness, batch eligibility or batch authorization.
 
 See the [consumed-canary correction](../validation/2026-09-13-prediction-consumed-canary-correction.md).

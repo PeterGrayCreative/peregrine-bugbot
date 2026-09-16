@@ -205,7 +205,9 @@ test("sidecar inspect validation rejects mounts and provider credentials", () =>
   }
 });
 
-test("full egress proof runs against an injected fake runtime only", () => {
+for (const privateStream of [false, true]) test(`full egress proof runs against an injected fake runtime only (${privateStream ? "private" : "legacy"})`, () => {
+  const protocol = privateStream ? "eval-private-stream-fixture-v1" : "eval-egress-fixture-v1";
+  const fixture = resolve(privateStream ? "scripts/eval-private-stream-probe-fixture-v1.mjs" : "scripts/eval-egress-probe-fixture.mjs");
   const audit = createAudit();
   // Candidate audit records are deliberately decoys: they remain authenticated
   // format diagnostics, but cannot make or break the verifier proof.
@@ -214,11 +216,12 @@ test("full egress proof runs against an injected fake runtime only", () => {
   const forwarderBody = { schemaVersion: 1, protocol: "methodology-mcp-forwarder-audit-v1", sealed: true, requests: { observed: 1, allowed: 0, denied: 1, forwarded: 0, budgeted: 1 }, events: [{ sequence: 1, decision: "deny", code: "upstream-failure" }] };
   const forwarderDigest = createHash("sha256").update("methodology-mcp-forwarder-audit-v1\0").update(JSON.stringify(forwarderBody)).digest("hex");
   const fixtureLine = (role: string, value: unknown) => {
-    const body = { status: "sealed", schemaVersion: 1, protocol: "eval-egress-fixture-v1", sealed: true, role, audit: value };
-    const sha256 = createHash("sha256").update("eval-egress-fixture-v1\0").update(JSON.stringify(body)).digest("hex");
+    const body = { status: "sealed", schemaVersion: 1, protocol, sealed: true, role, audit: value };
+    const sha256 = createHash("sha256").update(`${protocol}\0`).update(JSON.stringify(body)).digest("hex");
     return `${JSON.stringify({ ...body, sha256 })}\n`;
   };
   const logs = new Map<string, string>();
+  let wrongPathAccepted = false;
   const commands: string[][] = [];
   let reviewerName: string | undefined;
   let reviewerAlive = false;
@@ -233,14 +236,14 @@ test("full egress proof runs against an injected fake runtime only", () => {
       if (args[0] === "run") {
         const name = args[args.indexOf("--name") + 1]!;
         const command = args.at(-1);
-        if (args.includes("--reviewer")) { reviewerName = name; reviewerAlive = true; logs.set(name, fixtureLine("reviewer", { mcpViaSourceRead: true, wrongTokenDenied: true, gatewayProviderReached: true, mismatchedSniDenied: true, directProviderFailed: true, directMcpFailed: true, directProviderIpFailed: true, directMcpIpFailed: true })); }
+        if (args.includes("--reviewer")) { reviewerName = name; reviewerAlive = true; logs.set(name, fixtureLine("reviewer", { mcpViaSourceRead: true, [privateStream ? "wrongPathDenied" : "wrongTokenDenied"]: !wrongPathAccepted, gatewayProviderReached: true, mismatchedSniDenied: true, directProviderFailed: true, directMcpFailed: true, directProviderIpFailed: true, directMcpIpFailed: true })); }
         else if (args.includes("--provider")) {
           const challenge = args[args.indexOf("--expected-challenge") + 1]!;
-          logs.set(name, JSON.stringify({ status: "ready", protocol: "eval-egress-fixture-v1", role: "provider" }) + "\n" + fixtureLine("provider", { connections: 1, hellos: 1, acceptedSni: ["fake-provider.invalid"], mismatchedSni: 0, acceptedChallenges: [challenge], unexpectedChallenges: 0, sourceAddresses: ["8.8.8.4"] }));
+          logs.set(name, JSON.stringify({ status: "ready", protocol, role: "provider" }) + "\n" + fixtureLine("provider", { connections: 1, hellos: 1, acceptedSni: ["fake-provider.invalid"], mismatchedSni: 0, acceptedChallenges: [challenge], unexpectedChallenges: 0, sourceAddresses: ["8.8.8.4"] }));
         }
         else if (args.includes("--mcp")) {
           const challenge = args[args.indexOf("--expected-challenge") + 1]!;
-          logs.set(name, JSON.stringify({ status: "ready", protocol: "eval-egress-fixture-v1", role: "mcp" }) + "\n" + fixtureLine("mcp", { requests: 1, acceptedChallenges: [challenge], unexpectedChallenges: 0, sourceAddresses: ["8.8.8.5"] }));
+          logs.set(name, JSON.stringify({ status: "ready", protocol, role: "mcp" }) + "\n" + fixtureLine("mcp", { requests: 1, acceptedChallenges: [challenge], unexpectedChallenges: 0, sourceAddresses: ["8.8.8.5"] }));
         }
         else if (args.includes("/usr/local/bin/peregrine-egress-gateway")) logs.set(name, JSON.stringify({ status: "ready", protocol: "egress-gateway-v1" }) + "\n" + JSON.stringify({ status: "sealed", protocol: "egress-gateway-v1", audit: gatewayAudit }) + "\n");
         else logs.set(name, JSON.stringify({ status: "ready", protocol: "methodology-mcp-forwarder-v1" }) + "\n" + JSON.stringify({ status: "sealed", protocol: "methodology-mcp-forwarder-v1", audit: { ...forwarderBody, snapshotSha256: forwarderDigest } }) + "\n");
@@ -286,9 +289,14 @@ test("full egress proof runs against an injected fake runtime only", () => {
       return { status: 0 };
     },
   };
-  runEgressProbe("candidate:pr", undefined, fake, resolve("scripts/eval-egress-probe-fixture.mjs"));
+  runEgressProbe("candidate:pr", undefined, fake, fixture, privateStream);
   const digest = `ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:${"b".repeat(64)}`;
-  runEgressProbe(digest, "linux/amd64", fake, resolve("scripts/eval-egress-probe-fixture.mjs"));
+  runEgressProbe(digest, "linux/amd64", fake, fixture, privateStream);
+  if (privateStream) runEgressProbe(digest, "linux/arm64", fake, fixture, true);
+  for (const args of commands.filter(a => a[0] === "run" && a.includes("--reviewer"))) {
+    assert.equal(args.includes("--token"), !privateStream);
+    assert.equal(args.includes("--fixed-endpoint"), privateStream);
+  }
   assert.ok(commands.some((args) => JSON.stringify(args) === JSON.stringify(["image", "rm", "--force", digest])));
   assert.ok(commands.some((args) => JSON.stringify(args) === JSON.stringify(["image", "inspect", digest])));
   assert.ok(commands.some((args) => args[0] === "network" && args[1] === "inspect"));
@@ -298,4 +306,9 @@ test("full egress proof runs against an injected fake runtime only", () => {
   assert.ok(commands.some((args) => args[0] === "run" && args.includes("--provider") && args[args.indexOf("--name") + 1] && args.includes(VERIFIER_IMAGE)));
   assert.ok(commands.some((args) => args[0] === "run" && args.includes("--reviewer") && args.includes(VERIFIER_IMAGE)));
   assert.ok(commands.filter((args) => args[0] === "image" && args[1] === "rm").some((args) => args.at(-1) === VERIFIER_IMAGE));
+  if (privateStream) {
+    wrongPathAccepted = true;
+    assert.throws(() => runEgressProbe(digest, "linux/arm64", fake, fixture, true), /complete egress transaction/);
+    assert.ok(commands.slice(-6).some(args => args[0] === "image" && args[1] === "inspect"));
+  }
 });

@@ -11,6 +11,8 @@ const DIGEST_IMAGE = /^[a-z0-9][a-z0-9./:_-]*@sha256:[a-f0-9]{64}$/u;
 const HOST = /^[a-z0-9.-]+$/u;
 const IPV4 = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/u;
 const FIXTURE_PROTOCOL = "eval-egress-fixture-v1";
+const PRIVATE_FIXTURE_PROTOCOL = "eval-private-stream-fixture-v1";
+export const PRIVATE_VERIFIER_FIXTURE_SHA256 = "e1ae2722515a893125c9376bef6bb621016013bb9e0899f7a9d701e995df4fd2";
 const GATEWAY_PROTOCOL = "egress-gateway-v1";
 const FORWARDER_PROTOCOL = "methodology-mcp-forwarder-v1";
 const TEST_SUBNET = "8.8.8.0/24";
@@ -124,7 +126,7 @@ function isCanonicalIpv4(value: unknown): value is string {
 interface ParsedFixtureAudit {
   status: "sealed";
   schemaVersion: 1;
-  protocol: typeof FIXTURE_PROTOCOL;
+  protocol: typeof FIXTURE_PROTOCOL | typeof PRIVATE_FIXTURE_PROTOCOL;
   sealed: true;
   role: "provider" | "mcp" | "reviewer";
   audit: Record<string, unknown>;
@@ -132,17 +134,18 @@ interface ParsedFixtureAudit {
 }
 
 /** Runner-owned parser for the fixed fixture protocol. Never import a candidate parser. */
-export function parseEgressProbeFixtureAuditLine(line: string, expectedRole: ParsedFixtureAudit["role"]): ParsedFixtureAudit {
+export function parseEgressProbeFixtureAuditLine(line: string, expectedRole: ParsedFixtureAudit["role"], privateStream = false): ParsedFixtureAudit {
+  const protocol = privateStream ? PRIVATE_FIXTURE_PROTOCOL : FIXTURE_PROTOCOL;
   const value = parseJsonLine(line, "fixture audit");
   const baseKeys = ["audit", "protocol", "role", "schemaVersion", "sealed", "sha256", "status"];
   exactKeys(value, baseKeys, "fixture audit");
-  if (value.status !== "sealed" || value.schemaVersion !== 1 || value.protocol !== FIXTURE_PROTOCOL || value.sealed !== true || value.role !== expectedRole || typeof value.sha256 !== "string" || !HEX_DIGEST.test(value.sha256)) fail("invalid fixture audit");
+  if (value.status !== "sealed" || value.schemaVersion !== 1 || value.protocol !== protocol || value.sealed !== true || value.role !== expectedRole || typeof value.sha256 !== "string" || !HEX_DIGEST.test(value.sha256)) fail("invalid fixture audit");
   if (!value.audit || typeof value.audit !== "object" || Array.isArray(value.audit)) fail("invalid fixture audit payload");
   const audit = value.audit as Record<string, unknown>;
   const expectedAuditKeys = expectedRole === "provider"
     ? ["acceptedChallenges", "acceptedSni", "connections", "hellos", "mismatchedSni", "sourceAddresses", "unexpectedChallenges"]
     : expectedRole === "mcp" ? ["acceptedChallenges", "requests", "sourceAddresses", "unexpectedChallenges"]
-      : ["directMcpFailed", "directMcpIpFailed", "directProviderFailed", "directProviderIpFailed", "gatewayProviderReached", "mcpViaSourceRead", "mismatchedSniDenied", "wrongTokenDenied"];
+      : ["directMcpFailed", "directMcpIpFailed", "directProviderFailed", "directProviderIpFailed", "gatewayProviderReached", "mcpViaSourceRead", "mismatchedSniDenied", privateStream ? "wrongPathDenied" : "wrongTokenDenied"];
   exactKeys(audit, expectedAuditKeys, `${expectedRole} fixture audit`);
   if (expectedRole === "provider") {
     if (!Array.isArray(audit.acceptedSni) || audit.acceptedSni.some((entry) => typeof entry !== "string")) fail("invalid provider SNI audit");
@@ -155,8 +158,8 @@ export function parseEgressProbeFixtureAuditLine(line: string, expectedRole: Par
     for (const key of ["requests", "unexpectedChallenges"] as const) nonNegativeInteger(audit[key], `MCP ${key}`);
   }
   else for (const key of expectedAuditKeys) if (typeof audit[key] !== "boolean") fail(`invalid reviewer ${key} audit`);
-  const body = { status: "sealed", schemaVersion: 1, protocol: FIXTURE_PROTOCOL, sealed: true, role: expectedRole, audit };
-  const expected = sha256(`${FIXTURE_PROTOCOL}\0${JSON.stringify(body)}`);
+  const body = { status: "sealed", schemaVersion: 1, protocol, sealed: true, role: expectedRole, audit };
+  const expected = sha256(`${protocol}\0${JSON.stringify(body)}`);
   if (expected !== value.sha256) fail("fixture audit digest mismatch");
   return Object.freeze({ ...body, sha256: expected }) as ParsedFixtureAudit;
 }
@@ -394,6 +397,7 @@ export function parseEgressProbeNetworkAliases(value: unknown, names: EgressProb
 }
 
 interface ContainerRunSpec {
+  privateStream?: boolean;
   role: "provider" | "mcp" | "gateway" | "forwarder" | "reviewer";
   image: string;
   name: string;
@@ -437,7 +441,8 @@ export function buildEgressProbeContainerArgs(spec: ContainerRunSpec): string[] 
   if (!HOST.test(spec.alias)) fail("invalid container network alias");
   if (spec.fixturePath !== undefined) validatePath(spec.fixturePath, "fixture");
   if ((spec.role === "provider" || spec.role === "mcp" || spec.role === "reviewer") && spec.fixturePath === undefined) fail("fixture helper is required");
-  if ((spec.role === "mcp" || spec.role === "forwarder" || spec.role === "reviewer") && (!spec.token || !/^[a-f0-9]{64}$/u.test(spec.token))) fail("source-read token is required");
+  if ((spec.role === "mcp" || spec.role === "forwarder" || spec.role === "reviewer" && !spec.privateStream) && (!spec.token || !/^[a-f0-9]{64}$/u.test(spec.token))) fail("source-read token is required");
+  if (spec.privateStream && spec.role === "reviewer" && spec.token !== undefined) fail("private reviewer cannot receive forwarding capability");
   if ((spec.role === "provider" || spec.role === "mcp") && spec.challenge === undefined) fail("fixture correlation challenge is required");
   if (spec.challenge !== undefined) validateChallenge(spec.challenge, "fixture correlation challenge");
   if (spec.role === "reviewer" && spec.challenges === undefined) fail("reviewer correlation challenges are required");
@@ -460,6 +465,7 @@ export function buildEgressProbeContainerArgs(spec: ContainerRunSpec): string[] 
     : spec.role === "forwarder"
       ? ["MCP_FORWARDER_BIND_HOST=0.0.0.0", `MCP_FORWARDER_BIND_PORT=${FORWARDER_PORT}`, `MCP_FORWARDER_ALLOWED_HOST=${FORWARDER_ALIAS}:${FORWARDER_PORT}`, `MCP_FORWARDER_TOKEN=${spec.token}`, `MCP_FORWARDER_UPSTREAM_PORT=${MCP_UPSTREAM_PORT}`, "MCP_FORWARDER_MAX_REQUEST_BYTES=8192", "MCP_FORWARDER_MAX_RESPONSE_BYTES=8192", "MCP_FORWARDER_MAX_HEADER_BYTES=8192", "MCP_FORWARDER_REQUEST_TIMEOUT_MS=3000", "MCP_FORWARDER_MAX_CONNECTIONS=4", "MCP_FORWARDER_MAX_REQUESTS=8"]
       : [];
+  if (spec.privateStream && spec.role === "forwarder") env.push("MCP_FORWARDER_FIXED_CLIENT_PATH=1");
   for (const value of env) args.push("--env", value);
   if (spec.fixturePath !== undefined) args.push("--mount", `type=bind,source=${spec.fixturePath},target=/probe-fixture.mjs,readonly`);
   if (spec.role === "gateway") args.push("--entrypoint", GATEWAY_ENTRYPOINT);
@@ -467,13 +473,13 @@ export function buildEgressProbeContainerArgs(spec: ContainerRunSpec): string[] 
   args.push(spec.image);
   if (spec.role === "provider") args.push("node", "/probe-fixture.mjs", "--provider", "--host", "0.0.0.0", "--port", "443", "--expected-sni", PROVIDER_ALIAS, "--expected-challenge", spec.challenge!);
   else if (spec.role === "mcp") args.push("node", "/probe-fixture.mjs", "--mcp", "--host", "0.0.0.0", "--port", String(MCP_UPSTREAM_PORT), "--token", spec.token!, "--expected-challenge", spec.challenge!);
-  else if (spec.role === "reviewer") args.push("node", "/probe-fixture.mjs", "--reviewer", "--gateway", `${GATEWAY_ALIAS}:${GATEWAY_PORT}`, "--forwarder", `${FORWARDER_ALIAS}:${FORWARDER_PORT}`, "--token", spec.token!, "--provider", PROVIDER_ALIAS, "--mcp", MCP_ALIAS,
+  else if (spec.role === "reviewer") args.push("node", "/probe-fixture.mjs", "--reviewer", "--gateway", `${GATEWAY_ALIAS}:${GATEWAY_PORT}`, "--forwarder", `${FORWARDER_ALIAS}:${FORWARDER_PORT}`, ...(spec.privateStream ? ["--fixed-endpoint"] : ["--token", spec.token!]), "--provider", PROVIDER_ALIAS, "--mcp", MCP_ALIAS,
     "--allowed-provider-challenge", challenges!.allowedProvider, "--denied-provider-challenge", challenges!.deniedProvider,
     "--allowed-mcp-challenge", challenges!.allowedMcp, "--denied-mcp-challenge", challenges!.deniedMcp);
   return args;
 }
 
-export function parseEgressProbeContainerArgs(args: readonly string[]): { name: string; network: string; alias: string; image: string; role: ContainerRunSpec["role"]; platform?: EgressProbeOptions["platform"] } {
+export function parseEgressProbeContainerArgs(args: readonly string[], privateStream = false): { name: string; network: string; alias: string; image: string; role: ContainerRunSpec["role"]; platform?: EgressProbeOptions["platform"] } {
   let cursor = 0;
   const take = (expected?: string): string => {
     const value = args[cursor++];
@@ -534,7 +540,8 @@ export function parseEgressProbeContainerArgs(args: readonly string[]): { name: 
       if (mode === "--reviewer") {
         take("--gateway"); if (take() !== `${GATEWAY_ALIAS}:${GATEWAY_PORT}`) fail("invalid reviewer gateway");
         take("--forwarder"); if (take() !== `${FORWARDER_ALIAS}:${FORWARDER_PORT}`) fail("invalid reviewer forwarder");
-        take("--token"); if (!CORRELATION_CHALLENGE.test(take())) fail("invalid reviewer token");
+        if (privateStream) take("--fixed-endpoint");
+        else { take("--token"); if (!CORRELATION_CHALLENGE.test(take())) fail("invalid reviewer token"); }
         take("--provider"); if (take() !== PROVIDER_ALIAS) fail("invalid reviewer provider");
         take("--mcp"); if (take() !== MCP_ALIAS) fail("invalid reviewer MCP");
         const challenges = ["allowed-provider", "denied-provider", "allowed-mcp", "denied-mcp"].map((label) => {
@@ -562,6 +569,7 @@ export function parseEgressProbeContainerArgs(args: readonly string[]): { name: 
     const tokenEntry = env[3] ?? "";
     if (!/^MCP_FORWARDER_TOKEN=[a-f0-9]{64}$/u.test(tokenEntry)) fail("invalid forwarder capability token");
     const forwarderEnv = ["MCP_FORWARDER_BIND_HOST=0.0.0.0", `MCP_FORWARDER_BIND_PORT=${FORWARDER_PORT}`, `MCP_FORWARDER_ALLOWED_HOST=${FORWARDER_ALIAS}:${FORWARDER_PORT}`, tokenEntry, `MCP_FORWARDER_UPSTREAM_PORT=${MCP_UPSTREAM_PORT}`, "MCP_FORWARDER_MAX_REQUEST_BYTES=8192", "MCP_FORWARDER_MAX_RESPONSE_BYTES=8192", "MCP_FORWARDER_MAX_HEADER_BYTES=8192", "MCP_FORWARDER_REQUEST_TIMEOUT_MS=3000", "MCP_FORWARDER_MAX_CONNECTIONS=4", "MCP_FORWARDER_MAX_REQUESTS=8"];
+    if (privateStream) forwarderEnv.push("MCP_FORWARDER_FIXED_CLIENT_PATH=1");
     if (JSON.stringify(env) !== JSON.stringify(forwarderEnv)) fail("invalid forwarder environment");
   }
   if ((role === "provider" || role === "mcp" || role === "reviewer") && env.length !== 0) fail("fixture containers cannot receive environment values");
@@ -629,14 +637,14 @@ function output(result: ProbeProcessResult, field: "stdout" | "stderr"): string 
 }
 
 /** Reparse every topology-mutating argv immediately before it can reach Docker. */
-export function validateEgressProbeDockerArgs(args: readonly string[]): void {
+export function validateEgressProbeDockerArgs(args: readonly string[], privateStream = false): void {
   if (args[0] === "network" && args[1] === "create") parseEgressProbeNetworkCreateArgs(args);
   else if (args[0] === "network" && args[1] === "connect") parseEgressProbeNetworkConnectArgs(args);
-  else if (args[0] === "run") parseEgressProbeContainerArgs(args);
+  else if (args[0] === "run") parseEgressProbeContainerArgs(args, privateStream);
 }
 
-function invoke(runtime: ProbeRuntime, args: readonly string[], label: string): ProbeProcessResult {
-  validateEgressProbeDockerArgs(args);
+function invoke(runtime: ProbeRuntime, args: readonly string[], label: string, privateStream = false): ProbeProcessResult {
+  validateEgressProbeDockerArgs(args, privateStream);
   const result = runtime.spawn("docker", args, { encoding: "utf8" });
   if (result.error) throw new Error(`${label}: ${result.error.message}`);
   if (result.status !== 0) throw new Error(`${label}: Docker exited with status ${result.status ?? "unknown"}: ${output(result, "stderr").slice(0, 300)}`);
@@ -694,14 +702,17 @@ function assertImageAbsent(runtime: ProbeRuntime, image: string): void {
   if (result.error || result.status === 0 || result.status !== 1 || !/No such (?:object|image)/iu.test(errorText)) throw new Error("probe image remains or absence could not be proven");
 }
 
-export function runEgressProbe(image: string, platform?: EgressProbeOptions["platform"], runtime: ProbeRuntime = systemRuntime, fixturePath = resolve(fileURLToPath(new URL("./eval-egress-probe-fixture.mjs", import.meta.url)))): void {
+export function runEgressProbe(image: string, platform?: EgressProbeOptions["platform"], runtime: ProbeRuntime = systemRuntime, fixturePath: string | undefined = undefined, privateStream = false): void {
+  const protocol = privateStream ? PRIVATE_FIXTURE_PROTOCOL : FIXTURE_PROTOCOL;
+  const canonicalFixture = resolve(fileURLToPath(new URL(privateStream ? "./eval-private-stream-probe-fixture-v1.mjs" : "./eval-egress-probe-fixture.mjs", import.meta.url)));
+  fixturePath ??= canonicalFixture;
+  const execute = (args: readonly string[], label: string) => invoke(runtime, args, label, privateStream);
   validateImage(image, platform);
   validatePath(fixturePath, "fixture");
   if (!existsSync(fixturePath)) throw new Error("fixture helper does not exist");
-  const canonicalFixture = resolve(fileURLToPath(new URL("./eval-egress-probe-fixture.mjs", import.meta.url)));
   const fixtureStat = lstatSync(fixturePath);
   if (fixtureStat.isSymbolicLink() || !fixtureStat.isFile() || realpathSync(fixturePath) !== realpathSync(canonicalFixture)) throw new Error("fixture helper must be the canonical regular file");
-  if (sha256(readFileSync(fixturePath)) !== VERIFIER_FIXTURE_SHA256) throw new Error("fixture helper does not match the reviewed verifier bytes");
+  if (sha256(readFileSync(fixturePath)) !== (privateStream ? PRIVATE_VERIFIER_FIXTURE_SHA256 : VERIFIER_FIXTURE_SHA256)) throw new Error("fixture helper does not match the reviewed verifier bytes");
   const suffix = randomUUID().replaceAll("-", "");
   const names: EgressProbeNames = {
     reviewerNetwork: `peregrine-reviewer-${suffix}`,
@@ -724,32 +735,32 @@ export function runEgressProbe(image: string, platform?: EgressProbeOptions["pla
   const networks: string[] = [];
   let primaryError: unknown;
   try {
-    invoke(runtime, buildEgressProbeNetworkCreateArgs(names.reviewerNetwork), "create reviewer network"); networks.push(names.reviewerNetwork);
-    invoke(runtime, buildEgressProbeNetworkCreateArgs(names.externalNetwork, TEST_SUBNET), "create external network"); networks.push(names.externalNetwork);
-    const candidate = { image, platform };
-    const verifier = { image: VERIFIER_IMAGE, platform };
-    invoke(runtime, buildEgressProbeContainerArgs({ ...verifier, role: "provider", name: names.provider, network: names.externalNetwork, alias: PROVIDER_ALIAS, fixturePath, challenge: challenges.allowedProvider }), "start fake provider"); started.push(names.provider);
-    invoke(runtime, buildEgressProbeContainerArgs({ ...verifier, role: "mcp", name: names.mcp, network: names.externalNetwork, alias: MCP_ALIAS, fixturePath, token, challenge: challenges.allowedMcp }), "start fake MCP"); started.push(names.mcp);
-    invoke(runtime, buildEgressProbeContainerArgs({ ...candidate, role: "gateway", name: names.gateway, network: names.externalNetwork, alias: GATEWAY_ALIAS }), "start egress gateway"); started.push(names.gateway);
-    invoke(runtime, buildEgressProbeContainerArgs({ ...candidate, role: "forwarder", name: names.forwarder, network: names.externalNetwork, alias: FORWARDER_ALIAS, token }), "start MCP forwarder"); started.push(names.forwarder);
-    invoke(runtime, buildEgressProbeNetworkConnectArgs(names.reviewerNetwork, names.gateway, GATEWAY_ALIAS), "attach gateway to reviewer network");
-    invoke(runtime, buildEgressProbeNetworkConnectArgs(names.reviewerNetwork, names.forwarder, FORWARDER_ALIAS), "attach forwarder to reviewer network");
-    waitReady(runtime, names.provider, FIXTURE_PROTOCOL); waitReady(runtime, names.mcp, FIXTURE_PROTOCOL); waitReady(runtime, names.gateway, GATEWAY_PROTOCOL); waitReady(runtime, names.forwarder, FORWARDER_PROTOCOL);
-    const inspect = invoke(runtime, buildEgressProbeInspectArgs([names.gateway, names.forwarder]), "inspect sidecars");
+    execute(buildEgressProbeNetworkCreateArgs(names.reviewerNetwork), "create reviewer network"); networks.push(names.reviewerNetwork);
+    execute(buildEgressProbeNetworkCreateArgs(names.externalNetwork, TEST_SUBNET), "create external network"); networks.push(names.externalNetwork);
+    const candidate = { image, platform, privateStream };
+    const verifier = { image: VERIFIER_IMAGE, platform, privateStream };
+    execute(buildEgressProbeContainerArgs({ ...verifier, role: "provider", name: names.provider, network: names.externalNetwork, alias: PROVIDER_ALIAS, fixturePath, challenge: challenges.allowedProvider }), "start fake provider"); started.push(names.provider);
+    execute(buildEgressProbeContainerArgs({ ...verifier, role: "mcp", name: names.mcp, network: names.externalNetwork, alias: MCP_ALIAS, fixturePath, token, challenge: challenges.allowedMcp }), "start fake MCP"); started.push(names.mcp);
+    execute(buildEgressProbeContainerArgs({ ...candidate, role: "gateway", name: names.gateway, network: names.externalNetwork, alias: GATEWAY_ALIAS }), "start egress gateway"); started.push(names.gateway);
+    execute(buildEgressProbeContainerArgs({ ...candidate, role: "forwarder", name: names.forwarder, network: names.externalNetwork, alias: FORWARDER_ALIAS, token }), "start MCP forwarder"); started.push(names.forwarder);
+    execute(buildEgressProbeNetworkConnectArgs(names.reviewerNetwork, names.gateway, GATEWAY_ALIAS), "attach gateway to reviewer network");
+    execute(buildEgressProbeNetworkConnectArgs(names.reviewerNetwork, names.forwarder, FORWARDER_ALIAS), "attach forwarder to reviewer network");
+    waitReady(runtime, names.provider, protocol); waitReady(runtime, names.mcp, protocol); waitReady(runtime, names.gateway, GATEWAY_PROTOCOL); waitReady(runtime, names.forwarder, FORWARDER_PROTOCOL);
+    const inspect = execute(buildEgressProbeInspectArgs([names.gateway, names.forwarder]), "inspect sidecars");
     parseEgressProbeContainerInspect(JSON.parse(output(inspect, "stdout")), [names.gateway, names.forwarder]);
-    invoke(runtime, buildEgressProbeContainerArgs({ ...verifier, role: "reviewer", name: names.reviewer, network: names.reviewerNetwork, alias: "reviewer", fixturePath, token, challenges }), "run reviewer"); started.push(names.reviewer);
-    const reviewerLogs = waitSealed(runtime, names.reviewer, FIXTURE_PROTOCOL);
-    const topology = invoke(runtime, buildEgressProbeNetworkInspectArgs(names.reviewerNetwork, names.externalNetwork), "inspect probe networks");
+    execute(buildEgressProbeContainerArgs({ ...verifier, role: "reviewer", name: names.reviewer, network: names.reviewerNetwork, alias: "reviewer", fixturePath, ...(privateStream ? {} : { token }), challenges }), "run reviewer"); started.push(names.reviewer);
+    const reviewerLogs = waitSealed(runtime, names.reviewer, protocol);
+    const topology = execute(buildEgressProbeNetworkInspectArgs(names.reviewerNetwork, names.externalNetwork), "inspect probe networks");
     const externalEndpointIps = parseEgressProbeNetworkInspect(JSON.parse(output(topology, "stdout")), names);
-    const aliases = invoke(runtime, buildEgressProbeNetworkAliasInspectArgs(names), "inspect probe endpoint aliases");
+    const aliases = execute(buildEgressProbeNetworkAliasInspectArgs(names), "inspect probe endpoint aliases");
     parseEgressProbeNetworkAliases(JSON.parse(output(aliases, "stdout")), names);
-    invoke(runtime, buildEgressProbeStopArgs([names.reviewer]), "stop reviewer");
+    execute(buildEgressProbeStopArgs([names.reviewer]), "stop reviewer");
     if (!reviewerLogs || typeof reviewerLogs !== "object") throw new Error("reviewer result is missing");
-    const reviewerAudit = parseEgressProbeFixtureAuditLine(JSON.stringify(reviewerLogs), "reviewer");
+    const reviewerAudit = parseEgressProbeFixtureAuditLine(JSON.stringify(reviewerLogs), "reviewer", privateStream);
     // direct* fields are bounded connectivity diagnostics and deliberately do
     // not participate in the policy decision.
-    if (reviewerAudit.audit.mcpViaSourceRead !== true || reviewerAudit.audit.wrongTokenDenied !== true || reviewerAudit.audit.gatewayProviderReached !== true || reviewerAudit.audit.mismatchedSniDenied !== true) throw new Error("reviewer did not prove the complete egress transaction contract");
-    invoke(runtime, buildEgressProbeStopArgs([names.gateway, names.forwarder]), "stop sidecars");
+    if (reviewerAudit.audit.mcpViaSourceRead !== true || reviewerAudit.audit[privateStream ? "wrongPathDenied" : "wrongTokenDenied"] !== true || reviewerAudit.audit.gatewayProviderReached !== true || reviewerAudit.audit.mismatchedSniDenied !== true) throw new Error("reviewer did not prove the complete egress transaction contract");
+    execute(buildEgressProbeStopArgs([names.gateway, names.forwarder]), "stop sidecars");
     const gatewayLine = sealedLog(runtime, names.gateway, GATEWAY_PROTOCOL) as { audit?: unknown };
     const forwarderLine = sealedLog(runtime, names.forwarder, FORWARDER_PROTOCOL) as { audit?: unknown };
     const gatewayAudit = parseEgressProbeGatewayAudit(gatewayLine.audit);
@@ -758,21 +769,21 @@ export function runEgressProbe(image: string, platform?: EgressProbeOptions["pla
     // only. The policy proof below comes from the pinned verifier fixtures.
     void gatewayAudit;
     void forwarderAudit;
-    invoke(runtime, buildEgressProbeStopArgs([names.provider, names.mcp]), "stop fake upstreams");
-    const providerLine = parseEgressProbeFixtureAuditLine(JSON.stringify(sealedLog(runtime, names.provider, FIXTURE_PROTOCOL)), "provider");
+    execute(buildEgressProbeStopArgs([names.provider, names.mcp]), "stop fake upstreams");
+    const providerLine = parseEgressProbeFixtureAuditLine(JSON.stringify(sealedLog(runtime, names.provider, protocol)), "provider", privateStream);
     if (providerLine.audit.connections !== 1 || providerLine.audit.hellos !== 1 || JSON.stringify(providerLine.audit.acceptedSni) !== JSON.stringify([PROVIDER_ALIAS]) || providerLine.audit.mismatchedSni !== 0 || JSON.stringify(providerLine.audit.acceptedChallenges) !== JSON.stringify([challenges.allowedProvider]) || providerLine.audit.unexpectedChallenges !== 0) throw new Error("fake provider did not prove exact correlation and pre-upstream SNI denial");
     assertEgressProbeSourceWitness(providerLine.audit.sourceAddresses, externalEndpointIps.gateway, "provider");
-    const mcpLine = parseEgressProbeFixtureAuditLine(JSON.stringify(sealedLog(runtime, names.mcp, FIXTURE_PROTOCOL)), "mcp");
+    const mcpLine = parseEgressProbeFixtureAuditLine(JSON.stringify(sealedLog(runtime, names.mcp, protocol)), "mcp", privateStream);
     if (mcpLine.audit.requests !== 1 || JSON.stringify(mcpLine.audit.acceptedChallenges) !== JSON.stringify([challenges.allowedMcp]) || mcpLine.audit.unexpectedChallenges !== 0) throw new Error("fake MCP did not prove exact source-read correlation");
     assertEgressProbeSourceWitness(mcpLine.audit.sourceAddresses, externalEndpointIps.forwarder, "MCP");
   } catch (error) { primaryError = error; }
   const cleanupErrors: Error[] = [];
-  try { if (started.length) invoke(runtime, buildEgressProbeRemoveArgs([...started].reverse()), "remove probe containers"); } catch (error) { cleanupErrors.push(error instanceof Error ? error : new Error("remove probe containers failed")); }
+  try { if (started.length) execute(buildEgressProbeRemoveArgs([...started].reverse()), "remove probe containers"); } catch (error) { cleanupErrors.push(error instanceof Error ? error : new Error("remove probe containers failed")); }
   for (const name of started) { try { assertAbsent(runtime, "container", name); } catch (error) { cleanupErrors.push(error instanceof Error ? error : new Error("container absence failed")); } }
-  for (const name of [...networks].reverse()) { try { invoke(runtime, buildEgressProbeNetworkRemoveArgs(name), `remove network ${name}`); } catch (error) { cleanupErrors.push(error instanceof Error ? error : new Error("remove network failed")); } try { assertAbsent(runtime, "network", name); } catch (error) { cleanupErrors.push(error instanceof Error ? error : new Error("network absence failed")); } }
+  for (const name of [...networks].reverse()) { try { execute(buildEgressProbeNetworkRemoveArgs(name), `remove network ${name}`); } catch (error) { cleanupErrors.push(error instanceof Error ? error : new Error("remove network failed")); } try { assertAbsent(runtime, "network", name); } catch (error) { cleanupErrors.push(error instanceof Error ? error : new Error("network absence failed")); } }
   if (platform !== undefined) {
     for (const probeImage of [...new Set([image, VERIFIER_IMAGE])]) {
-      try { invoke(runtime, buildEgressProbeImageRemoveArgs(probeImage, platform), `remove platform probe image ${probeImage}`); } catch (error) { cleanupErrors.push(error instanceof Error ? error : new Error("remove platform probe image failed")); }
+      try { execute(buildEgressProbeImageRemoveArgs(probeImage, platform), `remove platform probe image ${probeImage}`); } catch (error) { cleanupErrors.push(error instanceof Error ? error : new Error("remove platform probe image failed")); }
       try { assertImageAbsent(runtime, probeImage); } catch (error) { cleanupErrors.push(error instanceof Error ? error : new Error("image absence failed")); }
     }
   }

@@ -1,0 +1,6 @@
+*
+!package.json
+!package-lock.json
+!containment-probe.mjs
+!egress-gateway.mjs
+!methodology-mcp-forwarder-private-v1.mjs

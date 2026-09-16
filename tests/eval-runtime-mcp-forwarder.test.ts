@@ -272,13 +272,21 @@ test("closing destroys an active socket and audit snapshots reauthenticate", asy
   assert.throws(() => parseMethodologyMcpForwarderAuditSnapshot(altered), /digest/);
 });
 
-test("closing cancels and awaits hung upstream work before the audit is sealed", async () => {
-  const service = await fixture(() => new Promise(() => {}), { requestTimeoutMs: 30_000 });
-  const pending = call(service.url, { headers: { "content-type": "application/json" }, body: "{}" }).catch(() => undefined);
-  await new Promise<void>((resolve) => {
-    const check = () => service.readiness().activeWork === 1 ? resolve() : setTimeout(check, 2);
-    check();
+test("closing cancels and awaits hung upstream work before the audit is sealed", async (t) => {
+  let upstreamStarted!: () => void;
+  let startTimeout: ReturnType<typeof setTimeout>;
+  const upstreamReady = new Promise<void>((resolve, reject) => {
+    startTimeout = setTimeout(() => reject(new Error("upstream fixture did not start")), 5_000);
+    upstreamStarted = () => { clearTimeout(startTimeout); resolve(); };
   });
+  t.after(() => clearTimeout(startTimeout));
+  const service = await fixture(() => {
+    upstreamStarted();
+    return new Promise(() => {});
+  }, { requestTimeoutMs: 30_000 });
+  t.after(() => service.close());
+  const pending = call(service.url, { headers: { "content-type": "application/json" }, body: "{}" }).catch(() => undefined);
+  await upstreamReady;
   const started = Date.now();
   await service.close();
   assert.ok(Date.now() - started < 1_000);
