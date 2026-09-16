@@ -8,6 +8,7 @@ on:
       - scripts/run-eval-runtime-probe.ts
       - scripts/run-eval-egress-probe.ts
       - scripts/run-private-stream-runtime-probe.ts
+      - scripts/private-stream-containment.ts
       - scripts/private-stream-runtime-contract.ts
       - scripts/eval-private-stream-probe-fixture-v1.mjs
       - scripts/eval-egress-probe-fixture.mjs

@@ -8,7 +8,7 @@ import { digest, freeze, sha } from "../eval/prediction-contract.js";
 export const PRIVATE_STREAM_PUBLICATION_PROFILE = "private-stream-v1";
 export const PRIVATE_STREAM_IMAGE_NAME = "ghcr.io/petergraycreative/peregrine-eval-runtime";
 const inputs = [".github/workflows/eval-private-stream-runtime-image.yml", "scripts/run-eval-runtime-probe.ts", "scripts/run-eval-egress-probe.ts",
-  "scripts/run-private-stream-runtime-probe.ts", "scripts/private-stream-runtime-contract.ts", "scripts/eval-egress-probe-fixture.mjs",
+  "scripts/run-private-stream-runtime-probe.ts", "scripts/private-stream-containment.ts", "scripts/private-stream-runtime-contract.ts", "scripts/eval-egress-probe-fixture.mjs",
   "scripts/eval-private-stream-probe-fixture-v1.mjs"];
 
 /** Source/acceptance INPUT only. A successful reconstruction grants no runtime authority. */

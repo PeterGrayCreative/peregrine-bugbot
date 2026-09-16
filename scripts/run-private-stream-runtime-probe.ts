@@ -3,7 +3,7 @@ import { existsSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { privateByteBinding, privateCommandBinding, privateFailureBinding } from "../eval/prediction-typed-evidence.js";
-import { runProbe as runContainmentProbe } from "./run-eval-runtime-probe.js";
+import { runPrivateContainmentProbe } from "./private-stream-containment.js";
 import { runEgressProbe, parseEgressProbeCliArgs, type ProbeRuntime, type ProbeProcessResult } from "./run-eval-egress-probe.js";
 import { preparePrivateStreamRuntimePublication } from "./private-stream-runtime-contract.js";
 
@@ -12,16 +12,21 @@ const MAX_BYTES = 4 * 1024 * 1024;
  * escape this wrapper. Existing probe validators inspect live bytes in memory. */
 export function privateProbeRuntime(runtime: ProbeRuntime, receipts: unknown[]): ProbeRuntime & { cleanupFailed(): boolean } {
   let failedCleanup = false;
-  const observer: ProbeRuntime & { cleanupFailed(): boolean } = { cleanupFailed: () => failedCleanup, spawn(command, args) {
+  const observer: ProbeRuntime & { cleanupFailed(): boolean } = { cleanupFailed: () => failedCleanup, spawn(command, args, options) {
     const cleanup = args[0] === "rm" || (args[0] === "network" || args[0] === "image") && args[1] === "rm";
     const environment = { PATH: process.env.PATH ?? "", HOME: process.env.HOME ?? "" };
     const start = { sequence: receipts.length + 1, invocation: privateCommandBinding(command, args, environment), startedAt: Date.now() };
-    const settings = { encoding: "utf8", stdio: "pipe", timeout: 120000, maxBuffer: MAX_BYTES, env: environment };
+    const maxBuffer = typeof options.maxBuffer === "number" && Number.isInteger(options.maxBuffer) && options.maxBuffer > 0 && options.maxBuffer < MAX_BYTES ? options.maxBuffer : MAX_BYTES;
+    const settings = { encoding: "utf8", stdio: "pipe", timeout: 120000, maxBuffer, env: environment };
     try {
       const result = runtime.spawn(command, args, settings);
-      const stream = (value: ProbeProcessResult["stdout"]) => { if (value !== undefined && value !== null && typeof value !== "string" && !Buffer.isBuffer(value)) throw new Error("invalid probe stream"); return Buffer.from(value ?? ""); };
+      const stream = (value: ProbeProcessResult["stdout"]) => {
+        if (value !== undefined && value !== null && typeof value !== "string" && !Buffer.isBuffer(value)) throw new Error("invalid probe stream");
+        if (Buffer.byteLength(value ?? "") > maxBuffer) throw new Error("probe stream byte limit exceeded");
+        return Buffer.from(value ?? "");
+      };
       const stdout = stream(result.stdout), stderr = stream(result.stderr);
-      if (stdout.length + stderr.length > MAX_BYTES || result.status !== null && (!Number.isInteger(result.status) || result.status < 0 || result.status > 255)) throw new Error("invalid bounded probe result");
+      if (stdout.length + stderr.length > maxBuffer || result.status !== null && (!Number.isInteger(result.status) || result.status < 0 || result.status > 255)) throw new Error("invalid bounded probe result");
       receipts.push({ ...start, closedAt: Date.now(), status: result.status, stdout: privateByteBinding(stdout), stderr: privateByteBinding(stderr), failure: result.error ? privateFailureBinding(result.error) : null });
       if (cleanup && (result.error || result.status !== 0)) {
         // The containment probe uses --rm, then defensively removes its exact
@@ -49,7 +54,7 @@ export function runPrivateStreamRuntimeProbe(options: { image: string; platform?
   let failure: ReturnType<typeof privateFailureBinding> | null = null;
   let containmentCompleted = false;
   try {
-    runContainmentProbe(options.image, options.platform, safe);
+    runPrivateContainmentProbe(options.image, options.platform, safe);
     containmentCompleted = true;
     runEgressProbe(options.image, options.platform, safe, undefined, true);
     if (safe.cleanupFailed()) throw new Error("private probe cleanup failed");

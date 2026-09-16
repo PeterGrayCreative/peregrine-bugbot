@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync, statSync } from "node:fs";
 import { join, dirname, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import test from "node:test";
@@ -9,6 +9,7 @@ import { predictionExecutionSourceManifest } from "../eval/prediction-execution-
 import { buildEgressProbeContainerArgs, parseEgressProbeContainerArgs, parseEgressProbeFixtureAuditLine, PRIVATE_VERIFIER_FIXTURE_SHA256, VERIFIER_IMAGE } from "../scripts/run-eval-egress-probe.js";
 import { privateProbeRuntime, runPrivateStreamRuntimeProbe } from "../scripts/run-private-stream-runtime-probe.js";
 import { preparePrivateStreamRuntimePublication } from "../scripts/private-stream-runtime-contract.js";
+import { PRIVATE_CONTAINMENT_MAX_BYTES, runPrivateContainmentProbe, validatePrivateContainmentResult } from "../scripts/private-stream-containment.js";
 
 test("private publication is separate, manual, source-frozen, dual-platform and readiness denied", () => {
   const workflow = readFileSync(resolve(".github/workflows/eval-private-stream-runtime-image.yml"), "utf8");
@@ -87,9 +88,36 @@ test("probe failure retains typed evidence and performs no provider-client launc
   assert.equal(JSON.stringify(receipts).includes("unproven-cleanup"), false);
 });
 
+test("private containment cannot give candidate reports writable host storage or Docker logs", () => {
+  let containment: readonly string[] | undefined;
+  let rawReportCreated = false;
+  const result = runPrivateStreamRuntimeProbe({ image: "candidate:pr" }, { spawn(_command, args) {
+    if (args[0] === "run" && args.includes("none")) {
+      containment = args;
+      for (let index = 0; index < args.length; index++) {
+        if (args[index] !== "--mount") continue;
+        const mount = args[index + 1]!;
+        if (mount.includes("target=/output") && !mount.endsWith(",readonly")) {
+          const source = mount.split(",").find(field => field.startsWith("source="))!.slice(7);
+          const report = JSON.stringify({ schemaVersion: 1, status: "passed", checks: ["raw-candidate-report"] });
+          writeFileSync(join(source, "containment-probe.json"), report);
+          rawReportCreated = readFileSync(join(source, "containment-probe.json"), "utf8") === report;
+        }
+      }
+      return { status: 0, stdout: '{"schemaVersion":1,"protocol":"private-stream-containment-v1","status":"passed"}\n' };
+    }
+    return { status: 1, stderr: "fixture stops before egress" };
+  } });
+  assert.ok(containment);
+  assert.equal(rawReportCreated, false, "candidate must not be able to persist a raw report on the host");
+  assert.ok(!containment.some(arg => arg.includes("target=/output")));
+  assert.equal(containment[containment.indexOf("--log-driver") + 1], "none");
+  assert.equal(JSON.stringify(result).includes("raw-candidate-report"), false);
+});
+
 test("publication input binds committed transitive sources and rejects drift and wrong revision", t => {
   const root = mkdtempSync(join(tmpdir(), "private-publication-git-")); t.after(() => rmSync(root, { recursive: true, force: true }));
-  const paths = [...predictionExecutionSourceManifest().files.map(f => f.path), ".github/workflows/eval-private-stream-runtime-image.yml", "scripts/run-eval-runtime-probe.ts", "scripts/run-eval-egress-probe.ts", "scripts/run-private-stream-runtime-probe.ts", "scripts/private-stream-runtime-contract.ts", "scripts/eval-egress-probe-fixture.mjs", "scripts/eval-private-stream-probe-fixture-v1.mjs"];
+  const paths = [...predictionExecutionSourceManifest().files.map(f => f.path), ".github/workflows/eval-private-stream-runtime-image.yml", "scripts/run-eval-runtime-probe.ts", "scripts/run-eval-egress-probe.ts", "scripts/run-private-stream-runtime-probe.ts", "scripts/private-stream-containment.ts", "scripts/private-stream-runtime-contract.ts", "scripts/eval-egress-probe-fixture.mjs", "scripts/eval-private-stream-probe-fixture-v1.mjs"];
   for (const path of new Set(paths)) { mkdirSync(dirname(join(root, path)), { recursive: true }); writeFileSync(join(root, path), readFileSync(resolve(path))); }
   const git = (args: string[]) => execFileSync("git", args, { cwd: root, encoding: "utf8", env: { ...process.env, GIT_AUTHOR_NAME: "Fixture", GIT_AUTHOR_EMAIL: "fixture@invalid", GIT_COMMITTER_NAME: "Fixture", GIT_COMMITTER_EMAIL: "fixture@invalid" } }).trim();
   git(["init", "--quiet"]); git(["add", "."]); git(["commit", "--quiet", "-m", "fixture"]); const revision = git(["rev-parse", "HEAD"]);
@@ -101,6 +129,140 @@ test("publication input binds committed transitive sources and rejects drift and
   const path = join(root, "scripts/eval-private-stream-probe-fixture-v1.mjs"), original = readFileSync(path);
   writeFileSync(path, Buffer.concat([original, Buffer.from("\n// drift")]));
   assert.throws(() => preparePrivateStreamRuntimePublication(root, revision), /differs/);
+});
+
+const containmentPass = '{"schemaVersion":1,"protocol":"private-stream-containment-v1","status":"passed"}\n';
+
+test("containment metadata is byte-bounded before decoding and has no extensible candidate fields", () => {
+  for (const stdout of [containmentPass, Buffer.from(containmentPass), containmentPass.trim()]) validatePrivateContainmentResult({ status: 0, stdout });
+  for (const stdout of ["", "{}", "null", "not json", containmentPass + containmentPass, containmentPass.replace('"passed"', '"failed"'), containmentPass.replace('"passed"', '"passed","checks":["raw-report"]'), containmentPass.replace('"passed"', '"failed","status":"passed"'), " ".repeat(PRIVATE_CONTAINMENT_MAX_BYTES) + containmentPass]) {
+    assert.throws(() => validatePrivateContainmentResult({ status: 0, stdout }));
+  }
+  const oversized = Buffer.alloc(PRIVATE_CONTAINMENT_MAX_BYTES + 1);
+  let decoded = false;
+  oversized.toString = () => { decoded = true; throw new Error("oversized bytes reached decoder"); };
+  assert.throws(() => validatePrivateContainmentResult({ status: 0, stdout: oversized }), /byte limit/);
+  assert.equal(decoded, false);
+  for (const result of [
+    { status: 0, stdout: containmentPass, stderr: "candidate diagnostic" },
+    { status: 1, stdout: containmentPass }, { status: null, stdout: containmentPass },
+    { status: 0, stdout: containmentPass, error: new Error("subprocess failure") },
+    { status: 0, stdout: "é".repeat(PRIVATE_CONTAINMENT_MAX_BYTES / 2 + 1) },
+    { status: 0, stdout: containmentPass, stderr: "x".repeat(PRIVATE_CONTAINMENT_MAX_BYTES) },
+  ]) assert.throws(() => validatePrivateContainmentResult(result));
+});
+
+test("private runtime enforces the containment pipe cap before returning bytes to any validator", () => {
+  for (const stdout of ["x".repeat(PRIVATE_CONTAINMENT_MAX_BYTES + 1), Buffer.alloc(PRIVATE_CONTAINMENT_MAX_BYTES + 1)]) {
+    const receipts: unknown[] = [];
+    const runtime = privateProbeRuntime({ spawn(_command, _args, options) {
+      assert.equal(options.maxBuffer, PRIVATE_CONTAINMENT_MAX_BYTES);
+      return { status: 0, stdout };
+    } }, receipts);
+    const result = runtime.spawn("docker", ["run"], { maxBuffer: PRIVATE_CONTAINMENT_MAX_BYTES });
+    assert.equal(result.status, null); assert.equal(result.stdout, undefined); assert.ok(result.error);
+    assert.equal(JSON.stringify(receipts).includes("x".repeat(40)), false);
+  }
+});
+
+test("private containment retains restrictions and removes temporary inputs for native and exact platform probes", () => {
+  for (const platform of [undefined, "linux/amd64", "linux/arm64"] as const) {
+    const image = platform ? "candidate@sha256:" + "a".repeat(64) : "candidate:pr";
+    const calls: string[][] = [], roots: string[] = [], receipts: unknown[] = [];
+    const runtime = privateProbeRuntime({ spawn(command, args, options) {
+      assert.equal(command, "docker"); assert.equal(options.maxBuffer, args[0] === "run" ? PRIVATE_CONTAINMENT_MAX_BYTES : 4 * 1024 * 1024);
+      calls.push([...args]);
+      if (args[0] === "run") {
+        for (const [flag, value] of [["--network", "none"], ["--log-driver", "none"], ["--cap-drop", "ALL"], ["--security-opt", "no-new-privileges"], ["--pids-limit", "256"], ["--user", "1000:1000"], ["--entrypoint", "node"]]) assert.equal(args[args.indexOf(flag!) + 1], value);
+        assert.ok(args.includes("--read-only") && args.includes("--rm") && args.includes("--quiet"));
+        assert.deepEqual(args.slice(-3), [image, "/opt/peregrine/private-containment-probe-v1.mjs", "--check"]);
+        if (platform) { assert.equal(args[args.indexOf("--platform") + 1], platform); assert.equal(args[args.indexOf("--pull") + 1], "always"); }
+        else assert.ok(!args.includes("--platform") && !args.includes("--pull"));
+        const mounts = args.filter((_, index) => args[index - 1] === "--mount");
+        assert.equal(mounts.length, 2);
+        for (const mount of mounts) {
+          assert.ok(mount.endsWith(",readonly"));
+          const source = mount.split(",")[1]!.slice(7);
+          assert.equal(statSync(source).mode & 0o777, 0o555);
+          roots.push(dirname(source));
+          assert.equal(existsSync(join(dirname(source), "output")), false);
+        }
+        return { status: 0, stdout: containmentPass };
+      }
+      if (args[0] === "rm") return { status: 0 };
+      if (args[0] === "container") return { status: 1, stderr: `Error: No such object: ${args[2]}` };
+      if (args[0] === "image" && args[1] === "rm") return { status: 0 };
+      if (args[0] === "image" && args[1] === "inspect") return { status: 1, stderr: `Error: No such image: ${image}` };
+      throw new Error("unexpected invocation");
+    } }, receipts);
+    runPrivateContainmentProbe(image, platform, runtime);
+    assert.equal(runtime.cleanupFailed(), false);
+    assert.ok(roots.length > 0 && roots.every(root => !existsSync(root)));
+    assert.equal(calls.filter(args => args[0] === "container" && args[1] === "inspect").length, 1);
+    assert.equal(calls.filter(args => args[0] === "image").length, platform ? 2 : 0);
+    assert.equal(JSON.stringify(receipts).includes(containmentPass.trim()), false);
+  }
+});
+
+test("malformed containment stops egress while retaining cleanup and metadata-only failure evidence", () => {
+  for (const raw of ["synthetic-candidate-report", containmentPass + "x".repeat(PRIVATE_CONTAINMENT_MAX_BYTES)]) {
+    const calls: string[][] = [];
+    const result = runPrivateStreamRuntimeProbe({ image: "candidate:pr" }, { spawn(_command, args) {
+      calls.push([...args]);
+      if (args[0] === "run") return { status: 0, stdout: raw };
+      if (args[0] === "rm") return { status: 0 };
+      return { status: 1, stderr: `Error: No such object: ${args[2]}` };
+    } });
+    assert.equal(result.status, "FAIL"); assert.equal(result.credentialFreeVersionChecks, null);
+    assert.deepEqual(calls.map(args => args[0]), ["run", "rm", "container"]);
+    assert.equal(JSON.stringify(result).includes(raw), false);
+    assert.equal(result.rawMechanicalStreamsPersisted, false);
+  }
+});
+
+test("private containment fails closed on cleanup uncertainty and still attempts every cleanup after a thrown run", () => {
+  const image = "candidate@sha256:" + "b".repeat(64);
+  for (const mode of ["auto-removed", "survivor", "wrong-name", "unknown-removal", "image-survivor", "image-removal", "thrown-run"] as const) {
+    const calls: string[][] = [];
+    const receipts: unknown[] = [];
+    const runtime = privateProbeRuntime({ spawn(_command, args) {
+      calls.push([...args]);
+      if (args[0] === "run") { if (mode === "thrown-run") throw new Error("synthetic thrown run"); return { status: 0, stdout: containmentPass }; }
+      if (args[0] === "rm") {
+        if (mode === "unknown-removal") return { status: 1, stderr: "daemon unavailable" };
+        return { status: 1, stderr: `Error response from daemon: No such container: ${args[2]}` };
+      }
+      if (args[0] === "container") {
+        if (mode === "survivor") return { status: 0, stdout: "[]" };
+        return { status: 1, stderr: `Error: No such object: ${mode === "wrong-name" ? "other-container" : args[2]}` };
+      }
+      if (args[1] === "rm") return { status: mode === "image-removal" ? 1 : 0 };
+      return mode === "image-survivor" ? { status: 0, stdout: "[]" } : { status: 1, stderr: `Error: No such image: ${image}` };
+    } }, receipts);
+    if (mode === "auto-removed") { runPrivateContainmentProbe(image, "linux/arm64", runtime); assert.equal(runtime.cleanupFailed(), false); }
+    else assert.throws(() => runPrivateContainmentProbe(image, "linux/arm64", runtime));
+    assert.ok(calls.some(args => args[0] === "rm"));
+    assert.ok(calls.some(args => args[0] === "container"));
+    assert.deepEqual(calls.slice(-2), [["image", "rm", "--force", image], ["image", "inspect", image]]);
+    assert.equal(JSON.stringify(receipts).includes("synthetic thrown run"), false);
+  }
+});
+
+test("versioned containment helper keeps predecessor network checks and exposes no report writer", () => {
+  const helper = resolve("container/eval-runtime/private-containment-probe-v1.mjs");
+  const source = readFileSync(helper, "utf8");
+  assert.doesNotMatch(source, /containment-probe\.json|JSON\.stringify\(report/);
+  const contract = JSON.parse(execFileSync(process.execPath, [helper, "--describe"], { encoding: "utf8" }));
+  assert.equal(contract.mounts.output.access, "read-only");
+  assert.deepEqual(contract.providerVersions, { claude: "2.1.252", codex: "0.152.0" });
+  const valid = { interfaces: ["lo"], addresses: { lo: [] }, ipv4Routes: [], ipv6Routes: [], counters: {} };
+  for (const fixture of [valid, { ...valid, interfaces: ["lo", "eth0"] }, { ...valid, ipv4Routes: [["lo", "00000000"]] }, { ...valid, addresses: { eth0: [{ address: "8.8.8.2" }] } }]) {
+    const args = ["--assess-network-fixture"], options = { encoding: "utf8" as const, input: JSON.stringify(fixture) };
+    const actual = execFileSync(process.execPath, [helper, ...args], options);
+    const predecessor = execFileSync(process.execPath, [resolve("container/eval-runtime/containment-probe.mjs"), ...args], options);
+    assert.equal(actual, predecessor);
+    assert.equal(JSON.parse(actual).length === 0, fixture === valid);
+  }
 });
 
 test("auto-removed containment container needs explicit absence proof, not a false cleanup failure", () => {
