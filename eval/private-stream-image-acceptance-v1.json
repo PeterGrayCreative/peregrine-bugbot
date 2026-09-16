@@ -1,0 +1,135 @@
+{
+  "protocol": "private-stream-image-acceptance-input-v1",
+  "image": "ghcr.io/petergraycreative/peregrine-eval-runtime@sha256:b7b2ab5d41b51f32a33c35e17e15746ac7c922d12243d5f773f4c7fcd2c30a52",
+  "tag": "ghcr.io/petergraycreative/peregrine-eval-runtime:private-stream-v1-788733c8d1935df2badd1765174de5a18d64394f",
+  "sourceCommit": "788733c8d1935df2badd1765174de5a18d64394f",
+  "sourceFreezeSha256": "1ee8574a386f0edbeca716cc8ec67f4828ecb7e9ba2661771fa2fb8b5436291c",
+  "workflow": ".github/workflows/eval-private-stream-runtime-image.yml",
+  "workflowRunId": 35153807393,
+  "workflowRunAttempt": 1,
+  "workflowUrl": "https://github.com/PeterGrayCreative/peregrine-bugbot/actions/runs/35153807393",
+  "platforms": {
+    "linux/amd64": "sha256:29ce8c969ca284d2eac3cb2ddab34c307955d7c41982e94403673b14e8fdf360",
+    "linux/arm64": "sha256:b6ef8194682808200da76baa1602f51ad9fa2a7249295ba50543edcc2d296b98"
+  },
+  "artifacts": [
+    {
+      "id": 10470257970,
+      "name": "private-stream-publication-788733c8d1935df2badd1765174de5a18d64394f",
+      "digest": "sha256:a1bf43be2dfee483567927887447350f19d50c7efd191f385178948cdfb79fbf"
+    },
+    {
+      "id": 10470600946,
+      "name": "private-stream-native-788733c8d1935df2badd1765174de5a18d64394f",
+      "digest": "sha256:5bd9fc804566e1c029e345282e3055f7a25d8263e8d6a8188d8d3b4d9f707daa"
+    },
+    {
+      "id": 10470770861,
+      "name": "PeterGrayCreative~peregrine-bugbot~8LIJSN.dockerbuild",
+      "digest": "sha256:6a04bcd937f289be83fa22cb9b0c02dca0eda99b6c7fc6a844600be1cf53b564"
+    }
+  ],
+  "files": {
+    "artifact-10470257970.archive": {
+      "bytes": 37797,
+      "sha256": "a1bf43be2dfee483567927887447350f19d50c7efd191f385178948cdfb79fbf"
+    },
+    "artifact-10470600946.archive": {
+      "bytes": 13121,
+      "sha256": "5bd9fc804566e1c029e345282e3055f7a25d8263e8d6a8188d8d3b4d9f707daa"
+    },
+    "artifact-10470770861.archive": {
+      "bytes": 87565,
+      "sha256": "6a04bcd937f289be83fa22cb9b0c02dca0eda99b6c7fc6a844600be1cf53b564"
+    },
+    "artifacts.json": {
+      "bytes": 2301,
+      "sha256": "8c701656fcb6ee344d9c9de6424789d341afcb64d2957a65fae14eb1836d4685"
+    },
+    "attestation-verification-v2.json": {
+      "bytes": 15348,
+      "sha256": "282779faaf0e1871277bc06fc87df3bd0008d87b934233c1e8b358f105eddcad"
+    },
+    "attestation-verification-v2.receipt.json": {
+      "bytes": 1038,
+      "sha256": "3370d5f4fb25b7bf54b4785575892379db44fb2498cc4e129732b1f4b2a5c9c6"
+    },
+    "attestations.json": {
+      "bytes": 12566,
+      "sha256": "4ddb20d8788c206abcd78e62579864d459df73c5ce6ea62eaa8c430ef01a515e"
+    },
+    "commit.json": {
+      "bytes": 144949,
+      "sha256": "3c2479dd4f8910310ebe3bf124bfa0b7e82cf55bed694b8aa6a8a83c4f2ed977"
+    },
+    "index.json": {
+      "bytes": 647,
+      "sha256": "b7b2ab5d41b51f32a33c35e17e15746ac7c922d12243d5f773f4c7fcd2c30a52"
+    },
+    "jobs.json": {
+      "bytes": 7770,
+      "sha256": "a7564e6ca0ad305abecfc8fae575b4680c93f294db75c77b647d20546ba8052b"
+    },
+    "manifest-amd64.json": {
+      "bytes": 2951,
+      "sha256": "29ce8c969ca284d2eac3cb2ddab34c307955d7c41982e94403673b14e8fdf360"
+    },
+    "manifest-arm64.json": {
+      "bytes": 2951,
+      "sha256": "b6ef8194682808200da76baa1602f51ad9fa2a7249295ba50543edcc2d296b98"
+    },
+    "private-stream-amd64.json": {
+      "bytes": 36148,
+      "sha256": "bb126c36adba62f5e0fc6c831162d005d3f0c1956deb0ce00a6b09422069193b"
+    },
+    "private-stream-amd64.json.start.json": {
+      "bytes": 22133,
+      "sha256": "e03c80a7d767379d6c60ee26cc4a4a2d00c44263e6cb363b70535d312d9d0dc0"
+    },
+    "private-stream-arm64.json": {
+      "bytes": 86859,
+      "sha256": "3deb8f25d7c318dd552ec4514703311b34ad0158a62e2a919538ff5f09d3d5a9"
+    },
+    "private-stream-arm64.json.start.json": {
+      "bytes": 22133,
+      "sha256": "27fb3f90b11ecdb4feeaa819d6aa87d4f59fd19448ff0af082f6a426b6f8f810"
+    },
+    "private-stream-native.json": {
+      "bytes": 31358,
+      "sha256": "ef76b0b5aca232dfc5a85faf637e4d5617e74150381bd7d8f5ff82a966978b71"
+    },
+    "private-stream-native.json.start.json": {
+      "bytes": 22031,
+      "sha256": "2de18f42411a6e7f6e0cbeb07b6225d524a13c03a9f099eef25b735f85c6c320"
+    },
+    "private-stream-source.json": {
+      "bytes": 27066,
+      "sha256": "ed04f7a59f9eb11672d5b91ce317debbe53b9d4e459b080340b54c9d036d5f65"
+    },
+    "run.json": {
+      "bytes": 13890,
+      "sha256": "9fd63e791ee86238951466fb8f31f61403d1128d7c3d0cccd2fe258cc011e05c"
+    },
+    "tag-index.json": {
+      "bytes": 647,
+      "sha256": "b7b2ab5d41b51f32a33c35e17e15746ac7c922d12243d5f773f4c7fcd2c30a52"
+    },
+    "workflow.json": {
+      "bytes": 617,
+      "sha256": "25a20c2618982eedab1ce0bf52268d532b837fcaf908ccc5ad63534ef18560cf"
+    }
+  },
+  "publicationVerified": true,
+  "independentImageReview": null,
+  "imageAccepted": false,
+  "runtimeReady": false,
+  "executionReady": false,
+  "publicationAuthorized": false,
+  "providerAuthorized": false,
+  "canaryAuthorized": false,
+  "retryAuthorized": false,
+  "batchAuthorized": false,
+  "productionAuthorized": false,
+  "providerCalls": 0,
+  "qualification": "Authenticated credential-free publication evidence only. Pending fresh independent image gate. Native tag probe is separate from published dual-platform digest proof; arm64 uses emulation. Typed receipt hashes cannot reconstruct omitted streams. No provider, canary, batch, retry, or production authority."
+}
