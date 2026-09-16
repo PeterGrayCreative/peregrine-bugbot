@@ -11,6 +11,26 @@ import { privateProbeRuntime, runPrivateStreamRuntimeProbe } from "../scripts/ru
 import { preparePrivateStreamRuntimePublication } from "../scripts/private-stream-runtime-contract.js";
 import { PRIVATE_CONTAINMENT_MAX_BYTES, runPrivateContainmentProbe, validatePrivateContainmentResult } from "../scripts/private-stream-containment.js";
 
+const privateDockerIgnore = "container/eval-runtime/Dockerfile.private-stream-v1.dockerignore";
+
+test("private Docker context admits every COPY input and excludes all other payloads", () => {
+  const recipe = readFileSync("container/eval-runtime/Dockerfile.private-stream-v1", "utf8");
+  const copyInputs = recipe.split("\n").filter(line => line.startsWith("COPY "))
+    .flatMap(line => line.split(/\s+/).slice(1, -1).filter(word => !word.startsWith("--")));
+  assert.deepEqual(copyInputs.sort(), ["containment-probe.mjs", "egress-gateway.mjs", "methodology-mcp-forwarder-private-v1.mjs", "package-lock.json", "package.json"]);
+  const rules = readFileSync(privateDockerIgnore, "utf8").trim().split("\n");
+  // Constrain the Docker ignore grammar to deny-all plus literal root filenames.
+  assert.equal(rules[0], "*");
+  for (const rule of rules.slice(1)) assert.match(rule, /^![a-z0-9.-]+$/);
+  const allowed = rules.slice(1).map(rule => rule.slice(1));
+  assert.deepEqual([...allowed].sort(), copyInputs);
+  for (const input of copyInputs) assert.ok(existsSync(join("container/eval-runtime", input)));
+  for (const path of [...readdirSync("container/eval-runtime"), ".env", "credentials.json", "unrelated.mjs", "nested/package.json"]) {
+    if (!copyInputs.includes(path)) assert.equal(allowed.includes(path), false, `${path} must remain excluded`);
+  }
+  assert.equal(readFileSync("container/eval-runtime/.dockerignore", "utf8"), "*\n!Dockerfile\n!package.json\n!package-lock.json\n!containment-probe.mjs\n!egress-gateway.mjs\n!methodology-mcp-forwarder.mjs\n");
+});
+
 test("private publication is separate, manual, source-frozen, dual-platform and readiness denied", () => {
   const workflow = readFileSync(resolve(".github/workflows/eval-private-stream-runtime-image.yml"), "utf8");
   const privateJob = workflow.split("\n  publish-private:\n")[1]!;
@@ -122,13 +142,20 @@ test("publication input binds committed transitive sources and rejects drift and
   const git = (args: string[]) => execFileSync("git", args, { cwd: root, encoding: "utf8", env: { ...process.env, GIT_AUTHOR_NAME: "Fixture", GIT_AUTHOR_EMAIL: "fixture@invalid", GIT_COMMITTER_NAME: "Fixture", GIT_COMMITTER_EMAIL: "fixture@invalid" } }).trim();
   git(["init", "--quiet"]); git(["add", "."]); git(["commit", "--quiet", "-m", "fixture"]); const revision = git(["rev-parse", "HEAD"]);
   const contract = preparePrivateStreamRuntimePublication(root, revision);
+  const ignoreBytes = readFileSync(join(root, privateDockerIgnore));
+  assert.deepEqual(contract.files.find(file => file.path === privateDockerIgnore), {
+    path: privateDockerIgnore, bytes: ignoreBytes.length, sha256: sha(ignoreBytes),
+  });
   assert.match(contract.tag, new RegExp(`:private-stream-v1-${revision}$`));
   assert.deepEqual([contract.publishedDigest, contract.workflowRun, contract.independentReview], [null, null, null]);
   assert.deepEqual([contract.imageAccepted, contract.runtimeReady, contract.providerAuthorized, contract.batchAuthorized], [false, false, false, false]);
   assert.throws(() => preparePrivateStreamRuntimePublication(root, "a".repeat(40)));
-  const path = join(root, "scripts/eval-private-stream-probe-fixture-v1.mjs"), original = readFileSync(path);
-  writeFileSync(path, Buffer.concat([original, Buffer.from("\n// drift")]));
-  assert.throws(() => preparePrivateStreamRuntimePublication(root, revision), /differs/);
+  for (const input of ["scripts/eval-private-stream-probe-fixture-v1.mjs", privateDockerIgnore]) {
+    const path = join(root, input), original = readFileSync(path);
+    writeFileSync(path, Buffer.concat([original, Buffer.from("\n# drift")]));
+    assert.throws(() => preparePrivateStreamRuntimePublication(root, revision), /differs/);
+    writeFileSync(path, original);
+  }
 });
 
 const containmentPass = '{"schemaVersion":1,"protocol":"private-stream-containment-v1","status":"passed"}\n';
