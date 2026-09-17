@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Structural validation only. Admission requires readHistoricalOracleAdmission to verify artifact bytes, observation bindings, outcomes and AI review digests. Formal means a machine-checkable proof, never a prose trace.",
+  "title": "Oracle-supported visible historical development case",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "protocol", "caseId", "partition", "duplicateFamily", "language", "source", "truth", "oracle", "reviews"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "protocol": { "const": "historical-oracle-v1" },
+    "caseId": { "$ref": "#/$defs/id" },
+    "partition": { "const": "visible-development" },
+    "duplicateFamily": { "$ref": "#/$defs/id" },
+    "language": { "enum": ["typescript", "javascript"] },
+    "source": {
+      "type": "object", "additionalProperties": false,
+      "required": ["repository", "reviewUrl", "base", "head", "repair", "provenance", "diff", "archive"],
+      "properties": {
+        "repository": { "type": "string", "pattern": "^https://", "maxLength": 16000 },
+        "reviewUrl": { "type": "string", "pattern": "^https://", "maxLength": 16000 },
+        "base": { "$ref": "#/$defs/revision" },
+        "head": { "$ref": "#/$defs/revision" },
+        "repair": { "oneOf": [{ "$ref": "#/$defs/revision" }, { "type": "null" }] },
+        "provenance": { "$ref": "#/$defs/artifact" },
+        "diff": { "$ref": "#/$defs/artifact" },
+        "archive": { "$ref": "#/$defs/artifact" }
+      }
+    },
+    "truth": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "status", "completeness", "scope", "roots"],
+      "properties": {
+        "version": { "$ref": "#/$defs/id" },
+        "status": { "enum": ["known-roots", "reviewed-comparison"] },
+        "completeness": { "const": "partial" },
+        "scope": { "$ref": "#/$defs/text" },
+        "roots": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["id", "mechanism", "trigger", "consequence", "severity", "file", "line"],
+            "properties": {
+              "id": { "$ref": "#/$defs/id" }, "mechanism": { "$ref": "#/$defs/text" },
+              "trigger": { "$ref": "#/$defs/text" }, "consequence": { "$ref": "#/$defs/text" },
+              "severity": { "enum": ["low", "medium", "high"] },
+              "file": { "$ref": "#/$defs/path" }, "line": { "type": "integer", "minimum": 1 }
+            }
+          }
+        }
+      }
+    },
+    "oracle": {
+      "type": "object", "additionalProperties": false,
+      "required": ["kind", "contract", "program", "environment", "certificate", "negativeControl", "observations"],
+      "properties": {
+        "kind": { "enum": ["executable", "formal"] },
+        "contract": { "$ref": "#/$defs/artifact" }, "program": { "$ref": "#/$defs/artifact" },
+        "environment": { "$ref": "#/$defs/artifact" },
+        "certificate": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/artifact" }] },
+        "negativeControl": {
+          "oneOf": [{ "type": "null" }, {
+            "type": "object", "additionalProperties": false, "required": ["description", "patch"],
+            "properties": { "description": { "$ref": "#/$defs/text" }, "patch": { "$ref": "#/$defs/artifact" } }
+          }]
+        },
+        "observations": {
+          "type": "array", "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["role", "revision", "command", "result", "log"],
+            "properties": {
+              "role": { "enum": ["base", "head", "repair", "negative-control"] },
+              "revision": { "$ref": "#/$defs/revision" },
+              "command": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/text" } },
+              "result": { "$ref": "#/$defs/artifact" }, "log": { "$ref": "#/$defs/artifact" }
+            }
+          }
+        }
+      }
+    },
+    "reviews": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["kind", "model", "effort", "sessionId", "rubricVersion", "reviewedAt", "evidenceSha256", "decision", "rationale"],
+        "properties": {
+          "kind": { "const": "ai" }, "model": { "$ref": "#/$defs/text" }, "effort": { "$ref": "#/$defs/text" },
+          "sessionId": { "$ref": "#/$defs/text" }, "rubricVersion": { "$ref": "#/$defs/text" },
+          "reviewedAt": { "type": "string", "format": "date-time" },
+          "evidenceSha256": { "$ref": "#/$defs/sha256" }, "decision": { "const": "supports-admission" },
+          "rationale": { "$ref": "#/$defs/artifact" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,127}$" },
+    "text": { "type": "string", "minLength": 1, "maxLength": 16000, "pattern": "\\S" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "path": { "type": "string", "minLength": 1, "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.?(?:/|$))(?!.*//)(?!.*\\\\)(?!.*[\\u0000-\\u001f\\u007f])(?!.*[/]$).+$" },
+    "artifact": {
+      "type": "object", "additionalProperties": false, "required": ["path", "sha256"],
+      "properties": { "path": { "$ref": "#/$defs/path" }, "sha256": { "$ref": "#/$defs/sha256" } }
+    },
+    "revision": {
+      "type": "object", "additionalProperties": false, "required": ["commit", "tree"],
+      "properties": { "commit": { "type": "string", "pattern": "^[a-f0-9]{40}$" }, "tree": { "type": "string", "pattern": "^[a-f0-9]{40}$" } }
+    }
+  }
+}

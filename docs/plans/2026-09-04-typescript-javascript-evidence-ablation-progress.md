@@ -1,5 +1,17 @@
 # TypeScript and JavaScript evidence and ablation progress
 
+## Corpus continuation (2026-09-16)
+
+The [oracle-supported development protocol](2026-09-16-oracle-backed-corpus-protocol.md)
+adds a deterministic admission path for actual before/after behavioral evidence
+with explicit AI curation. Existing human-review records remain unchanged.
+The compiler verifies original base/head/repair outcomes for known roots and
+protected-behavior/negative-control outcomes for comparisons, with artifact and
+review bindings. Its output is visible development with partial truth; it cannot
+declare human verification, protected selection, R4 readiness or efficacy.
+This implementation alone does not complete the corpus: actual oracle records,
+two AI reviews per case, and a compiled count/yield report remain required.
+
 Updated: 2026-09-13 (private-stream publication preparation; historical entries preserved)
 Active branch: `research/evidence-audit-corrections`
 
@@ -207,7 +219,7 @@ minimal reviewer. Production routing remains frozen.
 | Step | State | Evidence / remaining gate |
 | --- | --- | --- |
 | R1: collection feasibility | Complete | Five public review opportunities are archived in canonical, packet-bound form. Every v3 case has 2/2 rostered independent confirmations and the strict readiness gate passes. |
-| R2: gather and partition | Correction required; no admission or protected selection | The sealed v2 packet/workbook and its 36 blank decisions remain unchanged and unadmitted. A read-only Astra xhigh audit recommends 15 approvals (8 bug-bearing, 7 comparisons), 1 rejection, and 20 unresolved proposals; all approvals are development-only advisory recommendations, not human decisions. The current usable pool is short by 16 bug-bearing and 5 comparison approvals, and no R2 selection partition or R4 readiness exists. Repair the successor packet/corpus under the [correction goal](2026-09-12-evidence-audit-correction-goal.md) and [calibrated protocol](2026-09-12-calibrated-evidence-audit-protocol.md). |
+| R2: gather and partition | In progress; source restored and oracle path implemented, no admission or protected selection | The original packet and blank human decisions remain unchanged. The current private development pool contains 16 complete reviewer mounts and AI proposals, not admitted truth. Source recovery independently authenticated the 100-candidate archive and all 16 mounts. An additive oracle compiler now permits visible-development admission only after source-bound base/head/repair or comparison-negative-control evidence and two explicit AI reviews. A 12-case development roster is frozen; one bug reproduction passed and two partial attempts remain failed/unadmitted. A fresh 100-candidate reserved frame has 24 complete source captures; six identities were previously public and are excluded, leaving 94 provisionally withheld candidates and 23 provisionally withheld captures. No case has been admitted and no protected partition exists. See the [2026-09-16 checkpoint](../validation/2026-09-16-r2-corpus-completion-checkpoint.md). |
 | R3: neutral and truthful harness | Structurally complete; runtime canary separately gated | Four-arm scheduling, neutral prompts and mounts, input/lifecycle/stop seals, honest grading projections, all-finding adjudication, grouped discovery roots, resource accounting, exact Sol-high launch policy, bounded read tools, fail-closed scope evidence, destination-restricted egress, semantic judge, authenticated analysis joins, operator-only R2 truth/severity binding, clustered inference v2, and append-only decision lineage have deterministic evidence. Development severity remains descriptive and selection remains exploratory. Old artifacts and production behavior are unchanged. A credential-bearing model/tool canary requires separate authorization and is not historical efficacy evidence. Real execution depends on corrected R2 acceptance/partition under the prospective protocol, which does not yet exist. |
 | R4: register four-arm comparison | Not started | Requires R2 and R3. This is the next provider-authorization checkpoint. |
 | R5: methodology measurement | Not authorized | Planned maximum 96 initial attempts plus at most three registered component screens. |

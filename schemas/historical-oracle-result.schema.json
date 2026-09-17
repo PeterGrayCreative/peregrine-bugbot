@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$comment": "Recorded observation, not permission to execute its command. Admission requires exact case/revision/program/target matching and base-pass, head-behavioral-failure, repair-pass (or comparison head-pass and negative-control-failure).",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "caseId", "role", "revision", "programSha256", "exitCode", "checks"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "caseId": { "$ref": "historical-oracle-case.schema.json#/$defs/id" },
+    "role": { "enum": ["base", "head", "repair", "negative-control"] },
+    "revision": { "$ref": "historical-oracle-case.schema.json#/$defs/revision" },
+    "programSha256": { "$ref": "historical-oracle-case.schema.json#/$defs/sha256" },
+    "exitCode": { "type": "integer" },
+    "checks": {
+      "type": "array", "items": {
+        "type": "object", "additionalProperties": false, "required": ["targetId", "outcome"],
+        "properties": {
+          "targetId": { "$ref": "historical-oracle-case.schema.json#/$defs/id" },
+          "outcome": { "enum": ["passed", "behavioral-failure", "environment-failure"] }
+        }
+      }
+    }
+  }
+}
