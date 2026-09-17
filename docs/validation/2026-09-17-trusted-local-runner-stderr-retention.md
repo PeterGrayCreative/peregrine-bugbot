@@ -13,3 +13,5 @@ Verification under Node 22:
 - Independent fresh `gpt-6-astra` medium gate: PASS; no blockers
 
 Any replacement diagnostic requires a new attempt root and separate authorization.
+
+The first replacement pair also stopped before inference, now with actionable stderr: Codex CLI 0.154.0 rejected the dynamically quoted project-path trust override as an unknown strict-config field. The override is unnecessary because the runner already uses an isolated home with user configuration disabled and explicitly requests the read-only sandbox. It was removed without changing the review inputs or access level. That failed pair is preserved separately in the private evidence repository.

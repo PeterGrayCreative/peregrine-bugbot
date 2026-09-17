@@ -57,6 +57,7 @@ test("pair fixes model, effort, tools, schema, and scope while isolating A/B pro
     assert.ok(calls[0]!.args.includes("gpt-5.6-sol"));
     assert.ok(calls[0]!.args.includes('model_reasoning_effort="high"'));
     assert.ok(calls[0]!.args.includes("read-only"));
+    assert.equal(calls[0]!.args.some((arg) => arg.startsWith("projects.")), false);
     assert.ok(sessions.every((session) => !existsSync(session)));
     for (const arm of ["A", "B"]) {
       const directory = join(fixture.attemptRoot, `case-trusted-${arm}`);
