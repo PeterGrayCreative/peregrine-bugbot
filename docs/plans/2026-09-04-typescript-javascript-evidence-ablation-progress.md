@@ -1,5 +1,17 @@
 # TypeScript and JavaScript evidence and ablation progress
 
+## Corpus continuation (2026-09-16)
+
+The [oracle-supported development protocol](2026-09-16-oracle-backed-corpus-protocol.md)
+adds a deterministic admission path for actual before/after behavioral evidence
+with explicit AI curation. Existing human-review records remain unchanged.
+The compiler verifies original base/head/repair outcomes for known roots and
+protected-behavior/negative-control outcomes for comparisons, with artifact and
+review bindings. Its output is visible development with partial truth; it cannot
+declare human verification, protected selection, R4 readiness or efficacy.
+This implementation alone does not complete the corpus: actual oracle records,
+two AI reviews per case, and a compiled count/yield report remain required.
+
 Updated: 2026-09-13 (private-stream publication preparation; historical entries preserved)
 Active branch: `research/evidence-audit-corrections`
 

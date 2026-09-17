@@ -1,5 +1,10 @@
 # Calibrated evidence-audit protocol
 
+The additive [September 16 oracle-supported development protocol](2026-09-16-oracle-backed-corpus-protocol.md)
+implements the executable/formal-oracle option below for visible development.
+It preserves AI identity and requires real behavioral evidence; it does not
+convert AI proposals into human decisions or open protected selection.
+
 Date: 2026-09-12
 Status: prospective exploratory protocol; not a provider authorization
 
