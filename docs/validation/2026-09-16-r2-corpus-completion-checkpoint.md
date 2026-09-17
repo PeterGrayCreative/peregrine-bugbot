@@ -45,8 +45,9 @@ The private evidence repository contains the answer-bearing artifacts:
 - `corpus-completion/development-oracles-v1/`
 - `reserved-collection/r2-reserved-2026-09-16/`
 
-The private checkpoint is ready to commit and push. Do not copy reserved
-identities, truth or repair material into this public repository.
+The private checkpoint is committed and pushed to the designated evidence
+store. Do not copy reserved identities, truth or repair material into this
+public repository.
 
 ## Resume order
 
