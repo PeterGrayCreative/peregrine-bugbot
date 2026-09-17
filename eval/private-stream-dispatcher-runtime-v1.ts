@@ -106,8 +106,17 @@ export function verifyClientInspect(bytes: string, expected: { name: string; ima
 /** Real adapter; constructing it does not run commands. The injected seam is
  * used only by deterministic tests. All durable receipts contain bounded typed
  * fields and one-way bindings, never inspect/log/CLI/credential bytes. */
-export function createPrivateStreamRuntime(input: RuntimeInputs, runId: string, binding: DispatcherBinding, receipt: (value: unknown) => void, remainingMs: () => number,
-  run: typeof exec = exec): DispatcherRuntime {
+export interface PrivateStreamRuntimeHooks<Binding extends object> {
+  /** A successor dispatcher may provide its own process-local permission
+   * consumer without weakening the immutable V1 default. */
+  consumePermission(permission: object, runId: string, binding: Binding, executionClass: "real" | "synthetic"): void;
+  /** A versioned successor may accept additional bounded CLI counters while
+   * preserving the V1 reducer as the default. */
+  reduceStream(stdout: string): ReturnType<typeof reduceSafeCanaryStream>;
+  executionClass?: "real" | "synthetic";
+}
+export function createPrivateStreamRuntime<Binding extends object = DispatcherBinding>(input: RuntimeInputs, runId: string, binding: Binding,
+  receipt: (value: unknown) => void, remainingMs: () => number, run: typeof exec = exec, hooks?: PrivateStreamRuntimeHooks<Binding>): DispatcherRuntime {
   input = { ...input, authority: freeze(input.authority), contract: freeze(input.contract) };
   const image = PRIVATE_STREAM_CANARY_IMAGE.image;
   same(input.contract.image.image, image, "private-stream accepted image required");
@@ -216,7 +225,9 @@ export function createPrivateStreamRuntime(input: RuntimeInputs, runId: string, 
       }
     },
     async launch(signal, permission) {
-      consumeDispatcherLaunchPermission(permission, runId, binding, run === exec ? "real" : "synthetic");
+      const executionClass = hooks?.executionClass ?? (run === exec ? "real" : "synthetic");
+      if (hooks) hooks.consumePermission(permission, runId, binding, executionClass);
+      else consumeDispatcherLaunchPermission(permission, runId, binding as unknown as DispatcherBinding, executionClass);
       if (!attachment || !session || !scratch || launched || closing) throw new Error("single prepared launch required");
       launched = true;
       same(observeSessionMetadata(input.sessionDirectory), session, "session changed before launch");
@@ -235,7 +246,7 @@ export function createPrivateStreamRuntime(input: RuntimeInputs, runId: string, 
           auth: join(input.sessionDirectory, "auth.json"), ...identity, imageEnvironment, args: command });
       const result = successful(await docker(["start", "--attach", "--interactive", names.client], signal, SAFE_CANARY_PROMPT));
       if (result.stderr.trim()) throw new Error("unexpected canary error stream");
-      const stream = reduceSafeCanaryStream(result.stdout), reader = attachment.readerSnapshot(), audit = attachment.auditSnapshot();
+      const stream = (hooks?.reduceStream ?? reduceSafeCanaryStream)(result.stdout), reader = attachment.readerSnapshot(), audit = attachment.auditSnapshot();
       same([audit.sessions.attempted, audit.sessions.initialized, audit.sessions.ready, audit.sessions.denied,
         audit.requests.denied, audit.tools.denied, audit.denialCodes, audit.transportFailures], [1, 1, 1, 0, 0, 0, [], []], "actual MCP session/read transport mismatch");
       if (reader.stopped || reader.pending.length || reader.calls > 100 || reader.bytes > 2_000_000 || reader.transcript.some(call => !call.delivered)) throw new Error("reader budget or delivery mismatch");
