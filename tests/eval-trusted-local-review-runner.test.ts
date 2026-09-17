@@ -62,7 +62,7 @@ test("pair fixes model, effort, tools, schema, and scope while isolating A/B pro
       const directory = join(fixture.attemptRoot, `case-trusted-${arm}`);
       assert.equal(readFileSync(join(directory, "prompt.txt"), "utf8"), calls[arm === "A" ? 0 : 1]!.stdin);
       assert.deepEqual(JSON.parse(readFileSync(join(directory, "final-findings.json"), "utf8")), completed);
-      for (const name of ["prompt.txt", "argv.json", "raw.jsonl", "usage.json", "final-findings.json", "terminal.json"]) {
+      for (const name of ["prompt.txt", "argv.json", "raw.jsonl", "stderr.txt", "usage.json", "final-findings.json", "terminal.json"]) {
         assert.doesNotMatch(readFileSync(join(directory, name), "utf8"), /test-auth/);
       }
     }
@@ -103,6 +103,22 @@ test("timeout retains partial JSONL without manufacturing findings", async () =>
     assert.equal(terminal.findingsSha256, null);
     assert.equal(readFileSync(join(attempt.attemptDirectory, "raw.jsonl"), "utf8"), partial);
     assert.equal(existsSync(join(attempt.attemptDirectory, "final-findings.json")), false);
+  } finally {
+    fixture.cleanup();
+  }
+});
+
+test("process failure retains bounded stderr for diagnosis", async () => {
+  const fixture = createFixture();
+  try {
+    const [attempt] = await prepareTrustedLocalReviewPair(fixture.input);
+    const terminal = await runTrustedLocalReviewAttempt(fixture.input, attempt, {
+      run: async () => ({ stdout: "", stderr: "configuration rejected\n", code: 1, timedOut: false }),
+    });
+    assert.equal(terminal.status, "process-failed");
+    assert.equal(readFileSync(join(attempt.attemptDirectory, "stderr.txt"), "utf8"), "configuration rejected\n");
+    assert.match(terminal.stderrSha256, /^[a-f0-9]{64}$/);
+    assert.equal(terminal.findingsSha256, null);
   } finally {
     fixture.cleanup();
   }

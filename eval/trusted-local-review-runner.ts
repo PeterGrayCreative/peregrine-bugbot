@@ -74,6 +74,7 @@ export interface TrustedLocalReviewTerminal {
   promptSha256: string;
   argvSha256: string;
   rawJsonlSha256: string;
+  stderrSha256: string;
   findingsSha256: string | null;
   cleanupCompleted: boolean;
 }
@@ -210,6 +211,7 @@ export async function runTrustedLocalReviewAttempt(
 
   const rawJsonl = execution.stdout;
   writeExclusive(join(attempt.attemptDirectory, "raw.jsonl"), rawJsonl);
+  writeExclusive(join(attempt.attemptDirectory, "stderr.txt"), execution.stderr);
   writeExclusive(join(attempt.attemptDirectory, "usage.json"), `${canonicalJson(usage)}\n`);
   let findingsSha256: string | null = null;
   if (findings !== null) {
@@ -232,6 +234,7 @@ export async function runTrustedLocalReviewAttempt(
     promptSha256: attempt.promptSha256,
     argvSha256: sha256(argvBytes),
     rawJsonlSha256: sha256(rawJsonl),
+    stderrSha256: sha256(execution.stderr),
     findingsSha256,
     cleanupCompleted,
   };
