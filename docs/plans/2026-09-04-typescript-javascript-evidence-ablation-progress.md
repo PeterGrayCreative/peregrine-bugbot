@@ -915,3 +915,18 @@ Missing clock provenance fails closed; the one-millisecond wall/monotonic bound
 is unchanged. V7 and all failures remain immutable. No provider/runtime operation
 or attempt occurred; all 64 review slots remain unstarted, with readiness and
 batch authorization false. Fresh independent exact-freeze review remains required.
+
+## 2026-09-17: minimal trusted A/B diagnostic completed
+
+The [trusted local diagnostic](../validation/2026-09-17-trusted-local-ab-diagnostic-results.md)
+completed one Sol-high pair on a visible seeded TypeScript case. Both the
+competent minimal prompt and Peregrine found the single registered high-severity
+root and emitted no additional finding. Peregrine took 23.99% longer and used
+roughly 44% more observed input and output tokens in this pair. The independent
+Astra-medium result gate passed, and the complete attempts are stored in the
+private evidence repository at commit `bf981af`.
+
+This closes the trusted local runner infrastructure diagnostic only. It does
+not change the R2 admission deficit, complete R4, authorize the 96-attempt R5
+comparison, or support an efficacy or routing claim. Two failed startup pairs
+remain preserved; their minimal corrections merged in PRs #70 and #71.
