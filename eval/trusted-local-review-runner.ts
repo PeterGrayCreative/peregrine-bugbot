@@ -263,8 +263,6 @@ export function trustedLocalReviewArgs(checkoutDirectory: string, schemaFile: st
     "project_doc_max_bytes=0",
     "--config",
     "project_doc_fallback_filenames=[]",
-    "--config",
-    `projects.${JSON.stringify(checkoutDirectory)}.trust_level="untrusted"`,
     "--cd",
     checkoutDirectory,
     "--output-schema",
