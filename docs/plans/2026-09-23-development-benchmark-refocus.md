@@ -1,6 +1,7 @@
 # Development benchmark refocus and Sol handoff
 
-Date: 2026-09-23. Status: prospective planning amendment; implementation pending.
+Date: 2026-09-23. Status: implementation in progress; package acceptance blocked
+by exact-source availability and reviewer read-isolation checks.
 Scope source: the user's request to amend the plan and checklist after the
 project review, with Sol to pick up implementation afterward.
 
@@ -24,10 +25,10 @@ This is a successor exploratory milestone using the separately admitted
 prohibited R4 path. The adapter must retain the newer corpus's evidence class.
 
 The full [R1–R8 objective](2026-09-05-typescript-javascript-evidence-full-program-goal.md)
-remains incomplete. The user paused execution and has now requested planning
-changes only. Do not infer a provider authorization or automatically start
-implementation from this handoff. Sol's next implementation task is the package
-described here when the user resumes implementation.
+remains incomplete. The user has resumed implementation of this package, but
+has not authorized a provider experiment or production change. This plan is
+the milestone scope; source-readiness failures stop package acceptance rather
+than permitting a smaller or substituted corpus.
 
 ## Current state
 
@@ -39,6 +40,17 @@ described here when the user resumes implementation.
 | R3 | Substantial harness implementation exists. The trusted local A/B runner completed a seeded diagnostic; the historical development adapter and full dry run still need implementation/verification. |
 | R4/R5 | No current historical freeze or provider authorization. This milestone prepares a development-only freeze. |
 | R6–R8 | Reserved selection, confirmation, prospective work, and final component decisions remain outstanding. |
+
+The first implementation check verified the unchanged 12-case corpus and a
+deterministic 48-slot schedule under Node 22. Source archive hashes match, but
+isolated loading of each archived pack fails on a missing prerequisite Git
+object. Existing local source stores have complete base/head trees for only
+4 cases, base only for 2, and neither endpoint for 6. No case was removed or
+replaced; no live reviewer ran. The private source-feasibility report retains
+case-level details. A credential-free synthetic runner path can be validated
+independently, but it does not prove actual-case materialization or read
+isolation. Recover exact source in a separate bounded development-only step,
+then complete this checklist; do not label synthetic fixtures a corpus dry run.
 
 The [one-case diagnostic](../validation/2026-09-17-trusted-local-ab-diagnostic-results.md)
 found the same known defect in both arms, with more time and tokens for Peregrine.

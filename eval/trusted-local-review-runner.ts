@@ -22,6 +22,7 @@ export const TRUSTED_LOCAL_REVIEW_MODEL = "gpt-5.6-sol" as const;
 export const TRUSTED_LOCAL_REVIEW_EFFORT = "high" as const;
 export const TRUSTED_LOCAL_REVIEW_DEADLINE_MS = 20 * 60 * 1000;
 export const TRUSTED_LOCAL_REVIEW_OUTPUT_BYTES = 4 * 1024 * 1024;
+const SYNTHETIC_EXECUTOR_COMMAND = "__peregrine_synthetic_no_binary__";
 
 export interface TrustedLocalReviewPairInput {
   caseId: string;
@@ -77,6 +78,7 @@ export interface TrustedLocalReviewTerminal {
   stderrSha256: string;
   findingsSha256: string | null;
   cleanupCompleted: boolean;
+  synthetic?: true;
 }
 
 export interface TrustedLocalReviewDependencies {
@@ -148,13 +150,33 @@ export async function runTrustedLocalReviewAttempt(
   attempt: TrustedLocalReviewAttempt,
   dependencies: TrustedLocalReviewDependencies = {},
 ): Promise<TrustedLocalReviewTerminal> {
+  return runReviewAttempt(input, attempt, dependencies, false);
+}
+
+/** Record a synthetic attempt with an injected executor; no credentials or provider fallback. */
+export async function runSyntheticTrustedLocalReviewAttempt(
+  input: Omit<TrustedLocalReviewPairInput, "authFile">,
+  attempt: TrustedLocalReviewAttempt,
+  fakeRun: typeof exec,
+  dependencies: Pick<TrustedLocalReviewDependencies, "now"> = {},
+): Promise<TrustedLocalReviewTerminal> {
+  if (typeof fakeRun !== "function") throw new Error("synthetic review requires an injected fake executor");
+  return runReviewAttempt(input, attempt, { ...dependencies, run: fakeRun }, true);
+}
+
+async function runReviewAttempt(
+  input: Omit<TrustedLocalReviewPairInput, "authFile"> & { authFile?: string },
+  attempt: TrustedLocalReviewAttempt,
+  dependencies: TrustedLocalReviewDependencies,
+  synthetic: boolean,
+): Promise<TrustedLocalReviewTerminal> {
   const now = dependencies.now ?? Date.now;
-  const run = dependencies.run ?? exec;
+  const run = synthetic ? dependencies.run! : (dependencies.run ?? exec);
   const removeSession = dependencies.removeSession ?? ((path: string) => rmSync(path, { recursive: true, force: true }));
   const started = now();
   mkdirSync(attempt.attemptDirectory, { mode: 0o700 });
   writeExclusive(join(attempt.attemptDirectory, "prompt.txt"), attempt.prompt);
-  const argv = { command: attempt.command, args: attempt.args };
+  const argv = { command: synthetic ? SYNTHETIC_EXECUTOR_COMMAND : attempt.command, args: attempt.args };
   const argvBytes = `${canonicalJson(argv)}\n`;
   writeExclusive(join(attempt.attemptDirectory, "argv.json"), argvBytes);
 
@@ -165,16 +187,19 @@ export async function runTrustedLocalReviewAttempt(
   let findings: MethodologyReviewOutput | null = null;
   let cleanupCompleted = true;
   try {
-    sessionDirectory = mkdtempSync(join(tmpdir(), "peregrine-trusted-review-"));
-    cleanupCompleted = false;
-    chmodSync(sessionDirectory, 0o700);
-    mkdirSync(join(sessionDirectory, "tmp"), { mode: 0o700 });
-    copyFileSync(resolve(input.authFile), join(sessionDirectory, "auth.json"), constants.COPYFILE_EXCL);
-    chmodSync(join(sessionDirectory, "auth.json"), 0o600);
-    const environment = isolatedProviderEnvironment("codex", sessionDirectory);
-    delete environment.OPENAI_API_KEY;
-    environment.CODEX_HOME = sessionDirectory;
-    execution = await run(attempt.command, [...attempt.args], {
+    let environment: Record<string, string> = {};
+    if (!synthetic) {
+      sessionDirectory = mkdtempSync(join(tmpdir(), "peregrine-trusted-review-"));
+      cleanupCompleted = false;
+      chmodSync(sessionDirectory, 0o700);
+      mkdirSync(join(sessionDirectory, "tmp"), { mode: 0o700 });
+      copyFileSync(resolve(input.authFile!), join(sessionDirectory, "auth.json"), constants.COPYFILE_EXCL);
+      chmodSync(join(sessionDirectory, "auth.json"), 0o600);
+      environment = isolatedProviderEnvironment("codex", sessionDirectory);
+      delete environment.OPENAI_API_KEY;
+      environment.CODEX_HOME = sessionDirectory;
+    }
+    execution = await run(argv.command, [...attempt.args], {
       cwd: attempt.checkoutDirectory,
       env: environment,
       inheritEnv: false,
@@ -237,6 +262,7 @@ export async function runTrustedLocalReviewAttempt(
     stderrSha256: sha256(execution.stderr),
     findingsSha256,
     cleanupCompleted,
+    ...(synthetic ? { synthetic: true as const } : {}),
   };
   writeExclusive(join(attempt.attemptDirectory, "terminal.json"), `${canonicalJson(terminal)}\n`);
   return terminal;
