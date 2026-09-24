@@ -5,6 +5,16 @@ by exact-source availability and reviewer read-isolation checks.
 Scope source: the user's request to amend the plan and checklist after the
 project review, with Sol to pick up implementation afterward.
 
+2026-09-24 aggregate update: exact endpoint source trees for all 12 fixed
+development cases were recovered and materialized, and all 48 scheduled
+slots completed a credential-free synthetic dry run. This is structural
+evidence, not model findings. A narrow containment constructor and offline
+tests passed independent review, but the real read-isolation probe has not
+run because the pinned runtime image is unavailable locally. No provider
+comparison or production change is authorized. The historical status table
+and source-feasibility paragraphs below describe the planning baseline, not
+the current package-readiness claim.
+
 ## Next deliverable and precedence
 
 Prepare one reviewable, zero-provider, two-arm benchmark package using the
