@@ -1,10 +1,17 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { chmodSync, existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, realpathSync, symlinkSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { isAbsolute, join, normalize, relative, sep } from "node:path";
+import { basename, dirname, isAbsolute, join, normalize, relative, sep } from "node:path";
 import { ACCEPTED_EVAL_RUNTIME_IMAGE } from "./runtime-containment.js";
 import { trustedLocalReviewArgs } from "./trusted-local-review-runner.js";
 import { exec } from "../src/util/exec.js";
+import type { ExecResult } from "../src/util/exec.js";
+import { canonicalJson } from "./experiment.js";
+import {
+  parseTrustedLocalReviewJsonl, TRUSTED_LOCAL_REVIEW_DEADLINE_MS,
+  TRUSTED_LOCAL_REVIEW_EFFORT, TRUSTED_LOCAL_REVIEW_MODEL, TRUSTED_LOCAL_REVIEW_OUTPUT_BYTES,
+  type TrustedLocalReviewAttempt, type TrustedLocalReviewTerminal,
+} from "./trusted-local-review-runner.js";
 
 /** Construction only. This module does not authorize or execute a provider review. */
 export interface DevelopmentReviewMounts {
@@ -124,6 +131,143 @@ function directoryFile(path: string): string {
     throw new Error("credential must be a private, evaluator-owned single-link regular file");
   }
   return actual;
+}
+
+/** The private authorization decision and frozen package/source/schedule hashes are caller assertions. */
+export interface DevelopmentReviewAuthorization {
+  decision: "authorized";
+  packageSha256: string;
+  sourceSha256: string;
+  schemaSha256: string;
+  rawScopeSha256: string;
+  scheduleSha256: string;
+  attemptId: string;
+  caseId: string;
+  armId: "A" | "B";
+}
+
+export interface DevelopmentReviewSlot {
+  caseId: string;
+  attemptId: string;
+  armId: "A" | "B";
+  packageSha256: string;
+  sourceSha256: string;
+  schemaSha256: string;
+  scheduleSha256: string;
+  mounts: DevelopmentReviewMounts;
+  credentialFile: string;
+  attempt: TrustedLocalReviewAttempt;
+}
+
+const SHA256 = /^[a-f0-9]{64}$/;
+const hash = (value: string | Buffer) => createHash("sha256").update(value).digest("hex");
+
+/** No default executor exists here. The caller must supply both authorization and execution. */
+export async function runAuthorizedDevelopmentReviewAttempt(
+  slot: DevelopmentReviewSlot,
+  authorization: DevelopmentReviewAuthorization | undefined,
+  run: typeof exec,
+  now: () => number = Date.now,
+): Promise<TrustedLocalReviewTerminal> {
+  const attempt = slot.attempt;
+  const expected = [slot.packageSha256, slot.sourceSha256, slot.schemaSha256, slot.scheduleSha256, attempt.rawScopeSha256];
+  const validId = (value: string) => /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value);
+  if (!authorization || authorization.decision !== "authorized" || expected.some((value) => !SHA256.test(value)) ||
+      !validId(slot.caseId) || !validId(slot.attemptId) ||
+      authorization.packageSha256 !== slot.packageSha256 || authorization.sourceSha256 !== slot.sourceSha256 ||
+      authorization.schemaSha256 !== slot.schemaSha256 || authorization.scheduleSha256 !== slot.scheduleSha256 ||
+      authorization.rawScopeSha256 !== attempt.rawScopeSha256 || authorization.attemptId !== slot.attemptId ||
+      authorization.caseId !== slot.caseId || authorization.armId !== slot.armId) {
+    throw new Error("development review authorization binding is missing or mismatched");
+  }
+  if (typeof run !== "function") throw new Error("development review requires an injected executor");
+  if (attempt.armId !== slot.armId || attempt.promptSha256 !== hash(attempt.prompt) ||
+      (slot.armId === "A" ? attempt.methodSourceSha256 !== null : !attempt.methodSourceSha256) ||
+      attempt.command !== "codex") {
+    throw new Error("development review slot provenance is invalid");
+  }
+  const mounts = validate(slot.mounts);
+  const receipt = isAbsolute(attempt.attemptDirectory)
+    ? join(realpathSync(dirname(attempt.attemptDirectory)), basename(attempt.attemptDirectory)) : "";
+  if (!receipt || existsSync(receipt) || [mounts.checkout, mounts.assets, mounts.output].some((root) =>
+    contains(root, receipt) || contains(receipt, root))) {
+    throw new Error("review receipt directory must be absolute and disjoint from reviewer mounts");
+  }
+  if (mounts.checkout !== realpathSync(attempt.checkoutDirectory)) throw new Error("review source provenance checkout mismatch");
+  if (lstatSync(join(mounts.assets, SCHEMA)).size > 1024 * 1024) {
+    throw new Error("review output schema exceeds size bound");
+  }
+  if (hash(readFileSync(join(mounts.assets, SCHEMA))) !== slot.schemaSha256) {
+    throw new Error("review output schema provenance mismatch");
+  }
+  const name = `peregrine-review-${randomUUID()}`;
+  // Credential metadata is first touched here, after the complete binding check.
+  const args = buildDevelopmentReviewLaunchArgs(slot.mounts, slot.credentialFile, name);
+  if (canonicalJson(args.slice(args.indexOf("codex") + 1)) !==
+      canonicalJson(trustedLocalReviewArgs("/workspace", `/opt/peregrine/${SCHEMA}`))) {
+    throw new Error("review command differs from trusted local review arguments");
+  }
+  return runContainedAttempt(slot.caseId, attempt, args, name, run, now);
+}
+
+async function runContainedAttempt(
+  caseId: string, attempt: TrustedLocalReviewAttempt, args: string[], name: string, run: typeof exec, now: () => number,
+): Promise<TrustedLocalReviewTerminal> {
+  const started = now();
+  mkdirSync(attempt.attemptDirectory, { mode: 0o700 });
+  writeFileSync(join(attempt.attemptDirectory, "prompt.txt"), attempt.prompt, { flag: "wx", mode: 0o600 });
+  const argvBytes = `${canonicalJson({ command: "docker", args })}\n`;
+  writeFileSync(join(attempt.attemptDirectory, "argv.json"), argvBytes, { flag: "wx", mode: 0o600 });
+  let result: ExecResult = { stdout: "", stderr: "", code: -1, timedOut: false };
+  let launchError: string | null = null;
+  let cleanupFailed = false;
+  const cleanup: Record<string, unknown> = {};
+  try {
+    result = await run("docker", args, { stdin: attempt.prompt, timeoutMs: TRUSTED_LOCAL_REVIEW_DEADLINE_MS,
+      maximumOutputBytes: TRUSTED_LOCAL_REVIEW_OUTPUT_BYTES, inheritEnv: false, env: { PATH: process.env.PATH ?? "" } });
+  } catch (error) { launchError = String(error); }
+  // A thrown executor may have spawned the container. Always attempt both cleanup calls.
+  for (const [step, commandArgs, timeoutMs] of [
+    ["remove", ["rm", "--force", name], 15_000],
+    ["survivor", ["ps", "--all", "--quiet", "--filter", `name=^/${name}$`], 10_000],
+  ] as const) {
+    try {
+      const response = await run("docker", [...commandArgs], { timeoutMs, inheritEnv: false, env: { PATH: process.env.PATH ?? "" }, maximumOutputBytes: 4096 });
+      cleanup[step] = response;
+      if (response.code !== 0 || response.timedOut || response.outputLimitExceeded || (step === "survivor" && response.stdout.trim())) cleanupFailed = true;
+    } catch (error) { cleanup[step] = { error: String(error) }; cleanupFailed = true; }
+  }
+  writeFileSync(join(attempt.attemptDirectory, "cleanup.json"), `${canonicalJson(cleanup)}\n`, { flag: "wx", mode: 0o600 });
+  writeFileSync(join(attempt.attemptDirectory, "raw.jsonl"), result.stdout, { flag: "wx", mode: 0o600 });
+  writeFileSync(join(attempt.attemptDirectory, "stderr.txt"), result.stderr, { flag: "wx", mode: 0o600 });
+  if (launchError !== null) writeFileSync(join(attempt.attemptDirectory, "launch-error.txt"), launchError, { flag: "wx", mode: 0o600 });
+  let status: TrustedLocalReviewTerminal["status"] = "process-failed";
+  let usage: TrustedLocalReviewTerminal["usage"] = null;
+  let findingsSha256: string | null = null;
+  if (result.timedOut) status = "timed-out";
+  else if (result.outputLimitExceeded) status = "output-limit-exceeded";
+  else if (result.code === 0 && launchError === null) {
+    try {
+      const parsed = parseTrustedLocalReviewJsonl(result.stdout);
+      usage = parsed.usage;
+      const bytes = `${canonicalJson(parsed.findings)}\n`;
+      findingsSha256 = hash(bytes);
+      writeFileSync(join(attempt.attemptDirectory, "final-findings.json"), bytes, { flag: "wx", mode: 0o600 });
+      status = "completed";
+    } catch { status = "malformed-output"; }
+  }
+  if (cleanupFailed) status = "cleanup-failed";
+  writeFileSync(join(attempt.attemptDirectory, "usage.json"), `${canonicalJson(usage)}\n`, { flag: "wx", mode: 0o600 });
+  const terminal: TrustedLocalReviewTerminal = {
+    schemaVersion: 1, caseId,
+    armId: attempt.armId, requestedModel: TRUSTED_LOCAL_REVIEW_MODEL, requestedEffort: TRUSTED_LOCAL_REVIEW_EFFORT,
+    status, elapsedMs: Math.max(0, now() - started), exitCode: result.code, timedOut: result.timedOut,
+    outputLimitExceeded: result.outputLimitExceeded === true, usage, promptSha256: attempt.promptSha256,
+    argvSha256: hash(argvBytes), rawJsonlSha256: hash(result.stdout), stderrSha256: hash(result.stderr),
+    findingsSha256, cleanupCompleted: !cleanupFailed,
+  };
+  writeFileSync(join(attempt.attemptDirectory, "terminal.json"), `${canonicalJson(terminal)}\n`, { flag: "wx", mode: 0o600 });
+  return terminal;
 }
 
 /** Credential-free probe. The caller supplies a new durable receipt directory. */
