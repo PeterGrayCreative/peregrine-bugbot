@@ -1,19 +1,23 @@
 # Development benchmark refocus and Sol handoff
 
 Date: 2026-09-23. Status: implementation in progress; package acceptance blocked
-by exact-source availability and reviewer read-isolation checks.
+by the final live reviewer boundary and 48-slot launch integration.
 Scope source: the user's request to amend the plan and checklist after the
 project review, with Sol to pick up implementation afterward.
 
 2026-09-24 aggregate update: exact endpoint source trees for all 12 fixed
 development cases were recovered and materialized, and all 48 scheduled
-slots completed a credential-free synthetic dry run. This is structural
-evidence, not model findings. A narrow containment constructor and offline
-tests passed independent review, but the real read-isolation probe has not
-run because the pinned runtime image is unavailable locally. No provider
-comparison or production change is authorized. The historical status table
-and source-feasibility paragraphs below describe the planning baseline, not
-the current package-readiness claim.
+slots completed a credential-free synthetic dry run. The pinned GHCR runtime
+image is available locally. A planted-canary synthetic probe and one actual-case
+credential-free probe passed bounded filesystem read-denial and cleanup gates;
+all 12 fresh development mounts passed a full-manifest check. A private
+invented-data grading arithmetic fixture also passed its mechanical gate.
+These are preparation and structural evidence, not model findings. The proposed
+live reviewer adds credentials and bridge networking, so its complete access
+boundary, the final 48-slot launcher, whole-package gate, and authorization
+packet remain unfinished. No provider comparison or production change is
+authorized. The historical status table and source-feasibility paragraphs
+below describe the planning baseline, not the current package-readiness claim.
 
 ## Next deliverable and precedence
 
