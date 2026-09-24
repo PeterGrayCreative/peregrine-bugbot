@@ -1,5 +1,13 @@
 # TypeScript and JavaScript evidence gathering and Peregrine ablation plan
 
+Current direction (2026-09-23): the user requested a prospective refocus on a
+12-case, two-arm, 48-attempt exploratory development benchmark. Read the
+[refocus amendment and Sol checklist](2026-09-23-development-benchmark-refocus.md)
+first. It governs the next milestone, defers reserved collection as a prerequisite
+for that milestone, and retains the separate provider-authorization boundary.
+The original plan and dated corrections below remain historical context;
+the full R1–R8 objective is incomplete. Implementation is for Sol's next task.
+
 Date: 2026-09-04; prospective correction addendum dated 2026-09-12
 Status: active research direction; R1 complete, R2 correction/successor-corpus work pending under the prospective protocol, R3 truth-aware inference v2 and append-only sealing structurally complete. The dated correction addendum at the end prospectively governs future corpus work and does not rewrite prior artifacts.
 

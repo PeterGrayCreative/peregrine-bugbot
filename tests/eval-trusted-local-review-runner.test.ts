@@ -9,6 +9,7 @@ import {
   prepareTrustedLocalReviewPair,
   runTrustedLocalReviewAttempt,
   runTrustedLocalReviewPair,
+  runSyntheticTrustedLocalReviewAttempt,
   type TrustedLocalReviewPairInput,
 } from "../eval/trusted-local-review-runner.js";
 import type { ExecResult } from "../src/util/exec.js";
@@ -173,6 +174,65 @@ test("session cleanup failure overrides an otherwise completed attempt", async (
     assert.ok(session && existsSync(session));
   } finally {
     if (session) rmSync(session, { recursive: true, force: true });
+    fixture.cleanup();
+  }
+});
+
+test("synthetic attempt requires a fake executor and never accesses authFile", async () => {
+  const fixture = createFixture();
+  try {
+    const input = { ...fixture.input };
+    Object.defineProperty(input, "authFile", { get: () => { throw new Error("authFile was accessed"); } });
+    const [attempt] = await prepareTrustedLocalReviewPair(input);
+    await assert.rejects(
+      runSyntheticTrustedLocalReviewAttempt(input, attempt, undefined as never),
+      /requires an injected fake executor/,
+    );
+    assert.equal(existsSync(attempt.attemptDirectory), false);
+    const raw = successStream(completed);
+    let calls = 0;
+    const terminal = await runSyntheticTrustedLocalReviewAttempt(input, attempt, async (command, _args, options) => {
+      calls += 1;
+      assert.equal(command, "__peregrine_synthetic_no_binary__");
+      assert.equal(options?.inheritEnv, false);
+      assert.deepEqual(options?.env, {});
+      assert.equal(options?.stdin, attempt.prompt);
+      return raw;
+    });
+    assert.equal(calls, 1);
+    assert.equal(terminal.status, "completed");
+    assert.equal(terminal.synthetic, true);
+    assert.equal(terminal.cleanupCompleted, true);
+    assert.equal(readFileSync(join(attempt.attemptDirectory, "raw.jsonl"), "utf8"), raw.stdout);
+    assert.equal(JSON.parse(readFileSync(join(attempt.attemptDirectory, "argv.json"), "utf8")).command,
+      "__peregrine_synthetic_no_binary__");
+    assert.deepEqual(JSON.parse(readFileSync(join(attempt.attemptDirectory, "final-findings.json"), "utf8")), completed);
+    assert.equal(JSON.parse(readFileSync(join(attempt.attemptDirectory, "terminal.json"), "utf8")).synthetic, true);
+  } finally {
+    fixture.cleanup();
+  }
+});
+
+test("synthetic failures and timeouts preserve raw receipts without findings", async () => {
+  const fixture = createFixture();
+  try {
+    const [first, second] = await prepareTrustedLocalReviewPair(fixture.input);
+    const input = { ...fixture.input, authFile: join(fixture.root, "does-not-exist.json") };
+    const failed = await runSyntheticTrustedLocalReviewAttempt(input, first, async () => ({
+      stdout: "partial failure\n", stderr: "failed\n", code: 1, timedOut: false,
+    }));
+    assert.equal(failed.status, "process-failed");
+    assert.equal(readFileSync(join(first.attemptDirectory, "raw.jsonl"), "utf8"), "partial failure\n");
+    assert.equal(readFileSync(join(first.attemptDirectory, "stderr.txt"), "utf8"), "failed\n");
+    assert.equal(existsSync(join(first.attemptDirectory, "final-findings.json")), false);
+    const timedOut = await runSyntheticTrustedLocalReviewAttempt(input, second, async () => ({
+      stdout: "partial timeout\n", stderr: "timeout\n", code: null, timedOut: true,
+    }));
+    assert.equal(timedOut.status, "timed-out");
+    assert.equal(readFileSync(join(second.attemptDirectory, "raw.jsonl"), "utf8"), "partial timeout\n");
+    assert.equal(readFileSync(join(second.attemptDirectory, "stderr.txt"), "utf8"), "timeout\n");
+    assert.equal(existsSync(join(second.attemptDirectory, "final-findings.json")), false);
+  } finally {
     fixture.cleanup();
   }
 });

@@ -1,5 +1,11 @@
 # Evidence-audit correction goal
 
+Current successor direction (2026-09-23): see the
+[development benchmark refocus](2026-09-23-development-benchmark-refocus.md).
+This failed packet path stays terminated. The new milestone uses the separately
+admitted oracle-supported visible-development corpus and a new exploratory
+freeze; it does not revive this packet, its prohibited Section 4, or old approvals.
+
 Date: 2026-09-12
 Status: termination path complete; Sections 1–2 complete, Section 3 failed readiness, Section 4 prohibited
 
