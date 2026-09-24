@@ -1,5 +1,12 @@
 # Full evidence-program goal
 
+Current instruction (2026-09-23): the full objective remains incomplete and
+execution remains paused pending the user's implementation handoff to Sol.
+The [refocus amendment](2026-09-23-development-benchmark-refocus.md) governs the
+next milestone: prepare a two-arm development benchmark before returning to
+reserved collection. Earlier recovery/resumption statements below are history,
+not current execution instructions. No provider or production change is authorized.
+
 Status: full objective incomplete; execution stops at the requested recovery
 checkpoint. User previously resumed the full program on 2026-09-05.
 

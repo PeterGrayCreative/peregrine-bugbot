@@ -1,5 +1,20 @@
 # TypeScript and JavaScript evidence and ablation progress
 
+## Current direction — 2026-09-23
+
+Use the [refocus amendment and Sol checklist](2026-09-23-development-benchmark-refocus.md)
+as the current entry point. The dated snapshots below are retained history.
+
+- R1 complete; R2 visible development complete at 12 cases (8 defects and 4
+  comparisons), with 24 recorded AI reviews. Reserved yield is 0 defects and 1
+  recorded comparison, whose final order qualification remains unresolved.
+- R3 has substantial structural implementation and a completed one-case seeded
+  A/B diagnostic. A development-corpus adapter and full dry run remain pending.
+- Next: prepare a credential-free 12-case × 2-arm × 2-repeat package for separate
+  authorization. Reserved reconstruction and four-arm attribution are deferred.
+- R4 freeze incomplete; historical R5 runs unauthorized; R6–R8 outstanding.
+  This documentation task does not restart execution or mark the goal complete.
+
 ## Corpus continuation (2026-09-16)
 
 The [oracle-supported development protocol](2026-09-16-oracle-backed-corpus-protocol.md)

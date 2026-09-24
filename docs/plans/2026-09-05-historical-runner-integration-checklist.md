@@ -1,5 +1,12 @@
 # Historical runner integration checklist
 
+Current checklist (2026-09-23): use the
+[development benchmark refocus and Sol handoff](2026-09-23-development-benchmark-refocus.md#implementation-checklist-for-sol).
+The integration history below is retained for reference, not the next work queue.
+Prepare the existing 12-case development set for a two-arm, 48-attempt dry run;
+do not restart older runner, reserved-collection, or four-arm work by default.
+Live provider execution still needs separate authorization.
+
 Status: partial integration, updated 2026-09-09. No historical
 reviewer invocation is authorized or enabled by this checklist.
 

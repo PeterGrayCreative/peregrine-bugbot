@@ -1,5 +1,10 @@
 # Peregrine Bug-Finding and Cost Optimization Implementation Checklist
 
+Current work queue (2026-09-23): use the
+[development benchmark refocus and Sol checklist](2026-09-23-development-benchmark-refocus.md).
+The optimization checklist below is historical/deferred; it does not authorize
+resuming production optimization before the evidence decision.
+
 **Companion plan:** [2026-09-02-bug-finding-and-cost-optimization-plan.md](./2026-09-02-bug-finding-and-cost-optimization-plan.md)
 **Status:** Active
 **Last updated:** 2026-09-04
